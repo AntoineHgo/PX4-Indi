@@ -70,7 +70,7 @@ while [ ! -f indi_project/DONE ] && [ ! -f indi_project/STOP ]; do
 		--settings indi_project/claude_settings.json \
 		--dangerously-skip-permissions \
 		--output-format stream-json --verbose \
-		> "$LOG_DIR/run-$ts.jsonl" 2> "$LOG_DIR/run-$ts.err"
+		> "$LOG_DIR/run-$ts.jsonl" 2> "$LOG_DIR/run-$ts.err" 9>&-
 	rc=$?
 	elapsed=$(($(date +%s) - start))
 	result=$(jq -c 'select(.type=="result")' "$LOG_DIR/run-$ts.jsonl" 2>/dev/null | tail -1)
@@ -97,7 +97,7 @@ while [ ! -f indi_project/DONE ] && [ ! -f indi_project/STOP ]; do
 
 	{ [ -f indi_project/DONE ] || [ -f indi_project/STOP ]; } && break
 	log "relaunching in ${wait_s}s (at $(date -d "@$(($(date +%s) + wait_s))" '+%F %T'))"
-	sleep "$wait_s"
+	sleep "$wait_s" 9>&-
 done
 
 if [ -f indi_project/DONE ]; then
