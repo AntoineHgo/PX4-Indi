@@ -64,6 +64,7 @@ while [ ! -f indi_project/DONE ] && [ ! -f indi_project/STOP ]; do
 	log "run $runs: launching orchestrator (log: $LOG_DIR/run-$ts.jsonl)"
 
 	claude -p "$(cat "$PROMPT_FILE")" \
+		--name "indi-orchestrator $ts" \
 		--model "$MODEL" \
 		--effort "$EFFORT" \
 		--settings indi_project/claude_settings.json \
@@ -72,6 +73,9 @@ while [ ! -f indi_project/DONE ] && [ ! -f indi_project/STOP ]; do
 		> "$LOG_DIR/run-$ts.jsonl" 2> "$LOG_DIR/run-$ts.err"
 	rc=$?
 	elapsed=$(($(date +%s) - start))
+	result=$(jq -c 'select(.type=="result")' "$LOG_DIR/run-$ts.jsonl" 2>/dev/null | tail -1)
+	cost=$(jq -r '.total_cost_usd // "?"' <<<"$result" 2>/dev/null)
+	log "run $runs: exit $rc after ${elapsed}s, cost \$${cost:-?}"
 
 	if [ "$rc" -eq 0 ] && [ "$elapsed" -ge 300 ]; then
 		wait_s=60
@@ -79,9 +83,20 @@ while [ ! -f indi_project/DONE ] && [ ! -f indi_project/STOP ]; do
 		wait_s=$LIMIT_WAIT
 	fi
 
-	log "run $runs: exit $rc after ${elapsed}s"
+	# usage limit: sleep until the reset time the API reports, plus a margin
+	if [ "$(jq -r '.api_error // empty' <<<"$result" 2>/dev/null)" = "usage_limit_reached" ]; then
+		msg=$(jq -r '.result // empty' <<<"$result")
+		log "usage limit: $msg"
+		grep -qi "spend limit" <<<"$msg" && log "WARNING: a spend limit is reached, relaunches will keep failing until it is raised"
+		reset=$(grep -oiE 'resets [^(·]+' <<<"$msg" | head -1 | sed -E 's/^resets //I; s/,//g; s/[[:space:]]+$//')
+		if reset_at=$(date -d "$reset" +%s 2>/dev/null); then
+			[ "$reset_at" -le "$(date +%s)" ] && reset_at=$((reset_at + 86400))
+			wait_s=$((reset_at - $(date +%s) + 120))
+		fi
+	fi
+
 	{ [ -f indi_project/DONE ] || [ -f indi_project/STOP ]; } && break
-	log "relaunching in ${wait_s}s"
+	log "relaunching in ${wait_s}s (at $(date -d "@$(($(date +%s) + wait_s))" '+%F %T'))"
 	sleep "$wait_s"
 done
 

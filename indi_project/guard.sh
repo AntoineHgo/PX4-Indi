@@ -50,7 +50,12 @@ Bash)
 	has '(^|[^[:alnum:]_./-])dd[[:space:]]+[^;|&]*of=/dev/' && deny "no raw device writes"
 	has '(curl|wget)[^;&]*\|[[:space:]]*(ba|z|da)?sh' && deny "no piping downloads into a shell"
 	has '(\.ssh|\.gnupg|\.gitconfig|\.bashrc|\.zshrc|\.zshenv|\.profile|\.claude/settings|\.claude\.json|\.config/gh)' && deny "no access to credentials or shell/tool configuration"
-	has '(guard\.sh|claude_settings\.json|run_orchestrator\.sh|\.git/hooks)' && deny "supervisor files and git hooks are off limits"
+	# supervisor files and git hooks may be read, never modified
+	while IFS= read -r seg; do
+		grep -Eq '(guard\.sh|claude_settings\.json|run_orchestrator\.sh|ORCHESTRATOR_PROMPT\.md|\.git/hooks)' <<<"$seg" || continue
+		grep -Eq '(>|(^|[^[:alnum:]_.-])(tee|mv|cp|rm|ln|chmod|chown|truncate|install|dd|patch)([[:space:]]|$)|(sed|perl)[[:space:]]+[^;|&]*-[[:alnum:]]*i|git[[:space:]]+(checkout|restore|rm|mv|apply|stash)|open\(|write)' <<<"$seg" &&
+			deny "supervisor files and git hooks may be read but not modified"
+	done < <(tr ';|&\n' '\n\n\n\n' <<<"$cmd")
 	has '(^|[^[:alnum:]_./-])claude[[:space:]]+[^;|&]*(-p|--print|--dangerously|--permission-mode|--settings)' && deny "no nested claude sessions, use the Agent tool"
 	has 'pip3?[[:space:]]+install[^;|&]*--break-system-packages' && deny "install Python packages in a venv inside the repo or in the container image"
 
