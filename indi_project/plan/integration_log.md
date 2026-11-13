@@ -40,3 +40,38 @@
 - Commits: d66f114963 (msg), d6182aea41 (module + params).
 - Not verified: SITL flight with INDI; that each commit builds alone (msg commit not built separately).
 - This log is left uncommitted.
+
+## Yaw cutoff (session 8)
+
+### Step 1: library (commit 68ef4eaa0b)
+- `IndiRateControl::setYawCutoff()` (<=0 or non-finite -> 0 = off), two `LowPassFilter2p`
+  instances (`_yaw_lpf_accel`, `_yaw_lpf_torque`) with identical coefficients on the yaw
+  component of a_f (after the caller's chain) and t_f (after H). Increment law unchanged,
+  uses the filtered pair (G2 term uses the filtered t_f too). New getter
+  `getFilteredAngularAccel()` and member `_a_f` for logging.
+- Disabled = filter bypassed (not pass-through), so outputs are bit-identical to before.
+- Enabled flag set in `designFilters()`: cutoff > 0 and < 0.45 x sample rate, otherwise off
+  (explicit 0.45 guard; LowPassFilter2p itself only disables at >= 0.5 x rate).
+- Redesign trigger extended with a yaw cutoff change; a pending flag makes update() reset both
+  filters to the current unfiltered a_f,yaw and t_f,yaw (no transient). `resetStates()` resets
+  both to 0 (so on ground each cycle the a_f,yaw filter is reset: output is b0 x input, near 0).
+- Deviation from the brief: test 2 injects the noise on the yaw angular acceleration input
+  (the path the filter acts on) rather than on the yaw rate; noise on the rate only enters via
+  nu and is not filtered. Tests use 250 Hz (dt 4 ms) as specified. Test 1 compares against a
+  controller where setYawCutoff() is never called (cannot compare against the old binary).
+- 4 new gtests (14 total): YawCutoffZeroLeavesOutputsUnchanged, YawCutoffReducesYawNoiseOnly
+  (std < 0.7 x, roll/pitch equal), YawCutoffEnableHasNoTransient, YawCutoffInvalidValuesDisableFilter
+  (NaN, inf, -5, 120 Hz).
+- `make format`: passed, only my files changed.
+- `indi_project/docker/run.sh -n unittest -t 2400 'make tests TESTFILTER=indi_rate_control'`:
+  PASS, 14/14 gtests (1/1 ctest).
+
+### Step 2: parameter and wiring (commit 7da2dc5456)
+- `MC_INDI_YAW_CUT` (float, Hz, default 0, 0..100, decimal 1, increment 1) in
+  mc_rate_control_params.yaml after MC_INDI_DT_MAX; short description kept brief per
+  parameters.instructions.md; `setYawCutoff()` called in `parameters_updated()`.
+- `indi_rate_status.angular_accel_filtered` now from `getFilteredAngularAccel()`
+  (post-yaw-filter value), torque_filtered already post-filter.
+- Same test command: PASS 1/1 (the test build also compiles mc_rate_control, no warnings seen).
+- Not verified: px4_sitl_default build (forbidden while PID batch runs), SITL flight.
+- Log left uncommitted.
