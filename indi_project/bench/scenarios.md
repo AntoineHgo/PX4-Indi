@@ -145,3 +145,13 @@ commits.
 ## Change log
 
 - v1 (2026-11-13): initial frozen version.
+- v1.1 (2026-11-14, before any tuning run of either controller): the T2/T3
+  primary metric is the RMS attitude error of the stepped axis over the
+  scenario window (`attitude_tracking.<axis>_rms_deg`) instead of IAE,
+  because `metrics.py` computes RMS, not IAE. Both penalise the same
+  tracking error over the same window; RMS weights large errors more. The
+  same metric applies to `pid_tuned` and `indi`. T1 uses position RMS 3D,
+  T4 roll-rate RMS. The effort ratio uses `effort.motor_rate_rms_per_s`.
+  Stage-1 tuning uses T1-T4 only: T5-T9 need simulator extensions that do
+  not exist yet; when they do, both controllers are re-tuned on the full T
+  set with the same budget.
