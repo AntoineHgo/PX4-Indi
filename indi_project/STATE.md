@@ -98,6 +98,8 @@
   so the next valid cycle starts from t_f = 0 (torque transient). Acceptable
   for stage 1; revisit (hold last valid state) during module integration.
 - Run `make tests TESTFILTER=indi_rate_control` (ASAN build) once before the
+  module-integration commit; session 5 launched it at the end, result (untracked)
+  in `results/unittest_asan_s5.log` (look for "EXIT 0"). Original note:
   module-integration commit.
 
 - Guard false positives: both Sonnet agents had a heredoc/python shell
