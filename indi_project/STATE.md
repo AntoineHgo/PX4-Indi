@@ -30,10 +30,7 @@
 
 ## In progress
 
-- Session 4 subagents: rate-path analysis DONE (`plan/px4_analysis_rate.md`,
-  committed); integration analysis (`plan/px4_analysis_integration.md`) and
-  note smeur2018 (`research/notes/smeur2018.md`) were running at the last
-  save: if the files exist but are uncommitted, review and commit them.
+- Nothing in flight. Session 4 agents all finished and their files are committed.
 
 ## Next concrete actions
 
@@ -75,7 +72,24 @@
   separate module and no changes to commander/ControlAllocator
   (impl_px4_prior).
 
+- PX4 integration facts (plan/px4_analysis_integration.md, unverified by a
+  second reader): allocator is linear in motor command, normalised torque,
+  sequential desaturation (thrust > roll/pitch > yaw); Gazebo
+  `esc_status.esc_rpm` only echoes the command (no measured rotor speed), so
+  SITL INDI needs an onboard first-order motor model; x500 motor time
+  constants 0.0125 s up / 0.025 s down; PX4 CA_ROTOR_KM 0.05 vs gz
+  momentConstant 0.016 (built-in yaw model mismatch). Suggested selection
+  pattern: enum param in mc_rate_control (default PID), INDI law in a new
+  lib beside src/lib/rate_control; mc_nn_control/mc_raptor use external
+  modes and are not a suitable pattern.
+- smeur2018: wind tunnel 10 m/s, INDI 0.21 m vs PID 1.51 m position error,
+  but the PID had no gain matching (caveat for our fair-baseline design).
+
 ## Known problems
+
+- Guard false positives: both Sonnet agents had a heredoc/python shell
+  command blocked as "system administration"; they used the Edit tool
+  instead. Brief agents to write files with Write/Edit, not heredocs.
 
 - **Session 1 lost its work to a usage limit.** Five Sonnet subagents ran in
   parallel for about 14 minutes, took the 5-hour usage window from 11 % to
@@ -128,4 +142,4 @@
 - 2026-11-13: session 2: committed Docker image files; SITL build OK in Docker; reading list; notes smeur2016, acquatella2017, impl_paparazzi, impl_px4_prior; smoke flight script `bench/smoke_gz.sh`; smoke flight OK at speed 1 and 4.
 - 2026-11-13: session 3: froze `bench/scenarios.md` v1 (T1-T9 tuning, H1-H6 held-out, paired Wilcoxon acceptance); notes wang2019, tal2021.
 - 2026-11-13: session 2 closed: note blaha2024 added (RLS effectiveness identification, no PID baseline in that paper).
-- 2026-11-13: session 4: committed runner v0; speed-factor check (18 runs): speed 4 OK for attitude/rate, not for hover position; PX4 rate-path analysis.
+- 2026-11-13: session 4: committed runner v0; analyses plan/px4_analysis_{rate,integration}.md; note smeur2018; speed-factor check (18 runs): speed 4 OK for attitude/rate, not for hover position; PX4 rate-path analysis.
