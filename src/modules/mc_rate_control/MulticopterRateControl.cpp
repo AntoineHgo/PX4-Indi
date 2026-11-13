@@ -54,6 +54,9 @@ MulticopterRateControl::MulticopterRateControl(bool vtol) :
 {
 	_vehicle_status.vehicle_type = vehicle_status_s::VEHICLE_TYPE_ROTARY_WING;
 
+	_param_imu_gyro_cutoff = param_find("IMU_GYRO_CUTOFF");
+	_param_imu_dgyro_cutoff = param_find("IMU_DGYRO_CUTOFF");
+
 	parameters_updated();
 	_controller_status_pub.advertise();
 }
@@ -102,6 +105,52 @@ MulticopterRateControl::parameters_updated()
 				  radians(_param_mc_acro_y_max.get()));
 
 	_output_lpf_yaw.setCutoffFreq(_param_mc_yaw_tq_cutoff.get());
+
+	// INDI rate law
+	_indi.setGainK(Vector3f(_param_mc_indi_k_r.get(), _param_mc_indi_k_p.get(), _param_mc_indi_k_y.get()));
+	_indi.setG1(Vector3f(_param_mc_indi_g1_r.get(), _param_mc_indi_g1_p.get(), _param_mc_indi_g1_y.get()));
+	_indi.setG2Yaw(_param_mc_indi_g2_y.get());
+	_indi.setActuatorTimeConstant(_param_mc_indi_act_tc.get());
+	_indi.setDelaySamples(_param_mc_indi_delay.get());
+	_indi.setMaxIncrement(_param_mc_indi_dt_max.get());
+
+	// the actuator model filter must match the sensor filter chain of the angular acceleration
+	float gyro_cutoff = 0.f;
+	float dgyro_cutoff = 0.f;
+
+	if (_param_imu_gyro_cutoff != PARAM_INVALID) {
+		param_get(_param_imu_gyro_cutoff, &gyro_cutoff);
+	}
+
+	if (_param_imu_dgyro_cutoff != PARAM_INVALID) {
+		param_get(_param_imu_dgyro_cutoff, &dgyro_cutoff);
+	}
+
+	_indi.setFilterCutoffs(gyro_cutoff, dgyro_cutoff);
+}
+
+Vector3f
+MulticopterRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f &angular_accel, float dt, bool landed)
+{
+	// torque the allocator produced from the previous setpoint, only if its feedback belongs to that setpoint
+	Vector3f torque_allocated_prev = _prev_torque_setpoint;
+
+	if (_unallocated_torque_time > _prev_torque_setpoint_time) {
+		torque_allocated_prev -= _unallocated_torque;
+	}
+
+	const Vector3f torque_setpoint = _indi.update(rates, _rates_setpoint, angular_accel, torque_allocated_prev, dt, landed);
+
+	indi_rate_status_s indi_rate_status{};
+	_indi.getNu().copyTo(indi_rate_status.nu);
+	angular_accel.copyTo(indi_rate_status.angular_accel_filtered);
+	_indi.getFilteredTorque().copyTo(indi_rate_status.torque_filtered);
+	_indi.getTorqueIncrement().copyTo(indi_rate_status.torque_increment);
+	indi_rate_status.fault = _indi.getFault();
+	indi_rate_status.timestamp = hrt_absolute_time();
+	_indi_rate_status_pub.publish(indi_rate_status);
+
+	return torque_setpoint;
 }
 
 void
@@ -195,6 +244,11 @@ MulticopterRateControl::Run()
 			if (!_vehicle_control_mode.flag_armed || _vehicle_status.vehicle_type != vehicle_status_s::VEHICLE_TYPE_ROTARY_WING) {
 				_rate_control.resetIntegral();
 				_gain_compression.reset();
+
+				// latch the rate law selection and reset the INDI states while disarmed
+				_use_indi = (_param_mc_rate_ctl_type.get() == 1);
+				_indi.reset();
+				_prev_torque_setpoint.zero();
 			}
 
 			// reset gain compression on the ground to prevent ground contact from compressing the gains
@@ -222,24 +276,35 @@ MulticopterRateControl::Run()
 
 				// TODO: send the unallocated value directly for better anti-windup
 				_rate_control.setSaturationStatus(saturation_positive, saturation_negative);
+
+				// allocator feedback for the INDI actuator model
+				_unallocated_torque = Vector3f(control_allocator_status.unallocated_torque);
+				_unallocated_torque_time = control_allocator_status.timestamp;
 			}
 
-			// run rate controller
-			Vector3f torque_setpoint =
-				_rate_control.update(rates, _rates_setpoint, angular_accel, dt, _maybe_landed || _landed);
+			Vector3f torque_setpoint;
 
-			// reduce the loop gain when an oscillation is detected on the controller output
-			torque_setpoint = _gain_compression.getGains().emult(torque_setpoint);
-			_gain_compression.update(torque_setpoint, dt);
+			if (_use_indi) {
+				// INDI has its own actuator model: no yaw low-pass filter and no battery scaling
+				torque_setpoint = runIndiRateControl(rates, angular_accel, dt, _maybe_landed || _landed);
 
-			// apply low-pass filtering on yaw axis to reduce high frequency torque caused by rotor acceleration
-			torque_setpoint(2) = _output_lpf_yaw.update(torque_setpoint(2), dt);
+			} else {
+				// run rate controller
+				torque_setpoint = _rate_control.update(rates, _rates_setpoint, angular_accel, dt, _maybe_landed || _landed);
 
-			// publish rate controller status
-			rate_ctrl_status_s rate_ctrl_status{};
-			_rate_control.getRateControlStatus(rate_ctrl_status);
-			rate_ctrl_status.timestamp = hrt_absolute_time();
-			_controller_status_pub.publish(rate_ctrl_status);
+				// reduce the loop gain when an oscillation is detected on the controller output
+				torque_setpoint = _gain_compression.getGains().emult(torque_setpoint);
+				_gain_compression.update(torque_setpoint, dt);
+
+				// apply low-pass filtering on yaw axis to reduce high frequency torque caused by rotor acceleration
+				torque_setpoint(2) = _output_lpf_yaw.update(torque_setpoint(2), dt);
+
+				// publish rate controller status
+				rate_ctrl_status_s rate_ctrl_status{};
+				_rate_control.getRateControlStatus(rate_ctrl_status);
+				rate_ctrl_status.timestamp = hrt_absolute_time();
+				_controller_status_pub.publish(rate_ctrl_status);
+			}
 
 			// publish thrust and torque setpoints
 			vehicle_thrust_setpoint_s vehicle_thrust_setpoint{};
@@ -251,7 +316,7 @@ MulticopterRateControl::Run()
 			vehicle_torque_setpoint.xyz[2] = PX4_ISFINITE(torque_setpoint(2)) ? torque_setpoint(2) : 0.f;
 
 			// scale setpoints by battery status if enabled
-			if (_param_mc_bat_scale_en.get()) {
+			if (!_use_indi && _param_mc_bat_scale_en.get()) {
 				if (_battery_status_sub.updated()) {
 					battery_status_s battery_status;
 
@@ -275,6 +340,9 @@ MulticopterRateControl::Run()
 			vehicle_torque_setpoint.timestamp_sample = angular_velocity.timestamp_sample;
 			vehicle_torque_setpoint.timestamp = hrt_absolute_time();
 			_vehicle_torque_setpoint_pub.publish(vehicle_torque_setpoint);
+
+			_prev_torque_setpoint = Vector3f(vehicle_torque_setpoint.xyz);
+			_prev_torque_setpoint_time = vehicle_torque_setpoint.timestamp;
 
 			updateActuatorControlsStatus(vehicle_torque_setpoint, dt);
 

@@ -45,6 +45,7 @@ px4_add_module(
 	DEPENDS
 		circuit_breaker
 		mathlib
+		IndiRateControl
 		RateControl
 		px4_work_queue
 	)
