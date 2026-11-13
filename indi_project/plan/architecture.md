@@ -171,3 +171,21 @@ NaN inputs give finite bounded output; G2 term reduces to G1-only law when
 2. Actuator time constant and delay seen from `vehicle_torque_setpoint` to
    `xyz_derivative` (step identification, also gives `G1`).
 3. Whether the gz x500 rotor links have inertia (determines if `G2_y` matters).
+
+### Findings on the open items (session 5, from model files, not flown)
+
+- Item 1: the gz x500 IMU runs at 250 Hz (`x500_base/model.sdf:260`), so in
+  SITL the raw gyro rate, the filter rate and the rate-loop rate all equal
+  250 Hz: the sensor-side and INDI-side filters are designed at the same
+  rate. The backward difference adds half a sample (2 ms) on the sensor
+  side, which `MC_INDI_DELAY` cannot represent (integer samples); expected
+  to be minor, check in identification.
+- Item 3: rotor link Izz = 2.65e-5 kg m^2 vs body Izz = 0.04 kg m^2, with
+  `rotorVelocitySlowdownSim` 10. Rough hover estimate (omega ~ 757 rad/s,
+  per-motor thrust 4.9 N): drag-torque sensitivity 2 km kf omega ~ 2.1e-4
+  N m per rad/s, spin-up reaction Ir/tc ~ 2.1e-3 (or 2.1e-4 if the
+  slowdown factor scales the joint inertia effect) per rad/s of step. The
+  spin-up term is therefore not negligible in yaw transients: identify
+  `G2_y` rather than assume 0. How the slowdown factor enters the physics is
+  **[verify]** in the gz MulticopterMotorModel source.
+- Body inertia Ixx = Iyy = 0.0217, Izz = 0.04 kg m^2, mass 2.0 kg (+ rotors).

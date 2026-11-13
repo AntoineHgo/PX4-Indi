@@ -30,17 +30,18 @@
 
 ## In progress
 
-- Nothing in flight. Session 4 agents all finished and their files are committed.
+- Session 5: one Sonnet agent implementing `src/lib/indi_rate_control/`
+  (library + gtest only, no module integration, not committed by the agent).
+  Progress log: `plan/impl_log_indi_lib.md`. If the session dies, review the
+  files on disk and that log before relaunching.
 
 ## Next concrete actions
 
-1. Phase 2: write `plan/architecture.md` from the two `plan/px4_analysis_*.md`
-   files (orchestrator's own judgement, not delegated). Key facts: rate loop
-   runs on vehicle_angular_velocity at IMU_GYRO_RATEMAX (400 Hz); angular
-   accel = backward difference of LPF2p(40 Hz) gyro then AlphaFilter
-   (IMU_DGYRO_CUTOFF 20 Hz, first order despite yaml saying Butterworth);
-   torque setpoint normalised. To synchronise, filter the actuator/torque
-   signal with the same NotchFilter/LowPassFilter2p/AlphaFilter chain.
+1. Phase 2 architecture DONE (`plan/architecture.md`, D-arch-1..6).
+   Next on that line: review + commit the INDI library, then integrate in
+   mc_rate_control (`MC_RATE_CTL_TYPE`, latched while disarmed) and the
+   `indi_rate_status` message, in separate commits. Before tuning: SITL step
+   identification of G1, actuator tc, loop/gyro rate (architecture sec. 10).
 2. Harness: find why hover position rms differs at speed 4; add the
    remaining scenarios of `bench/scenarios.md` to `bench/scenarios.py`
    (trajectory, wind/gust, payload, degraded motor, plant mismatch: these
