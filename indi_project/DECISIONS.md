@@ -81,3 +81,18 @@ material for the justifications in the report.
   scenarios target the mechanisms where INDI can differ (acceleration feedback,
   plant change, actuator state, saturation), and equal tuning budgets plus a
   held-out set keep the comparison honest.
+
+## D-speed: simulation speed factor (session 4, 2026-11-13)
+
+**Data:** `results/speedcheck_pid_default.md` (PID default, seeds 1-3, speed 1 vs 4).
+Attitude-step and rate-step metrics (rate rms, attitude rms, rise time,
+overshoot, motor effort) agree within the seed-to-seed spread. Hover
+position rms does not: 0.027 m (0.021-0.033) at speed 1 vs 0.064 m
+(0.038-0.104) at speed 4.
+**Decision:** run attitude and rate scenarios at speed 4; run any scenario
+whose metric is position (hover, trajectory tracking, wind/gust position
+deviation) at speed 1 until the hover discrepancy is explained.
+**Alternatives:** speed 1 everywhere (4x the CPU time, safe); speed 4
+everywhere (rejected: measurably changes position-hold results).
+**Open:** cause not yet found (candidates: MAVLink setpoint stream timing
+at speed 4, EKF/sensor timing). To investigate before position scenarios.
