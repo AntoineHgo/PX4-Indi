@@ -41,11 +41,17 @@
 
 ## In progress
 
-- Session 8 (2026-11-14 00:17): PID tuning r1 still running (c03/24 at
-  00:16, ~1.3 min/candidate, ETA ~00:50). Launched 1 sonnet agent to
-  implement MC_INDI_YAW_CUT per `plan/yawfilt_spec.md` (lib + gtest + param,
-  told NOT to rebuild px4_sitl_default while tuning runs); report in
-  `plan/integration_log.md` (section "yaw cutoff").
+- Session 8 (2026-11-14): MC_INDI_YAW_CUT DONE (68ef4eaa0b lib + 4 gtests,
+  7da2dc5456 param; 14/14 gtests; reviewed by orchestrator; SITL binary NOT
+  yet rebuilt because PID r1 uses build/px4_sitl_default). PID r1 at 6/24
+  candidates at 00:30. Next, once `pgrep -f '[t]une.py'` is empty:
+  (1) `docker/run.sh -n build -t 3000 'make px4_sitl_default'`;
+  (2) fly hover with indi_v1.params + MC_INDI_YAW_CUT 0 / 10, compare
+  motor_rate_rms (PID 0.037, v0 0.300);
+  (3) launch INDI r1 detached: `python3 bench/tune.py --family indi
+  --round-name r1 --n-candidates 24 --seeds 1 2 --jobs 6 --sampler-seed 0
+  --base-params bench/params/indi_v1.params --center
+  bench/params/indi_r1_center.json > results/tuning/indi_r1.log 2>&1`.
 - Session 7 (2026-11-14): PID tuning round 1 launched detached at the end
   of the session: `python3 bench/tune.py --family pid --round-name r1
   --n-candidates 24 --seeds 1 2 --jobs 6 --sampler-seed 0`, log
