@@ -62,7 +62,8 @@
    (b) LAUNCHED (see "In progress") PID tuning round 1 on T1-T4
    (`--family pid --n-candidates 24 --seeds 1 2 --jobs 6`, add
    MC_YAW_TQ_CUTOFF to the PID space per D-yawfilt) — CPU only;
-   (c) implement `MC_INDI_YAW_CUT` (D-yawfilt) in the INDI lib + gtest,
+   (c) implement `MC_INDI_YAW_CUT` (D-yawfilt) in the INDI lib + gtest
+   (brief ready for one sonnet agent: `plan/yawfilt_spec.md`),
    rebuild, re-check hover effort with indi_v1.params; (d) INDI tuning round
    1 with the same budget (add MC_INDI_YAW_CUT to the INDI space).
    Primary metric of T2/T3 is stepped-axis attitude RMS, not IAE (metrics.py
