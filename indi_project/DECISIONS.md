@@ -96,3 +96,31 @@ deviation) at speed 1 until the hover discrepancy is explained.
 everywhere (rejected: measurably changes position-hold results).
 **Open:** cause not yet found (candidates: MAVLink setpoint stream timing
 at speed 4, EKF/sensor timing). To investigate before position scenarios.
+
+## D-arch-1..6: stage-1 INDI architecture (session 5, 2026-11-13)
+
+Full design and rationale in `plan/architecture.md`; summary here.
+- **D-arch-1 Torque space ahead of the allocator.** INDI outputs the normal
+  `vehicle_torque_setpoint`. Rejected: actuator-space increments (needs a new
+  allocator input or bypassing it, loses prioritisation and airmode; prior
+  PR #25216 reviewers asked for no allocator changes).
+- **D-arch-2 Selection inside `mc_rate_control`.** Enum `MC_RATE_CTL_TYPE`
+  (0 PID default, 1 INDI), latched while disarmed; INDI law in a new library
+  beside the untouched PID library. Rejected: separate module selected at
+  startup (duplicates acro setpoints, thrust/battery handling, status; two
+  torque publishers hazard); external-mode pattern of mc_nn_control/mc_raptor
+  (bypasses allocator and standard modes).
+- **D-arch-3 Actuator state from a first-order torque-space model** fed by
+  the allocated torque (setpoint minus `unallocated_torque`). Rejected for
+  stage 1: ESC feedback (gz echoes the command), per-motor model (needs a
+  copy of the allocator's unpublished normalisation). Trigger to upgrade:
+  benchmark shows motor-asymmetry or saturation limits performance.
+- **D-arch-4 Synchronisation** by applying LPF2p(IMU_GYRO_CUTOFF) then
+  AlphaFilter(IMU_DGYRO_CUTOFF) to the modelled torque, plus an optional
+  integer delay. Shared IMU filter params left at defaults unless tuning
+  needs otherwise, in which case the retuned PID gets the same freedom.
+- **D-arch-5 Fixed per-axis effectiveness G1 (and G2 for yaw)** identified
+  from SITL steps. Adaptive effectiveness deferred to after stage 1.
+- **D-arch-6 Safety:** no accumulator (windup-free by construction), state
+  reset when disarmed, t_f held at 0 when landed, non-finite inputs reset the
+  law and output zero increment, static memory only.
