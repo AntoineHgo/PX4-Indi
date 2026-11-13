@@ -14,11 +14,16 @@
   0.084 rad/s), off-axis coupling lower. Not a benchmark result yet. Sim speed 4 is
   equivalent to speed 1 for attitude/rate metrics but NOT for hover position
   rms (0.027 vs 0.064 m): position scenarios run at speed 1 (DECISIONS D-speed).
+- **Session 7 findings:** INDI filters are synchronised (lag 0-1 cycle);
+  in-loop G1 roll/pitch 237/245 (agree, R^2 0.95), yaw 7.4 (v0 default 30).
+  INDI v0 hover motor-rate effort is 8x PID's, all of it from yaw: the yaw
+  a_f noise passes to torque with gain 1/G1_Y. Fix decided (D-yawfilt), not
+  yet implemented (`results/sync_check_v0.md`).
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
   quoting in the report.
-- **Last updated:** 2026-11-13, session 5 (architecture written; INDI law
+- **Last updated:** 2026-11-14, session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
   library + unit tests committed, not yet wired into mc_rate_control; first
   G1 identification: pitch 211 (R^2 0.90), roll 321 (R^2 0.63), yaw not
   identified; see `results/identification_g1_v0.md`).
@@ -36,6 +41,10 @@
 
 ## In progress
 
+- Session 7 (2026-11-14): sonnet agent writing `bench/tune.py` (shared
+  tuning driver, spec in `plan/tuning_driver_spec.md`), log in
+  `plan/impl_log_tune.md`. INDI step_pitch/step_yaw seed1 batch running
+  (`results/batch_s7_indi_pitchyaw.log`) for in-loop G1 identification.
 - Nothing in flight. Session 6: INDI wired into mc_rate_control
   (d66f114963 msg `indi_rate_status`, d6182aea41 `MC_RATE_CTL_TYPE` +
   `MC_INDI_*` params). SITL build OK, lib gtest OK, diff reviewed by the
@@ -44,6 +53,15 @@
 
 ## Next concrete actions
 
+0. Session 7 next steps, in order: (a) review/commit `bench/tune.py`
+   (agent output, see "In progress"); (b) PID tuning round 1 on T1-T4
+   (`--family pid --n-candidates 24 --seeds 1 2 --jobs 6`, add
+   MC_YAW_TQ_CUTOFF to the PID space per D-yawfilt) — CPU only;
+   (c) implement `MC_INDI_YAW_CUT` (D-yawfilt) in the INDI lib + gtest,
+   rebuild, re-check hover effort with indi_v1.params; (d) INDI tuning round
+   1 with the same budget (add MC_INDI_YAW_CUT to the INDI space).
+   Primary metric of T2/T3 is stepped-axis attitude RMS, not IAE (metrics.py
+   has no IAE): record this in the scenarios.md change log before tuning.
 1. Phase 2 architecture DONE (`plan/architecture.md`, D-arch-1..6).
    INDI library DONE and integrated in mc_rate_control (session 6).
    First INDI flights DONE (session 6). Next: plot indi_rate_status
@@ -96,9 +114,10 @@
 
 ## Known problems
 
-- Roll vs pitch identified G1 differ (321 vs 211) on a symmetric vehicle;
-  unexplained (geometry ruled out). Refit with a common tc/delay and compare
-  with M_max/I before using as defaults.
+- RESOLVED (session 7): roll vs pitch G1 (321 vs 211) was an artefact of the
+  open-loop fit; in-loop fit gives 237/245 (D-g1-v1).
+- INDI yaw noise amplification (D-yawfilt) open; and step_yaw INDI v0
+  saturates motors 14 % of the time (vs 4 % PID).
 - INDI library: on a non-finite input it resets the actuator model to zero,
   so the next valid cycle starts from t_f = 0 (torque transient). Acceptable
   for stage 1; revisit (hold last valid state) during module integration.
@@ -149,6 +168,7 @@
 | 3 (2026-11-13) | 1 sonnet (runner v0), haiku notes | ~6 runner test flights | runner left uncommitted, committed in session 4 |
 | 4 (2026-11-13) | 2 sonnet, 1 haiku | 18 runs (speed check), 0 failures | ~$3 cap |
 | 5 (2026-11-13) | 1 sonnet (INDI lib, 27 tool calls) | 2 runs (step_pitch, step_yaw PID seed1), 0 failures | ~$2.4 used of $3 cap |
+| 7 (2026-11-14) | 1 sonnet (tune.py) | 2 INDI runs (step_pitch, step_yaw seed1) + agent smoke runs | $3 cap |
 | 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build, 2 INDI runs (hover, step_roll seed1), 0 failures | $1.63 cap |
 
 ## Journal
@@ -166,3 +186,4 @@
 - 2026-11-13: session 5 closed: INDI law library + 10 gtests committed; pitch/yaw identification added.
 - 2026-11-13: session 6: INDI selectable in mc_rate_control via MC_RATE_CTL_TYPE (PID default), indi_rate_status message; not yet flown.
 - 2026-11-13: session 6: first INDI flights (hover, step_roll) stable with default parameters.
+- 2026-11-14: session 7: `bench/check_sync.py`; INDI filters synchronised; in-loop G1 241/241/7.4 (`indi_v1.params`); yaw noise path found (D-yawfilt); tuning driver spec + agent.
