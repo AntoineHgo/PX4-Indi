@@ -2,7 +2,8 @@
 
 ## Status summary (read this first)
 
-- **Phase:** 1 (state of the art) in progress: 5 of 12 reading-list notes done.
+- **Phase:** 1 (state of the art) in progress: 7 of 12 reading-list notes done.
+  Benchmark spec frozen (`bench/scenarios.md` v1) before any INDI code.
   Phase 3 smoke test PASSED: `px4_sitl_default` builds in Docker and
   `gz_x500` flies headless (takeoff, hover at 2.5 m, land) at speed factor 1
   and 4 (4x: 43 s of sim in ~10 s wall, no log dropouts).
@@ -17,7 +18,7 @@
 
 | # | Phase | Status |
 |---|-------|--------|
-| 1 | State of the art (`research/`, report ch. 2-3) | in progress: reading list written, notes smeur2016, acquatella2017, blaha2024, impl_paparazzi, impl_px4_prior done |
+| 1 | State of the art (`research/`, report ch. 2-3) | in progress: reading list written, notes smeur2016, acquatella2017, blaha2024, wang2019, tal2021, impl_paparazzi, impl_px4_prior done; remaining: sieberling2010, steffensen2023, sun2022, smeur2018, impl_indiflight |
 | 2 | PX4 analysis and design (`plan/`, report ch. 4-5) | not started |
 | 3 | Simulation + benchmark harness on PID baseline (`docker/`, `bench/`) | image works, SITL build OK; gz_x500 headless smoke flight OK at speed 1 and 4 (`bench/smoke_gz.sh`); equivalence of results across speed factors not yet verified with metrics |
 | 4 | Implementation (firmware + unit tests) | not started |
@@ -27,11 +28,9 @@
 ## In progress
 
 - Session 3 (2026-11-13) subagents launched:
-  - haiku: note `research/notes/wang2019.md` (from `raw/robustness/wang_pure.pdf`)
-  - haiku: note `research/notes/tal2021.md` (fetch arXiv 1809.04048 into `raw/papers_dl/`)
   - sonnet: benchmark runner v0 `bench/run_scenario.py` + `bench/metrics.py`,
     progress log in `bench/RUNNER_NOTES.md`
-- Orchestrator: writing `bench/scenarios.md` (scenarios, metrics, acceptance).
+- (wang2019, tal2021 notes done and committed; scenarios.md committed.)
 
 ## Next concrete actions
 
@@ -60,6 +59,13 @@
 - Paparazzi: same 2nd-order Butterworth on gyro and on modelled actuator
   state; first-order actuator model; WLS allocation with roll/pitch priority
   in the full version; no NaN checks, fixed dt (impl_paparazzi).
+- wang2019: INDI's model-error perturbation is (B-B^)Δu, shrinking with
+  sampling, vs (B-B^)u for NDI: "less sensitive", not model-independent.
+  No transferable numeric bound for a multicopter rate loop.
+- tal2021: outer loop is PD + INDI increments; motor speed from optical
+  encoders, 2nd-order Butterworth 30 Hz on motor speed and IMU; no PID
+  baseline in hardware. Without motor feedback a motor model is needed (our
+  inference).
 - Prior PX4 PR #25216 was closed by the stale bot; reviewers wanted a
   separate module and no changes to commander/ControlAllocator
   (impl_px4_prior).
@@ -113,4 +119,5 @@
   per-session spend cap, max 3 concurrent subagents, host kept awake; prompt
   updated (small tasks, write as you go, bounded phase 1, early smoke test).
 - 2026-11-13: session 2: committed Docker image files; SITL build OK in Docker; reading list; notes smeur2016, acquatella2017, impl_paparazzi, impl_px4_prior; smoke flight script `bench/smoke_gz.sh`; smoke flight OK at speed 1 and 4.
+- 2026-11-13: session 3: froze `bench/scenarios.md` v1 (T1-T9 tuning, H1-H6 held-out, paired Wilcoxon acceptance); notes wang2019, tal2021.
 - 2026-11-13: session 2 closed: note blaha2024 added (RLS effectiveness identification, no PID baseline in that paper).
