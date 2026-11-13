@@ -3,8 +3,9 @@
 ## Status summary (read this first)
 
 - **Phase:** 1 (state of the art) in progress: 4 of 12 reading-list notes done.
-  Phase 3 smoke test: `px4_sitl_default` builds in Docker; the first headless
-  `gz_x500` flight is being debugged (see next actions).
+  Phase 3 smoke test PASSED: `px4_sitl_default` builds in Docker and
+  `gz_x500` flies headless (takeoff, hover at 2.5 m, land) at speed factor 1
+  and 4 (4x: 43 s of sim in ~10 s wall, no log dropouts).
 - **Headline results:** none yet. No controller code.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Last updated:** 2026-11-13, session 2.
@@ -15,22 +16,22 @@
 |---|-------|--------|
 | 1 | State of the art (`research/`, report ch. 2-3) | in progress: reading list written, notes smeur2016, acquatella2017, impl_paparazzi, impl_px4_prior done |
 | 2 | PX4 analysis and design (`plan/`, report ch. 4-5) | not started |
-| 3 | Simulation + benchmark harness on PID baseline (`docker/`, `bench/`) | image works, SITL build OK (~3 min warm ccache); gz smoke flight in progress |
+| 3 | Simulation + benchmark harness on PID baseline (`docker/`, `bench/`) | image works, SITL build OK; gz_x500 headless smoke flight OK at speed 1 and 4 (`bench/smoke_gz.sh`); equivalence of results across speed factors not yet verified with metrics |
 | 4 | Implementation (firmware + unit tests) | not started |
 | 5 | Tuning and iteration | not started |
 | 6 | Validation and report | not started |
 
 ## In progress
 
-- Nothing running when this file was last committed, unless the journal says otherwise.
+- Subagent blaha2024 (haiku) -> `research/notes/blaha2024.md` (partial file may exist if cut off).
 
 ## Next concrete actions
 
-1. Smoke flight: `indi_project/docker/run.sh -n smoke-gz -t 600 indi_project/bench/smoke_gz.sh 1`
-   (outputs in `logs/smoke_gz_speed1/`). Fixed so far: px4 needs the `etc`
-   positional argument; arming needed the GCS/RC-loss failsafes off (D-005).
-   Once it flies at speed 1, repeat at speed 4 and compare hover ULog stats
-   (sim time vs wall time, attitude/rate tracking) to verify lockstep.
+1. Harness: write the scenario/metric spec (`bench/scenarios.md`) and a
+   MAVSDK-based runner (one command: scenario, controller, seed -> ULog +
+   metrics). Verify speed factor 1 vs 4 give the same metrics before using 4.
+   Smoke usage: `indi_project/docker/run.sh -n smoke-gz -t 600 indi_project/bench/smoke_gz.sh <speed>`;
+   ULogs land in `build/px4_sitl_default/rootfs/fs/log/`.
 2. Remaining phase-1 notes, one small subagent each (haiku for papers):
    sieberling2010 and tal2021 and sun2022 need fetching (web-fetch, save PDFs
    under `research/raw/papers_dl/`); wang2019, steffensen2023 have PDFs on
@@ -103,4 +104,4 @@
 - 2026-11-13: owner review after session 1: supervisor now on Opus 5.5 with a
   per-session spend cap, max 3 concurrent subagents, host kept awake; prompt
   updated (small tasks, write as you go, bounded phase 1, early smoke test).
-- 2026-11-13: session 2: committed Docker image files; SITL build OK in Docker; reading list; notes smeur2016, acquatella2017, impl_paparazzi, impl_px4_prior; smoke flight script `bench/smoke_gz.sh` (debugging arming).
+- 2026-11-13: session 2: committed Docker image files; SITL build OK in Docker; reading list; notes smeur2016, acquatella2017, impl_paparazzi, impl_px4_prior; smoke flight script `bench/smoke_gz.sh`; smoke flight OK at speed 1 and 4.
