@@ -373,3 +373,148 @@ TEST(IndiRateControlTest, PassThroughFiltersAndDelay)
 	ctrl.update(Vector3f(), Vector3f(), Vector3f(), prev, kDt, false);
 	EXPECT_GT(ctrl.getFilteredTorque()(0), 0.4f);
 }
+
+namespace
+{
+
+constexpr float kDtYaw = 0.004f; // 250 Hz
+
+/// small linear congruential generator, uniform in [-1, 1)
+class Lcg
+{
+public:
+	float next()
+	{
+		_state = _state * 1664525u + 1013904223u;
+		return static_cast<float>(_state >> 8) / 8388608.f - 1.f;
+	}
+
+private:
+	uint32_t _state{12345u};
+};
+
+/// Run a noisy closed loop on all axes and return the std of the yaw torque increment.
+/// out_roll_pitch receives the sum of the roll and pitch outputs, for equality checks.
+float runYawNoise(IndiRateControl &ctrl, float &out_roll_pitch)
+{
+	Lcg noise_r;
+	Lcg noise_p;
+	Lcg noise_y;
+	Vector3f command;
+	float sum = 0.f;
+	float sum_sq = 0.f;
+	int count = 0;
+	out_roll_pitch = 0.f;
+
+	for (int i = 0; i < 1100; i++) {
+		const Vector3f accel(20.f * noise_r.next(), 20.f * noise_p.next(), 20.f * noise_y.next());
+		command = ctrl.update(Vector3f(), Vector3f(), accel, command, kDtYaw, false);
+
+		if (i >= 100) { // skip the filter start-up
+			const float inc = ctrl.getTorqueIncrement()(2);
+			sum += inc;
+			sum_sq += inc * inc;
+			count++;
+			out_roll_pitch += command(0) + command(1);
+		}
+	}
+
+	const float mean = sum / count;
+	return sqrtf(sum_sq / count - mean * mean);
+}
+
+} // namespace
+
+TEST(IndiRateControlTest, YawCutoffZeroLeavesOutputsUnchanged)
+{
+	IndiRateControl untouched = makeController();
+	IndiRateControl disabled = makeController();
+	disabled.setYawCutoff(0.f);
+
+	Lcg noise;
+	Vector3f command_a;
+	Vector3f command_b;
+
+	for (int i = 0; i < 500; i++) {
+		const float a = 10.f * noise.next();
+		const float sp = (i % 100 < 50) ? 1.f : -0.5f;
+		const Vector3f accel(a, -a, 0.5f * a);
+		const Vector3f rate_sp(sp, sp, sp);
+		command_a = untouched.update(Vector3f(), rate_sp, accel, command_a, kDtYaw, false);
+		command_b = disabled.update(Vector3f(), rate_sp, accel, command_b, kDtYaw, false);
+
+		// bit identical, and the logged feedback pair is the unfiltered one
+		EXPECT_EQ(command_a, command_b);
+		EXPECT_EQ(disabled.getFilteredAngularAccel(), accel);
+	}
+}
+
+TEST(IndiRateControlTest, YawCutoffReducesYawNoiseOnly)
+{
+	IndiRateControl off = makeController();
+	IndiRateControl on = makeController();
+	on.setYawCutoff(10.f);
+
+	float roll_pitch_off = 0.f;
+	float roll_pitch_on = 0.f;
+	const float std_off = runYawNoise(off, roll_pitch_off);
+	const float std_on = runYawNoise(on, roll_pitch_on);
+
+	EXPECT_GT(std_off, 0.f);
+	EXPECT_LT(std_on, 0.7f * std_off);
+	EXPECT_EQ(roll_pitch_on, roll_pitch_off); // roll and pitch untouched
+	EXPECT_FALSE(on.getFault());
+}
+
+TEST(IndiRateControlTest, YawCutoffEnableHasNoTransient)
+{
+	IndiRateControl ctrl = makeController();
+	const float torque = 0.3f;
+	const Vector3f prev(torque, torque, torque);
+	const Vector3f accel(kG1True * torque, kG1True * torque, kG1True * torque); // t_f * G1 = a_f
+	Vector3f out;
+
+	for (int i = 0; i < 1000; i++) { // settle the actuator model and the H filter
+		out = ctrl.update(Vector3f(), Vector3f(), accel, prev, kDtYaw, false);
+	}
+
+	const Vector3f before = out;
+	EXPECT_NEAR(ctrl.getFilteredTorque()(2), torque, 1e-3f);
+
+	ctrl.setYawCutoff(10.f);
+
+	for (int i = 0; i < 50; i++) {
+		out = ctrl.update(Vector3f(), Vector3f(), accel, prev, kDtYaw, false);
+		EXPECT_NEAR(out(2), before(2), 1e-4f);
+		EXPECT_NEAR(ctrl.getFilteredAngularAccel()(2), accel(2), 1e-2f);
+		EXPECT_NEAR(ctrl.getFilteredTorque()(2), torque, 1e-3f);
+	}
+
+	EXPECT_EQ(out(0), before(0));
+	EXPECT_EQ(out(1), before(1));
+}
+
+TEST(IndiRateControlTest, YawCutoffInvalidValuesDisableFilter)
+{
+	const float invalid[] = {std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::infinity(), -5.f, 120.f};
+
+	for (const float cutoff : invalid) { // 120 Hz is above 0.45 x the 250 Hz sample rate
+		IndiRateControl reference = makeController();
+		IndiRateControl ctrl = makeController();
+		ctrl.setYawCutoff(cutoff);
+
+		Lcg noise;
+		Vector3f command_a;
+		Vector3f command_b;
+
+		for (int i = 0; i < 300; i++) {
+			const float a = 10.f * noise.next();
+			const Vector3f accel(a, a, a);
+			command_a = reference.update(Vector3f(), Vector3f(1.f, 1.f, 1.f), accel, command_a, kDtYaw, false);
+			command_b = ctrl.update(Vector3f(), Vector3f(1.f, 1.f, 1.f), accel, command_b, kDtYaw, false);
+			EXPECT_EQ(command_a, command_b);
+			EXPECT_FALSE(ctrl.getFault());
+			EXPECT_TRUE(command_b.isAllFinite());
+		}
+	}
+}

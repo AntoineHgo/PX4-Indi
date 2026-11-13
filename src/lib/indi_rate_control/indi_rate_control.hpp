@@ -44,6 +44,9 @@
  *   dt_cmd = G1^-1 (nu - angular_accel)            roll, pitch
  *   t_cmd  = t_f + dt_cmd                          bounded to [-1, 1]
  *
+ * An optional extra low-pass on the yaw axis is applied to both angular_accel and t_f, so the
+ * pair stays synchronised while the yaw noise is reduced.
+ *
  * Yaw adds the rotor spin-up term G2 (Smeur 2016, torque space form):
  *   (G1 + G2/dt) dt_cmd = nu - angular_accel + (G2/dt) (t_f - t_f_prev)
  *
@@ -100,6 +103,13 @@ public:
 	void setFilterCutoffs(float gyro_cutoff_hz, float dgyro_cutoff_hz);
 
 	/**
+	 * Set the cutoff of an extra second order low pass applied to the yaw component of both the
+	 * angular acceleration and the filtered torque. A value <= 0 or non finite disables it, as
+	 * does a value above 0.45 x the controller sample rate. Roll and pitch are not affected.
+	 */
+	void setYawCutoff(float cutoff_hz) { _yaw_cutoff_hz = (math::isFinite(cutoff_hz) && (cutoff_hz > 0.f)) ? cutoff_hz : 0.f; }
+
+	/**
 	 * Set the pure delay applied to the actuator model output, clamped to [0, kMaxDelaySamples].
 	 */
 	void setDelaySamples(int delay_samples) { _delay_samples = math::constrain(delay_samples, 0, kMaxDelaySamples); }
@@ -117,6 +127,7 @@ public:
 	 * @param rate current vehicle angular rate (rad/s)
 	 * @param rate_sp desired vehicle angular rate (rad/s)
 	 * @param angular_accel filtered angular acceleration (rad/s^2), same filter chain as H
+	 *        (the yaw component additionally goes through the yaw low pass if enabled)
 	 * @param torque_allocated_prev normalised torque the allocator actually produced from the previous command
 	 * @param dt time since the previous call in s, valid range [kMinDt, kMaxDt]
 	 * @param landed true if ground contact is assumed (the filter and actuator states are held at zero)
@@ -134,6 +145,7 @@ public:
 
 	/// Logging getters, values of the last update() call
 	const matrix::Vector3f &getNu() const { return _nu; }
+	const matrix::Vector3f &getFilteredAngularAccel() const { return _a_f; }
 	const matrix::Vector3f &getFilteredTorque() const { return _t_f; }
 	const matrix::Vector3f &getTorqueIncrement() const { return _dt_cmd; }
 
@@ -147,6 +159,7 @@ public:
 private:
 	static constexpr int kDelayBufferSize = kMaxDelaySamples + 1;
 	static constexpr float kRedesignRatio = 0.1f; ///< relative sample rate change that triggers a filter redesign
+	static constexpr float kMaxYawCutoffRatio = 0.45f; ///< yaw low pass is disabled above this fraction of the sample rate
 
 	bool paramsValid() const;
 	void designFilters(float sample_freq);
@@ -161,11 +174,15 @@ private:
 	float _dgyro_cutoff_hz{30.f};
 	int _delay_samples{0};
 	float _max_increment{1.f};
+	float _yaw_cutoff_hz{0.f}; ///< 0 = yaw low pass disabled
 
 	// Filter design bookkeeping
 	float _design_sample_freq{0.f}; ///< sample rate the filters are designed for, 0 = not designed
 	float _design_gyro_cutoff_hz{0.f};
 	float _design_dgyro_cutoff_hz{0.f};
+	float _design_yaw_cutoff_hz{0.f};
+	bool _yaw_filter_active{false};  ///< yaw low pass designed and in use
+	bool _yaw_filter_reset_pending{false}; ///< settle the yaw low pass at the next unfiltered values
 
 	// States
 	matrix::Vector3f _t_act;   ///< actuator model output
@@ -173,10 +190,13 @@ private:
 	int _delay_head{0};        ///< index of the most recent sample in the ring buffer
 	math::LowPassFilter2p<float> _lpf[3];
 	AlphaFilter<float> _alpha[3];
+	math::LowPassFilter2p<float> _yaw_lpf_accel; ///< yaw low pass on the angular acceleration
+	math::LowPassFilter2p<float> _yaw_lpf_torque; ///< same design on the filtered torque
 	matrix::Vector3f _t_f_prev; ///< filtered torque of the previous cycle (yaw spin-up term)
 
 	// Outputs for logging
 	matrix::Vector3f _nu;
+	matrix::Vector3f _a_f;
 	matrix::Vector3f _t_f;
 	matrix::Vector3f _dt_cmd;
 	bool _fault{false};

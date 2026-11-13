@@ -87,7 +87,19 @@ void IndiRateControl::designFilters(float sample_freq)
 		_alpha[i].reset(_t_act(i));
 	}
 
+	// the yaw low pass is bypassed (not just pass-through) when disabled, so the outputs are unchanged
+	_yaw_filter_active = (_yaw_cutoff_hz > 0.f) && (_yaw_cutoff_hz < kMaxYawCutoffRatio * sample_freq);
+
+	if (_yaw_filter_active) {
+		_yaw_lpf_accel.set_cutoff_frequency(sample_freq, _yaw_cutoff_hz);
+		_yaw_lpf_torque.set_cutoff_frequency(sample_freq, _yaw_cutoff_hz);
+	}
+
+	// settled at the next unfiltered values, in update()
+	_yaw_filter_reset_pending = _yaw_filter_active;
+
 	_design_sample_freq = sample_freq;
+	_design_yaw_cutoff_hz = _yaw_cutoff_hz;
 	_design_gyro_cutoff_hz = _gyro_cutoff_hz;
 	_design_dgyro_cutoff_hz = _dgyro_cutoff_hz;
 }
@@ -107,6 +119,9 @@ void IndiRateControl::resetStates()
 		_alpha[i].reset(0.f);
 	}
 
+	_yaw_lpf_accel.reset(0.f);
+	_yaw_lpf_torque.reset(0.f);
+	_yaw_filter_reset_pending = false;
 	_t_f_prev.zero();
 }
 
@@ -114,6 +129,7 @@ void IndiRateControl::reset()
 {
 	resetStates();
 	_nu.zero();
+	_a_f.zero();
 	_t_f.zero();
 	_dt_cmd.zero();
 }
@@ -140,7 +156,8 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	if ((_design_sample_freq <= 0.f)
 	    || (fabsf(sample_freq - _design_sample_freq) > kRedesignRatio * _design_sample_freq)
 	    || (fabsf(_gyro_cutoff_hz - _design_gyro_cutoff_hz) > FLT_EPSILON)
-	    || (fabsf(_dgyro_cutoff_hz - _design_dgyro_cutoff_hz) > FLT_EPSILON)) {
+	    || (fabsf(_dgyro_cutoff_hz - _design_dgyro_cutoff_hz) > FLT_EPSILON)
+	    || (fabsf(_yaw_cutoff_hz - _design_yaw_cutoff_hz) > FLT_EPSILON)) {
 		designFilters(sample_freq);
 	}
 
@@ -174,6 +191,21 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 		}
 	}
 
+	// 6b. optional yaw low pass on both members of the feedback pair, same coefficients so they stay synchronised
+	Vector3f a_f = angular_accel;
+
+	if (_yaw_filter_active) {
+		if (_yaw_filter_reset_pending) {
+			// enabled or redesigned: start from the current values, no transient
+			_yaw_lpf_accel.reset(a_f(2));
+			_yaw_lpf_torque.reset(t_f(2));
+			_yaw_filter_reset_pending = false;
+		}
+
+		a_f(2) = _yaw_lpf_accel.apply(a_f(2));
+		t_f(2) = _yaw_lpf_torque.apply(t_f(2));
+	}
+
 	// 7. desired angular acceleration
 	const Vector3f nu = _gain_k.emult(rate_sp - rate);
 
@@ -182,7 +214,7 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 
 	for (int i = 0; i < 3; i++) {
 		const float g2_over_dt = (i == 2) ? (_g2_yaw / dt) : 0.f;
-		const float numerator = nu(i) - angular_accel(i) + g2_over_dt * (t_f(i) - _t_f_prev(i));
+		const float numerator = nu(i) - a_f(i) + g2_over_dt * (t_f(i) - _t_f_prev(i));
 		dt_cmd(i) = numerator / (_g1(i) + g2_over_dt);
 	}
 
@@ -205,6 +237,7 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 
 	// 10. logging values
 	_nu = nu;
+	_a_f = a_f;
 	_t_f = t_f;
 	_dt_cmd = dt_cmd;
 
