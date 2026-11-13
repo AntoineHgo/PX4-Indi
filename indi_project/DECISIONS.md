@@ -124,3 +124,38 @@ Full design and rationale in `plan/architecture.md`; summary here.
 - **D-arch-6 Safety:** no accumulator (windup-free by construction), state
   reset when disarmed, t_f held at 0 when landed, non-finite inputs reset the
   law and output zero increment, static memory only.
+
+## D-g1-v1: G1 from in-loop identification (session 7, 2026-11-14)
+
+- G1 roll = pitch = 241 (mean of the in-loop fits 237 / 245, R^2 0.94-0.95),
+  G1 yaw = 7.4 (fits 7.2-7.6 across increment spans). Source:
+  `results/sync_check_v0.md`. Parameter overlay `bench/params/indi_v1.params`.
+- Alternative rejected: the session-5 open-loop fit on PID logs (321 / 211),
+  which disagreed between two axes of a symmetric vehicle and fitted worse.
+- One common roll/pitch value because the vehicle is symmetric and the two
+  fits differ by 3 %, less than their seed-to-seed uncertainty is likely to be
+  (not yet measured: re-fit on seeds 2-3 during the T-set tuning runs).
+- G1 is not a tuning variable: it is identified, then K, ACT_TC and the
+  attitude P gains are tuned. G2 (yaw rotor inertia) stays at its default; it
+  is not identifiable from the yaw step data.
+
+## D-yawfilt: INDI-only yaw low-pass applied to both feedback paths (session 7, 2026-11-14)
+
+Problem: the yaw a_f noise reaches the yaw torque with gain 1/G1_Y; with the
+small identified G1_Y (7.4) this is 4x the v0 noise, which already made INDI's
+hover motor-rate effort 8x PID's (`results/sync_check_v0.md` sec. 3).
+
+- **Chosen:** an extra second-order low-pass on the yaw axis inside the INDI
+  law, `MC_INDI_YAW_CUT` (Hz, 0 = off), applied identically to a_f,yaw and to
+  t_f,yaw, so the synchronisation of D-arch-4 holds. It costs yaw phase lag
+  only; yaw bandwidth is low anyway (drag-torque limited). The cutoff enters
+  the INDI tuning space. For fairness `MC_YAW_TQ_CUTOFF`, PID's yaw output
+  filter, enters the PID tuning space.
+- Rejected: inflating G1_Y above the identified value (this is what v0 did by
+  accident): it detunes the cancellation and hides the model in a gain.
+- Rejected: lowering `IMU_DGYRO_CUTOFF`: shared with PID's D term and with all
+  axes; roll/pitch noise is already at PID's level.
+- Rejected: reusing `MC_YAW_TQ_CUTOFF` on the INDI output: filtering after the
+  increment breaks synchronisation.
+- Implementation: firmware change in the INDI law library + unit test, then
+  rebuild, before INDI tuning starts. PID tuning can start before it.
