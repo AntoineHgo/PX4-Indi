@@ -159,3 +159,15 @@ hover motor-rate effort 8x PID's (`results/sync_check_v0.md` sec. 3).
   increment breaks synchronisation.
 - Implementation: firmware change in the INDI law library + unit test, then
   rebuild, before INDI tuning starts. PID tuning can start before it.
+
+## D-indi-r1 (2026-11-14, session 8): INDI tuning round 1 space
+
+- Space = INDI gains K_R/K_P/K_Y, MC_INDI_ACT_TC, MC_INDI_YAW_CUT, attitude
+  P gains; base params `bench/params/indi_v1.params` (in-loop G1), same
+  budget as PID r1 (24 candidates, seeds 1 2, same scenarios and cost).
+- MC_INDI_YAW_CUT center 10 Hz (`bench/params/indi_r1_center.json`), span 2
+  (5-20 Hz). Its firmware default stays 0 (disabled) so the parameter does
+  not change behaviour by itself; log-space sampling cannot be centred on 0.
+- Alternative rejected: leaving the yaw cutoff out of the space and fixing it
+  at 10 Hz. Rejected because the PID space includes its yaw torque cutoff
+  (MC_YAW_TQ_CUTOFF), so equal treatment means both families tune theirs.

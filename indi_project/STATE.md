@@ -41,6 +41,11 @@
 
 ## In progress
 
+- Session 8 (2026-11-14 00:17): PID tuning r1 still running (c03/24 at
+  00:16, ~1.3 min/candidate, ETA ~00:50). Launched 1 sonnet agent to
+  implement MC_INDI_YAW_CUT per `plan/yawfilt_spec.md` (lib + gtest + param,
+  told NOT to rebuild px4_sitl_default while tuning runs); report in
+  `plan/integration_log.md` (section "yaw cutoff").
 - Session 7 (2026-11-14): PID tuning round 1 launched detached at the end
   of the session: `python3 bench/tune.py --family pid --round-name r1
   --n-candidates 24 --seeds 1 2 --jobs 6 --sampler-seed 0`, log
