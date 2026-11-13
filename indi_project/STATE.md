@@ -20,9 +20,13 @@
 | 5 | Tuning and iteration | not started |
 | 6 | Validation and report | not started |
 
-## In progress
+## In progress (session 2, 2026-11-13)
 
-- Nothing. No subagent is running.
+- Background: `make px4_sitl_default` in Docker (log `logs/smoke_build.log`).
+- Subagents in flight (output files; partial notes may exist if cut off):
+  - smeur2016 (haiku) -> `research/notes/smeur2016.md`
+  - acquatella2017 (haiku) -> `research/notes/acquatella2017.md`
+  - impl_paparazzi (sonnet) -> `research/notes/impl_paparazzi.md`
 
 ## Next concrete actions
 
