@@ -22,3 +22,16 @@ Interpretation:
   By symmetry of the x500 (Ixx = Iyy) expect G1_p ~ G1_r.
 - Not yet cross-checked against the model value M_max/Ixx with the
   allocator normalisation; do that before tuning.
+
+## Update: pitch and yaw steps (PID default, seed1, speed 1, 0 failures)
+
+`step_pitch` + `step_yaw` logs: pitch G1 = 211, tc 0.01 s, delay 2, R^2 0.90
+(well identified); yaw G1 ~ 16, R^2 0.18 (poor, consistent with a missing
+G2 spin-up term and weak yaw excitation); roll in these logs is barely
+excited (R^2 0.26, not used).
+Open: roll 321 vs pitch 211 although Ixx = Iyy. Candidates: non-square
+rotor geometry (RULED OUT: 4001_gz_x500 rotors at +-0.174 m on both axes)
+; remaining: the tc/delay trade-off in the
+grid (tc 0.025 + 1 sample vs tc 0.01 + 2 samples have similar low-frequency
+lag). Next: fit with a common tc/delay for both axes and compare to
+M_max/I computed from the allocator normalisation.
