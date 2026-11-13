@@ -35,7 +35,7 @@
 
 - Nothing in flight. Session 5 library agent finished; library committed
   (d8e5e555cc), 10/10 gtests pass in Docker (single ninja target; the
-  ASAN/UBSAN `make tests` variant was NOT run).
+  ASAN `make tests` run also passed).
 
 ## Next concrete actions
 
@@ -97,11 +97,8 @@
 - INDI library: on a non-finite input it resets the actuator model to zero,
   so the next valid cycle starts from t_f = 0 (torque transient). Acceptable
   for stage 1; revisit (hold last valid state) during module integration.
-- Run `make tests TESTFILTER=indi_rate_control` (ASAN build) once before the
-  module-integration commit; session 5 launched it at the end, result (untracked)
-  in `results/unittest_asan_s5.log` (look for "EXIT 0"). Original note:
-  module-integration commit.
-
+- DONE: `make tests TESTFILTER=indi_rate_control` (ASAN build) passed in
+  session 5 (log `results/unittest_asan_s5.log`, untracked).
 - Guard false positives: both Sonnet agents had a heredoc/python shell
   command blocked as "system administration"; they used the Edit tool
   instead. Brief agents to write files with Write/Edit, not heredocs.
