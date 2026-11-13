@@ -15,14 +15,15 @@
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
   quoting in the report.
-- **Last updated:** 2026-11-13, session 4.
+- **Last updated:** 2026-11-13, session 5 (architecture written; INDI library
+  in progress; first G1 identification: roll G1 ~ 320 rad/s^2/unit, tc 0.025 s).
 
 ## Phase checklist
 
 | # | Phase | Status |
 |---|-------|--------|
 | 1 | State of the art (`research/`, report ch. 2-3) | in progress: reading list written, notes smeur2016, acquatella2017, blaha2024, wang2019, tal2021, impl_paparazzi, impl_px4_prior done; remaining: sieberling2010, steffensen2023, sun2022, smeur2018, impl_indiflight |
-| 2 | PX4 analysis and design (`plan/`, report ch. 4-5) | not started |
+| 2 | PX4 analysis and design (`plan/`, report ch. 4-5) | architecture v1 done (`plan/architecture.md`); report chapter not drafted |
 | 3 | Simulation + benchmark harness on PID baseline (`docker/`, `bench/`) | image works, SITL build OK; gz_x500 headless smoke flight OK at speed 1 and 4 (`bench/smoke_gz.sh`); equivalence of results across speed factors not yet verified with metrics |
 | 4 | Implementation (firmware + unit tests) | not started |
 | 5 | Tuning and iteration | not started |
@@ -132,6 +133,7 @@
 | 2 (2026-11-13) | 5 (4 haiku, 1 sonnet), all completed | 1 SITL build, 4 smoke flights (2 OK) | ~$2.5 of $3 cap |
 | 3 (2026-11-13) | 1 sonnet (runner v0), haiku notes | ~6 runner test flights | runner left uncommitted, committed in session 4 |
 | 4 (2026-11-13) | 2 sonnet, 1 haiku | 18 runs (speed check), 0 failures | ~$3 cap |
+| 5 (2026-11-13) | 1 sonnet (INDI lib) | 2 runs (step_pitch, step_yaw PID seed1) | ~$3 cap |
 
 ## Journal
 
@@ -144,3 +146,4 @@
 - 2026-11-13: session 3: froze `bench/scenarios.md` v1 (T1-T9 tuning, H1-H6 held-out, paired Wilcoxon acceptance); notes wang2019, tal2021.
 - 2026-11-13: session 2 closed: note blaha2024 added (RLS effectiveness identification, no PID baseline in that paper).
 - 2026-11-13: session 4: committed runner v0; analyses plan/px4_analysis_{rate,integration}.md; note smeur2018; speed-factor check (18 runs): speed 4 OK for attitude/rate, not for hover position; PX4 rate-path analysis.
+- 2026-11-13: session 5: `plan/architecture.md` + D-arch-1..6; gz x500 IMU 250 Hz, rotor inertia noted; `bench/identify_g1.py` and `results/identification_g1_v0.md` (roll only); INDI library delegated.
