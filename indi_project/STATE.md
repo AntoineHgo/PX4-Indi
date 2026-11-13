@@ -41,10 +41,15 @@
 
 ## In progress
 
-- Session 7 (2026-11-14): sonnet agent writing `bench/tune.py` (shared
-  tuning driver, spec in `plan/tuning_driver_spec.md`), log in
-  `plan/impl_log_tune.md`. INDI step_pitch/step_yaw seed1 batch running
-  (`results/batch_s7_indi_pitchyaw.log`) for in-loop G1 identification.
+- Session 7 (2026-11-14): PID tuning round 1 launched detached at the end
+  of the session: `python3 bench/tune.py --family pid --round-name r1
+  --n-candidates 24 --seeds 1 2 --jobs 6 --sampler-seed 0`, log
+  `results/tuning/pid_r1.log`, output `results/tuning/pid/r1/summary.csv`.
+  ~250 flights, ~1 h. Next session: check `docker ps` for `px4-indi-*`; if
+  it is not running and summary.csv lacks candidates, re-run the same
+  command (resumable). tune.py and the spec are committed; smoke rounds
+  in `results/tuning/{pid,indi}/smoke` (untracked). Smoke: re-flying
+  pid_default gave J 1.016 at one seed, so ~2 % is run-to-run noise.
 - Nothing in flight. Session 6: INDI wired into mc_rate_control
   (d66f114963 msg `indi_rate_status`, d6182aea41 `MC_RATE_CTL_TYPE` +
   `MC_INDI_*` params). SITL build OK, lib gtest OK, diff reviewed by the
@@ -53,8 +58,8 @@
 
 ## Next concrete actions
 
-0. Session 7 next steps, in order: (a) review/commit `bench/tune.py`
-   (agent output, see "In progress"); (b) PID tuning round 1 on T1-T4
+0. Session 7 next steps, in order: (a) DONE tune.py committed;
+   (b) LAUNCHED (see "In progress") PID tuning round 1 on T1-T4
    (`--family pid --n-candidates 24 --seeds 1 2 --jobs 6`, add
    MC_YAW_TQ_CUTOFF to the PID space per D-yawfilt) — CPU only;
    (c) implement `MC_INDI_YAW_CUT` (D-yawfilt) in the INDI lib + gtest,
