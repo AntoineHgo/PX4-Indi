@@ -1,0 +1,45 @@
+# Decision log
+
+One entry per decision taken without the owner: what was chosen, what else was
+considered, and why. Newest entries at the bottom. This log is the raw
+material for the justifications in the report.
+
+## D-001 Commit sign-off and attribution (2026-11-13)
+
+- **Choice:** commit without `-s`; end each commit body with
+  `Assisted-by: Claude:<model id of the session>` (session 1 ran on
+  `claude-fable-5-2`, later sessions on `claude-opus-5-5`); no `Co-Authored-By`.
+- **Alternatives:** `git commit -s` as the `commit` skill does by default.
+- **Why:** the skill states that `-s` is the owner's DCO certification of
+  changes they have reviewed and must never be applied to work they have not
+  seen. This project runs unattended, so nothing here has been reviewed.
+  `AGENTS.md` asks for the `Assisted-by:` trailer and forbids
+  `Co-Authored-By` naming an AI. The owner can add the sign-off when
+  reviewing (e.g. `git rebase --signoff`) before any upstream submission.
+
+## D-002 Docker image contents (2026-11-13)
+
+- **Choice:** `indi_project/docker/Dockerfile` is `ubuntu:24.04` +
+  `Tools/setup/ubuntu.sh --no-nuttx` (Gazebo Harmonic included), built with
+  `Tools/setup` as context so the repository's own requirement files
+  (`requirements.txt`, `test-requirements.txt` with MAVSDK and pytest) are
+  installed by the same script the project uses. Extras: `scipy`, Xvfb/Mesa.
+- **Alternatives:** (a) extend the stock `px4io/px4-dev` image: rejected, the
+  local tag is old (v1.16) and adding Gazebo on top duplicates what
+  `ubuntu.sh` already does; (b) include the NuttX toolchain: rejected for
+  now, it adds gigabytes and the project validates in SITL. A NuttX compile
+  check can use the stock `px4io/px4-dev` image later.
+- **Why:** the mission asks to reuse the repository tooling with simulation
+  tools included; `--no-nuttx` keeps the image small.
+
+## D-003 Docker run wrapper (2026-11-13)
+
+- **Choice:** `indi_project/docker/run.sh` derives the repository path from
+  its own location (as `Tools/docker_run.sh` does), mounts only the repository
+  at its own path and `~/.ccache`, runs as the host uid/gid, uses `--rm`,
+  `--init`, a container name prefixed `px4-indi-`, an in-container
+  wall-clock `timeout`, and no TTY. No ports are published.
+- **Alternatives:** hard-coding the absolute repository path in the script:
+  rejected, it would make the benchmark irreproducible on another machine.
+- **Why:** matches the constraints in the mission; a predictable name prefix
+  lets a cleanup step stop only this project's containers.
