@@ -2,19 +2,22 @@
 
 ## Status summary (read this first)
 
-- **Phase:** 1 (state of the art) in progress: 4 of 12 reading-list notes done.
+- **Phase:** 1 (state of the art) in progress: 5 of 12 reading-list notes done.
   Phase 3 smoke test PASSED: `px4_sitl_default` builds in Docker and
   `gz_x500` flies headless (takeoff, hover at 2.5 m, land) at speed factor 1
   and 4 (4x: 43 s of sim in ~10 s wall, no log dropouts).
 - **Headline results:** none yet. No controller code.
 - **Blocker:** none. Usage budget is the binding constraint.
+- **Caveat on notes:** paper notes are from PDF text extraction; several
+  equations are flagged as reconstructed. Check them against the PDFs before
+  quoting in the report.
 - **Last updated:** 2026-11-13, session 2.
 
 ## Phase checklist
 
 | # | Phase | Status |
 |---|-------|--------|
-| 1 | State of the art (`research/`, report ch. 2-3) | in progress: reading list written, notes smeur2016, acquatella2017, impl_paparazzi, impl_px4_prior done |
+| 1 | State of the art (`research/`, report ch. 2-3) | in progress: reading list written, notes smeur2016, acquatella2017, blaha2024, impl_paparazzi, impl_px4_prior done |
 | 2 | PX4 analysis and design (`plan/`, report ch. 4-5) | not started |
 | 3 | Simulation + benchmark harness on PID baseline (`docker/`, `bench/`) | image works, SITL build OK; gz_x500 headless smoke flight OK at speed 1 and 4 (`bench/smoke_gz.sh`); equivalence of results across speed factors not yet verified with metrics |
 | 4 | Implementation (firmware + unit tests) | not started |
@@ -23,7 +26,7 @@
 
 ## In progress
 
-- Subagent blaha2024 (haiku) -> `research/notes/blaha2024.md` (partial file may exist if cut off).
+- Nothing. No subagent or simulation running.
 
 ## Next concrete actions
 
@@ -36,7 +39,7 @@
    sieberling2010 and tal2021 and sun2022 need fetching (web-fetch, save PDFs
    under `research/raw/papers_dl/`); wang2019, steffensen2023 have PDFs on
    disk (`research/raw/robustness/`, need text extraction, e.g. `pdftotext`
-   if present in the container); blaha2024 text on disk; impl_indiflight
+   if present in the container); impl_indiflight
    (sonnet, code on disk).
 3. Phase 2: read PX4 rate/attitude/allocator/gyro-filter code; write
    `plan/px4_analysis.md` and `plan/architecture.md`.
@@ -95,7 +98,7 @@
 | Session | Subagents spawned | Simulation runs | Notes |
 |---------|-------------------|-----------------|-------|
 | 1 (2026-11-13) | 5 (all killed by usage limit) | 0 | ~$10 spent, only the Docker image survived; host was also suspended 7 h |
-| 2 (2026-11-13) | 4 (3 haiku, 1 sonnet), all completed | 1 SITL build, 3 smoke attempts | ~$3 cap |
+| 2 (2026-11-13) | 5 (4 haiku, 1 sonnet), all completed | 1 SITL build, 4 smoke flights (2 OK) | ~$2.5 of $3 cap |
 
 ## Journal
 
@@ -105,3 +108,4 @@
   per-session spend cap, max 3 concurrent subagents, host kept awake; prompt
   updated (small tasks, write as you go, bounded phase 1, early smoke test).
 - 2026-11-13: session 2: committed Docker image files; SITL build OK in Docker; reading list; notes smeur2016, acquatella2017, impl_paparazzi, impl_px4_prior; smoke flight script `bench/smoke_gz.sh`; smoke flight OK at speed 1 and 4.
+- 2026-11-13: session 2 closed: note blaha2024 added (RLS effectiveness identification, no PID baseline in that paper).
