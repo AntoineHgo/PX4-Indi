@@ -3,22 +3,81 @@
 # Each launch is a fresh session that resumes from indi_project/STATE.md.
 # Stop it gracefully with: touch indi_project/STOP
 set -u
+export LC_NUMERIC=C # decimal point in awk and printf, whatever the host locale
 cd "$(dirname "$0")/.."
 REPO=$PWD
+
+# keep the host awake for the whole supervision (the first run lost 7 h to a laptop suspend)
+if [ -z "${INDI_INHIBITED:-}" ] && command -v systemd-inhibit >/dev/null; then
+	export INDI_INHIBITED=1
+	exec systemd-inhibit --what=sleep:idle:handle-lid-switch --who="indi orchestrator" \
+		--why="unattended INDI orchestrator running" --mode=block "$REPO/indi_project/run_orchestrator.sh" "$@"
+fi
 
 PROMPT_FILE=indi_project/ORCHESTRATOR_PROMPT.md
 GUARD=indi_project/guard.sh
 LOG_DIR=indi_project/logs
-MODEL="${MODEL:-claude-fable-5-2}"
-EFFORT="${EFFORT:-xhigh}"
+MODEL="${MODEL:-claude-opus-5-5}"
+EFFORT="${EFFORT:-high}"
 BRANCH="${BRANCH:-feat/indi-control}"
 EXPECTED_ORIGIN="${EXPECTED_ORIGIN:-AntoineHgo/PX4-Indi}"
-LIMIT_WAIT="${LIMIT_WAIT:-1800}"   # seconds to wait after a failed or very short run (usage limit, network, ...)
+# Share of the owner's usage the orchestrator may take. Before each launch a tiny Haiku call
+# (~$0.002) reads the current utilization of the 5-hour and weekly windows; the orchestrator
+# only launches below these shares, and its spend cap is the headroom left in the 5-hour share.
+FIVE_HOUR_SHARE="${FIVE_HOUR_SHARE:-0.75}" # leave the top 25 % of every 5-hour window to the owner
+WEEKLY_SHARE="${WEEKLY_SHARE:-0.6}"        # stop launching once the weekly window is 60 % used
+MIN_BUDGET_USD="${MIN_BUDGET_USD:-1}"      # below this headroom a session is mostly start-up cost: wait instead
+MAX_BUDGET_USD="${MAX_BUDGET_USD:-3}"      # bounds what one cut-off session can lose
+WINDOW_USD_DEFAULT=9                       # $ per full 5-hour window, measured on session 1; recalibrated each run
+LIMIT_WAIT="${LIMIT_WAIT:-1800}"           # fallback wait after a failed or very short run
 MAX_RUNS="${MAX_RUNS:-300}"
 mkdir -p "$LOG_DIR"
 
 log() { echo "[$(date '+%F %T')] $*" | tee -a "$LOG_DIR/supervisor.log"; }
 die() { log "ABORT: $*"; exit 1; }
+
+# sleep until an epoch time by wall clock (bash sleep stops counting during a suspend);
+# returns early if STOP or DONE appears
+wait_until() {
+	while [ "$(date +%s)" -lt "$1" ]; do
+		{ [ -f indi_project/DONE ] || [ -f indi_project/STOP ]; } && return
+		sleep 60 9>&-
+	done
+}
+
+# floating-point helpers
+fcalc() { awk "BEGIN { printf \"%.2f\", $1 }"; }
+fge() { awk "BEGIN { exit !($1 >= $2) }"; }
+
+# last rate_limit_info of a tiny Haiku call: current utilization of every usage window
+probe_usage() {
+	claude -p "Reply with the single word ok." --model claude-haiku-5-5 --effort low \
+		--no-session-persistence --max-budget-usd 0.05 --output-format stream-json --verbose 2>/dev/null 9>&- |
+		jq -c 'select(.type=="rate_limit_event") | .rate_limit_info' | tail -1
+}
+
+window_usd() {
+	local w
+	w=$(cat "$LOG_DIR/window_usd" 2>/dev/null)
+	echo "${w:-$WINDOW_USD_DEFAULT}"
+}
+
+# after a run: $ per 5-hour window = run cost / 5-hour utilization it consumed (same window only)
+calibrate_window() {
+	local f=$1 cost=$2 first last
+	first=$(jq -c 'select(.type=="rate_limit_event") | .rate_limit_info.unifiedWindows.five_hour // empty' "$f" | head -1)
+	last=$(jq -c 'select(.type=="rate_limit_event") | .rate_limit_info.unifiedWindows.five_hour // empty' "$f" | tail -1)
+	[ -n "$first" ] && [ -n "$last" ] && [ "$cost" != "?" ] || return
+	[ "$(jq -r .resetsAt <<<"$first")" = "$(jq -r .resetsAt <<<"$last")" ] || return
+	local du
+	du=$(fcalc "$(jq -r .utilization <<<"$last") - $(jq -r .utilization <<<"$first")")
+	fge "$du" 0.15 || return # too small a sample to be meaningful
+	local w
+	w=$(fcalc "$cost / $du")
+	fge "$w" 3 && fge 50 "$w" || return
+	echo "$w" >"$LOG_DIR/window_usd"
+	log "calibration: a 5-hour window holds about \$$w (run used $du of it for \$$cost)"
+}
 
 # --- preflight: refuse to start unless the guards are in place ---
 for tool in claude jq docker git realpath; do
@@ -52,21 +111,64 @@ guard_blocks "ls" && die "guard self-test failed (blocks everything)"
 if [ "$(git branch --show-current)" != "$BRANCH" ]; then
 	git switch "$BRANCH" 2>/dev/null || git switch -c "$BRANCH" || die "cannot switch to $BRANCH"
 fi
-log "preflight ok: branch $BRANCH, model $MODEL, effort $EFFORT"
+log "preflight ok: branch $BRANCH, model $MODEL, effort $EFFORT, shares 5h $FIVE_HOUR_SHARE / weekly $WEEKLY_SHARE, cap \$$MIN_BUDGET_USD-$MAX_BUDGET_USD/session, $(claude --version 2>/dev/null)"
 
 # --- supervise ---
 runs=0
 while [ ! -f indi_project/DONE ] && [ ! -f indi_project/STOP ]; do
+	# --- usage gate: launch only within the orchestrator's share of the owner's usage ---
+	now=$(date +%s)
+	rl=$(probe_usage)
+	if [ -z "$rl" ]; then
+		log "usage probe failed (network or hard limit), retrying in ${LIMIT_WAIT}s"
+		wait_until $((now + LIMIT_WAIT))
+		continue
+	fi
+	u5=$(jq -r '.unifiedWindows.five_hour.utilization // 0' <<<"$rl")
+	r5=$(jq -r ".unifiedWindows.five_hour.resetsAt // $((now + LIMIT_WAIT))" <<<"$rl")
+	u7=$(jq -r '.unifiedWindows.seven_day.utilization // 0' <<<"$rl")
+	r7=$(jq -r ".unifiedWindows.seven_day.resetsAt // $((now + LIMIT_WAIT))" <<<"$rl")
+	rejected=$(jq -r '[.unifiedWindows // {} | to_entries[] | select(.value.status == "rejected") | .value.resetsAt] | max // empty' <<<"$rl")
+	w=$(window_usd)
+	headroom=$(fcalc "($FIVE_HOUR_SHARE - $u5) * $w")
+	log "usage: 5-hour $u5, weekly $u7, headroom \$$headroom (window \$$w)"
+	if [ -n "$rejected" ]; then
+		log "a usage window is exhausted, waiting until $(date -d "@$rejected" '+%F %T')"
+		wait_until $((rejected + 120))
+		continue
+	fi
+	if fge "$u7" "$WEEKLY_SHARE"; then
+		log "weekly window at $u7 >= share $WEEKLY_SHARE, waiting for its reset at $(date -d "@$r7" '+%F %T')"
+		wait_until $((r7 + 120))
+		continue
+	fi
+	if ! fge "$headroom" "$MIN_BUDGET_USD"; then
+		log "5-hour headroom below \$$MIN_BUDGET_USD, waiting for its reset at $(date -d "@$r5" '+%F %T')"
+		wait_until $((r5 + 120))
+		continue
+	fi
+	budget=$headroom
+	fge "$budget" "$MAX_BUDGET_USD" && budget=$MAX_BUDGET_USD
+
 	runs=$((runs + 1))
 	[ "$runs" -le "$MAX_RUNS" ] || die "reached MAX_RUNS=$MAX_RUNS"
 	ts=$(date +%Y%m%d-%H%M%S)
 	start=$(date +%s)
-	log "run $runs: launching orchestrator (log: $LOG_DIR/run-$ts.jsonl)"
+	log "run $runs: launching orchestrator with a \$$budget cap (log: $LOG_DIR/run-$ts.jsonl)"
 
-	claude -p "$(cat "$PROMPT_FILE")" \
+	prompt="$(cat "$PROMPT_FILE")
+
+## This session
+
+- Launch $ts, model $MODEL. Spend cap for this session: about \$$budget, subagents included.
+  When it is reached the session is cut off and running subagents are stopped, so save state and
+  commit before starting anything long, and size the work you launch to fit."
+
+	claude -p "$prompt" \
 		--name "indi-orchestrator $ts" \
 		--model "$MODEL" \
 		--effort "$EFFORT" \
+		--max-budget-usd "$budget" \
 		--settings indi_project/claude_settings.json \
 		--dangerously-skip-permissions \
 		--output-format stream-json --verbose \
@@ -74,30 +176,23 @@ while [ ! -f indi_project/DONE ] && [ ! -f indi_project/STOP ]; do
 	rc=$?
 	elapsed=$(($(date +%s) - start))
 	result=$(jq -c 'select(.type=="result")' "$LOG_DIR/run-$ts.jsonl" 2>/dev/null | tail -1)
+	subtype=$(jq -r '.subtype // "?"' <<<"$result" 2>/dev/null)
 	cost=$(jq -r '.total_cost_usd // "?"' <<<"$result" 2>/dev/null)
-	log "run $runs: exit $rc after ${elapsed}s, cost \$${cost:-?}"
+	session=$(jq -r '.session_id // "?"' <<<"$result" 2>/dev/null)
+	log "run $runs: exit $rc after ${elapsed}s, result $subtype, cost \$${cost:-?}, session $session"
+	calibrate_window "$LOG_DIR/run-$ts.jsonl" "${cost:-?}"
 
-	if [ "$rc" -eq 0 ] && [ "$elapsed" -ge 300 ]; then
+	# the usage gate at the top of the loop decides whether the next launch has room;
+	# here only guard against a session that fails straight away for another reason
+	if [ "$rc" -eq 0 ] || [ "$elapsed" -ge 300 ] || [ "$subtype" = "error_max_budget_usd" ]; then
 		wait_s=60
 	else
 		wait_s=$LIMIT_WAIT
 	fi
 
-	# usage limit: sleep until the reset time the API reports, plus a margin
-	if [ "$(jq -r '.api_error // empty' <<<"$result" 2>/dev/null)" = "usage_limit_reached" ]; then
-		msg=$(jq -r '.result // empty' <<<"$result")
-		log "usage limit: $msg"
-		grep -qi "spend limit" <<<"$msg" && log "WARNING: a spend limit is reached, relaunches will keep failing until it is raised"
-		reset=$(grep -oiE 'resets [^(·]+' <<<"$msg" | head -1 | sed -E 's/^resets //I; s/,//g; s/[[:space:]]+$//')
-		if reset_at=$(date -d "$reset" +%s 2>/dev/null); then
-			[ "$reset_at" -le "$(date +%s)" ] && reset_at=$((reset_at + 86400))
-			wait_s=$((reset_at - $(date +%s) + 120))
-		fi
-	fi
-
 	{ [ -f indi_project/DONE ] || [ -f indi_project/STOP ]; } && break
 	log "relaunching in ${wait_s}s (at $(date -d "@$(($(date +%s) + wait_s))" '+%F %T'))"
-	sleep "$wait_s" 9>&-
+	wait_until $(($(date +%s) + wait_s))
 done
 
 if [ -f indi_project/DONE ]; then
