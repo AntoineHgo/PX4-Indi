@@ -27,10 +27,17 @@
 
 ## In progress
 
-- Session 3 (2026-11-13) subagents launched:
-  - sonnet: benchmark runner v0 `bench/run_scenario.py` + `bench/metrics.py`,
-    progress log in `bench/RUNNER_NOTES.md`
-- (wang2019, tal2021 notes done and committed; scenarios.md committed.)
+- Session 4 (2026-11-13, launch 20261113-232533):
+  - CPU batch: speed-factor equivalence + seed spread on PID default
+    (step_roll, rate_step_roll, hover; seeds 1-3; speeds 1 and 4), log
+    `logs/batch_speedcheck.log`, results `results/runs/`.
+  - sonnet: PX4 rate path analysis -> `plan/px4_analysis_rate.md`
+  - sonnet: allocator, actuator feedback, alternative-controller
+    integration -> `plan/px4_analysis_integration.md`
+  - haiku: note smeur2018 -> `research/notes/smeur2018.md`
+- Runner v0 committed (d8b3dc604b). First speed 1 vs 4 check on step_roll
+  seed 1: rise 0.435 vs 0.425 s, roll-rate rms 0.084 vs 0.092 rad/s (needs
+  seed spread to judge).
 
 ## Next concrete actions
 
