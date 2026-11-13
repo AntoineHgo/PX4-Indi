@@ -15,8 +15,10 @@
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
   quoting in the report.
-- **Last updated:** 2026-11-13, session 5 (architecture written; INDI library
-  in progress; first G1 identification: roll G1 ~ 320 rad/s^2/unit, tc 0.025 s).
+- **Last updated:** 2026-11-13, session 5 (architecture written; INDI law
+  library + unit tests committed, not yet wired into mc_rate_control; first
+  G1 identification: pitch 211 (R^2 0.90), roll 321 (R^2 0.63), yaw not
+  identified; see `results/identification_g1_v0.md`).
 
 ## Phase checklist
 
@@ -31,15 +33,15 @@
 
 ## In progress
 
-- Session 5: one Sonnet agent implementing `src/lib/indi_rate_control/`
-  (library + gtest only, no module integration, not committed by the agent).
-  Progress log: `plan/impl_log_indi_lib.md`. If the session dies, review the
-  files on disk and that log before relaunching.
+- Nothing in flight. Session 5 library agent finished; library committed
+  (d8e5e555cc), 10/10 gtests pass in Docker (single ninja target; the
+  ASAN/UBSAN `make tests` variant was NOT run).
 
 ## Next concrete actions
 
 1. Phase 2 architecture DONE (`plan/architecture.md`, D-arch-1..6).
-   Next on that line: review + commit the INDI library, then integrate in
+   INDI library DONE (`src/lib/indi_rate_control/`, reviewed by the
+   orchestrator against the spec). Next: integrate in
    mc_rate_control (`MC_RATE_CTL_TYPE`, latched while disarmed) and the
    `indi_rate_status` message, in separate commits. Before tuning: SITL step
    identification of G1, actuator tc, loop/gyro rate (architecture sec. 10).
@@ -89,6 +91,15 @@
 
 ## Known problems
 
+- Roll vs pitch identified G1 differ (321 vs 211) on a symmetric vehicle;
+  unexplained (geometry ruled out). Refit with a common tc/delay and compare
+  with M_max/I before using as defaults.
+- INDI library: on a non-finite input it resets the actuator model to zero,
+  so the next valid cycle starts from t_f = 0 (torque transient). Acceptable
+  for stage 1; revisit (hold last valid state) during module integration.
+- Run `make tests TESTFILTER=indi_rate_control` (ASAN build) once before the
+  module-integration commit.
+
 - Guard false positives: both Sonnet agents had a heredoc/python shell
   command blocked as "system administration"; they used the Edit tool
   instead. Brief agents to write files with Write/Edit, not heredocs.
@@ -133,7 +144,7 @@
 | 2 (2026-11-13) | 5 (4 haiku, 1 sonnet), all completed | 1 SITL build, 4 smoke flights (2 OK) | ~$2.5 of $3 cap |
 | 3 (2026-11-13) | 1 sonnet (runner v0), haiku notes | ~6 runner test flights | runner left uncommitted, committed in session 4 |
 | 4 (2026-11-13) | 2 sonnet, 1 haiku | 18 runs (speed check), 0 failures | ~$3 cap |
-| 5 (2026-11-13) | 1 sonnet (INDI lib) | 2 runs (step_pitch, step_yaw PID seed1) | ~$3 cap |
+| 5 (2026-11-13) | 1 sonnet (INDI lib, 27 tool calls) | 2 runs (step_pitch, step_yaw PID seed1), 0 failures | ~$2.4 used of $3 cap |
 
 ## Journal
 
@@ -147,3 +158,4 @@
 - 2026-11-13: session 2 closed: note blaha2024 added (RLS effectiveness identification, no PID baseline in that paper).
 - 2026-11-13: session 4: committed runner v0; analyses plan/px4_analysis_{rate,integration}.md; note smeur2018; speed-factor check (18 runs): speed 4 OK for attitude/rate, not for hover position; PX4 rate-path analysis.
 - 2026-11-13: session 5: `plan/architecture.md` + D-arch-1..6; gz x500 IMU 250 Hz, rotor inertia noted; `bench/identify_g1.py` and `results/identification_g1_v0.md` (roll only); INDI library delegated.
+- 2026-11-13: session 5 closed: INDI law library + 10 gtests committed; pitch/yaw identification added.
