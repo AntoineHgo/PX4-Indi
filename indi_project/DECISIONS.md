@@ -65,3 +65,19 @@ material for the justifications in the report.
 - **Why:** with no GCS heartbeat the arming check "No connection to the GCS"
   blocks takeoff. The change concerns failsafes only and is identical for
   INDI and PID, so it cannot bias the comparison.
+
+## D-session3-1: benchmark acceptance criteria and fairness rule (2026-11-13)
+
+- **Choice:** `bench/scenarios.md` v1, frozen before INDI exists: tuning set T1-T9,
+  held-out set H1-H6, paired Wilcoxon over 10 seeds, "outperforms" means >= 10 %
+  significant improvement on 4 of 6 held-out scenarios against a retuned PID,
+  no failure, no significant >10 % loss, hover effort <= 1.5x.
+- **Alternatives:** compare against PX4 defaults only (rejected: weak baseline);
+  compare on mean metrics without statistics (rejected: seed noise could decide
+  the outcome); tune each controller by hand (rejected: unequal effort is the
+  classic way to bias such comparisons).
+- **Why:** with fixed effectiveness INDI is an incremental PI(D)
+  (acquatella2017), so a nominal-plant comparison mostly measures tuning. The
+  scenarios target the mechanisms where INDI can differ (acceleration feedback,
+  plant change, actuator state, saturation), and equal tuning budgets plus a
+  held-out set keep the comparison honest.

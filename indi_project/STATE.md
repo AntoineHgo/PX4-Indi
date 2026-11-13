@@ -26,7 +26,12 @@
 
 ## In progress
 
-- Nothing. No subagent or simulation running.
+- Session 3 (2026-11-13) subagents launched:
+  - haiku: note `research/notes/wang2019.md` (from `raw/robustness/wang_pure.pdf`)
+  - haiku: note `research/notes/tal2021.md` (fetch arXiv 1809.04048 into `raw/papers_dl/`)
+  - sonnet: benchmark runner v0 `bench/run_scenario.py` + `bench/metrics.py`,
+    progress log in `bench/RUNNER_NOTES.md`
+- Orchestrator: writing `bench/scenarios.md` (scenarios, metrics, acceptance).
 
 ## Next concrete actions
 
