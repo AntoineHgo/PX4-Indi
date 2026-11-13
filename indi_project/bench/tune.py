@@ -44,7 +44,7 @@ SPACES = {
     "pid": ["MC_ROLLRATE_P", "MC_ROLLRATE_I", "MC_ROLLRATE_D", "MC_PITCHRATE_P", "MC_PITCHRATE_I", "MC_PITCHRATE_D",
             "MC_YAWRATE_P", "MC_YAWRATE_I", "MC_YAW_TQ_CUTOFF", "MC_ROLL_P", "MC_PITCH_P",
             "MC_YAW_P"],
-    "indi": ["MC_INDI_K_R", "MC_INDI_K_P", "MC_INDI_K_Y", "MC_INDI_ACT_TC", "MC_ROLL_P", "MC_PITCH_P", "MC_YAW_P"],
+    "indi": ["MC_INDI_K_R", "MC_INDI_K_P", "MC_INDI_K_Y", "MC_INDI_ACT_TC", "MC_INDI_YAW_CUT", "MC_ROLL_P", "MC_PITCH_P", "MC_YAW_P"],
 }
 # scenario -> (speed, primary metric (section, key))
 SCENARIOS = {
