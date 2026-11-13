@@ -13,7 +13,12 @@ set -u
 BENCH_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 PROJ_DIR=$(cd "${BENCH_DIR}/.." && pwd)
 RUNSH=${PROJ_DIR}/docker/run.sh
-RESULTS=${PROJ_DIR}/results/runs
+RESULTS=${RESULTS_DIR:-${PROJ_DIR}/results/runs}
+# Optional overrides used by bench/tune.py (all unset = default behaviour):
+#   PARAMS_FILE  explicit parameter overlay file (instead of bench/params/<controller>.params)
+#   RESULTS_DIR  output root (default indi_project/results/runs)
+#   FLAT_LAYOUT=1  output <RESULTS_DIR>/<scenario>/seed<N>[_x<speed>] (no <controller> directory)
+#   NAME_TAG     suffix appended to the container name (unique names for parallel batches)
 
 SCENARIOS=${SCENARIOS:-"step_roll hover"}
 CONTROLLERS=${CONTROLLERS:-"pid_default"}
@@ -27,9 +32,12 @@ run_one() { # scenario controller seed speed
 	local sfx="" tag=""
 	[ "${speed}" != "1" ] && { sfx="_x${speed}"; tag="-x${speed}"; }
 	local out="${RESULTS}/${scn}/${ctl}/seed${seed}${sfx}"
+	[ "${FLAT_LAYOUT:-0}" = "1" ] && out="${RESULTS}/${scn}/seed${seed}${sfx}"
+	tag="${tag}${NAME_TAG:+-${NAME_TAG}}"
 	local cname="px4-indi-${scn}-${seed}${tag}"
 	local params_arg=()
 	[ -f "${BENCH_DIR}/params/${ctl}.params" ] && params_arg=(--params "${BENCH_DIR}/params/${ctl}.params")
+	[ -n "${PARAMS_FILE:-}" ] && params_arg=(--params "${PARAMS_FILE}")
 
 	# stale container of the same name (from an earlier aborted batch)?
 	if docker ps -a --format '{{.Names}}' | grep -qx "${cname}"; then
