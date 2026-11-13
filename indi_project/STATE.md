@@ -174,7 +174,7 @@
 | 3 (2026-11-13) | 1 sonnet (runner v0), haiku notes | ~6 runner test flights | runner left uncommitted, committed in session 4 |
 | 4 (2026-11-13) | 2 sonnet, 1 haiku | 18 runs (speed check), 0 failures | ~$3 cap |
 | 5 (2026-11-13) | 1 sonnet (INDI lib, 27 tool calls) | 2 runs (step_pitch, step_yaw PID seed1), 0 failures | ~$2.4 used of $3 cap |
-| 7 (2026-11-14) | 1 sonnet (tune.py) | 2 INDI runs (step_pitch, step_yaw seed1) + agent smoke runs | $3 cap |
+| 7 (2026-11-14) | 1 sonnet (tune.py, 16 tool calls) | 2 INDI runs + 4 smoke tuning flights; PID tuning r1 (~250 flights) left running detached | ~$2.4 of $3 cap |
 | 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build, 2 INDI runs (hover, step_roll seed1), 0 failures | $1.63 cap |
 
 ## Journal
