@@ -113,6 +113,7 @@ MulticopterRateControl::parameters_updated()
 	_indi.setActuatorTimeConstant(_param_mc_indi_act_tc.get());
 	_indi.setDelaySamples(_param_mc_indi_delay.get());
 	_indi.setMaxIncrement(_param_mc_indi_dt_max.get());
+	_indi.setYawCutoff(_param_mc_indi_yaw_cut.get());
 
 	// the actuator model filter must match the sensor filter chain of the angular acceleration
 	float gyro_cutoff = 0.f;
@@ -143,7 +144,7 @@ MulticopterRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f
 
 	indi_rate_status_s indi_rate_status{};
 	_indi.getNu().copyTo(indi_rate_status.nu);
-	angular_accel.copyTo(indi_rate_status.angular_accel_filtered);
+	_indi.getFilteredAngularAccel().copyTo(indi_rate_status.angular_accel_filtered);
 	_indi.getFilteredTorque().copyTo(indi_rate_status.torque_filtered);
 	_indi.getTorqueIncrement().copyTo(indi_rate_status.torque_increment);
 	indi_rate_status.fault = _indi.getFault();

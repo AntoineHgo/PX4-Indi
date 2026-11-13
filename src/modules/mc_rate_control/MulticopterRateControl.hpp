@@ -206,6 +206,7 @@ private:
 		(ParamFloat<px4::params::MC_INDI_K_Y>) _param_mc_indi_k_y,
 		(ParamFloat<px4::params::MC_INDI_ACT_TC>) _param_mc_indi_act_tc,
 		(ParamInt<px4::params::MC_INDI_DELAY>) _param_mc_indi_delay,
-		(ParamFloat<px4::params::MC_INDI_DT_MAX>) _param_mc_indi_dt_max
+		(ParamFloat<px4::params::MC_INDI_DT_MAX>) _param_mc_indi_dt_max,
+		(ParamFloat<px4::params::MC_INDI_YAW_CUT>) _param_mc_indi_yaw_cut
 	)
 };
