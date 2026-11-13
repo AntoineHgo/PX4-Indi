@@ -43,3 +43,25 @@ material for the justifications in the report.
   rejected, it would make the benchmark irreproducible on another machine.
 - **Why:** matches the constraints in the mission; a predictable name prefix
   lets a cleanup step stop only this project's containers.
+
+## D-004 Phase 1 scope (2026-11-13)
+
+- **Choice:** a bounded reading list (`research/reading_list.md`) of 8 core
+  papers, one background paper (Acquatella 2017, INDI-PID equivalence) and
+  three reference implementations (Paparazzi, indiflight, prior PX4 work).
+  One note per source in `research/notes/`, written by one small subagent.
+- **Alternatives:** an exhaustive survey: rejected, session 1 lost its whole
+  budget to five broad agents. Skipping the PID-equivalence paper: rejected,
+  without it the INDI-vs-PID comparison cannot be interpreted.
+- **Why:** budget is the binding constraint; sources are added only when the
+  design or a result needs them.
+
+## D-005 Harness disables GCS/RC-loss failsafes (2026-11-13)
+
+- **Choice:** the SITL harness sets `NAV_DLL_ACT=0`, `COM_RC_IN_MODE=4`,
+  `COM_RCL_EXCEPT=4` after boot, for every controller and every run.
+- **Alternatives:** connecting a MAVSDK GCS and a virtual RC: heavier, and it
+  changes nothing in the inner loops under test.
+- **Why:** with no GCS heartbeat the arming check "No connection to the GCS"
+  blocks takeoff. The change concerns failsafes only and is identical for
+  INDI and PID, so it cannot bias the comparison.

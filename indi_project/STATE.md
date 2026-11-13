@@ -2,42 +2,58 @@
 
 ## Status summary (read this first)
 
-- **Phase:** 1 (state of the art) not really started: session 1 was cut off by a
-  usage limit before any research note was written. Docker image built, not
-  yet tested.
-- **Headline results:** none yet. No controller code, no simulation run.
-- **Blocker:** none. Usage budget is the binding constraint (see known problems).
-- **Last updated:** 2026-11-13 (corrected by the owner after session 1).
+- **Phase:** 1 (state of the art) in progress: 4 of 12 reading-list notes done.
+  Phase 3 smoke test: `px4_sitl_default` builds in Docker; the first headless
+  `gz_x500` flight is being debugged (see next actions).
+- **Headline results:** none yet. No controller code.
+- **Blocker:** none. Usage budget is the binding constraint.
+- **Last updated:** 2026-11-13, session 2.
 
 ## Phase checklist
 
 | # | Phase | Status |
 |---|-------|--------|
-| 1 | State of the art (`research/`, report ch. 2-3) | not started (raw material downloaded) |
-| 2 | PX4 analysis and design (`plan/`, report ch. 4-5) | not started (some code read, no notes) |
-| 3 | Simulation + benchmark harness on PID baseline (`docker/`, `bench/`) | image `px4-indi-sim` built, untested |
+| 1 | State of the art (`research/`, report ch. 2-3) | in progress: reading list written, notes smeur2016, acquatella2017, impl_paparazzi, impl_px4_prior done |
+| 2 | PX4 analysis and design (`plan/`, report ch. 4-5) | not started |
+| 3 | Simulation + benchmark harness on PID baseline (`docker/`, `bench/`) | image works, SITL build OK (~3 min warm ccache); gz smoke flight in progress |
 | 4 | Implementation (firmware + unit tests) | not started |
 | 5 | Tuning and iteration | not started |
 | 6 | Validation and report | not started |
 
-## In progress (session 2, 2026-11-13)
+## In progress
 
-- Background: `make px4_sitl_default` in Docker (log `logs/smoke_build.log`).
-- Subagents in flight (output files; partial notes may exist if cut off):
-  - smeur2016 (haiku) -> `research/notes/smeur2016.md`
-  - acquatella2017 (haiku) -> `research/notes/acquatella2017.md`
-  - impl_paparazzi (sonnet) -> `research/notes/impl_paparazzi.md`
+- Nothing running when this file was last committed, unless the journal says otherwise.
 
 ## Next concrete actions
 
-1. Commit `docker/`, `STATE.md`, `DECISIONS.md` (all still untracked).
-2. Smoke-test the image: build `px4_sitl` through `docker/run.sh`, fly
-   `gz_x500` headless once, record lockstep and speed-factor behaviour.
-3. Write `research/reading_list.md` (about 8 core sources, 2-3 implementations),
-   then run research as small subagent tasks (one source or one repository
-   each), reusing what is already in `research/raw/`.
-4. Read the PX4 rate/attitude/allocator/gyro-filter code; write
+1. Smoke flight: `indi_project/docker/run.sh -n smoke-gz -t 600 indi_project/bench/smoke_gz.sh 1`
+   (outputs in `logs/smoke_gz_speed1/`). Fixed so far: px4 needs the `etc`
+   positional argument; arming needed the GCS/RC-loss failsafes off (D-005).
+   Once it flies at speed 1, repeat at speed 4 and compare hover ULog stats
+   (sim time vs wall time, attitude/rate tracking) to verify lockstep.
+2. Remaining phase-1 notes, one small subagent each (haiku for papers):
+   sieberling2010 and tal2021 and sun2022 need fetching (web-fetch, save PDFs
+   under `research/raw/papers_dl/`); wang2019, steffensen2023 have PDFs on
+   disk (`research/raw/robustness/`, need text extraction, e.g. `pdftotext`
+   if present in the container); blaha2024 text on disk; impl_indiflight
+   (sonnet, code on disk).
+3. Phase 2: read PX4 rate/attitude/allocator/gyro-filter code; write
    `plan/px4_analysis.md` and `plan/architecture.md`.
+4. Draft report ch. 2 (state of the art) from the notes once the list is covered.
+
+## Key findings so far (from notes, to verify before the report)
+
+- With a fixed effectiveness, rate-loop INDI is algebraically an incremental
+  PI(D) with gain 1/(G*Ts) (acquatella2017, eq. 29-30). Any INDI advantage
+  over a well-tuned PID must come from effectiveness scaling, actuator-state
+  feedback (true motor state vs commanded), saturation handling, or the
+  acceleration feedback path: the benchmark must be designed to probe these.
+- Paparazzi: same 2nd-order Butterworth on gyro and on modelled actuator
+  state; first-order actuator model; WLS allocation with roll/pitch priority
+  in the full version; no NaN checks, fixed dt (impl_paparazzi).
+- Prior PX4 PR #25216 was closed by the stale bot; reviewers wanted a
+  separate module and no changes to commander/ControlAllocator
+  (impl_px4_prior).
 
 ## Known problems
 
@@ -78,6 +94,7 @@
 | Session | Subagents spawned | Simulation runs | Notes |
 |---------|-------------------|-----------------|-------|
 | 1 (2026-11-13) | 5 (all killed by usage limit) | 0 | ~$10 spent, only the Docker image survived; host was also suspended 7 h |
+| 2 (2026-11-13) | 4 (3 haiku, 1 sonnet), all completed | 1 SITL build, 3 smoke attempts | ~$3 cap |
 
 ## Journal
 
@@ -86,3 +103,4 @@
 - 2026-11-13: owner review after session 1: supervisor now on Opus 5.5 with a
   per-session spend cap, max 3 concurrent subagents, host kept awake; prompt
   updated (small tasks, write as you go, bounded phase 1, early smoke test).
+- 2026-11-13: session 2: committed Docker image files; SITL build OK in Docker; reading list; notes smeur2016, acquatella2017, impl_paparazzi, impl_px4_prior; smoke flight script `bench/smoke_gz.sh` (debugging arming).
