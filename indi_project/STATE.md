@@ -8,7 +8,10 @@
   Phase 3 smoke test PASSED: `px4_sitl_default` builds in Docker and
   `gz_x500` flies headless (takeoff, hover at 2.5 m, land) at speed factor 1
   and 4 (4x: 43 s of sim in ~10 s wall, no log dropouts).
-- **Headline results:** none yet. No controller code. Sim speed 4 is
+- **Headline results:** INDI (untuned defaults) flies in gz_x500: hover
+  and roll step stable, no faults (`results/first_flight_indi_v0.md`,
+  1 seed, smoke only). Roll step slower than default PID (rate rms 0.108 vs
+  0.084 rad/s), off-axis coupling lower. Not a benchmark result yet. Sim speed 4 is
   equivalent to speed 1 for attitude/rate metrics but NOT for hover position
   rms (0.027 vs 0.064 m): position scenarios run at speed 1 (DECISIONS D-speed).
 - **Blocker:** none. Usage budget is the binding constraint.
@@ -43,8 +46,9 @@
 
 1. Phase 2 architecture DONE (`plan/architecture.md`, D-arch-1..6).
    INDI library DONE and integrated in mc_rate_control (session 6).
-   Next: first INDI hover flight in gz (MC_RATE_CTL_TYPE=1, defaults) to
-   check it flies and that indi_rate_status shows t_f tracking. Before tuning: SITL step
+   First INDI flights DONE (session 6). Next: plot indi_rate_status
+   (t_f vs allocated torque, a_f vs nu) on step_roll to check filter
+   synchronisation before any gain change; then K sweep on T-set. Before tuning: SITL step
    identification of G1, actuator tc, loop/gyro rate (architecture sec. 10).
 2. Harness: find why hover position rms differs at speed 4; add the
    remaining scenarios of `bench/scenarios.md` to `bench/scenarios.py`
@@ -145,7 +149,7 @@
 | 3 (2026-11-13) | 1 sonnet (runner v0), haiku notes | ~6 runner test flights | runner left uncommitted, committed in session 4 |
 | 4 (2026-11-13) | 2 sonnet, 1 haiku | 18 runs (speed check), 0 failures | ~$3 cap |
 | 5 (2026-11-13) | 1 sonnet (INDI lib, 27 tool calls) | 2 runs (step_pitch, step_yaw PID seed1), 0 failures | ~$2.4 used of $3 cap |
-| 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build | $1.63 cap |
+| 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build, 2 INDI runs (hover, step_roll seed1), 0 failures | $1.63 cap |
 
 ## Journal
 
@@ -161,3 +165,4 @@
 - 2026-11-13: session 5: `plan/architecture.md` + D-arch-1..6; gz x500 IMU 250 Hz, rotor inertia noted; `bench/identify_g1.py` and `results/identification_g1_v0.md` (roll only); INDI library delegated.
 - 2026-11-13: session 5 closed: INDI law library + 10 gtests committed; pitch/yaw identification added.
 - 2026-11-13: session 6: INDI selectable in mc_rate_control via MC_RATE_CTL_TYPE (PID default), indi_rate_status message; not yet flown.
+- 2026-11-13: session 6: first INDI flights (hover, step_roll) stable with default parameters.
