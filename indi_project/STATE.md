@@ -33,17 +33,18 @@
 
 ## In progress
 
-- Nothing in flight. Session 5 library agent finished; library committed
-  (d8e5e555cc), 10/10 gtests pass in Docker (single ninja target; the
-  ASAN `make tests` run also passed).
+- Nothing in flight. Session 6: INDI wired into mc_rate_control
+  (d66f114963 msg `indi_rate_status`, d6182aea41 `MC_RATE_CTL_TYPE` +
+  `MC_INDI_*` params). SITL build OK, lib gtest OK, diff reviewed by the
+  orchestrator. INDI has NOT flown yet. Log: `plan/integration_log.md`.
+  rate_ctrl_status is not published on the INDI branch (by design).
 
 ## Next concrete actions
 
 1. Phase 2 architecture DONE (`plan/architecture.md`, D-arch-1..6).
-   INDI library DONE (`src/lib/indi_rate_control/`, reviewed by the
-   orchestrator against the spec). Next: integrate in
-   mc_rate_control (`MC_RATE_CTL_TYPE`, latched while disarmed) and the
-   `indi_rate_status` message, in separate commits. Before tuning: SITL step
+   INDI library DONE and integrated in mc_rate_control (session 6).
+   Next: first INDI hover flight in gz (MC_RATE_CTL_TYPE=1, defaults) to
+   check it flies and that indi_rate_status shows t_f tracking. Before tuning: SITL step
    identification of G1, actuator tc, loop/gyro rate (architecture sec. 10).
 2. Harness: find why hover position rms differs at speed 4; add the
    remaining scenarios of `bench/scenarios.md` to `bench/scenarios.py`
@@ -144,6 +145,7 @@
 | 3 (2026-11-13) | 1 sonnet (runner v0), haiku notes | ~6 runner test flights | runner left uncommitted, committed in session 4 |
 | 4 (2026-11-13) | 2 sonnet, 1 haiku | 18 runs (speed check), 0 failures | ~$3 cap |
 | 5 (2026-11-13) | 1 sonnet (INDI lib, 27 tool calls) | 2 runs (step_pitch, step_yaw PID seed1), 0 failures | ~$2.4 used of $3 cap |
+| 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build | $1.63 cap |
 
 ## Journal
 
@@ -158,3 +160,4 @@
 - 2026-11-13: session 4: committed runner v0; analyses plan/px4_analysis_{rate,integration}.md; note smeur2018; speed-factor check (18 runs): speed 4 OK for attitude/rate, not for hover position; PX4 rate-path analysis.
 - 2026-11-13: session 5: `plan/architecture.md` + D-arch-1..6; gz x500 IMU 250 Hz, rotor inertia noted; `bench/identify_g1.py` and `results/identification_g1_v0.md` (roll only); INDI library delegated.
 - 2026-11-13: session 5 closed: INDI law library + 10 gtests committed; pitch/yaw identification added.
+- 2026-11-13: session 6: INDI selectable in mc_rate_control via MC_RATE_CTL_TYPE (PID default), indi_rate_status message; not yet flown.
