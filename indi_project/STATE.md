@@ -2,17 +2,20 @@
 
 ## Status summary (read this first)
 
-- **Phase:** 1 (state of the art) in progress: 7 of 12 reading-list notes done.
+- **Phase:** 1 (state of the art) 8 of 12 notes; phase 2 (PX4 analysis) started;
+  phase 3 runner v0 works (pymavlink, seeded gz, one command per run).
   Benchmark spec frozen (`bench/scenarios.md` v1) before any INDI code.
   Phase 3 smoke test PASSED: `px4_sitl_default` builds in Docker and
   `gz_x500` flies headless (takeoff, hover at 2.5 m, land) at speed factor 1
   and 4 (4x: 43 s of sim in ~10 s wall, no log dropouts).
-- **Headline results:** none yet. No controller code.
+- **Headline results:** none yet. No controller code. Sim speed 4 is
+  equivalent to speed 1 for attitude/rate metrics but NOT for hover position
+  rms (0.027 vs 0.064 m): position scenarios run at speed 1 (DECISIONS D-speed).
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
   quoting in the report.
-- **Last updated:** 2026-11-13, session 2.
+- **Last updated:** 2026-11-13, session 4.
 
 ## Phase checklist
 
@@ -27,34 +30,29 @@
 
 ## In progress
 
-- Session 4 (2026-11-13, launch 20261113-232533):
-  - CPU batch: speed-factor equivalence + seed spread on PID default
-    (step_roll, rate_step_roll, hover; seeds 1-3; speeds 1 and 4), log
-    `logs/batch_speedcheck.log`, results `results/runs/`.
-  - sonnet: PX4 rate path analysis -> `plan/px4_analysis_rate.md`
-  - sonnet: allocator, actuator feedback, alternative-controller
-    integration -> `plan/px4_analysis_integration.md`
-  - haiku: note smeur2018 -> `research/notes/smeur2018.md`
-- Runner v0 committed (d8b3dc604b). First speed 1 vs 4 check on step_roll
-  seed 1: rise 0.435 vs 0.425 s, roll-rate rms 0.084 vs 0.092 rad/s (needs
-  seed spread to judge).
+- Session 4 subagents: rate-path analysis DONE (`plan/px4_analysis_rate.md`,
+  committed); integration analysis (`plan/px4_analysis_integration.md`) and
+  note smeur2018 (`research/notes/smeur2018.md`) were running at the last
+  save: if the files exist but are uncommitted, review and commit them.
 
 ## Next concrete actions
 
-1. Harness: write the scenario/metric spec (`bench/scenarios.md`) and a
-   MAVSDK-based runner (one command: scenario, controller, seed -> ULog +
-   metrics). Verify speed factor 1 vs 4 give the same metrics before using 4.
-   Smoke usage: `indi_project/docker/run.sh -n smoke-gz -t 600 indi_project/bench/smoke_gz.sh <speed>`;
-   ULogs land in `build/px4_sitl_default/rootfs/fs/log/`.
-2. Remaining phase-1 notes, one small subagent each (haiku for papers):
-   sieberling2010 and tal2021 and sun2022 need fetching (web-fetch, save PDFs
-   under `research/raw/papers_dl/`); wang2019, steffensen2023 have PDFs on
-   disk (`research/raw/robustness/`, need text extraction, e.g. `pdftotext`
-   if present in the container); impl_indiflight
-   (sonnet, code on disk).
-3. Phase 2: read PX4 rate/attitude/allocator/gyro-filter code; write
-   `plan/px4_analysis.md` and `plan/architecture.md`.
-4. Draft report ch. 2 (state of the art) from the notes once the list is covered.
+1. Phase 2: write `plan/architecture.md` from the two `plan/px4_analysis_*.md`
+   files (orchestrator's own judgement, not delegated). Key facts: rate loop
+   runs on vehicle_angular_velocity at IMU_GYRO_RATEMAX (400 Hz); angular
+   accel = backward difference of LPF2p(40 Hz) gyro then AlphaFilter
+   (IMU_DGYRO_CUTOFF 20 Hz, first order despite yaml saying Butterworth);
+   torque setpoint normalised. To synchronise, filter the actuator/torque
+   signal with the same NotchFilter/LowPassFilter2p/AlphaFilter chain.
+2. Harness: find why hover position rms differs at speed 4; add the
+   remaining scenarios of `bench/scenarios.md` to `bench/scenarios.py`
+   (trajectory, wind/gust, payload, degraded motor, plant mismatch: these
+   need simulator extensions in separate commits).
+3. PID retuned baseline (documented tuning effort) before INDI flies.
+4. Remaining phase-1 notes: sieberling2010 (fetch), steffensen2023 (PDF on
+   disk), sun2022 (fetch), impl_indiflight (code on disk).
+5. Budget lesson: two Sonnet code-reading agents (~30 tool calls each) cost
+   about $1 together. Use at most one Sonnet agent per $3 session.
 
 ## Key findings so far (from notes, to verify before the report)
 
@@ -117,6 +115,8 @@
 |---------|-------------------|-----------------|-------|
 | 1 (2026-11-13) | 5 (all killed by usage limit) | 0 | ~$10 spent, only the Docker image survived; host was also suspended 7 h |
 | 2 (2026-11-13) | 5 (4 haiku, 1 sonnet), all completed | 1 SITL build, 4 smoke flights (2 OK) | ~$2.5 of $3 cap |
+| 3 (2026-11-13) | 1 sonnet (runner v0), haiku notes | ~6 runner test flights | runner left uncommitted, committed in session 4 |
+| 4 (2026-11-13) | 2 sonnet, 1 haiku | 18 runs (speed check), 0 failures | ~$3 cap |
 
 ## Journal
 
@@ -128,3 +128,4 @@
 - 2026-11-13: session 2: committed Docker image files; SITL build OK in Docker; reading list; notes smeur2016, acquatella2017, impl_paparazzi, impl_px4_prior; smoke flight script `bench/smoke_gz.sh`; smoke flight OK at speed 1 and 4.
 - 2026-11-13: session 3: froze `bench/scenarios.md` v1 (T1-T9 tuning, H1-H6 held-out, paired Wilcoxon acceptance); notes wang2019, tal2021.
 - 2026-11-13: session 2 closed: note blaha2024 added (RLS effectiveness identification, no PID baseline in that paper).
+- 2026-11-13: session 4: committed runner v0; speed-factor check (18 runs): speed 4 OK for attitude/rate, not for hover position; PX4 rate-path analysis.
