@@ -85,6 +85,7 @@ void LoggedTopics::add_default_topics()
 	add_optional_topic_multi("heater_status", 1000);
 	add_topic("home_position");
 	add_topic("hover_thrust_estimate", 100);
+	add_optional_topic("indi_rate_status");
 	add_topic("input_rc", 500);
 	add_optional_topic("internal_combustion_engine_control", 10);
 	add_optional_topic("internal_combustion_engine_status", 10);
