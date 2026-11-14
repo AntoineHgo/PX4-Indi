@@ -133,7 +133,7 @@ The reading is: INDI tracks roll steps 12 % and pitch steps 7 % better (pitch wi
 
 ## Inconsistencies and unverified claims
 
-1. **PID candidate count.** `DECISIONS.md` D-freeze and `results/tuning/r2.md` say "64 candidates over two rounds". The same `results/tuning/r2.md` says "40 sampled PID candidates" for r1 plus r2, and the summary files hold 24 + 16 = 40 rows (`results/tuning/pid/r1/summary.csv`, `results/tuning/pid/r2/summary.csv`). This chapter uses 40. The 480 flights quoted in both files agree with 40 candidates.
+1. **PID candidate count (resolved).** `DECISIONS.md` D-freeze and `results/tuning/r2.md` once said "64 candidates over two rounds"; the summary files hold 24 + 16 = 40 rows (`results/tuning/pid/r1/summary.csv`, `results/tuning/pid/r2/summary.csv`), consistent with the 480 flights. Both sources were corrected to 40 in session 17.
 2. **INDI flight count.** D-freeze says "~600 flights" for r1 to r4 (`DECISIONS.md`); the per-round counts in the result files give 792 for the four rounds and 852 with the four re-scores.
 3. **PID default hover effort.** `results/yawcut_check_s8.md` gives 0.037 1/s for `pid_default` hover (seed 1), and `results/effort_axes_s9.md` gives 0.054 for the same scenario and seed. The "44x" and "6x PID" ratios of 7.3 use 0.037; with 0.054 they would be about 30x and 4x.
 4. **PID J.** The PID value is quoted as 0.96 (`DECISIONS.md` D-freeze), 0.946 (r1, `results/tuning/pid_r1.md`), 0.958 for the best and 0.964 for re-flown defaults (r2, `results/tuning/r2.md`), and "0.958 to 0.964" (`results/tuning/r4f.md`). The differences come from hover noise, not from different parameters.
