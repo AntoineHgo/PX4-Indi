@@ -1,0 +1,121 @@
+{
+ "scenario": "step_pitch",
+ "controller": "pid_default",
+ "seed": 4,
+ "speed": 4.0,
+ "sim": "v2",
+ "instance": 0,
+ "params_file": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_project/bench/params/v2_fac.params",
+ "params_applied": {
+  "NAV_DLL_ACT": 0,
+  "COM_RC_IN_MODE": 4,
+  "COM_RCL_EXCEPT": 4,
+  "SDLOG_PROFILE": 17,
+  "MIS_TAKEOFF_ALT": 5.0,
+  "IMU_GYRO_DNF_EN": "1",
+  "THR_MDL_FAC": "0.683"
+ },
+ "git": {
+  "commit": "a26ee7e1abc75d4ff6f9bcc43d6bca44f305c675",
+  "dirty": true
+ },
+ "noise_seed": {
+  "gz_sim_seed": 4,
+  "px4_baro_srand": 1234
+ },
+ "events": [
+  {
+   "name": "settle",
+   "t_us": 34291000,
+   "dur_s": 2.0,
+   "mode": "attitude",
+   "axis": "pitch",
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  },
+  {
+   "name": "up",
+   "t_us": 36291000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "pitch",
+   "value": 15.0,
+   "prev": 0.0,
+   "step": true
+  },
+  {
+   "name": "zero1",
+   "t_us": 39291000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "pitch",
+   "value": 0.0,
+   "prev": 15.0,
+   "step": true
+  },
+  {
+   "name": "down",
+   "t_us": 42296000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "pitch",
+   "value": -15.0,
+   "prev": 0.0,
+   "step": true
+  },
+  {
+   "name": "zero2",
+   "t_us": 45296000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "pitch",
+   "value": 0.0,
+   "prev": -15.0,
+   "step": true
+  }
+ ],
+ "phase_log": [],
+ "exit_status": "ok",
+ "error": null,
+ "erpm_drop": 0.01,
+ "vib": {
+  "acc": 1.0,
+  "gyr": 0.05
+ },
+ "imu_rate": 1000,
+ "model_variant": {
+  "scale": {
+   "rpm": true,
+   "imu_rate": 1000
+  },
+  "dir": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_project/results/s2_seen_v2/runs/step_pitch/pid_default/seed4/model_variant",
+  "stock_models": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/Tools/simulation/gz/models",
+  "original": {
+   "imu_rate": 250.0
+  },
+  "new": {
+   "imu_rate": 1000.0,
+   "joint_state_publisher": [
+    "rotor_0_joint",
+    "rotor_1_joint",
+    "rotor_2_joint",
+    "rotor_3_joint"
+   ]
+  }
+ },
+ "arm_attempts": 1,
+ "t_arm_us": 17287000,
+ "hold_pos_ned": [
+  0.01757257804274559,
+  0.04034927859902382,
+  -5.1192626953125
+ ],
+ "hold_yaw_rad": 1.5917555093765259,
+ "hover_thrust_estimate": 0.59504,
+ "t_offboard_us": 31287000,
+ "t_window_start_us": 34291000,
+ "t_window_end_us": 48299000,
+ "ulog": "flight.ulg",
+ "wall_time_s": 38.4
+}
