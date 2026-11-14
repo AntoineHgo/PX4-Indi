@@ -225,7 +225,7 @@ All are only used when `MC_RATE_CTL_TYPE` = 1. Values are the firmware defaults;
 | `MC_INDI_G1_R` | 320 | 0.001-5000 | rad/s$^2$ per unit torque | roll effectiveness |
 | `MC_INDI_G1_P` | 210 | 0.001-5000 | same | pitch effectiveness |
 | `MC_INDI_G1_Y` | 30 | 0.001-5000 | same | yaw effectiveness (not identified for any airframe) |
-| `MC_INDI_G2_Y` | 0 | 0-100 | rad/s$^2$ per unit torque rate | yaw spin-up term, 0 disables |
+| `MC_INDI_G2_Y` | 0 | 0-1 | rad/s$^2$ per unit torque rate | yaw spin-up term, 0 disables |
 | `MC_INDI_K_R`, `_K_P`, `_K_Y` | 20, 20, 10 | 1-100 | rad/s | rate-tracking bandwidth |
 | `MC_INDI_ACT_TC` | 0.02 | 0.001-0.2 | s | actuator lag time constant |
 | `MC_INDI_DELAY` | 0 | 0-4 | cycles | pure delay on the modelled torque |
