@@ -113,6 +113,41 @@ parameters:
           decimal: 3
           default: 0.0
           reboot_required: true
+        SIM_GZ_VIB_ACC:
+          description:
+            short: Simulated IMU vibration, accelerometer amplitude per rotor
+            long: Adds to the first IMU a sinusoidal vibration per rotor at its rotation frequency (in the rotor plane)
+              and at the blade-pass frequency of a two-blade propeller (along the thrust axis, half amplitude), scaled
+              with rotor speed squared. Needs SIM_GZ_ESC_FB 1 or 2 (rotor joint speeds). 0 disables.
+          type: float
+          unit: m/s^2
+          min: 0.0
+          max: 50.0
+          decimal: 2
+          default: 0.0
+          reboot_required: true
+        SIM_GZ_VIB_GYR:
+          description:
+            short: Simulated IMU vibration, gyroscope amplitude per rotor
+            long: Gyroscope counterpart of SIM_GZ_VIB_ACC (roll and pitch at the rotation frequency, yaw at the
+              blade-pass frequency at 0.2 of the amplitude). 0 disables.
+          type: float
+          unit: rad/s
+          min: 0.0
+          max: 5.0
+          decimal: 3
+          default: 0.0
+          reboot_required: true
+        SIM_GZ_VIB_RPM:
+          description:
+            short: Rotor speed at which the SIM_GZ_VIB amplitudes apply
+          type: float
+          unit: rpm
+          min: 100.0
+          max: 100000.0
+          decimal: 0
+          default: 7000.0
+          reboot_required: true
         SIM_GZ_EC_SIGNED:
           description:
             short: Signed command for non-motor ESC channels

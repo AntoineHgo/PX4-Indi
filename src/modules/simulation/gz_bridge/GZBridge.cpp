@@ -599,6 +599,36 @@ void GZBridge::airspeedCallback(const gz::msgs::AirSpeed &msg)
 	_differential_pressure_pub.publish(report);
 }
 
+void GZBridge::addRotorVibration(uint64_t timestamp_sample, gz::math::Vector3d &accel_b, gz::math::Vector3d &gyro_b)
+{
+	const float dt = (_vib_timestamp_last > 0 && timestamp_sample > _vib_timestamp_last)
+			 ? math::min((timestamp_sample - _vib_timestamp_last) * 1e-6f, 0.02f) : 0.f;
+	_vib_timestamp_last = timestamp_sample;
+
+	if ((_sim_gz_vib_acc.get() <= 0.f && _sim_gz_vib_gyr.get() <= 0.f) || _sim_gz_vib_rpm.get() <= 0.f
+	    || !_mixing_interface_esc._rotor_rpm_valid) {
+		return;
+	}
+
+	float rotor_rpm[_MAX_VIB_ROTORS];
+	pthread_mutex_lock(&_mixing_interface_esc._node_mutex);
+	memcpy(rotor_rpm, _mixing_interface_esc._rotor_rpm, sizeof(rotor_rpm));
+	pthread_mutex_unlock(&_mixing_interface_esc._node_mutex);
+
+	for (int i = 0; i < _MAX_VIB_ROTORS; i++) {
+		// Mass imbalance: a force rotating in the rotor plane at the rotor frequency (1P), scaling with speed squared,
+		// plus a blade-pass (2P, two blades) component along the thrust axis. Amplitudes are per rotor at SIM_GZ_VIB_RPM.
+		const float omega = rotor_rpm[i] * 2.f * M_PI_F / 60.f; // [rad/s]
+		_vib_phase[i] = matrix::wrap_2pi(_vib_phase[i] + omega * dt);
+		const float scale = (rotor_rpm[i] / _sim_gz_vib_rpm.get()) * (rotor_rpm[i] / _sim_gz_vib_rpm.get());
+		const float phase = _vib_phase[i] + i * M_PI_2_F; // rotors not in phase with each other
+		const float s1 = sinf(phase), c1 = cosf(phase), s2 = sinf(2.f * phase);
+
+		accel_b += gz::math::Vector3d(c1, s1, 0.5f * s2) * (_sim_gz_vib_acc.get() * scale);
+		gyro_b += gz::math::Vector3d(s1, c1, 0.2f * s2) * (_sim_gz_vib_gyr.get() * scale);
+	}
+}
+
 void GZBridge::imuCallback(const gz::msgs::IMU &msg, uint8_t instance_index)
 {
 	// Bounds check and safety guard
@@ -625,6 +655,10 @@ void GZBridge::imuCallback(const gz::msgs::IMU &msg, uint8_t instance_index)
 					    msg.angular_velocity().x(),
 					    msg.angular_velocity().y(),
 					    msg.angular_velocity().z()));
+
+	if (instance_index == 0) {
+		addRotorVibration(timestamp_sample, accel_b, gyro_b);
+	}
 
 	// Update the specific IMU instance wrapper
 	_px4_accel[instance_index].update(timestamp, accel_b.X(), accel_b.Y(), accel_b.Z());

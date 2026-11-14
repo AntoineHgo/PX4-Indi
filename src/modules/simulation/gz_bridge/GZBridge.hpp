@@ -161,6 +161,12 @@ private:
 		{1311004}  // 1311004: DRV_IMU_DEVTYPE_SIM, BUS: 3, ADDR: 1, TYPE: SIMULATION
 	};
 
+	// Rotor-speed-tied IMU vibration (SIM_GZ_VIB_*), driven by the rotor joint speeds of the ESC interface
+	void addRotorVibration(uint64_t timestamp_sample, gz::math::Vector3d &accel_b, gz::math::Vector3d &gyro_b);
+	static constexpr int _MAX_VIB_ROTORS = 4;
+	float _vib_phase[_MAX_VIB_ROTORS] {}; // rotor angle [rad]
+	uint64_t _vib_timestamp_last{0};
+
 	static constexpr uint8_t _MAX_MAG_SENSORS = 2;
 	PX4Magnetometer  _px4_mag[_MAX_MAG_SENSORS] {
 		{197388},  // 197388: DRV_MAG_DEVTYPE_MAGSIM, BUS: 1, ADDR: 3, TYPE: SIMULATION
@@ -235,6 +241,9 @@ private:
 		(ParamInt<px4::params::SIM_GZ_EN_ODOM>) _sim_gz_en_odom,
 		(ParamInt<px4::params::SIM_GZ_EN_GPS>) _sim_gz_en_gps,
 		(ParamInt<px4::params::SIM_GZ_EN_IMU>) _sim_gz_en_imu,
-		(ParamInt<px4::params::SIM_GZ_EN_MAG>) _sim_gz_en_mag
+		(ParamInt<px4::params::SIM_GZ_EN_MAG>) _sim_gz_en_mag,
+		(ParamFloat<px4::params::SIM_GZ_VIB_ACC>) _sim_gz_vib_acc,
+		(ParamFloat<px4::params::SIM_GZ_VIB_GYR>) _sim_gz_vib_gyr,
+		(ParamFloat<px4::params::SIM_GZ_VIB_RPM>) _sim_gz_vib_rpm
 	)
 };
