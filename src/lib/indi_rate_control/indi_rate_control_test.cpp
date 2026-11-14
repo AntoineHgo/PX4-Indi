@@ -612,3 +612,37 @@ TEST(IndiRateControlTest, YawRateFilterSteadyStateNuIsGainTimesError)
 	EXPECT_GT(ref.getNu()(2), 0.f);
 	EXPECT_NEAR(ctrl.getNu()(2), ref.getNu()(2), 1e-4f * ref.getNu()(2));
 }
+
+TEST(IndiRateControlTest, YawCutoffSmoothsYawRateSetpointStep)
+{
+	IndiRateControl off = makeController();
+	IndiRateControl on = makeController();
+	on.setYawCutoff(2.f);
+
+	Vector3f command_off;
+	Vector3f command_on;
+	const Vector3f rate_sp(0.f, 0.f, 1.f);
+
+	for (int i = 0; i < 50; i++) { // settle at zero error so the filters are initialised
+		command_off = off.update(Vector3f(), Vector3f(), Vector3f(), command_off, kDtYaw, false);
+		command_on = on.update(Vector3f(), Vector3f(), Vector3f(), command_on, kDtYaw, false);
+	}
+
+	command_off = off.update(Vector3f(), rate_sp, Vector3f(), command_off, kDtYaw, false);
+	command_on = on.update(Vector3f(), rate_sp, Vector3f(), command_on, kDtYaw, false);
+
+	// unfiltered nu jumps to K_Y at once, the filtered one only starts to rise
+	EXPECT_GT(off.getNu()(2), 0.f);
+	EXPECT_GT(on.getNu()(2), 0.f);
+	EXPECT_LT(on.getNu()(2), 0.1f * off.getNu()(2));
+	EXPECT_EQ(on.getNu()(0), off.getNu()(0));
+	EXPECT_EQ(on.getNu()(1), off.getNu()(1));
+
+	for (int i = 0; i < 1500; i++) { // 6 s, many filter time constants
+		command_off = off.update(Vector3f(), rate_sp, Vector3f(), command_off, kDtYaw, false);
+		command_on = on.update(Vector3f(), rate_sp, Vector3f(), command_on, kDtYaw, false);
+	}
+
+	EXPECT_NEAR(on.getNu()(2), off.getNu()(2), 1e-3f * off.getNu()(2));
+	EXPECT_FALSE(on.getFault());
+}

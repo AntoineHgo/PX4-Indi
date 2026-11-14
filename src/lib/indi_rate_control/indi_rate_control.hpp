@@ -46,7 +46,8 @@
  *
  * An optional extra low-pass on the yaw axis is applied to both angular_accel and t_f, so the
  * pair stays synchronised while the yaw noise is reduced. The same cut-off also filters the
- * measured yaw rate used in nu (nu_yaw = K_Y * (rate_sp - lpf(rate))), the setpoint is not filtered.
+ * yaw rate error used in nu (nu_yaw = K_Y * lpf(rate_sp - rate)), setpoint included, as the PID
+ * yaw torque output filter (MC_YAW_TQ_CUTOFF) does for the whole PID yaw command.
  *
  * Yaw adds the rotor spin-up term G2 (Smeur 2016, torque space form):
  *   (G1 + G2/dt) dt_cmd = nu - angular_accel + (G2/dt) (t_f - t_f_prev)
@@ -193,7 +194,7 @@ private:
 	AlphaFilter<float> _alpha[3];
 	math::LowPassFilter2p<float> _yaw_lpf_accel; ///< yaw low pass on the angular acceleration
 	math::LowPassFilter2p<float> _yaw_lpf_torque; ///< same design on the filtered torque
-	math::LowPassFilter2p<float> _yaw_rate_lpf; ///< same design on the measured yaw rate fed back in nu
+	math::LowPassFilter2p<float> _yaw_error_lpf; ///< same design on the yaw rate error in nu
 	matrix::Vector3f _t_f_prev; ///< filtered torque of the previous cycle (yaw spin-up term)
 
 	// Outputs for logging

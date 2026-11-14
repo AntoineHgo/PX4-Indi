@@ -93,7 +93,7 @@ void IndiRateControl::designFilters(float sample_freq)
 	if (_yaw_filter_active) {
 		_yaw_lpf_accel.set_cutoff_frequency(sample_freq, _yaw_cutoff_hz);
 		_yaw_lpf_torque.set_cutoff_frequency(sample_freq, _yaw_cutoff_hz);
-		_yaw_rate_lpf.set_cutoff_frequency(sample_freq, _yaw_cutoff_hz);
+		_yaw_error_lpf.set_cutoff_frequency(sample_freq, _yaw_cutoff_hz);
 	}
 
 	// settled at the next unfiltered values, in update()
@@ -122,7 +122,7 @@ void IndiRateControl::resetStates()
 
 	_yaw_lpf_accel.reset(0.f);
 	_yaw_lpf_torque.reset(0.f);
-	_yaw_rate_lpf.reset(0.f);
+	_yaw_error_lpf.reset(0.f);
 	_yaw_filter_reset_pending = false;
 	_t_f_prev.zero();
 }
@@ -195,24 +195,26 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 
 	// 6b. optional yaw low pass on both members of the feedback pair, same coefficients so they stay synchronised
 	Vector3f a_f = angular_accel;
-	Vector3f rate_nu = rate; // rate used in nu, its yaw component is filtered like the feedback pair
+	// rate error used in nu, its yaw component (setpoint included) is filtered like the feedback pair, as the PID
+	// yaw torque output filter does for the whole yaw command
+	Vector3f rate_error = rate_sp - rate;
 
 	if (_yaw_filter_active) {
 		if (_yaw_filter_reset_pending) {
 			// enabled or redesigned: start from the current values, no transient
 			_yaw_lpf_accel.reset(a_f(2));
 			_yaw_lpf_torque.reset(t_f(2));
-			_yaw_rate_lpf.reset(rate(2));
+			_yaw_error_lpf.reset(rate_error(2));
 			_yaw_filter_reset_pending = false;
 		}
 
 		a_f(2) = _yaw_lpf_accel.apply(a_f(2));
 		t_f(2) = _yaw_lpf_torque.apply(t_f(2));
-		rate_nu(2) = _yaw_rate_lpf.apply(rate(2)); // inputs were validated as finite above
+		rate_error(2) = _yaw_error_lpf.apply(rate_error(2)); // inputs were validated as finite above
 	}
 
 	// 7. desired angular acceleration
-	const Vector3f nu = _gain_k.emult(rate_sp - rate_nu);
+	const Vector3f nu = _gain_k.emult(rate_error);
 
 	// 8. incremental inversion, only yaw has the spin-up term (g2 / dt = 0 for roll and pitch)
 	Vector3f dt_cmd;
