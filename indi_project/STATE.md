@@ -193,6 +193,11 @@ owner decisions when you first act on them.
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+- SESSION 43 (2026-11-14, launch 20261114-223703): seen set RUNNING (57/420 at 22:37, ~80 min total), V re-fly
+  queued behind it. Done: V' frozen (90339483ef, scenarios.md sec. 9, D-heldout-v3); v3 spec `plan/v3_blend_spec.md`.
+  IN FLIGHT: 1 sonnet agent implementing D-v3-blend (lib + MC_INDI_ACT_BLD + gtests), log `plan/impl_log_v3_blend.md`,
+  commits locally, no push, no px4_sitl_default build (batch running). If the session dies: check the log and
+  `git log`, verify the gtest result yourself before relying on it.
 - SESSION 42 (2026-11-14, launch 20261114-222717): V batch DONE 22:25 (HELDOUT_V2_DONE). Verdict
   `results/s2_heldout_v2.md` (3ed1368de5): INDI v2 does NOT outperform PID on V (8 entries worse by >10 %, 1 better).
   Host SUSPENDED 20:45:31 (journalctl) -> seed 3 of com_shift + motor_loss_0 stalled for all controllers; moved to
