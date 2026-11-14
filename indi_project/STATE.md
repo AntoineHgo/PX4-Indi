@@ -125,7 +125,8 @@
   flight modes covered.
   Ch. 9 open checks resolved session 17: gz motor tau 0.0125/0.025 verified (model.sdf); sim_fidelity.md written
   (gz k_m/k_f 0.016 vs CA_ROTOR_KM 0.05 recorded there). Still open in ch. 9: full T-set re-tune, KM effect on yaw,
-  INDI speed 1 vs 4, PID candidate count 64 vs 40, flight modes covered.
+  INDI speed 1 vs 4, flight modes covered. PID count settled: 40 (fixed in r2.md, DECISIONS, ch. 9; ch. 7 l.136
+  'Inconsistencies' item 1 still to update).
   (D) DONE + committed 702e9f3787 (`results/act_tc_sweep_s17.md`). Optional follow-up: plant-tau sweep via
   model_variant.py key tau (~21 runs) to map the real stability boundary.
   (B'') fable review relaunched session 17 (order 1,3,5,2,4,6, writes each section as it goes): if partial, relaunch
