@@ -638,3 +638,13 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
   search varies, so both families tune their yaw filter. Not varied: G1, ACT_TC, ERPM_DLY (identified, O-5).
   r2 centre = r1 candidate with the lowest J and no failure, picked by `bench/s2_indi_tune_r2.sh` (the rule the
   orchestrator applied by hand for the PID r2f), so r2 can run unattended between sessions.
+
+## D-v2indi (session 40): v2 tuned INDI = r2 c01
+
+- **Choice:** the v2 tuned INDI is INDI r2 c01 (`bench/params/indi_v2_tuned.params`, J 0.933 on 3 seeds, no effort
+  penalty), the controller flown on the held-out set V.
+- **Why:** lowest J in r2; the r1 best (r2 c00, J 0.985 when re-flown on 3 seeds) is 0.10 better on roll steps but
+  pays the frozen effort penalty there and on rate pulses (1.5x PID-default motor-rate effort). c01's lead is effort
+  and yaw, not the noise-dominated hover term, so the D-v2pid rule does not reject it (`results/s2_tuning/indi_r1r2.md`).
+- **Rejected:** r2 c11 (J 0.940, gains on hover only, more yaw effort); a round 3 (same stopping rule as v1 r2 and
+  v2 PID: both families get r1 24 x 2 + r2 16 x 3).
