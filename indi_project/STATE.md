@@ -81,8 +81,13 @@
 - QUEUED session 12: after r3 ends, PID T8 motor_loss_0 seeds 1-3 (speed 1,
   log `results/t8_pid_s12.log`, output `results/runs/motor_loss_0/pid_default/`).
   INDI T8 waits for the r3 best candidate.
-- RUNNING session 12: one sonnet agent, T9 `mismatch_inertia` model variant,
-  log `plan/t9_model_variant_log.md`. If cut off, read the log and finish.
+- DONE session 12 (sonnet agent, ~$0.26, 12 calls): T9 `mismatch_inertia`
+  (1eec3f211b, 8f77dd79b8): `bench/model_variant.py` builds a per-run x500
+  copy (keys ixx, iyy, izz, mass, tau; tau/mass untested), spawned via
+  PX4_GZ_MODELS; gz reports Ixx 0.0282 vs stock 0.0217 (verified), stock runs
+  unaffected. PID seed 1 x4: roll RMS 3.27 deg vs stock 3.35, rise 0.411 vs
+  0.424 s: x1.3 inertia barely shows in PID's attitude tracking (only roll-rate
+  RMS 0.096 vs 0.086). Log `plan/t9_model_variant_log.md`. Open: does H5 scale izz.
 
 - RUNNING session 12 (detached): INDI r3 (D-r3), 16 cand x 5 scen x 3 seeds,
   ~240 flights, ~1.5 h. Log `results/tuning/r3.log` (header = command,
