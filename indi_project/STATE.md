@@ -138,7 +138,7 @@ owner decisions when you first act on them.
   velocity and how GZBridge fills esc_status (today esc_rpm echoes the command); write `plan/s2_rotor_speed.md`
   with the exact change, no code. (b) one haiku task: AM32 + bidirectional DShot eRPM figures from the AM32 source
   and Betaflight docs (frame rate, latency, resolution, pole count, CRC failures) into `research/notes/am32_erpm.md`
-  with URLs; check `src/drivers/dshot` for what PX4 publishes. Run at most one agent per session.
+  with URLs; check `src/drivers/dshot` for what PX4 publishes. (b) LAUNCHED s26 (haiku), output `research/notes/am32_erpm.md`; (a) DONE inline: `plan/s2_rotor_speed.md` (55294aedb6): esc_rpm echoes PX4's own command (GZBridge subscribes to the topic it publishes); gz-sim 8.15 thrust uses joint velocity x slowdown 10, so JointStatePublisher x 10 is the true rotor speed; motor model has no G2 term, joint reaction at 1/10 speed at most (DART transmission unverified, O-4). NEXT after (b): one sonnet task to implement the x500 variant + SIM_GZ_ESC_FB joint-state feedback per that note (simulator commit), then the eRPM model commit.
 
 - SESSION 25 (2026-11-14, closing v1 per O-2): DONE ch. 2 l.11 acquatella checked myself against the text (inconsistency
   real: Eq. 28 drops t_s, Eq. 29 matches K(e+T_I^-1 int e) only), 6 [GAP] items rewritten as limitations (19a0466619);
