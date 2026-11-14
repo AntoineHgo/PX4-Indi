@@ -672,6 +672,14 @@ owner decisions when you first act on them.
 
 ## Next concrete actions
 
+S43 ORDER (supersedes S42 steps 3-4; S42 steps 1, 2, 5 still apply):
+a. S42 steps 1-2 (seen set + V re-fly check, final verdict tables). Seen set was 69/420 at 22:40 (~23:50 end).
+b. O-12: implement `plan/o12_watchdog_spec.md` (part A then B, one sonnet task each, separate commits) once no
+   batch is flying; replay check `results/o12_watchdog_replay.md` before committing part A.
+c. v3: verify the D-v3-blend commit (gtests yourself), build px4_sitl_default, screen under O-12 on T-set/seen entries
+   only (motor_loss_0, mismatch_combined_rate, step_roll; Tb 0.1/0.3/1.0; 1 seed), freeze indi_v3, then fly V'
+   (`bench/scenarios.md` sec. 9; W3 needs the list-of-motors hook first, W1-W5 entries go in scenarios.py).
+
 S42 ORDER (do this first, top to bottom):
 1. Check `results/s2_seen_v2/run.log` for SEEN_V2_DONE and `results/s2_heldout_v2/run.log` for HELDOUT_V2_REFLY_DONE
    (the re-fly runs `bench/s2_heldout_v2_refly.sh` detached after the seen set). If the refly process died, relaunch:
