@@ -313,8 +313,10 @@ def main():
     ap.add_argument("--params", default=None, help="file with lines 'NAME VALUE' applied before arming")
     ap.add_argument("--out", required=True)
     ap.add_argument("--instance", type=int, default=0)
-    ap.add_argument("--sim", choices=("v1", "v2"), default="v1",
-                    help="v1: stock gz_x500 (esc_rpm echoes the command); v2: stage-2 sim, rotor joint speed in esc_rpm")
+    ap.add_argument("--sim", choices=("v1", "v2", "v2true"), default="v1",
+                    help="v1: stock gz_x500 (esc_rpm echoes the command); v2: stage-2 sim, rotor speed through the "
+                         "eRPM telemetry model; v2true: stage-2 sim, exact rotor speed in esc_rpm")
+    ap.add_argument("--erpm-drop", type=float, default=0.0, help="v2: probability of a dropped eRPM frame")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
 
@@ -336,9 +338,11 @@ def main():
     try:
         sim.load_env()
         variant = dict(sc.get("model_variant") or {})
-        if a.sim == "v2":
+        if a.sim != "v1":  # read once when gz_bridge starts
             variant["rpm"] = True
-            sim.env["PX4_PARAM_SIM_GZ_ESC_FB"] = "1"  # read once when gz_bridge starts
+            sim.env["PX4_PARAM_SIM_GZ_ESC_FB"] = "2" if a.sim == "v2" else "1"
+            sim.env["PX4_PARAM_SIM_GZ_ERPM_DRP"] = str(a.erpm_drop)
+            meta["erpm_drop"] = a.erpm_drop
         if variant:
             meta["model_variant"] = sim.apply_model_variant(variant)
         sim.start_gz()
