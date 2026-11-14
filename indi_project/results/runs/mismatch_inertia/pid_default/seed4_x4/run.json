@@ -1,0 +1,108 @@
+{
+ "scenario": "mismatch_inertia",
+ "controller": "pid_default",
+ "seed": 4,
+ "speed": 4.0,
+ "instance": 0,
+ "params_file": null,
+ "params_applied": {
+  "NAV_DLL_ACT": 0,
+  "COM_RC_IN_MODE": 4,
+  "COM_RCL_EXCEPT": 4,
+  "SDLOG_PROFILE": 17,
+  "MIS_TAKEOFF_ALT": 5.0
+ },
+ "git": {
+  "commit": "bb09a19fde4512e384bfc437679b10b829124466",
+  "dirty": true
+ },
+ "noise_seed": {
+  "gz_sim_seed": 4,
+  "px4_baro_srand": 1234
+ },
+ "events": [
+  {
+   "name": "settle",
+   "t_us": 46184000,
+   "dur_s": 2.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  },
+  {
+   "name": "up",
+   "t_us": 48184000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": 15.0,
+   "prev": 0.0,
+   "step": true
+  },
+  {
+   "name": "zero1",
+   "t_us": 51184000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": 0.0,
+   "prev": 15.0,
+   "step": true
+  },
+  {
+   "name": "down",
+   "t_us": 54184000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": -15.0,
+   "prev": 0.0,
+   "step": true
+  },
+  {
+   "name": "zero2",
+   "t_us": 57184000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": 0.0,
+   "prev": -15.0,
+   "step": true
+  }
+ ],
+ "phase_log": [],
+ "exit_status": "ok",
+ "error": null,
+ "model_variant": {
+  "scale": {
+   "ixx": 1.3,
+   "iyy": 1.3
+  },
+  "dir": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_project/results/runs/mismatch_inertia/pid_default/seed4_x4/model_variant",
+  "stock_models": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/Tools/simulation/gz/models",
+  "original": {
+   "ixx": 0.02166666666666667,
+   "iyy": 0.02166666666666667
+  },
+  "new": {
+   "ixx": 0.028166666666666673,
+   "iyy": 0.028166666666666673
+  }
+ },
+ "arm_attempts": 5,
+ "t_arm_us": 29184000,
+ "hold_pos_ned": [
+  -0.0018932828679680824,
+  -0.02468458190560341,
+  -5.27349853515625
+ ],
+ "hold_yaw_rad": 1.5857762098312378,
+ "hover_thrust_estimate": 0.73524,
+ "t_offboard_us": 43184000,
+ "t_window_start_us": 46184000,
+ "t_window_end_us": 60184000,
+ "ulog": "flight.ulg",
+ "wall_time_s": 29.7
+}
