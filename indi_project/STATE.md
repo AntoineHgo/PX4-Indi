@@ -184,7 +184,8 @@ owner decisions when you first act on them.
   if it died, finished runs are skipped). First triple checked: metrics written, MC_INDI_EN 1 only on indi_v2. Do not
   rebuild build/px4_sitl_default while it runs. NEXT: (1) when done, analysis script for V under the unchanged
   acceptance criteria of `bench/scenarios.md` sec. 6 (paired per seed, 3 controllers; one sonnet task, spec it
-  first), write `results/s2_heldout_v2.md` and the v2 verdict; commit metrics.json/run.json only (as for tuning);
+  first; `bench/summarize_seeds.py results/s2_heldout_v2/runs <entries> --a pid_tuned --b indi_v2` already gives the
+  paired table with Wilcoxon p and now roll-rate RMS, so the task may be only a wrapper), write `results/s2_heldout_v2.md` and the v2 verdict; commit metrics.json/run.json only (as for tuning);
   (2) re-fly H1-H6 on v2 labelled "seen" (O-7); (3) report ch. 7.7/8 v2 sections; (4) then stage 8 (outer-loop
   flatness INDI design, O-10).
 
