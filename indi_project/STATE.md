@@ -102,7 +102,7 @@
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
   quoting in the report.
-- **Last updated:** 2026-11-14, session 21 (review triaged, G2_Y bound fix, figures, ch. 2 draft). Before that: session 20. Before that: session 16 (ch. 8 draft + control-law review in flight). Before that: session 15 (H1/H4/H5 implemented, batches flying). Before that: session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
+- **Last updated:** 2026-11-14, session 23 (bibliography, D-noretune). Before that: session 21 (review triaged, G2_Y bound fix, figures, ch. 2 draft). Before that: session 20. Before that: session 16 (ch. 8 draft + control-law review in flight). Before that: session 15 (H1/H4/H5 implemented, batches flying). Before that: session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
   library + unit tests committed, not yet wired into mc_rate_control; first
   G1 identification: pitch 211 (R^2 0.90), roll 321 (R^2 0.63), yaw not
   identified; see `results/identification_g1_v0.md`).
@@ -111,14 +111,19 @@
 
 | # | Phase | Status |
 |---|-------|--------|
-| 1 | State of the art (`research/`, report ch. 2-3) | in progress: reading list written, notes smeur2016, acquatella2017, blaha2024, wang2019, tal2021, impl_paparazzi, impl_px4_prior done; steffensen2023 (session 9); remaining: sieberling2010, sun2022, smeur2018, impl_indiflight |
-| 2 | PX4 analysis and design (`plan/`, report ch. 4-5) | architecture v1 done (`plan/architecture.md`); ch. 4 drafted and integration analysis code-checked (session 9, `plan/px4_analysis_verification.md`: 44/54 confirmed, 2 corrected); ch. 5 not drafted |
-| 3 | Simulation + benchmark harness on PID baseline (`docker/`, `bench/`) | image works, SITL build OK; gz_x500 headless smoke flight OK at speed 1 and 4 (`bench/smoke_gz.sh`); equivalence of results across speed factors not yet verified with metrics |
-| 4 | Implementation (firmware + unit tests) | not started |
-| 5 | Tuning and iteration | not started |
-| 6 | Validation and report | not started |
+| 1 | State of the art (`research/`, report ch. 2-3) | 9 sources read with notes; ch. 2 and 3 drafted; open: [TO VERIFY] markers (ch. 2: 8, ch. 3: 9) and [GAP] items (sieberling2010, sun2022/UZH, indiflight code) |
+| 2 | PX4 analysis and design (`plan/`, report ch. 4-5) | done; ch. 4 and 5 drafted |
+| 3 | Simulation + benchmark harness (`docker/`, `bench/`) | done; ch. 6 drafted (6 [TO VERIFY] open) |
+| 4 | Implementation (firmware + unit tests) | done (`src/lib/indi_rate_control`, 19/19 gtests, MC_INDI_* params) |
+| 5 | Tuning and iteration | done, frozen (D-freeze); full-T re-tune dropped (D-noretune); ch. 7 drafted |
+| 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+
+- SESSION 23 (2026-11-14): DONE ch. 12 bibliography (generated from sources.md, all cited keys covered + review_s16);
+  D-noretune (full-T re-tune not run, stated in ch. 7/9); ch. 8 PID count 64 -> 40; phase checklist refreshed.
+  NEXT: [TO VERIFY] in ch. 3 (9, equations vs PDFs in raw/) and ch. 2 (8), ch. 6 (6), ch. 9 (2), one small agent per
+  chapter; then report PDF image (D-pdf); then final review (fable) of conclusions; then DONE.
 
 - SESSION 22 (2026-11-14): DONE figures referenced in ch. 8 (Fig 8.1-8.3) and ch. 9 (Fig 9.1), review s5 band-pass
   mechanism + triaged review risks (a-i) added to ch. 9 (0a1ca5a2a5); wang2019/steffensen2023 URLs in sources.md;
@@ -481,3 +486,4 @@
 - 2026-11-14 session 17: ACT_TC sweep summarised (no limit cycle from model error alone); fable control-law review relaunched.
 - 2026-11-14 session 22: figures in ch. 8-9, review limitations, ch. 1, ch. 10, appendix A drafted; speed check: INDI (not PID) is speed-sensitive on H6 (+4 % at speed 1).
 - 2026-11-14 session 21: review complete and triaged; MC_INDI_G2_Y bounded; figure script + 4 figures; ch. 2 drafted.
+- 2026-11-14 session 23: ch. 12 bibliography; D-noretune (full-T re-tune not run, stated in ch. 7/9); ch. 8 PID count fixed; phase checklist refreshed.
