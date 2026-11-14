@@ -15,7 +15,9 @@ The reference is `pid_default` (no overlay) under results/runs/<scenario>/pid_de
 Cost per (scenario, seed): ratio = primary / primary_ref, plus 0.2 * (effort_ratio - 1) if effort_ratio > 1.25,
 or 10 for a failed run (no ULog, runner rc != 0, missing metric). J = mean over (scenario, seed).
 Output: results/tuning/<family>/<round>/c<NN>/params, c<NN>/<scenario>/seed<S>[_x4]/, summary.csv, candidates.json.
-Runs whose metrics.json already exists are skipped (resumable). --center accepts a JSON file holding either
+Runs whose metrics.json already exists are skipped (resumable).
+Environment (stage 2): TUNE_REF_ROOT, TUNE_REF_PARAMS (overlay for the pid_default reference), TUNE_OUT_ROOT.
+--center accepts a JSON file holding either
 {"NAME": value, ...} or a summary-style record {"params": {...}}.
 """
 import argparse
@@ -35,8 +37,10 @@ BENCH_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJ_DIR = os.path.dirname(BENCH_DIR)
 REPO_DIR = os.path.dirname(PROJ_DIR)
 RUN_BATCH = os.path.join(BENCH_DIR, "run_batch.sh")
-REF_ROOT = os.path.join(PROJ_DIR, "results", "runs")
-TUNE_ROOT = os.path.join(PROJ_DIR, "results", "tuning")
+# Stage-2 overrides (unset = v1 behaviour): reference root, reference overlay file, tuning output root
+REF_ROOT = os.environ.get("TUNE_REF_ROOT", os.path.join(PROJ_DIR, "results", "runs"))
+REF_PARAMS = os.environ.get("TUNE_REF_PARAMS") or None
+TUNE_ROOT = os.environ.get("TUNE_OUT_ROOT", os.path.join(PROJ_DIR, "results", "tuning"))
 YAMLS = [os.path.join(REPO_DIR, "src/modules/mc_rate_control/mc_rate_control_params.yaml"),
          os.path.join(REPO_DIR, "src/modules/mc_att_control/mc_att_control_params.yaml")]
 
@@ -247,7 +251,7 @@ def main():
     # 1. reference flights (pid_default) first
     refs, bad = {}, False
     with ThreadPoolExecutor(a.jobs) as ex:
-        futs = {ex.submit(fly, scn, s, SCENARIOS[scn][0], "pid_default", None, REF_ROOT, False,
+        futs = {ex.submit(fly, scn, s, SCENARIOS[scn][0], "pid_default", REF_PARAMS, REF_ROOT, False,
                           f"ref-{a.family}-{a.round_name}", lock): (scn, s)
                 for scn in a.scenarios for s in a.seeds}
         for f in as_completed(futs):
