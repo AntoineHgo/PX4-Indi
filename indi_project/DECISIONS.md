@@ -753,3 +753,12 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
 - **Alternatives rejected:** Tb 0.1 (watchdog trip, altitude loss after the fault, seed 1); Tb 1.0 (roll/pitch 1.6x and
   position 2.6x Tb 0.3's: the slower blend leaves the gap uncorrected longer).
 - **Open before freezing indi_v3:** the yaw rate loop (yaw RMS 1.3x PID after the motor loss, step_yaw 1.26x).
+
+## D-v3-hover (session 47, 2026-11-15): v3 hover effort ~2x PID is accepted as a known result, not tuned away
+- Data: `results/v3_hover_effort.md` (5 seeds): every v3 config 2.03-2.40x pid_tuned; Tb 0.3 lowest; v2 is also ~2x
+  on clean seeds. The excess is sensor noise passed into the command (body motion only 1.2x).
+- Choice: freeze v3 without an effort-specific retune; V' criterion 4 is expected to fail and the report says so,
+  correcting the v2 1.26x figure (inflated by two overloaded PID seeds).
+- Alternatives rejected: (a) lower `IMU_DGYRO_CUTOFF` for INDI only: shared parameter, would need an INDI-local
+  filter (firmware change, adds delay that the INDI loop is sensitive to), out of the remaining budget for v3;
+  (b) select the yaw survivor with the lowest effort: none is lower than the base.
