@@ -648,3 +648,29 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
   and yaw, not the noise-dominated hover term, so the D-v2pid rule does not reject it (`results/s2_tuning/indi_r1r2.md`).
 - **Rejected:** r2 c11 (J 0.940, gains on hover only, more yaw effort); a round 3 (same stopping rule as v1 r2 and
   v2 PID: both families get r1 24 x 2 + r2 16 x 3).
+
+## D-s8-early (session 41): draft the stage-8 design while the v2 validation flies
+
+- **Choice:** write `plan/s8_outer_loop_design.md` (design only, no code, no flight) while the V and seen batches run.
+- **Why:** O-10 forbids starting the outer loop before the inner v2 is validated; a paper design spends tokens, not
+  CPU, and does not depend on the V outcome (it reuses the inner loop as is). Code and flights wait for the verdict.
+- **Rejected:** idling until the batches end (the budget per session is fixed, the batches take ~3 h).
+
+## D-s8-arch (session 41, draft): outer-loop INDI as a separate external-mode module
+
+- **Choice:** new module `mc_indi_pos_control`, registered as an external mode like `mc_raptor` (optionally
+  replacing OFFBOARD), publishing `vehicle_rates_setpoint` (setpoint type RATES); acceleration INDI (Tal eq. 20) on
+  filtered accelerometer and eRPM-measured thrust, stock P position/velocity gains without integrator, stock
+  `AttitudeControl` + `bodyzToAttitude`, body-rate feedforward from jerk. Details and the evaluation arms in the plan.
+- **Why:** keeps `mc_pos_control`/`mc_att_control` at `main` (O-11 spirit), reuses the stock attitude loop and
+  position gains so the comparison isolates the INDI acceleration loop and the feedforward (O-9 ablation).
+- **Rejected:** a parameter branch in `PositionControl` (changes a stock module), a copy of `mc_pos_control` (too
+  large), Tal's own attitude PD (needs a new message, mixes two changes).
+
+## D-s8-ff / D-s8-snap (session 41, draft): feedforward inputs
+
+- **Choice:** jerk from `trajectory_setpoint.jerk` when set, else a backward difference of the acceleration setpoint
+  between updates (~10 ms lag at 50 Hz); no snap / angular-acceleration feedforward in the first version.
+- **Why:** MAVLink PVA offboard carries no jerk; the lag is ~1 deg of phase on the fastest frozen trajectory. Snap
+  would need a field `vehicle_rates_setpoint` does not have; a message change is avoided until the jerk-only result
+  shows whether the feedforward matters at all. Recorded as a limitation against Tal (who uses both).
