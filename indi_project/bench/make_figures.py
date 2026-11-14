@@ -233,6 +233,199 @@ def fig_timeseries():
     plt.close(fig)
     return None
 
+# ---- figures 5-9: time series around events (seed 1 unless stated) -------------------------------------------------
+def _ulog(scen, ctrl, seed=1, sfx=''):
+    from pyulog import ULog
+    d = os.path.join(RUNS, scen, ctrl, f'seed{seed}{sfx}')
+    ulg = ULog(os.path.join(d, 'flight.ulg'))
+    return {x.name: x.data for x in ulg.data_list}, json.load(open(os.path.join(d, 'metrics.json'))), \
+        json.load(open(os.path.join(d, 'run.json')))
+
+
+def _qmul(a, b):
+    w1, x1, y1, z1 = a.T
+    w2, x2, y2, z2 = b.T
+    return np.stack([w1*w2 - x1*x2 - y1*y2 - z1*z2, w1*x2 + x1*w2 + y1*z2 - z1*y2,
+                     w1*y2 - x1*z2 + y1*w2 + z1*x2, w1*z2 + x1*y2 - y1*x2 + z1*w2], axis=1)
+
+
+def _att(d):
+    """time (s), q (n,4) of vehicle_attitude and q_d of the attitude setpoint held (zero-order) at those times"""
+    va, sp = d['vehicle_attitude'], d['vehicle_attitude_setpoint']
+    t = va['timestamp'] / 1e6
+    q = np.stack([va[f'q[{i}]'] for i in range(4)], axis=1)
+    qd = np.stack([sp[f'q_d[{i}]'] for i in range(4)], axis=1)
+    idx = np.clip(np.searchsorted(sp['timestamp'] / 1e6, t, side='right') - 1, 0, len(qd) - 1)
+    return t, q, qd[idx]
+
+
+def _rot_err_deg(q, qd):
+    qe = _qmul(q * np.array([1, -1, -1, -1]), qd)
+    return np.degrees(2 * np.arccos(np.clip(np.abs(qe[:, 0]), 0, 1)))
+
+
+def _euler_deg(q):
+    w, x, y, z = q.T
+    roll = np.arctan2(2*(w*x + y*z), 1 - 2*(x*x + y*y))
+    pitch = np.arcsin(np.clip(2*(w*y - z*x), -1, 1))
+    yaw = np.arctan2(2*(w*z + x*y), 1 - 2*(y*y + z*z))
+    return np.degrees(roll), np.degrees(pitch), np.degrees(yaw)
+
+
+def _tilt_deg(q):
+    return np.degrees(np.arccos(np.clip(1 - 2*(q[:, 1]**2 + q[:, 2]**2), -1, 1)))
+
+
+CTRLS = ((PID, C_PID, 'PID default'), (INDI, C_INDI, 'INDI tuned'))
+
+
+def fig_disturbance_onset():
+    fname = 'fig_disturbance_onset.png'
+    print(f"\n== {fname}")
+    fig, axes = plt.subplots(3, 1, figsize=(7.2, 6.0), sharex=True)
+    for ax, scen in zip(axes, ('gust_x', 'gust_diag', 'com_shift')):
+        for ctrl, col, lab in CTRLS:
+            d, m, _ = _ulog(scen, ctrl)
+            on = m['disturbance']['onset_s']
+            t, q, qd = _att(d)
+            e = _rot_err_deg(q, qd)
+            k = (t - on > -3) & (t - on < 20)
+            ax.plot(t[k] - on, e[k], color=col, lw=0.9, label=lab)
+            print(f"  {scen} {ctrl}: onset {on:.2f} s, max error in plot {e[k].max():.2f} deg")
+        ax.axvline(0, color='0.5', lw=0.8, ls=':')
+        ax.set_ylabel('attitude error (deg)')
+        ax.set_title(scen, fontsize=9, loc='left')
+    axes[0].legend(frameon=False, fontsize=8, loc='upper right')
+    axes[-1].set_xlabel('time since disturbance onset (s)')
+    fig.tight_layout()
+    fig.savefig(os.path.join(OUT, fname), dpi=150)
+    plt.close(fig)
+
+
+def fig_t8_fault():
+    fname = 'fig_t8_fault.png'
+    print(f"\n== {fname}")
+    fig, axes = plt.subplots(2, 1, figsize=(7.2, 4.6), sharex=True)
+    for ctrl, col, lab in CTRLS:
+        d, m, _ = _ulog('motor_loss_0', ctrl)
+        mf = m['motor_fault']
+        on, mot = mf['event_s'], mf['motor']
+        t, q, qd = _att(d)
+        e = _rot_err_deg(q, qd)
+        k = (t - on > -2) & (t - on < 10)
+        axes[0].plot(t[k] - on, e[k], color=col, lw=0.9, label=lab)
+        am = d['actuator_motors']
+        ta = am['timestamp'] / 1e6
+        c = am[f'control[{mot}]']
+        k = (ta - on > -2) & (ta - on < 10)
+        axes[1].plot(ta[k] - on, c[k], color=col, lw=0.9, label=lab)
+        print(f"  {ctrl}: fault at {on:.3f} s, motor {mot}, max error {e[(t-on>-2)&(t-on<10)].max():.2f} deg")
+    for ax in axes:
+        ax.axvline(0, color='0.5', lw=0.8, ls=':')
+    axes[0].set_ylabel('attitude error (deg)')
+    axes[1].set_ylabel('motor 0 command (normalised)')
+    axes[1].set_xlabel('time since fault onset (s)')
+    axes[0].legend(frameon=False, fontsize=8, loc='upper right')
+    fig.tight_layout()
+    fig.savefig(os.path.join(OUT, fname), dpi=150)
+    plt.close(fig)
+
+
+def fig_step_responses():
+    fname = 'fig_step_responses.png'
+    print(f"\n== {fname}")
+    # step_roll / step_pitch / step_yaw have no indi_tuned run on disk (only pid_default and earlier INDI variants),
+    # so only the diagonal step (step_diag, speed 4, dirs seed1_x4) is plotted
+    panels = (('step_diag', 0, 'roll (deg)'), ('step_diag', 1, 'pitch (deg)'), ('step_diag', None, 'tilt angle (deg)'))
+    fig, axes = plt.subplots(3, 1, figsize=(7.2, 6.0))
+    for ax, (scen, j, yl) in zip(axes, panels):
+        for ctrl, col, lab in CTRLS:
+            d, m, _ = _ulog(scen, ctrl, 1, '_x4')
+            t0, t1 = m['window']['start_s'], m['window']['end_s']
+            t, q, qd = _att(d)
+            if j is None:
+                y, ysp = _tilt_deg(q), _tilt_deg(qd)
+            else:
+                y, ysp = np.unwrap(np.radians(_euler_deg(q)[j])), np.unwrap(np.radians(_euler_deg(qd)[j]))
+                y, ysp = np.degrees(y), np.degrees(ysp)
+            k = (t >= t0) & (t <= t1)
+            if ctrl == PID:
+                ax.plot(t[k] - t0, ysp[k], color='0.35', lw=1, label='setpoint')
+            ax.plot(t[k] - t0, y[k], color=col, lw=0.9, label=lab)
+        ax.set_ylabel(yl)
+        ax.set_title(scen, fontsize=9, loc='left')
+    axes[0].legend(frameon=False, fontsize=8, loc='upper right', ncol=3)
+    axes[-1].set_xlabel('time since start of the metrics window (s)')
+    fig.tight_layout()
+    fig.savefig(os.path.join(OUT, fname), dpi=150)
+    plt.close(fig)
+
+
+def fig_lemniscate():
+    fname = 'fig_lemniscate.png'
+    print(f"\n== {fname}")
+    fig = plt.figure(figsize=(7.2, 3.6))
+    ax_g = fig.add_subplot(1, 2, 1)
+    ax_e = fig.add_subplot(1, 2, 2)
+    for ctrl, col, lab in CTRLS:
+        d, m, _ = _ulog('traj_lemniscate', ctrl)
+        t0, t1 = m['window']['start_s'], m['window']['end_s']
+        lp, sp = d['vehicle_local_position'], d['trajectory_setpoint']
+        t = lp['timestamp'] / 1e6
+        ts = sp['timestamp'] / 1e6
+        k = (t >= t0) & (t <= t1)
+        ks = (ts >= t0) & (ts <= t1)
+        if ctrl == PID:
+            ax_g.plot(sp['position[1]'][ks], sp['position[0]'][ks], color='0.35', lw=1, label='setpoint')
+        ax_g.plot(lp['y'][k], lp['x'][k], color=col, lw=0.9, label=lab)
+        # setpoint held between samples (zero-order hold), as in bench/metrics.py
+        ih = np.clip(np.searchsorted(ts, t[k], side='right') - 1, 0, len(ts) - 1)
+        ref = [sp[f'position[{i}]'][ih] for i in range(3)]
+        err = np.sqrt((lp['x'][k] - ref[0])**2 + (lp['y'][k] - ref[1])**2 + (lp['z'][k] - ref[2])**2)
+        ax_e.plot(t[k] - t0, err, color=col, lw=0.9, label=lab)
+        print(f"  {ctrl}: window {t0:.2f}-{t1:.2f} s, 3D error rms {np.sqrt(np.mean(err**2)):.3f} m (metrics {m['trajectory']['rms_3d_m']:.3f})")
+    ax_g.set_xlabel('east (m)')
+    ax_g.set_ylabel('north (m)')
+    ax_g.set_aspect('equal', adjustable='datalim')
+    ax_g.legend(frameon=False, fontsize=7.5)
+    ax_e.set_xlabel('time since start of the metrics window (s)')
+    ax_e.set_ylabel('3D position error (m)')
+    fig.tight_layout()
+    fig.savefig(os.path.join(OUT, fname), dpi=150)
+    plt.close(fig)
+
+
+def fig_h4_crash():
+    fname = 'fig_h4_crash.png'
+    print(f"\n== {fname}")
+    fig, axes = plt.subplots(2, 2, figsize=(7.2, 4.6), sharex='col')
+    styles = {1: '-', 2: '--', 3: ':'}
+    for j, (ctrl, col, lab) in enumerate(CTRLS):
+        for seed in (1, 2, 3):
+            d, m, _ = _ulog('motor_loss_2', ctrl, seed)
+            on = m['motor_fault']['event_s']
+            lp, ld = d['vehicle_local_position'], d['vehicle_land_detected']
+            tl = ld['timestamp'] / 1e6
+            kc = np.where((tl > on) & (ld['ground_contact'] > 0))[0]
+            tc = tl[kc[0]] if len(kc) else lp['timestamp'][-1] / 1e6
+            t = lp['timestamp'] / 1e6
+            k = (t >= on) & (t <= tc)
+            axes[0, j].plot(t[k] - on, -lp['z'][k], color=col, ls=styles[seed], lw=1, label=f'seed {seed}')
+            va = d['vehicle_attitude']
+            tv = va['timestamp'] / 1e6
+            q = np.stack([va[f'q[{i}]'] for i in range(4)], axis=1)
+            kv = (tv >= on) & (tv <= tc)
+            axes[1, j].plot(tv[kv] - on, _tilt_deg(q)[kv], color=col, ls=styles[seed], lw=1, label=f'seed {seed}')
+            print(f"  {ctrl} seed {seed}: fault {on:.3f} s, ground contact {tc - on:.2f} s after onset, max tilt {_tilt_deg(q)[kv].max():.1f} deg")
+        axes[0, j].set_title(lab, fontsize=9, loc='left', color=col)
+        axes[1, j].set_xlabel('time since fault onset (s)')
+        axes[0, j].legend(frameon=False, fontsize=7.5)
+    axes[0, 0].set_ylabel('altitude (m)')
+    axes[1, 0].set_ylabel('tilt angle (deg)')
+    fig.tight_layout()
+    fig.savefig(os.path.join(OUT, fname), dpi=150)
+    plt.close(fig)
+
 
 if __name__ == '__main__':
     miss = {}
@@ -240,5 +433,10 @@ if __name__ == '__main__':
     miss['eff'] = fig_effort_ratio()
     fig_act_tc_sweep()
     miss['ts'] = fig_timeseries()
+    for f in (fig_disturbance_onset, fig_t8_fault, fig_step_responses, fig_lemniscate, fig_h4_crash):
+        try:
+            f()
+        except Exception as ex:  # a figure that cannot be built is skipped and reported
+            miss[f.__name__] = repr(ex)
     print('\nMissing / skipped:', miss)
     print('Discrepancies > 2 %:', DISCREPANCIES if DISCREPANCIES else 'none')
