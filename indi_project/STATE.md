@@ -127,7 +127,7 @@
   eqs, acquatella PI constants, smeur2018 Table 1 / gain conflict, wang Monte Carlo, Paparazzi adaptation scaling,
   PX4 forum 'can not take off' quote vs impl_px4_prior reading) and 5 [GAP] (sieberling2010, sun2022/UZH,
   tal2021 identification, modelled actuator state, indiflight code).
-  NEXT (cheap first): add the 3 keys to sources.md; reference the figures in ch. 8 (fig_attitude_ratio,
+  NEXT (cheap first): 3 keys added to sources.md (wang2019, steffensen2023 URLs still missing: find via title search); reference the figures in ch. 8 (fig_attitude_ratio,
   fig_effort_ratio, fig_rate_timeseries) and ch. 9 (fig_act_tc_sweep); add review limitations (triage list) to
   ch. 9; then ch. 1 intro, ch. 10 conclusion, bibliography, appendix reproduce (one sonnet agent each, <= $0.5);
   REPORT FIXES list (session 14 entry); PDF build if pandoc is in the image.
