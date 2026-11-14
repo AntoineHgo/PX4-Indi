@@ -11,9 +11,16 @@
 control_allocator start
 
 #
-# Start Multicopter Rate Controller.
+# Start Multicopter Rate Controller: INDI if selected and built in, else PID.
+# On a board without mc_indi_rate_control, MC_INDI_EN does not exist and the PID controller starts.
 #
-mc_rate_control start
+if param compare -s MC_INDI_EN 1
+then
+	mc_indi_rate_control start
+
+else
+	mc_rate_control start
+fi
 
 #
 # Start Multicopter Attitude Controller.
