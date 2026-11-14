@@ -168,6 +168,16 @@ owner decisions when you first act on them.
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+- SESSION 37 (2026-11-14): O-11 refactor started. DONE: c1a700e7bb (mc_rate_control back to base),
+  462eb68990 (allocator + allocation lib back to base), D-o11 in DECISIONS.md, spec `plan/o11_module_spec.md`.
+  IN FLIGHT: 1 sonnet agent implementing the new module per the spec (commits a, b; builds into
+  build/px4_sitl_o11); check `git log` for `feat(mc_indi_rate_control)` / `feat(rc.mc_apps)` and its notes in
+  `plan/o11_agent_log.md`. Batches untouched: PID r1f still flying at session start (c18/24, tune.py pid
+  3993080), frz queue (3998259) and r2f queue (4179723) behind it; they use build/px4_sitl_default (old tree,
+  never rebuild it while they fly). Keep build/px4_sitl_omega2 (old-placement reference for the regression check).
+  NEXT: bench support for MC_INDI_EN at boot + old/new param names (spec "Not in this task"), smoke flights with
+  PX4_INDI_BUILD=build/px4_sitl_o11, then the O-11 regression check (v1 frozen + v2 omega2, few tuning
+  scenarios x 3 seeds, old vs new binary); update plan/architecture.md and report ch. 4-5.
 
 - SESSION 36 (2026-11-14): held-out v2 settled (D-heldout-v2) and frozen (scenarios.md sec. 8, 26af39125d): sim hooks
   48d82eacda (gz_bridge: SIM_GZ_ERPM_LAT start-time, SIM_GZ_ERPM_LOSS and SIM_GZ_THR_SC runtime) + 332cb817d9

@@ -587,3 +587,27 @@ These are the owner's decisions, not the orchestrator's; full text in `OWNER_GUI
   v2 configuration: never used for tuning, so they are still held out, but their v1 outcome is known, which the
   report states. New disturbance profiles were rejected for budget. Rejected for V3: dropping the latency case (the
   owner listed ESC latency explicitly).
+
+## O-11 (owner decision, 2026-11-14, acted on in session 37): upstream-reviewable architecture
+
+Owner decision, not re-opened; text in `OWNER_GUIDANCE.md`. Supersedes D-arch-2 and the placement part of
+D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
+
+- **Mutual exclusion via the startup script**, not a runtime check in the module:
+  `rc.mc_apps` starts `mc_indi_rate_control` if `MC_INDI_EN` is 1, else `mc_rate_control`. Same pattern as
+  `MC_NN_EN`; PX4 has no clean, non-fragile way for one module to test whether another is running, and the
+  script gives a single decision point. On a board built without the module `MC_INDI_EN` does not exist, so
+  `param compare` fails and PID starts (safe fallback). `MC_INDI_EN` is reboot-required; it replaces
+  `MC_RATE_CTL_TYPE` and the old latched-while-disarmed runtime switch (alternative rejected: keep a runtime
+  switch inside one module, which is exactly what O-11 removes). The selection is still "by parameter".
+- **Measured torque** computed in the INDI module by a subclass of `ControlAllocationPseudoInverse` configured
+  from the same `CA_*` parameters as the allocator, so B, trim and scale match by construction (gtest checks
+  it on the x500 geometry). Alternative rejected: public getters added to the allocation library (O-11
+  requires zero diff there).
+- **`actuator_torque_measured` stays a published topic** (now from the INDI module), for logging and the
+  existing analysis scripts; it is not a setpoint message. `CA_R_W_MAX` becomes `MC_INDI_W_MAX`.
+- **Commit order:** removals first (c1a700e7bb mc_rate_control, 462eb68990 allocator, both to the merge-base
+  with main), then the new module, then startup selection, then bench support. The INDI path is unavailable
+  between the removal commits and the module commit; every commit still builds.
+- **Regression reference binary:** `build/px4_sitl_omega2` (old placement, built from the pre-refactor tree)
+  is kept untouched until the O-11 regression check is done; the new tree builds into `build/px4_sitl_o11`.
