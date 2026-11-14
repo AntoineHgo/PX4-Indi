@@ -66,7 +66,10 @@
   c13 re-scored with D-yawsp: step_yaw effort 5.2x -> 1.42x PID, but yaw
   tracking 0.88 -> 1.06 x PID; J 1.058 unchanged because hover term is noise
   (D-hovernoise: sporadic vertical excursions for both families, horizontal
-  hover RMS equal; `results/tuning/r3f_yawsp.md`). Yaw-only round r4 launched (D-r4).
+  hover RMS equal; `results/tuning/r3f_yawsp.md`). r4 yaw-only sweep (72 flights,
+  `results/tuning/r4.md`): with D-yawsp no INDI yaw set beats PID on step_yaw at
+  acceptable effort (best 1.089 x PID at 1.13x effort, c10); yaw near-parity is
+  structural. Same params+seeds gave hover 0.77 vs 1.31: hover noise confirmed.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -89,16 +92,17 @@
 
 ## In progress
 
-- RUNNING session 13 (detached): INDI r4 (D-r4), yaw-only sweep (K_Y, YAW_CUT,
-  YAW_P) around c13, 12 cand x {step_yaw, hover} x seeds 1-3 = 72 flights, ~30 min.
-  Log `results/tuning/r4.log` (header = command, resumable), output
-  `results/tuning/indi/r4/summary.csv`. NEXT: pick best by mean step_yaw per-run
-  cost (rule fixed in D-r4, compute from metrics.json as in r3.md effort script),
-  write `results/tuning/r4.md`, commit r4 metrics; build combined candidate
-  (c13 + r4 yaw set) as `bench/params/indi_r4_best.json`, re-score on all 5
-  tuning scenarios (like r3f_yawsp). Then freeze INDI tuned candidate, fly INDI
-  T8 (CONTROLLERS=indi_tuned PARAMS_FILE=<cand params>, as `results/t8_pid_s13.log`),
-  then held-out set for both controllers with more seeds (D-hovernoise).
+- RUNNING session 13 (detached): r4f, combined candidate c13 + r4 c10 yaw set
+  (`bench/params/indi_r4_best.json`) on all 5 tuning scenarios, seeds 1-3 (15
+  flights). Log `results/tuning/r4f.log` (header = command, resumable), output
+  `results/tuning/indi/r4f/summary.csv`. NEXT: write `results/tuning/r4f.md`
+  (per-scenario ratios + effort, as r3f_yawsp.md), commit metrics. Then freeze
+  the INDI tuned candidate (DECISIONS entry; J compared with PID 0.96 and the
+  noise caveat D-hovernoise), fly INDI T8 seeds 1-3 (CONTROLLERS=indi_tuned
+  PARAMS_FILE=results/tuning/indi/r4f/c00/params, rest as
+  `results/t8_pid_s13.log`), then the held-out set for both controllers with
+  more seeds (>= 5) and the horizontal/vertical hover split.
+- DONE session 13: r4 (`results/tuning/r4.md`, ec2bd1ad7a).
 - DONE session 13: c13 D-yawsp re-score (`results/tuning/r3f_yawsp.md`).
 
 - r3 FINISHED (16/16, `results/tuning/indi/r3/`); best: `[tune] c13 done: J=1.0552 failures=0`.
@@ -308,7 +312,7 @@
 | 9 (2026-11-14) | 1 haiku (steffensen2023), 1 sonnet (ch. 4 draft) | round 2 launched (~480 flights) | triage + yaw effort analysis |
 | 10 (2026-11-14) | 1 sonnet (disturbance injector, 59 tool calls, ~$0.9) | 2 test flights; r2 finished (480 flights, 0 failures) | ~$2.6 of $3 |
 | 11 (2026-11-14) | 2 sonnet (T8 motor loss 14 calls; D-yawnu 13 calls) | 15 INDI (r2f_yc2) + 1 T8 PID + 3 hover (yawnu), 0 failures; r2f_yawnu (15) left running | yaw effort root cause and fix, ~$2.4 of $3 |
-| 13 (2026-11-14) | 0 | 3 T8 PID, 15 INDI r3f_yawsp, 72 INDI r4 (launched), 1 SITL build, unit tests | r3 analysis, D-yawsp, D-hovernoise, D-r4; ~$2 of $3 |
+| 13 (2026-11-14) | 0 | 3 T8 PID, 15 INDI r3f_yawsp, 72 INDI r4, 15 INDI r4f (launched), 1 SITL build, unit tests | r3 analysis, D-yawsp, D-hovernoise, D-r4; ~$2 of $3 |
 | 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build, 2 INDI runs (hover, step_roll seed1), 0 failures | $1.63 cap |
 
 ## Journal
@@ -338,3 +342,4 @@
 - 2026-11-14: session 11: D-yawnu scored on tuning set: J 1.197 vs PID 0.96, penalty now from step_yaw effort (~7x PID).
 - 2026-11-14: session 13: r3 scored (c13 J 1.055 vs PID 0.96, step_yaw effort the only penalty); D-yawsp implemented; PID T8 seeds 1-3 flown.
 - 2026-11-14: session 13: D-yawsp scored (yaw effort fixed, yaw tracking lost, J 1.058); hover term found noise-dominated; r4 yaw sweep launched.
+- 2026-11-14: session 13: r4 done (yaw parity with PID is structural under D-yawsp); r4f combined candidate launched.
