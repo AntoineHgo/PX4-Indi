@@ -325,3 +325,13 @@ fails identically, and H5 (T2 + T4) is split so that the worse part (T4, rate pu
 Alternative rejected: averaging the two H5 parts or excluding H4 as infeasible, because both would be rule changes
 after seeing the data; neither would change the outcome anyway (criterion 3 fails on H5 alone). Outcome: "INDI does not
 outperform PID". The report states it plainly, with the disturbance-rejection gains and the actuator-mismatch weakness.
+
+## D-actsweep (session 17, 2026-11-14): post-acceptance ACT_TC robustness sweep
+
+H5 showed that a plant motor time constant 2x the controller's MC_INDI_ACT_TC gives a 5-7 Hz roll limit cycle.
+To map INDI's stability margin against this error, the frozen INDI candidate (r4f/c00) is flown on step_roll with
+MC_INDI_ACT_TC scaled by f in {0.33, 0.5, 0.67, 1, 1.5, 2, 3} on the stock gz_x500 plant (plant/model ratio 1/f),
+speed 4, seeds 1-3 (`results/act_tc_sweep_s17/`). Scaling the controller's assumption instead of the plant keeps the
+inertia and mass unchanged and reuses the stock model; it is equivalent for the loop as long as only the ratio matters,
+which is an assumption to state in the report. This is post-acceptance work: it never changes the verdict of
+`results/acceptance_s15.md`, and it is reported as characterisation, not as a re-tune.

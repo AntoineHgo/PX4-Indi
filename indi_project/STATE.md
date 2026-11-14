@@ -116,6 +116,10 @@
   draft (A) was committed (2cd1c49235). Relaunched: (B') fable control-law review -> `review/control_law_review_s16.md`
   (fills the skeleton section by section); (C) sonnet drafts report ch. 9 discussion -> `report/09_discussion.md`.
   If partial next session, relaunch only for the missing sections.
+  (D) RUNNING detached: ACT_TC sweep (D-actsweep), 21 runs, `results/act_tc_sweep_s17/run.sh`, log `sweep.log`
+  (ends with SWEEP_DONE; runs with metrics.json are skipped, so re-run run.sh if incomplete). Output
+  `results/runs/step_roll/indi_act<f>/seed<N>_x4/`. NEXT: table of roll-rate RMS / effort / saturation vs 1/f
+  (summarize_seeds.py), look for the limit-cycle onset ratio, write `results/act_tc_sweep_s17.md`, commit metrics.
 - SESSION 16 (2026-11-14) IN FLIGHT: (A) sonnet drafts report ch. 8 results -> `report/08_results.md`;
   (B) fable independent review of the INDI control law -> `review/control_law_review_s16.md`. If a file is
   partial or missing next session, relaunch only for what it lacks. Committed bd5da68490 (re-flown PID hover seeds 1-3).
