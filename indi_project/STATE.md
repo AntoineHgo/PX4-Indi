@@ -107,7 +107,7 @@
   NEXT: (1) check `bench/scenarios.md` for H1, H4, H5 definitions and implement/fly them (10 seeds, both
   controllers) to decide acceptance: H1 traj_circle_fast, H4 motor_loss_2 (motor 2 x0.6 during
   T5 lemniscate), H5 mismatch_combined (inertia x0.8, mass x1.15, motor tau x2; T2+T4) per `bench/scenarios.md` l.72-76;
-  (2) T8 motor loss seeds 4-10 LAUNCHED detached end of session 14 (`results/t8_s14.log`, ~5 min): summarise with
+  (2) T8 motor loss seeds 4-10 DONE and metrics committed (`results/t8_s14.log`): summarise with
   summarize_seeds.py motor_loss_0 (metrics.json motor_fault block too), commit metrics/run.json; (3) T1 hover effort ratio for criterion 4;
   (4) report ch. 8 results (delegate draft to sonnet from results/*.md); (5) independent fable review of the control law.
   REPORT FIXES TO DO (from drafting agents): (a) architecture.md out of date vs code (no K_ff/setpoint derivative, no 20 ms freshness, landed output = G1^-1(nu - a_f) with t_f held 0, yaw filters missing): update plan or note in ch. 5; (b) ch. 5 G2 yaw derivation is the agent's own: verify before final; (c) PID candidate count: D-freeze/r2.md say 64, rounds sum to 40 (24+16): fix DECISIONS; INDI flights ~600 vs 792-852 counted; (d) PID hover effort 0.037 (yawcut_check_s8) vs 0.054 (effort_axes_s9) same scenario/seed: explain; (e) PID J quoted 0.946/0.958/0.964/0.96: pick one reference (re-flown defaults) for the report; (f) scenarios.md promised full-T re-tune: not done, state it in ch. 7 or do it; (g) ch. 5 is 5400 words, fine.

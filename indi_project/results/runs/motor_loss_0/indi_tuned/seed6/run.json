@@ -1,0 +1,110 @@
+{
+ "scenario": "motor_loss_0",
+ "controller": "indi_tuned",
+ "seed": 6,
+ "speed": 1.0,
+ "instance": 0,
+ "params_file": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_project/results/tuning/indi/r4f/c00/params",
+ "params_applied": {
+  "NAV_DLL_ACT": 0,
+  "COM_RC_IN_MODE": 4,
+  "COM_RCL_EXCEPT": 4,
+  "SDLOG_PROFILE": 17,
+  "MIS_TAKEOFF_ALT": 5.0,
+  "MC_RATE_CTL_TYPE": "1",
+  "MC_INDI_G1_R": "241",
+  "MC_INDI_G1_P": "241",
+  "MC_INDI_G1_Y": "7.4",
+  "MC_INDI_K_R": "23.89",
+  "MC_INDI_K_P": "12.29",
+  "MC_INDI_K_Y": "2.118",
+  "MC_INDI_ACT_TC": "0.01142",
+  "MC_INDI_YAW_CUT": "1.572",
+  "MC_ROLL_P": "6.275",
+  "MC_PITCH_P": "6.185",
+  "MC_YAW_P": "3.308"
+ },
+ "git": {
+  "commit": "c883907c92c85b4371f29ea8a77e19bbc8e6ef69",
+  "dirty": true
+ },
+ "noise_seed": {
+  "gz_sim_seed": 6,
+  "px4_baro_srand": 1234
+ },
+ "events": [
+  {
+   "name": "settle",
+   "t_us": 34516000,
+   "dur_s": 5.0,
+   "mode": "attitude",
+   "axis": "yaw",
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  },
+  {
+   "name": "loss",
+   "t_us": 39516000,
+   "dur_s": 10.0,
+   "mode": "attitude",
+   "axis": "yaw",
+   "value": 0.0,
+   "prev": 0.0,
+   "step": true
+  },
+  {
+   "name": "up",
+   "t_us": 49516000,
+   "dur_s": 4.0,
+   "mode": "attitude",
+   "axis": "yaw",
+   "value": 45.0,
+   "prev": 0.0,
+   "step": true
+  },
+  {
+   "name": "zero",
+   "t_us": 53516000,
+   "dur_s": 4.0,
+   "mode": "attitude",
+   "axis": "yaw",
+   "value": 0.0,
+   "prev": 45.0,
+   "step": true
+  }
+ ],
+ "phase_log": [],
+ "exit_status": "ok",
+ "error": null,
+ "arm_attempts": 1,
+ "t_arm_us": 15504000,
+ "hold_pos_ned": [
+  0.008315482176840305,
+  -0.00029736629221588373,
+  -5.006744384765625
+ ],
+ "hold_yaw_rad": 1.5896879434585571,
+ "hover_thrust_estimate": 0.73087,
+ "t_offboard_us": 31504000,
+ "t_window_start_us": 34516000,
+ "motor_fault": {
+  "motor": 0,
+  "thrust_scale": 0.7,
+  "nominal": {
+   "MIN": 150,
+   "MAX": 1000
+  },
+  "segment": "loss",
+  "event_us": 39516000,
+  "event_done_us": 39516000,
+  "applied": {
+   "MIN": 125,
+   "MAX": 837
+  },
+  "omega_ratio": 0.8366600265340756
+ },
+ "t_window_end_us": 57516000,
+ "ulog": "flight.ulg",
+ "wall_time_s": 77.4
+}

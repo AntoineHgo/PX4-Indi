@@ -1,0 +1,98 @@
+{
+ "scenario": "motor_loss_0",
+ "controller": "pid_default",
+ "seed": 5,
+ "speed": 1.0,
+ "instance": 0,
+ "params_file": null,
+ "params_applied": {
+  "NAV_DLL_ACT": 0,
+  "COM_RC_IN_MODE": 4,
+  "COM_RCL_EXCEPT": 4,
+  "SDLOG_PROFILE": 17,
+  "MIS_TAKEOFF_ALT": 5.0
+ },
+ "git": {
+  "commit": "a0d8b0b2f1028dc93894e6dc5897bf55d4e75ce5",
+  "dirty": true
+ },
+ "noise_seed": {
+  "gz_sim_seed": 5,
+  "px4_baro_srand": 1234
+ },
+ "events": [
+  {
+   "name": "settle",
+   "t_us": 34352000,
+   "dur_s": 5.0,
+   "mode": "attitude",
+   "axis": "yaw",
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  },
+  {
+   "name": "loss",
+   "t_us": 39352000,
+   "dur_s": 10.0,
+   "mode": "attitude",
+   "axis": "yaw",
+   "value": 0.0,
+   "prev": 0.0,
+   "step": true
+  },
+  {
+   "name": "up",
+   "t_us": 49352000,
+   "dur_s": 4.0,
+   "mode": "attitude",
+   "axis": "yaw",
+   "value": 45.0,
+   "prev": 0.0,
+   "step": true
+  },
+  {
+   "name": "zero",
+   "t_us": 53352000,
+   "dur_s": 4.0,
+   "mode": "attitude",
+   "axis": "yaw",
+   "value": 0.0,
+   "prev": 45.0,
+   "step": true
+  }
+ ],
+ "phase_log": [],
+ "exit_status": "ok",
+ "error": null,
+ "arm_attempts": 1,
+ "t_arm_us": 15352000,
+ "hold_pos_ned": [
+  -0.022452982142567635,
+  0.038544684648513794,
+  -5.02239990234375
+ ],
+ "hold_yaw_rad": 1.5823420286178589,
+ "hover_thrust_estimate": 0.73089,
+ "t_offboard_us": 31352000,
+ "t_window_start_us": 34352000,
+ "motor_fault": {
+  "motor": 0,
+  "thrust_scale": 0.7,
+  "nominal": {
+   "MIN": 150,
+   "MAX": 1000
+  },
+  "segment": "loss",
+  "event_us": 39352000,
+  "event_done_us": 39352000,
+  "applied": {
+   "MIN": 125,
+   "MAX": 837
+  },
+  "omega_ratio": 0.8366600265340756
+ },
+ "t_window_end_us": 57352000,
+ "ulog": "flight.ulg",
+ "wall_time_s": 77.3
+}
