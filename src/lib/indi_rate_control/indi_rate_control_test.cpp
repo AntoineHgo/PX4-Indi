@@ -344,6 +344,36 @@ TEST(IndiRateControlTest, SampleRateChangeRedesignsFiltersWithoutTransient)
 	EXPECT_FALSE(ctrl.getFault());
 }
 
+TEST(IndiRateControlTest, DtJitterWithRampingTorqueKeepsOutputContinuous)
+{
+	// +-20 % dt jitter (hardware gyro publication) while the allocated torque ramps: the design rate is
+	// low-passed, so t_f keeps its group delay instead of jumping to the actuator model state
+	IndiRateControl ctrl = makeController();
+	constexpr float kRampPerS = 2.f;
+	float t = 0.f;
+	float t_f_prev = 0.f;
+	float max_step = 0.f;
+
+	for (int i = 0; i < 400; i++) {
+		const float dt = (i % 2 == 0) ? 1.2f * kDt : 0.8f * kDt;
+		t += dt;
+		const float torque = math::min(kRampPerS * t, 0.8f);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), Vector3f(torque, torque, torque), dt, false);
+
+		if (i > 0) {
+			max_step = math::max(max_step, fabsf(ctrl.getFilteredTorque()(0) - t_f_prev));
+		}
+
+		t_f_prev = ctrl.getFilteredTorque()(0);
+		EXPECT_FALSE(ctrl.getFault());
+	}
+
+	// a reset of t_f to the model state jumps by ramp x filter delay (~0.025); the ramp alone moves
+	// t_f by at most kRampPerS * 1.2 kDt = 0.006 per cycle
+	EXPECT_LT(max_step, 1.5f * kRampPerS * 1.2f * kDt);
+	EXPECT_NEAR(ctrl.getFilteredTorque()(0), 0.8f, 1e-2f);
+}
+
 TEST(IndiRateControlTest, PassThroughFiltersAndDelay)
 {
 	IndiRateControl ctrl = makeController();

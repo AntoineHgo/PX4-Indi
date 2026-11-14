@@ -161,10 +161,12 @@ public:
 private:
 	static constexpr int kDelayBufferSize = kMaxDelaySamples + 1;
 	static constexpr float kRedesignRatio = 0.1f; ///< relative sample rate change that triggers a filter redesign
+	static constexpr float kSampleFreqAlpha = 0.01f; ///< low pass on 1/dt for the design rate, so dt jitter does not redesign
 	static constexpr float kMaxYawCutoffRatio = 0.45f; ///< yaw low pass is disabled above this fraction of the sample rate
 
 	bool paramsValid() const;
-	void designFilters(float sample_freq);
+	void designSyncFilters(float sample_freq, bool reset_states);
+	void designYawFilters(float sample_freq);
 	void resetStates();
 
 	// Parameters
@@ -180,6 +182,7 @@ private:
 
 	// Filter design bookkeeping
 	float _design_sample_freq{0.f}; ///< sample rate the filters are designed for, 0 = not designed
+	float _sample_freq_filtered{0.f}; ///< low-passed 1/dt, 0 = no sample yet
 	float _design_gyro_cutoff_hz{0.f};
 	float _design_dgyro_cutoff_hz{0.f};
 	float _design_yaw_cutoff_hz{0.f};
@@ -188,6 +191,7 @@ private:
 
 	// States
 	matrix::Vector3f _t_act;   ///< actuator model output
+	matrix::Vector3f _t_lpf;   ///< last output of the H low pass, restores it on a sample rate redesign
 	matrix::Vector3f _t_delay_buffer[kDelayBufferSize]; ///< ring buffer of past _t_act
 	int _delay_head{0};        ///< index of the most recent sample in the ring buffer
 	math::LowPassFilter2p<float> _lpf[3];

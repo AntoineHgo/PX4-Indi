@@ -72,7 +72,7 @@ bool IndiRateControl::paramsValid() const
 	return true;
 }
 
-void IndiRateControl::designFilters(float sample_freq)
+void IndiRateControl::designSyncFilters(float sample_freq, bool reset_states)
 {
 	for (int i = 0; i < 3; i++) {
 		// LowPassFilter2p disables itself (pass-through) for a cutoff <= 0 or >= Nyquist
@@ -82,11 +82,25 @@ void IndiRateControl::designFilters(float sample_freq)
 			_alpha[i].setAlpha(1.f); // pass-through, the default alpha of 0 would freeze the output
 		}
 
-		// keep the filters settled at the current modelled torque, a redesign must not cause a transient
-		_lpf[i].reset(_t_act(i));
-		_alpha[i].reset(_t_act(i));
+		// a cutoff change settles the filters at the current modelled torque; on a sample rate change the
+		// low pass restarts from its last output (its setter zeroes the states) and the alpha filter keeps its
+		// state, resetting t_f to the model state would drop its group delay while a_f keeps it
+		if (reset_states) {
+			_lpf[i].reset(_t_act(i));
+			_alpha[i].reset(_t_act(i));
+
+		} else {
+			_lpf[i].reset(_t_lpf(i));
+		}
 	}
 
+	_design_sample_freq = sample_freq;
+	_design_gyro_cutoff_hz = _gyro_cutoff_hz;
+	_design_dgyro_cutoff_hz = _dgyro_cutoff_hz;
+}
+
+void IndiRateControl::designYawFilters(float sample_freq)
+{
 	// the yaw low pass is bypassed (not just pass-through) when disabled, so the outputs are unchanged
 	_yaw_filter_active = (_yaw_cutoff_hz > 0.f) && (_yaw_cutoff_hz < kMaxYawCutoffRatio * sample_freq);
 
@@ -98,16 +112,13 @@ void IndiRateControl::designFilters(float sample_freq)
 
 	// settled at the next unfiltered values, in update()
 	_yaw_filter_reset_pending = _yaw_filter_active;
-
-	_design_sample_freq = sample_freq;
 	_design_yaw_cutoff_hz = _yaw_cutoff_hz;
-	_design_gyro_cutoff_hz = _gyro_cutoff_hz;
-	_design_dgyro_cutoff_hz = _dgyro_cutoff_hz;
 }
 
 void IndiRateControl::resetStates()
 {
 	_t_act.zero();
+	_t_lpf.zero();
 
 	for (int i = 0; i < kDelayBufferSize; i++) {
 		_t_delay_buffer[i].zero();
@@ -154,15 +165,24 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 
 	_fault = false;
 
-	// 2. (re)design the synchronisation filters
+	// 2. (re)design the synchronisation filters on a low-passed sample rate, as the gyro chain designs on its
+	// nominal rate: a jittery dt must neither trigger a redesign nor reset the feedback pair
 	const float sample_freq = 1.f / dt;
+	_sample_freq_filtered = (_sample_freq_filtered > 0.f)
+				? _sample_freq_filtered + kSampleFreqAlpha * (sample_freq - _sample_freq_filtered) : sample_freq;
 
-	if ((_design_sample_freq <= 0.f)
-	    || (fabsf(sample_freq - _design_sample_freq) > kRedesignRatio * _design_sample_freq)
-	    || (fabsf(_gyro_cutoff_hz - _design_gyro_cutoff_hz) > FLT_EPSILON)
-	    || (fabsf(_dgyro_cutoff_hz - _design_dgyro_cutoff_hz) > FLT_EPSILON)
-	    || (fabsf(_yaw_cutoff_hz - _design_yaw_cutoff_hz) > FLT_EPSILON)) {
-		designFilters(sample_freq);
+	const bool cutoffs_changed = (_design_sample_freq <= 0.f)
+				     || (fabsf(_gyro_cutoff_hz - _design_gyro_cutoff_hz) > FLT_EPSILON)
+				     || (fabsf(_dgyro_cutoff_hz - _design_dgyro_cutoff_hz) > FLT_EPSILON);
+	const bool rate_changed = fabsf(_sample_freq_filtered - _design_sample_freq) > kRedesignRatio * _design_sample_freq;
+
+	if (cutoffs_changed || rate_changed) {
+		designSyncFilters(_sample_freq_filtered, cutoffs_changed);
+		designYawFilters(_sample_freq_filtered);
+
+	} else if (fabsf(_yaw_cutoff_hz - _design_yaw_cutoff_hz) > FLT_EPSILON) {
+		// a yaw cutoff change leaves the roll/pitch/yaw synchronisation filters H untouched
+		designYawFilters(_design_sample_freq);
 	}
 
 	Vector3f t_f;
@@ -191,7 +211,8 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 
 		// 5. synchronisation filter H, same order as the gyro derivative chain: LPF2p then alpha filter
 		for (int i = 0; i < 3; i++) {
-			t_f(i) = _alpha[i].update(_lpf[i].apply(t_del(i)));
+			_t_lpf(i) = _lpf[i].apply(t_del(i));
+			t_f(i) = _alpha[i].update(_t_lpf(i));
 		}
 	}
 
