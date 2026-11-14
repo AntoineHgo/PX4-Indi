@@ -129,6 +129,11 @@ owner decisions when you first act on them.
 
 ## In progress
 
+- SESSION 27 (2026-11-14): DONE step 2a rotor speed telemetry: gz_bridge `SIM_GZ_ESC_FB` (8dfe3e9e1a), bench `--sim v2` /
+  `SIM_VERSION=v2` (46f0e6f935), check flight OK (`results/s2_escfb_check.md`, D-escfb). IN FLIGHT: haiku agent closing the
+  AM32 eRPM gaps (turnaround latency, default poles, loss rates) -> appends "Session 27 gap closure" to
+  `research/notes/am32_erpm.md`. Orchestrator: PX4 BDShot side (output rate, decode, CRC counter) -> `research/notes/px4_bdshot.md`.
+
 - SESSION 26 (2026-11-14): **v1 report closed at 743acd7140** (O-2). Review s25 applied (1 must-fix, 10 should-fix,
   5 minor; af424cf88a); T8 summarised on its 10 existing seeds (79c41e5b94, D-t8-10); 5 seed-1 time-series figures
   added to ch. 8 (65073894df), all ch. 8 figure TODOs gone, figures renumbered 8.1-8.8; PDF built and committed
