@@ -122,10 +122,15 @@
 
 - SESSION 23 (2026-11-14): DONE ch. 12 bibliography (generated from sources.md, all cited keys covered + review_s16);
   D-noretune (full-T re-tune not run, stated in ch. 7/9); ch. 8 PID count 64 -> 40; phase checklist refreshed.
-  NEXT: [TO VERIFY] in ch. 3 (9, equations vs PDFs in raw/) and ch. 2 (8), ch. 6 (6), ch. 9 (2), one small agent per
-  chapter; then report PDF image (D-pdf); then final review (fable) of conclusions; then DONE.
-  DONE ch. 6 allocator-fault + aero-plugin markers. IN FLIGHT (haiku): ch. 3 equation check against PDF page
-  images -> `review/ch3_equation_check_s23.md` (one section per marker; if cut off, relaunch for missing markers only).
+  DONE ch. 6 allocator-fault + aero-plugin markers (allocator unaware of gz motor fault; no aero plugin in x500).
+  DONE (haiku, 16 calls) ch. 3 equation check vs PDF pages (`review/ch3_equation_check_s23.md`): 6 MATCH, 2 fixed
+  (smeur2016 Eq. 10 G2 has T_s^-1, verified in txt too; Eq. 27 disturbance term 1-AHz^-1, quote made verbatim);
+  ch. 3 has 0 [TO VERIFY]. Ch. 5 G2 law already divides by T_s (consistent); ch. 5 G2_Y range fixed 0-1.
+  Open minor: acquatella2017 note claims Eqs. 26/28 inconsistent with 29; haiku did not reproduce it (re-check at
+  zoom only if ch. 3 relies on it). smeur2016 PDF is `research/raw/foundations/inaoep_14032018.pdf`.
+  NEXT: ch. 2 [TO VERIFY] (8) and [GAP] (5), ch. 6 (4 left: lockstep source l.19, delay l.109, l.3, l.113),
+  ch. 9 (2: CA_ROTOR_KM effect on yaw, flight modes covered); then report PDF image (D-pdf); then a fable
+  review of conclusions (ch. 8-10 vs results/); then DONE.
 
 - SESSION 22 (2026-11-14): DONE figures referenced in ch. 8 (Fig 8.1-8.3) and ch. 9 (Fig 9.1), review s5 band-pass
   mechanism + triaged review risks (a-i) added to ch. 9 (0a1ca5a2a5); wang2019/steffensen2023 URLs in sources.md;
@@ -489,3 +494,4 @@
 - 2026-11-14 session 22: figures in ch. 8-9, review limitations, ch. 1, ch. 10, appendix A drafted; speed check: INDI (not PID) is speed-sensitive on H6 (+4 % at speed 1).
 - 2026-11-14 session 21: review complete and triaged; MC_INDI_G2_Y bounded; figure script + 4 figures; ch. 2 drafted.
 - 2026-11-14 session 23: ch. 12 bibliography; D-noretune (full-T re-tune not run, stated in ch. 7/9); ch. 8 PID count fixed; phase checklist refreshed.
+- 2026-11-14 session 23: ch. 3 equations checked against PDFs (2 corrected, 0 open); ch. 6 two checks resolved; ch. 5 G2_Y range fixed. Agents: 1 haiku.
