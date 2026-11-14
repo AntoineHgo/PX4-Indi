@@ -24,7 +24,7 @@ EXPECTED_ORIGIN="${EXPECTED_ORIGIN:-AntoineHgo/PX4-Indi}"
 # Share of the owner's usage the orchestrator may take. Before each launch a tiny Haiku call
 # (~$0.002) reads the current utilization of the 5-hour and weekly windows; the orchestrator
 # only launches below these shares, and its spend cap is the headroom left in the 5-hour share.
-FIVE_HOUR_SHARE="${FIVE_HOUR_SHARE:-0.75}" # leave the top 25 % of every 5-hour window to the owner
+FIVE_HOUR_SHARE="${FIVE_HOUR_SHARE:-0.8}"  # leave the top 20 % of every 5-hour window to the owner
 WEEKLY_SHARE="${WEEKLY_SHARE:-0.6}"        # stop launching once the weekly window is 60 % used
 MIN_BUDGET_USD="${MIN_BUDGET_USD:-1}"      # below this headroom a session is mostly start-up cost: wait instead
 MAX_BUDGET_USD="${MAX_BUDGET_USD:-3}"      # bounds what one cut-off session can lose
