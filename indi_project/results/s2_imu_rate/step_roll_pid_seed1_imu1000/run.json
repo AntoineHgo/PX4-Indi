@@ -1,0 +1,115 @@
+{
+ "scenario": "step_roll",
+ "controller": "pid",
+ "seed": 1,
+ "speed": 1.0,
+ "sim": "v2",
+ "instance": 0,
+ "params_file": null,
+ "params_applied": {
+  "NAV_DLL_ACT": 0,
+  "COM_RC_IN_MODE": 4,
+  "COM_RCL_EXCEPT": 4,
+  "SDLOG_PROFILE": 17,
+  "MIS_TAKEOFF_ALT": 5.0
+ },
+ "git": {
+  "commit": "ac944d24d5902cb14a8375db4413cb64963b15d5",
+  "dirty": true
+ },
+ "noise_seed": {
+  "gz_sim_seed": 1,
+  "px4_baro_srand": 1234
+ },
+ "events": [
+  {
+   "name": "settle",
+   "t_us": 34249000,
+   "dur_s": 2.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  },
+  {
+   "name": "up",
+   "t_us": 36249000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": 15.0,
+   "prev": 0.0,
+   "step": true
+  },
+  {
+   "name": "zero1",
+   "t_us": 39249000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": 0.0,
+   "prev": 15.0,
+   "step": true
+  },
+  {
+   "name": "down",
+   "t_us": 42249000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": -15.0,
+   "prev": 0.0,
+   "step": true
+  },
+  {
+   "name": "zero2",
+   "t_us": 45249000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": 0.0,
+   "prev": -15.0,
+   "step": true
+  }
+ ],
+ "phase_log": [],
+ "exit_status": "ok",
+ "error": null,
+ "erpm_drop": 0.01,
+ "imu_rate": 1000,
+ "model_variant": {
+  "scale": {
+   "rpm": true,
+   "imu_rate": 1000
+  },
+  "dir": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_project/results/s2_imu_rate/step_roll_pid_seed1_imu1000/model_variant",
+  "stock_models": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/Tools/simulation/gz/models",
+  "original": {
+   "imu_rate": 250.0
+  },
+  "new": {
+   "imu_rate": 1000.0,
+   "joint_state_publisher": [
+    "rotor_0_joint",
+    "rotor_1_joint",
+    "rotor_2_joint",
+    "rotor_3_joint"
+   ]
+  }
+ },
+ "arm_attempts": 1,
+ "t_arm_us": 15249000,
+ "hold_pos_ned": [
+  -0.007762058638036251,
+  -0.01251345593482256,
+  -5.006378173828125
+ ],
+ "hold_yaw_rad": 1.5789920091629028,
+ "hover_thrust_estimate": 0.73089,
+ "t_offboard_us": 31249000,
+ "t_window_start_us": 34249000,
+ "t_window_end_us": 48249000,
+ "ulog": "flight.ulg",
+ "wall_time_s": 68.2
+}
