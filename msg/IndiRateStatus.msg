@@ -8,3 +8,4 @@ float32[3] torque_increment		# commanded torque increment (normalised)
 
 bool fault				# inputs or parameters were rejected in this cycle, the torque output is zero
 
+bool measured_torque_in_use		# the measured actuator torque (ESC rpm) replaced the actuator model in this cycle
