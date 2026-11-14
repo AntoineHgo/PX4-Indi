@@ -508,3 +508,11 @@ These are the owner's decisions, not the orchestrator's; full text in `OWNER_GUI
   last-good-value reaction and is bounded.
 - Alternatives rejected: hold indefinitely (a persistent fault must not freeze a possibly large torque); time-based
   hold (dt itself may be the invalid input).
+
+- **D-g2sim (session 32, O-4)** The gz x500 transmits the rotor reaction torque (velocity-commanded rotor joint,
+  constraint reacts on the body). Identified from v2 yaw steps with matched filtering: b/a = 32-35 s
+  (prediction J_rotor/10 / (k_f k_m) = 19.4 s; excess unexplained), v1 units MC_INDI_G2_Y ~ 0.16
+  (`results/s2_ident_g2.md`). Alternatives: (a) say "G2 cannot be evaluated" (rejected: data show the term,
+  R^2 0.966 -> 0.981); (b) fit on the raw logged rate (rejected: confounded with esc_rpm latency, any
+  0-14 ms shift fits equally). The simulated G2 is ~1/10 of physical (rotor slowdown 10): the report must say
+  that the G2 benefit is under-represented here. Re-check with G2_Y 0.16 follows the O-3 re-check, post-acceptance.
