@@ -48,6 +48,21 @@ yaw with G2:  (G1_y + G2_y/Ts) dt_y = nu_y - a_f,y + (G2_y/Ts) (t_f,y - t_f,y[k-
 
 ## 3. Placement in PX4 (D-arch-1, D-arch-2)
 
+> **Superseded placement (O-11, session 37).** Since d2c1f06ad8/299a55e2fa INDI runs in its own module
+> `src/modules/mc_indi_rate_control/`, started instead of `mc_rate_control` by `rc.mc_apps` when `MC_INDI_EN` = 1
+> (takes effect at the next boot; on boards without the module the parameter does not exist and PID starts).
+> Mutual exclusion is by the startup script, so only one torque publisher can run. `mc_rate_control`,
+> `control_allocator` and `src/lib/control_allocation` are back to `main` (zero diff). The measured torque
+> tau_meas = B(u_meas - trim) is computed inside the INDI module with the control-allocation library, configured
+> from the same `CA_*` parameters as the allocator (gtest: module B matches the allocator's for the x500 geometry);
+> the rotor speed scale is `MC_INDI_W_MAX` (was `CA_R_W_MAX`), `MC_RATE_CTL_TYPE` is gone. The control law in
+> `src/lib/indi_rate_control/` is unchanged. Known deviations from the old placement, checked by the O-11
+> regression flights (`results/s2_o11_regress.md`): measured torque used one cycle later (same as the old allocator
+> timing); non-fresh rotors evaluated at trim; failed-motor column zeroing not ported (an offline ESC invalidates
+> the measured torque and the law falls back to its actuator model); the module reads the `MC_ACRO_*` parameters
+> defined by `mc_rate_control`. Spec: `plan/o11_module_spec.md`; decision: D-o11. The text below describes the v1
+> placement inside `mc_rate_control`, with which all v1 results were obtained.
+
 - **Torque space, ahead of the allocator.** INDI publishes the same
   `vehicle_torque_setpoint` / `vehicle_thrust_setpoint` as the PID. The
   allocator, its prioritisation (thrust > roll/pitch > yaw) and airmode are
