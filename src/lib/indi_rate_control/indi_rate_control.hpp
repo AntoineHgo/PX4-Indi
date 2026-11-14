@@ -79,7 +79,8 @@ public:
 
 	/**
 	 * Set the rate tracking bandwidth.
-	 * @param gain_k per axis closed loop bandwidth in rad/s, must be > 0
+	 * @param gain_k per axis closed loop bandwidth in rad/s, >= 0 (0 stops rate tracking on that axis, the law
+	 *        then only drives the angular acceleration to zero), negative or non finite values fault update()
 	 */
 	void setGainK(const matrix::Vector3f &gain_k) { _gain_k = gain_k; }
 
