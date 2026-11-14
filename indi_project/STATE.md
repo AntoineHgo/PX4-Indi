@@ -107,6 +107,8 @@ owner decisions when you first act on them.
 - **Session 22:** report has ch. 1-10 + appendix A (bibliography chapter missing). Speed check: PID speed-invariant,
   INDI H6 attitude RMS +4 % at speed 1 (still better than PID 3/3 seeds, margin ~11 % -> ~7 %); H5 loss unchanged.
 - **v1 report closed** at 743acd7140 (session 26). Stage 2 (OWNER_GUIDANCE.md) starts at step 2, sim realism.
+- **Stage 2 (session 27):** sim now has true rotor speed and an AM32/BDShot eRPM telemetry model (`--sim v2`), and a
+  selectable IMU/physics rate (1000 Hz runs real time). Next: IMU rate choice, vibration noise, then PID re-baseline.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -135,9 +137,13 @@ owner decisions when you first act on them.
   (`results/s2_escfb_check.md`); D-escfb, D-erpm; notes `px4_bdshot.md`, `am32_erpm.md` (gap closure: AM32 rebuilds the
   reply every frame, poles 14, no turnaround constant, loss rates only secondhand). Finding for INDI v2: esc timestamps
   do not show staleness and 87 % of samples repeat, so loss detection must use esc_errorcount / online flag.
-  NEXT (step 2 cont.): (c) IMU: measure lockstep cost of a faster gz IMU (x500_base imu update_rate 250 -> 500/1000 via
-  model_variant key), then rotor-speed-tied vibration noise (blade-pass) - check gz sensor noise options from source
-  first; (d) re-fly PID baseline on the v2 sim (defaults + same tuning budget) BEFORE any INDI v2 flight.
+  DONE (c, part 1): `--imu-rate N` (IMU update_rate + world physics step, PX4_GZ_WORLDS points at the copy because
+  px4-rc.gzsim re-applies max_step_size); 1000 Hz runs real time at speed 1 (`results/s2_imu_rate.md`).
+  NEXT (step 2 cont.): (c1) find why esc_status / vehicle_angular_velocity are logged at 250 Hz in the 1000 Hz run
+  (logger interval vs loop rate: IMU_INTEG_RATE 250?, IMU_GYRO_RATEMAX 800) and measure cost at speed 2-4 / 6 parallel;
+  then choose the v2 IMU rate (D-imurate); (c2) rotor-speed-tied vibration noise (blade-pass) - check gz sensor noise
+  options from source first (likely a GZBridge-side or IMU-plugin addition); (c3) pick v2 erpm-drop 1 % (D-erpm);
+  (d) re-fly PID baseline on the v2 sim (defaults + same tuning budget) BEFORE any INDI v2 flight.
 
 - SESSION 26 (2026-11-14): **v1 report closed at 743acd7140** (O-2). Review s25 applied (1 must-fix, 10 should-fix,
   5 minor; af424cf88a); T8 summarised on its 10 existing seeds (79c41e5b94, D-t8-10); 5 seed-1 time-series figures
@@ -507,7 +513,6 @@ owner decisions when you first act on them.
 
 ## Journal
 
-- 2026-11-14 session 27: stage-2 sim: true rotor speed and AM32 eRPM telemetry model in gz_bridge (SIM_GZ_ESC_FB 1/2), bench --sim v2. Agents: 1 haiku.
 
 - 2026-11-13: session 1 started from scratch; created `STATE.md`, `DECISIONS.md`,
   Docker image `px4-indi-sim`. Cut off by the 5-hour usage limit at 08:13.
@@ -548,3 +553,5 @@ owner decisions when you first act on them.
 - 2026-11-14 session 23: ch. 3 equations checked against PDFs (2 corrected, 0 open); ch. 6 two checks resolved; ch. 5 G2_Y range fixed. Agents: 1 haiku.
 - 2026-11-14 session 26: review s25 applied, T8 on 10 seeds, ch. 8 figures, PDF committed; v1 report closed at 743acd7140.
 - 2026-11-14 session 26: stage 2 started: gz rotor-speed path verified from source (plan/s2_rotor_speed.md); AM32 eRPM note (gaps listed). Agents s26: 1 haiku.
+- 2026-11-14 session 27: stage-2 sim: true rotor speed and AM32 eRPM telemetry model in gz_bridge (SIM_GZ_ESC_FB 1/2), bench --sim v2. Agents: 1 haiku.
+- 2026-11-14 session 27: --imu-rate option (1000 Hz gyro, real time at speed 1).
