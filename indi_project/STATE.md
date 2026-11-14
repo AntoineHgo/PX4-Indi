@@ -180,7 +180,12 @@ owner decisions when you first act on them.
   RUNNING detached since 18:46: `bench/s2_indi_tune_r1.sh` (INDI v2 r1, 24 cand x 2 seeds, 240 flights, jobs 6,
   4 h timeout, log `results/s2_tuning/indi_r1.log`, output `results/s2_tuning/indi/r1/`) on build/px4_sitl_default
   (O-11 tree): do not rebuild default while it runs. Checked c00: MC_INDI_EN 1, G1 174/174/12.2, indi_rate_status +
-  actuator_torque_measured logged, no rate_ctrl_status. QUEUED detached behind it: `bench/s2_indi_tune_r2.sh` (waits
+  actuator_torque_measured logged, no rate_ctrl_status. First scores (18:49): c00 J 1.251, c01 1.240, 0 failures. c00 (frozen v1 gains, identified
+  G1) vs PID defaults (ref_fac, 3 seeds): step_roll 2.97 vs 3.35 deg (0.89x) at 1.36x effort (above the 1.25 limit),
+  rate_step_roll 0.357 vs 0.372 (0.96x) at 0.69x effort, step_yaw 18.5 vs 14.8 deg (1.25x), hover 0.078 vs 0.056 m
+  (noise term). EXPLAINED, not a bug: with G1_Y 7.4 (< true 12.2) the regression runs had a 1.65x yaw loop gain
+  (yaw 15.8 deg); the correct G1 gives K_Y exactly, so yaw is slower, and roll gains rise 1.39x (241 -> 174), hence
+  the roll effort. The search varies K_Y and K_R, so r1 should absorb both. QUEUED detached behind it: `bench/s2_indi_tune_r2.sh` (waits
   for r1, writes the centre `bench/params/indi_v2_r1_best.json` = lowest J with no failure, then 16 x 3 seeds, log
   `results/s2_tuning/indi_r2_queue.log`, output `results/s2_tuning/indi/r2/`). NEXT: (1) when r1 ends, write `results/s2_tuning/indi_r1.md`
   (best vs c00 = frozen gains with identified G1, vs PID r1f c05 J 0.925 and defaults 0.966); (2) check r2 (already queued) when it ends; v2 tuned INDI = r2 best
