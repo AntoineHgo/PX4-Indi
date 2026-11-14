@@ -93,6 +93,31 @@ it, and if it does, record why in `DECISIONS.md`.
   - Record O-11 in `DECISIONS.md` as an owner decision, and update `plan/architecture.md` and report ch. 4-5
     (design/implementation) to describe the final placement, stating that v1 results were obtained with the
     earlier in-`mc_rate_control` placement and why the regression check makes them comparable.
+- **O-12 Spend simulation time on promising configurations only (owner, 2026-11-14, during session 41).**
+  Batches have been flown to completion even when early runs already showed that a candidate was hopeless.
+  From now on:
+  - **Abort a run that is obviously bad.** Add a watchdog to `bench/run_scenario.py` that ends the run early
+    and records it as a failure (with the reason) on divergence: for example a tilt above ~60 deg, an
+    altitude loss well beyond the scenario's tolerance, NaN in the controller status, or motors saturated
+    for most of a window. Choose the thresholds, justify them in `DECISIONS.md`, and check that no run in
+    the existing PID or INDI results would have tripped them by mistake. The run must not burn its whole
+    wall-clock timeout.
+  - **Prune bad candidates early in tuning and exploration.** Fly in stages, for example successive halving:
+    every candidate on 1 seed of the 2-3 most discriminating scenarios first; drop the candidates that fail
+    or whose cost is clearly worse than the incumbent (e.g. J > 1.3x the best so far); move only the top few
+    to more seeds and scenarios. Write `run_batch.sh` / `tune.py` so a pruned candidate's remaining runs are
+    never launched, and stop a whole batch if its first runs all fail (that points to a setup bug, not to
+    the candidates).
+  - **Fly extensive tests only once a configuration is promising.** Multi-seed, full-scenario sweeps (10
+    seeds, held-out, seen set) are for a configuration that has already passed the staged screening and a
+    cheap sanity flight. No large batch for an unscreened idea.
+  - **Honesty limit, not negotiable.** Early stopping is for tuning and exploration. In a *validation* batch
+    (held-out or seen set) of a frozen configuration, never drop a seed or scenario because its result looks
+    bad: an aborted run counts as a failure in the verdict and is reported. A validation batch may be stopped
+    as a whole only for a setup or infrastructure fault, and is then re-flown in full. The held-out V batch
+    and the seen-set batch queued in session 41 run to completion as planned.
+  - Record O-12 in `DECISIONS.md` as an owner decision and say in report ch. 7 (tuning methodology) that
+    staged pruning was used from this point on.
 
 ## Order of work
 
