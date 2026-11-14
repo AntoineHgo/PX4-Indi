@@ -2,7 +2,7 @@
 # v3 stage-1 screening (session 46, O-12, D-outer-check): MC_INDI_ACT_BLD Tb in {0, 0.1, 0.3, 1.0} on indi_v2 with
 # tuned PID's outer gains, vs pid_tuned, seed 1, on motor_loss_0 (T8, speed 1), mismatch_combined_rate and step_roll
 # (speed 4); v2 sim config as s2_seen_v2.sh. One entry across all five configs at a time. Watchdog on (default).
-# Resumable. Ends with V3_SCREEN_DONE.
+# Resumable. Stage 2: SEEDS="2 3" CONFIGS="pid_tuned v3_tb0.3 v3_tb1.0" END=V3_STAGE2_DONE. Ends with $END.
 cd /home/ahugo/Documents/Drotek/Codes/PX4-Indi
 P=/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_project
 D=$P/results/v3_screen/runs
@@ -22,8 +22,8 @@ run() {  # entry controller seed
 }
 for seed in ${SEEDS:-1}; do
 	for e in motor_loss_0 mismatch_combined_rate step_roll; do
-		for c in pid_tuned v3_tb0 v3_tb0.1 v3_tb0.3 v3_tb1.0; do run $e $c $seed & done
+		for c in ${CONFIGS:-pid_tuned v3_tb0 v3_tb0.1 v3_tb0.3 v3_tb1.0}; do run $e $c $seed & done
 		wait
 	done
 done
-echo V3_SCREEN_DONE
+echo ${END:-V3_SCREEN_DONE}
