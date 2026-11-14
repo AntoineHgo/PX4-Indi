@@ -68,7 +68,7 @@
 ## In progress
 
 - DONE session 11: T8 motor_loss_0 (f3205105bd): runtime SIM_GZ_EC_MIN1/MAX1 x sqrt(0.7) (thrust x0.70), attitude mode, then +45 deg yaw step; PID seed 1: motor 0 0.73 -> 0.905, saturated 1.5 s, peak tilt 5.1 deg, altitude sags 1.2 m (attitude mode, fixed thrust; identical for both controllers). Notes `plan/t8_motor_loss_log.md`.
-- IN FLIGHT session 11: sonnet agent implementing D-yawnu from `plan/yawnu_spec.md`. If the session was cut: check `git status` for uncommitted changes in `src/lib/indi_rate_control/` and `git log` before relaunching.
+- DONE session 11: D-yawnu implemented (d2fb64330f firmware+3 gtests, 17/17 pass, SITL build OK; 5cbf7478fc param doc; diff reviewed by orchestrator). Hover check flying: c11+YAW_CUT 2 seeds 1-3 -> `results/yawnu_check_s11/hover/seed*/`, log `results/yawnu_check_s11.log` (untracked); if no metrics, re-run the command recorded in `results/yawnu_check_s11.md` or STATE next actions.
 - DONE session 11 (`results/tuning/r2f_yc2.md`): `python3 bench/tune.py --family indi --round-name r2f_yc2 --n-candidates 1 --seeds 1 2 3 --jobs 6 --sampler-seed 0 --span-factor 1.0 --base-params bench/params/indi_v1.params --center bench/params/indi_c11_yc2.json` (c11 with YAW_CUT 2 Hz, 15 flights), log `results/tuning/r2f_yc2.log`. Resumable: re-run if summary.csv missing.
 - Nothing running. r2 finished and committed (`results/tuning/r2.md`).
 - DONE session 10: T6 gust_x + T7 payload_add (D-dist, commits 160dda984d,
@@ -100,9 +100,7 @@
 
 ## Next concrete actions
 
-00. Session 11 next steps: (a) implement D-yawnu with one sonnet agent from
-   `plan/yawnu_spec.md` (firmware + gtest, separate param-description
-   commit), rebuild SITL, check hover effort with `bench/indi_terms.py`
+00. Session 11 next steps: (a) DONE implement D-yawnu; NEXT check hover effort with `bench/indi_terms.py`
    and `bench/effort_axes.py` on c11 + YAW_CUT 2 (expect yaw drms ~0); then
    an INDI round 3 (new YAW_CUT semantics, say so) on the 5 tuning
    scenarios x 3 seeds; (b) T8 result: see `plan/t8_motor_loss_log.md`;
