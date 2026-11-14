@@ -33,13 +33,11 @@
 
 #pragma once
 
-#include <lib/indi_rate_control/indi_rate_control.hpp>
 #include <lib/rate_control/gain_compression.hpp>
 #include <lib/rate_control/rate_control.hpp>
 #include <lib/mathlib/math/filter/AlphaFilter.hpp>
 #include <lib/matrix/matrix/math.hpp>
 #include <lib/perf/perf_counter.h>
-#include <parameters/param.h>
 #include <px4_platform_common/defines.h>
 #include <px4_platform_common/module.h>
 #include <px4_platform_common/module_params.h>
@@ -53,8 +51,6 @@
 #include <uORB/topics/actuator_controls_status.h>
 #include <uORB/topics/battery_status.h>
 #include <uORB/topics/control_allocator_status.h>
-#include <uORB/topics/actuator_torque_measured.h>
-#include <uORB/topics/indi_rate_status.h>
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/rate_ctrl_status.h>
@@ -97,20 +93,11 @@ private:
 
 	void updateActuatorControlsStatus(const vehicle_torque_setpoint_s &vehicle_torque_setpoint, float dt);
 
-	/**
-	 * Run the INDI rate law, publishes indi_rate_status
-	 * @return normalised torque setpoint
-	 */
-	matrix::Vector3f runIndiRateControl(const matrix::Vector3f &rates, const matrix::Vector3f &angular_accel, float dt,
-					    bool landed);
-
 	RateControl _rate_control; ///< class for rate control calculations
 	GainCompression3d _gain_compression; ///< reduces the loop gain when an oscillation is detected
-	IndiRateControl _indi; ///< INDI rate law, used instead of _rate_control when selected
 
 	uORB::Subscription _battery_status_sub{ORB_ID(battery_status)};
 	uORB::Subscription _control_allocator_status_sub{ORB_ID(control_allocator_status)};
-	uORB::Subscription _actuator_torque_measured_sub{ORB_ID(actuator_torque_measured)};
 	uORB::Subscription _manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)};
 	uORB::Subscription _vehicle_control_mode_sub{ORB_ID(vehicle_control_mode)};
 	uORB::Subscription _vehicle_land_detected_sub{ORB_ID(vehicle_land_detected)};
@@ -123,7 +110,6 @@ private:
 
 	uORB::Publication<actuator_controls_status_s>	_actuator_controls_status_pub{ORB_ID(actuator_controls_status_0)};
 	uORB::PublicationMulti<rate_ctrl_status_s>	_controller_status_pub{ORB_ID(rate_ctrl_status)};
-	uORB::Publication<indi_rate_status_s>		_indi_rate_status_pub{ORB_ID(indi_rate_status)};
 	uORB::Publication<vehicle_rates_setpoint_s>	_vehicle_rates_setpoint_pub{ORB_ID(vehicle_rates_setpoint)};
 	uORB::Publication<vehicle_thrust_setpoint_s>	_vehicle_thrust_setpoint_pub;
 	uORB::Publication<vehicle_torque_setpoint_s>	_vehicle_torque_setpoint_pub;
@@ -133,21 +119,6 @@ private:
 
 	bool _landed{true};
 	bool _maybe_landed{true};
-
-	// last measured actuator torque from the allocator (ESC rpm), all zero and invalid until one is received
-	actuator_torque_measured_s _torque_measured{};
-
-	// INDI rate law selection, latched while disarmed
-	bool _use_indi{false};
-
-	// previous torque setpoint publication and allocator feedback, for the INDI actuator model
-	matrix::Vector3f _prev_torque_setpoint{};
-	hrt_abstime _prev_torque_setpoint_time{0};
-	matrix::Vector3f _unallocated_torque{};
-	hrt_abstime _unallocated_torque_time{0};
-
-	param_t _param_imu_gyro_cutoff{PARAM_INVALID};
-	param_t _param_imu_dgyro_cutoff{PARAM_INVALID};
 
 	hrt_abstime _last_run{0};
 
@@ -199,21 +170,6 @@ private:
 		(ParamBool<px4::params::MC_BAT_SCALE_EN>) _param_mc_bat_scale_en,
 
 		(ParamBool<px4::params::MC_GC_EN>) _param_mc_gc_en,
-		(ParamFloat<px4::params::MC_GC_GAIN_MIN>) _param_mc_gc_gain_min,
-
-		(ParamInt<px4::params::MC_RATE_CTL_TYPE>) _param_mc_rate_ctl_type,
-		(ParamFloat<px4::params::MC_INDI_G1_R>) _param_mc_indi_g1_r,
-		(ParamFloat<px4::params::MC_INDI_G1_P>) _param_mc_indi_g1_p,
-		(ParamFloat<px4::params::MC_INDI_G1_Y>) _param_mc_indi_g1_y,
-		(ParamFloat<px4::params::MC_INDI_G2_Y>) _param_mc_indi_g2_y,
-		(ParamFloat<px4::params::MC_INDI_K_R>) _param_mc_indi_k_r,
-		(ParamFloat<px4::params::MC_INDI_K_P>) _param_mc_indi_k_p,
-		(ParamFloat<px4::params::MC_INDI_K_Y>) _param_mc_indi_k_y,
-		(ParamFloat<px4::params::MC_INDI_ACT_TC>) _param_mc_indi_act_tc,
-		(ParamInt<px4::params::MC_INDI_DELAY>) _param_mc_indi_delay,
-		(ParamInt<px4::params::MC_INDI_ERPM_DLY>) _param_mc_indi_erpm_dly,
-		(ParamFloat<px4::params::MC_INDI_ERPM_TO>) _param_mc_indi_erpm_to,
-		(ParamFloat<px4::params::MC_INDI_DT_MAX>) _param_mc_indi_dt_max,
-		(ParamFloat<px4::params::MC_INDI_YAW_CUT>) _param_mc_indi_yaw_cut
+		(ParamFloat<px4::params::MC_GC_GAIN_MIN>) _param_mc_gc_gain_min
 	)
 };
