@@ -229,3 +229,25 @@ hover motor-rate effort 8x PID's (`results/sync_check_v0.md` sec. 3).
   the environment under a running tuning batch.
 - Limitations for the report: drag ignores vehicle velocity and rotor
   inflow effects; the payload adds weight but not inertial mass.
+
+## D-yawnu: YAW_CUT also filters the yaw rate fed back in nu (session 11, 2026-11-14)
+
+Evidence: `results/tuning/r2f_yc2.md`. With a_f,yaw and t_f,yaw filtered at
+PID's 2 Hz, INDI hover motor-rate effort is still ~2.1x PID's; the chatter is
+the gyro noise in nu_yaw = K_Y (r_sp - r), gain K_Y/G1_Y ~ 0.8.
+
+- **Chosen:** when `MC_INDI_YAW_CUT` > 0, the yaw rate used in nu goes
+  through a third low-pass instance with the same cut-off (setpoint not
+  filtered). One knob then sets the yaw-axis noise bandwidth for every
+  feedback path of the yaw increment, as `MC_YAW_TQ_CUTOFF` does for PID's
+  whole yaw output. YAW_CUT = 0 stays bit-identical to the current code.
+  r1/r2 results were obtained with the old semantics; the round that uses
+  the new one must say so.
+- Rejected: filtering the whole yaw increment (output) — this adds lag in
+  series with the actuator, which INDI's increment form assumes is captured
+  by t_f only, and breaks the a_f/t_f synchronisation of D-arch-4.
+- Rejected: only shrinking K_Y — the tuner already had K_Y in its space
+  (span 1.5 around 7.1) and settled at 5.8; lower K_Y trades away the yaw
+  tracking that is INDI's measured advantage.
+- Rejected: a separate parameter — enlarges the tuning space for one knob
+  whose physical meaning (yaw noise bandwidth) is the same.
