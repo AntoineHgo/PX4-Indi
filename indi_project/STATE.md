@@ -59,6 +59,10 @@
   `results/tuning/{pid,indi}/r2/summary.csv`. Next session: if no
   `px4-indi-*` container runs and a summary lacks candidates, re-run the
   command in the log header (resumable). Then write `results/tuning/r2.md`.
+- Session 9 subagents in flight: haiku -> `research/notes/steffensen2023.md`;
+  sonnet -> `report/04_px4_architecture.md` + `plan/px4_analysis_verification.md`
+  (chapter 4 draft + code check of the integration analysis). If a file is
+  missing or partial next session, relaunch only for what is missing.
 - Nothing running. Session 8 finished PID r1 and INDI r1.
 - Session 7 (2026-11-14): PID tuning round 1 launched detached at the end
   of the session: `python3 bench/tune.py --family pid --round-name r1
@@ -200,7 +204,7 @@
 | 5 (2026-11-13) | 1 sonnet (INDI lib, 27 tool calls) | 2 runs (step_pitch, step_yaw PID seed1), 0 failures | ~$2.4 used of $3 cap |
 | 7 (2026-11-14) | 1 sonnet (tune.py, 16 tool calls) | 2 INDI runs + 4 smoke tuning flights; PID tuning r1 (~250 flights) left running detached | ~$2.4 of $3 cap |
 | 8 (2026-11-14) | 1 sonnet (yaw cutoff, 14 tool calls) | 1 SITL build, 6 check flights (2 tooling failures), PID r1 finished (240), INDI r1 finished (240, 0 failures) | ~$1.8 of $2.61 |
-| 9 (2026-11-14) | 0 | round 2 launched (~480 flights) | triage + yaw effort analysis |
+| 9 (2026-11-14) | 1 haiku (steffensen2023), 1 sonnet (ch. 4 draft) | round 2 launched (~480 flights) | triage + yaw effort analysis |
 | 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build, 2 INDI runs (hover, step_roll seed1), 0 failures | $1.63 cap |
 
 ## Journal
