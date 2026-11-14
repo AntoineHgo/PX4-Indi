@@ -96,6 +96,8 @@
 - **Session 19:** review s1/s3/s5 committed; its top bug (yaw filters zeroed every landed cycle) fixed post-freeze
   (1d776dc6dc, 19/19 gtests, D-landyaw); check re-fly: metric windows unchanged within noise (`results/landyaw_check_s19.md`). Review s5 explains the ACT_TC sweep: model slower than
   plant is a gain reduction (safe); dangerous case is plant slower than model, band-pass boost at 1/(2 pi sqrt(tau_e tau_t)).
+- **Session 22:** report has ch. 1-10 + appendix A (bibliography chapter missing). Speed check: PID speed-invariant,
+  INDI H6 attitude RMS +4 % at speed 1 (still better than PID 3/3 seeds, margin ~11 % -> ~7 %); H5 loss unchanged.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -125,9 +127,8 @@
   consolidated bibliography chapter (from research/sources.md), ch. 2 [TO VERIFY]/[GAP] items, REPORT FIXES list
   (session 14 entry), ch. 9.4 speed [TO VERIFY] (batch below), FIGURE for H5 spectrum (optional).
   DONE (O) INDI speed-1 check (`results/speedcheck_indi_s22.md`, ch. 9.4 updated): rate/effort agree <= 4 %, H5 loss
-  unchanged; H6 attitude RMS +4 % at speed 1 (half the 8 % margin). IN FLIGHT (P) CPU: PID step_diag speed 1 seeds 1-3
-  (CONTROLLERS=pid_default, no PARAMS_FILE, NAME_TAG=spd22p) -> results/runs/step_diag/pid_default/seed<N>; then
-  add the H6 ratio at speed 1 to speedcheck_indi_s22.md and ch. 9.4.
+  unchanged; H6 attitude RMS +4 % at speed 1. DONE (P) PID step_diag speed 1: PID speed-invariant (<0.2 %), INDI/PID H6 ratio 0.88-0.97 at
+  speed 1 vs 0.87-0.90 at speed 4 (INDI is speed-sensitive, cause open); ch. 9.4 updated.
 
 - SESSION 21 (2026-11-14) DONE: review complete + triaged (28eba44030, items 8-13 + triage in its Summary);
   MC_INDI_G2_Y max 100 -> 1 (2bb0ba3ac9, SITL build OK; DT_MAX min 0.01 and K min 1 already guard review item 11
@@ -478,5 +479,5 @@
 - 2026-11-14 session 19: landed yaw-filter bug fixed (D-landyaw); review s1/3/5 committed; ch. 3 + review s2/4/6 + fix check in flight.
 - 2026-11-14 session 18: ch. 6 simulation drafted; ch. 7 PID count item resolved; fable review (sections 1,3,5) relaunched.
 - 2026-11-14 session 17: ACT_TC sweep summarised (no limit cycle from model error alone); fable control-law review relaunched.
-- 2026-11-14 session 22: figures in ch. 8-9, review limitations, ch. 1, ch. 10, appendix A drafted; INDI speed check flying.
+- 2026-11-14 session 22: figures in ch. 8-9, review limitations, ch. 1, ch. 10, appendix A drafted; speed check: INDI (not PID) is speed-sensitive on H6 (+4 % at speed 1).
 - 2026-11-14 session 21: review complete and triaged; MC_INDI_G2_Y bounded; figure script + 4 figures; ch. 2 drafted.
