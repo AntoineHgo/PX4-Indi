@@ -123,6 +123,8 @@ owner decisions when you first act on them.
   ~1/10 of physical; `results/s2_ident_g2.md`). D-omega2 decided: u = (omega/omega_max)^2 in torque space through
   the allocator; requires THR_MDL_FAC 0.683 (fitted, `results/s2_thr_mdl_fac.md`) for BOTH controllers, so the
   v2 PID tuning check must be repeated on the FAC config.
+- **Stage 2 (session 33):** D-omega2 library part done (895b55aed8, 35/35 gtests). v2 PID r2 (FAC 0): defaults
+  stay. Running: v1 ACT_TC/G2 re-checks, then PID r1f on the FAC config.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -151,8 +153,14 @@ owner decisions when you first act on them.
   35/35 gtests (23 old unmodified), log `plan/impl_log_omega2_lib.md`. Diff reviewed by me (selection/feeds OK).
   Open from it: G2 yaw term sees a t_f step at the switch if model != measurement (not mitigated).
   DONE r1f script + chain `bench/s2_after_rebuild.sh` (recheck v1 then r1f, sequential) (8c4f0faadc).
-  NEXT after r2 ends: analyse r2 -> `results/s2_tuning/r2.md`; rebuild px4_sitl_default; hover check PID+FAC;
-  `setsid indi_project/bench/s2_after_rebuild.sh > /dev/null 2>&1 &`. Then module wiring of D-omega2 (sonnet:
+  DONE r2 (`results/s2_tuning/r2.md`): best c14 J 0.956, inside ~5 % seed spread -> defaults stay (FAC 0 record).
+  DONE rebuild px4_sitl_default (includes 895b55aed8; v1 path bit-identical per gtest). Separate FAC hover check
+  SKIPPED (budget): the r1f reference flights (defaults + v2_fac.params) are that check; inspect hover
+  actuator_motors median (~0.59 predicted) in `results/s2_tuning/ref_fac/` first.
+  RUNNING (detached, 17:15): `bench/s2_after_rebuild.sh` = s2_recheck_v1 (105 runs, log
+  `results/s2_recheck_v1/run.log`) then r1f (log `results/s2_tuning_r1f.log`). If dead and incomplete, relaunch
+  `setsid indi_project/bench/s2_after_rebuild.sh > /dev/null 2>&1 &` (both parts resumable? recheck: check
+  run_batch skip rule first). NEXT: analyse recheck vs v1 frozen; analyse r1f; module wiring (below). Then module wiring of D-omega2 (sonnet:
   esc_status -> u_i -> tau_meas = B u in allocator-normalised units, MC_INDI_W_MAX/ERPM_DLY/ERPM_TO, status field).
 
 - SESSION 32 (2026-11-14): PID r2 still RUNNING at start (6/16), 9/16 at end; same relaunch rule as s31 below.
@@ -609,6 +617,7 @@ owner decisions when you first act on them.
 | 11 (2026-11-14) | 2 sonnet (T8 motor loss 14 calls; D-yawnu 13 calls) | 15 INDI (r2f_yc2) + 1 T8 PID + 3 hover (yawnu), 0 failures; r2f_yawnu (15) left running | yaw effort root cause and fix, ~$2.4 of $3 |
 | 13 (2026-11-14) | 0 | 3 T8 PID, 15 INDI r3f_yawsp, 72 INDI r4, 15 INDI r4f, 3 INDI T8, 1 SITL build, unit tests | r3 analysis, D-yawsp, D-hovernoise, D-r4; ~$2 of $3 |
 | 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build, 2 INDI runs (hover, step_roll seed1), 0 failures | $1.63 cap |
+| 33 (2026-11-14) | 1 sonnet (omega2 lib, 29 calls, ~$0.6) | 1 SITL build; r2 finished (240); chain launched | ~$2.2 of $3 |
 | 27 (2026-11-14) | 1 haiku (AM32 gaps, 22 calls) | 2 SITL builds, 5 check flights (2 invalid: physics step reset, fixed) | stage-2 sim: rotor speed, eRPM model, IMU rate; ~$2.9 of $3 |
 
 ## Journal
