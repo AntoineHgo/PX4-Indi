@@ -78,6 +78,13 @@
 
 ## In progress
 
+- r3 FINISHED (16/16, `results/tuning/indi/r3/`); best: `[tune] c13 done: J=1.0552 failures=0`.
+  NEXT: write `results/tuning/r3.md` (J vs PID 0.96, effort ratios,
+  `bench/yaw_step_effort.py` on best step_yaw), commit r3 metrics. Queued PID
+  T8 batch never started (waiter matched its own pgrep pattern): run
+  `results/t8_pid_s12.log` command by hand without the loop. Never use
+  `pkill -f`/`pgrep -f` with a pattern that appears in the caller's command.
+
 - QUEUED session 12: after r3 ends, PID T8 motor_loss_0 seeds 1-3 (speed 1,
   log `results/t8_pid_s12.log`, output `results/runs/motor_loss_0/pid_default/`).
   INDI T8 waits for the r3 best candidate.
