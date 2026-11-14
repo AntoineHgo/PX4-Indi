@@ -37,6 +37,10 @@ def _rate_pulses(n=3):
 SCENARIOS = {
     "hover": dict(mode="position", axis=None, segments=[("hold", 30.0, 0.0)]),
     "step_roll": dict(mode="attitude", axis="roll", segments=_attitude_steps("roll", STEP_DEG, 3.0)),
+    # T9: plant mismatch, Ixx and Iyy x1.3 in the sim (controllers unchanged), T2 attitude step pattern.
+    # model_variant: scale factors, see bench/model_variant.py (reused by held-out H5).
+    "mismatch_inertia": dict(mode="attitude", axis="roll", segments=_attitude_steps("roll", STEP_DEG, 3.0),
+                             model_variant=dict(ixx=1.3, iyy=1.3)),
     "step_pitch": dict(mode="attitude", axis="pitch", segments=_attitude_steps("pitch", STEP_DEG, 3.0)),
     "step_yaw": dict(mode="attitude", axis="yaw", segments=_attitude_steps("yaw", YAW_STEP_DEG, 4.0)),
     # Held-out H6: simultaneous roll and pitch steps.

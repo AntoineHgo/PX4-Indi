@@ -22,6 +22,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from scenarios import SCENARIOS  # noqa: E402
+from model_variant import build_variant  # noqa: E402
 
 REPO = os.environ.get("PX4_INDI_REPO", os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 BUILD = os.path.join(REPO, "build/px4_sitl_default")
@@ -66,6 +67,13 @@ class Sim:
         env.update(HEADLESS="1", PX4_SIM_MODEL="gz_x500", PX4_SIM_SPEED_FACTOR=str(self.a.speed))
         self.env = env
 
+    def apply_model_variant(self, spec):
+        """Per-run model copy with scaled values; PX4 spawns $PX4_GZ_MODELS/x500, x500_base resolves via the path."""
+        vdir, rec = build_variant(spec, self.out, self.env["PX4_GZ_MODELS"])
+        self.env["PX4_GZ_MODELS"] = vdir
+        self.env["GZ_SIM_RESOURCE_PATH"] = vdir + ":" + self.env.get("GZ_SIM_RESOURCE_PATH", "")
+        return rec
+
     def spawn(self, argv, logname):
         f = open(os.path.join(self.out, logname), "w")
         p = subprocess.Popen(argv, env=self.env, stdout=f, stderr=subprocess.STDOUT, start_new_session=True,
@@ -105,6 +113,12 @@ class Sim:
         self.px4 = self.spawn([f"{BUILD}/bin/px4", "-i", str(self.a.instance), "-d", "-w", self.rootfs,
                                f"{BUILD}/etc"], "px4.log")
         self.wait_log("Startup script returned successfully", 180)
+        try:  # evidence of the model gz actually loaded (inertia, link poses); informational only
+            r = subprocess.run(["gz", "model", "-m", "x500_0"], capture_output=True, text=True, env=self.env,
+                               timeout=30)
+            open(os.path.join(self.out, "gz_model_info.txt"), "w").write(r.stdout + r.stderr)
+        except Exception as e:  # noqa: BLE001
+            open(os.path.join(self.out, "gz_model_info.txt"), "w").write(f"failed: {e}\n")
 
     def cli(self, tool, *args, timeout=30):
         r = subprocess.run([f"{BUILD}/bin/{tool}", "--instance", str(self.a.instance), *args], capture_output=True,
@@ -277,6 +291,8 @@ def main():
     ok = False
     try:
         sim.load_env()
+        if sc.get("model_variant"):
+            meta["model_variant"] = sim.apply_model_variant(sc["model_variant"])
         sim.start_gz()
         sim.start_px4()
         if sc.get("disturbance"):  # idle injector: loads the wrench system, waits for the onset trigger
