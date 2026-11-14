@@ -123,11 +123,14 @@ public:
 	void setDelaySamples(int delay_samples) { _delay_samples_target = math::constrain(delay_samples, 0, kMaxDelaySamples); }
 
 	/**
-	 * Set the per axis limit of the torque increment, non finite or <= 0 values select 1.
+	 * Set the per axis limit of the torque increment. Non finite or <= 0 values are ignored and the last valid
+	 * limit is kept (1, the full torque range, until a valid value is set), so an invalid value never widens it.
 	 */
 	void setMaxIncrement(float max_increment)
 	{
-		_max_increment = (math::isFinite(max_increment) && (max_increment > 0.f)) ? max_increment : 1.f;
+		if (math::isFinite(max_increment) && (max_increment > 0.f)) {
+			_max_increment = max_increment;
+		}
 	}
 
 	/**

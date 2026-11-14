@@ -766,3 +766,16 @@ TEST(IndiRateControlTest, DelayChangeMidRunMovesOneSamplePerCycle)
 	// settled at delay 0: the model output trails the applied torque by less than one ramp step
 	EXPECT_NEAR(t_f_last, slope * 59, slope);
 }
+
+TEST(IndiRateControlTest, InvalidMaxIncrementKeepsLastValidLimit)
+{
+	IndiRateControl ctrl = makeController();
+	ctrl.setMaxIncrement(0.05f);
+	ctrl.setMaxIncrement(0.f);
+	ctrl.setMaxIncrement(-1.f);
+	ctrl.setMaxIncrement(NAN);
+
+	// a large rate error asks for far more than 0.05, the limit set before the invalid values still applies
+	const Vector3f torque = ctrl.update(Vector3f(), Vector3f(1.f, 0.f, 0.f), Vector3f(), Vector3f(), kDt, false);
+	EXPECT_NEAR(torque(0), 0.05f, 1e-6f);
+}
