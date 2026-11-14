@@ -155,3 +155,9 @@ commits.
   Stage-1 tuning uses T1-T4 only: T5-T9 need simulator extensions that do
   not exist yet; when they do, both controllers are re-tuned on the full T
   set with the same budget.
+- 2026-11-14 (session 12): H6 `step_diag` implemented as the T2 pattern
+  (settle 2 s, then 0, +20, 0, -20, 0 deg, 3 s each) on roll and pitch at
+  once; step metrics are reported per axis (`<segment>_roll`,
+  `<segment>_pitch`), primary metric `rotation_angle_rms_deg`. One PID
+  default harness check (seed 1, x4): 6.5 deg, no saturation. Not used for
+  tuning.
