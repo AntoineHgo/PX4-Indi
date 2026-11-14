@@ -667,3 +667,4 @@ owner decisions when you first act on them.
 - 2026-11-14 session 27: --imu-rate option (1000 Hz gyro, real time at speed 1).
 - 2026-11-14 session 30: step 3 items 5 (D-landmodel) and 7 (D-faulthold) in the INDI library, 21/21 gtests; v2 PID r1 flying. Agents: 0.
 - 2026-11-14 session 29: D-notch (ESC-rpm notch in v2, both controllers); dt-jitter fix 68cab62e42 (20/20 gtests); v2 PID tuning r1 launched detached. Agents: 0.
+- 2026-11-14 s33: D-omega2 library (895b55aed8); PID r2 closed (defaults stay, FAC 0); SITL rebuilt; v1 re-checks + PID r1f (FAC) launched.
