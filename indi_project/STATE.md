@@ -208,7 +208,7 @@ owner decisions when you first act on them.
   (t_offboard - 5 s .. t_window_end + 4 s). Run 2 DONE (9ebc74caf6, `results/o12_watchdog_replay.md`): trips only on
   H4, v1 r2 c05 (diverging candidate, J 35.9: correct) and seen-set seed-2 runs (~22:41) with an ESTIMATOR GLITCH
   (height to 35 m at -17 m/s, snaps back to -0.3 m, no failsafe). Cause suspected: host overload, the s43 replay
-  (4 workers) ran beside 6 sims; the s44 replays (22:58-23:05, 23:15-23:22) did too. D-watchdog recorded. Plan
+  (4 workers) ran beside 6 sims; the s44 replays (~22:57-23:06) did too. D-watchdog recorded. Plan
   copy `plan/o12_wip/` removed (the patch is the artifact). `plan/o12_partA.patch` is NOT applied yet.
 - SESSION 43 (2026-11-14, launch 20261114-223703): seen set RUNNING (57/420 at 22:37, ~80 min total), V re-fly
   queued behind it. Done: V' frozen (90339483ef, scenarios.md sec. 9, D-heldout-v3); v3 spec `plan/v3_blend_spec.md`.
@@ -696,7 +696,7 @@ S44 ORDER (first; then S43 a-c with b done except applying the patch):
    glitches in the seen set (s44 finding). Light single-file checks only.
 1. When SEEN_V2_DONE and HELDOUT_V2_REFLY_DONE: scan every seen-set flight.ulg for estimator glitches (|vz| > 10 m/s
    or a height jump > 5 m in 0.5 s inside the window; one process) and list (entry, seed, wall time). Expect seed 2
-   ~22:41 and runs flown 22:58-23:05 and 23:15-23:22. Re-fly each affected (entry, seed) for ALL controllers
+   ~22:41 and runs flown ~22:57-23:06 (seeds 4-5). Re-fly each affected (entry, seed) for ALL controllers
    (D-v2-refly rule; move old runs to runs_suspended/), BEFORE the final verdict tables (S42 step 2).
 2. Apply O-12 part A: `git apply -p0 --directory=indi_project indi_project/plan/o12_partA.patch` (from repo root),
    one SITL smoke flight (hover, pid_default) to check that the watchdog does not trip and run.json is unchanged

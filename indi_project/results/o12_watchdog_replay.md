@@ -162,6 +162,6 @@ Runs without a usable z setpoint are excluded from the setpoint rows; runs count
 - Seen set v2 seed 2 (step_yaw indi_v2, step_pitch pid_default / indi_v2, flown ~22:41): NOT a controller failure.
   Local-position height runs to 35 m at -17 m/s in 4 s and snaps back to -0.3 m (estimator glitch), no failsafe,
   offboard throughout. At that time the session-43 replay (4 workers) was loading the host on top of 6 sims; the
-  session-44 replays (22:58-23:05, ~23:15-23:22) did the same. Suspected infrastructure fault (host overload); the
+  session-44 replays (~22:57-23:06) did the same. Suspected infrastructure fault (host overload); the
   affected (entry, seed) pairs must be identified and re-flown for all controllers (D-v2-refly rule).
 - No threshold change needed: no trip on a run that was flying normally.
