@@ -24,3 +24,23 @@
   (3) Open-loop thrust=hover_estimate/cos(tilt) drifted 20 m in altitude over a roll scenario (3 % thrust error);
   added a PD altitude loop on the thrust in attitude/rate scenarios (same for all controllers).
   (4) Roll +-15 deg for 3 s drifts the vehicle ~30 m horizontally (open-loop attitude; inherent to the spec'd steps).
+
+## Disturbance injection (gust_x, payload_add), session 10
+- Scenarios `gust_x` (settle 10 s + 28 s profile) and `payload_add` (settle 10 s + 30 s) in scenarios.py (key `disturbance`);
+  run through the normal runner / run_batch.sh. `bench/disturbance.py` is spawned by run_scenario.py after PX4 starts,
+  loads `gz-sim-apply-link-wrench-system` at runtime via the world service `/world/default/entity/system/add`
+  (called through the `gz service` CLI: the python binding cannot build `gz.msgs.Plugin`), waits for
+  `disturbance_trigger.json` (onset in PX4 time, written by the runner at the start of the scenario window) and then
+  publishes the wrench at every gz clock tick (250 Hz sim time) on `/world/default/wrench` (ONE-STEP topic).
+  `/wrench/persistent` ACCUMULATES every message: re-publishing it each tick summed the force (vehicle crashed / flew away,
+  gz ODE abort). Output: `disturbance.csv` (sim_time_s, px4_time_s, fx..tz, world frame, applied at the CoM) + `disturbance.log`.
+- Wind is along gz world +x (east) = NED +y; vehicle heading at hover is also east, so the gust shows as body pitch.
+- ULog-vs-gz time offset: **0 s** (to within one 4 ms physics step). PX4 syncs its clock to /world/default/clock on every
+  callback (GZBridge::clockCallback). Checked on the payload_add flight: onset (PX4 time) 44.516 s, motors react 44.536 s.
+  `CLOCK_OFFSET_S = 0.0` in disturbance.py; run.json["disturbance"]["onset_us"] is in ULog time.
+- Assumptions: Cd*A = 0.06 m^2, rho 1.225, centre of pressure 0.05 m above CoM (torque r x F), vehicle velocity neglected,
+  x500 mass 2.0643 kg (2.0 base_link + 4 x 0.016077 rotors), g = 9.8 (world), payload = 0.25 m g = 5.057 N downward,
+  weight only (no added inertial mass or inertia). gust_x window = 28 s (the 15 s hold at 3 m/s IS the 15 s after the gust).
+- metrics.json["disturbance"]: peak_attitude_dev_deg (tilt vs pre-onset body z), peak roll/pitch dev, peak_position_dev_m
+  (horizontal for gust_x, vertical for payload_add), recovery_s = first time >= peak with error <= 0.1 m for 2 s
+  (null if never, within the window), final_position_error_m.

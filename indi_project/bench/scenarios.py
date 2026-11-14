@@ -39,4 +39,11 @@ SCENARIOS = {
     "step_pitch": dict(mode="attitude", axis="pitch", segments=_attitude_steps("pitch", STEP_DEG, 3.0)),
     "step_yaw": dict(mode="attitude", axis="yaw", segments=_attitude_steps("yaw", YAW_STEP_DEG, 4.0)),
     "rate_step_roll": dict(mode="rate", axis="roll", segments=_rate_pulses(3)),
+    # Disturbance scenarios (bench/disturbance.py). Position mode; the segment named "dist" starts the disturbance
+    # profile (profile time 0 = start of that segment). The key `disturbance` selects the injector profile.
+    # gust_x: profile 28 s = 2 ramp + 10 hold + 1 gust + 15 hold at 3 m/s. payload_add: step held 30 s.
+    "gust_x": dict(mode="position", axis=None, disturbance="gust_x",
+                   segments=[("settle", 10.0, 0.0), ("dist", 28.0, 0.0)]),
+    "payload_add": dict(mode="position", axis=None, disturbance="payload_add",
+                        segments=[("settle", 10.0, 0.0), ("dist", 30.0, 0.0)]),
 }

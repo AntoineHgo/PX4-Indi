@@ -271,6 +271,9 @@ def main():
         sim.load_env()
         sim.start_gz()
         sim.start_px4()
+        if sc.get("disturbance"):  # idle injector: loads the wrench system, waits for the onset trigger
+            sim.spawn(["python3", os.path.join(os.path.dirname(os.path.abspath(__file__)), "disturbance.py"),
+                       "--profile", sc["disturbance"], "--out", a.out], "disturbance.stdout")
         for k, v in {**BASE_PARAMS, **overlay}.items():
             sim.set_param(k, v)
             meta["params_applied"][k] = v
@@ -316,6 +319,12 @@ def main():
         # ---- scenario ----
         axis, mode = sc["axis"], sc["mode"]
         meta["t_window_start_us"] = int(sim.t * 1e6)
+        if sc.get("disturbance"):
+            # onset = start of the segment named "dist" (PX4 time); the injector (started earlier, idle) reads it
+            onset = sim.t + sum(d for n, d, _ in sc["segments"][:[n for n, _, _ in sc["segments"]].index("dist")])
+            meta["disturbance"] = {"profile": sc["disturbance"], "onset_px4_s": onset, "onset_us": int(onset * 1e6),
+                                   "csv": "disturbance.csv"}
+            json.dump({"onset_px4_s": onset}, open(os.path.join(a.out, "disturbance_trigger.json"), "w"))
         prev = 0.0
         for name, dur, val in sc["segments"]:
             ev = {"name": name, "t_us": int(sim.t * 1e6), "dur_s": dur, "mode": mode, "axis": axis,

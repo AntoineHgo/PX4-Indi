@@ -99,6 +99,69 @@ def step_metrics(t, x, t0, dur, value, amp_floor):
             "final_error_pct": float((y[-1] - 1.0) * 100.0)}
 
 
+REC_BAND_M = 0.1   # recovery: position error back within this band ...
+REC_HOLD_S = 2.0   # ... and staying there for this long
+
+
+def disturbance_metrics(dist, lp, att, run, w1):
+    """Peak deviations and recovery time after the disturbance onset (run.json["disturbance"]["onset_us"], ULog time).
+
+    attitude deviation: tilt angle between the body z axis and its pre-onset value (median of the last 1 s before onset),
+      and peak |roll|,|pitch| deviation from the pre-onset median (deg).
+    position deviation: from the hold position; horizontal norm for gust_x, |vertical| for payload_add.
+    recovery_s: from onset to the earliest time t >= t_peak such that the error stays <= REC_BAND_M for REC_HOLD_S
+      (up to the end of the evaluation window); None if it never does."""
+    t0 = dist["onset_us"]
+    prof = dist["profile"]
+    res = {"profile": prof, "onset_s": t0 * 1e-6, "recovery_band_m": REC_BAND_M, "recovery_hold_s": REC_HOLD_S}
+    # attitude
+    ta = att["timestamp"]
+    q = qcols(att, "q")
+    pre = (ta >= t0 - 1_000_000) & (ta <= t0)
+    post = (ta >= t0) & (ta <= w1)
+    if pre.any() and post.any():
+        roll, pitch, _ = quat_to_euler(q)
+        r0, p0 = np.median(roll[pre]), np.median(pitch[pre])
+        dr, dp = np.degrees(roll[post] - r0), np.degrees(pitch[post] - p0)
+
+        def zaxis(qq):  # body z axis in world frame
+            w, x, y, z = qq[:, 0], qq[:, 1], qq[:, 2], qq[:, 3]
+            return np.column_stack([2 * (x * z + w * y), 2 * (y * z - w * x), 1 - 2 * (x * x + y * y)])
+        z0 = zaxis(q[pre]).mean(axis=0)
+        z0 /= np.linalg.norm(z0)
+        tilt = np.degrees(np.arccos(np.clip(zaxis(q[post]) @ z0, -1, 1)))
+        res.update({"peak_attitude_dev_deg": float(tilt.max()), "peak_roll_dev_deg": float(np.abs(dr).max()),
+                    "peak_pitch_dev_deg": float(np.abs(dp).max())})
+    # position
+    t = lp["timestamp"]
+    m = (t >= t0) & (t <= w1)
+    ref = run.get("hold_pos_ned") or [float(lp[k][t >= t0][0]) for k in ("x", "y", "z")]
+    if m.any():
+        dx, dy, dz = lp["x"][m] - ref[0], lp["y"][m] - ref[1], lp["z"][m] - ref[2]
+        err = np.abs(dz) if prof == "payload_add" else np.hypot(dx, dy)
+        tt = t[m] * 1e-6
+        i_pk = int(np.argmax(err))
+        res.update({"position_error_kind": "vertical" if prof == "payload_add" else "horizontal",
+                    "peak_position_dev_m": float(err[i_pk]), "t_peak_s": float(tt[i_pk] - t0 * 1e-6),
+                    "peak_dev_north_m": float(dx[np.argmax(np.abs(dx))]), "peak_dev_east_m": float(dy[np.argmax(np.abs(dy))]),
+                    "peak_dev_down_m": float(dz[np.argmax(np.abs(dz))]),
+                    "final_position_error_m": float(err[-1])})
+        rec = None
+        for i in range(i_pk, len(tt)):
+            if err[i] > REC_BAND_M:
+                continue
+            # error must stay within the band over [tt[i], tt[i] + REC_HOLD_S]
+            j = np.searchsorted(tt, tt[i] + REC_HOLD_S)
+            if j >= len(tt):
+                break  # window ends before the hold time can be verified
+            if not (err[i:j + 1] > REC_BAND_M).any():
+                rec = float(tt[i] - t0 * 1e-6)
+                break
+        res["recovery_s"] = rec
+        res["recovered"] = rec is not None
+    return res
+
+
 def compute(ulog, run):
     out = {"scenario": run.get("scenario"), "controller": run.get("controller"), "seed": run.get("seed"),
            "speed": run.get("speed"), "warnings": []}
@@ -195,6 +258,11 @@ def compute(ulog, run):
         out["position"] = {"ref_ned": list(map(float, ref)), "rms_3d_m": rms(d3), "rms_horizontal_m": rms(dh),
                            "rms_vertical_m": rms(d[:, 2]), "max_dev_3d_m": float(d3.max()),
                            "max_dev_horizontal_m": float(dh.max()), "max_dev_vertical_m": float(np.abs(d[:, 2]).max())}
+
+    # ---- disturbance scenarios (gust_x, payload_add): only when run.json carries a "disturbance" record ----
+    dist = run.get("disturbance")
+    if dist and lp is not None and att is not None:
+        out["disturbance"] = disturbance_metrics(dist, lp, att, run, w1)
 
     # ---- control effort + saturation ----
     am = topic(ulog, "actuator_motors")
