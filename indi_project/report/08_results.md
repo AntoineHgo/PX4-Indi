@@ -56,8 +56,6 @@ Two points about reading the verdict. First, criterion 2 counts H5 as one scenar
 
 Results against PID are summarised in the source as follows. INDI is much better at rejecting disturbance torques (27-84 % lower attitude RMS on H2, H3 and T6-T8) and slightly better at tracking, but it is fragile to an error in its actuator model (motor time constant x2 gives a limit cycle), which PID tolerates (`results/acceptance_s15.md`). That trade-off is the main finding of this thesis.
 
-FIGURE TODO: bar chart of INDI/PID ratio per held-out scenario with the 10 % threshold line and the 1.0 line; data from `results/acceptance_s15.md`.
-
 ## 8.3 Disturbance rejection
 
 The disturbance scenarios test the mechanism INDI is expected to win on: a disturbance torque appears in the measured angular acceleration and is cancelled within one control increment, whereas PID has to wait for its integrator (`results/heldout_s14.md`). All rows below are 10 paired seeds, PID defaults against the frozen INDI candidate, exact two-sided Wilcoxon (`results/heldout_s14.md`, 120 flights, 0 failures). Scenarios: T6 `gust_x` (3 m/s steady wind plus a 6 m/s, 1 s gust), T7 `payload_add` (+25 % mass), H2 `gust_diag`, H3 `com_shift`, T9 `mismatch_inertia` (Ixx, Iyy x1.3, run on the T2 steps; a plant-mismatch scenario rather than a disturbance).
@@ -286,8 +284,6 @@ Saturation (fraction of window with a motor at a limit, or time saturated):
 | H4 motor_loss_2 (time, s) | 8.86 ± 2.7 | 8.97 ± 1.6 | crash scenario, p = 0.85 |
 
 Saturation is therefore a non-issue on most scenarios but INDI saturates more than PID on both of the scenarios where the plant is degraded (T8, H5 rate pulses). No scenario shows INDI saturating less. The benchmark spec also asks for the `control_allocator_status` unallocated torque; the sources do not report it.
-
-FIGURE TODO: motor-rate effort ratio INDI/PID per scenario with the 1.5x hover limit marked; data from the table above.
 
 ## 8.8 Summary of all scenarios
 

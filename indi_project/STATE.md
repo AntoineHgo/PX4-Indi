@@ -128,6 +128,12 @@ owner decisions when you first act on them.
 
 ## In progress
 
+- SESSION 25 (2026-11-14, closing v1 per O-2): DONE ch. 2 l.11 acquatella checked myself against the text (inconsistency
+  real: Eq. 28 drops t_s, Eq. 29 matches K(e+T_I^-1 int e) only), 6 [GAP] items rewritten as limitations (19a0466619);
+  ch. 2-10: 0 markers. Two stale FIGURE TODOs removed (covered by Fig. 8.1/8.3). IN FLIGHT: (F) sonnet: 5 time-series
+  figures for ch. 8 in `bench/make_figures.py` (log `review/figs_s25.md`); (R) fable: conclusions review ch. 8-10 vs
+  results/ (`review/conclusions_review_s25.md`). NEXT after both: apply review, PDF image (D-pdf), mark "v1 report closed".
+
 - SESSION 24 (2026-11-14): DONE ch. 6 markers all resolved (7eab4e7647: lockstep is stock SITL, sitl.cmake + GZBridge clockCallback;
   latency and hover-excursion cause stated as untested limitations); DONE ch. 9 CA_ROTOR_KM marker (fc695dcf8f: in-loop G1 fit is
   pre-allocator, absorbs KM error; same allocator for PID). ch. 6 and ch. 9: 0 [TO VERIFY].
