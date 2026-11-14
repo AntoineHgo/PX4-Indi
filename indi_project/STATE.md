@@ -220,6 +220,11 @@ owner decisions when you first act on them.
   seeds, better 1, worse > 10 % 8, INDI failures 0, hover effort 1.26: INDI v2 does not outperform PID. Seen set (O-7)
   in the same file: worse on 6 entries (motor_loss_2 3.14x: tuned PID holds it, INDI v2 does not), better only gust_x
   0.73x. Report 8.9 updated. NEXT: S44 step 2 (apply O-12 part A + smoke), then S43 c (v3 build + screening).
+  O-12 part A APPLIED (watchdog commit after 'final v2 held-out' docs commit), smoke hover pid_default watchdog
+  on/off both ok, no trip (`results/o12_smoke/`, untracked, ULogs only). O-12 is now complete (A + B).
+  NEXT (session 46): S43 step c: build px4_sitl_default with the v3 commit (3a47bf746e, MC_INDI_ACT_BLD), one hover
+  smoke with ACT_BLD 0 (must match v2), then screening under O-12 (`tune.py --stages 2`) on motor_loss_0,
+  mismatch_combined_rate, step_roll, Tb 0.1/0.3/1.0, 1 seed; freeze indi_v3; then V' (scenarios.md sec. 9).
 - SESSION 44 (2026-11-14, launch 20261114-225445): seen set at seed 4/10 at 22:55 (slower than estimated: ~6 min
   per seed-entry group; end likely after 01:00), V re-fly still queued behind it. The s43 replay agent was cut off
   after fixing the takeoff window (log `plan/impl_log_o12.md`); the orchestrator reviewed `bench/watchdog_replay.py`
