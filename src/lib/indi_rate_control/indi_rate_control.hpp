@@ -74,6 +74,9 @@ public:
 	/// Maximum supported synchronisation delay in controller cycles
 	static constexpr int kMaxDelaySamples = 4;
 
+	/// Consecutive rejected cycles during which the last valid output is held before a reset to zero torque
+	static constexpr int kFaultHoldCycles = 3;
+
 	/**
 	 * Set the rate tracking bandwidth.
 	 * @param gain_k per axis closed loop bandwidth in rad/s, must be > 0
@@ -134,7 +137,8 @@ public:
 	 * @param dt time since the previous call in s, valid range [kMinDt, kMaxDt]
 	 * @param landed true if ground contact is assumed (the feedback torque is held out of the law, the actuator
 	 *        model and its filters keep running)
-	 * @return [-1,1] normalised torque vector to apply to the vehicle, zero if the inputs are invalid
+	 * @return [-1,1] normalised torque vector to apply to the vehicle. On invalid inputs the last valid output is
+	 *         held for kFaultHoldCycles consecutive cycles, then the states are reset and the output is zero
 	 */
 	matrix::Vector3f update(const matrix::Vector3f &rate, const matrix::Vector3f &rate_sp,
 				const matrix::Vector3f &angular_accel, const matrix::Vector3f &torque_allocated_prev,
@@ -142,7 +146,7 @@ public:
 
 	/**
 	 * Set all dynamic states (actuator model, delay buffer, filters, previous filtered torque,
-	 * logged outputs) to zero. Parameters, filter design and the fault flag are kept.
+	 * held output, logged outputs) to zero. Parameters, filter design and the fault flag are kept.
 	 */
 	void reset();
 
@@ -169,6 +173,9 @@ private:
 	void designSyncFilters(float sample_freq, bool reset_states);
 	void designYawFilters(float sample_freq);
 	void resetStates();
+
+	/// Output of a rejected cycle: the held last valid output, or zero with reset states once the hold expires
+	matrix::Vector3f faultOutput(bool states_corrupted);
 
 	// Parameters
 	matrix::Vector3f _gain_k{20.f, 20.f, 10.f};
@@ -201,6 +208,8 @@ private:
 	math::LowPassFilter2p<float> _yaw_lpf_torque; ///< same design on the filtered torque
 	math::LowPassFilter2p<float> _yaw_error_lpf; ///< same design on the yaw rate error in nu
 	matrix::Vector3f _t_f_prev; ///< filtered torque of the previous cycle (yaw spin-up term)
+	matrix::Vector3f _t_cmd_last; ///< last valid output, held on rejected cycles
+	int _fault_cycles{0}; ///< consecutive rejected cycles
 
 	// Outputs for logging
 	matrix::Vector3f _nu;

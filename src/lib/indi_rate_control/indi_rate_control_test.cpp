@@ -200,7 +200,7 @@ TEST(IndiRateControlTest, LandedOutputIsBoundedIncrementOnly)
 	}
 }
 
-TEST(IndiRateControlTest, InvalidInputsGiveZeroAndFault)
+TEST(IndiRateControlTest, InvalidInputsHoldLastOutputAndFault)
 {
 	const float nan = std::numeric_limits<float>::quiet_NaN();
 	const float inf = std::numeric_limits<float>::infinity();
@@ -241,30 +241,36 @@ TEST(IndiRateControlTest, InvalidInputsGiveZeroAndFault)
 	};
 
 	for (const Case &c : cases) {
+		// a single bad sample holds the last valid output and leaves the states untouched
+		const Vector3f filtered_torque = ctrl.getFilteredTorque();
 		const Vector3f out = ctrl.update(c.rate, c.rate_sp, c.accel, c.prev, c.dt, false);
-		EXPECT_EQ(out, Vector3f());
-		EXPECT_TRUE(out.isAllFinite());
+		EXPECT_EQ(out, valid);
 		EXPECT_TRUE(ctrl.getFault());
-		EXPECT_EQ(ctrl.getFilteredTorque(), Vector3f());
+		EXPECT_EQ(ctrl.getFilteredTorque(), filtered_torque);
 
-		// the next valid call works and clears the fault: from reset states the first output is the P term only
-		const Vector3f next = ctrl.update(rate, rate_sp, accel, prev, kDt, false);
+		// the next valid call works and clears the fault
+		valid = ctrl.update(rate, rate_sp, accel, prev, kDt, false);
 		EXPECT_FALSE(ctrl.getFault());
-		EXPECT_TRUE(next.isAllFinite());
-		EXPECT_GT(fabsf(next(0)), 0.f);
+		EXPECT_TRUE(valid.isAllFinite());
+		EXPECT_GT(fabsf(valid(0)), 0.f);
 	}
 
-	// invalid effectiveness
+	// invalid effectiveness, consecutive rejected cycles: held output, then zero torque from reset states
+	int rejected = 0;
+
 	for (int axis = 0; axis < 3; axis++) {
 		for (const float g1_bad : {0.f, 0.0005f, -5.f, nan}) {
 			Vector3f g1(kG1True, kG1True, kG1True);
 			g1(axis) = g1_bad;
 			ctrl.setG1(g1);
 			const Vector3f out = ctrl.update(rate, rate_sp, accel, prev, kDt, false);
-			EXPECT_EQ(out, Vector3f());
+			EXPECT_EQ(out, (rejected < IndiRateControl::kFaultHoldCycles) ? valid : Vector3f());
 			EXPECT_TRUE(ctrl.getFault());
+			rejected++;
 		}
 	}
+
+	EXPECT_EQ(ctrl.getFilteredTorque(), Vector3f());
 
 	ctrl.setG1(Vector3f(kG1True, kG1True, kG1True));
 	const Vector3f recovered = ctrl.update(rate, rate_sp, accel, prev, kDt, false);

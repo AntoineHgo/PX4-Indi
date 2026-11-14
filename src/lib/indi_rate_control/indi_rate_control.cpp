@@ -147,23 +147,38 @@ void IndiRateControl::reset()
 	_a_f.zero();
 	_t_f.zero();
 	_dt_cmd.zero();
+	_t_cmd_last.zero();
+}
+
+Vector3f IndiRateControl::faultOutput(const bool states_corrupted)
+{
+	_fault = true;
+
+	if (states_corrupted) {
+		resetStates();
+	}
+
+	// a single bad sample holds the last command instead of becoming a zero-torque cycle and a from-zero restart
+	if (_fault_cycles < kFaultHoldCycles) {
+		_fault_cycles++;
+		return _t_cmd_last;
+	}
+
+	reset();
+	return Vector3f();
 }
 
 Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, const Vector3f &angular_accel,
 				 const Vector3f &torque_allocated_prev, const float dt, const bool landed)
 {
-	// 1. validate inputs and parameters, a rejected cycle outputs zero and restarts from clean states
+	// 1. validate inputs and parameters, a rejected cycle leaves the states untouched
 	const bool dt_valid = math::isFinite(dt) && (dt >= kMinDt) && (dt <= kMaxDt);
 	const bool inputs_valid = rate.isAllFinite() && rate_sp.isAllFinite() && angular_accel.isAllFinite()
 				  && torque_allocated_prev.isAllFinite();
 
 	if (!dt_valid || !inputs_valid || !paramsValid() || !math::isFinite(_g2_yaw)) {
-		reset();
-		_fault = true;
-		return Vector3f();
+		return faultOutput(false);
 	}
-
-	_fault = false;
 
 	// 2. (re)design the synchronisation filters on a low-passed sample rate, as the gyro chain designs on its
 	// nominal rate: a jittery dt must neither trigger a redesign nor reset the feedback pair
@@ -256,10 +271,8 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	_t_f_prev = t_f;
 
 	if (!dt_cmd.isAllFinite()) {
-		// e.g. overflow from an absurdly large input
-		reset();
-		_fault = true;
-		return Vector3f();
+		// e.g. overflow from an absurdly large input, which may have reached the filter states
+		return faultOutput(true);
 	}
 
 	// 9. bound the increment and the output
@@ -269,6 +282,10 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 		dt_cmd(i) = math::constrain(dt_cmd(i), -_max_increment, _max_increment);
 		t_cmd(i) = math::constrain(t_fb(i) + dt_cmd(i), -1.f, 1.f);
 	}
+
+	_fault = false;
+	_fault_cycles = 0;
+	_t_cmd_last = t_cmd;
 
 	// 10. logging values
 	_nu = nu;
