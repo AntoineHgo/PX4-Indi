@@ -100,7 +100,7 @@
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
   quoting in the report.
-- **Last updated:** 2026-11-14, session 16 (ch. 8 draft + control-law review in flight). Before that: session 15 (H1/H4/H5 implemented, batches flying). Before that: session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
+- **Last updated:** 2026-11-14, session 20 (review s2 committed, s4/s6 in flight). Before that: session 16 (ch. 8 draft + control-law review in flight). Before that: session 15 (H1/H4/H5 implemented, batches flying). Before that: session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
   library + unit tests committed, not yet wired into mc_rate_control; first
   G1 identification: pitch 211 (R^2 0.90), roll 321 (R^2 0.63), yaw not
   identified; see `results/identification_g1_v0.md`).
@@ -117,6 +117,10 @@
 | 6 | Validation and report | not started |
 
 ## In progress
+
+- SESSION 20 (2026-11-14): review section 2 committed (4f1abbd426). IN FLIGHT: (J) fable fills sections 4 and 6
+  of `review/control_law_review_s16.md` (replaces 'Not covered in this pass.'); if cut off, relaunch only for what is missing,
+  then add their items to the Summary and triage remaining findings into fix / report-limitation.
 
 - SESSION 19: (G) DONE ch. 3 drafted (~4500 words, trim; [TO VERIFY] smeur2016 eqs 7,9,10,22-27, acquatella2017 eqs 4,26,28, wang2019 eq 13; [UNSOURCED] normalised G1, up/down asymmetry; cites [review_s16], add to sources.md; f* peak (tt-te)/(tt+te) checked by orchestrator); (H) fable fills review
   sections 2, 4, 6 + summary in `review/control_law_review_s16.md`; (I) DONE landed-yaw check (`results/landyaw_check_s19.md`, unchanged within noise); was log
