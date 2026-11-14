@@ -67,7 +67,8 @@
 
 ## In progress
 
-- Session 11: sonnet agent T8 motor_loss_0 (runtime SIM_GZ_EC_MAX scaling), notes in `plan/t8_motor_loss_log.md`; check that file and `git log` before relaunching.
+- DONE session 11: T8 motor_loss_0 (f3205105bd): runtime SIM_GZ_EC_MIN1/MAX1 x sqrt(0.7) (thrust x0.70), attitude mode, then +45 deg yaw step; PID seed 1: motor 0 0.73 -> 0.905, saturated 1.5 s, peak tilt 5.1 deg, altitude sags 1.2 m (attitude mode, fixed thrust; identical for both controllers). Notes `plan/t8_motor_loss_log.md`.
+- IN FLIGHT session 11: sonnet agent implementing D-yawnu from `plan/yawnu_spec.md`. If the session was cut: check `git status` for uncommitted changes in `src/lib/indi_rate_control/` and `git log` before relaunching.
 - DONE session 11 (`results/tuning/r2f_yc2.md`): `python3 bench/tune.py --family indi --round-name r2f_yc2 --n-candidates 1 --seeds 1 2 3 --jobs 6 --sampler-seed 0 --span-factor 1.0 --base-params bench/params/indi_v1.params --center bench/params/indi_c11_yc2.json` (c11 with YAW_CUT 2 Hz, 15 flights), log `results/tuning/r2f_yc2.log`. Resumable: re-run if summary.csv missing.
 - Nothing running. r2 finished and committed (`results/tuning/r2.md`).
 - DONE session 10: T6 gust_x + T7 payload_add (D-dist, commits 160dda984d,
