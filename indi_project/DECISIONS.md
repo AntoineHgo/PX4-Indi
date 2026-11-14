@@ -452,3 +452,22 @@ These are the owner's decisions, not the orchestrator's; full text in `OWNER_GUI
 - Gyro amplitude has no quantitative source: chosen to scale with the accel amplitude; the report must say so.
 - Alternatives rejected: band-limited random noise (loses the rotor-speed tie that matters for INDI's differentiated
   gyro and for notch filtering); vibration in the gz IMU plugin (needs a gz-sim change, outside this repository).
+
+## D-notch (session 29, 2026-11-14): ESC-rpm dynamic gyro notch in the v2 configuration, both controllers
+
+- Choice: `IMU_GYRO_DNF_EN 1` (ESC rpm, PX4 defaults for harmonics/min frequency/bandwidth) in every v2 flight, PID and
+  INDI, including the PID reference and the PID tuning check. Evidence: `results/s2_notch_check.md` (hover effort
+  0.7-1.1 -> 0.03, tracking unchanged).
+- Why: the target hardware has AM32 ESCs with bidirectional DShot (O-5), the setup for which PX4 documents the
+  ESC-rpm notch; a v2 benchmark without it would grade both controllers on vibration throughput a real build removes.
+  The notch tracks the eRPM-model rpm (latency, rounding, drops), not the true rotor speed.
+- Caveat (report): the sim vibration is a pure rotor-synchronous tone, so the notch is close to ideal here; broadband
+  frame vibration is not modelled. The no-notch v2 baseline stays recorded as a stress condition for the new
+  held-out set.
+- INDI consequence (review item 6, notches not mirrored): the notch is on the gyro before the derivative, so a_f
+  carries its group delay (estimate ~1-2 ms at hover for 4 rotors x 3 harmonics at 1P ~ 120 Hz, phase < 1 deg per notch
+  at 10 Hz) and t_f does not. v2 handles it by identifying the relative delay between the omega^2 path and a_f
+  (owner step 5: identify, do not tune), not by mirroring the notch bank.
+- Alternatives rejected: static notch IMU_GYRO_NF0_FRQ (rotor speed varies with thrust, so a fixed notch misses in
+  manoeuvres); FFT notch (no rpm-independent source of vibration in the sim, and BDShot rpm is available); lower
+  IMU_GYRO_CUTOFF (adds phase lag in band to both loops, penalises the faster loop).
