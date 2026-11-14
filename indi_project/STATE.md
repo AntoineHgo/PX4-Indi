@@ -205,7 +205,11 @@ owner decisions when you first act on them.
   11 vs 8.6 deg PID (yaw remainder, unexplained). RUNNING detached: stage 2 = `SEEDS="2 3" CONFIGS="pid_tuned
   v3_tb0.3 v3_tb1.0" END=V3_STAGE2_DONE bash bench/v3_screen_tb.sh` (18 flights, log `results/v3_screen.log`,
   resumable with the same command). Stage 2 DONE 00:45, 0 failures: Tb 0.3 SELECTED (D-v3-tb), seeds agree within
-  3 %; motor_loss_0 rotation gap to PID is all yaw (11.2 vs 8.5 deg). NEXT (session 47): (1) decide on a small yaw
+  3 %; motor_loss_0 rotation gap to PID is all yaw (11.2 vs 8.5 deg). RUNNING detached 00:47: yaw stage-1 screen `bench/v3_screen_yaw.sh` (K_Y {2.733,4,5.5} x
+  YAW_CUT {1.665,3} on Tb 0.3 + pid_tuned, seed 1, step_yaw/motor_loss_0/hover, 21 flights, log
+  `results/v3_screen_yaw.log`, ends V3Y_SCREEN_DONE, resumable with the same command). NEXT (session 47): (1) analyse
+  the yaw screen (yaw RMS on step_yaw and motor_loss_0, step_yaw + hover effort vs PID; prune > 1.3x best), decide a
+  stage 2 or freeze; the original plan was a small yaw
   screen (K_Y, YAW_CUT; O-12 staged, entries step_yaw + motor_loss_0, Tb 0.3, outer gains = PID's) before freezing,
   or freeze now and report yaw as the known weakness; (2) freeze indi_v3 params (`bench/params/indi_v3.params` =
   indi_v3_tb0.3 [+ yaw] + DECISIONS D-v3-freeze); (3) V' verdict mode in s2_verdict.py (5 entries, sec. 9 criteria),
