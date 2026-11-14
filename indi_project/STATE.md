@@ -94,7 +94,7 @@
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
   quoting in the report.
-- **Last updated:** 2026-11-14, session 15 (H1/H4/H5 implemented, batches flying). Before that: session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
+- **Last updated:** 2026-11-14, session 16 (ch. 8 draft + control-law review in flight). Before that: session 15 (H1/H4/H5 implemented, batches flying). Before that: session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
   library + unit tests committed, not yet wired into mc_rate_control; first
   G1 identification: pitch 211 (R^2 0.90), roll 321 (R^2 0.63), yaw not
   identified; see `results/identification_g1_v0.md`).
@@ -112,6 +112,11 @@
 
 ## In progress
 
+- SESSION 16 (2026-11-14) IN FLIGHT: (A) sonnet drafts report ch. 8 results -> `report/08_results.md`;
+  (B) fable independent review of the INDI control law -> `review/control_law_review_s16.md`. If a file is
+  partial or missing next session, relaunch only for what it lacks. Committed bd5da68490 (re-flown PID hover seeds 1-3).
+  Known: gust_x and payload_add pid_default seed1 `disturbance_trigger.json` modified on disk (onset differs from the
+  committed one, metrics.json unchanged): a re-run overwrote it; not committed, check before quoting seed 1 onset.
 - SESSION 15 DONE: H1/H4/H5 flown and committed, acceptance decided (negative, see summary). NEXT (phase 6):
   (1) metrics.py: end the window at ground contact for crash-capable scenarios, re-score H4/T8; move the session-15
   inline trajectory/H4 table scripts into `bench/` (reproducibility); (2) T1 hover effort, frozen candidates, 10 seeds: DONE (1.04x, met)
