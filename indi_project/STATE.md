@@ -168,6 +168,20 @@ owner decisions when you first act on them.
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+- SESSION 38 (2026-11-14): r1f done + committed; frz control done: restated in `results/s2_recheck_v1.md` (variant
+  gains real; G2_Y 0.16 breaks yaw on the tuning set). Runner: 282c879f4e (MC_INDI_EN at boot, CA_R_W_MAX ->
+  MC_INDI_W_MAX on O-11 builds). r2f (PID, 240 flights) RUNNING detached on build/px4_sitl_default since 18:06
+  (tune.py pid 140000): do not rebuild default, do not edit run_batch.sh while it runs (bash reads it live).
+  O-11 regression: script `results/s2_o11_regress/run.sh` (SET=smoke|v1|v2old|v2new, tuning set x 3 seeds, 3 jobs);
+  v1 old-binary reference = `results/s2_recheck_v1/runs/*/indi_frz`. Smoke OK (o11 hover: indi_rate_status
+  logged, one vehicle_torque_setpoint publisher, no rate_ctrl_status). Full regression LAUNCHED detached 18:09
+  (v1 -> v2old -> v2new, 45 runs, log `results/s2_o11_regress/run.log`, ends with O11_REGRESS_ALL_DONE).
+  Compare: `bench/regress_compare.py 'results/s2_recheck_v1/runs/{sc}/indi_frz' 'results/s2_o11_regress/runs/v1new/{sc}'
+  hover step_roll step_pitch step_yaw rate_step_roll` (v2: runs/v2old/{sc} vs runs/v2new/{sc}); write
+  `results/s2_o11_regress.md`. plan/architecture.md updated (314c0c56a4); report ch. 4-5 still to update.
+  NEXT after regression: write-up, then (r2f end) v2 pid_tuned decision + rebuild px4_sitl_default, then G1 v2 on
+  3 seeds and v2 INDI tuning (O-5). Guard blocks the word "reboot" in shell commands: use Edit for such text.
+
 - SESSION 37 (2026-11-14): O-11 refactor started. DONE: c1a700e7bb (mc_rate_control back to base),
   462eb68990 (allocator + allocation lib back to base), D-o11 in DECISIONS.md, spec `plan/o11_module_spec.md`.
   DONE (sonnet agent, 44 calls, ~$1.3): d2c1f06ad8 module (+ lib IndiMeasuredTorque, gtest 4/4), 299a55e2fa
