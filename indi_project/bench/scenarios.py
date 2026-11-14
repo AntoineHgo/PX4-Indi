@@ -118,3 +118,12 @@ _VIB3 = dict(sim_params=dict(SIM_GZ_VIB_ACC=3.0, SIM_GZ_VIB_GYR=0.15))          
 SCENARIOS["v2_vib3_hover"] = {**SCENARIOS["hover"], **_VIB3}
 SCENARIOS["v2_vib3_att"] = {**_ATT, **_VIB3}
 SCENARIOS["v2_sag_att"] = {**_ATT, "thrust_sag": dict(scale=0.85)}               # V6 thrust -15 % over the window
+
+# Stage-2 held-out set V' (scenarios.md section 9, frozen for v3, run with --sim v2 only). Same patterns and hooks as V:
+# W1/W2 = T8 segments with another motor / scale, W3 = motors 0 and 3 at 0.85 from "up" (motor_fault `motors` list),
+# W4 = V6 hook at 75 %, W5 = V1 (tau x2 from the start) plus motor 2 at 0.8 from "up".
+SCENARIOS["vp_loss1_06"] = {**SCENARIOS["motor_loss_0"], "motor_fault": dict(segment="loss", motor=1, thrust_scale=0.6)}
+SCENARIOS["vp_loss2_08"] = {**SCENARIOS["motor_loss_0"], "motor_fault": dict(segment="loss", motor=2, thrust_scale=0.8)}
+SCENARIOS["vp_gain03_att"] = {**_ATT, "motor_fault": dict(segment="up", motors=[0, 3], thrust_scale=0.85)}
+SCENARIOS["vp_sag75_att"] = {**_ATT, "thrust_sag": dict(scale=0.75)}
+SCENARIOS["vp_tau2_loss2_att"] = {**_ATT, **_V_PLANT["tau2"], "motor_fault": dict(segment="up", motor=2, thrust_scale=0.8)}

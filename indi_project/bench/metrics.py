@@ -170,7 +170,10 @@ def motor_fault_metrics(mf, att, asp, am, lp, w1):
       >= 0.99 or <= 0.01 while airborne; faulty_motor_high_sat_s: time the faulty motor is >= 0.99.
     motor_mean_*: mean actuator_motors control of the faulty motor vs the mean of the others (post event, in the window)."""
     t0, k = mf["event_us"], mf["motor"]
+    ks = mf.get("motors") or [k]  # several weakened motors (V' W3): faulty_* metrics cover all of them
     res = {"event_s": t0 * 1e-6, "motor": k, "thrust_scale": mf["thrust_scale"]}
+    if len(ks) > 1:
+        res["motors"] = list(ks)
 
     def zaxis(qq):
         w, x, y, z = qq[:, 0], qq[:, 1], qq[:, 2], qq[:, 3]
@@ -187,7 +190,7 @@ def motor_fault_metrics(mf, att, asp, am, lp, w1):
         t = am["timestamp"]
         m = (t >= t0) & (t <= w1)
         cols = [c for c in sorted(c for c in am if c.startswith("control[")) if np.isfinite(am[c]).any()]
-        if m.any() and len(cols) > k:
+        if m.any() and len(cols) > max(ks):
             u = np.column_stack([am[c] for c in cols])[m]
             tm = t[m] * 1e-6
             dt = np.diff(tm, append=tm[-1])
@@ -195,9 +198,9 @@ def motor_fault_metrics(mf, att, asp, am, lp, w1):
             air = z < -1.0
             sat = ((u >= 0.99) | (u <= 0.01)).any(axis=1) & air
             res.update({"saturation_time_s": float(dt[sat].sum()),
-                        "faulty_motor_high_sat_s": float(dt[(u[:, k] >= 0.99) & air].sum()),
-                        "motor_mean_faulty": float(u[:, k].mean()),
-                        "motor_mean_others": float(np.delete(u, k, axis=1).mean())})
+                        "faulty_motor_high_sat_s": float(dt[(u[:, ks] >= 0.99).any(axis=1) & air].sum()),
+                        "motor_mean_faulty": float(u[:, ks].mean()),
+                        "motor_mean_others": float(np.delete(u, ks, axis=1).mean())})
     return res
 
 

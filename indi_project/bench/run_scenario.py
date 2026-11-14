@@ -492,10 +492,15 @@ def main():
             json.dump({"onset_px4_s": onset}, open(os.path.join(a.out, "disturbance_trigger.json"), "w"))
         fault = sc.get("motor_fault")
         if fault:  # plant change: read nominal MIN/MAX of the motor's gz channel now (param index = motor + 1)
-            ch = fault["motor"] + 1
-            nom = {k: sim.get_param(f"SIM_GZ_EC_{k}{ch}") for k in ("MIN", "MAX")}
-            meta["motor_fault"] = {"motor": fault["motor"], "thrust_scale": fault["thrust_scale"], "nominal": nom,
-                                   "segment": fault["segment"]}
+            # `motor` (one index, T8/H4) or `motors` (list, V' W3): every listed motor gets the same thrust scale
+            fmotors = fault.get("motors") or [fault["motor"]]
+            nom_all = {}
+            for fm in fmotors:
+                nom_all[fm] = {k: sim.get_param(f"SIM_GZ_EC_{k}{fm + 1}") for k in ("MIN", "MAX")}
+            meta["motor_fault"] = {"motor": fmotors[0], "thrust_scale": fault["thrust_scale"],
+                                   "nominal": nom_all[fmotors[0]], "segment": fault["segment"]}
+            if len(fmotors) > 1:
+                meta["motor_fault"].update({"motors": list(fmotors), "nominal_all": {str(m): v for m, v in nom_all.items()}})
         loss = sc.get("erpm_loss")  # dict(motor, start, end): total eRPM loss from segment start to segment end
         if loss:
             meta["erpm_loss"] = dict(loss)
@@ -520,12 +525,15 @@ def main():
                 meta["erpm_loss"]["on_us" if on else "off_us"] = int(sim.t * 1e6)
             if fault and name == fault["segment"]:
                 k_om = math.sqrt(fault["thrust_scale"])
-                new = {k: int(round(v * k_om)) for k, v in nom.items()}
+                new_all = {fm: {k: int(round(v * k_om)) for k, v in nom_all[fm].items()} for fm in fmotors}
                 t_req = sim.t
-                for k, v in new.items():
-                    sim.set_param(f"SIM_GZ_EC_{k}{ch}", v)
-                meta["motor_fault"].update({"event_us": int(t_req * 1e6), "event_done_us": int(sim.t * 1e6), "applied": new,
-                                            "omega_ratio": k_om})
+                for fm in fmotors:
+                    for k, v in new_all[fm].items():
+                        sim.set_param(f"SIM_GZ_EC_{k}{fm + 1}", v)
+                meta["motor_fault"].update({"event_us": int(t_req * 1e6), "event_done_us": int(sim.t * 1e6),
+                                            "applied": new_all[fmotors[0]], "omega_ratio": k_om})
+                if len(fmotors) > 1:
+                    meta["motor_fault"]["applied_all"] = {str(m): v for m, v in new_all.items()}
             ev = {"name": name, "t_us": int(sim.t * 1e6), "dur_s": dur, "mode": mode, "axis": axis,
                   "value": val, "prev": prev, "step": name != "settle" and mode not in ("position", "trajectory")}
             meta["events"].append(ev)
