@@ -145,6 +145,10 @@ owner decisions when you first act on them.
 
 ## In progress
 
+- SESSION 33 (2026-11-14): r2 still RUNNING at start (11/16). IN FLIGHT: sonnet agent "D-omega2 library"
+  (measured-torque path + validity/fallback in `src/lib/indi_rate_control`, gtests, one commit), log
+  `plan/impl_log_omega2_lib.md`. If the session dies: check that file and `git log`; relaunch only what is missing.
+
 - SESSION 32 (2026-11-14): PID r2 still RUNNING at start (6/16), 9/16 at end; same relaunch rule as s31 below.
   DONE O-4 (inline, no agent): `bench/identify_g2.py` (f16d518109), `results/s2_ident_g2.md` + D-g2sim
   (2f884370b9). DONE D-omega2 design (99ad5997da). DONE THR_MDL_FAC fit 0.683, overlay
