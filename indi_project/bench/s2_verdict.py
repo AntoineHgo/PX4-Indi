@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """v2 verdict on the held-out set V under the unchanged section-6 rules (bench/scenarios.md sec. 8).
-usage: s2_verdict.py [RUNS_DIR] [--b indi_v2] [--a pid_tuned] [--hover-runs DIR] [--final]
+usage: s2_verdict.py [RUNS_DIR] [--b indi_v2] [--a pid_tuned] [--hover-runs DIR] [--final] [--seen]
+--seen tabulates the O-7 seen set (results/s2_seen_v2/runs) with the v1 primary metrics instead of V (reported only,
+not part of the V verdict).
 Per V entry: primary metric (sec. 8 table), paired by seed, median improvement 1 - b/a and the exact two-sided
 Wilcoxon p (summarize_seeds.wilcoxon_exact). A run fails when it has no metrics.json, run.json exit_status is not
 'ok', or the primary metric is missing (sec. 4: failed runs are reported, never dropped). Criterion 4 (hover effort,
@@ -24,6 +26,11 @@ PRIMARY = {"v2_tau2_att": ATT, "v2_tau2_rate": RATE, "v2_asym_att": ATT, "v2_asy
            "v2_lat_att": ATT, "v2_lat_rate": RATE, "v2_drop_att": ATT, "v2_drop_rate": RATE,
            "v2_vib3_hover": HOVER, "v2_vib3_att": ATT, "v2_sag_att": ATT,
            "gust_diag": ROT, "com_shift": ROT, "motor_loss_0": ROT}
+# O-7 seen set: the v1 T and H entries, with the primary metrics of the v1 summary (report sec. 8.8)
+SEEN = {"hover": HOVER, "step_roll": ATT, "step_pitch": "attitude_tracking.pitch_rms_deg",
+        "step_yaw": "attitude_tracking.yaw_rms_deg", "rate_step_roll": RATE, "traj_lemniscate": HOVER,
+        "gust_x": ROT, "payload_add": ROT, "mismatch_inertia": ROT, "traj_circle_fast": HOVER, "motor_loss_2": HOVER,
+        "mismatch_combined_att": ATT, "mismatch_combined_rate": RATE, "step_diag": ROT}
 SEEDS = [f"seed{i}" for i in range(1, 11)]
 FINAL = False
 
@@ -49,9 +56,12 @@ def main():
     ap.add_argument("--b", default="indi_v2")
     ap.add_argument("--hover-runs")
     ap.add_argument("--final", action="store_true", help="batch ended: a run without run.json failed")
+    ap.add_argument("--seen", action="store_true", help="tabulate the O-7 seen set instead of V")
     a = ap.parse_args()
-    global FINAL
+    global FINAL, PRIMARY
     FINAL = a.final
+    if a.seen:
+        PRIMARY = SEEN
 
     print(f"| entry | primary metric | {a.a} mean | {a.b} mean | ratio | b<a | med impr | p | effort ratio | "
           f"fails {a.a}/{a.b} | verdict |\n|---|---|---|---|---|---|---|---|---|---|---|")
@@ -85,7 +95,7 @@ def main():
               f"{p:.3g} | {statistics.median(eff):.2f} | {fa}/{len(fb)} | {verdict} |")
 
     print(f"\nComplete entries (10 paired seeds): {n_complete}/{len(PRIMARY)}")
-    print(f"1. INDI failures in V: {len(b_fails)} {b_fails if b_fails else ''} (seen/T entries: see the seen set)")
+    print(f"1. INDI failures in {'the seen set' if a.seen else 'V'}: {len(b_fails)} {b_fails if b_fails else ''} (seen/T entries: see the seen set)")
     print(f"2. significantly better (>= 10 %, p < 0.05): {better}/{len(PRIMARY)} (needs >= 10)")
     print(f"3. significantly worse by > 10 %: {worse} (needs 0)")
     if a.hover_runs:
