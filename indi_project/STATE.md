@@ -170,9 +170,14 @@ owner decisions when you first act on them.
 ## In progress
 - SESSION 37 (2026-11-14): O-11 refactor started. DONE: c1a700e7bb (mc_rate_control back to base),
   462eb68990 (allocator + allocation lib back to base), D-o11 in DECISIONS.md, spec `plan/o11_module_spec.md`.
-  IN FLIGHT: 1 sonnet agent implementing the new module per the spec (commits a, b; builds into
-  build/px4_sitl_o11); check `git log` for `feat(mc_indi_rate_control)` / `feat(rc.mc_apps)` and its notes in
-  `plan/o11_agent_log.md`. Batches untouched: PID r1f still flying at session start (c18/24, tune.py pid
+  DONE (sonnet agent, 44 calls, ~$1.3): d2c1f06ad8 module (+ lib IndiMeasuredTorque, gtest 4/4), 299a55e2fa
+  rc.mc_apps selection + sitl board; build/px4_sitl_o11 builds; indi gtests 35/35, CA tests pass; zero diff
+  verified by orchestrator. Agent log `plan/o11_agent_log.md`. NOT YET FLOWN. Deviations to check in the
+  regression flights: (i) measured torque computed after publish, used next cycle (as old allocator timing);
+  (ii) non-fresh rotors evaluated at trim (torque then invalid anyway); (iii) failed-motor column zeroing not
+  ported (offline ESC -> torque invalid -> model fallback; check T8/V9 motor loss); (iv) module reads MC_ACRO_*
+  from mc_rate_control's yaml, so boards need mc_rate_control built too (acceptable; note in ch. 5); (v) one
+  zero allocate() after each configuration to get the lazy normalisation scale (gtest caught it). Batches untouched: PID r1f still flying at session start (c18/24, tune.py pid
   3993080), frz queue (3998259) and r2f queue (4179723) behind it; they use build/px4_sitl_default (old tree,
   never rebuild it while they fly). Keep build/px4_sitl_omega2 (old-placement reference for the regression check).
   NEXT: bench support for MC_INDI_EN at boot + old/new param names (spec "Not in this task"), smoke flights with
@@ -760,4 +765,5 @@ owner decisions when you first act on them.
 - 2026-11-14 s33: D-omega2 library (895b55aed8); PID r2 closed (defaults stay, FAC 0); SITL rebuilt; v1 re-checks + PID r1f (FAC) launched.
 - 2026-11-14 s34: D-omega2 wiring (4 commits, sonnet agent); v1 recheck flown (105 runs), prelim results; frz control queued.
 - 2026-11-14 s35: D-omega2 first flights (measured torque OK, fallback OK, D-erpmdly), G1 v2, held-out v2 draft. Agents: 0.
+- 2026-11-14 s37: O-11 refactor: mc_rate_control + allocator back to base, new module mc_indi_rate_control (builds, gtests pass, not flown). Agents: 1 sonnet.
 - 2026-11-14 s36: held-out v2 frozen (D-heldout-v2, sim hooks V3/V4/V6 + tau_up/down, PID smoke OK); r1f done (c05 0.925 vs 0.966); r2f queued. Agents: 0.
