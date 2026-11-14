@@ -52,6 +52,11 @@
  * Yaw adds the rotor spin-up term G2 (Smeur 2016, torque space form):
  *   (G1 + G2/dt) dt_cmd = nu - angular_accel + (G2/dt) (t_f - t_f_prev)
  *
+ * Measured torque path (optional, decision D-omega2): setMeasuredTorque() supplies tau_meas = B u from the ESC
+ * rotor speeds. It runs through its own delay and its own copy of H in parallel to the model, and replaces
+ * the modelled t_f after kMeasValidCycles consecutive valid cycles. Any invalid cycle falls back to the model
+ * at once. While invalid, the measurement path is fed the model's t_act so that the switch back is bumpless.
+ *
  * There is no integrator. All memory is statically allocated.
  */
 
@@ -123,6 +128,47 @@ public:
 	void setDelaySamples(int delay_samples) { _delay_samples_target = math::constrain(delay_samples, 0, kMaxDelaySamples); }
 
 	/**
+	 * Set the pure delay applied to the measured torque, same clamping and one sample per update() slew as
+	 * setDelaySamples(). A change is applied at once by reset().
+	 */
+	void setMeasurementDelaySamples(int delay_samples)
+	{
+		_meas_delay_samples_target = math::constrain(delay_samples, 0, kMaxDelaySamples);
+	}
+
+	/**
+	 * Supply the measured normalised torque (B u, u_i = (omega_i / omega_max)^2, same units as the output of
+	 * update()) for the next update() call only. Validity must be supplied every cycle: a cycle without a call
+	 * counts as invalid, as does a non finite torque, which never enters the filters. The model path keeps
+	 * running either way, the measurement replaces the modelled torque in the law after kMeasValidCycles
+	 * consecutive valid cycles and is dropped at the first invalid one (decision D-omega2).
+	 */
+	void setMeasuredTorque(const matrix::Vector3f &tau_meas, bool valid)
+	{
+		_tau_meas = tau_meas;
+		_meas_valid_pending = valid;
+	}
+
+	/**
+	 * Normalised rotor thrust u = (rpm / rpm_max)^2 clamped to [0, 1], for building the measured torque.
+	 * @param rpm measured rotor speed, rpm_max the speed at full thrust (same unit)
+	 * @param u set only if the return value is true
+	 * @return false (u untouched) for a non finite rpm or rpm_max, rpm_max <= 0, rpm < 0 or an implausible
+	 *         rpm > kMaxRpmRatio x rpm_max
+	 */
+	static bool normalisedThrustFromRpm(float rpm, float rpm_max, float &u)
+	{
+		if (!math::isFinite(rpm) || !math::isFinite(rpm_max) || !(rpm_max > 0.f) || (rpm < 0.f)
+		    || (rpm > kMaxRpmRatio * rpm_max)) {
+			return false;
+		}
+
+		const float ratio = rpm / rpm_max;
+		u = math::constrain(ratio * ratio, 0.f, 1.f);
+		return true;
+	}
+
+	/**
 	 * Set the per axis limit of the torque increment. Non finite or <= 0 values are ignored and the last valid
 	 * limit is kept (1, the full torque range, until a valid value is set), so an invalid value never widens it.
 	 */
@@ -165,9 +211,27 @@ public:
 	/// True if the last update() call rejected its inputs or parameters
 	bool getFault() const { return _fault; }
 
+	/// True if the last update() call used the measured torque as t_f instead of the actuator model
+	bool measurementInUse() const { return _meas_in_use; }
+
+	/// Filtered torque of each path in the last update() call (not zeroed on ground, unlike getFilteredTorque())
+	const matrix::Vector3f &getFilteredModelTorque() const { return _t_f_model; }
+	const matrix::Vector3f &getFilteredMeasuredTorque() const { return _t_f_meas; }
+
 	static constexpr float kMinG1 = 1e-3f;      ///< smallest valid control effectiveness
 	static constexpr float kMinDt = 0.000125f;  ///< shortest valid cycle time (8 kHz)
 	static constexpr float kMaxDt = 0.02f;      ///< longest valid cycle time (50 Hz)
+
+	/**
+	 * Consecutive valid measurement cycles before the measured torque replaces the model in the law (the
+	 * counting cycle is the first to use it). About twice the worst case settling at 1 kHz: kMaxDelaySamples
+	 * of delay slew plus roughly 6 cycles for the sync filters (LPF2p and alpha, tens of Hz) to converge from
+	 * the model value they were fed while the measurement was invalid.
+	 */
+	static constexpr int kMeasValidCycles = 20;
+
+	/// Measured rpm above this multiple of rpm_max is rejected as implausible by normalisedThrustFromRpm()
+	static constexpr float kMaxRpmRatio = 1.5f;
 
 private:
 	static constexpr int kDelayBufferSize = kMaxDelaySamples + 1;
@@ -193,6 +257,7 @@ private:
 	int _delay_samples_target{0};
 	float _max_increment{1.f};
 	float _yaw_cutoff_hz{0.f}; ///< 0 = yaw low pass disabled
+	int _meas_delay_samples_target{0};
 
 	// Filter design bookkeeping
 	float _design_sample_freq{0.f}; ///< sample rate the filters are designed for, 0 = not designed
@@ -211,6 +276,19 @@ private:
 	int _delay_samples{0};     ///< delay in use, slewed toward _delay_samples_target by one sample per cycle
 	math::LowPassFilter2p<float> _lpf[3];
 	AlphaFilter<float> _alpha[3];
+
+	// Measurement path, same structure and design as the model path above
+	matrix::Vector3f _tau_meas;          ///< measured torque supplied for the next update()
+	bool _meas_valid_pending{false};     ///< validity supplied for the next update(), cleared by every update()
+	matrix::Vector3f _meas_t_lpf;        ///< last output of the measurement H low pass
+	matrix::Vector3f _meas_delay_buffer[kDelayBufferSize]; ///< ring buffer of past measurement path inputs
+	int _meas_delay_head{0};
+	int _meas_delay_samples{0};          ///< slewed toward _meas_delay_samples_target by one sample per cycle
+	math::LowPassFilter2p<float> _meas_lpf[3];
+	AlphaFilter<float> _meas_alpha[3];
+	int _meas_valid_cycles{0};           ///< consecutive valid cycles, saturates at kMeasValidCycles
+	bool _meas_in_use{false};
+
 	math::LowPassFilter2p<float> _yaw_lpf_accel; ///< yaw low pass on the angular acceleration
 	math::LowPassFilter2p<float> _yaw_lpf_torque; ///< same design on the filtered torque
 	math::LowPassFilter2p<float> _yaw_error_lpf; ///< same design on the yaw rate error in nu
@@ -222,6 +300,8 @@ private:
 	matrix::Vector3f _nu;
 	matrix::Vector3f _a_f;
 	matrix::Vector3f _t_f;
+	matrix::Vector3f _t_f_model;
+	matrix::Vector3f _t_f_meas;
 	matrix::Vector3f _dt_cmd;
 	bool _fault{false};
 };

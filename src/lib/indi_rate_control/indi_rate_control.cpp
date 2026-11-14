@@ -85,12 +85,22 @@ void IndiRateControl::designSyncFilters(float sample_freq, bool reset_states)
 		// a cutoff change settles the filters at the current modelled torque; on a sample rate change the
 		// low pass restarts from its last output (its setter zeroes the states) and the alpha filter keeps its
 		// state, resetting t_f to the model state would drop its group delay while a_f keeps it
+		// the measurement path uses the identical design and the same reset rule
+		_meas_lpf[i].set_cutoff_frequency(sample_freq, _gyro_cutoff_hz);
+
+		if (!_meas_alpha[i].setCutoffFreq(sample_freq, _dgyro_cutoff_hz)) {
+			_meas_alpha[i].setAlpha(1.f);
+		}
+
 		if (reset_states) {
 			_lpf[i].reset(_t_act(i));
 			_alpha[i].reset(_t_act(i));
+			_meas_lpf[i].reset(_t_act(i));
+			_meas_alpha[i].reset(_t_act(i));
 
 		} else {
 			_lpf[i].reset(_t_lpf(i));
+			_meas_lpf[i].reset(_meas_t_lpf(i));
 		}
 	}
 
@@ -132,6 +142,24 @@ void IndiRateControl::resetStates()
 		_alpha[i].reset(0.f);
 	}
 
+	// measurement path, and back to the model until kMeasValidCycles valid cycles have been seen again
+	_meas_t_lpf.zero();
+
+	for (int i = 0; i < kDelayBufferSize; i++) {
+		_meas_delay_buffer[i].zero();
+	}
+
+	_meas_delay_head = 0;
+	_meas_delay_samples = _meas_delay_samples_target;
+
+	for (int i = 0; i < 3; i++) {
+		_meas_lpf[i].reset(0.f);
+		_meas_alpha[i].reset(0.f);
+	}
+
+	_meas_valid_cycles = 0;
+	_meas_in_use = false;
+
 	_yaw_lpf_accel.reset(0.f);
 	_yaw_lpf_torque.reset(0.f);
 	_yaw_error_lpf.reset(0.f);
@@ -147,6 +175,8 @@ void IndiRateControl::reset()
 	_nu.zero();
 	_a_f.zero();
 	_t_f.zero();
+	_t_f_model.zero();
+	_t_f_meas.zero();
 	_dt_cmd.zero();
 	_t_cmd_last.zero();
 }
@@ -172,12 +202,19 @@ Vector3f IndiRateControl::faultOutput(const bool states_corrupted)
 Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, const Vector3f &angular_accel,
 				 const Vector3f &torque_allocated_prev, const float dt, const bool landed)
 {
+	// the measurement validity is valid for this call only, whatever happens below; a non finite torque is invalid
+	const bool meas_valid = _meas_valid_pending && _tau_meas.isAllFinite();
+	_meas_valid_pending = false;
+
 	// 1. validate inputs and parameters, a rejected cycle leaves the states untouched
 	const bool dt_valid = math::isFinite(dt) && (dt >= kMinDt) && (dt <= kMaxDt);
 	const bool inputs_valid = rate.isAllFinite() && rate_sp.isAllFinite() && angular_accel.isAllFinite()
 				  && torque_allocated_prev.isAllFinite();
 
 	if (!dt_valid || !inputs_valid || !paramsValid() || !math::isFinite(_g2_yaw)) {
+		// the measurement was not processed this cycle, so it does not count as valid
+		_meas_valid_cycles = 0;
+		_meas_in_use = false;
 		return faultOutput(false);
 	}
 
@@ -228,12 +265,47 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	const Vector3f t_del = _t_delay_buffer[delay_index];
 
 	// 5. synchronisation filter H, same order as the gyro derivative chain: LPF2p then alpha filter
-	Vector3f t_f;
+	Vector3f t_f_model;
 
 	for (int i = 0; i < 3; i++) {
 		_t_lpf(i) = _lpf[i].apply(t_del(i));
-		t_f(i) = _alpha[i].update(_t_lpf(i));
+		t_f_model(i) = _alpha[i].update(_t_lpf(i));
 	}
+
+	// 5b. measurement path, same steps as 3-5 on the measured torque. While it is invalid it is fed the modelled
+	// torque so that its filters stay near the right value and the return to the measurement is bumpless
+	Vector3f t_meas_in = _t_act;
+
+	if (meas_valid) {
+		for (int i = 0; i < 3; i++) {
+			t_meas_in(i) = math::constrain(_tau_meas(i), -1.f, 1.f);
+		}
+	}
+
+	if (_meas_delay_samples < _meas_delay_samples_target) {
+		_meas_delay_samples++;
+
+	} else if (_meas_delay_samples > _meas_delay_samples_target) {
+		_meas_delay_samples--;
+	}
+
+	_meas_delay_head = (_meas_delay_head + 1) % kDelayBufferSize;
+	_meas_delay_buffer[_meas_delay_head] = t_meas_in;
+	const int meas_delay_index = (_meas_delay_head + kDelayBufferSize - _meas_delay_samples) % kDelayBufferSize;
+	const Vector3f t_meas_del = _meas_delay_buffer[meas_delay_index];
+
+	Vector3f t_f_meas;
+
+	for (int i = 0; i < 3; i++) {
+		_meas_t_lpf(i) = _meas_lpf[i].apply(t_meas_del(i));
+		t_f_meas(i) = _meas_alpha[i].update(_meas_t_lpf(i));
+	}
+
+	// 5c. source selection: the measurement only after kMeasValidCycles consecutive valid cycles, any invalid cycle
+	// drops back to the model at once. No per axis mixing, model and measurement differ in lag and units
+	_meas_valid_cycles = meas_valid ? math::min(_meas_valid_cycles + 1, kMeasValidCycles) : 0;
+	_meas_in_use = (_meas_valid_cycles >= kMeasValidCycles);
+	Vector3f t_f = _meas_in_use ? t_f_meas : t_f_model;
 
 	if (landed) {
 		// restart the yaw filters from the current values each landed cycle (bypassed on ground)
@@ -300,6 +372,8 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	_nu = nu;
 	_a_f = a_f;
 	_t_f = t_fb;
+	_t_f_model = t_f_model;
+	_t_f_meas = t_f_meas;
 	_dt_cmd = dt_cmd;
 
 	return t_cmd;

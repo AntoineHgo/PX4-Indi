@@ -779,3 +779,355 @@ TEST(IndiRateControlTest, InvalidMaxIncrementKeepsLastValidLimit)
 	const Vector3f torque = ctrl.update(Vector3f(), Vector3f(1.f, 0.f, 0.f), Vector3f(), Vector3f(), kDt, false);
 	EXPECT_NEAR(torque(0), 0.05f, 1e-6f);
 }
+
+namespace
+{
+
+constexpr int kN = IndiRateControl::kMeasValidCycles;
+
+/// varying but deterministic inputs for the measurement path tests
+struct Excitation {
+	Vector3f rate;
+	Vector3f rate_sp;
+	Vector3f accel;
+	Vector3f alloc;
+};
+
+Excitation excitation(int i)
+{
+	const float t = i * kDt;
+	Excitation e;
+	e.rate = Vector3f(0.3f * sinf(7.f * t), 0.2f * cosf(5.f * t), 0.1f * sinf(3.f * t));
+	e.rate_sp = Vector3f(0.5f * sinf(2.f * t), 0.4f * cosf(1.5f * t), 0.2f * sinf(t));
+	e.accel = Vector3f(2.f * sinf(11.f * t), 1.5f * cosf(9.f * t), 0.5f * sinf(4.f * t));
+	e.alloc = Vector3f(0.4f * sinf(6.f * t), 0.3f * cosf(8.f * t), 0.2f * sinf(2.5f * t));
+	return e;
+}
+
+Vector3f step(IndiRateControl &ctrl, int i)
+{
+	const Excitation e = excitation(i);
+	return ctrl.update(e.rate, e.rate_sp, e.accel, e.alloc, kDt, false);
+}
+
+/// constant measured torque, zero everything else, returns after n cycles
+void runConstantMeasurement(IndiRateControl &ctrl, const Vector3f &alloc, const Vector3f &meas, int n)
+{
+	for (int i = 0; i < n; i++) {
+		ctrl.setMeasuredTorque(meas, true);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, false);
+	}
+}
+
+} // namespace
+
+TEST(IndiRateControlMeasurementTest, NeverValidIsBitIdenticalToModelOnly)
+{
+	IndiRateControl ref = makeController();
+	IndiRateControl ctrl = makeController();
+	ctrl.setMeasurementDelaySamples(3);
+	ref.setDelaySamples(2);
+	ctrl.setDelaySamples(2);
+	ref.setYawCutoff(15.f);
+	ctrl.setYawCutoff(15.f);
+	ref.setG2Yaw(0.5f);
+	ctrl.setG2Yaw(0.5f);
+
+	for (int i = 0; i < 600; i++) {
+		// measurement supplied but never valid, with garbage content, and cycles with no call at all
+		if (i % 2 == 0) {
+			ctrl.setMeasuredTorque(Vector3f(0.9f, -0.9f, 0.7f), false);
+		}
+
+		const Vector3f a = step(ref, i);
+		const Vector3f b = step(ctrl, i);
+		ASSERT_EQ(a, b) << "cycle " << i;
+		ASSERT_EQ(ref.getFilteredTorque(), ctrl.getFilteredTorque());
+		ASSERT_FALSE(ctrl.measurementInUse());
+	}
+}
+
+TEST(IndiRateControlMeasurementTest, MeasurementEqualToModelSwitchesWithoutTransient)
+{
+	IndiRateControl ref = makeController();
+	IndiRateControl ctrl = makeController();
+	Vector3f meas;
+	const float alpha = 1.f - expf(-kDt / kActuatorTc);
+	bool in_use_seen = false;
+
+	for (int i = 0; i < 400; i++) {
+		const Excitation e = excitation(i);
+		// the actuator model run outside the library on the same allocated torque
+		meas += alpha * (e.alloc - meas);
+		ctrl.setMeasuredTorque(meas, true);
+
+		const Vector3f a = step(ref, i);
+		const Vector3f b = step(ctrl, i);
+		in_use_seen = in_use_seen || ctrl.measurementInUse();
+
+		for (int k = 0; k < 3; k++) {
+			ASSERT_NEAR(a(k), b(k), 1e-4f) << "cycle " << i << " axis " << k;
+		}
+	}
+
+	EXPECT_TRUE(in_use_seen);
+	EXPECT_TRUE(ctrl.measurementInUse());
+}
+
+TEST(IndiRateControlMeasurementTest, SwitchesOnlyAfterRequiredValidCycles)
+{
+	IndiRateControl ctrl = makeController();
+
+	for (int i = 1; i <= kN + 5; i++) {
+		ctrl.setMeasuredTorque(Vector3f(0.3f, 0.f, 0.f), true);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), Vector3f(0.5f, 0.f, 0.f), kDt, false);
+		// the kN-th consecutive valid cycle is the first to use the measurement
+		EXPECT_EQ(ctrl.measurementInUse(), i >= kN) << "cycle " << i;
+	}
+}
+
+TEST(IndiRateControlMeasurementTest, OneInvalidCycleFallsBackAndRestartsCount)
+{
+	IndiRateControl ctrl = makeController();
+	const Vector3f alloc(0.5f, 0.f, 0.f);
+	runConstantMeasurement(ctrl, alloc, Vector3f(0.3f, 0.f, 0.f), 300);
+	ASSERT_TRUE(ctrl.measurementInUse());
+	EXPECT_NEAR(ctrl.getFilteredTorque()(0), 0.3f, 1e-3f);
+
+	// a cycle without any setMeasuredTorque() call is invalid
+	ctrl.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, false);
+	EXPECT_FALSE(ctrl.measurementInUse());
+	EXPECT_EQ(ctrl.getFilteredTorque(), ctrl.getFilteredModelTorque());
+
+	// an explicit valid = false is the same, the counter starts over
+	ctrl.setMeasuredTorque(Vector3f(0.3f, 0.f, 0.f), false);
+	ctrl.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, false);
+	EXPECT_FALSE(ctrl.measurementInUse());
+
+	for (int i = 1; i <= kN; i++) {
+		ctrl.setMeasuredTorque(Vector3f(0.3f, 0.f, 0.f), true);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, false);
+		EXPECT_EQ(ctrl.measurementInUse(), i >= kN) << "cycle " << i;
+	}
+
+	// a rejected cycle (non finite input) counts as invalid too
+	ctrl.setMeasuredTorque(Vector3f(0.3f, 0.f, 0.f), true);
+	ctrl.update(Vector3f(NAN, 0.f, 0.f), Vector3f(), Vector3f(), alloc, kDt, false);
+	EXPECT_TRUE(ctrl.getFault());
+	EXPECT_FALSE(ctrl.measurementInUse());
+}
+
+TEST(IndiRateControlMeasurementTest, InvalidFeedKeepsMeasurementFiltersNearModel)
+{
+	IndiRateControl ctrl = makeController();
+	const Vector3f alloc(0.5f, -0.2f, 0.1f);
+
+	// invalid for a long time: the measurement filters follow the model, not the stale content
+	for (int i = 0; i < 300; i++) {
+		ctrl.setMeasuredTorque(Vector3f(-0.9f, 0.9f, -0.9f), false);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, false);
+	}
+
+	for (int k = 0; k < 3; k++) {
+		EXPECT_NEAR(ctrl.getFilteredMeasuredTorque()(k), alloc(k), 1e-3f);
+		EXPECT_NEAR(ctrl.getFilteredModelTorque()(k), alloc(k), 1e-3f);
+	}
+}
+
+TEST(IndiRateControlMeasurementTest, NonFiniteMeasurementIsInvalid)
+{
+	IndiRateControl ctrl = makeController();
+	const Vector3f alloc(0.5f, 0.f, 0.f);
+	runConstantMeasurement(ctrl, alloc, Vector3f(0.3f, 0.f, 0.f), 300);
+	ASSERT_TRUE(ctrl.measurementInUse());
+
+	const float bad[3] = {NAN, INFINITY, -INFINITY};
+
+	for (int k = 0; k < 3; k++) {
+		Vector3f meas(0.3f, 0.f, 0.f);
+		meas(k) = bad[k];
+		ctrl.setMeasuredTorque(meas, true); // flagged valid but not finite
+		const Vector3f torque = ctrl.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, false);
+		EXPECT_FALSE(ctrl.measurementInUse());
+		EXPECT_TRUE(torque.isAllFinite());
+		EXPECT_FALSE(ctrl.getFault());
+		EXPECT_TRUE(ctrl.getFilteredMeasuredTorque().isAllFinite());
+	}
+
+	// the filters were not poisoned: valid cycles bring the measurement back
+	runConstantMeasurement(ctrl, alloc, Vector3f(0.3f, 0.f, 0.f), 300);
+	EXPECT_TRUE(ctrl.measurementInUse());
+	EXPECT_NEAR(ctrl.getFilteredTorque()(0), 0.3f, 1e-3f);
+}
+
+TEST(IndiRateControlMeasurementTest, MeasurementDelayClampsAndSlewsOneSamplePerCycle)
+{
+	IndiRateControl ctrl = makeController();
+	ctrl.setFilterCutoffs(0.f, 0.f); // pass-through, so the filtered measurement is the delayed measurement
+
+	const float slope = 0.002f;
+	float last = 0.f;
+
+	for (int i = 0; i < 40; i++) {
+		ctrl.setMeasuredTorque(Vector3f(slope * i, 0.f, 0.f), true);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), Vector3f(), kDt, false);
+		last = ctrl.getFilteredMeasuredTorque()(0);
+	}
+
+	EXPECT_NEAR(last, slope * 39, 1e-6f); // delay 0
+
+	// 0 -> 4 in flight, requested far above the maximum: held back one sample per cycle, clamped at 4
+	ctrl.setMeasurementDelaySamples(100);
+
+	for (int i = 40; i < 50; i++) {
+		ctrl.setMeasuredTorque(Vector3f(slope * i, 0.f, 0.f), true);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), Vector3f(), kDt, false);
+		const float value = ctrl.getFilteredMeasuredTorque()(0);
+		EXPECT_GE(value, last - 1e-6f);
+		EXPECT_LE(value - last, slope + 1e-6f);
+		last = value;
+	}
+
+	EXPECT_NEAR(last, slope * (49 - IndiRateControl::kMaxDelaySamples), 1e-6f);
+
+	// 4 -> 0 (negative request clamps to 0): one skipped sample per cycle
+	ctrl.setMeasurementDelaySamples(-3);
+
+	for (int i = 50; i < 60; i++) {
+		ctrl.setMeasuredTorque(Vector3f(slope * i, 0.f, 0.f), true);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), Vector3f(), kDt, false);
+		const float value = ctrl.getFilteredMeasuredTorque()(0);
+		EXPECT_GE(value, last - 1e-6f);
+		EXPECT_LE(value - last, 2.f * slope + 1e-6f);
+		last = value;
+	}
+
+	EXPECT_NEAR(last, slope * 59, 1e-6f);
+
+	// the model path delay is independent: still 0, the model output is not shifted by the measurement delay
+	EXPECT_NEAR(ctrl.getFilteredModelTorque()(0), 0.f, 1e-6f);
+}
+
+TEST(IndiRateControlMeasurementTest, FollowsMeasurementWhenModelIsWrong)
+{
+	// the model time constant is 10 x too slow for the 0.5 allocated torque that is not what is measured
+	IndiRateControl ctrl = makeController();
+	ctrl.setActuatorTimeConstant(0.2f);
+	const Vector3f alloc(0.5f, 0.f, -0.4f);
+	const Vector3f meas(0.3f, 0.1f, -0.1f);
+
+	// model only: t_f converges to the allocated torque
+	for (int i = 0; i < 1200; i++) {
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, false);
+	}
+
+	EXPECT_NEAR(ctrl.getFilteredTorque()(0), 0.5f, 1e-3f);
+
+	// measurement valid: after the switch t_f settles at the measurement and the command with it (zero error)
+	Vector3f torque;
+
+	for (int i = 0; i < 1200; i++) {
+		ctrl.setMeasuredTorque(meas, true);
+		torque = ctrl.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, false);
+	}
+
+	ASSERT_TRUE(ctrl.measurementInUse());
+
+	for (int k = 0; k < 3; k++) {
+		EXPECT_NEAR(ctrl.getFilteredTorque()(k), meas(k), 1e-3f);
+		EXPECT_NEAR(torque(k), meas(k), 1e-3f);
+	}
+
+	// the model path keeps its own value
+	EXPECT_NEAR(ctrl.getFilteredModelTorque()(0), 0.5f, 1e-3f);
+}
+
+TEST(IndiRateControlMeasurementTest, LandedUsesMeasurementLikeModel)
+{
+	IndiRateControl ctrl = makeController();
+	Vector3f torque;
+
+	for (int i = 0; i < 100; i++) {
+		ctrl.setMeasuredTorque(Vector3f(0.3f, 0.f, 0.f), true);
+		torque = ctrl.update(Vector3f(), Vector3f(0.5f, 0.f, 0.f), Vector3f(), Vector3f(), kDt, true);
+		EXPECT_FLOAT_EQ(torque(0), 0.1f); // increment only, as with the model
+		EXPECT_EQ(ctrl.getFilteredTorque(), Vector3f());
+	}
+
+	// the measurement path ran on ground and is already in use at takeoff
+	EXPECT_TRUE(ctrl.measurementInUse());
+	EXPECT_NEAR(ctrl.getFilteredMeasuredTorque()(0), 0.3f, 1e-3f);
+	ctrl.setMeasuredTorque(Vector3f(0.3f, 0.f, 0.f), true);
+	torque = ctrl.update(Vector3f(), Vector3f(0.5f, 0.f, 0.f), Vector3f(), Vector3f(), kDt, false);
+	EXPECT_NEAR(torque(0), 0.4f, 1e-3f);
+}
+
+TEST(IndiRateControlMeasurementTest, ResetClearsMeasurementPath)
+{
+	IndiRateControl ctrl = makeController();
+	ctrl.setMeasurementDelaySamples(2);
+	runConstantMeasurement(ctrl, Vector3f(0.5f, 0.f, 0.f), Vector3f(0.3f, 0.f, 0.f), 300);
+	ASSERT_TRUE(ctrl.measurementInUse());
+
+	ctrl.reset();
+	EXPECT_FALSE(ctrl.measurementInUse());
+	EXPECT_EQ(ctrl.getFilteredMeasuredTorque(), Vector3f());
+
+	// a pending measurement is not carried over by reset() only if it is re-supplied; counting restarts at zero
+	for (int i = 1; i <= kN; i++) {
+		ctrl.setMeasuredTorque(Vector3f(0.3f, 0.f, 0.f), true);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), Vector3f(0.5f, 0.f, 0.f), kDt, false);
+		EXPECT_EQ(ctrl.measurementInUse(), i >= kN) << "cycle " << i;
+	}
+}
+
+TEST(IndiRateControlMeasurementTest, SampleRateChangeKeepsMeasurementFiltersContinuous)
+{
+	IndiRateControl ctrl = makeController();
+	const Vector3f alloc(0.5f, 0.f, 0.f);
+	const Vector3f meas(0.3f, 0.f, 0.f);
+
+	for (int i = 0; i < 400; i++) {
+		ctrl.setMeasuredTorque(meas, true);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, false);
+	}
+
+	ASSERT_TRUE(ctrl.measurementInUse());
+
+	// 400 Hz -> 800 Hz redesigns the filters, the filtered measurement must not jump
+	for (int i = 0; i < 400; i++) {
+		ctrl.setMeasuredTorque(meas, true);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt / 2.f, false);
+		ASSERT_NEAR(ctrl.getFilteredMeasuredTorque()(0), 0.3f, 2e-3f) << "cycle " << i;
+	}
+}
+
+TEST(IndiRateControlMeasurementTest, NormalisedThrustFromRpm)
+{
+	float u = -1.f;
+
+	EXPECT_TRUE(IndiRateControl::normalisedThrustFromRpm(0.f, 10000.f, u));
+	EXPECT_FLOAT_EQ(u, 0.f);
+	EXPECT_TRUE(IndiRateControl::normalisedThrustFromRpm(5000.f, 10000.f, u));
+	EXPECT_FLOAT_EQ(u, 0.25f);
+	EXPECT_TRUE(IndiRateControl::normalisedThrustFromRpm(10000.f, 10000.f, u));
+	EXPECT_FLOAT_EQ(u, 1.f);
+
+	// above rpm_max but plausible: clamped to 1
+	EXPECT_TRUE(IndiRateControl::normalisedThrustFromRpm(12000.f, 10000.f, u));
+	EXPECT_FLOAT_EQ(u, 1.f);
+	EXPECT_TRUE(IndiRateControl::normalisedThrustFromRpm(15000.f, 10000.f, u));
+	EXPECT_FLOAT_EQ(u, 1.f);
+
+	// rejected cases leave u untouched
+	u = 0.123f;
+	EXPECT_FALSE(IndiRateControl::normalisedThrustFromRpm(15001.f, 10000.f, u));
+	EXPECT_FALSE(IndiRateControl::normalisedThrustFromRpm(-1.f, 10000.f, u));
+	EXPECT_FALSE(IndiRateControl::normalisedThrustFromRpm(5000.f, 0.f, u));
+	EXPECT_FALSE(IndiRateControl::normalisedThrustFromRpm(5000.f, -10000.f, u));
+	EXPECT_FALSE(IndiRateControl::normalisedThrustFromRpm(NAN, 10000.f, u));
+	EXPECT_FALSE(IndiRateControl::normalisedThrustFromRpm(INFINITY, 10000.f, u));
+	EXPECT_FALSE(IndiRateControl::normalisedThrustFromRpm(5000.f, NAN, u));
+	EXPECT_FALSE(IndiRateControl::normalisedThrustFromRpm(5000.f, INFINITY, u));
+	EXPECT_FLOAT_EQ(u, 0.123f);
+}
