@@ -119,11 +119,15 @@ owner decisions when you first act on them.
   rebuilt (PID r1 was flying on it). v2 PID tuning r1 running.
 - **Stage 2 (session 31):** v2 PID r1 best c23 J 0.967 beats defaults 1.007 (hover-noise dominated); r2 (centred
   on c23) running detached. Step 3 done except item 4 (after O-5). O-3: gz motor tau identified 12.4/25.0 ms up/down.
+- **Stage 2 (session 32):** O-4 done: gz DOES transmit rotor reaction torque (G2_Y ~ 0.16 in v1 units, b/a 33 s,
+  ~1/10 of physical; `results/s2_ident_g2.md`). D-omega2 decided: u = (omega/omega_max)^2 in torque space through
+  the allocator; requires THR_MDL_FAC 0.683 (fitted, `results/s2_thr_mdl_fac.md`) for BOTH controllers, so the
+  v2 PID tuning check must be repeated on the FAC config.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
   quoting in the report.
-- **Last updated:** 2026-11-14, session 24 (ch. 6/9 markers closed, ch. 2 7/8). Agents s24: 1 haiku. Before that: session 23 (bibliography, D-noretune). Before that: session 21 (review triaged, G2_Y bound fix, figures, ch. 2 draft). Before that: session 20. Before that: session 16 (ch. 8 draft + control-law review in flight). Before that: session 15 (H1/H4/H5 implemented, batches flying). Before that: session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
+- **Last updated:** 2026-11-14, session 32 (O-4, D-omega2, FAC). Earlier: session 24 (ch. 6/9 markers closed, ch. 2 7/8). Agents s24: 1 haiku. Before that: session 23 (bibliography, D-noretune). Before that: session 21 (review triaged, G2_Y bound fix, figures, ch. 2 draft). Before that: session 20. Before that: session 16 (ch. 8 draft + control-law review in flight). Before that: session 15 (H1/H4/H5 implemented, batches flying). Before that: session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
   library + unit tests committed, not yet wired into mc_rate_control; first
   G1 identification: pitch 211 (R^2 0.90), roll 321 (R^2 0.63), yaw not
   identified; see `results/identification_g1_v0.md`).
@@ -140,6 +144,19 @@ owner decisions when you first act on them.
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+
+- SESSION 32 (2026-11-14): PID r2 still RUNNING at start (6/16), 9/16 at end; same relaunch rule as s31 below.
+  DONE O-4 (inline, no agent): `bench/identify_g2.py` (f16d518109), `results/s2_ident_g2.md` + D-g2sim
+  (2f884370b9). DONE D-omega2 design (99ad5997da). DONE THR_MDL_FAC fit 0.683, overlay
+  `bench/params/v2_fac.params` (DNF + FAC) (b07bf0cb16). Agents s32: 0.
+  NEXT, in order: (1) when r2 ends: analyse it as in s31 (record as "v2 PID, FAC 0", superseded by FAC config);
+  (2) rebuild px4_sitl_default (Docker); (3) one hover flight PID defaults with v2_fac.params: check hover
+  actuator_motors median ~0.59 (prediction) and stable; (4) v2 PID tuning check on FAC config: copy
+  s2_pid_tune_r1.sh/r2.sh with --base-params bench/params/v2_fac.params and new round names (r1f, r2f), CPU
+  only; (5) O-3/O-4 v1 re-checks post-acceptance (frozen v1 INDI, ACT_TC 0.0125 and 0.025 runs, G2_Y 0.16 run;
+  tuning set + H5 x10) on the v1 config (FAC 0, as v1 was flown); (6) implement D-omega2 (sonnet agent, one
+  change per commit: eRPM state + validity/fallback in the library with gtests, then module wiring,
+  MC_INDI_W_MAX, MC_INDI_ERPM_DLY, MC_INDI_ERPM_TO); identify ERPM_DLY before flying.
 
 - SESSION 31 (2026-11-14): r1 analysed (`results/s2_tuning/r1.md`): CORRECTION to s30, c23 J 0.967 beats the
   defaults c00 1.007 (mostly the noisy hover term; steps: roll 0.82, pitch 0.96, yaw 1.09, rate 0.92). r2 RUNNING
