@@ -225,6 +225,9 @@ owner decisions when you first act on them.
   NEXT (session 46): S43 step c: build px4_sitl_default with the v3 commit (3a47bf746e, MC_INDI_ACT_BLD), one hover
   smoke with ACT_BLD 0 (must match v2), then screening under O-12 (`tune.py --stages 2`) on motor_loss_0,
   mismatch_combined_rate, step_roll, Tb 0.1/0.3/1.0, 1 seed; freeze indi_v3; then V' (scenarios.md sec. 9).
+  v3 BUILD DONE 00:25 (px4_sitl_default incl. 3a47bf746e, log `results/v3_build_s45.log`, 0 errors, MC_INDI_ACT_BLD
+  in parameters.xml). Session 46 starts at the ACT_BLD 0 hover smoke (compare to seen hover indi_v2 seed 1).
+  Ledger s45: 0 agents; flights 9 (seen re-fly) + 2 (O-12 smoke); 1 build.
 - SESSION 44 (2026-11-14, launch 20261114-225445): seen set at seed 4/10 at 22:55 (slower than estimated: ~6 min
   per seed-entry group; end likely after 01:00), V re-fly still queued behind it. The s43 replay agent was cut off
   after fixing the takeoff window (log `plan/impl_log_o12.md`); the orchestrator reviewed `bench/watchdog_replay.py`
