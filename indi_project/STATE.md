@@ -45,7 +45,7 @@
 | # | Phase | Status |
 |---|-------|--------|
 | 1 | State of the art (`research/`, report ch. 2-3) | in progress: reading list written, notes smeur2016, acquatella2017, blaha2024, wang2019, tal2021, impl_paparazzi, impl_px4_prior done; steffensen2023 (session 9); remaining: sieberling2010, sun2022, smeur2018, impl_indiflight |
-| 2 | PX4 analysis and design (`plan/`, report ch. 4-5) | architecture v1 done (`plan/architecture.md`); report chapter not drafted |
+| 2 | PX4 analysis and design (`plan/`, report ch. 4-5) | architecture v1 done (`plan/architecture.md`); ch. 4 drafted and integration analysis code-checked (session 9, `plan/px4_analysis_verification.md`: 44/54 confirmed, 2 corrected); ch. 5 not drafted |
 | 3 | Simulation + benchmark harness on PID baseline (`docker/`, `bench/`) | image works, SITL build OK; gz_x500 headless smoke flight OK at speed 1 and 4 (`bench/smoke_gz.sh`); equivalence of results across speed factors not yet verified with metrics |
 | 4 | Implementation (firmware + unit tests) | not started |
 | 5 | Tuning and iteration | not started |
@@ -59,10 +59,6 @@
   `results/tuning/{pid,indi}/r2/summary.csv`. Next session: if no
   `px4-indi-*` container runs and a summary lacks candidates, re-run the
   command in the log header (resumable). Then write `results/tuning/r2.md`.
-- Session 9 subagents in flight: haiku -> `research/notes/steffensen2023.md`;
-  sonnet -> `report/04_px4_architecture.md` + `plan/px4_analysis_verification.md`
-  (chapter 4 draft + code check of the integration analysis). If a file is
-  missing or partial next session, relaunch only for what is missing.
 - Nothing running. Session 8 finished PID r1 and INDI r1.
 - Session 7 (2026-11-14): PID tuning round 1 launched detached at the end
   of the session: `python3 bench/tune.py --family pid --round-name r1
@@ -226,3 +222,4 @@
 - 2026-11-14: session 8: PID r1 done (defaults best of 24); MC_INDI_YAW_CUT (lib, gtests, param); yaw cut 10 Hz cuts INDI hover effort 7x; INDI r1 launched.
 - 2026-11-14: session 8: INDI r1 done: better tracking on all tuning scenarios, worse J from effort.
 - 2026-11-14: session 9: untracked files triaged; INDI hover effort traced to yaw; tuning round 2 (both families, 3 seeds) launched.
+- 2026-11-14: session 9: Steffensen 2023 note; report ch. 4 draft + code verification of the integration analysis (SIH has a first-order motor lag SIH_T_TAU and a modelled esc_rpm, unlike gz).
