@@ -98,7 +98,8 @@
 
 ## In progress
 
-- SESSION 14 (launch 20261114-062440): held-out batch confirmed running (started 06:23). Subagents in flight: (a) sonnet drafting `report/05_design_implementation.md`, (b) sonnet drafting `report/07_tuning.md`. If cut off: check those files, relaunch only for missing sections.
+- SESSION 14: held-out batch running (18/60 done at 06:40; log `results/heldout_s13.log`). Done: ch. 5 draft (3fe72c1ed2), ch. 7 draft (0fe27b6e72), T8 fault-onset table (9bf76400aa: INDI peak tilt 1.6 vs PID 5.1 deg, saturation 2.8 vs 1.7 s).
+  REPORT FIXES TO DO (from drafting agents): (a) architecture.md out of date vs code (no K_ff/setpoint derivative, no 20 ms freshness, landed output = G1^-1(nu - a_f) with t_f held 0, yaw filters missing): update plan or note in ch. 5; (b) ch. 5 G2 yaw derivation is the agent's own: verify before final; (c) PID candidate count: D-freeze/r2.md say 64, rounds sum to 40 (24+16): fix DECISIONS; INDI flights ~600 vs 792-852 counted; (d) PID hover effort 0.037 (yawcut_check_s8) vs 0.054 (effort_axes_s9) same scenario/seed: explain; (e) PID J quoted 0.946/0.958/0.964/0.96: pick one reference (re-flown defaults) for the report; (f) scenarios.md promised full-T re-tune: not done, state it in ch. 7 or do it; (g) ch. 5 is 5400 words, fine.
 - RUNNING end of session 13 (detached, ~30-40 min): held-out/disturbance batch,
   PID defaults + INDI tuned, seeds 1-5: speed 1 {com_shift gust_diag gust_x
   payload_add}, speed 4 {step_diag mismatch_inertia}. Log
@@ -357,3 +358,4 @@
 - 2026-11-14: session 13: D-yawsp scored (yaw effort fixed, yaw tracking lost, J 1.058); hover term found noise-dominated; r4 yaw sweep launched.
 - 2026-11-14: session 13: r4 done (yaw parity with PID is structural under D-yawsp); r4f combined candidate launched.
 - 2026-11-14: session 13: r4f J 0.978 (tie with PID); INDI frozen (D-freeze); T8 motor loss: INDI roll/pitch 5-9x better, yaw worse.
+- 2026-11-14: session 14: T8 fault-onset metrics; report ch. 5 and ch. 7 drafted (sonnet, 2 agents); held-out batch running.
