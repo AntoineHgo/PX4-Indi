@@ -1,0 +1,5 @@
+- step1: firmware (indi_rate_control.{hpp,cpp}: _yaw_rate_lpf, nu uses lpf(rate(2)) when yaw cut-off active) and 3 tests (YawRateFilter*) edited; build pending
+- step2: make format (astyle in Docker) on the 3 C++ files: unchanged.
+- step3: `indi_project/docker/run.sh -n yawnu_ut -t 2400 'make tests TESTFILTER=indi_rate_control'`: PASS, 17/17 gtests (14 existing + 3 new YawRateFilter*), 1/1 ctest.
+- step4: MC_INDI_YAW_CUT long description updated in mc_rate_control_params.yaml.
+- step5: `make px4_sitl_default` in Docker: build OK (704/704, bin/px4 linked).
