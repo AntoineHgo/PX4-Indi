@@ -119,11 +119,15 @@
 ## In progress
 
 - SESSION 22 (2026-11-14): DONE figures referenced in ch. 8 (Fig 8.1-8.3) and ch. 9 (Fig 9.1), review s5 band-pass
-  mechanism + triaged review risks (a-i) added to ch. 9 (0a1ca5a2a5). IN FLIGHT: (M) sonnet drafts
-  `report/01_introduction.md` + `report/10_conclusion.md`; (N) haiku drafts `report/11_appendix_reproduce.md`.
-  If cut off: check those files, relaunch only for what is missing.
-  (O) CPU: INDI speed-1 check (ch. 9.4 TO VERIFY): SCENARIOS="step_diag mismatch_combined_rate" CONTROLLERS=indi_tuned
-  SEEDS="1 2 3" SPEEDS=1 -> results/runs/<sc>/indi_tuned/seed<N> (compare with seed<N>_x4); log results/speedcheck_indi_s22.log.
+  mechanism + triaged review risks (a-i) added to ch. 9 (0a1ca5a2a5); wang2019/steffensen2023 URLs in sources.md;
+  D-pdf (no pandoc/LaTeX anywhere; PDF later via separate report image); ch. 1 + ch. 10 drafted (sonnet, ~$0.15);
+  appendix A reproduce drafted (haiku), all [TO VERIFY] resolved. Report now has ch. 1-10 + appendix A; missing:
+  consolidated bibliography chapter (from research/sources.md), ch. 2 [TO VERIFY]/[GAP] items, REPORT FIXES list
+  (session 14 entry), ch. 9.4 speed [TO VERIFY] (batch below), FIGURE for H5 spectrum (optional).
+  IN FLIGHT (O) CPU: INDI speed-1 check, PARAMS_FILE=results/tuning/indi/r4f/c00/params, SCENARIOS="step_diag
+  mismatch_combined_rate" SEEDS="1 2 3" SPEEDS=1 NAME_TAG=spd22b -> results/runs/<sc>/indi_tuned/seed<N> (compare
+  with seed<N>_x4 on rotation_angle_rms_deg / roll_rms_rad_s / motor_rate_rms); log results/speedcheck_indi_s22.log.
+  If the dirs exist with metrics.json, just compare and write results/speedcheck_indi_s22.md, then fix ch. 9.4.
 
 - SESSION 21 (2026-11-14) DONE: review complete + triaged (28eba44030, items 8-13 + triage in its Summary);
   MC_INDI_G2_Y max 100 -> 1 (2bb0ba3ac9, SITL build OK; DT_MAX min 0.01 and K min 1 already guard review item 11
@@ -371,6 +375,12 @@
 
 ## Known problems
 
+- run_batch.sh with CONTROLLERS=indi_tuned and no PARAMS_FILE silently flies PID defaults (no
+  bench/params/indi_tuned.params exists). Always pass PARAMS_FILE=<abs>/results/tuning/indi/r4f/c00/params and
+  check `params_file` in run.json. (Session 22 lost one batch launch to this; caught before any data was used.)
+- Never write waiters as `while pgrep -f "<pattern>"` inside a `bash -c` whose own command line contains the
+  pattern: it matches itself forever (a session-13 waiter was found still looping and killed in session 22).
+
 - RESOLVED (session 7): roll vs pitch G1 (321 vs 211) was an artefact of the
   open-loop fit; in-loop fit gives 237/245 (D-g1-v1).
 - INDI yaw noise amplification (D-yawfilt) open; and step_yaw INDI v0
@@ -468,4 +478,5 @@
 - 2026-11-14 session 19: landed yaw-filter bug fixed (D-landyaw); review s1/3/5 committed; ch. 3 + review s2/4/6 + fix check in flight.
 - 2026-11-14 session 18: ch. 6 simulation drafted; ch. 7 PID count item resolved; fable review (sections 1,3,5) relaunched.
 - 2026-11-14 session 17: ACT_TC sweep summarised (no limit cycle from model error alone); fable control-law review relaunched.
+- 2026-11-14 session 22: figures in ch. 8-9, review limitations, ch. 1, ch. 10, appendix A drafted; INDI speed check flying.
 - 2026-11-14 session 21: review complete and triaged; MC_INDI_G2_Y bounded; figure script + 4 figures; ch. 2 drafted.
