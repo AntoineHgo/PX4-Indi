@@ -80,7 +80,7 @@
   INDI attitude RMS lower than PID on every disturbance scenario, 5/5 seeds: com_shift 0.15x, gust_diag 0.57x,
   gust_x 0.61x, payload_add 0.75x, inertia mismatch 0.88x, diagonal steps 0.92x; T8 fault-onset peak tilt
   1.6 vs 5.1 deg. Yaw worse whenever yaw is commanded (step_diag 1.30x). Effort equal except gust_diag 1.18x,
-  inertia mismatch 1.26x. Spec needs 10 seeds (Wilcoxon p<0.05): seeds 6-10 running.
+  inertia mismatch 1.26x. 10 seeds: attitude RMS lower 10/10, p=0.002 on all 6 (H2 44 %, H3 84 %, H6 10 % borderline); acceptance needs H1, H4, H5 still unflown.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -103,12 +103,10 @@
 
 ## In progress
 
-- SESSION 14 RUNNING (detached, started 06:39, ~20 min): seeds 6-10 of the same 6 scenarios x 2 controllers,
-  log `results/heldout_s14.log` (header has the command; runs with metrics.json are skipped on re-run).
-  NEXT: `python3 bench/summarize_seeds.py results/runs step_diag com_shift gust_diag gust_x payload_add mismatch_inertia`
-  (n=10), add a paired Wilcoxon signed-rank per scenario on the primary metric of `bench/scenarios.md` (extend
-  summarize_seeds.py, scipy if in the image, else exact enumeration of 2^10 sign patterns), update
-  `results/heldout_s14.md`, commit metrics/run.json of seeds 6-10. Then T8 to 10 seeds, then report ch. 8 results.
+- SESSION 14 DONE: held-out seeds 1-10 committed (`results/heldout_s14.md`, Wilcoxon in `bench/summarize_seeds.py`).
+  NEXT: (1) check `bench/scenarios.md` for H1, H4, H5 definitions and implement/fly them (10 seeds, both
+  controllers) to decide acceptance; (2) T8 motor loss to 10 seeds; (3) T1 hover effort ratio for criterion 4;
+  (4) report ch. 8 results (delegate draft to sonnet from results/*.md); (5) independent fable review of the control law.
   REPORT FIXES TO DO (from drafting agents): (a) architecture.md out of date vs code (no K_ff/setpoint derivative, no 20 ms freshness, landed output = G1^-1(nu - a_f) with t_f held 0, yaw filters missing): update plan or note in ch. 5; (b) ch. 5 G2 yaw derivation is the agent's own: verify before final; (c) PID candidate count: D-freeze/r2.md say 64, rounds sum to 40 (24+16): fix DECISIONS; INDI flights ~600 vs 792-852 counted; (d) PID hover effort 0.037 (yawcut_check_s8) vs 0.054 (effort_axes_s9) same scenario/seed: explain; (e) PID J quoted 0.946/0.958/0.964/0.96: pick one reference (re-flown defaults) for the report; (f) scenarios.md promised full-T re-tune: not done, state it in ch. 7 or do it; (g) ch. 5 is 5400 words, fine.
 - RUNNING end of session 13 (detached, ~30-40 min): held-out/disturbance batch,
   PID defaults + INDI tuned, seeds 1-5: speed 1 {com_shift gust_diag gust_x
@@ -368,4 +366,4 @@
 - 2026-11-14: session 13: D-yawsp scored (yaw effort fixed, yaw tracking lost, J 1.058); hover term found noise-dominated; r4 yaw sweep launched.
 - 2026-11-14: session 13: r4 done (yaw parity with PID is structural under D-yawsp); r4f combined candidate launched.
 - 2026-11-14: session 13: r4f J 0.978 (tie with PID); INDI frozen (D-freeze); T8 motor loss: INDI roll/pitch 5-9x better, yaw worse.
-- 2026-11-14: session 14: T8 fault-onset metrics; report ch. 5 and ch. 7 drafted (sonnet, 2 agents); held-out seeds 1-5 done (INDI better on all disturbance scenarios, yaw worse when commanded); seeds 6-10 launched.
+- 2026-11-14: session 14: T8 fault-onset metrics; report ch. 5 and ch. 7 drafted (sonnet, 2 agents); held-out seeds 1-5 done (INDI better on all disturbance scenarios, yaw worse when commanded); seeds 6-10 done: INDI attitude better p=0.002 on all 6 scenarios.
