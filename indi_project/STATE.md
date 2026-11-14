@@ -23,6 +23,10 @@
   default gains (`results/tuning/pid_r1.md`); hover reference ratio biased
   (~0.8 for all candidates, open). MC_INDI_YAW_CUT implemented; 10 Hz cuts
   INDI hover effort 7x (1.62 -> 0.23, PID 0.037) (`results/yawcut_check_s8.md`).
+  INDI r1 (240 flights): best INDI tracks better than best PID on all 5
+  tuning scenarios (ratios 0.67-0.98 vs 0.75-1.00) but J 1.17 vs 0.95
+  because of motor-rate effort; PID wins r1 under the frozen cost
+  (`results/tuning/indi_r1.md`).
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -45,14 +49,7 @@
 
 ## In progress
 
-- Session 8 (2026-11-14 00:48): INDI tuning r1 launched detached:
-  `python3 bench/tune.py --family indi --round-name r1 --n-candidates 24
-  --seeds 1 2 --jobs 6 --sampler-seed 0 --base-params
-  bench/params/indi_v1.params --center bench/params/indi_r1_center.json`,
-  log `results/tuning/indi_r1.log` (stdout buffered, may stay empty until
-  exit), output `results/tuning/indi/r1/summary.csv`. ~50 min. Next session:
-  if `pgrep -af '[t]une.py'` is empty and summary.csv has < 25 lines,
-  re-run the same command (resumable).
+- Nothing running. Session 8 finished PID r1 and INDI r1.
 - Session 7 (2026-11-14): PID tuning round 1 launched detached at the end
   of the session: `python3 bench/tune.py --family pid --round-name r1
   --n-candidates 24 --seeds 1 2 --jobs 6 --sampler-seed 0`, log
@@ -70,8 +67,7 @@
 
 ## Next concrete actions
 
-0. Session 9 next steps: (a) analyse INDI r1 vs PID r1 per scenario
-   (write `results/tuning/indi_r1.md`); (b) explain the hover reference
+0. Session 9 next steps: (a) DONE INDI r1 analysis; (b) explain the hover reference
    bias (re-fly pid_default hover seeds 1-3 now, compare with the
    11-13 reference; if noise, use more hover seeds); (c) remaining INDI
    hover effort 6x PID: run check_sync.py on hover/indi_v1_yc10 to see
@@ -194,7 +190,7 @@
 | 4 (2026-11-13) | 2 sonnet, 1 haiku | 18 runs (speed check), 0 failures | ~$3 cap |
 | 5 (2026-11-13) | 1 sonnet (INDI lib, 27 tool calls) | 2 runs (step_pitch, step_yaw PID seed1), 0 failures | ~$2.4 used of $3 cap |
 | 7 (2026-11-14) | 1 sonnet (tune.py, 16 tool calls) | 2 INDI runs + 4 smoke tuning flights; PID tuning r1 (~250 flights) left running detached | ~$2.4 of $3 cap |
-| 8 (2026-11-14) | 1 sonnet (yaw cutoff, 14 tool calls) | 1 SITL build, 6 check flights (2 tooling failures), PID r1 finished (240), INDI r1 launched (~240) | ~$1.8 of $2.61 |
+| 8 (2026-11-14) | 1 sonnet (yaw cutoff, 14 tool calls) | 1 SITL build, 6 check flights (2 tooling failures), PID r1 finished (240), INDI r1 finished (240, 0 failures) | ~$1.8 of $2.61 |
 | 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build, 2 INDI runs (hover, step_roll seed1), 0 failures | $1.63 cap |
 
 ## Journal
@@ -214,3 +210,4 @@
 - 2026-11-13: session 6: first INDI flights (hover, step_roll) stable with default parameters.
 - 2026-11-14: session 7: `bench/check_sync.py`; INDI filters synchronised; in-loop G1 241/241/7.4 (`indi_v1.params`); yaw noise path found (D-yawfilt); tuning driver spec + agent.
 - 2026-11-14: session 8: PID r1 done (defaults best of 24); MC_INDI_YAW_CUT (lib, gtests, param); yaw cut 10 Hz cuts INDI hover effort 7x; INDI r1 launched.
+- 2026-11-14: session 8: INDI r1 done: better tracking on all tuning scenarios, worse J from effort.
