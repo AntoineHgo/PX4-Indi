@@ -35,11 +35,15 @@
   defaults 0.964, inside noise: PX4 defaults are the retuned PID baseline
   (64 candidates over r1+r2, `results/tuning/r2.md`). Gust and payload
   disturbance scenarios (T6, T7) implemented and flown once with PID.
+- **INDI r2:** best J 1.150 (r1 1.167): tracks 12-18 % better than PID
+  on hover/attitude/yaw steps, equal on rate pulses, but ~2.3x motor-rate
+  effort; PID still wins under the frozen cost. Hover effort is still the
+  yaw path (yaw torque std 3x PID at YAW_CUT 4.6 Hz; roll/pitch equal).
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
   quoting in the report.
-- **Last updated:** 2026-11-14, session 8. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
+- **Last updated:** 2026-11-14, session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
   library + unit tests committed, not yet wired into mc_rate_control; first
   G1 identification: pitch 211 (R^2 0.90), roll 321 (R^2 0.63), yaw not
   identified; see `results/identification_g1_v0.md`).
@@ -57,12 +61,7 @@
 
 ## In progress
 
-- Session 10 (2026-11-14): INDI half of r2 running detached (started ~02:54,
-  ~30 min). Next session: if no `px4-indi-*-indi-r2` container runs and
-  `results/tuning/indi/r2/summary.csv` lacks candidates, re-run the INDI
-  command of the r2.log header (resumable); then fill the INDI section of
-  `results/tuning/r2.md`. Per-candidate dirs of pid/r2 (c00..c15) are
-  untracked: commit their metrics.json/run.json like r1 (no .ulg/.log).
+- Nothing running. r2 finished and committed (`results/tuning/r2.md`).
 - DONE session 10: T6 gust_x + T7 payload_add (D-dist, commits 160dda984d,
   4681575174); PID-default seed 1: gust 0.61 m / 14.2 deg / recovery 15.9 s,
   payload 0.35 m / recovery 4.8 s. Unverified: wrench not read back from gz
@@ -92,7 +91,11 @@
 
 ## Next concrete actions
 
-0. Session 10 next steps: (a) INDI r2 analysis; (b) remaining sim
+0. Session 10 next steps: (a) DONE INDI r2 analysis; (a2) NEXT: INDI c11
+   with MC_INDI_YAW_CUT=2 (PID's yaw torque cut) on the 5 tuning scenarios x
+   3 seeds (CPU only, run_batch.sh with NAME_TAG); compare J and per-axis
+   effort; if yaw still dominates, analyse why a matched cut-off does not
+   match PID (yaw G1 7.4 small -> 1/G1 noise gain); (b) remaining sim
    extensions, one small sonnet task each: T8 motor loss (per-channel
    SIM_GZ_EC_MAX at runtime, check thrust ~ omega^2 so scale by sqrt),
    T9/H5 model variants (generated x500_base override on GZ_SIM_RESOURCE_PATH),
@@ -222,7 +225,7 @@
 | 7 (2026-11-14) | 1 sonnet (tune.py, 16 tool calls) | 2 INDI runs + 4 smoke tuning flights; PID tuning r1 (~250 flights) left running detached | ~$2.4 of $3 cap |
 | 8 (2026-11-14) | 1 sonnet (yaw cutoff, 14 tool calls) | 1 SITL build, 6 check flights (2 tooling failures), PID r1 finished (240), INDI r1 finished (240, 0 failures) | ~$1.8 of $2.61 |
 | 9 (2026-11-14) | 1 haiku (steffensen2023), 1 sonnet (ch. 4 draft) | round 2 launched (~480 flights) | triage + yaw effort analysis |
-| 10 (2026-11-14) | 1 sonnet (disturbance injector, 59 tool calls, ~$0.9) | 2 test flights + PID r2 finished (240) | ~$2 of $3 by mid-session |
+| 10 (2026-11-14) | 1 sonnet (disturbance injector, 59 tool calls, ~$0.9) | 2 test flights; r2 finished (480 flights, 0 failures) | ~$2.6 of $3 |
 | 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build, 2 INDI runs (hover, step_roll seed1), 0 failures | $1.63 cap |
 
 ## Journal
@@ -246,3 +249,4 @@
 - 2026-11-14: session 9: untracked files triaged; INDI hover effort traced to yaw; tuning round 2 (both families, 3 seeds) launched.
 - 2026-11-14: session 9: Steffensen 2023 note; report ch. 4 draft + code verification of the integration analysis (SIH has a first-order motor lag SIH_T_TAU and a modelled esc_rpm, unlike gz).
 - 2026-11-14: session 10: PID r2 done (defaults within noise of best); T6 gust_x and T7 payload_add scenarios added (ApplyLinkWrench injector).
+- 2026-11-14: session 10: INDI r2 done (J 1.150 vs PID 0.958; effort from yaw path persists).
