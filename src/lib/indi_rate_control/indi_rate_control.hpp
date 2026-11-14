@@ -132,7 +132,8 @@ public:
 	 *        (the yaw component additionally goes through the yaw low pass if enabled)
 	 * @param torque_allocated_prev normalised torque the allocator actually produced from the previous command
 	 * @param dt time since the previous call in s, valid range [kMinDt, kMaxDt]
-	 * @param landed true if ground contact is assumed (the filter and actuator states are held at zero)
+	 * @param landed true if ground contact is assumed (the feedback torque is held out of the law, the actuator
+	 *        model and its filters keep running)
 	 * @return [-1,1] normalised torque vector to apply to the vehicle, zero if the inputs are invalid
 	 */
 	matrix::Vector3f update(const matrix::Vector3f &rate, const matrix::Vector3f &rate_sp,
