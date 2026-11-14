@@ -305,7 +305,7 @@ ROLL_P 6.275, PITCH_P 6.185, YAW_P 3.308; G1 241/241/7.4). Tuning-set J 0.978 vs
 noise). Four INDI rounds (r1-r4, ~600 flights) plus three structural fixes (D-yawfilt, D-yawnu, D-yawsp); the last
 two rounds moved J by less than the hover noise, and the remaining INDI deficit (yaw) is explained (`r4.md`). This
 meets the stopping rule "several iterations without improvement, with an explanation". The PID baseline stays at
-PX4 defaults (r1+r2, 64 candidates, none better). Both frozen candidates now go to the held-out and disturbance
+PX4 defaults (r1+r2, 40 candidates, none better; "64" in the first version of this entry was wrong, corrected session 17 from `results/tuning/pid/r{1,2}/summary.csv`). Both frozen candidates now go to the held-out and disturbance
 scenarios, which were not used for tuning.
 
 ## D-h5 (2026-11-14, session 15): held-out H1, H4, H5 flown exactly as frozen in scenarios.md
