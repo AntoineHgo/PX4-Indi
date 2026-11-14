@@ -44,7 +44,7 @@
 
 | # | Phase | Status |
 |---|-------|--------|
-| 1 | State of the art (`research/`, report ch. 2-3) | in progress: reading list written, notes smeur2016, acquatella2017, blaha2024, wang2019, tal2021, impl_paparazzi, impl_px4_prior done; remaining: sieberling2010, steffensen2023, sun2022, smeur2018, impl_indiflight |
+| 1 | State of the art (`research/`, report ch. 2-3) | in progress: reading list written, notes smeur2016, acquatella2017, blaha2024, wang2019, tal2021, impl_paparazzi, impl_px4_prior done; steffensen2023 (session 9); remaining: sieberling2010, sun2022, smeur2018, impl_indiflight |
 | 2 | PX4 analysis and design (`plan/`, report ch. 4-5) | architecture v1 done (`plan/architecture.md`); report chapter not drafted |
 | 3 | Simulation + benchmark harness on PID baseline (`docker/`, `bench/`) | image works, SITL build OK; gz_x500 headless smoke flight OK at speed 1 and 4 (`bench/smoke_gz.sh`); equivalence of results across speed factors not yet verified with metrics |
 | 4 | Implementation (firmware + unit tests) | not started |
