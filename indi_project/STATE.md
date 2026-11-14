@@ -43,8 +43,10 @@
   unchanged, hover effort still ~2.1x PID. Remaining yaw chatter is gyro
   noise in nu = K_Y(r_sp - r) (gain K_Y/G1_Y ~ 0.8 vs PID P 0.2 behind a
   2 Hz filter) (`results/tuning/r2f_yc2.md`). Fix decided (D-yawnu: YAW_CUT
-  also filters the yaw rate in nu), brief `plan/yawnu_spec.md`, not yet
-  implemented.
+  also filters the yaw rate in nu): implemented (d2fb64330f, 17/17
+  gtests). Hover check: INDI motor-rate effort 0.041-0.043 vs PID 0.037
+  (~1.1x, was ~2.1x), yaw torque chatter gone (`results/yawnu_check_s11.md`).
+  Full 5-scenario x 3-seed scoring of this candidate launched detached.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -67,6 +69,7 @@
 
 ## In progress
 
+- Session 11 end: LAUNCHED detached `python3 bench/tune.py --family indi --round-name r2f_yawnu --n-candidates 1 --seeds 1 2 3 --jobs 6 --sampler-seed 0 --span-factor 1.0 --base-params bench/params/indi_v1.params --center bench/params/indi_c11_yc2.json` (cwd indi_project; firmware with D-yawnu; 15 flights, ~15 min). Log `results/tuning/r2f_yawnu.log` (gitignored), output `results/tuning/indi/r2f_yawnu/summary.csv`. Resumable: re-run if summary lacks c00. Compare J against PID 0.958 and r2 c11 1.150; write `results/tuning/r2f_yawnu.md`.
 - DONE session 11: T8 motor_loss_0 (f3205105bd): runtime SIM_GZ_EC_MIN1/MAX1 x sqrt(0.7) (thrust x0.70), attitude mode, then +45 deg yaw step; PID seed 1: motor 0 0.73 -> 0.905, saturated 1.5 s, peak tilt 5.1 deg, altitude sags 1.2 m (attitude mode, fixed thrust; identical for both controllers). Notes `plan/t8_motor_loss_log.md`.
 - DONE session 11: D-yawnu implemented (d2fb64330f firmware+3 gtests, 17/17 pass, SITL build OK; 5cbf7478fc param doc; diff reviewed by orchestrator). Hover check flying: c11+YAW_CUT 2 seeds 1-3 -> `results/yawnu_check_s11/hover/seed*/`, log `results/yawnu_check_s11.log` (untracked); if no metrics, re-run the command recorded in `results/yawnu_check_s11.md` or STATE next actions.
 - DONE session 11 (`results/tuning/r2f_yc2.md`): `python3 bench/tune.py --family indi --round-name r2f_yc2 --n-candidates 1 --seeds 1 2 3 --jobs 6 --sampler-seed 0 --span-factor 1.0 --base-params bench/params/indi_v1.params --center bench/params/indi_c11_yc2.json` (c11 with YAW_CUT 2 Hz, 15 flights), log `results/tuning/r2f_yc2.log`. Resumable: re-run if summary.csv missing.
@@ -100,7 +103,11 @@
 
 ## Next concrete actions
 
-00. Session 11 next steps: (a) DONE implement D-yawnu; NEXT check hover effort with `bench/indi_terms.py`
+00. Session 11 next steps: (a0) NEXT: analyse r2f_yawnu (see In progress);
+   if J < PID's, that is still a tuning-set result only: run INDI round 3
+   (new semantics, centre c11/YAW_CUT 2, span 1.5, 16 cand x 3 seeds) for a
+   tuned optimum, then confirm on held-out scenarios. Also re-fly PID on
+   T8 motor_loss_0 seeds 1-3 and INDI likewise. (a) DONE D-yawnu; DONE check hover effort with `bench/indi_terms.py`
    and `bench/effort_axes.py` on c11 + YAW_CUT 2 (expect yaw drms ~0); then
    an INDI round 3 (new YAW_CUT semantics, say so) on the 5 tuning
    scenarios x 3 seeds; (b) T8 result: see `plan/t8_motor_loss_log.md`;
@@ -240,7 +247,7 @@
 | 8 (2026-11-14) | 1 sonnet (yaw cutoff, 14 tool calls) | 1 SITL build, 6 check flights (2 tooling failures), PID r1 finished (240), INDI r1 finished (240, 0 failures) | ~$1.8 of $2.61 |
 | 9 (2026-11-14) | 1 haiku (steffensen2023), 1 sonnet (ch. 4 draft) | round 2 launched (~480 flights) | triage + yaw effort analysis |
 | 10 (2026-11-14) | 1 sonnet (disturbance injector, 59 tool calls, ~$0.9) | 2 test flights; r2 finished (480 flights, 0 failures) | ~$2.6 of $3 |
-| 11 (2026-11-14) | 1 sonnet (T8 motor loss) | 15 INDI flights (r2f_yc2, 0 failures) | yaw effort root cause |
+| 11 (2026-11-14) | 2 sonnet (T8 motor loss 14 calls; D-yawnu 13 calls) | 15 INDI (r2f_yc2) + 1 T8 PID + 3 hover (yawnu), 0 failures; r2f_yawnu (15) left running | yaw effort root cause and fix, ~$2.4 of $3 |
 | 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build, 2 INDI runs (hover, step_roll seed1), 0 failures | $1.63 cap |
 
 ## Journal
@@ -266,3 +273,4 @@
 - 2026-11-14: session 10: PID r2 done (defaults within noise of best); T6 gust_x and T7 payload_add scenarios added (ApplyLinkWrench injector).
 - 2026-11-14: session 10: INDI r2 done (J 1.150 vs PID 0.958; effort from yaw path persists).
 - 2026-11-14: session 11: YAW_CUT 2 Hz control run: effort unchanged; yaw chatter traced to gyro noise in nu; D-yawnu decided.
+- 2026-11-14: session 11: T8 motor_loss_0 scenario added; D-yawnu implemented: INDI hover effort ~1.1x PID (was ~2.1x).
