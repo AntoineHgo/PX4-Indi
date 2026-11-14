@@ -307,3 +307,13 @@ two rounds moved J by less than the hover noise, and the remaining INDI deficit 
 meets the stopping rule "several iterations without improvement, with an explanation". The PID baseline stays at
 PX4 defaults (r1+r2, 64 candidates, none better). Both frozen candidates now go to the held-out and disturbance
 scenarios, which were not used for tuning.
+
+## D-h5 (2026-11-14, session 15): held-out H1, H4, H5 flown exactly as frozen in scenarios.md
+
+H5 "inertia x0.8" is applied to all three axes (T9 named Ixx, Iyy explicitly; H5 does not restrict, and a yaw
+inertia change exercises the INDI yaw path too). H5 "run T2 + T4" becomes two scenarios with the same model variant,
+reported separately. H1 (12.6 m/s^2 centripetal) and H4 (motor x0.6 under 6.6 m/s^2 path acceleration) turned out
+to exceed what the airframe and the default position-controller limits allow; they are flown unchanged, because
+softening a held-out scenario after seeing one result would be selection after the fact. Ground contact and
+saturation time are reported as outcomes. Alternatives rejected: raising MPC_TILTMAX_AIR for H1 (changes the
+baseline's outer loop, not the rate loop under test), reducing H4 to x0.7 (would merely repeat T8).

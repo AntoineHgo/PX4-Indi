@@ -176,3 +176,16 @@ commits.
   verified in gz). Same mechanism supports ixx/iyy/izz/mass/tau scales for
   H5. PID default (seed 1, speed 4): roll RMS 3.27 deg vs 3.35 deg for
   step_roll, no slower rise (details in `plan/t9_model_variant_log.md`).
+- 2026-11-14 (session 15): H5 implemented as two runs `mismatch_combined_att`
+  (T2 pattern) and `mismatch_combined_rate` (T4 pattern), model variant ixx,
+  iyy, izz x0.8, mass x1.15, motor time constants x2 (gz reports mass 2.3 kg).
+  Trajectory mode added (`traj` segment, position + velocity + acceleration
+  feedforward, smoothstep phase ramps of 3 s so paths start and end at rest at
+  the hold position): T5 `traj_lemniscate` (Gerono, 8 x 4 m, 5 m/s, 2 laps),
+  H1 `traj_circle_fast` (r 4 m, 7 m/s, vertical sine +-1 m, 3 laps), H4
+  `motor_loss_2` (T5 path, motor 2 thrust x0.6 from path start). Metric:
+  `trajectory` block, error against the logged `trajectory_setpoint`. Start
+  phase is not seeded (deviation from 3.3: seed varies only sim noise). H1
+  needs ~52 deg tilt, above the default MPC_TILTMAX_AIR 45 deg: infeasible as
+  specified for both controllers, flown unchanged. H4 PID seed 1 touched the
+  ground (altitude 0 m in the window): reported as an outcome, not re-specified.
