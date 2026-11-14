@@ -133,6 +133,10 @@ owner decisions when you first act on them.
   the model (gain 0.95-0.99, 4-9 ms later), fallback robust at 90 % eRPM drops (734 switches, 0 faults), ERPM_DLY 1
   identified (D-erpmdly). v2 G1: roll/pitch ~175, yaw ~12.4 (frozen 241/7.4 were v1 units). Draft v2 held-out set
   `plan/s2_heldout_v2.md` (not frozen). Running: r1f (PID, FAC), then frz queue.
+- **Stage 2 (session 36):** v2 held-out set V FROZEN (`bench/scenarios.md` sec. 8, D-heldout-v2) with its sim
+  hooks (48d82eacda gz_bridge SIM_GZ_ERPM_LAT/ERPM_LOSS/THR_SC; 332cb817d9 bench V1-V6), smoke-checked with PID
+  (`results/s2_vhooks_check.md`). PID r1f (FAC config): best c05 J 0.925 vs defaults 0.966 (gains on the step axes
+  too, not only hover); r2f centred on c05 queued behind the frz control run.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -154,6 +158,21 @@ owner decisions when you first act on them.
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+
+- SESSION 36 (2026-11-14): held-out v2 settled (D-heldout-v2) and frozen (scenarios.md sec. 8, 26af39125d): sim hooks
+  48d82eacda (gz_bridge: SIM_GZ_ERPM_LAT start-time, SIM_GZ_ERPM_LOSS and SIM_GZ_THR_SC runtime) + 332cb817d9
+  (model_variant tau_up/tau_down; runner sim_params, erpm_loss, thrust_sag; scenarios v2_tau2/asym/lat/drop _att/_rate,
+  v2_vib3_hover/_att, v2_sag_att; V7-V9 = gust_diag/com_shift/motor_loss_0 on v2). Built into build/px4_sitl_omega2
+  ONLY (default build not rebuilt: batches fly on it). PID smoke of V3/V4/V6 OK; V3 frame = 1 ms is ASSUMED (esc_status
+  logged at 5 ms). r1f DONE: c05 J 0.925 vs c00 defaults 0.966 (`results/s2_tuning/pid/r1f/summary.csv`, not yet
+  written up). QUEUED detached: `bench/s2_pid_tune_r2f.sh` (16 cand x 3 seeds centred on `bench/params/pid_r1f_c05.json`,
+  starts when run_frz.sh ends; log `results/s2_tuning/r2f_queue.log`). frz queue (pid 3998259) was running at end.
+  NEXT (session 37): (1) analyse frz vs tcup/tcdn/g2 (`results/s2_recheck_v1.md` restate) once run_frz.log shows
+  RECHECK_FRZ_DONE; write up r1f (`results/s2_tuning/r1f.md`). (2) When r2f ends: decide v2 pid_tuned (r2f best vs
+  defaults, noise rule as v1 r2), then rebuild px4_sitl_default (picks up logger, omega2 wiring, 48d82eacda) and drop
+  build/px4_sitl_omega2 by path; never rebuild default while frz/r2f fly. (3) G1 v2 on 3 seeds, then v2 INDI tuning
+  (O-5: G, ACT_TC, delays, G2 identified, never tuned). (4) Optional: verify V3 frame period with a full-rate
+  esc_status log.
 
 - SESSION 35 (2026-11-14): r1f flying at start (c01), frz queue alive (pid 3998259). Runner gets PX4_INDI_BUILD
   (ed2e439cf0) so build/px4_sitl_omega2 flies beside the batch; logger logs actuator_torque_measured (07c6a39811,
@@ -721,3 +740,4 @@ owner decisions when you first act on them.
 - 2026-11-14 s33: D-omega2 library (895b55aed8); PID r2 closed (defaults stay, FAC 0); SITL rebuilt; v1 re-checks + PID r1f (FAC) launched.
 - 2026-11-14 s34: D-omega2 wiring (4 commits, sonnet agent); v1 recheck flown (105 runs), prelim results; frz control queued.
 - 2026-11-14 s35: D-omega2 first flights (measured torque OK, fallback OK, D-erpmdly), G1 v2, held-out v2 draft. Agents: 0.
+- 2026-11-14 s36: held-out v2 frozen (D-heldout-v2, sim hooks V3/V4/V6 + tau_up/down, PID smoke OK); r1f done (c05 0.925 vs 0.966); r2f queued. Agents: 0.
