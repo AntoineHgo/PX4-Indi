@@ -339,3 +339,18 @@ which is an assumption to state in the report. This is post-acceptance work: it 
 Outcome (session 17): the equivalence assumption above is falsified by the data. No limit cycle for f in 0.33-3,
 whereas plant tau x2 with the stock model limit-cycles (H5 diagnostic). The report states the sweep as a test of
 model error on a fast actuator only, and attributes the H5 instability to a slower physical actuator left unmodelled.
+
+## D-landyaw (session 19, 2026-11-14): fix the landed yaw-filter bug after the freeze
+
+The session-16 control-law review found that `resetStates()` zeroed the yaw filters on every landed /
+maybe_landed cycle, so yaw control was scaled by ~0.005 on the ground and early in each takeoff when
+MC_INDI_YAW_CUT > 0 (the frozen candidate uses it). Fixed in 1d776dc6dc (reset from the next input instead),
+with a regression gtest that fails without the fix.
+
+Alternatives: (a) leave the frozen firmware untouched and only document the bug; rejected, a known bug in a
+deliverable that is meant to fly is not acceptable, and the fix is local. (b) re-fly the whole benchmark;
+rejected for budget, since the bug only acts while landed/maybe_landed, i.e. before every metric window.
+Chosen: fix, keep the frozen parameters, and check that the metric windows are unaffected by re-flying INDI on
+step_diag (yaw commanded, speed 4) and com_shift (largest INDI gain, speed 1), seeds 1-3, against the committed
+runs (`results/landyaw_check_s19/`). The verdict of `results/acceptance_s15.md` was obtained with the pre-fix
+code and is reported as such.
