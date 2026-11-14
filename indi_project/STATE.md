@@ -187,7 +187,10 @@ owner decisions when you first act on them.
   Verdict script READY: `bench/s2_verdict.py` (V primary metrics per sec. 8, paired Wilcoxon, criteria 1-4; V9 primary
   = rotation-angle RMS, fixed before any V9 result). When V ends: `python3 indi_project/bench/s2_verdict.py --final`
   -> `results/s2_heldout_v2.md`; criterion 4 and seen failures need `--hover-runs results/s2_seen_v2/runs` after the
-  seen set. Do not rebuild build/px4_sitl_default until SEEN_V2_DONE. NEXT while flying: stage 8 design (O-10).
+  seen set. Do not rebuild build/px4_sitl_default until SEEN_V2_DONE. Stage-8 design DRAFT written
+  (`plan/s8_outer_loop_design.md`, D-s8-early/arch/ff/snap); its sec. 6 open questions are the next step (one sonnet
+  code-reading task), after the V verdict. Guard note: a long heredoc into DECISIONS.md was blocked (cause unknown);
+  use the Edit tool for prose files.
 
 - SESSION 40 (2026-11-14): r1 + r2 done and committed (94c0a2c23d metrics, 1da7218ba1 D-v2indi). RUNNING detached
   since 20:21: `INDI_PARAMS=.../bench/params/indi_v2_tuned.params setsid timeout 43200 bash bench/s2_heldout_v2.sh`
