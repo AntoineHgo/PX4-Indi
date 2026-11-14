@@ -5,6 +5,8 @@ Supported keys:
   ixx, iyy, izz   base_link <inertia> diagonal terms (x500_base/model.sdf)
   mass            base_link <mass> (x500_base/model.sdf); propeller link masses are left unchanged
   tau             motor timeConstantUp and timeConstantDown of all four rotors (x500/model.sdf)
+  rpm             True: add a JointStatePublisher (every physics step) to x500, the stage-2 rotor speed source
+                  read by GZBridge when SIM_GZ_ESC_FB=1 (plan/s2_rotor_speed.md); no effect on the dynamics
 
 build_variant() copies x500 and x500_base into <out>/model_variant/ (meshes/materials/thumbnails are symlinked,
 only model.sdf and model.config are real copies), edits the copies, and returns the directory. The caller sets
@@ -16,7 +18,7 @@ import shutil
 import xml.etree.ElementTree as ET
 
 INERTIA_KEYS = ("ixx", "iyy", "izz")
-ALLOWED = INERTIA_KEYS + ("mass", "tau")
+ALLOWED = INERTIA_KEYS + ("mass", "tau", "rpm")
 
 
 def _copy_model(src, dst, real=("model.sdf", "model.config")):
@@ -71,4 +73,16 @@ def build_variant(spec, out_dir, stock_models):
         if n != 8:
             raise RuntimeError(f"expected 8 motor time constants in x500/model.sdf, found {n}")
         tree.write(x_path)
+
+    if spec.get("rpm"):
+        x_path = os.path.join(root, "x500", "model.sdf")
+        tree = ET.parse(x_path)
+        plugin = ET.SubElement(tree.getroot().find("model"), "plugin",
+                               filename="gz-sim-joint-state-publisher-system",
+                               name="gz::sim::systems::JointStatePublisher")
+        for i in range(4):
+            ET.SubElement(plugin, "joint_name").text = f"rotor_{i}_joint"
+        ET.SubElement(plugin, "update_rate").text = "0"
+        tree.write(x_path)
+        rec["new"]["joint_state_publisher"] = [f"rotor_{i}_joint" for i in range(4)]
     return root, rec

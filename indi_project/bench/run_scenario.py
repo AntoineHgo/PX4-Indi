@@ -313,11 +313,13 @@ def main():
     ap.add_argument("--params", default=None, help="file with lines 'NAME VALUE' applied before arming")
     ap.add_argument("--out", required=True)
     ap.add_argument("--instance", type=int, default=0)
+    ap.add_argument("--sim", choices=("v1", "v2"), default="v1",
+                    help="v1: stock gz_x500 (esc_rpm echoes the command); v2: stage-2 sim, rotor joint speed in esc_rpm")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
 
     sc = SCENARIOS[a.scenario]
-    meta = {"scenario": a.scenario, "controller": a.controller, "seed": a.seed, "speed": a.speed,
+    meta = {"scenario": a.scenario, "controller": a.controller, "seed": a.seed, "speed": a.speed, "sim": a.sim,
             "instance": a.instance, "params_file": a.params, "params_applied": {}, "git": git_info(),
             "noise_seed": {"gz_sim_seed": a.seed, "px4_baro_srand": 1234}, "events": [], "phase_log": [],
             "exit_status": "running", "error": None}
@@ -333,8 +335,12 @@ def main():
     ok = False
     try:
         sim.load_env()
-        if sc.get("model_variant"):
-            meta["model_variant"] = sim.apply_model_variant(sc["model_variant"])
+        variant = dict(sc.get("model_variant") or {})
+        if a.sim == "v2":
+            variant["rpm"] = True
+            sim.env["PX4_PARAM_SIM_GZ_ESC_FB"] = "1"  # read once when gz_bridge starts
+        if variant:
+            meta["model_variant"] = sim.apply_model_variant(variant)
         sim.start_gz()
         sim.start_px4()
         if sc.get("disturbance"):  # idle injector: loads the wrench system, waits for the onset trigger
