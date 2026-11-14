@@ -20,8 +20,8 @@ All six held-out scenarios flown with 10 paired seeds each, frozen candidates (D
 3. Not significantly worse by > 10 % on any H: **not met** (H5, rate pulses 1.58x; root cause actuator-model
    mismatch, `heldout_h5_s15.md`).
 4. Hover effort <= 1.5x: **met.** T1 hover, 10 paired seeds (`results/hover_s15.log`, `summarize_seeds.py results/runs
-   hover`): motor-rate RMS 0.0387 vs 0.0371 /s (1.04x, p 0.16); attitude RMS 0.76x (10/10, p 0.002). PID seeds already
-   on disk from earlier sessions were reused by the batch (same defaults, skip-if-metrics).
+   hover`): motor-rate RMS 0.0387 vs 0.0371 /s (1.04x, p 0.16); attitude RMS 0.76x (10/10, p 0.002). PID seeds 1-3
+   were re-flown by the hover batch (same defaults); seeds 4-10 come from earlier sessions.
 
 **Outcome under the frozen rules: "INDI does not outperform PID".** Criterion 3 fails on its own (H5), and
 criterion 1 fails on H4. Even setting H4 aside as infeasible for both controllers, the outcome is unchanged.
