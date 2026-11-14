@@ -147,11 +147,16 @@ owner decisions when you first act on them.
 
 ## In progress
 
-- SESSION 34 (2026-11-14): chain `bench/s2_after_rebuild.sh` RUNNING at start (recheck v1 just started 17:14).
-  D-omega2-wire decided (DECISIONS.md): control_allocator computes tau_meas with its own matrix and publishes
-  `actuator_torque_measured`; mc_rate_control feeds setMeasuredTorque. IN FLIGHT: 1 sonnet agent implementing it,
-  log `plan/impl_log_omega2_wire.md` (one commit per step; builds only in build/px4_sitl_omega2 and px4_sitl_test,
-  NOT px4_sitl_default while the chain flies). If cut off: read that log, finish remaining steps only.
+- SESSION 34 (2026-11-14): D-omega2-wire decided and IMPLEMENTED (sonnet agent, 27 calls, ~$0.6): ddecbb37ce msg
+  ActuatorTorqueMeasured + indi_rate_status.measured_torque_in_use; 2c9ef01a90 getControlFromActuators + gtest;
+  fa3d8f2381 control_allocator publishes actuator_torque_measured (CA_R_W_MAX, 0 = off, multirotor only; eRPM
+  drop = esc_errorcount change -> sample held, ages out after 20 ms); 62c0eb5937 mc_rate_control feeds
+  setMeasuredTorque (MC_INDI_ERPM_DLY default 1, MC_INDI_ERPM_TO 0.02 s). Log `plan/impl_log_omega2_wire.md`.
+  Allocator + rate-control diffs reviewed by me (OK). Built in build/px4_sitl_omega2 (no warnings); gtests green.
+  Default CA_R_W_MAX 0 -> v1 behaviour unchanged. UNTESTED at run time: no SITL flight with CA_R_W_MAX 1000 yet.
+  NEXT (after the chain ends, then rebuild px4_sitl_default): (a) one hover + roll step INDI v2 flight with
+  CA_R_W_MAX 1000 + v2_fac.params: check measured_torque_in_use = 1 and tau_meas vs model torque agree;
+  (b) identify MC_INDI_ERPM_DLY (cross-correlate tau_meas vs model t_f, bench/identify_actuator.py style).
 
 - SESSION 33 (2026-11-14): r2 still RUNNING at start (11/16). DONE (sonnet agent, 29 calls): D-omega2 library part
   895b55aed8 (setMeasuredTorque/valid per cycle, own delay MC_INDI_ERPM_DLY-to-be + own sync filters, model fed
