@@ -1,0 +1,160 @@
+module_name: mc_indi_rate_control
+parameters:
+- group: Multicopter INDI Rate Control
+  definitions:
+    MC_INDI_EN:
+      description:
+        short: Use the INDI multicopter rate controller
+        long: |-
+          Start mc_indi_rate_control (incremental nonlinear dynamic inversion, see the MC_INDI_* parameters)
+          instead of the PID based mc_rate_control. Only one of the two runs, selected at boot.
+      type: boolean
+      default: 0
+      reboot_required: true
+    MC_INDI_W_MAX:
+      description:
+        short: Rotor speed at full thrust (for the measured actuator torque)
+        long: |-
+          Rotor speed at which a motor produces its full normalised thrust (1.0), in rad/s. Used with ESC rpm
+          telemetry to compute the torque the rotors actually produce (topic actuator_torque_measured),
+          assuming normalised thrust = (omega / MC_INDI_W_MAX)^2.
+
+          Zero disables the measured torque, INDI then uses its actuator model.
+      type: float
+      unit: rad/s
+      min: 0
+      max: 5000
+      decimal: 1
+      default: 0
+    MC_INDI_G1_R:
+      description:
+        short: INDI roll control effectiveness
+        long: Roll angular acceleration in rad/s^2 per unit of normalised torque.
+      type: float
+      default: 320.0
+      min: 0.001
+      max: 5000
+      decimal: 1
+      increment: 5
+    MC_INDI_G1_P:
+      description:
+        short: INDI pitch control effectiveness
+        long: Pitch angular acceleration in rad/s^2 per unit of normalised torque.
+      type: float
+      default: 210.0
+      min: 0.001
+      max: 5000
+      decimal: 1
+      increment: 5
+    MC_INDI_G1_Y:
+      description:
+        short: INDI yaw control effectiveness
+        long: Yaw angular acceleration in rad/s^2 per unit of normalised torque. The default is not identified for any airframe.
+      type: float
+      default: 30.0
+      min: 0.001
+      max: 5000
+      decimal: 1
+      increment: 1
+    MC_INDI_G2_Y:
+      description:
+        short: INDI yaw rotor spin-up term
+        long: Yaw angular acceleration in rad/s^2 per unit of normalised torque rate (rad/s^2 per 1/s). Set to 0 to disable. Sensible values are of the order of MC_INDI_G1_Y times the loop period (about 0.02); values much larger than that let the spin-up term dominate the yaw increment and remove yaw rate feedback.
+      type: float
+      default: 0.0
+      min: 0.0
+      max: 1
+      decimal: 2
+      increment: 0.1
+    MC_INDI_K_R:
+      description:
+        short: INDI roll rate bandwidth
+        long: Closed loop roll rate tracking bandwidth.
+      type: float
+      default: 20.0
+      min: 1.0
+      max: 100
+      unit: rad/s
+      decimal: 1
+      increment: 1
+    MC_INDI_K_P:
+      description:
+        short: INDI pitch rate bandwidth
+        long: Closed loop pitch rate tracking bandwidth.
+      type: float
+      default: 20.0
+      min: 1.0
+      max: 100
+      unit: rad/s
+      decimal: 1
+      increment: 1
+    MC_INDI_K_Y:
+      description:
+        short: INDI yaw rate bandwidth
+        long: Closed loop yaw rate tracking bandwidth.
+      type: float
+      default: 10.0
+      min: 1.0
+      max: 100
+      unit: rad/s
+      decimal: 1
+      increment: 1
+    MC_INDI_ACT_TC:
+      description:
+        short: INDI actuator time constant
+        long: Time constant of the first order actuator model.
+      type: float
+      default: 0.02
+      min: 0.001
+      max: 0.2
+      unit: s
+      decimal: 3
+      increment: 0.001
+    MC_INDI_DELAY:
+      description:
+        short: INDI actuator model delay
+        long: Pure delay of the actuator model in controller cycles.
+      type: int32
+      default: 0
+      min: 0
+      max: 4
+    MC_INDI_ERPM_DLY:
+      description:
+        short: INDI measured torque delay
+        long: Pure delay applied to the torque measured from the ESC rpm (actuator_torque_measured), in controller cycles, to match its latency to that of the filtered angular acceleration. Only used when MC_INDI_W_MAX is set.
+      type: int32
+      default: 1
+      min: 0
+      max: 4
+    MC_INDI_ERPM_TO:
+      description:
+        short: INDI measured torque timeout
+        long: Age of the oldest ESC sample behind the measured torque above which it is not used and INDI falls back to its actuator model. Only used when MC_INDI_W_MAX is set.
+      type: float
+      default: 0.02
+      min: 0.001
+      max: 0.5
+      unit: s
+      decimal: 3
+      increment: 0.001
+    MC_INDI_DT_MAX:
+      description:
+        short: INDI maximum torque increment
+        long: Limit of the torque increment per cycle and axis.
+      type: float
+      default: 1.0
+      min: 0.01
+      max: 1
+      decimal: 2
+      increment: 0.05
+    MC_INDI_YAW_CUT:
+      description:
+        short: INDI yaw feedback low-pass cutoff
+        long: Extra low-pass on the yaw angular acceleration and torque feedback, and on the yaw rate error (setpoint included) used in the desired angular acceleration. Set to 0 to disable.
+      type: float
+      default: 0
+      min: 0
+      max: 100
+      unit: Hz
+      decimal: 1
+      increment: 1
