@@ -119,6 +119,8 @@
   (E) fable reviews sections 1, 3, 5 only of `review/control_law_review_s16.md` (writes each section as done);
   (F) sonnet drafts report ch. 6 simulation environment -> `report/06_simulation.md`.
   If partial next session, relaunch only for what the files lack; sections 2, 4, 6 of the review remain.
+  (F) DONE ad8e7a8e41: ch. 6 drafted (~2850 words, trim). Open [TO VERIFY] in it: lockstep config source, motor-loss
+  allocator awareness, latency not characterised, gz aero plugins, hover excursions vs speed factor.
 - SESSION 17 (2026-11-14) IN FLIGHT: session-16 review (B) was cut off with only its section skeleton on disk, ch. 8
   draft (A) was committed (2cd1c49235). Relaunched: (B') fable control-law review -> `review/control_law_review_s16.md`
   (fills the skeleton section by section); (C) sonnet drafts report ch. 9 discussion -> `report/09_discussion.md`.
@@ -427,4 +429,5 @@
 - 2026-11-14: session 14: T8 fault-onset metrics; report ch. 5 and ch. 7 drafted (sonnet, 2 agents); held-out seeds 1-5 done (INDI better on all disturbance scenarios, yaw worse when commanded); seeds 6-10 done: INDI attitude better p=0.002 on all 6 scenarios.
 - 2026-11-14 session 15: H5 implemented and flown (10 seeds): INDI loses, ACT_TC-mismatch limit cycle diagnosed; trajectory mode + T5/H1/H4 added, batch launched.
 - 2026-11-14 session 15: T5/H1/H4 flown (10 seeds); acceptance decided: INDI does not outperform PID (H5 criterion 3, H4 criterion 1).
+- 2026-11-14 session 18: ch. 6 simulation drafted; ch. 7 PID count item resolved; fable review (sections 1,3,5) relaunched.
 - 2026-11-14 session 17: ACT_TC sweep summarised (no limit cycle from model error alone); fable control-law review relaunched.
