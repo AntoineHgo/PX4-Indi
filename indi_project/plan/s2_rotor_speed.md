@@ -31,3 +31,20 @@
 - Whether the velocity command reaches the parent link as a reaction torque (needed for O-4/G2 as well).
 - The joint-state topic name (`/world/<world>/model/<model>/joint_state`) and its publish rate (must be
   at least the PX4 loop rate; check the plugin's `update_rate` option).
+
+## Verified in gz-sim 8.15.0 source (image has libgz-sim8.so.8.15.0; source in `research/raw/gz_sim8/`)
+
+- `MulticopterMotorModel.cc:682-690` (velocity mode): `refMotorRotVel = rotorVelocityFilter->UpdateFilter(refMotorInput)`
+  (first-order up/down filter), then `JointVelocityCmd = turningDirection * refMotorRotVel / rotorVelocitySlowdownSim`.
+- `:564-574`: thrust uses the **measured** joint velocity: `realMotorVelocity = JointVelocity * rotorVelocitySlowdownSim`,
+  thrust = motorConstant * realMotorVelocity^2. So joint velocity x 10 is the speed the plant's thrust actually uses:
+  the right "true rotor speed" for the telemetry. Confirms point 1 above.
+- `:655-669`: the yaw moment applied to the parent is only `momentConstant * thrust` (drag) plus rolling moment.
+  There is **no explicit rotor-acceleration (G2) term**. Any G2-like effect can only come from the physics
+  engine transmitting the joint velocity command's constraint reaction to the body, at the joint speed, which is
+  1/10 of the real speed: at most `Izz_rotor * omega_dot / 10` per rotor (`Izz_rotor = 2.65e-5 kg m^2`,
+  x500_base model.sdf). Whether DART's velocity-command servo transmits that reaction is NOT verified (O-4: check
+  gz-physics dartsim `SetJointVelocityCommand`, or measure yaw response to a differential-speed step at constant
+  drag torque). Provisional reading: G2 is absent or 10x too small in this simulator.
+- `JointStatePublisher.cc:107,186-190`: optional `<update_rate>` (0 = every step), topic
+  `<scoped model name>/joint_state` unless `<topic>` is given.
