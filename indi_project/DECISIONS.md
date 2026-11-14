@@ -354,3 +354,11 @@ Chosen: fix, keep the frozen parameters, and check that the metric windows are u
 step_diag (yaw commanded, speed 4) and com_shift (largest INDI gain, speed 1), seeds 1-3, against the committed
 runs (`results/landyaw_check_s19/`). The verdict of `results/acceptance_s15.md` was obtained with the pre-fix
 code and is reported as such.
+
+## D-pdf (session 22, 2026-11-14): no PDF build yet
+
+- Fact: neither the host nor `px4-indi-sim` has pandoc or LaTeX (checked with `which`).
+- Choice: keep the report as Markdown chapters for now; add a PDF build only as a separate small image
+  (e.g. `indi_project/docker/report.Dockerfile` with pandoc + texlive-xetex) once all chapters are final,
+  so the simulation image stays unchanged and every benchmark result stays reproducible with it.
+- Rejected: adding pandoc/LaTeX to `px4-indi-sim` (rebuild of the simulation image, ~1 GB, no benefit to results).
