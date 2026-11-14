@@ -125,11 +125,15 @@ owner decisions when you first act on them.
   v2 PID tuning check must be repeated on the FAC config.
 - **Stage 2 (session 33):** D-omega2 library part done (895b55aed8, 35/35 gtests). v2 PID r2 (FAC 0): defaults
   stay. Running: v1 ACT_TC/G2 re-checks, then PID r1f on the FAC config.
+- **Stage 2 (session 34):** D-omega2 module wiring done (allocator publishes actuator_torque_measured from eRPM,
+  CA_R_W_MAX; mc_rate_control MC_INDI_ERPM_DLY/TO), not yet flown. v1 re-check: identified ACT_TC 25 ms cuts the H5
+  roll-rate loss (3.9x -> 1.8x PID att, 1.58x -> 1.19x rate) but does not remove it; G2 has no effect. Running:
+  r1f (PID on FAC config), then same-binary frozen control indi_frz (queued).
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
   quoting in the report.
-- **Last updated:** 2026-11-14, session 32 (O-4, D-omega2, FAC). Earlier: session 24 (ch. 6/9 markers closed, ch. 2 7/8). Agents s24: 1 haiku. Before that: session 23 (bibliography, D-noretune). Before that: session 21 (review triaged, G2_Y bound fix, figures, ch. 2 draft). Before that: session 20. Before that: session 16 (ch. 8 draft + control-law review in flight). Before that: session 15 (H1/H4/H5 implemented, batches flying). Before that: session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
+- **Last updated:** 2026-11-14, session 34 (wiring, recheck). Earlier: session 32 (O-4, D-omega2, FAC). Earlier: session 24 (ch. 6/9 markers closed, ch. 2 7/8). Agents s24: 1 haiku. Before that: session 23 (bibliography, D-noretune). Before that: session 21 (review triaged, G2_Y bound fix, figures, ch. 2 draft). Before that: session 20. Before that: session 16 (ch. 8 draft + control-law review in flight). Before that: session 15 (H1/H4/H5 implemented, batches flying). Before that: session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
   library + unit tests committed, not yet wired into mc_rate_control; first
   G1 identification: pitch 211 (R^2 0.90), roll 321 (R^2 0.63), yaw not
   identified; see `results/identification_g1_v0.md`).
@@ -643,6 +647,7 @@ owner decisions when you first act on them.
 | 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build, 2 INDI runs (hover, step_roll seed1), 0 failures | $1.63 cap |
 | 33 (2026-11-14) | 1 sonnet (omega2 lib, 29 calls, ~$0.6) | 1 SITL build; r2 finished (240); chain launched | ~$2.2 of $3 |
 | 27 (2026-11-14) | 1 haiku (AM32 gaps, 22 calls) | 2 SITL builds, 5 check flights (2 invalid: physics step reset, fixed) | stage-2 sim: rotor speed, eRPM model, IMU rate; ~$2.9 of $3 |
+| 34 | 1 sonnet (~$0.6, D-omega2 wiring) | 105 (v1 recheck) + r1f running + frz queued | session ~$2.8 |
 
 ## Journal
 
@@ -692,3 +697,4 @@ owner decisions when you first act on them.
 - 2026-11-14 session 30: step 3 items 5 (D-landmodel) and 7 (D-faulthold) in the INDI library, 21/21 gtests; v2 PID r1 flying. Agents: 0.
 - 2026-11-14 session 29: D-notch (ESC-rpm notch in v2, both controllers); dt-jitter fix 68cab62e42 (20/20 gtests); v2 PID tuning r1 launched detached. Agents: 0.
 - 2026-11-14 s33: D-omega2 library (895b55aed8); PID r2 closed (defaults stay, FAC 0); SITL rebuilt; v1 re-checks + PID r1f (FAC) launched.
+- 2026-11-14 s34: D-omega2 wiring (4 commits, sonnet agent); v1 recheck flown (105 runs), prelim results; frz control queued.
