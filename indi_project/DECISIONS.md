@@ -547,3 +547,16 @@ These are the owner's decisions, not the orchestrator's; full text in `OWNER_GUI
     reviewers asked to keep (D-arch-1); its only advantage, exact per-motor inversion, is obtained here
     through B^+. (2) measured state mapped back to command space c_i = (omega_i - omega_min)/delta: consistent
     with the allocator without THR_MDL_FAC, but G1 depends on thrust again, which O-6 asks to remove.
+
+- **D-omega2-wire (session 34) where tau_meas = B u is computed: in control_allocator, published as a new topic
+  `actuator_torque_measured`.** The allocator owns the effectiveness matrix, its normalisation/scale and the
+  motor-to-output mapping, so it computes tau_meas = (B (u_meas - trim)).emult(scale), the same expression as
+  getAllocatedControl() with the measured u in place of the setpoint: tau_meas is then in exactly the units of
+  the torque setpoint by construction. u_i = (omega_i/omega_max)^2 from esc_status rpm, motor i matched through
+  esc[j].actuator_function (Motor1 = 101). Validity: all motors of matrix 0 online, fresh (CA side) and in range
+  (normalisedThrustFromRpm); otherwise published with valid = false. omega_max is a vehicle/ESC property and
+  lives with the allocator as CA_R_W_MAX (rad/s, 0 = feature off). Rate-controller side keeps MC_INDI_ERPM_DLY
+  (delay samples) and MC_INDI_ERPM_TO (topic age timeout).
+  Rejected: (1) duplicating the geometry in mc_rate_control from CA_ROTOR* params: two copies of B and of its
+  normalisation that must agree, silent unit error if they drift; (2) adding fields to control_allocator_status:
+  wide message used by logging/GCS, mixes setpoint feedback with a sensor-derived quantity.

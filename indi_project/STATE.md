@@ -147,6 +147,12 @@ owner decisions when you first act on them.
 
 ## In progress
 
+- SESSION 34 (2026-11-14): chain `bench/s2_after_rebuild.sh` RUNNING at start (recheck v1 just started 17:14).
+  D-omega2-wire decided (DECISIONS.md): control_allocator computes tau_meas with its own matrix and publishes
+  `actuator_torque_measured`; mc_rate_control feeds setMeasuredTorque. IN FLIGHT: 1 sonnet agent implementing it,
+  log `plan/impl_log_omega2_wire.md` (one commit per step; builds only in build/px4_sitl_omega2 and px4_sitl_test,
+  NOT px4_sitl_default while the chain flies). If cut off: read that log, finish remaining steps only.
+
 - SESSION 33 (2026-11-14): r2 still RUNNING at start (11/16). DONE (sonnet agent, 29 calls): D-omega2 library part
   895b55aed8 (setMeasuredTorque/valid per cycle, own delay MC_INDI_ERPM_DLY-to-be + own sync filters, model fed
   while invalid, switch after kMeasValidCycles=20 valid cycles, immediate fallback; normalisedThrustFromRpm helper),
