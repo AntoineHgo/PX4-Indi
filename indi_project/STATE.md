@@ -191,13 +191,16 @@ owner decisions when you first act on them.
   Host SUSPENDED 20:45:31 (journalctl) -> seed 3 of com_shift + motor_loss_0 stalled for all controllers; moved to
   `results/s2_heldout_v2/runs_suspended/`, re-fly queued detached (`bench/s2_heldout_v2_refly.sh`, waits for
   SEEN_V2_DONE, ends HELDOUT_V2_REFLY_DONE in the V run.log). Seen set RUNNING (started ~22:26).
-  **SUSPECTED DEFECT (load-bearing for the verdict):** in V motor_loss_0 the indi_v2 vehicle holds a STEADY ~9.4 deg
-  diagonal tilt (roll +9.4, pitch -9.4, std 0.05) with a level attitude setpoint from ~t=27 s, BEFORE the fault at
-  42 s, and drifts ~160 m in x; pid_tuned is level (seeds 1, 2 checked, script in session scratch). So the 1.91x on
-  motor_loss_0 is not the fault response. Suspect the O-11 module / mode switch into offboard attitude at speed 1
-  (rate loop not reacting to a steady attitude error). Diagnosis task: `plan/s42_tilt_diag.md` (sonnet agent),
-  output `results/s2_tilt_diag.md`. Until resolved, the V verdict carries this caveat; check whether com_shift,
-  gust_diag and v2_vib3_hover (also speed 1) show it.
+  **FINDING (s42, `results/s2_tilt_diag.md`, sonnet agent + orchestrator check):** in motor_loss_0 indi_v2 settles
+  at a steady 13-14 deg attitude error after the fault, in all 9 seeds (PID < 0.3 deg). Cause: measured-eRPM
+  actuator state gives the fixed point t_cmd - t_meas = nu/G1, so a command-to-output actuator gap (motor 0 at ~0.7)
+  is held by a standing rate error. v1's modelled state integrated it away. v2 thus has NO implicit integral action
+  against actuator mismatch. Seen seed 1: motor_loss_2 21.7 deg, mismatch_combined_rate 36.7 deg. (An earlier s42
+  note said the tilt began before the fault: wrong, it compared ULog-relative time with boot-time events.)
+  NEXT (design, judgement): D-v3-integral, either a slow integrator on (t_cmd - t_meas), i.e. an actuator-gap
+  estimate added to t_meas (Smeur-style adaptive effectiveness is the literature route), or a hybrid model/measured
+  state. Must be screened under O-12 (watchdog + staged pruning first) and flown on the seen set before any new
+  validation. The frozen v2 V and seen results stand as recorded.
 - SESSION 41 (2026-11-14, launch 20261114-202503): V batch (session 40) still RUNNING, healthy (seed 1 done 20:27, no
   failure). QUEUED detached behind it: `bench/s2_seen_v2.sh` (O-7 seen set on v2: H1 traj_circle_fast, H4 motor_loss_2,
   H5 mismatch_combined_att/_rate, H6 step_diag, T5 lemniscate, T6 gust_x, T7 payload_add, T1-T4 + rate_step_roll,

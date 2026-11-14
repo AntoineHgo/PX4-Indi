@@ -53,9 +53,15 @@ Outcome on criteria 1-3 (V only; criterion 1 also needs the seen/T entries, crit
   seen on the tuning set (INDI better on rate pulses, worse on roll steps, D-v2indi). The INDI v2 attitude-step
   response is slower than tuned PID's and it spends less effort doing it; the tuning cost J traded these off.
 - **Disturbances:** com_shift 0.43x (9/9 seeds, the v1 strength holds); gust_diag 0.93x (10/10, below 10 %).
-- **motor_loss_0 1.91x worse** (rotation-angle RMS, 0/9 seeds). This is the opposite of v1 (T8: roll/pitch 5-9x
-  better). Rotation-angle RMS includes yaw, which INDI already lost in v1, but a 1.9x ratio needs a cause before the
-  report states one: open item, diagnose with per-axis attitude RMS on the existing logs.
+- **motor_loss_0 1.91x worse** (rotation-angle RMS, 0/9 seeds); per axis: roll/pitch RMS 8.4 deg vs PID 0.8-0.9,
+  yaw 11.7 vs 8.5. The opposite of v1 (T8: roll/pitch 5-9x better). Cause (`results/s2_tilt_diag.md`): after the
+  fault, every indi_v2 seed settles at a steady 13-14 deg attitude error (PID < 0.3 deg). v2 INDI takes the actuator
+  state from measured eRPM, so its fixed point is t_cmd - t_meas = nu/G1. Motor 0 now reaches only part of its command,
+  and that gap (0.086 normalised torque) can only be held by a constant nu, i.e. a standing rate error, which the
+  attitude loop turns into a tilt. v1 used a modelled actuator state (t_meas = filtered t_cmd), so the gap was
+  integrated away. In v2 the measured actuator state removes INDI's implicit integral action against any
+  command-to-output actuator mismatch. This is a structural property of the frozen v2 design, not a harness artefact.
+  Seen-set seed 1 shows the same on motor_loss_2 (21.7 deg) and mismatch_combined_rate (36.7 deg).
 - **Hover (v2_vib3_hover) 1.56x, 3/10 seeds**, p = 0.03: hover position RMS is the noise-dominated metric (D-hovernoise).
 - **Baseline fairness check:** pid_tuned vs pid_default on V: tuned is better on every att entry (0.92-0.94x),
   gust_diag 0.80x, com_shift 0.65x, motor_loss_0 0.88x, equal on rate entries. The retuned PID is a genuinely
