@@ -217,6 +217,12 @@ owner decisions when you first act on them.
   (+ `--b indi_v2` reported post-hoc) and the hover criterion from `bench/v3_hover_effort.py`; write
   `results/vprime.md`, commit metrics/run.json only; (2) report 7.8/8.10 for v3 (correct the v2 hover 1.26x:
   ~2x on clean seeds); (3) stage 8 per OWNER_GUIDANCE.
+  FINDING 00:57: V' W1 vp_loss1_06 seed 1: ALL FOUR controllers (pid_default, pid_tuned, indi_v2, indi_v3) tripped
+  the watchdog (> 3 m below hold altitude for 1 s, sim t 44-53 s); W2 seed 1 ok for all. W1 (motor 1 at 0.6 thrust,
+  hover throttle ~0.59) is likely beyond the x500's authority. Validation rule (O-12): failures stand, no re-fly, the
+  entry is reported as failed for every controller (criterion 1 then fails for v3). AFTER VPRIME_DONE (not while it
+  flies): post-hoc diagnostic, W1 seed 1 x 4 controllers with `--watchdog off` into `results/vprime_w1_diag/`, to
+  show whether any controller would recover (reported post-hoc only, never in the verdict).
 - SESSION 46 (2026-11-15, launch 20261115-003114): DONE: owner outer-gain diagnostic committed + D-outer-check (v3
   tunes the INDI inner loop only, outer gains fixed at tuned PID's) + report 8.9 paragraph. v3 smoke DONE
   (`results/v3_smoke.md`): ACT_BLD 0 flies as v2 (step_roll 3.63 vs 3.62 deg). V' W1-W5 IMPLEMENTED (sonnet agent,
@@ -1029,5 +1035,5 @@ S42 ORDER (do this first, top to bottom):
   (watchdog deferred until the validation batches end). Agents: 1 sonnet (tilt diagnosis, 18 tool calls).
 - 2026-11-14 s43: V' frozen (D-heldout-v3); v3 blend spec + firmware 3a47bf746e (gtests 40/40); O-12 spec written. Agents: 1 sonnet.
 - 2026-11-14 s44: O-12 part B committed (f064c78d9f), part A staged as patch, watchdog replay done (9ebc74caf6: no false trips; seen seed-2 estimator glitches under host overload), D-watchdog. Agents: 0.
-- 2026-11-15 s47: hover effort 5 seeds (~2x PID, inherited from v2), yaw stage 2, indi_v3 frozen, V' verdict mode, V' launched (200 flights). Agents: 0. Runs: 36 (+200 V').
 - 2026-11-15 s46: outer-gain diagnostic committed (D-outer-check); v3 ACT_BLD 0 smoke = v2; V' implemented; Tb screening: 0.3/1.0 remove motor-loss tilt, 0.1 pruned; stage 2 running. Agents: 1 sonnet. Runs: 19 (+18).
+- 2026-11-15 s47: hover effort 5 seeds (~2x PID, inherited from v2), yaw stage 2, indi_v3 frozen, V' verdict mode, V' launched (200 flights). Agents: 0. Runs: 36 (+200 V').
