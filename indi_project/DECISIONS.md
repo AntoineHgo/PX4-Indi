@@ -674,3 +674,22 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
 - **Why:** MAVLink PVA offboard carries no jerk; the lag is ~1 deg of phase on the fastest frozen trajectory. Snap
   would need a field `vehicle_rates_setpoint` does not have; a message change is avoided until the jerk-only result
   shows whether the feedforward matters at all. Recorded as a limitation against Tal (who uses both).
+
+## O-12 (owner, 2026-11-14, during session 41): spend simulation time on promising configurations only
+
+- **Decision (owner):** watchdog in `bench/run_scenario.py` that aborts divergent runs and records them as failures;
+  staged (successive-halving) screening in tuning/exploration so pruned candidates' runs are never launched; full
+  multi-seed batches only for a screened configuration. Validation batches of a frozen configuration run in full, an
+  aborted run there is a reported failure. Text in `OWNER_GUIDANCE.md`. Not re-opened.
+- **Implementation timing (session 42):** the watchdog is NOT added while the seen-set validation batch and the V
+  re-fly are flying, because every run of those batches calls `run_scenario.py`: changing it mid-batch would make
+  part of a validation batch fly different code. It goes in right after HELDOUT_V2_REFLY_DONE, before any new
+  tuning or exploration batch.
+
+## D-v2-refly (session 42): held-out V seed 3 of com_shift and motor_loss_0 re-flown
+
+- **Choice:** the six runs (3 controllers) of com_shift and motor_loss_0 seed 3 stalled when the host suspended at
+  20:45:31 (journalctl) and ended in wall timeouts. They are kept in `results/s2_heldout_v2/runs_suspended/` and
+  the (entry, seed) is re-flown for all three controllers (`bench/s2_heldout_v2_refly.sh`).
+- **Why:** an infrastructure fault that hit every controller alike, which O-12 allows to be re-flown. Re-flying all
+  controllers of that seed keeps the pairing, and does not select on the result.
