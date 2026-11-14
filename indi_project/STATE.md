@@ -21,7 +21,7 @@
   yet implemented (`results/sync_check_v0.md`).
 - **Session 8:** PID tuning r1 (240 flights): no candidate beats PX4
   default gains (`results/tuning/pid_r1.md`); hover reference ratio biased
-  (~0.8 for all candidates, open). MC_INDI_YAW_CUT implemented; 10 Hz cuts
+  (~0.8 for all candidates: run-to-run noise, hover RMS varies 2x for the same seed). MC_INDI_YAW_CUT implemented; 10 Hz cuts
   INDI hover effort 7x (1.62 -> 0.23, PID 0.037) (`results/yawcut_check_s8.md`).
   INDI r1 (240 flights): best INDI tracks better than best PID on all 5
   tuning scenarios (ratios 0.67-0.98 vs 0.75-1.00) but J 1.17 vs 0.95
@@ -67,9 +67,9 @@
 
 ## Next concrete actions
 
-0. Session 9 next steps: (a) DONE INDI r1 analysis; (b) explain the hover reference
-   bias (re-fly pid_default hover seeds 1-3 now, compare with the
-   11-13 reference; if noise, use more hover seeds); (c) remaining INDI
+0. Session 9 next steps: (a) DONE INDI r1 analysis; (b) DONE: hover position RMS is not
+   repeatable per seed (re-fly up to 2.2x the reference, `pid_r1.md`
+   follow-up): find the non-determinism, then >= 8 hover seeds in J; (c) remaining INDI
    hover effort 6x PID: run check_sync.py on hover/indi_v1_yc10 to see
    which axis; (d) round 2 for both families (span 1.3 around the best).
    Use NAME_TAG for parallel run_batch.sh calls (container names collide).

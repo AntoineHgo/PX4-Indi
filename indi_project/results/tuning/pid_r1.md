@@ -37,3 +37,16 @@ The retuned-PID baseline is, for now, the default gains, with this round as
 the documented tuning effort. A narrower round (span 1.3, more seeds on
 hover) around c00 is the next PID step, once the hover reference bias is
 explained. INDI round 1 uses the same budget, scenarios and cost (D-indi-r1).
+
+## Follow-up (session 8): hover re-fly
+
+`pid_default` hover re-flown with the same seeds 1-3 (`results/refly_s8/`,
+log `results/refly_s8.log`): position RMS 0.036 / 0.037 / 0.046 m vs the
+reference 0.033 / 0.027 / 0.021 m (ratios 1.08, 1.38, 2.19). Same gains,
+same seed, up to 2x apart: **hover position RMS is not repeatable per
+seed**, so the "bias" is run-to-run noise in a short hover, not a setup
+difference. Consequence: the hover term of J is noise-dominated with 2
+seeds. Before round 2, either fly hover with many more seeds (>= 8), or use
+a longer hover window, and find the source of the non-determinism (seeded
+gz sensor noise should make a run reproducible; lockstep timing or wind
+model state may not be seeded).
