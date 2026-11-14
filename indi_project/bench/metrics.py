@@ -258,21 +258,22 @@ def compute(ulog, run):
         if not ev.get("step"):
             continue
         t0, dur = ev["t_us"] * 1e-6, ev["dur_s"]
-        ax = ev["axis"]
-        if ev["mode"] == "attitude" and euler is not None:
-            x = euler[ax]
-            if ax == "yaw":
-                x = wrap(x - hold_yaw)
-            x = np.degrees(x)
-            tt, floor = att["timestamp"] * 1e-6, 1.0
-        elif ev["mode"] == "rate" and av is not None:
-            x = np.degrees(av[f"xyz[{AXES.index(ax)}]"])
-            tt, floor = av["timestamp"] * 1e-6, 10.0
-        else:
-            continue
-        r = step_metrics(tt, x, t0, dur, ev["value"], floor)
-        if r is not None:
-            steps.append({"name": ev["name"], "t0_s": t0, "dur_s": dur, "from": ev["prev"], "to": ev["value"], **r})
+        for ax in (("roll", "pitch") if ev["axis"] == "rollpitch" else (ev["axis"],)):
+            if ev["mode"] == "attitude" and euler is not None:
+                x = euler[ax]
+                if ax == "yaw":
+                    x = wrap(x - hold_yaw)
+                x = np.degrees(x)
+                tt, floor = att["timestamp"] * 1e-6, 1.0
+            elif ev["mode"] == "rate" and av is not None:
+                x = np.degrees(av[f"xyz[{AXES.index(ax)}]"])
+                tt, floor = av["timestamp"] * 1e-6, 10.0
+            else:
+                continue
+            r = step_metrics(tt, x, t0, dur, ev["value"], floor)
+            if r is not None:
+                name = ev["name"] if ev["axis"] != "rollpitch" else f'{ev["name"]}_{ax}'
+                steps.append({"name": name, "t0_s": t0, "dur_s": dur, "from": ev["prev"], "to": ev["value"], **r})
     out["steps"] = steps
     summ = {}
     for k in ("delay_10pct_s", "rise_10_90_s", "overshoot_pct", "settle_5pct_s"):

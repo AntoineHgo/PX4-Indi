@@ -352,8 +352,8 @@ def main():
             ev = {"name": name, "t_us": int(sim.t * 1e6), "dur_s": dur, "mode": mode, "axis": axis,
                   "value": val, "prev": prev, "step": name != "settle" and mode != "position"}
             meta["events"].append(ev)
-            r = val if axis == "roll" else 0.0
-            p = val if axis == "pitch" else 0.0
+            r = val if axis in ("roll", "rollpitch") else 0.0
+            p = val if axis in ("pitch", "rollpitch") else 0.0
             y = val if axis == "yaw" else 0.0
             if mode == "position":
                 sp = pos_sp

@@ -5,12 +5,13 @@ All durations are SIM seconds. Every scenario starts after the vehicle hovers at
 mode:   "position"  -> hold the position/yaw captured at offboard start
         "attitude"  -> roll/pitch/yaw attitude setpoints (deg, yaw relative to initial yaw), thrust = hover
         "rate"      -> body-rate setpoints (deg/s), thrust = hover
-axis:   which channel the segment values drive (roll | pitch | yaw)
+axis:   which channel the segment values drive (roll | pitch | yaw | rollpitch = roll and pitch together)
 segments: (name, duration_s, value). `settle` segments are not step events (value 0, lead-in);
           every other segment starts a step from the previous value to `value`.
 """
 
 STEP_DEG = 15.0
+DIAG_STEP_DEG = 20.0
 YAW_STEP_DEG = 45.0
 RATE_STEP_DPS = 120.0
 
@@ -38,6 +39,8 @@ SCENARIOS = {
     "step_roll": dict(mode="attitude", axis="roll", segments=_attitude_steps("roll", STEP_DEG, 3.0)),
     "step_pitch": dict(mode="attitude", axis="pitch", segments=_attitude_steps("pitch", STEP_DEG, 3.0)),
     "step_yaw": dict(mode="attitude", axis="yaw", segments=_attitude_steps("yaw", YAW_STEP_DEG, 4.0)),
+    # Held-out H6: simultaneous roll and pitch steps.
+    "step_diag": dict(mode="attitude", axis="rollpitch", segments=_attitude_steps("rollpitch", DIAG_STEP_DEG, 3.0)),
     "rate_step_roll": dict(mode="rate", axis="roll", segments=_rate_pulses(3)),
     # Disturbance scenarios (bench/disturbance.py). Position mode; the segment named "dist" starts the disturbance
     # profile (profile time 0 = start of that segment). The key `disturbance` selects the injector profile.
