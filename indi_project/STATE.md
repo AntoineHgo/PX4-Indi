@@ -87,7 +87,7 @@
   INDI's main robustness weakness here. Trajectory mode + T5/H1/H4 implemented; 10-seed batch flying.
 - **Acceptance (session 15, `results/acceptance_s15.md`): all 6 H scenarios flown, 10 seeds. Outcome under the
   frozen rules: "INDI does not outperform PID".** Criterion 3 fails on H5 (rate pulses 1.58x, ACT_TC-mismatch limit
-  cycle); criterion 1 fails on H4 (both controllers crash 10/10, alike up to impact). Criterion 2 met (H1, H2, H3; H6
+  cycle); criterion 1 fails on H4 (both controllers crash 10/10, alike up to impact). Criterion 4 met (hover effort 1.04x). Criterion 2 met (H1, H2, H3; H6
   at threshold). INDI's strength: disturbance rejection; its weakness: actuator-model mismatch.
   T5 lemniscate: INDI 0.95x position RMS; H1 fast circle 0.73x (infeasible for both) (`results/heldout_s15.md`).
 - **Blocker:** none. Usage budget is the binding constraint.
@@ -114,7 +114,7 @@
 
 - SESSION 15 DONE: H1/H4/H5 flown and committed, acceptance decided (negative, see summary). NEXT (phase 6):
   (1) metrics.py: end the window at ground contact for crash-capable scenarios, re-score H4/T8; move the session-15
-  inline trajectory/H4 table scripts into `bench/` (reproducibility); (2) T1 hover effort, frozen candidates, 10 seeds: LAUNCHED end of session 15, log `results/hover_s15.log` (re-run header if incomplete), then summarize_seeds.py hover
+  inline trajectory/H4 table scripts into `bench/` (reproducibility); (2) T1 hover effort, frozen candidates, 10 seeds: DONE (1.04x, met)
   (criterion 4); (3) report ch. 8 results + ch. 9 discussion (delegate drafts to sonnet from results/*.md:
   heldout_s14, heldout_s15, heldout_h5_s15, acceptance_s15, t8_motor_loss_s13, tuning/*.md); (4) fable review of the
   control law and of the conclusions; (5) the open REPORT FIXES list below. Optional, clearly labelled as
