@@ -53,6 +53,7 @@
 #include <uORB/topics/actuator_controls_status.h>
 #include <uORB/topics/battery_status.h>
 #include <uORB/topics/control_allocator_status.h>
+#include <uORB/topics/actuator_torque_measured.h>
 #include <uORB/topics/indi_rate_status.h>
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/parameter_update.h>
@@ -109,6 +110,7 @@ private:
 
 	uORB::Subscription _battery_status_sub{ORB_ID(battery_status)};
 	uORB::Subscription _control_allocator_status_sub{ORB_ID(control_allocator_status)};
+	uORB::Subscription _actuator_torque_measured_sub{ORB_ID(actuator_torque_measured)};
 	uORB::Subscription _manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)};
 	uORB::Subscription _vehicle_control_mode_sub{ORB_ID(vehicle_control_mode)};
 	uORB::Subscription _vehicle_land_detected_sub{ORB_ID(vehicle_land_detected)};
@@ -131,6 +133,9 @@ private:
 
 	bool _landed{true};
 	bool _maybe_landed{true};
+
+	// last measured actuator torque from the allocator (ESC rpm), all zero and invalid until one is received
+	actuator_torque_measured_s _torque_measured{};
 
 	// INDI rate law selection, latched while disarmed
 	bool _use_indi{false};
@@ -206,6 +211,8 @@ private:
 		(ParamFloat<px4::params::MC_INDI_K_Y>) _param_mc_indi_k_y,
 		(ParamFloat<px4::params::MC_INDI_ACT_TC>) _param_mc_indi_act_tc,
 		(ParamInt<px4::params::MC_INDI_DELAY>) _param_mc_indi_delay,
+		(ParamInt<px4::params::MC_INDI_ERPM_DLY>) _param_mc_indi_erpm_dly,
+		(ParamFloat<px4::params::MC_INDI_ERPM_TO>) _param_mc_indi_erpm_to,
 		(ParamFloat<px4::params::MC_INDI_DT_MAX>) _param_mc_indi_dt_max,
 		(ParamFloat<px4::params::MC_INDI_YAW_CUT>) _param_mc_indi_yaw_cut
 	)

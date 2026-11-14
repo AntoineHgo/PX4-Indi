@@ -112,6 +112,7 @@ MulticopterRateControl::parameters_updated()
 	_indi.setG2Yaw(_param_mc_indi_g2_y.get());
 	_indi.setActuatorTimeConstant(_param_mc_indi_act_tc.get());
 	_indi.setDelaySamples(_param_mc_indi_delay.get());
+	_indi.setMeasurementDelaySamples(_param_mc_indi_erpm_dly.get());
 	_indi.setMaxIncrement(_param_mc_indi_dt_max.get());
 	_indi.setYawCutoff(_param_mc_indi_yaw_cut.get());
 
@@ -140,6 +141,15 @@ MulticopterRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f
 		torque_allocated_prev -= _unallocated_torque;
 	}
 
+	// measured actuator torque from the ESC rpm (allocator), used only while complete, fresh and finite
+	_actuator_torque_measured_sub.update(&_torque_measured);
+	const Vector3f torque_measured(_torque_measured.torque);
+	const hrt_abstime now = hrt_absolute_time();
+	const bool measurement_valid = _torque_measured.valid && (now >= _torque_measured.timestamp_sample)
+				       && (((now - _torque_measured.timestamp_sample) * 1e-6f) < _param_mc_indi_erpm_to.get())
+				       && torque_measured.isAllFinite();
+	_indi.setMeasuredTorque(torque_measured, measurement_valid);
+
 	const Vector3f torque_setpoint = _indi.update(rates, _rates_setpoint, angular_accel, torque_allocated_prev, dt, landed);
 
 	indi_rate_status_s indi_rate_status{};
@@ -148,6 +158,7 @@ MulticopterRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f
 	_indi.getFilteredTorque().copyTo(indi_rate_status.torque_filtered);
 	_indi.getTorqueIncrement().copyTo(indi_rate_status.torque_increment);
 	indi_rate_status.fault = _indi.getFault();
+	indi_rate_status.measured_torque_in_use = _indi.measurementInUse();
 	indi_rate_status.timestamp = hrt_absolute_time();
 	_indi_rate_status_pub.publish(indi_rate_status);
 

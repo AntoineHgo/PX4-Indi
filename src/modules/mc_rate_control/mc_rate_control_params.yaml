@@ -342,6 +342,25 @@ parameters:
       default: 0
       min: 0
       max: 4
+    MC_INDI_ERPM_DLY:
+      description:
+        short: INDI measured torque delay
+        long: Pure delay applied to the torque measured from the ESC rpm (actuator_torque_measured), in controller cycles, to match its latency to that of the filtered angular acceleration. Only used when MC_RATE_CTL_TYPE is INDI and CA_R_W_MAX is set.
+      type: int32
+      default: 1
+      min: 0
+      max: 4
+    MC_INDI_ERPM_TO:
+      description:
+        short: INDI measured torque timeout
+        long: Age of the oldest ESC sample behind the measured torque above which it is not used and INDI falls back to its actuator model. Only used when MC_RATE_CTL_TYPE is INDI and CA_R_W_MAX is set.
+      type: float
+      default: 0.02
+      min: 0.001
+      max: 0.5
+      unit: s
+      decimal: 3
+      increment: 0.001
     MC_INDI_DT_MAX:
       description:
         short: INDI maximum torque increment
