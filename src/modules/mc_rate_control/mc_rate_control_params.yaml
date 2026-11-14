@@ -283,11 +283,11 @@ parameters:
     MC_INDI_G2_Y:
       description:
         short: INDI yaw rotor spin-up term
-        long: Yaw angular acceleration in rad/s^2 per unit of normalised torque rate (rad/s^2 per 1/s). Set to 0 to disable. Only used when MC_RATE_CTL_TYPE is INDI.
+        long: Yaw angular acceleration in rad/s^2 per unit of normalised torque rate (rad/s^2 per 1/s). Set to 0 to disable. Sensible values are of the order of MC_INDI_G1_Y times the loop period (about 0.02); values much larger than that let the spin-up term dominate the yaw increment and remove yaw rate feedback. Only used when MC_RATE_CTL_TYPE is INDI.
       type: float
       default: 0.0
       min: 0.0
-      max: 100
+      max: 1
       decimal: 2
       increment: 0.1
     MC_INDI_K_R:
