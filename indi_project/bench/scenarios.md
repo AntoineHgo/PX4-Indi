@@ -171,3 +171,8 @@ commits.
   in T7). Metric kinds: gust_diag horizontal, com_shift vertical. PID
   default harness check (seed 1, speed 1): gust_diag 0.44 m / 11.2 deg /
   recovery 15.1 s; com_shift 0.21 m / 2.6 deg / recovery 3.9 s.
+- 2026-11-14: T9 `mismatch_inertia` implemented via per-run gz model variants
+  (`model_variant` scenario key, `bench/model_variant.py`; Ixx, Iyy x1.3,
+  verified in gz). Same mechanism supports ixx/iyy/izz/mass/tau scales for
+  H5. PID default (seed 1, speed 4): roll RMS 3.27 deg vs 3.35 deg for
+  step_roll, no slower rise (details in `plan/t9_model_variant_log.md`).
