@@ -193,6 +193,15 @@ owner decisions when you first act on them.
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+- SESSION 44 (2026-11-14, launch 20261114-225445): seen set at seed 4/10 at 22:55 (slower than estimated: ~6 min
+  per seed-entry group; end likely after 01:00), V re-fly still queued behind it. The s43 replay agent was cut off
+  after fixing the takeoff window (log `plan/impl_log_o12.md`); the orchestrator reviewed `bench/watchdog_replay.py`
+  and is running it itself (nice 19, 4 workers) -> `results/o12_watchdog_replay.md`.
+  O-12 part B DONE (f064c78d9f, tune.py `--stages 2 --stage1-scenarios ... --prune-ratio 1.3 --keep 4`, dry-run
+  checked; failed run.json now scores as failure). Part A WRITTEN, NOT APPLIED (batch flying): staged as
+  `plan/o12_partA.patch` (apply from repo root: `git apply -p0 --directory=indi_project indi_project/plan/o12_partA.patch`,
+  then delete `plan/o12_wip/`). It deviates from the spec on one point: the altitude-deficit trip uses the hold
+  altitude at takeoff completion (5 m), not the live z setpoint (attitude/rate scenarios have none; circle z_amp 1 m).
 - SESSION 43 (2026-11-14, launch 20261114-223703): seen set RUNNING (57/420 at 22:37, ~80 min total), V re-fly
   queued behind it. Done: V' frozen (90339483ef, scenarios.md sec. 9, D-heldout-v3); v3 spec `plan/v3_blend_spec.md`.
   D-v3-blend DONE in firmware (3a47bf746e, lib + MC_INDI_ACT_BLD default 0 = v2 bit-identical, 5 new gtests, 40/40;
