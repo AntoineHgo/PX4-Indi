@@ -464,10 +464,6 @@ ControlAllocator::Run()
 	// Publish actuator setpoint and allocator status
 	publish_actuator_controls();
 
-	if (do_update) {
-		publish_actuator_torque_measured(now);
-	}
-
 	// Publish status at limited rate, as it's somewhat expensive and we use it for slower dynamics
 	// (i.e. anti-integrator windup)
 	if (now - _last_status_pub >= 5_ms) {
@@ -806,127 +802,6 @@ ControlAllocator::publish_actuator_controls()
 
 		_actuator_servos_pub.publish(actuator_servos);
 	}
-}
-
-namespace
-{
-/// An ESC sample older than this makes the measured torque invalid
-static constexpr hrt_abstime kEscSampleMaxAge = 20_ms;
-/// Measured rotor speeds above this multiple of CA_R_W_MAX are implausible (same bound as IndiRateControl::kMaxRpmRatio)
-static constexpr float kMaxOmegaRatio = 1.5f;
-}
-
-void
-ControlAllocator::update_esc_samples()
-{
-	esc_status_s esc_status;
-
-	if (!_esc_status_sub.update(&esc_status)) {
-		return;
-	}
-
-	const float omega_max = _param_ca_r_w_max.get();
-	const int num_escs = math::min((int)esc_status.esc_count, (int)esc_status_s::CONNECTED_ESC_MAX);
-
-	for (int j = 0; j < num_escs; j++) {
-		const esc_report_s &esc = esc_status.esc[j];
-		const int motor = (int)esc.actuator_function - (int)esc_report_s::ACTUATOR_FUNCTION_MOTOR1;
-
-		if (motor < 0 || motor >= MAX_NUM_MOTORS) {
-			continue;
-		}
-
-		EscSample &sample = _esc_samples[motor];
-
-		if (!(esc_status.esc_online_flags & (1u << j))) {
-			sample.online = false;
-			sample.has_value = false;
-			continue;
-		}
-
-		sample.online = true;
-
-		// A failed telemetry frame (esc_errorcount increments) is reported as the last good value with a fresh
-		// timestamp: keep the previous sample and its time, so a run of dropped frames ages it out.
-		const bool dropped = sample.has_value && (esc.esc_errorcount != sample.error_count);
-		sample.error_count = esc.esc_errorcount;
-
-		if (dropped) {
-			continue;
-		}
-
-		// the ESC reports rpm: omega = rpm * 2 pi / 60, then u = (omega / omega_max)^2 clamped to [0, 1]
-		const float omega = (float)esc.esc_rpm * (2.f * M_PI_F / 60.f);
-		const float ratio = omega / omega_max;
-
-		sample.u_valid = PX4_ISFINITE(ratio) && (omega >= 0.f) && (ratio <= kMaxOmegaRatio);
-		sample.u = sample.u_valid ? math::constrain(ratio * ratio, 0.f, 1.f) : 0.f;
-		sample.timestamp_good = esc.timestamp;
-		sample.has_value = true;
-	}
-}
-
-void
-ControlAllocator::publish_actuator_torque_measured(const hrt_abstime now)
-{
-	// Only for multirotors: the rotor columns of allocation 0 are then the motors, in order
-	if (!(_param_ca_r_w_max.get() > 0.f) || _effectiveness_source_id != EffectivenessSource::MULTIROTOR
-	    || _num_control_allocation < 1 || _control_allocation[0] == nullptr) {
-		return;
-	}
-
-	update_esc_samples();
-
-	// all actuators at their setpoint (NaN, a stopped motor, counts as zero), the rotors at the measured value
-	ActuatorVector actuator = _control_allocation[0]->getActuatorSetpoint();
-
-	bool valid = true;
-	uint8_t valid_mask = 0;
-	hrt_abstime oldest = 0;
-	int num_rotors = 0;
-	int column = 0;
-
-	for (int motor = 0; motor < _num_actuators[(int)ActuatorType::MOTORS] && motor < MAX_NUM_MOTORS; motor++) {
-		if (_control_allocation_selection_indexes[motor] != 0) {
-			continue; // motor of another allocation, not a column of allocation 0
-		}
-
-		const EscSample &sample = _esc_samples[motor];
-		const bool fresh = sample.online && sample.has_value && sample.u_valid
-				   && (sample.timestamp_good <= now) && ((now - sample.timestamp_good) < kEscSampleMaxAge);
-
-		num_rotors++;
-
-		if (fresh) {
-			actuator(column) = sample.u;
-
-			if (motor < 8) {
-				valid_mask |= (uint8_t)(1u << motor);
-			}
-
-			if (oldest == 0 || sample.timestamp_good < oldest) {
-				oldest = sample.timestamp_good;
-			}
-
-		} else {
-			valid = false;
-		}
-
-		column++;
-	}
-
-	const matrix::Vector<float, NUM_AXES> control = _control_allocation[0]->getControlFromActuators(actuator);
-
-	actuator_torque_measured_s msg{};
-	msg.timestamp = hrt_absolute_time();
-	msg.timestamp_sample = oldest;
-	msg.torque[0] = control(0);
-	msg.torque[1] = control(1);
-	msg.torque[2] = control(2);
-	msg.valid = valid && (num_rotors > 0) && PX4_ISFINITE(control(0)) && PX4_ISFINITE(control(1))
-		    && PX4_ISFINITE(control(2));
-	msg.motor_valid_mask = valid_mask;
-	_actuator_torque_measured_pub.publish(msg);
 }
 
 void

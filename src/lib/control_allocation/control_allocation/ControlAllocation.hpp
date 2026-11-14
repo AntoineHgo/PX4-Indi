@@ -153,22 +153,6 @@ public:
 	}
 
 	/**
-	 * Get the control produced by a given actuator vector
-	 *
-	 * Same expression as getAllocatedControl(), with the argument in place of the actuator setpoint.
-	 * Used to evaluate measured actuator states. NaN entries are treated as zero thrust.
-	 *
-	 * @param actuator Actuator vector (same units and order as the actuator setpoint)
-	 * @return Control vector
-	 */
-	matrix::Vector<float, NUM_AXES> getControlFromActuators(const ActuatorVector &actuator) const
-	{
-		ActuatorVector actuator_copy{actuator};
-		actuator_copy.nanToZero();
-		return (_effectiveness * (actuator_copy - _actuator_trim)).emult(_control_allocation_scale);
-	}
-
-	/**
 	 * Get the control effectiveness matrix
 	 *
 	 * @return Effectiveness matrix

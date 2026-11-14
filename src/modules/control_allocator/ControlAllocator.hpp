@@ -73,9 +73,7 @@
 #include <uORB/topics/actuator_motors.h>
 #include <uORB/topics/actuator_servos.h>
 #include <uORB/topics/actuator_servos_trim.h>
-#include <uORB/topics/actuator_torque_measured.h>
 #include <uORB/topics/control_allocator_status.h>
-#include <uORB/topics/esc_status.h>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/vehicle_torque_setpoint.h>
@@ -154,12 +152,6 @@ private:
 
 	void publish_actuator_controls();
 
-	/** Store the rotor speed samples of a new esc_status message (per motor index) */
-	void update_esc_samples();
-
-	/** Publish the torque produced by the measured rotor speeds (CA_R_W_MAX > 0, multirotor, allocation 0) */
-	void publish_actuator_torque_measured(const hrt_abstime now);
-
 	void handle_stopped_motors(const hrt_abstime now);
 
 	float get_ice_shedding_output(hrt_abstime now);
@@ -222,12 +214,10 @@ private:
 	uORB::Publication<actuator_motors_s>	_actuator_motors_pub{ORB_ID(actuator_motors)};
 	uORB::Publication<actuator_servos_s>	_actuator_servos_pub{ORB_ID(actuator_servos)};
 	uORB::Publication<actuator_servos_trim_s>	_actuator_servos_trim_pub{ORB_ID(actuator_servos_trim)};
-	uORB::Publication<actuator_torque_measured_s>	_actuator_torque_measured_pub{ORB_ID(actuator_torque_measured)};
 
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
 	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
-	uORB::Subscription _esc_status_sub{ORB_ID(esc_status)};
 	uORB::Subscription _vehicle_control_mode_sub{ORB_ID(vehicle_control_mode)};
 	uORB::Subscription _failure_detector_status_sub{ORB_ID(failure_detector_status)};
 
@@ -246,18 +236,6 @@ private:
 	int8_t _opposite_motor[MAX_NUM_MOTORS]; // per-motor index of geometric opposite; -1 if none
 
 	ActuatorGroupPreflightCheck _actuator_group_preflight_check;
-
-	/// Last rotor speed sample of an ESC, indexed by motor index (esc actuator_function - Motor1)
-	struct EscSample {
-		hrt_abstime timestamp_good{0}; ///< ESC timestamp of the last sample that was not a repeated (dropped) one
-		float u{0.f};                  ///< normalised thrust (omega / CA_R_W_MAX)^2 of that sample
-		uint32_t error_count{0};
-		bool online{false};
-		bool has_value{false};         ///< a sample was received since the ESC was last seen offline
-		bool u_valid{false};           ///< the last sample was finite, non negative and plausible
-	};
-
-	EscSample _esc_samples[MAX_NUM_MOTORS] {};
 
 	perf_counter_t	_loop_perf;			/**< loop duration performance counter */
 
@@ -278,7 +256,6 @@ private:
 		(ParamInt<px4::params::CA_FAILURE_MODE>) _param_ca_failure_mode,
 		(ParamInt<px4::params::CA_R_REV>) _param_r_rev,
 		(ParamFloat<px4::params::CA_REV_THR_FRAC>) _param_ca_rev_thr_frac,
-		(ParamFloat<px4::params::CA_R_W_MAX>) _param_ca_r_w_max,
 		(ParamFloat<px4::params::CA_ICE_PERIOD>) _param_ice_shedding_period
 	)
 
