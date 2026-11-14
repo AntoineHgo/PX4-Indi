@@ -51,9 +51,52 @@ it, and if it does, record why in `DECISIONS.md`.
   feedforward and how much from the INDI feedback (e.g. one INDI ablation without the flatness terms).
 - **O-10 Order of work: inner loop first.** Follow the order below. The outer loop starts only once
   the inner-loop v2 is validated.
+- **O-11 Upstream-reviewable architecture (owner review 2026-11-14, after session 36).** The firmware must
+  be acceptable to PX4 maintainers, so the review of the prior PR #25216 (summarised in
+  `research/notes/impl_px4_prior.md` section 1) is now a requirement, not background. This supersedes
+  D-arch-2 (selection inside `mc_rate_control`) and the placement part of D-omega2-wire (measured torque
+  computed in `control_allocator`). Concretely:
+  - **Separate module.** INDI runs in its own module `src/modules/mc_indi_rate_control/`, started instead of
+    `mc_rate_control` from `ROMFS/px4fmu_common/init.d/rc.mc_apps` behind a parameter (same pattern as
+    `MC_NN_EN` / `MC_RAPTOR_ENABLE`; e.g. `MC_INDI_EN`, default 0), behind its own Kconfig option so boards
+    that do not enable it pay no flash. The control law stays in `src/lib/indi_rate_control/`. Commander is
+    not touched. `mc_rate_control` (code, params, CMakeLists) goes back to its state on `main`: zero diff.
+    Only one torque publisher may ever run: the module refuses to start if `mc_rate_control` is running,
+    and vice versa or via the startup script, whichever is cleanest; say which in `DECISIONS.md`. What the
+    module has to duplicate from `mc_rate_control` (rate setpoint, thrust, battery scaling, landed state,
+    status topics) is acceptable; share code through a small library only if it stays readable.
+  - **Allocator untouched.** `src/modules/control_allocator/` and `src/lib/control_allocation/` go back to
+    their state on `main`: zero diff (no `CA_R_W_MAX`, no `getControlFromActuators()`, no
+    `actuator_torque_measured` publisher there). As Jaeyoung-Lim suggested on #25216, the INDI module uses
+    the control-allocation / actuator-effectiveness *library* itself to build the same effectiveness
+    matrix, normalisation and scale from the same `CA_*` parameters, and computes tau_meas = B(u_meas - trim)
+    in torque-setpoint units. This answers D-omega2-wire's rejected option (1): there is one parameter source
+    and one piece of code computing B, not two copies. Add a gtest that the module's B matches the
+    allocator's for the x500 geometry. `omega_max` becomes an `MC_INDI_*` (or reused `CA_*` if one fits)
+    parameter of the INDI module. Whether `actuator_torque_measured` stays as a topic (for logging) or
+    becomes internal is the orchestrator's choice.
+  - **Parameters and flash.** Reuse existing `CA_*` / `IMU_*` / `MC_*` parameters wherever a physical value
+    already exists, rather than duplicating it (reviewers' flash concern). Keep the `MC_INDI_*` set minimal.
+  - **Messages and logging.** Follow `.github/instructions/messages.instructions.md` and the uORB docs style
+    the #25216 reviewers pointed to (units in brackets, e.g. `[rad/s^2]`). No measured quantities in
+    setpoint messages. INDI debug topics are optional/low-rate in `logged_topics.cpp`.
+  - **No VTOL / fixed-wing code paths** unless tested.
+  - **Simulator changes** (`gz_bridge`) are not affected by O-11; they stay as they are.
+  - **How:** behaviour-preserving refactor, in small commits (new module, then removals from
+    `mc_rate_control` and `control_allocator` each in their own commit), all gtests passing, `make format`.
+    Then a regression check: the frozen v1 INDI and the current v2 omega2 configuration flown on a few
+    tuning scenarios x 3 seeds with the old and the new binary; metrics must agree within run-to-run noise,
+    reported in `results/`. Any difference is explained before going on.
+  - **When:** now, before any INDI v2 tuning or validation flight (order of work step 7). PID-only batches
+    already queued or flying may continue, since PID's path ends identical to `main`. The frozen v2
+    held-out set (`bench/scenarios.md` v2) is not reopened.
+  - Record O-11 in `DECISIONS.md` as an owner decision, and update `plan/architecture.md` and report ch. 4-5
+    (design/implementation) to describe the final placement, stating that v1 results were obtained with the
+    earlier in-`mc_rate_control` placement and why the regression check makes them comparable.
 
 ## Order of work
 
+0. **(Added after session 36) O-11 refactor first**, before any INDI v2 tuning or validation flight: see O-11.
 1. **Close v1** (O-2). Cheap, about one session.
 2. **Simulation realism** (O-8a). Separate simulator commits, applied identically to both controllers.
    Keep the v1 configuration reproducible (flag or model variant), because v1 results must stay

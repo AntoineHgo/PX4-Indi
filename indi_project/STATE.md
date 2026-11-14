@@ -1,5 +1,15 @@
 # INDI project state
 
+## OWNER DECISION 2026-11-14 (after session 36): O-11, read it in `indi_project/OWNER_GUIDANCE.md` now
+
+Session 36 was stopped by the owner. New owner decision **O-11 (upstream-reviewable architecture)**: INDI moves
+to a separate module `mc_indi_rate_control`, `mc_rate_control` and the control allocator return to their state
+on `main`, the measured torque is computed inside the INDI module with the allocation library, `CA_*` parameters
+are reused. Do this refactor (plus a regression flight check) NEXT, before any INDI v2 tuning or validation
+flight. PID-only batches may keep flying. It supersedes D-arch-2 and the placement part of D-omega2-wire.
+Check the r1f/frz/r2f batches left by session 36 before relaunching anything (the session was killed, not
+closed cleanly).
+
 ## OWNER REVIEW 2026-11-14 (after session 24): read `indi_project/OWNER_GUIDANCE.md` now
 
 The owner extended the scope to a stage 2 (v2 controller: eRPM actuator state with u = omega^2, simulation
