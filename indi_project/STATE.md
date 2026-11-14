@@ -122,6 +122,8 @@
   mechanism + triaged review risks (a-i) added to ch. 9 (0a1ca5a2a5). IN FLIGHT: (M) sonnet drafts
   `report/01_introduction.md` + `report/10_conclusion.md`; (N) haiku drafts `report/11_appendix_reproduce.md`.
   If cut off: check those files, relaunch only for what is missing.
+  (O) CPU: INDI speed-1 check (ch. 9.4 TO VERIFY): SCENARIOS="step_diag mismatch_combined_rate" CONTROLLERS=indi_tuned
+  SEEDS="1 2 3" SPEEDS=1 -> results/runs/<sc>/indi_tuned/seed<N> (compare with seed<N>_x4); log results/speedcheck_indi_s22.log.
 
 - SESSION 21 (2026-11-14) DONE: review complete + triaged (28eba44030, items 8-13 + triage in its Summary);
   MC_INDI_G2_Y max 100 -> 1 (2bb0ba3ac9, SITL build OK; DT_MAX min 0.01 and K min 1 already guard review item 11
