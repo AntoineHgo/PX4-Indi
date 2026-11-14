@@ -8,10 +8,10 @@ Frozen v1 ACT_TC is 11.42 ms.
 
 H5 roll-rate RMS (rad/s), mean +- std over 10 seeds; v1 columns are the v1-era runs (`results/runs/`):
 
-| scenario | PID v1 | INDI frozen v1 | indi_tcup | indi_tcdn |
-|---|---|---|---|---|
-| mismatch_combined_att | 0.088 +- 0.002 | 0.340 +- 0.039 | 0.210 +- 0.018 | 0.157 +- 0.005 |
-| mismatch_combined_rate | 0.356 +- 0.004 | 0.562 +- 0.006 | 0.515 +- 0.007 | 0.425 +- 0.038 |
+| scenario | PID v1 | INDI frozen v1 | indi_tcup | indi_tcdn | indi_g2 |
+|---|---|---|---|---|---|
+| mismatch_combined_att | 0.088 +- 0.002 | 0.340 +- 0.039 | 0.210 +- 0.018 | 0.157 +- 0.005 | 0.317 +- 0.035 |
+| mismatch_combined_rate | 0.356 +- 0.004 | 0.562 +- 0.006 | 0.515 +- 0.007 | 0.425 +- 0.038 | 0.559 +- 0.006 |
 
 Motor-rate effort vs frozen v1 (summarize_seeds, paired, 10/10 seeds lower, p 0.002): tcup 0.57x / 0.88x,
 tcdn 0.33x / 0.63x (att / rate). Attitude RMS within noise of frozen v1 on att; tcdn pitch RMS 1.55x on rate.
@@ -24,4 +24,9 @@ Reading (provisional):
   changed since the v1 runs (s19 landyaw, s29 dt-jitter, s30 landmodel/faulthold, s31 delay slew), so part of
   every variant's gain may be the binary. Same-binary control `indi_frz` is queued (`run_frz.sh`); the variant
   effects must be re-stated against it before any of this enters the report.
-- Tuning set (hover, steps) and indi_g2: not yet analysed.
+- indi_g2 (frozen ACT_TC 11.42 ms + G2_Y 0.16) is within ~7 % of frozen v1 on H5 (effort 1.78 / 3.61, frozen
+  1.92 / 3.63): the G2 term neither causes nor cures the limit cycle. That g2 on the current binary reproduces
+  the v1 numbers suggests the binary change is NOT the main cause of tcup's gain, and that H5 is very sensitive
+  to ACT_TC near 11-12 ms (near a stability boundary). To be confirmed by indi_frz.
+- Batch: 105 runs, 1 failure (step_yaw/indi_g2/seed3: wall timeout in climb, CPU contention at the r1f start).
+- Tuning set (hover, steps): not yet analysed.

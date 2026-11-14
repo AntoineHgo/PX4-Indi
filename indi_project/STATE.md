@@ -162,7 +162,13 @@ owner decisions when you first act on them.
   control variant indi_frz (frozen params) is QUEUED detached (`bench/s2_queue_frz.sh`, waits for the chain incl.
   r1f, then `results/s2_recheck_v1/run_frz.sh` -> run_frz.log, RECHECK_FRZ_DONE). Compare tcup/tcdn/g2 vs frz
   with `bench/summarize_seeds.py` (one RUNS_DIR: results/s2_recheck_v1/runs, --a indi_frz --b indi_<v>).
-  Rebuild px4_sitl_default ONLY after run_frz.log shows RECHECK_FRZ_DONE. If the queue died, relaunch
+  Rebuild px4_sitl_default ONLY after run_frz.log shows RECHECK_FRZ_DONE. (Queue pattern bug fixed at 17:30:
+  r1f runs as `tune.py ... --round-name r1f` after exec; an early frz start was killed and its partial runs
+  deleted; the queue was relaunched, pid 3998259.)
+  DONE recheck (105 runs, 1 timeout): preliminary `results/s2_recheck_v1.md`: H5 roll-rate RMS att/rate PID
+  0.088/0.356, frozen v1 0.340/0.562, tcup 0.210/0.515, tcdn 0.157/0.425, g2 0.317/0.559. ACT_TC 25 ms reduces
+  but does not remove the H5 loss; G2 irrelevant. NEXT: tuning-set part of the recheck; restate vs indi_frz;
+  analyse r1f (`results/s2_tuning/pid/r1f/summary.csv`). If the queue died, relaunch
   `setsid indi_project/bench/s2_queue_frz.sh > /dev/null 2>&1 &`.
 
 - SESSION 33 (2026-11-14): r2 still RUNNING at start (11/16). DONE (sonnet agent, 29 calls): D-omega2 library part
