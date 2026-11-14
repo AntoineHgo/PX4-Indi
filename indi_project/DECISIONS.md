@@ -427,3 +427,17 @@ These are the owner's decisions, not the orchestrator's; full text in `OWNER_GUI
   only). Chosen: 1 % nominal for the v2 configuration, 5 % as a stress scenario in the new held-out set.
 - Alternatives rejected: a Gaussian noise model on rpm (real error is deterministic quantisation plus holds); a
   latency of several frames (no source).
+
+## D-imurate (session 28, 2026-11-14): v2 simulation runs the IMU and physics at 1000 Hz
+
+- Choice: `--imu-rate 1000` (gz IMU update_rate and physics step 1 ms) for every stage-2 flight, both controllers.
+  v1 stays re-flyable at the stock 250 Hz (`--sim v1`, default `--imu-rate 250`).
+- Evidence (`results/s2_imu_rate.md`): rate control runs at 1 kHz (VehicleAngularVelocity publishes every sample under
+  IMU_GYRO_RATEMAX 800); lockstep keeps up at speed 4 and with 6 parallel runs at speed 1; speed 2/4 step metrics stay
+  inside the 6-seed spread at speed 1.
+- Why: the owner review flags the clean 250 Hz gyro as flattering INDI's differentiated gyro, real flight controllers
+  run the gyro at >= 1 kHz, and rotor vibration (1P ~ 120 Hz, blade-pass ~ 240 Hz at hover) aliases at 250 Hz sampling
+  (Nyquist 125 Hz) but not at 1000 Hz, where it reaches PX4 as on hardware with the IMU's own anti-alias filter.
+- Alternatives rejected: 500 Hz (no cost reason left to compromise); 2000+ Hz (beyond IMU_GYRO_RATEMAX default;
+  untested lockstep cost). The logger subsamples at 3.5 ms, so analyses of logged INDI signals at 1 kHz see a subsample.
+- Speed rule unchanged: attitude/rate scenarios may run at speed 4, position scenarios at speed 1 (D-speed).
