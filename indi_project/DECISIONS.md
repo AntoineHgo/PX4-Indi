@@ -471,3 +471,26 @@ These are the owner's decisions, not the orchestrator's; full text in `OWNER_GUI
 - Alternatives rejected: static notch IMU_GYRO_NF0_FRQ (rotor speed varies with thrust, so a fixed notch misses in
   manoeuvres); FFT notch (no rpm-independent source of vibration in the sim, and BDShot rpm is available); lower
   IMU_GYRO_CUTOFF (adds phase lag in band to both loops, penalises the faster loop).
+
+## D-landmodel (session 30, 2026-11-14): actuator model keeps running while landed (owner step 3, review item 5)
+
+- Decision: steps 3-5 of the INDI law (actuator model, delay, synchronisation filter H) run on every valid cycle,
+  landed or not. While `landed` (module passes `maybe_landed || landed`) the feedback torque is still held out of
+  the law (t_cmd = bounded increment only, so no increment accumulates against a ground-constrained a_f), and the
+  logged `torque_filtered` stays zero. The yaw filters restart from the current values on each landed cycle as
+  before (D-landyaw). The spin-up term uses the running model, so no G2 spike at takeoff.
+- Why: v1 reset the model to zero on every landed cycle, so at takeoff t_f restarted from zero while the gyro-side
+  chain (a_f) was warm: a desynchronised feedback pair for a few actuator time constants, during the takeoff phase
+  where a CoM offset matters most. With measured omega (O-5) the actuator state is measured continuously anyway;
+  the model now behaves the same way.
+- Consequence, accepted: on the first airborne cycle the command steps by the modelled torque (the filtered landed
+  output). That output is one bounded increment (|dt_cmd| <= MC_INDI_DT_MAX), so the step is no larger than the
+  per-cycle change the law already allows in flight, and it is the correct incremental command (applied torque plus
+  increment). Gtests `LandedKeepsActuatorModelRunning` (new) and `LandedYawOutputUnaffectedByYawCutoff` (takeoff
+  expectation 0.1 -> 0.2) encode it.
+- Alternatives rejected: gating INDI on `landed` only (the law then integrates against a ground-constrained a_f
+  during `maybe_landed`, integrator gain K/(G1 tau) ~ 27x the PID I gain, a tip-over risk; PID freezes its
+  integral in that phase for the same reason); fading t_f in at takeoff with the actuator time constant (no step,
+  but reproduces the v1 model/plant mismatch transient and adds state).
+- Not flown: benchmark results are unaffected in principle (all scenarios start the metric window well after
+  takeoff); v2 flights will use it.
