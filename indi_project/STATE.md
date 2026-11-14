@@ -107,6 +107,9 @@ owner decisions when you first act on them.
 - **Session 22:** report has ch. 1-10 + appendix A (bibliography chapter missing). Speed check: PID speed-invariant,
   INDI H6 attitude RMS +4 % at speed 1 (still better than PID 3/3 seeds, margin ~11 % -> ~7 %); H5 loss unchanged.
 - **v1 report closed** at 743acd7140 (session 26). Stage 2 (OWNER_GUIDANCE.md) starts at step 2, sim realism.
+- **Stage 2 (session 28):** v2 sim config fixed: 1000 Hz IMU (D-imurate), rotor-speed vibration (D-vib), eRPM 1 %
+  drops; PID defaults re-flown on it. Vibration now dominates motor-rate effort (hover ~30x). Next: notch decision,
+  PID tuning check, then hardware-readiness fixes.
 - **Stage 2 (session 27):** sim now has true rotor speed and an AM32/BDShot eRPM telemetry model (`--sim v2`), and a
   selectable IMU/physics rate (1000 Hz runs real time). Next: IMU rate choice, vibration noise, then PID re-baseline.
 - **Blocker:** none. Usage budget is the binding constraint.
@@ -137,9 +140,11 @@ owner decisions when you first act on them.
   bench `--vib-acc/--vib-gyr` + VIB_ACC/VIB_GYR in run_batch.sh, `bench/vib_check.py` (ac41d67f76); check
   `results/s2_vib_check.md`: PID hover unaffected; D-vib: nominal v2 1.0/0.05, stress 2.0/0.1. (c3) eRPM drop 1 %
   nominal already in D-erpm. v2 NOMINAL CONFIG = `SIM_VERSION=v2 IMU_RATE=1000 ERPM_DROP=0.01 VIB_ACC=1.0 VIB_GYR=0.05`.
-  IN FLIGHT (d): PID defaults on v2 nominal, 5 tuning scenarios x seeds 1-3 (hover speed 1, others speed 4) ->
-  `results/s2_pid_baseline/defaults/` (batch logs there). NEXT: tabulate vs v1 PID defaults (`results/tuning/r2.md`
-  re-flown defaults), then the PID tuning check on v2 with the v1 budget (tune.py inherits the env vars above; same
+  DONE (d, part 1): PID defaults on v2 nominal, 5 tuning scenarios x 3 seeds, 15/15 ok (`results/s2_pid_baseline.md`).
+  FINDING: vibration dominates motor-rate effort (hover 0.026 no vib -> 0.7-1.1 nominal; v1 PID 0.037).
+  NEXT: (d2) effort by axis (`bench/effort_axes.py`) and decide whether a gyro notch (IMU_GYRO_NF0_FRQ ~115 Hz, or
+  dynamic notch from esc rpm, IMU_GYRO_DNF_EN) is part of the v2 configuration for BOTH controllers (record as
+  D-notch; real builds with eRPM would use the rpm notch); then the PID tuning check on v2 with the v1 budget (tune.py inherits the env vars above; same
   space and rounds as r1+r2), then step 3 (hardware-readiness fixes). Not done: 1.0/0.05 confirmation flight (covered
   by the baseline hover runs).
 
@@ -526,6 +531,7 @@ owner decisions when you first act on them.
 
 ## Journal
 
+- 2026-11-14 s28: 1 kHz loop confirmed, lockstep cost ok (D-imurate); GZBridge vibration model (D-vib); v2 PID defaults baseline; vibration dominates effort. Agents: 0. Runs: 26.
 
 - 2026-11-13: session 1 started from scratch; created `STATE.md`, `DECISIONS.md`,
   Docker image `px4-indi-sim`. Cut off by the 5-hour usage limit at 08:13.
