@@ -100,7 +100,7 @@
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
   quoting in the report.
-- **Last updated:** 2026-11-14, session 21 (review complete + triaged 28eba44030; figures script and ch. 2 in flight). Before that: session 20. Before that: session 16 (ch. 8 draft + control-law review in flight). Before that: session 15 (H1/H4/H5 implemented, batches flying). Before that: session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
+- **Last updated:** 2026-11-14, session 21 (review triaged, G2_Y bound fix, figures, ch. 2 draft). Before that: session 20. Before that: session 16 (ch. 8 draft + control-law review in flight). Before that: session 15 (H1/H4/H5 implemented, batches flying). Before that: session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
   library + unit tests committed, not yet wired into mc_rate_control; first
   G1 identification: pitch 211 (R^2 0.90), roll 321 (R^2 0.63), yaw not
   identified; see `results/identification_g1_v0.md`).
@@ -118,12 +118,19 @@
 
 ## In progress
 
-- SESSION 21 (2026-11-14): (J) DONE review sections 4, 6 + summary + triage committed (28eba44030); review complete.
-  IN FLIGHT (sonnet): (K) `bench/make_figures.py` -> `report/figures/*.png` + `report/figures/README.md`
-  (no figures existed yet); (L) report ch. 2 state of the art from `research/notes/` -> `report/02_state_of_the_art.md`.
-  If cut off, relaunch only for what the files lack. Remaining deliverables after these: ch. 1 intro, ch. 10
-  conclusion, bibliography from `research/sources.md`, appendix reproduce, figure refs in ch. 6-9, PDF build,
-  optional param-bound fixes (review items 8, 10, 11), REPORT FIXES list (session 14 entry).
+- SESSION 21 (2026-11-14) DONE: review complete + triaged (28eba44030, items 8-13 + triage in its Summary);
+  MC_INDI_G2_Y max 100 -> 1 (2bb0ba3ac9, SITL build OK; DT_MAX min 0.01 and K min 1 already guard review item 11
+  at param level); (K) `bench/make_figures.py` + 4 figures (f7ea7940b7, ab392e193e; ratios match md tables
+  within 2 %; README notes: bars are medians of per-seed ratios, traj effort ratios and motor_loss_0 10-seed
+  reference not in any md; host python needs plain `python3`, not `-I`); (L) ch. 2 drafted (3855 words, trim).
+  Ch. 2 open: sources.md lacks keys smeur2018, wang2019, steffensen2023 (add); 8 [TO VERIFY] (smeur2016 rotor
+  eqs, acquatella PI constants, smeur2018 Table 1 / gain conflict, wang Monte Carlo, Paparazzi adaptation scaling,
+  PX4 forum 'can not take off' quote vs impl_px4_prior reading) and 5 [GAP] (sieberling2010, sun2022/UZH,
+  tal2021 identification, modelled actuator state, indiflight code).
+  NEXT (cheap first): add the 3 keys to sources.md; reference the figures in ch. 8 (fig_attitude_ratio,
+  fig_effort_ratio, fig_rate_timeseries) and ch. 9 (fig_act_tc_sweep); add review limitations (triage list) to
+  ch. 9; then ch. 1 intro, ch. 10 conclusion, bibliography, appendix reproduce (one sonnet agent each, <= $0.5);
+  REPORT FIXES list (session 14 entry); PDF build if pandoc is in the image.
 
 - SESSION 20 (2026-11-14): review section 2 committed (4f1abbd426). IN FLIGHT: (J) fable fills sections 4 and 6
   of `review/control_law_review_s16.md` (replaces 'Not covered in this pass.'); if cut off, relaunch only for what is missing,
@@ -454,3 +461,4 @@
 - 2026-11-14 session 19: landed yaw-filter bug fixed (D-landyaw); review s1/3/5 committed; ch. 3 + review s2/4/6 + fix check in flight.
 - 2026-11-14 session 18: ch. 6 simulation drafted; ch. 7 PID count item resolved; fable review (sections 1,3,5) relaunched.
 - 2026-11-14 session 17: ACT_TC sweep summarised (no limit cycle from model error alone); fable control-law review relaunched.
+- 2026-11-14 session 21: review complete and triaged; MC_INDI_G2_Y bounded; figure script + 4 figures; ch. 2 drafted.
