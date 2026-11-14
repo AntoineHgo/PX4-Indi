@@ -184,8 +184,10 @@ owner decisions when you first act on them.
   for r1, writes the centre `bench/params/indi_v2_r1_best.json` = lowest J with no failure, then 16 x 3 seeds, log
   `results/s2_tuning/indi_r2_queue.log`, output `results/s2_tuning/indi/r2/`). NEXT: (1) when r1 ends, write `results/s2_tuning/indi_r1.md`
   (best vs c00 = frozen gains with identified G1, vs PID r1f c05 J 0.925 and defaults 0.966); (2) check r2 (already queued) when it ends; v2 tuned INDI = r2 best
-  vs r1 best by the noise rule of v1 r2 / D-v2pid; (3) v2 held-out V1-V9, 10 seeds, PID defaults,
-  PID r1f c05, INDI v2 tuned.
+  vs r1 best by the noise rule of v1 r2 / D-v2pid; (3) v2 held-out V1-V9, 10 seeds: script READY, `bench/s2_heldout_v2.sh`
+  (INDI_PARAMS=<v2 tuned INDI params file>; 14 entries x 10 seeds x {pid_default, pid_tuned = r1f c05, indi_v2},
+  420 flights, controllers of one (entry, seed) fly side by side for equal load, resumable, output
+  `results/s2_heldout_v2/runs/`). Not yet run, not dry-run tested. Report ch. 7.7 (v2 set-up) drafted.
 
 - SESSION 38 (2026-11-14): r1f done + committed; frz control done: restated in `results/s2_recheck_v1.md` (variant
   gains real; G2_Y 0.16 breaks yaw on the tuning set). Runner: 282c879f4e (MC_INDI_EN at boot, CA_R_W_MAX ->
