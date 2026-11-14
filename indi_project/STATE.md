@@ -193,6 +193,9 @@ owner decisions when you first act on them.
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+- SESSION 45 (2026-11-14, launch 20261114-230951): seen set at seed 6/10 at 23:10 (~9 min per seed, end ~23:45),
+  V re-fly queued behind it. While it flies (no CPU-heavy work, S44 rule 0): report ch. 8 v2 section (8.9) from
+  `results/s2_heldout_v2.md` + `results/s2_tilt_diag.md`. After SEEN_V2_DONE + HELDOUT_V2_REFLY_DONE: S44 steps 1-2.
 - SESSION 44 (2026-11-14, launch 20261114-225445): seen set at seed 4/10 at 22:55 (slower than estimated: ~6 min
   per seed-entry group; end likely after 01:00), V re-fly still queued behind it. The s43 replay agent was cut off
   after fixing the takeoff window (log `plan/impl_log_o12.md`); the orchestrator reviewed `bench/watchdog_replay.py`

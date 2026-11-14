@@ -314,3 +314,59 @@ The T8 ratio of 0.18 is the ratio of the 10-seed means in `results/t8_motor_loss
 **Overall reading.** INDI has a clear and statistically solid advantage on disturbance torques (T6, T7, H2, H3, T8 at onset) in attitude, a smaller advantage in position, and about parity on nominal tracking. It loses on yaw whenever yaw is commanded, it has a larger peak deviation on the lemniscate, it saturates more under degraded actuators, and it is fragile to a wrong actuator time constant (H5), which PID tolerates. Under the rules fixed before INDI flew, that is "INDI does not outperform PID".
 
 **Not available in the sources used for this chapter:** 10-seed results for T2, T3 and T4 (only the 3-seed tuning-set values), the 10-seed hover position RMS, peak deviation and recovery-time metrics for T6, T7, H2 and H3 (the sources report RMS and position maximum deviation), and any comparison against a separately retuned `pid_tuned` (it equals the defaults). A p-value cannot be given for T8.
+
+## 8.9 Stage 2: the v2 controllers on the held-out set V
+
+The v2 controllers (eRPM actuator state, u = omega^2, section 7.7) were judged on a new held-out set V, frozen in
+session 36 before any v2 INDI flight (`bench/scenarios.md` sec. 8, D-heldout-v2): 14 entries x 10 seeds x three
+controllers (PID defaults, tuned PID r1f c05, tuned INDI v2 r2 c01), 420 flights. The comparison is paired per
+seed against the tuned PID, with the Wilcoxon signed-rank test (`bench/s2_verdict.py`, `results/s2_heldout_v2.md`).
+A host suspend stalled seed 3 of com_shift and motor_loss_0 for all controllers; those runs are kept aside as an
+infrastructure fault and re-flown for every controller (D-v2-refly). Until the re-fly is in, those two entries
+have 9 paired seeds. [Final 10-seed values and criteria 1 and 4: pending the re-fly and the seen set.]
+
+| entry | primary metric | tuned PID | INDI v2 | ratio | INDI lower | p | effort ratio |
+|---|---|---|---|---|---|---|---|
+| tau x2, attitude pattern | roll attitude RMS (deg) | 3.10 | 3.68 | 1.19 | 0/10 | 0.002 | 0.85 |
+| tau x2, rate pulses | roll-rate RMS (rad/s) | 0.413 | 0.384 | 0.93 | 10/10 | 0.002 | 1.13 |
+| asymmetric motors, attitude | roll attitude RMS (deg) | 3.10 | 3.66 | 1.18 | 0/10 | 0.002 | 0.77 |
+| asymmetric motors, rate | roll-rate RMS (rad/s) | 0.405 | 0.374 | 0.92 | 10/10 | 0.002 | 1.15 |
+| eRPM latency, attitude | roll attitude RMS (deg) | 3.13 | 3.63 | 1.16 | 0/10 | 0.002 | 0.76 |
+| eRPM latency, rate | roll-rate RMS (rad/s) | 0.374 | 0.346 | 0.92 | 10/10 | 0.002 | 1.09 |
+| eRPM drop-outs, attitude | roll attitude RMS (deg) | 2.96 | 3.54 | 1.20 | 0/10 | 0.002 | 0.75 |
+| eRPM drop-outs, rate | roll-rate RMS (rad/s) | 0.375 | 0.347 | 0.92 | 10/10 | 0.002 | 1.10 |
+| vibration x3, hover | position RMS 3D (m) | 0.025 | 0.039 | 1.56 | 3/10 | 0.027 | 0.99 |
+| vibration x3, attitude | roll attitude RMS (deg) | 3.10 | 3.63 | 1.17 | 0/10 | 0.002 | 0.79 |
+| battery sag, attitude | roll attitude RMS (deg) | 2.95 | 3.49 | 1.18 | 0/10 | 0.002 | 0.72 |
+| gust_diag | rotation-angle RMS (deg) | 0.95 | 0.89 | 0.93 | 10/10 | 0.002 | 0.99 |
+| com_shift (9 seeds) | rotation-angle RMS (deg) | 0.52 | 0.23 | 0.43 | 9/9 | 0.004 | 1.19 |
+| motor_loss_0 (9 seeds) | rotation-angle RMS (deg) | 8.57 | 16.3 | 1.91 | 0/9 | 0.004 | 0.66 |
+
+**Verdict under the frozen criteria: INDI v2 does not outperform PID on V.** It is significantly better by at least
+10 % on one entry (com_shift; 10 needed) and significantly worse by more than 10 % on eight (none allowed). Eight
+entries are worse on every seed with p = 0.002, so the pending re-fly cannot change the outcome.
+
+**Reading.** The six actuator and sensor perturbations of V barely move the ratios: on every attitude-pattern entry
+INDI is 1.16-1.20x the tuned PID with 0.72-0.85x its effort, and on every rate-pulse entry it is 0.92-0.93x with
+1.09-1.15x its effort. What separates the controllers is the nominal step behaviour of the two tunings, the trade
+already visible in the tuning set (section 7.7), not the perturbations. The v2 INDI keeps the v1 strength against a
+slowly applied disturbance torque (com_shift 0.43x) but not against the gust (0.93x, under the 10 % bar).
+
+**The motor-loss reversal.** On motor_loss_0 the v1 controller was 5-9x better than PID in roll and pitch; v2 is
+1.91x worse. After the fault every v2 INDI seed settles at a steady 13-14 deg attitude error, where PID returns to
+under 0.3 deg (`results/s2_tilt_diag.md`). The cause is structural. With the actuator state taken from measured
+rotor speed, the control law's fixed point is t_cmd - t_meas = nu/G1. The failed motor delivers about 0.7 of its
+command, so a torque gap of 0.086 (normalised) persists between command and output, and it can only be held by a
+constant virtual control nu, that is, a standing rate error, which the attitude loop turns into a tilt. The v1
+controller took the actuator state from a model driven by its own command (t_meas = filtered t_cmd); the same gap
+then appeared as an angular-acceleration error and was integrated away. Measured actuator feedback therefore removes
+INDI's implicit integral action against any command-to-output actuator mismatch. This is the opposite of the usual
+argument for rotor-speed feedback, which is that it makes INDI exact when the motor model is wrong; it is exact about
+the actuator output, and for that very reason blind to the gap between command and output. The seen set shows the
+same mechanism on motor_loss_2 and on the combined-mismatch rate pattern. A v3 design that blends the modelled and
+measured actuator states (`plan/v3_actuator_blend.md`, D-v3-blend) is implemented behind a parameter, default off,
+and has not flown yet.
+
+**Baseline fairness.** The tuned PID is also better than PID defaults on V (attitude entries 0.92-0.94x, gust_diag
+0.80x, com_shift 0.65x, motor_loss_0 0.88x, equal on rate entries), so the retuning produced a genuinely stronger
+baseline on unseen scenarios, not an artefact of the tuning set.

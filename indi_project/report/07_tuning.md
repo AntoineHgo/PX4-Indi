@@ -162,7 +162,16 @@ was 2 % better in J, all of it on the noise-dominated hover term, and 10 % worse
 (D-v2pid, `results/s2_tuning/r2f.md`). The v2 INDI search starts from the frozen v1 gains with the identified
 values above and varies the three INDI gains, the yaw filter cutoff and the three attitude gains. The PID search
 varies its yaw torque cutoff, so each family tunes its yaw filter (D-v2indi-tune). G1, ACT_TC and ERPM_DLY are
-not varied. [Results of the v2 INDI rounds: pending, `results/s2_tuning/indi/`.]
+not varied.
+
+**v2 INDI rounds.** Round 1 (24 x 2 seeds, 240 flights, one failed candidate, c12) and round 2 (16 x 3 seeds,
+240 flights, no failure) used exactly the PID budget (`results/s2_tuning/indi_r1r2.md`). The round-1 best, re-flown
+as the round-2 centre, went from J 0.938 to 0.985 on three seeds and paid the effort penalty on roll steps and rate
+pulses (1.5x the PID-default effort). The chosen v2 tuned INDI is round-2 c01 (D-v2indi, J 0.933, no effort penalty
+on any scenario; K_R 28.8, K_P 16.8, K_Y 2.73, YAW_CUT 1.67 Hz, ROLL_P 3.17, PITCH_P 5.19, YAW_P 2.76). Against the
+tuned PID (J 0.911) this is a tie within the hover noise; per scenario, INDI is better on rate pulses (0.92 against
+PID-default 1.0) and worse on roll and yaw steps (1.09 and 1.08). The tuning cost thus traded a slower attitude-step
+response for lower effort, and the held-out results in section 8.9 show that trade carried over unchanged.
 
 ## Inconsistencies and unverified claims
 
