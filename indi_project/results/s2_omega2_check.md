@@ -44,3 +44,34 @@ replaced would be 5-9 ms early. **MC_INDI_ERPM_DLY stays 1** (finer resolution w
 In u = omega^2 units the roll effectiveness is G1_R ~ 170-182 (R^2 0.87-0.96), not the frozen 241 (v1 units, FAC
 0). Frozen gains therefore run at ~0.72x their designed loop gain on v2: G1 must be re-identified (and the v2 INDI
 tuned) before any v2 comparison. Hover logs do not excite the axes enough for G1.
+
+## (c) Fallback under heavy eRPM loss (step_roll, 90 % frame drops)
+
+`ONLY="step_roll 4" DROP=0.9 SFX=_drop90 run.sh`: `actuator_torque_measured.valid` 55 % of samples, measured torque in
+use only 9.6 % of cycles (switch-back needs 20 consecutive valid cycles), 734 switches between measured and model
+torque, 0 fault cycles. Flight normal: roll-rate RMS 0.152 rad/s, rise 0.26 s, overshoot 0.2 %, effort 0.80 (0.78-0.85
+on the 1 % drop flights). With held samples the measurement lags the model by 17 ms (gain 0.88), which is why the
+age-out matters. Not tested in flight: a complete, permanent eRPM loss mid-flight (needs a sim injection; the
+library fallback on loss is covered by the gtests of 895b55aed8).
+
+Single-seed note, to check on the v2 tuning: with the frozen v1 gains the mostly-model flight (0.152) has a lower
+roll-rate RMS than the measured-torque flights (0.168, 0.169). Hypothesis (unverified): the model torque leads
+the true actuator state by 4-9 ms, so on the model path the increment's base u0 = t_f already contains commands
+that have not acted yet, a predictive (phase-lead) effect that the synchronised measurement removes; the frozen
+gains were also tuned on the model path and in v1 units (see below). This is not a v2 result.
+
+## (d) Initial G1 for v2 (u = omega^2 units, measured torque in use), seed 1 each
+
+`check_sync.py --span 13` on the step log of each axis (only the stepped axis is excited):
+
+| axis | log | G1 | R^2 | best lag (3 ms samples) | frozen v1 G1 (v1 units) |
+|---|---|---|---|---|---|
+| roll | step_roll, step_roll_log | 173, 182 | 0.95, 0.87 | -1, 0 | 241 |
+| pitch | step_pitch | 172 | 0.90 | 0 | 241 |
+| yaw | step_yaw | 12.4 | 0.99 (0.97 at lag 0) | -6 | 7.4 |
+
+Measured vs model on these logs: gain 0.95-0.99, delay 5-9 ms (as in (a)). Roll and pitch G1 agree (~175, the
+x500 is symmetric). Yaw a_f leads the measured torque by ~18 ms: expected if the rotor reaction torque (G2 term,
+proportional to d omega / dt, identified in s32) is present, since it leads the drag torque; the yaw R^2 is flat
+over the lag (0.97-0.99), so this is not an ERPM_DLY question. Initial v2 values: **G1_R = G1_P = 175, G1_Y = 12.4**,
+to be confirmed on 3 seeds before tuning.
