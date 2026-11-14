@@ -131,6 +131,39 @@ The reading is: INDI tracks roll steps 12 % and pitch steps 7 % better (pitch wi
 - **Structural changes were made on the tuning set and affect INDI only.** D-yawfilt, D-yawnu and D-yawsp were motivated by effort measured on tuning scenarios. They were justified as giving INDI the same filtering structure PID already has, but the PID baseline did not get an equivalent search over its own structure (for example its D-term filtering).
 - **Simulator limits.** Hover non-determinism of unknown origin, and a speed factor of 4 validated only on `pid_default` seeds 1 to 3 (`DECISIONS.md` D-speed).
 
+## 7.7 Stage 2: identification and tuning set-up of the v2 controllers
+
+The v2 controllers fly the v2 configuration (eRPM actuator state, u = omega^2, 1000 Hz IMU, vibration, 1 % eRPM
+drops, THR_MDL_FAC 0.683 for both families; `DECISIONS.md` D-omega2) with the module placement of O-11. The v1
+rule holds: physical quantities are identified, only gains are tuned (O-5).
+
+**Identified values.** The actuator time constants were identified from rotor-speed step data as 12.5 ms up and
+25 ms down, matching the simulator's SDF values (`results/s2_ident_act.md`); the eRPM delay parameter stays at
+one cycle (D-erpmdly). The control effectiveness changes units with u = omega^2, so G1 was re-identified on three
+seeds from the stepped axis of the O-11 regression flights, as the least-squares slope of the filtered
+angular-acceleration increment on the filtered measured-torque increment (`results/s2_g1_v2.md`):
+
+| axis | seed 1 | seed 2 | seed 3 | value used |
+|---|---|---|---|---|
+| roll | 172.8 | 173.1 | 176.2 | 174 |
+| pitch | 171.4 | 178.1 | 172.1 | 174 |
+| yaw | 12.4 | 12.4 | 11.7 | 12.2 |
+
+R^2 is 0.83-0.98 on roll and pitch and 0.96-0.99 on yaw, and the seed-to-seed spread is within +-3 %. The v1
+values (241, 7.4) were in different units, so the frozen v1 gains would run at about 0.72 of their design loop
+gain on roll and pitch if G1 were not updated. ACT_TC, which on v2 only drives the fallback model used when eRPM
+is invalid, is set to the identified up constant, 0.0125 s (D-v2indi-start).
+
+**Tuning protocol.** Both families get the same budget and sampler as in v1: round 1 has 24 candidates x 2 seeds
+(span factor 2), and round 2 has 16 x 3 seeds centred on the round-1 best (span factor 1.5). Both use the same cost J,
+normalised by the same PID-default reference flights on the v2 configuration. The v2 PID search found that r1f c05
+(J 0.925 against 0.966 for the defaults) was not beaten in round 2 beyond run-to-run noise (the best challenger
+was 2 % better in J, all of it on the noise-dominated hover term, and 10 % worse on rate pulses), so it is the v2 tuned PID baseline
+(D-v2pid, `results/s2_tuning/r2f.md`). The v2 INDI search starts from the frozen v1 gains with the identified
+values above and varies the three INDI gains, the yaw filter cutoff and the three attitude gains. The PID search
+varies its yaw torque cutoff, so each family tunes its yaw filter (D-v2indi-tune). G1, ACT_TC and ERPM_DLY are
+not varied. [Results of the v2 INDI rounds: pending, `results/s2_tuning/indi/`.]
+
 ## Inconsistencies and unverified claims
 
 1. **PID candidate count (resolved).** `DECISIONS.md` D-freeze and `results/tuning/r2.md` once said "64 candidates over two rounds"; the summary files hold 24 + 16 = 40 rows (`results/tuning/pid/r1/summary.csv`, `results/tuning/pid/r2/summary.csv`), consistent with the 480 flights. Both sources were corrected to 40 in session 17.
