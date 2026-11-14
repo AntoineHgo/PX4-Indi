@@ -27,3 +27,17 @@ Effort (motor-rate RMS ratio to PID): motor_loss_0 0.77-0.88, mismatch_combined_
 
 Survivors to stage 2: Tb 0.3 and 1.0, seeds 2-3, same entries (`V3_STAGE2_DONE` in `results/v3_screen.log`).
 1 seed: screening only, not a result.
+
+## Stage 2 (seeds 2-3, Tb 0.3 and 1.0 vs pid_tuned, 18 flights, 0 failures)
+
+Seeds 1-3 agree within 1-3 % on every metric (mean of 3 seeds):
+
+| config | motor_loss_0 roll / pitch / yaw RMS (deg) | rotation RMS | position RMS (m) | mismatch_combined_rate roll-rate RMS | step_roll roll RMS |
+|---|---|---|---|---|---|
+| pid_tuned | 0.80 / 0.90 / 8.47 | 8.55 | 3.90 | 0.386 | 3.11 |
+| Tb 0.3 | 0.67 / 1.03 / 11.2 | 11.2 | 3.30 | 0.366 | 3.09 |
+| Tb 1.0 | 1.06 / 1.57 / 10.8 | 11.0 | 8.48 | 0.365 | 3.09 |
+
+- **Tb 0.3 selected** (D-v3-tb): best roll/pitch and position after the motor loss, equal elsewhere.
+- The rotation-angle gap to PID on motor_loss_0 is entirely yaw (11.2 vs 8.5 deg). Together with step_yaw (1.26x PID,
+  D-outer-check) it points at the INDI yaw rate loop (K_Y behind YAW_CUT), which the blend does not touch.
