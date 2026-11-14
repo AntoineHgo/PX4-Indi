@@ -84,12 +84,34 @@ parameters:
             long: Selects what esc_status esc_rpm reports. Echo returns the motor speed command
               sent to Gazebo (no motor dynamics, command units). Joint state reports the rotor speed
               of the simulated motor in rpm, read from the model's JointStatePublisher system
-              (rotor joints named rotor_N_joint, rotorVelocitySlowdownSim 10).
+              (rotor joints named rotor_N_joint, rotorVelocitySlowdownSim 10). The eRPM model adds one output
+              period of latency, the AM32 period encoding, the PX4 100 eRPM rounding and dropped frames.
           type: enum
           values:
             0: Echo motor command
             1: Rotor joint state
+            2: Rotor joint state through a bidirectional DShot eRPM model
           default: 0
+          reboot_required: true
+        SIM_GZ_ERPM_POL:
+          description:
+            short: Motor pole count of the simulated eRPM telemetry
+            long: Used by SIM_GZ_ESC_FB 2 to convert rotor speed to eRPM and back, as DSHOT_MOT_POLn on hardware.
+          type: int32
+          min: 2
+          max: 64
+          default: 14
+          reboot_required: true
+        SIM_GZ_ERPM_DRP:
+          description:
+            short: Probability of a dropped eRPM telemetry frame
+            long: Used by SIM_GZ_ESC_FB 2. A dropped frame (CRC failure) keeps the last decoded value and increments
+              esc_errorcount, as the PX4 DShot driver does.
+          type: float
+          min: 0.0
+          max: 1.0
+          decimal: 3
+          default: 0.0
           reboot_required: true
         SIM_GZ_EC_SIGNED:
           description:

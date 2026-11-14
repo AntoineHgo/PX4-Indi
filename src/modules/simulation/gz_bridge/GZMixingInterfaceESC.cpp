@@ -38,7 +38,7 @@ bool GZMixingInterfaceESC::init(const std::string &world_name, const std::string
 {
 	pthread_mutex_init(&_node_mutex, nullptr);
 
-	if (_esc_feedback == 1) {
+	if (_esc_feedback >= 1) {
 		// Rotor speed feedback from the JointStatePublisher system of the model: /world/default/model/x500_0/joint_state
 		std::string joint_state_topic = "/world/" + world_name + "/model/" + model_name + "/joint_state";
 
@@ -143,6 +143,20 @@ void GZMixingInterfaceESC::motorSpeedCallback(const gz::msgs::Actuators &actuato
 			// Zero until the first joint state arrives
 			esc_status.esc[i].esc_rpm = _rotor_rpm_valid ? (int32_t)roundf(_rotor_rpm[i]) : 0;
 
+		} else if (_esc_feedback == 2) {
+			// The reply to the previous frame is read with this one: one output period of latency
+			if (_erpm_drop_probability > 0.f && uniformRandom() < _erpm_drop_probability) {
+				// CRC failure: the driver keeps returning the last good value with a fresh timestamp
+				_erpm_errors[i]++;
+
+			} else {
+				_erpm_last_rpm[i] = erpmTelemetry(_erpm_reply_rpm[i]);
+			}
+
+			esc_status.esc[i].esc_rpm = _erpm_last_rpm[i];
+			esc_status.esc[i].esc_errorcount = _erpm_errors[i];
+			_erpm_reply_rpm[i] = _rotor_rpm_valid ? _rotor_rpm[i] : 0.f;
+
 		} else {
 			esc_status.esc[i].esc_rpm = actuators.velocity(i);
 		}
@@ -186,4 +200,42 @@ void GZMixingInterfaceESC::jointStateCallback(const gz::msgs::Model &model)
 	}
 
 	pthread_mutex_unlock(&_node_mutex);
+}
+
+int32_t GZMixingInterfaceESC::erpmTelemetry(float rotor_rpm) const
+{
+	const int32_t pole_pairs = _erpm_poles / 2;
+	const float erpm = rotor_rpm * pole_pairs;
+
+	if (erpm < 1.f) {
+		return 0;
+	}
+
+	// AM32 sends the electrical period in us as a 9-bit mantissa shifted by a 3-bit exponent
+	uint32_t period_us = math::min((uint32_t)roundf(60e6f / erpm), (uint32_t)(0x1FF << 7));
+	uint32_t exponent = 0;
+
+	while (period_us > 0x1FF) {
+		period_us >>= 1;
+		exponent++;
+	}
+
+	const uint32_t period = period_us << exponent;
+
+	if (period == 0) {
+		return 0;
+	}
+
+	// PX4 dshot.c decode: eRPM / 100, rounded; DShot.cpp: rpm = eRPM / pole pairs, integer division
+	const int32_t erpm_100 = (int32_t)((1000000u * 60u / 100u + period / 2u) / period);
+	return (erpm_100 * 100) / pole_pairs;
+}
+
+float GZMixingInterfaceESC::uniformRandom()
+{
+	// xorshift32
+	_random_state ^= _random_state << 13;
+	_random_state ^= _random_state >> 17;
+	_random_state ^= _random_state << 5;
+	return (float)(_random_state >> 8) / (float)(1u << 24);
 }

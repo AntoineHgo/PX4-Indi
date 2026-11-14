@@ -34,6 +34,7 @@
 #pragma once
 
 #include <lib/failure_injection/FailureInjection.hpp>
+#include <lib/mathlib/mathlib.h>
 #include <lib/mixer_module/mixer_module.hpp>
 
 #include <gz/msgs.hh>
@@ -60,6 +61,9 @@ public:
 		_signed_mask = static_cast<uint32_t>(signed_mask);
 
 		param_get(param_find("SIM_GZ_ESC_FB"), &_esc_feedback);
+		param_get(param_find("SIM_GZ_ERPM_POL"), &_erpm_poles);
+		param_get(param_find("SIM_GZ_ERPM_DRP"), &_erpm_drop_probability);
+		_erpm_poles = math::max(_erpm_poles, (int32_t)2);
 	}
 
 	bool updateOutputs(float outputs[MAX_ACTUATORS], unsigned num_outputs, unsigned num_control_groups_updated) override;
@@ -82,15 +86,26 @@ private:
 	void motorSpeedCallback(const gz::msgs::Actuators &actuators);
 	void jointStateCallback(const gz::msgs::Model &model);
 
+	// Bidirectional DShot eRPM telemetry as decoded by the PX4 DShot driver, from a true rotor speed [rpm]
+	int32_t erpmTelemetry(float rotor_rpm) const;
+	float uniformRandom();
+
 	// MulticopterMotorModel spins the rotor joint at the motor speed divided by rotorVelocitySlowdownSim
 	// (10 in all PX4 gz multicopter models) and computes thrust from joint velocity times that factor.
 	static constexpr float ROTOR_VELOCITY_SLOWDOWN_SIM = 10.f;
 
 	uint32_t _signed_mask{0};
 
-	int32_t _esc_feedback{0}; // SIM_GZ_ESC_FB: 0 = echo motor command, 1 = rotor joint velocity
+	int32_t _esc_feedback{0}; // SIM_GZ_ESC_FB: 0 = echo motor command, 1 = rotor joint velocity, 2 = eRPM model
 	float _rotor_rpm[esc_status_s::CONNECTED_ESC_MAX] {};
 	bool _rotor_rpm_valid{false};
+
+	int32_t _erpm_poles{14};
+	float _erpm_drop_probability{0.f};
+	float _erpm_reply_rpm[esc_status_s::CONNECTED_ESC_MAX] {}; // speed sampled at the previous frame
+	int32_t _erpm_last_rpm[esc_status_s::CONNECTED_ESC_MAX] {}; // last decoded value, held on a dropped frame
+	uint32_t _erpm_errors[esc_status_s::CONNECTED_ESC_MAX] {};
+	uint32_t _random_state{0x12345678u}; // fixed seed: dropouts are repeatable run to run
 
 	gz::transport::Node &_node;
 	pthread_mutex_t _node_mutex;
