@@ -129,11 +129,15 @@ owner decisions when you first act on them.
   CA_R_W_MAX; mc_rate_control MC_INDI_ERPM_DLY/TO), not yet flown. v1 re-check: identified ACT_TC 25 ms cuts the H5
   roll-rate loss (3.9x -> 1.8x PID att, 1.58x -> 1.19x rate) but does not remove it; G2 has no effect. Running:
   r1f (PID on FAC config), then same-binary frozen control indi_frz (queued).
+- **Stage 2 (session 35):** D-omega2 flies (omega2 build via PX4_INDI_BUILD): measured eRPM torque in use, matches
+  the model (gain 0.95-0.99, 4-9 ms later), fallback robust at 90 % eRPM drops (734 switches, 0 faults), ERPM_DLY 1
+  identified (D-erpmdly). v2 G1: roll/pitch ~175, yaw ~12.4 (frozen 241/7.4 were v1 units). Draft v2 held-out set
+  `plan/s2_heldout_v2.md` (not frozen). Running: r1f (PID, FAC), then frz queue.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
   quoting in the report.
-- **Last updated:** 2026-11-14, session 34 (wiring, recheck). Earlier: session 32 (O-4, D-omega2, FAC). Earlier: session 24 (ch. 6/9 markers closed, ch. 2 7/8). Agents s24: 1 haiku. Before that: session 23 (bibliography, D-noretune). Before that: session 21 (review triaged, G2_Y bound fix, figures, ch. 2 draft). Before that: session 20. Before that: session 16 (ch. 8 draft + control-law review in flight). Before that: session 15 (H1/H4/H5 implemented, batches flying). Before that: session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
+- **Last updated:** 2026-11-14, session 35 (omega2 check, G1 v2, held-out draft). Earlier: session 34 (wiring, recheck). Earlier: session 32 (O-4, D-omega2, FAC). Earlier: session 24 (ch. 6/9 markers closed, ch. 2 7/8). Agents s24: 1 haiku. Before that: session 23 (bibliography, D-noretune). Before that: session 21 (review triaged, G2_Y bound fix, figures, ch. 2 draft). Before that: session 20. Before that: session 16 (ch. 8 draft + control-law review in flight). Before that: session 15 (H1/H4/H5 implemented, batches flying). Before that: session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
   library + unit tests committed, not yet wired into mc_rate_control; first
   G1 identification: pitch 211 (R^2 0.90), roll 321 (R^2 0.63), yaw not
   identified; see `results/identification_g1_v0.md`).
@@ -150,6 +154,23 @@ owner decisions when you first act on them.
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+
+- SESSION 35 (2026-11-14): r1f flying at start (c01), frz queue alive (pid 3998259). Runner gets PX4_INDI_BUILD
+  (ed2e439cf0) so build/px4_sitl_omega2 flies beside the batch; logger logs actuator_torque_measured (07c6a39811,
+  omega2 build rebuilt, default build NOT). D-omega2 first run-time check (`results/s2_omega2_check/`, frozen v1
+  params + v2_fac + CA_R_W_MAX 1000, v2 sim): flies, measured torque in use 97.7 % of the log (fallback only on the
+  ground at arming), 0 faults; step_roll rate rms 0.168, hover att rms 0.12 deg, effort 0.038. check_sync (span 13,
+  log at 3 ms): roll a_f vs measured t_f lag -1..0 samples (ERPM_DLY 1 consistent), G1_R ~173 in u=omega^2 units
+  (frozen 241: re-identify G1 for v2). Re-fly with the logged topic: `run.sh` SFX=_log -> hover_log, step_roll_log;
+  analyse with `bench/omega2_torque_check.py LOG` (meas vs ACT_TC model: delay, gain).
+  DONE all of it (`results/s2_omega2_check.md` a-d): meas = model within 2-9 % gain, 4-9 ms later; ERPM_DLY 1
+  (D-erpmdly); fallback at 90 % drops OK; G1 v2 roll/pitch 175, yaw 12.4 (seed 1). Draft held-out v2
+  `plan/s2_heldout_v2.md`. NEXT (session 36): (1) when run_frz.log shows RECHECK_FRZ_DONE: analyse frz vs
+  tcup/tcdn/g2 and r1f; rebuild px4_sitl_default (it then includes logger + omega2 wiring; CA_R_W_MAX 0 keeps v1
+  behaviour) and drop build/px4_sitl_omega2 by path. (2) settle the open choices of the held-out draft (AM32 note
+  for V2/V3), implement the missing sim pieces (V2 up/down factors in model_variant, V4 timed total eRPM loss,
+  V6 motor max-speed ramp; one small sonnet task each, separate sim commits), freeze as scenarios.md v2.
+  (3) G1 v2 on 3 seeds (step logs, check_sync), then v2 INDI tuning per the v1 budget rules.
 
 - SESSION 34 (2026-11-14): D-omega2-wire decided and IMPLEMENTED (sonnet agent, 27 calls, ~$0.6): ddecbb37ce msg
   ActuatorTorqueMeasured + indi_rate_status.measured_torque_in_use; 2c9ef01a90 getControlFromActuators + gtest;
@@ -647,6 +668,7 @@ owner decisions when you first act on them.
 | 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build, 2 INDI runs (hover, step_roll seed1), 0 failures | $1.63 cap |
 | 33 (2026-11-14) | 1 sonnet (omega2 lib, 29 calls, ~$0.6) | 1 SITL build; r2 finished (240); chain launched | ~$2.2 of $3 |
 | 27 (2026-11-14) | 1 haiku (AM32 gaps, 22 calls) | 2 SITL builds, 5 check flights (2 invalid: physics step reset, fixed) | stage-2 sim: rotor speed, eRPM model, IMU rate; ~$2.9 of $3 |
+| 35 | 0 | 1 omega2 build, 7 check flights (omega2), r1f continuing | ~$2.0 of $3 |
 | 34 | 1 sonnet (~$0.6, D-omega2 wiring) | 105 (v1 recheck) + r1f running + frz queued | session ~$2.8 |
 
 ## Journal
@@ -698,3 +720,4 @@ owner decisions when you first act on them.
 - 2026-11-14 session 29: D-notch (ESC-rpm notch in v2, both controllers); dt-jitter fix 68cab62e42 (20/20 gtests); v2 PID tuning r1 launched detached. Agents: 0.
 - 2026-11-14 s33: D-omega2 library (895b55aed8); PID r2 closed (defaults stay, FAC 0); SITL rebuilt; v1 re-checks + PID r1f (FAC) launched.
 - 2026-11-14 s34: D-omega2 wiring (4 commits, sonnet agent); v1 recheck flown (105 runs), prelim results; frz control queued.
+- 2026-11-14 s35: D-omega2 first flights (measured torque OK, fallback OK, D-erpmdly), G1 v2, held-out v2 draft. Agents: 0.

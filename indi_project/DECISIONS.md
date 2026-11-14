@@ -560,3 +560,11 @@ These are the owner's decisions, not the orchestrator's; full text in `OWNER_GUI
   Rejected: (1) duplicating the geometry in mc_rate_control from CA_ROTOR* params: two copies of B and of its
   normalisation that must agree, silent unit error if they drift; (2) adding fields to control_allocator_status:
   wide message used by logging/GCS, mixes setpoint feedback with a sensor-derived quantity.
+
+- **D-erpmdly (session 35) MC_INDI_ERPM_DLY stays 1 (identified, not tuned; O-5).** On the v2 sim (AM32 eRPM model,
+  1000 Hz IMU) the measured torque with a 1-cycle delay is in step with the filtered angular acceleration: roll and
+  pitch step logs give a best lag of -1/0/0 and 0 log samples (3 ms each, R^2 0.87-0.95,
+  `results/s2_omega2_check.md`). The residual is below the log resolution; logging indi_rate_status at 1 kHz to
+  resolve it was not judged worth the cost. Yaw is not used for this: its a_f leads the drag torque through the
+  rotor reaction torque (G2), and its R^2 is flat over the lag. Alternative rejected: picking the delay that
+  minimises a tracking cost (that would tune a model parameter, against O-5 and the D-g1-v1 rule).
