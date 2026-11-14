@@ -324,7 +324,10 @@ seed against the tuned PID, with the Wilcoxon signed-rank test (`bench/s2_verdic
 A host suspend stalled seed 3 of com_shift and motor_loss_0 for all controllers; those runs are kept aside as an
 infrastructure fault and re-flown for every controller (D-v2-refly); every entry has 10 paired seeds. No INDI run
 failed (criterion 1), and the hover effort ratio is 1.26 (criterion 4, limit 1.5; ratio of the 10-seed means on the
-seen-set hover runs).
+seen-set hover runs). That margin is smaller than it looks: pid_tuned's hover effort was 0.064-0.066 on seen-set seeds
+3-4, flown under host overload (D-watchdog), against 0.021-0.031 on the other seeds, while indi_v2 stayed at
+0.044-0.052. On clean seeds INDI's hover effort is about 2x PID's, which the five-seed v3 check confirmed
+(`results/v3_hover_effort.md`, section 7.8).
 
 | entry | primary metric | tuned PID | INDI v2 | ratio | INDI lower | p | effort ratio |
 |---|---|---|---|---|---|---|---|

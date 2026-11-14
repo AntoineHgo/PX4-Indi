@@ -173,6 +173,40 @@ tuned PID (J 0.911) this is a tie within the hover noise; per scenario, INDI is 
 PID-default 1.0) and worse on roll and yaw steps (1.09 and 1.08). The tuning cost thus traded a slower attitude-step
 response for lower effort, and the held-out results in section 8.9 show that trade carried over unchanged.
 
+## 7.8 Stage 2b: screening and freezing the v3 controller
+
+v3 adds one parameter to v2, the blend time constant Tb (`MC_INDI_ACT_BLD`): the actuator state follows the measured
+eRPM above 1/(2 pi Tb) and the first-order motor model below it, which restores the low-frequency integral action
+that v2 lost under a motor fault (D-v3-blend, section 8.9). Everything else in the inner loop is v2's, and the outer
+attitude gains are fixed at the tuned PID's (D-outer-check), so the comparison isolates the inner loop. Tuning
+followed the staged rule of O-12: one seed per candidate on a few seen/tuning entries, a watchdog that aborts a
+clearly failed run, pruning, then two more seeds for the survivors. No V' entry was flown by an INDI candidate
+before the freeze.
+
+1. **Blend (Tb), `results/v3_screen.md`.** Tb in {0.1, 0.3, 1.0} on motor_loss_0, mismatch_combined_rate and
+   step_roll. Tb 0.1 tripped the watchdog (altitude loss after the fault) and was pruned; Tb 0.3 and 1.0 removed the
+   steady post-fault tilt of v2 (roll/pitch RMS 5.3/7.7 deg at Tb 0, 0.67/1.03 at Tb 0.3, PID 0.80/0.90) without
+   bringing back the 5-7 Hz limit cycle of v1 on the actuator-mismatch entry, and did not change nominal steps
+   (within 3 %). Over three seeds Tb 0.3 had the best tilt and position after the fault (D-v3-tb).
+2. **Yaw (K_Y, YAW_CUT), `results/v3_screen_yaw.md` and `results/v3_screen_yaw2.md`.** After the blend, the remaining
+   gap to PID on motor_loss_0 was yaw only. K_Y in {2.733, 4.0, 5.5} x YAW_CUT in {1.665, 3.0} Hz on step_yaw,
+   motor_loss_0 and hover: K_Y >= 4 behind the 1.665 Hz filter failed or oscillated, the phase lag of the yaw
+   filter limiting the gain as D-yawsp predicted. Two survivors went to stage 2. The frozen choice, K_Y 2.733 with a
+   3 Hz cut (D-v3-freeze), has the best roll/pitch under motor loss of any controller (0.60/0.92 deg) and yaw within
+   1.15-1.18x PID; K_Y 4.0 tracks yaw steps closer to PID (1.05x) but loses pitch under motor loss. No configuration
+   closed the yaw gap, as in v1 (section 7.3).
+3. **Hover effort, `results/v3_hover_effort.md`.** Every v3 configuration uses 2.0-2.4x the motor-rate effort of
+   pid_tuned in hover over five seeds (frozen v3: 2.14x), above the 1.5x limit of criterion 4. The blend is not the
+   cause (Tb 0.3 is the lowest INDI configuration), and v2 is at the same level on clean seeds (section 8.9). Body
+   rates move only 1.2x more than with PID while the torque command varies about 2x more on every axis: the excess
+   is sensor noise passed into the command, since INDI feeds the filtered angular acceleration and the measured eRPM
+   into the increment with gain 1/G1. Lowering the shared derivative filter would change PID as well, and an INDI-only
+   filter would add delay to a loop that is sensitive to it, so this was recorded rather than tuned away
+   (D-v3-hover).
+
+The screening flew 92 flights in total (v3 smoke, Tb stages 1-2, yaw stages 1-2, hover check), every one with the
+tuned PID in the same batch. The frozen parameters are `bench/params/indi_v3.params`.
+
 ## Inconsistencies and unverified claims
 
 1. **PID candidate count (resolved).** `DECISIONS.md` D-freeze and `results/tuning/r2.md` once said "64 candidates over two rounds"; the summary files hold 24 + 16 = 40 rows (`results/tuning/pid/r1/summary.csv`, `results/tuning/pid/r2/summary.csv`), consistent with the 480 flights. Both sources were corrected to 40 in session 17.
