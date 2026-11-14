@@ -196,6 +196,14 @@ owner decisions when you first act on them.
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+- SESSION 47 (2026-11-15, launch 20261115-004917): hover batch found at seed 3 (seed 2 done 00:49). Analysis script
+  `bench/v3_hover_effort.py` (seeds 1-5, seed 1 from v3_screen_yaw, v3_tb0.3 = k2.733_c1.665 there). Seed 1-2 reading:
+  v3_tb0 ~3.0x, v3_tb0.3 ~2.0x, survivors 1.9-2.4x pid_tuned. v2 seen set hover (non-glitch pid seeds 1,2,5: 0.021-0.031;
+  indi_v2 0.044-0.052) shows the ~2x is INHERITED from v2 (its 1.26x came from pid seeds 3-4 at 0.066, host-overload
+  seeds), so the blend does not raise hover effort; PID outer gains on v2 (v3_tb0) raise it. QUEUED detached behind
+  V3_HOVER_DONE: yaw stage 2 `bench/v3_screen_yaw2.sh` (step_yaw + motor_loss_0, seeds 2-3, {pid_tuned, k2.733_c1.665,
+  k2.733_c3.0, k4.0_c3.0}, 16 flights, log `results/v3_screen_yaw2.log`, ends V3Y2_SCREEN_DONE, resumable with
+  `bash indi_project/bench/v3_screen_yaw2.sh >> indi_project/results/v3_screen_yaw2.log`).
 - SESSION 46 (2026-11-15, launch 20261115-003114): DONE: owner outer-gain diagnostic committed + D-outer-check (v3
   tunes the INDI inner loop only, outer gains fixed at tuned PID's) + report 8.9 paragraph. v3 smoke DONE
   (`results/v3_smoke.md`): ACT_BLD 0 flies as v2 (step_roll 3.63 vs 3.62 deg). V' W1-W5 IMPLEMENTED (sonnet agent,
