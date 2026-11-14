@@ -157,6 +157,13 @@ owner decisions when you first act on them.
   NEXT (after the chain ends, then rebuild px4_sitl_default): (a) one hover + roll step INDI v2 flight with
   CA_R_W_MAX 1000 + v2_fac.params: check measured_torque_in_use = 1 and tau_meas vs model torque agree;
   (b) identify MC_INDI_ERPM_DLY (cross-correlate tau_meas vs model t_f, bench/identify_actuator.py style).
+  NOTE recheck comparability: the binary changed since the v1 frozen runs (s19 landyaw, s29 dt-jitter, s30
+  landmodel/faulthold, s31 delay slew), and tcup ACT_TC 12.5 ms is only 9 % from frozen 11.42 ms. So a same-binary
+  control variant indi_frz (frozen params) is QUEUED detached (`bench/s2_queue_frz.sh`, waits for the chain incl.
+  r1f, then `results/s2_recheck_v1/run_frz.sh` -> run_frz.log, RECHECK_FRZ_DONE). Compare tcup/tcdn/g2 vs frz
+  with `bench/summarize_seeds.py` (one RUNS_DIR: results/s2_recheck_v1/runs, --a indi_frz --b indi_<v>).
+  Rebuild px4_sitl_default ONLY after run_frz.log shows RECHECK_FRZ_DONE. If the queue died, relaunch
+  `setsid indi_project/bench/s2_queue_frz.sh > /dev/null 2>&1 &`.
 
 - SESSION 33 (2026-11-14): r2 still RUNNING at start (11/16). DONE (sonnet agent, 29 calls): D-omega2 library part
   895b55aed8 (setMeasuredTorque/valid per cycle, own delay MC_INDI_ERPM_DLY-to-be + own sync filters, model fed
