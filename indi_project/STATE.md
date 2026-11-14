@@ -2,7 +2,7 @@
 
 ## Status summary (read this first)
 
-- **Phase:** 1 (state of the art) 8 of 12 notes; phase 2 (PX4 analysis) started;
+- **Phase:** 6 starting (tuning frozen in session 13: D-freeze); also open: 1 (state of the art) 8 of 12 notes; phase 2 (PX4 analysis) started;
   phase 3 runner v0 works (pymavlink, seeded gz, one command per run).
   Benchmark spec frozen (`bench/scenarios.md` v1) before any INDI code.
   Phase 3 smoke test PASSED: `px4_sitl_default` builds in Docker and
@@ -70,6 +70,12 @@
   `results/tuning/r4.md`): with D-yawsp no INDI yaw set beats PID on step_yaw at
   acceptable effort (best 1.089 x PID at 1.13x effort, c10); yaw near-parity is
   structural. Same params+seeds gave hover 0.77 vs 1.31: hover noise confirmed.
+  r4f (c13 + r4 yaw) J 0.978 vs PID 0.96: tie within noise; INDI better on
+  roll/pitch steps (0.88/0.93), equal on rate step and hover, worse on yaw
+  (1.10). FROZEN as INDI tuned (D-freeze, `results/tuning/r4f.md`).
+  First untuned scenario, T8 motor loss (3 seeds each): INDI roll/pitch RMS
+  0.08/0.15 deg vs PID 0.71/0.68 (5-9x better), yaw 10.3 vs 9.0 deg, saturation
+  12 % vs 7.5 % (`results/t8_motor_loss_s13.md`).
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -92,16 +98,15 @@
 
 ## In progress
 
-- RUNNING session 13 (detached): r4f, combined candidate c13 + r4 c10 yaw set
-  (`bench/params/indi_r4_best.json`) on all 5 tuning scenarios, seeds 1-3 (15
-  flights). Log `results/tuning/r4f.log` (header = command, resumable), output
-  `results/tuning/indi/r4f/summary.csv`. NEXT: write `results/tuning/r4f.md`
-  (per-scenario ratios + effort, as r3f_yawsp.md), commit metrics. Then freeze
-  the INDI tuned candidate (DECISIONS entry; J compared with PID 0.96 and the
-  noise caveat D-hovernoise), fly INDI T8 seeds 1-3 (CONTROLLERS=indi_tuned
-  PARAMS_FILE=results/tuning/indi/r4f/c00/params, rest as
-  `results/t8_pid_s13.log`), then the held-out set for both controllers with
-  more seeds (>= 5) and the horizontal/vertical hover split.
+- NEXT (nothing running): phase 6 on frozen candidates (PID defaults vs
+  INDI tuned = `results/tuning/indi/r4f/c00/params`). (1) T8: run
+  `bench/disturbance.py` for peak tilt/recovery at fault onset, find where INDI
+  saturates. (2) Held-out set (H2 gust_diag, H3 com_shift, H6 step_diag, H5?) and
+  T6 gust, T7 payload, T9 inertia mismatch, >= 5 seeds per controller, CPU-only
+  batches via run_batch.sh (PARAMS_FILE absolute path, CONTROLLERS=indi_tuned).
+  (3) Report hover with horizontal/vertical split (D-hovernoise). (4) Then report
+  chapters 5-9 (delegate drafts to sonnet from results/*.md and DECISIONS.md).
+- DONE session 13: r4f + D-freeze (553c4dbdd0); INDI T8 seeds 1-3.
 - DONE session 13: r4 (`results/tuning/r4.md`, ec2bd1ad7a).
 - DONE session 13: c13 D-yawsp re-score (`results/tuning/r3f_yawsp.md`).
 
@@ -312,7 +317,7 @@
 | 9 (2026-11-14) | 1 haiku (steffensen2023), 1 sonnet (ch. 4 draft) | round 2 launched (~480 flights) | triage + yaw effort analysis |
 | 10 (2026-11-14) | 1 sonnet (disturbance injector, 59 tool calls, ~$0.9) | 2 test flights; r2 finished (480 flights, 0 failures) | ~$2.6 of $3 |
 | 11 (2026-11-14) | 2 sonnet (T8 motor loss 14 calls; D-yawnu 13 calls) | 15 INDI (r2f_yc2) + 1 T8 PID + 3 hover (yawnu), 0 failures; r2f_yawnu (15) left running | yaw effort root cause and fix, ~$2.4 of $3 |
-| 13 (2026-11-14) | 0 | 3 T8 PID, 15 INDI r3f_yawsp, 72 INDI r4, 15 INDI r4f (launched), 1 SITL build, unit tests | r3 analysis, D-yawsp, D-hovernoise, D-r4; ~$2 of $3 |
+| 13 (2026-11-14) | 0 | 3 T8 PID, 15 INDI r3f_yawsp, 72 INDI r4, 15 INDI r4f, 3 INDI T8, 1 SITL build, unit tests | r3 analysis, D-yawsp, D-hovernoise, D-r4; ~$2 of $3 |
 | 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build, 2 INDI runs (hover, step_roll seed1), 0 failures | $1.63 cap |
 
 ## Journal
@@ -343,3 +348,4 @@
 - 2026-11-14: session 13: r3 scored (c13 J 1.055 vs PID 0.96, step_yaw effort the only penalty); D-yawsp implemented; PID T8 seeds 1-3 flown.
 - 2026-11-14: session 13: D-yawsp scored (yaw effort fixed, yaw tracking lost, J 1.058); hover term found noise-dominated; r4 yaw sweep launched.
 - 2026-11-14: session 13: r4 done (yaw parity with PID is structural under D-yawsp); r4f combined candidate launched.
+- 2026-11-14: session 13: r4f J 0.978 (tie with PID); INDI frozen (D-freeze); T8 motor loss: INDI roll/pitch 5-9x better, yaw worse.
