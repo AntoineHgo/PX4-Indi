@@ -179,9 +179,12 @@ owner decisions when you first act on them.
   `bench/params/indi_v2_start.params` (D-v2indi-start); tune.py now also reads the mc_indi_rate_control yaml.
   RUNNING detached since 18:46: `bench/s2_indi_tune_r1.sh` (INDI v2 r1, 24 cand x 2 seeds, 240 flights, jobs 6,
   4 h timeout, log `results/s2_tuning/indi_r1.log`, output `results/s2_tuning/indi/r1/`) on build/px4_sitl_default
-  (O-11 tree): do not rebuild default while it runs. NEXT: (1) when it ends, write `results/s2_tuning/indi_r1.md`
-  (best vs c00 = frozen gains with identified G1, vs PID r1f c05 J 0.925 and defaults 0.966); (2) r2 (16 x 3
-  seeds, --center the r1 best, same as bench/s2_pid_tune_r2f.sh); (3) v2 held-out V1-V9, 10 seeds, PID defaults,
+  (O-11 tree): do not rebuild default while it runs. Checked c00: MC_INDI_EN 1, G1 174/174/12.2, indi_rate_status +
+  actuator_torque_measured logged, no rate_ctrl_status. QUEUED detached behind it: `bench/s2_indi_tune_r2.sh` (waits
+  for r1, writes the centre `bench/params/indi_v2_r1_best.json` = lowest J with no failure, then 16 x 3 seeds, log
+  `results/s2_tuning/indi_r2_queue.log`, output `results/s2_tuning/indi/r2/`). NEXT: (1) when r1 ends, write `results/s2_tuning/indi_r1.md`
+  (best vs c00 = frozen gains with identified G1, vs PID r1f c05 J 0.925 and defaults 0.966); (2) check r2 (already queued) when it ends; v2 tuned INDI = r2 best
+  vs r1 best by the noise rule of v1 r2 / D-v2pid; (3) v2 held-out V1-V9, 10 seeds, PID defaults,
   PID r1f c05, INDI v2 tuned.
 
 - SESSION 38 (2026-11-14): r1f done + committed; frz control done: restated in `results/s2_recheck_v1.md` (variant

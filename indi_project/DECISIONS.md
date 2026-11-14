@@ -636,3 +636,5 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
   frozen cost and same PID-default reference flights (`results/s2_tuning/ref_fac`). Varied: MC_INDI_K_R/K_P/K_Y,
   MC_INDI_YAW_CUT, MC_ROLL_P/PITCH_P/YAW_P. YAW_CUT is the INDI counterpart of MC_YAW_TQ_CUTOFF, which the PID
   search varies, so both families tune their yaw filter. Not varied: G1, ACT_TC, ERPM_DLY (identified, O-5).
+  r2 centre = r1 candidate with the lowest J and no failure, picked by `bench/s2_indi_tune_r2.sh` (the rule the
+  orchestrator applied by hand for the PID r2f), so r2 can run unattended between sessions.
