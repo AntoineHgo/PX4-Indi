@@ -124,6 +124,8 @@
   D-noretune (full-T re-tune not run, stated in ch. 7/9); ch. 8 PID count 64 -> 40; phase checklist refreshed.
   NEXT: [TO VERIFY] in ch. 3 (9, equations vs PDFs in raw/) and ch. 2 (8), ch. 6 (6), ch. 9 (2), one small agent per
   chapter; then report PDF image (D-pdf); then final review (fable) of conclusions; then DONE.
+  DONE ch. 6 allocator-fault + aero-plugin markers. IN FLIGHT (haiku): ch. 3 equation check against PDF page
+  images -> `review/ch3_equation_check_s23.md` (one section per marker; if cut off, relaunch for missing markers only).
 
 - SESSION 22 (2026-11-14): DONE figures referenced in ch. 8 (Fig 8.1-8.3) and ch. 9 (Fig 9.1), review s5 band-pass
   mechanism + triaged review risks (a-i) added to ch. 9 (0a1ca5a2a5); wang2019/steffensen2023 URLs in sources.md;
