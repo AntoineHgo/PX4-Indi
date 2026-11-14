@@ -494,3 +494,17 @@ These are the owner's decisions, not the orchestrator's; full text in `OWNER_GUI
   but reproduces the v1 model/plant mismatch transient and adds state).
 - Not flown: benchmark results are unaffected in principle (all scenarios start the metric window well after
   takeoff); v2 flights will use it.
+
+## D-faulthold (session 30, 2026-11-14): rejected INDI cycles hold the last output (owner step 3, review item 7)
+
+- Decision: a rejected cycle (non-finite input, dt outside [kMinDt, kMaxDt], invalid parameters) returns the last
+  valid output and leaves the states untouched, for up to `kFaultHoldCycles` = 3 consecutive cycles (3 ms at
+  1 kHz, 7.5 ms at 400 Hz, shorter than the actuator time constant); the next rejected cycle resets the states and
+  outputs zero torque, as v1 did at once. An overflow in the increment (finite but absurd inputs) resets the states
+  immediately, since it may have reached the filters, but still holds the output. `fault` is logged on every
+  rejected cycle. Commit 5a163c4dec, gtest `InvalidInputsHoldLastOutputAndFault` (21/21).
+- Why: inputs are sanitised upstream, so a rejected cycle is a glitch; v1 turned it into a zero-torque cycle plus a
+  from-zero restart of the actuator model (a transient of several time constants). A short hold is the standard
+  last-good-value reaction and is bounded.
+- Alternatives rejected: hold indefinitely (a persistent fault must not freeze a possibly large torque); time-based
+  hold (dt itself may be the invalid input).
