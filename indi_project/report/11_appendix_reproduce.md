@@ -82,10 +82,11 @@ From the repository root, with plain `python3` (not `python3 -I`, because matplo
 python3 indi_project/bench/make_figures.py
 ```
 
-The script reads `results/runs/` and the reference tables in `indi_project/results/*.md`, and writes four PNGs at 150 dpi into `indi_project/report/figures/`: `fig_attitude_ratio.png`, `fig_effort_ratio.png`, `fig_act_tc_sweep.png` and `fig_rate_timeseries.png`. It prints the plotted numbers and flags any difference above 2 % from the reference tables as `DISCREPANCY`. Figure ratios are medians of per-seed paired ratios, so they can differ from the ratios of means in the tables (`report/figures/README.md`). The reference tables are committed under `indi_project/results/`.
+The script reads `results/runs/` and the reference tables in `indi_project/results/*.md`, and writes nine PNGs at 150 dpi into `indi_project/report/figures/`: `fig_attitude_ratio.png`, `fig_effort_ratio.png`, `fig_act_tc_sweep.png`, `fig_rate_timeseries.png`, and the seed-1 time series `fig_disturbance_onset.png`, `fig_t8_fault.png`, `fig_step_responses.png`, `fig_lemniscate.png` and `fig_h4_crash.png` (these five read the ULogs under `results/runs/`, which are not committed). It prints the plotted numbers and flags any difference above 2 % from the reference tables as `DISCREPANCY`. Figure ratios are medians of per-seed paired ratios, so they can differ from the ratios of means in the tables (`report/figures/README.md`). The reference tables are committed under `indi_project/results/`.
 
 ## A.7 Known gaps
 
+- The T8 10-seed table is `python3 indi_project/bench/summarize_seeds.py indi_project/results/runs motor_loss_0` plus the `motor_fault` block of each `metrics.json` (`results/t8_motor_loss_10seeds_s26.md`).
 - The trajectory tables and the H4 table were produced by inline scripts that are not yet in `bench/`. Their numbers cannot be regenerated from the repository until those scripts are added.
 - Seeding is partial. `--seed` controls the Gazebo sensor noise (`gz sim --seed`). The baro simulation in the PX4 SITL sensor module (`SensorBaroSim`) calls `srand(1234)` and is not seed-controlled. `run.json` records both values (`noise_seed`).
 - The SITL firmware build command in A.2 is recorded in a log, not wrapped in a script.
