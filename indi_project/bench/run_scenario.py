@@ -22,7 +22,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from scenarios import SCENARIOS  # noqa: E402
-from model_variant import build_variant  # noqa: E402
+from model_variant import build_variant, build_world  # noqa: E402
 
 REPO = os.environ.get("PX4_INDI_REPO", os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 BUILD = os.path.join(REPO, "build/px4_sitl_default")
@@ -97,6 +97,9 @@ class Sim:
 
     def start_gz(self):
         world = os.path.join(self.env["PX4_GZ_WORLDS"], "default.sdf")
+        if self.a.imu_rate != 250:
+            world = build_world(self.a.imu_rate, self.out, self.env["PX4_GZ_WORLDS"])
+            self.env["PX4_GZ_WORLDS"] = os.path.dirname(world)  # px4-rc.gzsim re-applies its max_step_size
         self.gz = self.spawn(["gz", "sim", "--verbose=1", "-r", "-s", "--seed", str(self.a.seed), world], "gz.log")
         t0 = time.time()
         while time.time() - t0 < 120:
@@ -316,6 +319,7 @@ def main():
     ap.add_argument("--sim", choices=("v1", "v2", "v2true"), default="v1",
                     help="v1: stock gz_x500 (esc_rpm echoes the command); v2: stage-2 sim, rotor speed through the "
                          "eRPM telemetry model; v2true: stage-2 sim, exact rotor speed in esc_rpm")
+    ap.add_argument("--imu-rate", type=int, default=250, help="gz IMU rate and physics rate in Hz (stock 250)")
     ap.add_argument("--erpm-drop", type=float, default=0.0, help="v2: probability of a dropped eRPM frame")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
@@ -343,6 +347,9 @@ def main():
             sim.env["PX4_PARAM_SIM_GZ_ESC_FB"] = "2" if a.sim == "v2" else "1"
             sim.env["PX4_PARAM_SIM_GZ_ERPM_DRP"] = str(a.erpm_drop)
             meta["erpm_drop"] = a.erpm_drop
+        if a.imu_rate != 250:
+            variant["imu_rate"] = a.imu_rate
+            meta["imu_rate"] = a.imu_rate
         if variant:
             meta["model_variant"] = sim.apply_model_variant(variant)
         sim.start_gz()

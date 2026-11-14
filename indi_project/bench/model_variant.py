@@ -5,6 +5,8 @@ Supported keys:
   ixx, iyy, izz   base_link <inertia> diagonal terms (x500_base/model.sdf)
   mass            base_link <mass> (x500_base/model.sdf); propeller link masses are left unchanged
   tau             motor timeConstantUp and timeConstantDown of all four rotors (x500/model.sdf)
+  imu_rate        x500_base imu_sensor <update_rate> in Hz (stock 250); the world physics step must match
+                  (run_scenario.py --imu-rate writes the world copy)
   rpm             True: add a JointStatePublisher (every physics step) to x500, the stage-2 rotor speed source
                   read by GZBridge when SIM_GZ_ESC_FB=1 (plan/s2_rotor_speed.md); no effect on the dynamics
 
@@ -18,7 +20,7 @@ import shutil
 import xml.etree.ElementTree as ET
 
 INERTIA_KEYS = ("ixx", "iyy", "izz")
-ALLOWED = INERTIA_KEYS + ("mass", "tau", "rpm")
+ALLOWED = INERTIA_KEYS + ("mass", "tau", "rpm", "imu_rate")
 
 
 def _copy_model(src, dst, real=("model.sdf", "model.config")):
@@ -57,6 +59,13 @@ def build_variant(spec, out_dir, stock_models):
             old = float(el.text)
             el.text = repr(old * spec[key])
             rec["original"][key], rec["new"][key] = old, old * spec[key]
+    if "imu_rate" in spec:
+        sensors = [s for s in tree.getroot().iter("sensor") if s.get("name") == "imu_sensor"]
+        if len(sensors) != 1:
+            raise RuntimeError("imu_sensor not found in x500_base/model.sdf")
+        el = sensors[0].find("update_rate")
+        rec["original"]["imu_rate"], rec["new"]["imu_rate"] = float(el.text), float(spec["imu_rate"])
+        el.text = str(int(spec["imu_rate"]))
     tree.write(base_path)
 
     if "tau" in spec:
@@ -86,3 +95,15 @@ def build_variant(spec, out_dir, stock_models):
         tree.write(x_path)
         rec["new"]["joint_state_publisher"] = [f"rotor_{i}_joint" for i in range(4)]
     return root, rec
+
+
+def build_world(rate_hz, out_dir, stock_worlds):
+    """World copy with the physics step at 1/rate_hz (stock default.sdf: 0.004 s, 250 Hz). Returns its path."""
+    path = os.path.join(os.path.abspath(out_dir), "world", "default.sdf")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tree = ET.parse(os.path.join(stock_worlds, "default.sdf"))
+    physics = tree.getroot().find("world").find("physics")
+    physics.find("max_step_size").text = repr(1.0 / rate_hz)
+    physics.find("real_time_update_rate").text = str(int(rate_hz))
+    tree.write(path)
+    return path
