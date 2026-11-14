@@ -1,0 +1,97 @@
+{
+ "scenario": "step_yaw",
+ "controller": "indi_v1_yc10",
+ "seed": 1,
+ "speed": 4.0,
+ "instance": 0,
+ "params_file": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_project/bench/params/indi_v1_yc10.params",
+ "params_applied": {
+  "NAV_DLL_ACT": 0,
+  "COM_RC_IN_MODE": 4,
+  "COM_RCL_EXCEPT": 4,
+  "SDLOG_PROFILE": 17,
+  "MIS_TAKEOFF_ALT": 5.0,
+  "MC_RATE_CTL_TYPE": "1",
+  "MC_INDI_G1_R": "241",
+  "MC_INDI_G1_P": "241",
+  "MC_INDI_G1_Y": "7.4",
+  "MC_INDI_YAW_CUT": "10"
+ },
+ "git": {
+  "commit": "be8a998a61a5214a6c59b74f32abd54cd172603f",
+  "dirty": true
+ },
+ "noise_seed": {
+  "gz_sim_seed": 1,
+  "px4_baro_srand": 1234
+ },
+ "events": [
+  {
+   "name": "settle",
+   "t_us": 48832000,
+   "dur_s": 2.0,
+   "mode": "attitude",
+   "axis": "yaw",
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  },
+  {
+   "name": "up",
+   "t_us": 50832000,
+   "dur_s": 4.0,
+   "mode": "attitude",
+   "axis": "yaw",
+   "value": 45.0,
+   "prev": 0.0,
+   "step": true
+  },
+  {
+   "name": "zero1",
+   "t_us": 54832000,
+   "dur_s": 4.0,
+   "mode": "attitude",
+   "axis": "yaw",
+   "value": 0.0,
+   "prev": 45.0,
+   "step": true
+  },
+  {
+   "name": "down",
+   "t_us": 58832000,
+   "dur_s": 4.0,
+   "mode": "attitude",
+   "axis": "yaw",
+   "value": -45.0,
+   "prev": 0.0,
+   "step": true
+  },
+  {
+   "name": "zero2",
+   "t_us": 62832000,
+   "dur_s": 4.0,
+   "mode": "attitude",
+   "axis": "yaw",
+   "value": 0.0,
+   "prev": -45.0,
+   "step": true
+  }
+ ],
+ "phase_log": [],
+ "exit_status": "ok",
+ "error": null,
+ "arm_attempts": 6,
+ "t_arm_us": 28832000,
+ "hold_pos_ned": [
+  -0.0257389098405838,
+  -0.009215948171913624,
+  -4.9427490234375
+ ],
+ "hold_yaw_rad": 1.580336570739746,
+ "hover_thrust_estimate": 0.73073,
+ "t_offboard_us": 45832000,
+ "t_window_start_us": 48832000,
+ "t_window_end_us": 66832000,
+ "ulog": "flight.ulg",
+ "wall_time_s": 31.1
+}
