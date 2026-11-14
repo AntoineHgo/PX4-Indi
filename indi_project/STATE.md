@@ -145,6 +145,10 @@ owner decisions when you first act on them.
   REBUILD px4_sitl_default before any INDI flight (not done: would replace the binary under the running PID round).
   Remaining step 3: items 4 (after O-5), 10/11 bounds (library: setMaxIncrement(<=0), K=0), 12 (DELAY change
   mid-run), 13 tests (runtime param change). Agents s30: 0.
+  r1 FINISHED (24/24, 0 failures): defaults c00 J 1.0067 best, c17 1.0073 tie, all others worse: as v1, no
+  candidate beats the PX4 defaults on v2. NEXT: write `results/s2_tuning/r1.md` from summary.csv, then launch
+  `setsid indi_project/bench/s2_pid_tune_r2.sh > indi_project/results/s2_tuning_r2.log 2>&1 &` (no centre = defaults,
+  as v1 r2), then step 3 item 12 (delay slew) + rebuild SITL.
 
 - SESSION 29 (2026-11-14): DONE (d2) effort by axis: v2 vibration effort is roll/pitch torque chatter only. DONE
   D-notch: ESC-rpm dynamic notch (IMU_GYRO_DNF_EN 1) in the v2 config for BOTH controllers; PID hover effort 0.7-1.1 ->
