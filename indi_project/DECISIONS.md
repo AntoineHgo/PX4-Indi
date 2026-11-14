@@ -568,3 +568,22 @@ These are the owner's decisions, not the orchestrator's; full text in `OWNER_GUI
   resolve it was not judged worth the cost. Yaw is not used for this: its a_f leads the drag torque through the
   rotor reaction torque (G2), and its R^2 is flat over the lag. Alternative rejected: picking the delay that
   minimises a tracking cost (that would tune a model parameter, against O-5 and the D-g1-v1 rule).
+
+- **D-heldout-v2 (session 36) open choices of the v2 held-out draft (O-7), settled before the freeze.**
+  (1) V1/V2 change the actuator only (no inertia/mass change), so a loss is attributable; H5 stays in the seen set.
+  (2) V2 = plant spin-down constant x3, spin-up x1. Not sourced: the AM32 note has nothing on braking. Kept as a
+  synthetic stress case for an actuator whose up/down asymmetry the model does not know (the stock gz motor is
+  already 12.5/25 ms), labelled "synthetic, magnitude not sourced" wherever reported. (3) V3 = +2 eRPM frames of
+  latency over the model's one-frame reply (new SIM_GZ_ERPM_LAT, one frame = one gz motor-speed message). The real
+  figure is not quantified (no fixed AM32 turnaround; the dominant terms, commutation-interval speed estimate and
+  driver esc_status rate, are unmeasured), so +2 frames is a placeholder that sits 2x beyond the identified
+  MC_INDI_ERPM_DLY 1; reported as such. (4) V4 = 20 % frame drops on all motors plus a total eRPM loss of motor 0
+  over one segment (3 s in the step pattern, 2.25 s in the rate pulses), new runtime SIM_GZ_ERPM_LOSS bitmask.
+  Losing one motor already invalidates the measured torque (allocator needs all motors), so this exercises the
+  model fallback and the switch back. (5) V5 = vibration x3 on hover and on the step pattern. (6) V6 = available
+  thrust ramps linearly 100 % -> 85 % over the window (new runtime SIM_GZ_THR_SC, motor speeds x sqrt(scale), set
+  by the runner in a 0.5 s staircase); PX4 battery compensation stays at default for both families (the sim battery
+  voltage does not sag). (7) V7-V9 are the existing H2 gust_diag, H3 com_shift and T8 motor_loss_0 profiles on the
+  v2 configuration: never used for tuning, so they are still held out, but their v1 outcome is known, which the
+  report states. New disturbance profiles were rejected for budget. Rejected for V3: dropping the latency case (the
+  owner listed ESC latency explicitly).

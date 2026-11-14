@@ -142,6 +142,36 @@ body, and whether mass, inertia and motor constants can be changed at runtime
 or per run. Missing pieces are added as simulator extensions in separate
 commits.
 
+## 8. Stage-2 held-out set V (frozen v2, 2026-11-14, session 36, before the v2 INDI flies any of it)
+
+Owner decision O-7; choices in DECISIONS.md D-heldout-v2; draft `plan/s2_heldout_v2.md`. Every run uses the v2
+configuration: `--sim v2 --imu-rate 1000 --erpm-drop 0.01 --vib-acc 1.0 --vib-gyr 0.05` and `v2_fac.params` for both
+families (D-omega2), seeds 1-10, speed 4 for attitude/rate patterns and speed 1 for position scenarios (D-speed).
+Scenario-level plant settings override the CLI ones. None of these entries is ever used for tuning.
+
+| entry | id | plant change (identical for both controllers) | primary metric (as in v1 for the same pattern) |
+|---|---|---|---|
+| v2_tau2_att, v2_tau2_rate | V1 | motor time constants x2 | H5 att: roll attitude RMS; H5 rate: roll-rate RMS |
+| v2_asym_att, v2_asym_rate | V2 | spin-down constant x3 (synthetic, not sourced) | same |
+| v2_lat_att, v2_lat_rate | V3 | eRPM latency +2 frames (placeholder magnitude) | same |
+| v2_drop_att, v2_drop_rate | V4 | 20 % eRPM frame drops + total loss of motor 0 over one segment | same |
+| v2_vib3_hover, v2_vib3_att | V5 | vibration x3 | T1 hover: as T1; att: as H5 att |
+| v2_sag_att | V6 | available thrust 100 % -> 85 % over the window | as H5 att |
+| gust_diag | V7 | H2 profile | as H2 |
+| com_shift | V8 | H3 profile | as H3 |
+| motor_loss_0 | V9 | T8 profile | as T8 |
+
+V7-V9 were flown in v1 (never tuned on): held out, but their v1 outcome is known. The seen set (H1-H6, T1-T8 on
+the v2 configuration) is reported separately and labelled as seen.
+
+Acceptance for v2 (section 6 rules, same test and thresholds, scaled to 14 entries, against the v2 `pid_tuned`):
+1. no INDI run fails in any V, seen or T entry;
+2. INDI significantly better (median improvement >= 10 %, p < 0.05) on at least 10 of the 14 V entries (2/3, as 4/6
+   in v1);
+3. INDI not significantly worse by more than 10 % on any V entry;
+4. INDI hover control effort (T1, v2 configuration) at most 1.5x `pid_tuned`.
+Outcome words as in section 6.
+
 ## Change log
 
 - v1 (2026-11-13): initial frozen version.
@@ -189,3 +219,5 @@ commits.
   needs ~52 deg tilt, above the default MPC_TILTMAX_AIR 45 deg: infeasible as
   specified for both controllers, flown unchanged. H4 PID seed 1 touched the
   ground (altitude 0 m in the window): reported as an outcome, not re-specified.
+- 2026-11-14 (session 36): section 8 added, stage-2 held-out set V frozen (O-7) before any v2 INDI flight on it.
+  The v1 sections are unchanged and v1 results stay valid.
