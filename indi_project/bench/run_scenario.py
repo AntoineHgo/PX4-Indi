@@ -320,6 +320,8 @@ def main():
                     help="v1: stock gz_x500 (esc_rpm echoes the command); v2: stage-2 sim, rotor speed through the "
                          "eRPM telemetry model; v2true: stage-2 sim, exact rotor speed in esc_rpm")
     ap.add_argument("--imu-rate", type=int, default=250, help="gz IMU rate and physics rate in Hz (stock 250)")
+    ap.add_argument("--vib-acc", type=float, default=0.0, help="v2: IMU vibration accel amplitude per rotor [m/s^2]")
+    ap.add_argument("--vib-gyr", type=float, default=0.0, help="v2: IMU vibration gyro amplitude per rotor [rad/s]")
     ap.add_argument("--erpm-drop", type=float, default=0.0, help="v2: probability of a dropped eRPM frame")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
@@ -347,6 +349,10 @@ def main():
             sim.env["PX4_PARAM_SIM_GZ_ESC_FB"] = "2" if a.sim == "v2" else "1"
             sim.env["PX4_PARAM_SIM_GZ_ERPM_DRP"] = str(a.erpm_drop)
             meta["erpm_drop"] = a.erpm_drop
+            if a.vib_acc > 0 or a.vib_gyr > 0:  # needs the rotor joint speeds of SIM_GZ_ESC_FB >= 1
+                sim.env["PX4_PARAM_SIM_GZ_VIB_ACC"] = str(a.vib_acc)
+                sim.env["PX4_PARAM_SIM_GZ_VIB_GYR"] = str(a.vib_gyr)
+                meta["vib"] = {"acc": a.vib_acc, "gyr": a.vib_gyr}
         if a.imu_rate != 250:
             variant["imu_rate"] = a.imu_rate
             meta["imu_rate"] = a.imu_rate
