@@ -510,6 +510,7 @@ owner decisions when you first act on them.
 | 11 (2026-11-14) | 2 sonnet (T8 motor loss 14 calls; D-yawnu 13 calls) | 15 INDI (r2f_yc2) + 1 T8 PID + 3 hover (yawnu), 0 failures; r2f_yawnu (15) left running | yaw effort root cause and fix, ~$2.4 of $3 |
 | 13 (2026-11-14) | 0 | 3 T8 PID, 15 INDI r3f_yawsp, 72 INDI r4, 15 INDI r4f, 3 INDI T8, 1 SITL build, unit tests | r3 analysis, D-yawsp, D-hovernoise, D-r4; ~$2 of $3 |
 | 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build, 2 INDI runs (hover, step_roll seed1), 0 failures | $1.63 cap |
+| 27 (2026-11-14) | 1 haiku (AM32 gaps, 22 calls) | 2 SITL builds, 5 check flights (2 invalid: physics step reset, fixed) | stage-2 sim: rotor speed, eRPM model, IMU rate; ~$2.9 of $3 |
 
 ## Journal
 
