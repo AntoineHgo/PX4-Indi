@@ -370,6 +370,16 @@ clearly better only on the gust (gust_x 0.73x, 10/10 seeds). A v3 design that bl
 measured actuator states (`plan/v3_actuator_blend.md`, D-v3-blend) is implemented behind a parameter, default off,
 and has not flown yet.
 
+**Why the attitude entries lose: the outer loop, not INDI.** INDI replaces only the rate loop; the attitude (outer)
+P gains are shared parameters, and the v2 INDI tuning had chosen lower ones than the tuned PID (MC_ROLL_P 3.17 vs
+5.12) under a cost dominated by hover noise. A diagnostic flown after the verdict (`results/s2_outer_check.md`, 5
+nominal entries x 3 seeds, not part of the verdict) gave the frozen v2 INDI the tuned PID's outer gains and nothing
+else: the roll, pitch and diagonal step ratios fell from 1.20/1.08/1.13x to 1.01/1.04/1.04x, while the yaw step stayed
+at 1.26-1.29x (its deficit is in the INDI yaw rate loop, K_Y behind the YAW_CUT filter) and the rate pulses at 0.91x.
+The roll deficit on V's attitude entries is therefore an outer-loop tuning artefact; with matched outer gains INDI
+reaches parity on nominal attitude steps, not an advantage. This does not change the verdict, which was fixed before
+the diagnostic; it changes how the v3 tuning is set up (outer gains fixed at the tuned PID's, D-outer-check).
+
 **Baseline fairness.** The tuned PID is also better than PID defaults on V (attitude entries 0.92-0.94x, gust_diag
 0.80x, com_shift 0.65x, motor_loss_0 0.88x, equal on rate entries), so the retuning produced a genuinely stronger
 baseline on unseen scenarios, not an artefact of the tuning set.

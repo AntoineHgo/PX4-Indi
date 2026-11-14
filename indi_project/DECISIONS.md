@@ -732,3 +732,16 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
   three controllers (`bench/s2_seen_v2_refly.sh`); the originals are kept in `results/s2_seen_v2/runs_suspended/`.
 - **Alternatives rejected:** dropping the seeds (unpaired 9-seed entries, and O-12 forbids dropping seeds); re-flying
   only the affected controller (a different host load for one side of a paired comparison).
+
+## D-outer-check (session 46): v2 nominal step deficit attributed to outer-loop tuning; v3 tunes the inner loop only
+- **Context:** owner diagnostic (2026-11-15, `results/s2_outer_check.md`, 45 runs, 3 seeds): frozen indi_v2 with tuned
+  PID's shared outer gains (MC_ROLL_P/PITCH_P/YAW_P) goes from 1.20x/1.08x/1.13x to 1.01x/1.04x/1.04x PID on
+  step_roll/pitch/diag; step_yaw stays 1.26-1.29x (inner yaw loop, K_Y behind YAW_CUT); rate pulses 0.91x.
+- **Decision:** (1) the frozen v2 verdict stands unchanged; the diagnostic is reported in ch. 8.9 as an explanation,
+  not a result. (2) v3 screening and tuning fix the shared outer gains at tuned PID's values (r1f c05) and vary only
+  INDI inner-loop parameters (ACT_BLD/Tb, K, YAW_CUT). This follows the owner's advice and is justified by the data:
+  the outer loop is common to both controllers, so giving it the same gains isolates the inner-loop comparison, which
+  is the question of the project.
+- **Alternatives rejected:** re-tuning the outer gains jointly with INDI (the v2 route: under a hover-noise-dominated J
+  it settled on low MC_ROLL_P and cost 20 % on roll steps); re-opening the v2 verdict with the new gains (post-hoc
+  change after a held-out result).
