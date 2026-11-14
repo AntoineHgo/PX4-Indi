@@ -94,7 +94,7 @@
   the stock plant gives NO limit cycle (roll-rate RMS 0.129-0.161, graded). The H5 limit cycle needs a physically
   slower actuator the model does not know; ratio alone does not explain it (D-actsweep assumption falsified).
 - **Session 19:** review s1/s3/s5 committed; its top bug (yaw filters zeroed every landed cycle) fixed post-freeze
-  (1d776dc6dc, 19/19 gtests, D-landyaw); check re-fly running. Review s5 explains the ACT_TC sweep: model slower than
+  (1d776dc6dc, 19/19 gtests, D-landyaw); check re-fly: metric windows unchanged within noise (`results/landyaw_check_s19.md`). Review s5 explains the ACT_TC sweep: model slower than
   plant is a gain reduction (safe); dangerous case is plant slower than model, band-pass boost at 1/(2 pi sqrt(tau_e tau_t)).
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
@@ -119,7 +119,7 @@
 ## In progress
 
 - SESSION 19 (2026-11-14) IN FLIGHT: (G) sonnet drafts ch. 3 theory -> `report/03_theory.md`; (H) fable fills review
-  sections 2, 4, 6 + summary in `review/control_law_review_s16.md`; (I) landed-yaw check flights, log
+  sections 2, 4, 6 + summary in `review/control_law_review_s16.md`; (I) DONE landed-yaw check (`results/landyaw_check_s19.md`, unchanged within noise); was log
   `results/landyaw_check_s19.log` (ends CHECK_DONE; resumable: re-run the header's two run_batch.sh calls), output
   `results/landyaw_check_s19/{step_diag,com_shift}/indi_tuned/seed{1,2,3}[_x4]/metrics.json`. NEXT: compare with
   `results/runs/{step_diag,com_shift}/indi_tuned/seed1-3` (summarize_seeds.py), write `results/landyaw_check_s19.md`,
