@@ -646,3 +646,22 @@ TEST(IndiRateControlTest, YawCutoffSmoothsYawRateSetpointStep)
 	EXPECT_NEAR(on.getNu()(2), off.getNu()(2), 1e-3f * off.getNu()(2));
 	EXPECT_FALSE(on.getFault());
 }
+
+TEST(IndiRateControlTest, LandedYawOutputUnaffectedByYawCutoff)
+{
+	IndiRateControl ctrl = makeController();
+	ctrl.setYawCutoff(2.f);
+	Vector3f torque;
+
+	for (int i = 0; i < 400; i++) { // 1 s on ground, constant yaw rate error 0.5 rad/s
+		torque = ctrl.update(Vector3f(), Vector3f(0.f, 0.f, 0.5f), Vector3f(), torque, kDt, true);
+
+		// the yaw filters restart from the current input each landed cycle: same P form as roll in
+		// LandedOutputIsBoundedIncrementOnly, nu = 20 * 0.5 = 10 rad/s^2, increment = 10 / 100
+		EXPECT_NEAR(torque(2), 0.1f, 1e-4f); // filter reset then apply rounds in float
+	}
+
+	// takeoff: the first airborne cycle continues from the landed values, no step in the yaw command
+	const Vector3f airborne = ctrl.update(Vector3f(), Vector3f(0.f, 0.f, 0.5f), Vector3f(), torque, kDt, false);
+	EXPECT_NEAR(airborne(2), 0.1f, 0.01f);
+}

@@ -123,7 +123,9 @@ void IndiRateControl::resetStates()
 	_yaw_lpf_accel.reset(0.f);
 	_yaw_lpf_torque.reset(0.f);
 	_yaw_error_lpf.reset(0.f);
-	_yaw_filter_reset_pending = false;
+	// restart the yaw filters from the next input, not from zero, which would scale the yaw path by the
+	// filter's feed-through gain on every cycle that resets the states (landed, fault recovery)
+	_yaw_filter_reset_pending = true;
 	_t_f_prev.zero();
 }
 
