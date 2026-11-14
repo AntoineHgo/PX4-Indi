@@ -172,6 +172,9 @@ owner decisions when you first act on them.
   `results/s2_tilt_diag.md`). Fix drafted: `plan/v3_actuator_blend.md` (complementary model/measured state). V seed 3
   of 2 entries is being re-flown after a host suspend (infrastructure fault, D-v2-refly). Tuned PID beats default PID
   on V too (fair baseline).
+- **Stage 2 (session 46):** v2's nominal roll/pitch step deficit is outer-loop tuning (owner diagnostic, matched
+  outer gains -> 1.01-1.04x PID; D-outer-check). v3 blend flies: Tb 0.3 removes the motor-loss tilt on seed 1
+  (`results/v3_screen.md`), stage 2 (seeds 2-3) running. V' implemented.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -193,13 +196,22 @@ owner decisions when you first act on them.
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
-- SESSION 46 (2026-11-15, launch 20261115-003114): owner outer-gain diagnostic committed (tooling 1 commit, results
-  1 commit), recorded as D-outer-check (v3 tunes the INDI inner loop only, outer gains fixed at tuned PID's) and in
-  report 8.9. RUNNING: `bench/v3_smoke.sh` (v3 binary, MC_INDI_ACT_BLD 0, hover + step_roll seed 1, output
-  `results/v3_smoke/runs/`, log `results/v3_smoke.log`, ends V3_SMOKE_DONE); compare to seen indi_v2 seed 1.
-  FOUND: V' (scenarios.md sec. 9, W1-W5) is NOT implemented in the bench yet (no vp_* scenario). IN FLIGHT: 1 sonnet
-  agent implementing W1-W5 + multi-motor T8 hook, log `plan/impl_log_vprime.md` (no flights of V' entries
-  except one PID harness check). NEXT: Tb screening (seen-set entries only, never V/V' entries), freeze indi_v3, fly V'.
+- SESSION 46 (2026-11-15, launch 20261115-003114): DONE: owner outer-gain diagnostic committed + D-outer-check (v3
+  tunes the INDI inner loop only, outer gains fixed at tuned PID's) + report 8.9 paragraph. v3 smoke DONE
+  (`results/v3_smoke.md`): ACT_BLD 0 flies as v2 (step_roll 3.63 vs 3.62 deg). V' W1-W5 IMPLEMENTED (sonnet agent,
+  reviewed, committed; W3/W5 harness-checked with pid_tuned; W1/W2/W4 not flown yet; `s2_verdict.py` has no V' mode:
+  TODO before V' verdict). Tb screening stage 1 DONE (`results/v3_screen.md`): Tb 0.3/1.0 remove the motor_loss_0
+  tilt (roll/pitch 0.67/1.03 deg vs v2 5.3/7.7, PID 0.80/0.90); Tb 0.1 watchdog trip, pruned; rotation RMS still
+  11 vs 8.6 deg PID (yaw remainder, unexplained). RUNNING detached: stage 2 = `SEEDS="2 3" CONFIGS="pid_tuned
+  v3_tb0.3 v3_tb1.0" END=V3_STAGE2_DONE bash bench/v3_screen_tb.sh` (18 flights, log `results/v3_screen.log`,
+  resumable with the same command). NEXT (session 47): (1) add seeds 2-3 to `results/v3_screen.md`, pick Tb (prefer
+  the one with lower motor_loss_0 roll/pitch RMS and no failure); (2) look at yaw after the fault in motor_loss_0
+  (rotation RMS remainder) and step_yaw 1.26x (K_Y/YAW_CUT, D-outer-check): decide whether a small yaw screen is
+  needed before freezing; (3) freeze indi_v3 params (`bench/params/indi_v3.params` + DECISIONS D-v3-freeze);
+  (4) V' verdict mode in s2_verdict.py (5 entries, criteria sec. 9), then fly V' (5 x 10 seeds x 4 controllers).
+  Pitfall: never edit a bash script while it runs (bash re-reads it by offset; it broke the stage-1 tail, all runs
+  were complete, marker appended by hand). Ledger s46: 1 sonnet agent; flights 2 smoke + 15 screen + 2 V' check
+  (+18 stage 2 running).
 - SESSION 45 (2026-11-14, launch 20261114-230951): seen set at seed 6/10 at 23:10 (~9 min per seed, end ~23:45),
   V re-fly queued behind it. While it flies (no CPU-heavy work, S44 rule 0): report ch. 8 v2 section (8.9) from
   `results/s2_heldout_v2.md` + `results/s2_tilt_diag.md`. After SEEN_V2_DONE + HELDOUT_V2_REFLY_DONE: S44 steps 1-2.
@@ -984,3 +996,4 @@ S42 ORDER (do this first, top to bottom):
   (watchdog deferred until the validation batches end). Agents: 1 sonnet (tilt diagnosis, 18 tool calls).
 - 2026-11-14 s43: V' frozen (D-heldout-v3); v3 blend spec + firmware 3a47bf746e (gtests 40/40); O-12 spec written. Agents: 1 sonnet.
 - 2026-11-14 s44: O-12 part B committed (f064c78d9f), part A staged as patch, watchdog replay done (9ebc74caf6: no false trips; seen seed-2 estimator glitches under host overload), D-watchdog. Agents: 0.
+- 2026-11-15 s46: outer-gain diagnostic committed (D-outer-check); v3 ACT_BLD 0 smoke = v2; V' implemented; Tb screening: 0.3/1.0 remove motor-loss tilt, 0.1 pruned; stage 2 running. Agents: 1 sonnet. Runs: 19 (+18).
