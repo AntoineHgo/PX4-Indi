@@ -354,6 +354,9 @@ def main():
                 sim.env["PX4_PARAM_SIM_GZ_VIB_ACC"] = str(a.vib_acc)
                 sim.env["PX4_PARAM_SIM_GZ_VIB_GYR"] = str(a.vib_gyr)
                 meta["vib"] = {"acc": a.vib_acc, "gyr": a.vib_gyr}
+        for k, v in (sc.get("sim_params") or {}).items():  # scenario plant settings, override the CLI ones
+            sim.env[f"PX4_PARAM_{k}"] = str(v)
+            meta.setdefault("sim_params", {})[k] = v
         if a.imu_rate != 250:
             variant["imu_rate"] = a.imu_rate
             meta["imu_rate"] = a.imu_rate
@@ -421,8 +424,28 @@ def main():
             nom = {k: sim.get_param(f"SIM_GZ_EC_{k}{ch}") for k in ("MIN", "MAX")}
             meta["motor_fault"] = {"motor": fault["motor"], "thrust_scale": fault["thrust_scale"], "nominal": nom,
                                    "segment": fault["segment"]}
+        loss = sc.get("erpm_loss")  # dict(motor, start, end): total eRPM loss from segment start to segment end
+        if loss:
+            meta["erpm_loss"] = dict(loss)
+        sag = sc.get("thrust_sag")  # dict(scale): available thrust ramps linearly 1 -> scale over the window
+        if sag:
+            sag_t0, sag_dur = sim.t, sum(d for _, d, _ in sc["segments"])
+            sag_state = {"next": sim.t, "steps": []}
+            meta["thrust_sag"] = {**sag, "t0_us": int(sag_t0 * 1e6), "dur_s": sag_dur, "steps": sag_state["steps"]}
+
+            def sag_tick():  # 0.5 s staircase; one param set per step (PX4 CLI, blocks a few ms of wall time)
+                if sim.t >= sag_state["next"]:
+                    frac = min(1.0, (sim.t - sag_t0) / sag_dur)
+                    v = round(1.0 - frac * (1.0 - sag["scale"]), 4)
+                    sim.set_param("SIM_GZ_THR_SC", v)
+                    sag_state["steps"].append((int(sim.t * 1e6), v))
+                    sag_state["next"] += 0.5
         prev = 0.0
         for name, dur, val in sc["segments"]:
+            if loss and name in (loss["start"], loss["end"]):
+                on = name == loss["start"]
+                sim.set_param("SIM_GZ_ERPM_LOSS", (1 << loss["motor"]) if on else 0)
+                meta["erpm_loss"]["on_us" if on else "off_us"] = int(sim.t * 1e6)
             if fault and name == fault["segment"]:
                 k_om = math.sqrt(fault["thrust_scale"])
                 new = {k: int(round(v * k_om)) for k, v in nom.items()}
@@ -454,9 +477,15 @@ def main():
                       sim.send_att(rr, pp, yy, thr_cmd(tilt)))
             else:
                 sp = (lambda r=math.radians(r), p=math.radians(p), y=math.radians(y): sim.send_rate(r, p, y, thr_cmd(1.0)))
+            if sag:
+                sp = (lambda sp0=sp: (sag_tick(), sp0()))
             sim.run(dur, sp=sp, what=f"scenario:{name}")
             prev = val
         meta["t_window_end_us"] = int(sim.t * 1e6)
+        if sag:
+            sim.set_param("SIM_GZ_THR_SC", 1.0)
+        if loss and loss["end"] is None:
+            sim.set_param("SIM_GZ_ERPM_LOSS", 0)
         sim.run(4.0, sp=pos_sp, what="recover")  # outside the metrics window
 
         # ---- land ----

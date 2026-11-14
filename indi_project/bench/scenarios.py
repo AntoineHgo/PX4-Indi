@@ -97,3 +97,24 @@ SCENARIOS = {
                          segments=[("settle", 5.0, 0.0), ("loss", 10.0, 0.0), ("up", 4.0, +YAW_STEP_DEG),
                                    ("zero", 4.0, 0.0)]),
 }
+
+# Stage-2 held-out set (plan/s2_heldout_v2.md, frozen in scenarios.md v2): run with --sim v2 only. Step pattern and rate
+# pulses of H5, with one actuator or telemetry change each so that a loss is attributable. V7-V9 are H2, H3 and T8
+# (gust_diag, com_shift, motor_loss_0) flown on the v2 configuration and need no new entry.
+_ATT = dict(mode="attitude", axis="roll", segments=_attitude_steps("roll", STEP_DEG, 3.0))
+_RATE = dict(mode="rate", axis="roll", segments=_rate_pulses(3))
+_V_PLANT = {
+    "tau2": dict(model_variant=dict(tau=2.0)),                                    # V1 slow actuator
+    "asym": dict(model_variant=dict(tau_down=3.0)),                               # V2 slow spin-down
+    "lat": dict(sim_params=dict(SIM_GZ_ERPM_LAT=2)),                              # V3 eRPM latency +2 frames
+    "drop": dict(sim_params=dict(SIM_GZ_ERPM_DRP=0.2)),                           # V4 dropouts (+ total loss below)
+}
+for _k, _plant in _V_PLANT.items():
+    SCENARIOS[f"v2_{_k}_att"] = {**_ATT, **_plant}
+    SCENARIOS[f"v2_{_k}_rate"] = {**_RATE, **_plant}
+SCENARIOS["v2_drop_att"]["erpm_loss"] = dict(motor=0, start="up", end="zero1")              # 3 s on motor 0
+SCENARIOS["v2_drop_rate"]["erpm_loss"] = dict(motor=0, start="pulse1_up", end="pulse1_down")  # 2.25 s
+_VIB3 = dict(sim_params=dict(SIM_GZ_VIB_ACC=3.0, SIM_GZ_VIB_GYR=0.15))           # V5 vibration x3
+SCENARIOS["v2_vib3_hover"] = {**SCENARIOS["hover"], **_VIB3}
+SCENARIOS["v2_vib3_att"] = {**_ATT, **_VIB3}
+SCENARIOS["v2_sag_att"] = {**_ATT, "thrust_sag": dict(scale=0.85)}               # V6 thrust -15 % over the window

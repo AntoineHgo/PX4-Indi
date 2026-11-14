@@ -5,6 +5,8 @@ Supported keys:
   ixx, iyy, izz   base_link <inertia> diagonal terms (x500_base/model.sdf)
   mass            base_link <mass> (x500_base/model.sdf); propeller link masses are left unchanged
   tau             motor timeConstantUp and timeConstantDown of all four rotors (x500/model.sdf)
+  tau_up          timeConstantUp only (multiplies with tau); for the asymmetric-actuator scenario (V2)
+  tau_down        timeConstantDown only (multiplies with tau)
   imu_rate        x500_base imu_sensor <update_rate> in Hz (stock 250); the world physics step must match
                   (run_scenario.py --imu-rate writes the world copy)
   rpm             True: add a JointStatePublisher (every physics step) to x500, the stage-2 rotor speed source
@@ -20,7 +22,7 @@ import shutil
 import xml.etree.ElementTree as ET
 
 INERTIA_KEYS = ("ixx", "iyy", "izz")
-ALLOWED = INERTIA_KEYS + ("mass", "tau", "rpm", "imu_rate")
+ALLOWED = INERTIA_KEYS + ("mass", "tau", "rpm", "imu_rate", "tau_up", "tau_down")
 
 
 def _copy_model(src, dst, real=("model.sdf", "model.config")):
@@ -68,16 +70,17 @@ def build_variant(spec, out_dir, stock_models):
         el.text = str(int(spec["imu_rate"]))
     tree.write(base_path)
 
-    if "tau" in spec:
+    if {"tau", "tau_up", "tau_down"} & set(spec):
         x_path = os.path.join(root, "x500", "model.sdf")
         tree = ET.parse(x_path)
         n = 0
-        for tag in ("timeConstantUp", "timeConstantDown"):
+        for tag, own in (("timeConstantUp", "tau_up"), ("timeConstantDown", "tau_down")):
+            factor = spec.get("tau", 1.0) * spec.get(own, 1.0)
             for el in tree.getroot().iter(tag):
                 old = float(el.text)
                 rec["original"].setdefault(tag, []).append(old)
-                el.text = repr(old * spec["tau"])
-                rec["new"].setdefault(tag, []).append(old * spec["tau"])
+                el.text = repr(old * factor)
+                rec["new"].setdefault(tag, []).append(old * factor)
                 n += 1
         if n != 8:
             raise RuntimeError(f"expected 8 motor time constants in x500/model.sdf, found {n}")
