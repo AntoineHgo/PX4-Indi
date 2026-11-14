@@ -1,0 +1,138 @@
+{
+ "scenario": "motor_loss_0",
+ "controller": "k5.5_c1.665",
+ "seed": 1,
+ "speed": 1.0,
+ "sim": "v2",
+ "instance": 0,
+ "params_file": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_project/bench/params/indi_v3y_k5.5_c1.665.params",
+ "params_applied": {
+  "NAV_DLL_ACT": 0,
+  "COM_RC_IN_MODE": 4,
+  "COM_RCL_EXCEPT": 4,
+  "SDLOG_PROFILE": 17,
+  "MIS_TAKEOFF_ALT": 5.0,
+  "MC_INDI_G1_R": "174",
+  "MC_INDI_G1_P": "174",
+  "MC_INDI_G1_Y": "12.2",
+  "MC_INDI_ACT_TC": "0.0125",
+  "MC_INDI_ERPM_DLY": "1",
+  "MC_INDI_K_R": "28.77",
+  "MC_INDI_K_P": "16.76",
+  "MC_INDI_K_Y": "5.5",
+  "MC_INDI_YAW_CUT": "1.665",
+  "IMU_GYRO_DNF_EN": "1",
+  "THR_MDL_FAC": "0.683",
+  "MC_ROLL_P": "5.122",
+  "MC_PITCH_P": "5.797",
+  "MC_YAW_P": "3.238",
+  "MC_INDI_ACT_BLD": "0.3",
+  "MC_INDI_W_MAX": "1000"
+ },
+ "git": {
+  "commit": "12c636a310c271eef66c190cfef34e015df7ceda",
+  "dirty": false
+ },
+ "noise_seed": {
+  "gz_sim_seed": 1,
+  "px4_baro_srand": 1234
+ },
+ "events": [
+  {
+   "name": "settle",
+   "t_us": 34914000,
+   "dur_s": 5.0,
+   "mode": "attitude",
+   "axis": "yaw",
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  },
+  {
+   "name": "loss",
+   "t_us": 39914000,
+   "dur_s": 10.0,
+   "mode": "attitude",
+   "axis": "yaw",
+   "value": 0.0,
+   "prev": 0.0,
+   "step": true
+  },
+  {
+   "name": "up",
+   "t_us": 49914000,
+   "dur_s": 4.0,
+   "mode": "attitude",
+   "axis": "yaw",
+   "value": 45.0,
+   "prev": 0.0,
+   "step": true
+  }
+ ],
+ "phase_log": [],
+ "exit_status": "failed",
+ "error": "WatchdogTrip: watchdog: > 3.0 m below hold altitude for 1.0 s (sim t=53.41, value=3.81)",
+ "boot_params": {
+  "MC_INDI_EN": 1
+ },
+ "erpm_drop": 0.01,
+ "vib": {
+  "acc": 1.0,
+  "gyr": 0.05
+ },
+ "imu_rate": 1000,
+ "model_variant": {
+  "scale": {
+   "rpm": true,
+   "imu_rate": 1000
+  },
+  "dir": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_project/results/v3_screen_yaw/runs/motor_loss_0/k5.5_c1.665/seed1/model_variant",
+  "stock_models": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/Tools/simulation/gz/models",
+  "original": {
+   "imu_rate": 250.0
+  },
+  "new": {
+   "imu_rate": 1000.0,
+   "joint_state_publisher": [
+    "rotor_0_joint",
+    "rotor_1_joint",
+    "rotor_2_joint",
+    "rotor_3_joint"
+   ]
+  }
+ },
+ "arm_attempts": 1,
+ "t_arm_us": 16914000,
+ "hold_pos_ned": [
+  -0.007045549340546131,
+  -0.02690494991838932,
+  -4.992431640625
+ ],
+ "hold_yaw_rad": 1.5860141515731812,
+ "hover_thrust_estimate": 0.59294,
+ "t_offboard_us": 31906000,
+ "t_window_start_us": 34914000,
+ "motor_fault": {
+  "motor": 0,
+  "thrust_scale": 0.7,
+  "nominal": {
+   "MIN": 150,
+   "MAX": 1000
+  },
+  "segment": "loss",
+  "event_us": 39914000,
+  "event_done_us": 39914000,
+  "applied": {
+   "MIN": 125,
+   "MAX": 837
+  },
+  "omega_ratio": 0.8366600265340756
+ },
+ "watchdog": {
+  "reason": "> 3.0 m below hold altitude for 1.0 s",
+  "t_sim_s": 53.406,
+  "value": 3.809906005859375
+ },
+ "ulog": "flight.ulg",
+ "wall_time_s": 56.9
+}
