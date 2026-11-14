@@ -129,10 +129,15 @@ owner decisions when you first act on them.
 
 ## In progress
 
-- SESSION 27 (2026-11-14): DONE step 2a rotor speed telemetry: gz_bridge `SIM_GZ_ESC_FB` (8dfe3e9e1a), bench `--sim v2` /
-  `SIM_VERSION=v2` (46f0e6f935), check flight OK (`results/s2_escfb_check.md`, D-escfb). IN FLIGHT: haiku agent closing the
-  AM32 eRPM gaps (turnaround latency, default poles, loss rates) -> appends "Session 27 gap closure" to
-  `research/notes/am32_erpm.md`. Orchestrator: PX4 BDShot side (output rate, decode, CRC counter) -> `research/notes/px4_bdshot.md`.
+- SESSION 27 (2026-11-14): DONE step 2a rotor speed telemetry: gz_bridge `SIM_GZ_ESC_FB` 1 = true rotor speed
+  (8dfe3e9e1a), 2 = AM32/BDShot eRPM model (latency 1 frame, period encoding, 100-eRPM rounding, 14 poles, held drops,
+  `SIM_GZ_ERPM_DRP`); bench `--sim v1|v2|v2true --erpm-drop` (`SIM_VERSION` in run_batch.sh). Checks OK
+  (`results/s2_escfb_check.md`); D-escfb, D-erpm; notes `px4_bdshot.md`, `am32_erpm.md` (gap closure: AM32 rebuilds the
+  reply every frame, poles 14, no turnaround constant, loss rates only secondhand). Finding for INDI v2: esc timestamps
+  do not show staleness and 87 % of samples repeat, so loss detection must use esc_errorcount / online flag.
+  NEXT (step 2 cont.): (c) IMU: measure lockstep cost of a faster gz IMU (x500_base imu update_rate 250 -> 500/1000 via
+  model_variant key), then rotor-speed-tied vibration noise (blade-pass) - check gz sensor noise options from source
+  first; (d) re-fly PID baseline on the v2 sim (defaults + same tuning budget) BEFORE any INDI v2 flight.
 
 - SESSION 26 (2026-11-14): **v1 report closed at 743acd7140** (O-2). Review s25 applied (1 must-fix, 10 should-fix,
   5 minor; af424cf88a); T8 summarised on its 10 existing seeds (79c41e5b94, D-t8-10); 5 seed-1 time-series figures
@@ -501,6 +506,8 @@ owner decisions when you first act on them.
 | 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build, 2 INDI runs (hover, step_roll seed1), 0 failures | $1.63 cap |
 
 ## Journal
+
+- 2026-11-14 session 27: stage-2 sim: true rotor speed and AM32 eRPM telemetry model in gz_bridge (SIM_GZ_ESC_FB 1/2), bench --sim v2. Agents: 1 haiku.
 
 - 2026-11-13: session 1 started from scratch; created `STATE.md`, `DECISIONS.md`,
   Docker image `px4-indi-sim`. Cut off by the 5-hour usage limit at 08:13.

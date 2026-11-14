@@ -109,3 +109,55 @@ Facts from S1:
 | Typical pole count, 5-10 inch | NOT FOUND | - |
 | PX4 DShot output rate | NOT FOUND | - |
 | CRC error rate in practice | NOT FOUND | - |
+
+## Session 27 gap closure
+
+Same clone and base URL as above (HEAD 077b6a49852a1d5642d89ccc4d1259cb8e3802dd). Files are under `Src/`, `Mcu/`, `Inc/` of the clone.
+
+### Q1. Turnaround delay (DShot frame end -> telemetry frame start) and telemetry bit cell
+
+- Turnaround as a fixed constant: NOT FOUND. No µs delay constant exists in the telemetry send path. The telemetry send is started directly from the DMA transfer-complete path, with no software delay:
+  - `Mcu/f051/Src/IO.c:21-56`, `receiveDshotDma()` / `sendDshotDma()`; the TC handler `Mcu/f051/Src/stm32f0xx_it.c:111-116` reads `if (out_put) { receiveDshotDma(); compute_dshot_flag = 2; } else { sendDshotDma(); compute_dshot_flag = 1; }`.
+  - `Mcu/g431/Src/stm32g4xx_it.c:88-91` calls `transfercomplete();`, and `Src/signal.c:121-127` holds the armed+bidir branch that makes the same out_put choice.
+- "28" in code: only in the changelog, `Src/main.c:28` ("add 28us delay for dshot300") and `Src/main.c:186` ("Fix dshot telemetry delay f4 and e230 mcu"). These are changelog text, not an implementation constant. Not used as a value.
+- The main leading delay is `buffer_padding`: `Src/signal.c:212` sets `buffer_padding = 14` (DShot branch 1) and `Src/signal.c:224` sets `buffer_padding = 7` (branch 2). The GCR buffer is built with `gcr[buffer_padding] = 0` (`Src/dshot.c:329`, `:344`), and the DMA sends `23 + buffer_padding` entries from `gcr[0]` (`Mcu/f051/Src/IO.c:77`, `:87`; `Mcu/g431/Src/IO.c:71`). So the first `buffer_padding` entries are low, i.e. a leading delay of `buffer_padding` output-timer cells before the first telemetry bit. Interpretation (derived from code, not measured).
+- Telemetry bit cell (one GCR entry = one output-timer update period): `cell = (ARR + 1) * (PSC + 1) / f_tim`, where
+  - G431: `ARR = 108` (`Mcu/g431/Src/IO.c:65`), `PSC = output_timer_prescaler` (`Mcu/g431/Src/IO.c:64`).
+  - F051: `ARR = 61` (`Mcu/f051/Src/IO.c:71`), `PSC = output_timer_prescaler` (`Mcu/f051/Src/IO.c:70`).
+  - `output_timer_prescaler` values: `Src/signal.c:206` (=1 if CPU_FREQUENCY_MHZ > 100 else `:208` =0) for branch 1; `Src/signal.c:220` (=3 if > 100 else `:222` =1) for branch 2.
+  - Relation: branch 2 cell = 2x branch 1 cell (PSC 3 vs 1, same ARR). Absolute µs NOT computed: f_tim (timer clock vs CPU_FREQUENCY_MHZ on the G431 target) was NOT verified.
+- Telemetry bit rate relative to DShot rate: NOT FOUND as a ratio. The DShot input rate was not derived from the code. No 5/4 or similar factor found in the lines read.
+- Caveat: the receive DMA completes after `buffersize = 32` captures (`Src/signal.c:27`, `:213`, `:225`), i.e. at the last captured edge of the input frame. Frame-end reference point is inferred from this, not measured.
+
+### Q2. How often the period value is updated
+
+- Source value: `e_com_time` is recomputed on every main-loop iteration: `Src/main.c:2088` (inside `while (1)` at `Src/main.c:2087`), as the sum of six `commutation_intervals[]` halved, mean over one electrical revolution. `commutation_intervals[]` is written at each commutation (`Src/main.c:920`, from the prior note).
+- Build of the telemetry buffer: `make_dshot_package(e_com_time)` is called from:
+  - `processDshot()` at `Src/main.c:1754` (or `make_dshot_package(65535)` at `:1752` when `e_com_time > 65535`), only when `compute_dshot_flag == 2` (`Src/main.c:1744-1756`);
+  - `Src/signal.c:142` (the non-armed `dshot_telemetry` branch, not the armed path).
+- Who calls `processDshot()`: G431 `EXTI15_10_IRQHandler` at `Mcu/g431/Src/stm32g4xx_it.c:133-136`; F051 `EXTI4_15_IRQHandler` at `Mcu/f051/Src/stm32f0xx_it.c:310-313`; main loop at `Src/main.c:2102` only under `#ifdef NEED_INPUT_READY` with `input_ready` (`Src/main.c:2098-2104`). `EXTI->SWIER ... LINE_15` is set at the end of each DMA TC handler, which triggers that EXTI ISR.
+- Trigger: `compute_dshot_flag = 2` is set in the TC handler when `out_put` is 1, i.e. after each telemetry transmission completes (`Mcu/f051/Src/stm32f0xx_it.c:111-116`, `Src/signal.c:121-130`).
+- Resulting rate: the period is rebuilt once per DShot frame cycle (one receive plus one send), not per electrical revolution and not per main loop. Per cycle, the send is started with the buffer built at the end of the previous send (derived from control flow, not measured). The sampled value is therefore aged by about one DShot frame interval (the wait for the next input frame, plus a frame length). Derived, not measured.
+- CORRECTION to the section 4 claim above ("one telemetry frame per DShot command request bit, dshot.c:107-108"): in the armed bidir branch, `Src/signal.c:121-127` sends a telemetry frame on every cycle with no check of `send_telemetry`. `send_telemetry` (set at `Src/dshot.c:107-108` from bit 11) only gates the serial telemetry path (`Src/main.c:2260`). So the per-frame rate follows the DShot cycle, not the request bit. Read the code to confirm before modelling; this contradicts the earlier note.
+
+### Q3. AM32 default motor_poles
+
+- Value: 14 poles (7 pole pairs). Source: `Src/DroneCAN/DroneCAN.c:343-347`, `static const uint8_t default_settings[]`. Comment at `:340`: "default settings, based on public/assets/eeprom_default.bin in AM32 configurator / update to 2.19 default". Index 27 (0-based) = `0x0e` = 14.
+- Offset check (verified in the code): `Inc/eeprom.h:30-40` labels fields with byte offsets (`pwm_frequency; // 24`, `motor_kv; // 26`, `motor_poles; // 27`). Index 24 of the same array = `0x18` = 24, matching the pwm_frequency offset label; index 26 = `0x37` (motor_kv), index 27 = `0x0e` = 14.
+- Cross-check: DroneCAN parameter default `Src/DroneCAN/DroneCAN.c:157`: `{ "MOTOR_POLES", T_UINT8, 2, 64, 14, &eepromBuffer.motor_poles}` (min 2, max 64, default 14). Same value.
+- NOT FOUND: the `eeprom_default.bin` file (the array's stated origin) is not in the clone (`find` for `eeprom_default*` returned nothing). `Src/main.c:275-348` (the "Defaults" block) contains no `motor_poles` entry. The DroneCAN build conditional around `default_settings` was not checked, so the table may apply only to DroneCAN builds.
+- Usage: `Src/main.c:812-813`, `:1337`, `:2023`, `:2491`: eRPM = mech_rpm * (motor_poles/2).
+
+
+### Q4. Typical bidirectional DShot error / dropped-frame rates (web, secondhand)
+
+- Official Betaflight pages: `https://betaflight.com/docs/development/Dshot` returned HTTP 404 (WebFetch). `https://betaflight.com/docs/wiki/guides/current/RPM-Filter` and `.../Bidirectional-DShot` returned 404 earlier (S8, S9). Not read.
+- Search (WebSearch, standard mode) did not return official `dshot_telemetry_info` documentation or an error-percentage definition from Betaflight. Secondhand forum figures only:
+  - IntoFPV (`https://intofpv.com/archive/index.php/thread-25242.html`, also `https://intofpv.com/t-bidirectional-dshot-errors-when-transmitter-on`): the "E" field is the DShot telemetry error rate; quote: "A powered ESC should show 0% or very close to 0% errors."
+  - IntoFPV (`https://intofpv.com/t-bidirectional-dshot-errors-when-transmitter-on`): with BlueJay on Betaflight 4.4, quote: "The error percentage fluctuate between 0% and 0.3% when my transmitter is off. The error rate should be 0." Rate reported about 5% at 4 kHz PID on that setup (single user).
+  - IntoFPV (same search, separate thread): one user reports about 2-3% error at DShot600 during motor spin-up, and no errors after switching to DShot300 (single user).
+  - ArduPilot forum (`https://discuss.ardupilot.org/t/esc-errors-on-logs-and-what-can-i-do-to-reduce-the-errors/145157`): one user puts the abnormal line at 1%, "anything over 1%". Forum opinion, not a spec.
+- Rotorflight wiki (`https://github.com/rotorflight/rotorflight/wiki/Bidirectional-DSHOT`, a Betaflight fork, not Betaflight): ESC firmware 32.7.0 or later stated for full support. Secondhand, search snippet only.
+- Assessment: the only quantitative figures are single-user forum reports (0 to 0.3% idle with transmitter off, 2-3% at DShot600 spin-up, about 5% under heavy PID load, 1% as a rule of thumb). No dropped-frame rate in per-second terms was found. Use these as bounds for a sensitivity range, not as a calibrated model input.
+- Sources were not opened as full pages beyond search snippets. The IntoFPV and ArduPilot figures come from search-result summaries, not from full page reads.
+

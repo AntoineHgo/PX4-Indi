@@ -19,3 +19,13 @@ Not measured: end-to-end sensor-to-actuator latency in SITL (lockstep makes it o
 characterised against hardware). Consequences for the conclusions are discussed in report ch. 9: a low-noise,
 bias-free, vibration-free gyro favours INDI, whose angular-acceleration estimate differentiates the gyro, so the
 disturbance-rejection margins measured here are likely optimistic for real flight (not tested).
+
+## Stage-2 additions (session 27)
+
+- `--sim v2true`: esc_rpm = rotor joint speed x 10 (true motor speed of the plant, first-order up 0.0125 s / down
+  0.025 s), via JointStatePublisher + `SIM_GZ_ESC_FB=1` (D-escfb).
+- `--sim v2`: the same speed through the eRPM model (`SIM_GZ_ESC_FB=2`, D-erpm): one output period latency (250 Hz:
+  4 ms), AM32 period encoding, PX4 100-eRPM rounding, 14 poles, drop probability `--erpm-drop` (held value).
+  Not modelled: ESC measurement age within a frame (AM32 rebuilds the reply once per frame from a period averaged
+  over one electrical revolution, ~1.2 ms at hover), turnaround (no constant in AM32 source), offline after 200
+  consecutive drops. IMU rate and vibration are still the v1 values (next step).

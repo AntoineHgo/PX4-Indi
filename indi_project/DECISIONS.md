@@ -413,3 +413,17 @@ These are the owner's decisions, not the orchestrator's; full text in `OWNER_GUI
   T9/H5 model variants that already copy x500); publishing esc_status from the joint callback (rate tied to the
   physics step, not to the output rate as on hardware).
 - Evidence: `results/s2_escfb_check.md`.
+
+## D-erpm (session 27, 2026-11-14): eRPM telemetry model values
+
+- Latency: one output period (the reply to frame k-1 is read at frame k: PX4 `DShot.cpp:98,169`, note
+  `px4_bdshot.md`). AM32 rebuilds the reply once per DShot frame (`Src/main.c:1744-1756`, `am32_erpm.md` session 27);
+  turnaround has no constant in AM32 (signal.c starts the reply from the DMA-complete interrupt): not modelled.
+- Resolution: AM32 9-bit mantissa / 3-bit exponent period (us) and PX4's eRPM/100 rounding then integer division by
+  pole pairs (`dshot.c:885-910`, `DShot.cpp:793`). Poles 14 (AM32 default `DroneCAN.c:343-347`, PX4 default
+  `DShot.cpp:1026`).
+- Drops: last good value held, error counter incremented (`dshot.c:676-700`). Rate: no primary source found;
+  secondhand forum figures 0-0.3 % idle, 2-5 % under load, "1 % rule of thumb" (URLs in `am32_erpm.md`, search snippets
+  only). Chosen: 1 % nominal for the v2 configuration, 5 % as a stress scenario in the new held-out set.
+- Alternatives rejected: a Gaussian noise model on rpm (real error is deterministic quantisation plus holds); a
+  latency of several frames (no source).

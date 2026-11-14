@@ -14,3 +14,12 @@ Firmware: gz_bridge commit "optional rotor joint speed as ESC rpm feedback".
   measure the up/down time constants and delay properly.
 - v1 path: `SIM_GZ_ESC_FB=0` (default) executes the old code; the only change on that path is that the node mutex is
   initialised before the first subscription. v1 runs are not re-flown for this.
+
+## eRPM model check (same scenario, `--sim v2 --erpm-drop 0.05`, `step_roll_pid_seed1_erpm/run.json`)
+
+- Flight OK. esc_status 250 Hz; 695 dropped frames since boot (~5.1 % of ~13 500 frames incl. the ~14 s before the
+  log starts; 7 % if divided by logged frames only), as set.
+- Quantisation: 302 distinct motor-0 values in flight, median step 15 rpm (100 eRPM / 7 pole pairs = 14.3 rpm).
+  Median 7357 rpm vs command 7344 rpm (+0.2 %, one quantisation step).
+- 87 % of consecutive samples are identical (quantisation at slow hover dynamics, plus drops): a "frozen value" test
+  cannot detect stale telemetry; INDI v2 must use the esc_errorcount increments and the online state instead.
