@@ -47,10 +47,21 @@ BASE_PARAMS = {
 TAKEOFF_ALT = 5.0
 ALT_KP, ALT_KD = 0.04, 0.10  # thrust per m / per m/s of altitude error in attitude/rate scenarios
 SETPOINT_PERIOD = 0.02  # sim seconds between offboard setpoints
+# O-12 watchdog (D-watchdog), active from takeoff completion to the landing command
+WD_TILT_DEG, WD_TILT_HOLD_S = 60.0, 0.5  # MPC_TILTMAX_AIR 45 deg; largest commanded tilt ~52 deg (H4)
+WD_MIN_HEIGHT_M = 0.3  # ground contact while airborne
+WD_BELOW_M, WD_BELOW_HOLD_S = 3.0, 1.0  # height deficit below the hold altitude; worst recorded excursions < 1 m
+WD_NO_TICK_S = 10.0  # wall seconds without ATTITUDE while PX4 is alive (host suspend, stall)
 
 
 class RunError(Exception):
     pass
+
+
+class WatchdogTrip(RunError):
+    def __init__(self, reason, t_sim_s, value):
+        super().__init__(f"watchdog: {reason} (sim t={t_sim_s:.2f}, value={value:.3g})")
+        self.info = {"reason": reason, "t_sim_s": round(t_sim_s, 3), "value": value}
 
 
 class Sim:
@@ -71,6 +82,12 @@ class Sim:
         self.landed_state = None
         self.mav = None
         self.sysid = a.instance + 1
+        # watchdog state; armed by wd_start() once the vehicle is airborne
+        self.wd_on = False
+        self.wd_href = None
+        self.wd_tilt_t0 = None
+        self.wd_below_t0 = None
+        self.wd_last_tick = time.time()
 
     # ---------- processes ----------
     def load_env(self):
@@ -210,6 +227,9 @@ class Sim:
         if ty == "ATTITUDE":
             self.t = m.time_boot_ms * 1e-3
             self.yaw = m.yaw
+            self.wd_last_tick = time.time()
+            if self.wd_on:
+                self.wd_check(m)
             return True
         if ty == "LOCAL_POSITION_NED":
             self.pos = (m.x, m.y, m.z)
@@ -220,6 +240,34 @@ class Sim:
         elif ty == "EXTENDED_SYS_STATE":
             self.landed_state = m.landed_state
         return False
+
+    def wd_start(self):
+        self.wd_on = self.a.watchdog == "on"
+        self.wd_href = -self.pos[2]
+
+    def wd_check(self, m):
+        vals = (m.roll, m.pitch, m.yaw, m.rollspeed, m.pitchspeed, m.yawspeed)
+        if not all(math.isfinite(v) for v in vals):
+            raise WatchdogTrip("non-finite attitude or rate", self.t, float("nan"))
+        tilt = math.degrees(max(abs(m.roll), abs(m.pitch)))
+        if tilt > WD_TILT_DEG:
+            self.wd_tilt_t0 = self.t if self.wd_tilt_t0 is None else self.wd_tilt_t0
+            if self.t - self.wd_tilt_t0 >= WD_TILT_HOLD_S:
+                raise WatchdogTrip(f"tilt > {WD_TILT_DEG:.0f} deg for {WD_TILT_HOLD_S} s", self.t, tilt)
+        else:
+            self.wd_tilt_t0 = None
+        if self.pos is None:
+            return
+        h = -self.pos[2]
+        if h < WD_MIN_HEIGHT_M:
+            raise WatchdogTrip(f"height < {WD_MIN_HEIGHT_M} m", self.t, h)
+        if self.wd_href - h > WD_BELOW_M:
+            self.wd_below_t0 = self.t if self.wd_below_t0 is None else self.wd_below_t0
+            if self.t - self.wd_below_t0 >= WD_BELOW_HOLD_S:
+                raise WatchdogTrip(f"> {WD_BELOW_M} m below hold altitude for {WD_BELOW_HOLD_S} s", self.t,
+                                   self.wd_href - h)
+        else:
+            self.wd_below_t0 = None
 
     def run(self, sim_dur, sp=None, until=None, wall_timeout=None, what=""):
         """Advance sim time by sim_dur (or until cond), sending setpoint sp() every SETPOINT_PERIOD sim s."""
@@ -234,6 +282,10 @@ class Sim:
                 return True
             if time.time() - w0 > wall_timeout:
                 raise RunError(f"wall timeout ({wall_timeout:.0f}s) in phase '{what}' (sim t={self.t:.2f})")
+            if (self.wd_on and time.time() - self.wd_last_tick > WD_NO_TICK_S and getattr(self, "px4", None)
+                    and self.px4.poll() is None):
+                raise WatchdogTrip(f"no ATTITUDE for {WD_NO_TICK_S:.0f} s wall in phase '{what}'", self.t,
+                                   time.time() - self.wd_last_tick)
             if self.pump() and sp is not None and self.t >= next_sp:
                 sp()
                 next_sp = self.t + SETPOINT_PERIOD
@@ -335,6 +387,8 @@ def main():
     ap.add_argument("--vib-acc", type=float, default=0.0, help="v2: IMU vibration accel amplitude per rotor [m/s^2]")
     ap.add_argument("--vib-gyr", type=float, default=0.0, help="v2: IMU vibration gyro amplitude per rotor [rad/s]")
     ap.add_argument("--erpm-drop", type=float, default=0.0, help="v2: probability of a dropped eRPM frame")
+    ap.add_argument("--watchdog", choices=("on", "off"), default="on",
+                    help="O-12 run watchdog; 'off' is for diagnosis only, never in a batch")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
 
@@ -407,6 +461,7 @@ def main():
             raise RunError("takeoff rejected")
         sim.run(None, until=lambda: sim.pos and sim.pos[2] <= -(TAKEOFF_ALT - 0.3), wall_timeout=120 + 60 / a.speed,
                 what="climb")
+        sim.wd_start()
         sim.run(5.0, what="hover_before_offboard")
         hold_pos, hold_yaw = sim.pos, sim.yaw
         meta["hold_pos_ned"], meta["hold_yaw_rad"] = hold_pos, hold_yaw
@@ -506,12 +561,15 @@ def main():
         sim.run(4.0, sp=pos_sp, what="recover")  # outside the metrics window
 
         # ---- land ----
+        sim.wd_on = False
         sim.cmd(21, 0, 0, 0, float("nan"), float("nan"), float("nan"), 0)
         sim.run(None, until=lambda: not sim.armed, wall_timeout=120 + 120 / a.speed, what="land")
         sim.run(2.0, what="post_disarm")
         ok = True
     except Exception as e:  # noqa: BLE001
         meta["error"] = f"{type(e).__name__}: {e}"
+        if isinstance(e, WatchdogTrip):
+            meta["watchdog"] = e.info
         print("RUN FAILED:", meta["error"], file=sys.stderr)
     finally:
         try:
