@@ -317,3 +317,11 @@ to exceed what the airframe and the default position-controller limits allow; th
 softening a held-out scenario after seeing one result would be selection after the fact. Ground contact and
 saturation time are reported as outcomes. Alternatives rejected: raising MPC_TILTMAX_AIR for H1 (changes the
 baseline's outer loop, not the rate loop under test), reducing H4 to x0.7 (would merely repeat T8).
+
+## D-accept (2026-11-14, session 15): acceptance criteria applied literally
+
+The section-6 criteria are applied as frozen. H4 (both controllers crash) counts against criterion 1 even though PID
+fails identically, and H5 (T2 + T4) is split so that the worse part (T4, rate pulses 1.58x) decides criterion 3.
+Alternative rejected: averaging the two H5 parts or excluding H4 as infeasible, because both would be rule changes
+after seeing the data; neither would change the outcome anyway (criterion 3 fails on H5 alone). Outcome: "INDI does not
+outperform PID". The report states it plainly, with the disturbance-rejection gains and the actuator-mismatch weakness.

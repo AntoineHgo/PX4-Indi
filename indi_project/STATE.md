@@ -85,6 +85,11 @@
   (step pattern) and 1.6x (rate pulses), effort 3.1x, from a 5-7 Hz roll limit cycle. Diagnosed: motor time constant
   x2 alone causes it (inertia/mass alone do not); with MC_INDI_ACT_TC matched it vanishes. Actuator-model mismatch is
   INDI's main robustness weakness here. Trajectory mode + T5/H1/H4 implemented; 10-seed batch flying.
+- **Acceptance (session 15, `results/acceptance_s15.md`): all 6 H scenarios flown, 10 seeds. Outcome under the
+  frozen rules: "INDI does not outperform PID".** Criterion 3 fails on H5 (rate pulses 1.58x, ACT_TC-mismatch limit
+  cycle); criterion 1 fails on H4 (both controllers crash 10/10, alike up to impact). Criterion 2 met (H1, H2, H3; H6
+  at threshold). INDI's strength: disturbance rejection; its weakness: actuator-model mismatch.
+  T5 lemniscate: INDI 0.95x position RMS; H1 fast circle 0.73x (infeasible for both) (`results/heldout_s15.md`).
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -107,7 +112,15 @@
 
 ## In progress
 
-- SESSION 15 RUNNING (detached): H5 batch (`results/h5_s15.log`, mismatch_combined_att/_rate, speed 4, seeds 1-10,
+- SESSION 15 DONE: H1/H4/H5 flown and committed, acceptance decided (negative, see summary). NEXT (phase 6):
+  (1) metrics.py: end the window at ground contact for crash-capable scenarios, re-score H4/T8; move the session-15
+  inline trajectory/H4 table scripts into `bench/` (reproducibility); (2) T1 hover effort, frozen candidates, 10 seeds
+  (criterion 4); (3) report ch. 8 results + ch. 9 discussion (delegate drafts to sonnet from results/*.md:
+  heldout_s14, heldout_s15, heldout_h5_s15, acceptance_s15, t8_motor_loss_s13, tuning/*.md); (4) fable review of the
+  control law and of the conclusions; (5) the open REPORT FIXES list below. Optional, clearly labelled as
+  post-acceptance work and never retro-fitted into the verdict: ACT_TC robustness sweep (INDI stability margin vs
+  motor time-constant error), which the H5 finding motivates.
+- (old) SESSION 15 RUNNING (detached): H5 batch (`results/h5_s15.log`, mismatch_combined_att/_rate, speed 4, seeds 1-10,
   both controllers), then trajectory batch (`results/traj_s15.log`: traj_lemniscate T5, traj_circle_fast H1,
   motor_loss_2 H4, speed 1, seeds 1-10). Runs with metrics.json are skipped, so re-run the log-header commands if
   incomplete. NEXT: `bench/summarize_seeds.py` on each (trajectory block for T5/H1/H4: rms_3d_m; ground contact for
@@ -381,3 +394,4 @@
 - 2026-11-14: session 13: r4f J 0.978 (tie with PID); INDI frozen (D-freeze); T8 motor loss: INDI roll/pitch 5-9x better, yaw worse.
 - 2026-11-14: session 14: T8 fault-onset metrics; report ch. 5 and ch. 7 drafted (sonnet, 2 agents); held-out seeds 1-5 done (INDI better on all disturbance scenarios, yaw worse when commanded); seeds 6-10 done: INDI attitude better p=0.002 on all 6 scenarios.
 - 2026-11-14 session 15: H5 implemented and flown (10 seeds): INDI loses, ACT_TC-mismatch limit cycle diagnosed; trajectory mode + T5/H1/H4 added, batch launched.
+- 2026-11-14 session 15: T5/H1/H4 flown (10 seeds); acceptance decided: INDI does not outperform PID (H5 criterion 3, H4 criterion 1).
