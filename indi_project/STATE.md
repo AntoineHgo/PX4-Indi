@@ -112,6 +112,8 @@ owner decisions when you first act on them.
   PID tuning check, then hardware-readiness fixes.
 - **Stage 2 (session 27):** sim now has true rotor speed and an AM32/BDShot eRPM telemetry model (`--sim v2`), and a
   selectable IMU/physics rate (1000 Hz runs real time). Next: IMU rate choice, vibration noise, then PID re-baseline.
+- **Stage 2 (session 29):** D-notch: ESC-rpm gyro notch in v2 for both controllers (vibration effort gone, tracking
+  unchanged). INDI dt-jitter desync fixed (review item 2). v2 PID tuning check r1 running.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -133,6 +135,22 @@ owner decisions when you first act on them.
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+
+- SESSION 29 (2026-11-14): DONE (d2) effort by axis: v2 vibration effort is roll/pitch torque chatter only. DONE
+  D-notch: ESC-rpm dynamic notch (IMU_GYRO_DNF_EN 1) in the v2 config for BOTH controllers; PID hover effort 0.7-1.1 ->
+  0.03, tracking unchanged (`results/s2_notch_check.md`). v2 NOMINAL CONFIG is now the env of session 28 PLUS the
+  overlay `bench/params/pid_dnf.params` (INDI v2 overlays must include `IMU_GYRO_DNF_EN 1`). DONE tune.py env overrides
+  TUNE_REF_ROOT/TUNE_REF_PARAMS/TUNE_OUT_ROOT (b7ad54b701). DONE step 3 item 2 (+9): dt-jitter fix (68cab62e42,
+  20/20 gtests; SITL binary NOT rebuilt since, rebuild before any INDI flight).
+  RUNNING (detached, setsid, resumable, 4 h timeout): v2 PID tuning check r1 = `bench/s2_pid_tune_r1.sh` (24 cand x
+  5 scn x 2 seeds + 10 ref flights, span 2, sampler seed 0, notch in ref and candidates) -> `results/s2_tuning/pid/r1/`
+  (summary.csv), ref `results/s2_tuning/ref/`, log `results/s2_tuning_r1.log`. If no process `tune.py --family pid`
+  is alive and summary.csv is incomplete, re-launch the same script (skips done runs).
+  NEXT: (1) analyse r1 (J per candidate vs c00 = defaults); (2) r2 as v1 (16 cand x 3 seeds, span 1.5, centred on r1
+  best; write `bench/s2_pid_tune_r2.sh` like r1 with --round-name r2 --n-candidates 16 --seeds 1 2 3 --span-factor
+  1.5 [--center best.json]); (3) step 3 remaining items 4 (after O-5), 5, 7, 10/11 bounds, 12, 13 tests: small, one
+  per commit, each with a gtest; (4) for v2 INDI: tune.py INDI space must DROP MC_INDI_ACT_TC (owner: G, ACT_TC,
+  delays, G2 never tuned).
 
 - SESSION 28 (2026-11-14): DONE (c1) logged 250/285 Hz is a logger artifact (3500 us poll, esc_status 5 ms); the loop
   runs at 1 kHz. Lockstep at 1000 Hz keeps up at speed 4 and 6 parallel; speed 2/4 inside the seed spread
@@ -574,3 +592,4 @@ owner decisions when you first act on them.
 - 2026-11-14 session 26: stage 2 started: gz rotor-speed path verified from source (plan/s2_rotor_speed.md); AM32 eRPM note (gaps listed). Agents s26: 1 haiku.
 - 2026-11-14 session 27: stage-2 sim: true rotor speed and AM32 eRPM telemetry model in gz_bridge (SIM_GZ_ESC_FB 1/2), bench --sim v2. Agents: 1 haiku.
 - 2026-11-14 session 27: --imu-rate option (1000 Hz gyro, real time at speed 1).
+- 2026-11-14 session 29: D-notch (ESC-rpm notch in v2, both controllers); dt-jitter fix 68cab62e42 (20/20 gtests); v2 PID tuning r1 launched detached. Agents: 0.
