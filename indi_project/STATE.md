@@ -53,7 +53,9 @@
   INDI setpoint term K_Y*r_sp/G1_Y peaks at 2.75, yaw torque saturates at 1.0
   on every step (PID peak 0.33); INDI yaw loop tuned ~4x faster than PID
   (K_Y 5.8 vs P*G1 1.5 rad/s). INDI round 3 launched centred at K_Y 3,
-  YAW_P 4 (D-r3).
+  YAW_P 4 (D-r3). r3 c00 J 1.157, c01 1.087 (PID 0.96), running.
+  Held-out scenarios H6 step_diag, H2 gust_diag, H3 com_shift implemented
+  and flown once with PID (harness check only, `bench/scenarios.md` log).
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -75,6 +77,12 @@
 | 6 | Validation and report | not started |
 
 ## In progress
+
+- QUEUED session 12: after r3 ends, PID T8 motor_loss_0 seeds 1-3 (speed 1,
+  log `results/t8_pid_s12.log`, output `results/runs/motor_loss_0/pid_default/`).
+  INDI T8 waits for the r3 best candidate.
+- RUNNING session 12: one sonnet agent, T9 `mismatch_inertia` model variant,
+  log `plan/t9_model_variant_log.md`. If cut off, read the log and finish.
 
 - RUNNING session 12 (detached): INDI r3 (D-r3), 16 cand x 5 scen x 3 seeds,
   ~240 flights, ~1.5 h. Log `results/tuning/r3.log` (header = command,
