@@ -31,6 +31,10 @@
   committed). Remaining INDI hover effort is yaw: yaw torque std 9x PID
   (PID filters yaw torque at 2 Hz by default, INDI was at 10 Hz)
   (`results/effort_axes_s9.md`). Round 2 for both families launched (D-r2).
+- **Session 10:** PID r2 (16 cand x 3 seeds): best J 0.958 vs re-flown
+  defaults 0.964, inside noise: PX4 defaults are the retuned PID baseline
+  (64 candidates over r1+r2, `results/tuning/r2.md`). Gust and payload
+  disturbance scenarios (T6, T7) implemented and flown once with PID.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -53,11 +57,17 @@
 
 ## In progress
 
-- Session 10 (2026-11-14): r2 still running at session start (PID c09/16 at
-  02:41, ~1.7 min per candidate). One sonnet agent implementing T6 gust_x +
-  T7 payload_add per `plan/disturbance_spec.md` (D-dist); progress log
-  `plan/impl_log_disturbance.md`. If cut off: read that log, finish what it
-  lacks.
+- Session 10 (2026-11-14): INDI half of r2 running detached (started ~02:54,
+  ~30 min). Next session: if no `px4-indi-*-indi-r2` container runs and
+  `results/tuning/indi/r2/summary.csv` lacks candidates, re-run the INDI
+  command of the r2.log header (resumable); then fill the INDI section of
+  `results/tuning/r2.md`. Per-candidate dirs of pid/r2 (c00..c15) are
+  untracked: commit their metrics.json/run.json like r1 (no .ulg/.log).
+- DONE session 10: T6 gust_x + T7 payload_add (D-dist, commits 160dda984d,
+  4681575174); PID-default seed 1: gust 0.61 m / 14.2 deg / recovery 15.9 s,
+  payload 0.35 m / recovery 4.8 s. Unverified: wrench not read back from gz
+  (inferred from response), speed > 1 untested. Injector uses the one-step
+  `/wrench` topic each 4 ms tick (`/wrench/persistent` accumulates, crashed gz).
 - Session 9 (2026-11-14): tuning round 2 (D-r2) launched detached, PID then
   INDI, 16 candidates x 5 scenarios x seeds 1 2 3 each (~480 flights,
   ~2-3 h). Log `results/tuning/r2.log`, outputs
@@ -82,7 +92,13 @@
 
 ## Next concrete actions
 
-0. Session 9 next steps: (a) DONE INDI r1 analysis; (b) DONE: hover position RMS is not
+0. Session 10 next steps: (a) INDI r2 analysis; (b) remaining sim
+   extensions, one small sonnet task each: T8 motor loss (per-channel
+   SIM_GZ_EC_MAX at runtime, check thrust ~ omega^2 so scale by sqrt),
+   T9/H5 model variants (generated x500_base override on GZ_SIM_RESOURCE_PATH),
+   T5/H1 trajectories, H2/H3 profiles in disturbance.py. Sonnet agents
+   overrun the 30-call target (59 calls, ~$0.9): split tasks smaller.
+   Session 9 next steps: (a) DONE INDI r1 analysis; (b) DONE: hover position RMS is not
    repeatable per seed (re-fly up to 2.2x the reference, `pid_r1.md`
    follow-up): find the non-determinism, then >= 8 hover seeds in J; (c) DONE (session 9): remaining INDI hover effort is yaw
    (`results/effort_axes_s9.md`); (d) LAUNCHED session 9: round 2 for both families (D-r2).
@@ -206,6 +222,7 @@
 | 7 (2026-11-14) | 1 sonnet (tune.py, 16 tool calls) | 2 INDI runs + 4 smoke tuning flights; PID tuning r1 (~250 flights) left running detached | ~$2.4 of $3 cap |
 | 8 (2026-11-14) | 1 sonnet (yaw cutoff, 14 tool calls) | 1 SITL build, 6 check flights (2 tooling failures), PID r1 finished (240), INDI r1 finished (240, 0 failures) | ~$1.8 of $2.61 |
 | 9 (2026-11-14) | 1 haiku (steffensen2023), 1 sonnet (ch. 4 draft) | round 2 launched (~480 flights) | triage + yaw effort analysis |
+| 10 (2026-11-14) | 1 sonnet (disturbance injector, 59 tool calls, ~$0.9) | 2 test flights + PID r2 finished (240) | ~$2 of $3 by mid-session |
 | 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build, 2 INDI runs (hover, step_roll seed1), 0 failures | $1.63 cap |
 
 ## Journal
@@ -228,3 +245,4 @@
 - 2026-11-14: session 8: INDI r1 done: better tracking on all tuning scenarios, worse J from effort.
 - 2026-11-14: session 9: untracked files triaged; INDI hover effort traced to yaw; tuning round 2 (both families, 3 seeds) launched.
 - 2026-11-14: session 9: Steffensen 2023 note; report ch. 4 draft + code verification of the integration analysis (SIH has a first-order motor lag SIH_T_TAU and a modelled esc_rpm, unlike gz).
+- 2026-11-14: session 10: PID r2 done (defaults within noise of best); T6 gust_x and T7 payload_add scenarios added (ApplyLinkWrench injector).
