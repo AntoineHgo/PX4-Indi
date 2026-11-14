@@ -21,3 +21,17 @@ average (up to 7 % on seed 3), which is larger than the speed-4 seed spread and 
 over PID (0.92x). PID was not re-flown at speed 1 on step_diag (its step_roll attitude RMS moved -2.5 % from speed
 4 to 1, `speedcheck_pid_default.md`), so the H6 ratio at speed 1 is unknown; H6 was already at the acceptance
 threshold. Two confounds: the firmware differs by the post-freeze fixes, and n = 3.
+
+## Follow-up: PID on step_diag at speed 1 (seeds 1-3)
+
+| seed | PID rot. RMS s1 / s4 (deg) | INDI/PID s1 | INDI/PID s4 |
+|---|---|---|---|
+| 1 | 6.544 / 6.530 | 0.881 | 0.874 |
+| 2 | 6.529 / 6.540 | 0.935 | 0.893 |
+| 3 | 6.342 / 6.356 | 0.973 | 0.904 |
+
+PID does not depend on the speed factor (within 0.2 %); INDI does (+4 % on average at speed 1). INDI is still
+lower than PID on 3/3 seeds at speed 1, but the H6 margin shrinks from ~11 % to ~7 % on these seeds. The
+D-landyaw fix was already shown not to change step_diag at speed 4 (`landyaw_check_s19.md`), so the shift is more
+likely a timing effect of the faster-than-real-time run on the INDI path (angular-acceleration estimate) than the
+firmware difference. Cause not identified; n = 3.
