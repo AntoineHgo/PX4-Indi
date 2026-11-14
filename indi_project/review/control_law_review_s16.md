@@ -152,7 +152,46 @@ adds F's phase at the yaw crossover `K_Y` rad/s.
 
 ## 4. Boundedness, allocation, readability
 
-Not covered in this pass.
+Bound chain (`indi_rate_control.cpp`): inputs finite-checked (:145-147), `dt` in `[kMinDt, kMaxDt]`
+(:145, already clamped in `Run()` `MulticopterRateControl.cpp:186`), `t_alloc` clamped to +-1 (:180),
+`_t_act` a convex combination of bounded values since `alpha in (0,1)` for `tc in [1 ms, 200 ms]` (:49,
+:183-184), ring buffer and H filters driven by bounded input, `dt_cmd` clamped to `+-_max_increment`
+(:243) and `t_cmd` to +-1 (:244). The divisor `G1 + G2/dt >= kMinG1` (:63, :93, :227). `nu` itself is
+unbounded (`K * error`) but only enters through the clamped `dt_cmd`. The non-finite check at :232 catches
+the overflow case. Every state is a fixed-size member (`_t_delay_buffer[5]`, three `LowPassFilter2p`,
+three `AlphaFilter`); no heap use on the update path, `indi_rate_status` is a static uORB publication
+(`MulticopterRateControl.cpp:145-152`). **ok, confirmed.**
+
+- **risk, confirmed** `indi_rate_control.hpp:122-125` and `:79-80,67`: `setMaxIncrement(<= 0)` silently
+  selects the *largest* increment (1, the full torque range) instead of the safest; and `paramsValid`
+  accepts `K = 0` (`>= 0.f`) although the header says `> 0`. With `K = 0` the law becomes
+  `dt = -a_f/G1`, pure acceleration cancellation (open loop on rate). Fix: fault or select a small
+  increment on an invalid `DT_MAX`, and require `K > 0` (or document `0` as intentional).
+- **risk, suspected** `mc_rate_control_params.yaml` (bounds not re-read here): if `MC_INDI_DT_MAX` has
+  `min: 0`, a user-entered 0 reaches the fallback above. Make the parameter min strictly positive.
+- **risk, confirmed** `MulticopterRateControl.cpp:137-141,281-283`: the actuator model consumes
+  `prev_setpoint - unallocated` only when the status timestamp is newer than the previous setpoint
+  time; otherwise the unclamped previous setpoint (which is the INDI output, so already in +-1) is used.
+  The status is in normalised torque, same frame as the setpoint, so the subtraction is dimensionally
+  consistent with the model; but the status describes the setpoint the allocator *last processed*,
+  not necessarily the one of cycle k-1, so after a stale run the model receives the saturation of an
+  older command. Bounded by one torque unit; see section 1 for the cadence. The PID branch keeps its
+  own sign-based saturation flags (:269-276) so the two laws see different feedback - acceptable but
+  worth a comment.
+- **risk, confirmed** `indi_rate_control.cpp:117,189`: `setDelaySamples` can change mid-run; the ring
+  buffer always holds `kMaxDelaySamples + 1` valid (possibly zero) samples so the read index is always in
+  range, but a change from 0 to 4 makes `t_f` jump back 4 cycles of actuator history in one step
+  (`t_cmd` steps by the corresponding change in `t_act`). Fix: document as a ground-only parameter.
+- **style** `indi_rate_control.cpp:63,67` vs `:145-147`: `PX4_ISFINITE` and `math::isFinite` mixed in the
+  same file; pick one. `:149` re-checks `_g2_yaw` finiteness that `setG2Yaw` (:93) already guarantees.
+- **style** `indi_rate_control.cpp:144-247`: step comments run 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10 but step
+  6 (landed) sits above 3-5 in the file; renumber so the comment order follows the code. `:128` sets
+  `_yaw_filter_reset_pending` even when the yaw filter is inactive (harmless, as noted in section 2);
+  `:135` of the header still says states are "held at zero" while landed. `_fault` is not cleared by
+  `reset()` (documented, :144) but a caller cannot distinguish "never run" from "last run OK" after a
+  reset; a `_fault = false` in `reset()` or a tri-state would be clearer.
+- **style** `MulticopterRateControl.cpp:290,294`: the landed gate `_maybe_landed || _landed` is written
+  twice; hoist into one local so the two laws cannot drift apart.
 
 ## 5. Robustness to actuator time constant mismatch (5-7 Hz roll limit cycle)
 
@@ -186,7 +225,42 @@ Code-level mitigations, in order of preference:
 
 ## 6. Test coverage gaps
 
-Not covered in this pass.
+Existing tests (`indi_rate_control_test.cpp:97-650`, 19 cases) cover: zero inputs, rate step, constant
+disturbance, saturated allocator, landed increment bound, invalid inputs -> fault, yaw with/without G2,
+a single sample-rate change, pass-through filters and delay, and eight yaw-cutoff cases. All run at a
+constant dt and with constant or single-step inputs, so no test exercises the dynamic paths flagged in
+sections 1-3. There is no module-level test at all for `MulticopterRateControl` (latching, status
+staleness, landed gating). Gaps ranked by risk, with proposed test names:
+
+1. **risk, confirmed** dt jitter (section 1): `DtJitterWithRampingTorqueKeepsOutputContinuous`,
+   alternate dt by +-15 % while `torque_allocated_prev` ramps; assert `t_cmd` step per cycle bounded by
+   the ramp slope, not by `t_act - t_f`.
+2. **risk, confirmed** landed/airborne transition: `LandedToAirborneWithNonZeroTorqueHasNoStep`, run
+   landed with a constant allocated torque, flip `landed`, assert no `t_cmd` jump; and
+   `MaybeLandedYawErrorIsNotAttenuated`, hold landed several cycles with `YAW_CUT > 0` and a constant yaw
+   error, assert `nu_y = K_Y e` each cycle (the present `LandedYawOutputUnaffectedByYawCutoff` :650 must
+   be checked to run more than one landed cycle with non-settled inputs).
+3. **risk, confirmed** yaw cutoff change while torque moves (section 2):
+   `YawCutoffChangeDuringTorqueRampLeavesRollPitchUnchanged`, compare roll/pitch `t_cmd` with and
+   without a mid-ramp `setYawCutoff` change.
+4. **risk, confirmed** clamps: `IncrementClampIsAppliedBeforeOutputClamp` (large error, small
+   `DT_MAX`, assert `|t_cmd - t_f| <= DT_MAX`), `OutputClampHoldsAtUnityWithSaturatedFeedback`, and
+   `MaxIncrementInvalidValueSelectsSafeDefault` (documents the `<= 0 -> 1` choice of section 4).
+5. **risk, confirmed** dt bounds and 20 ms yaw-filter toggle (section 2): `DtAtBoundsIsAccepted` (exactly
+   `kMinDt`, `kMaxDt`, just outside -> fault) and `YawFilterToggleAtMaxDtGivesNoG2Spike` (30 Hz cutoff,
+   one 20 ms cycle in a 2.5 ms run, `G2 > 0`, assert `|dt_cmd_y|` bounded by the nominal value).
+6. **risk, suspected** parameter changes at runtime: `DelayChangeMidRunStaysInRangeAndBounded`,
+   `G1ChangeMidRunIsStateSafe`, `ActuatorTcChangeMidRunHasNoTransient`; and `G2LargeRelativeToG1Dt`
+   showing the loss of yaw authority of section 2 (`dt_cmd_y -> t_f - t_f_prev`).
+7. **risk, confirmed** fault recovery: `FaultCycleThenValidCycleRecovers`, a single NaN sample, then
+   assert `getFault()` false, outputs finite and the restart transient is from zero;
+   `HugeFiniteInputsFaultInsteadOfNaN` (1e30 rate, assert zero output and fault, not NaN).
+8. **risk, suspected** actuator mismatch (section 5): `PlantTwiceSlowerThanModelStaysBounded`, closed
+   loop simulation `1/s` plant with 40 ms lag against `ACT_TC = 20 ms`, assert no growth over 2 s.
+9. **risk, suspected** module level (needs a `MulticopterRateControl` harness or extraction of the
+   latch into a testable helper): `UseIndiLatchedOnArmEdgeWithoutRateFlag`,
+   `StaleAllocatorStatusReusesLastUnallocatedTorque`, `LandedGateIdenticalForPidAndIndi`.
+10. **style** `K = 0` acceptance and header/code contract: `ZeroGainKIsRejectedOrDocumented`.
 
 ## Summary ranked by severity
 
@@ -203,3 +277,27 @@ Not covered in this pass.
 6. **risk, suspected** (s1): H designed at the controller rate, notches not mirrored.
 7. **risk, suspected** (s3): `_use_indi` latch needs the rate flag while disarmed; fault path resets
    all states on a single bad sample; no thrust/voltage effectiveness scaling.
+8. **risk, confirmed** (s2): no enforced relation between `MC_INDI_YAW_CUT` and `MC_INDI_K_Y`; a cutoff
+   near the yaw crossover eats the phase margin. The frozen tune (K_Y 2.12 rad/s = 0.34 Hz crossover,
+   YAW_CUT 1.57 Hz, ratio 4.7) satisfies the proposed `YAW_CUT >= ~3 K_Y/(2 pi)` rule (orchestrator check,
+   ~17 deg filter lag at crossover), so the benchmark is unaffected; the defaults/param bounds are not.
+9. **risk, confirmed** (s2): a `MC_INDI_YAW_CUT` change re-runs `designFilters()` and re-settles the
+   roll/pitch H filters, stepping `t_cmd` on all axes when the torque is moving.
+10. **risk, confirmed** (s2): yaw-filter active/inactive toggle on a 20 ms dt cycle gives a one-cycle G2
+    spike (zero with the default `G2 = 0`); `MC_INDI_G2_Y` max 100 lets `G2/dt` swamp `G1` (silent loss of
+    yaw authority): max should be ~1.
+11. **risk, confirmed** (s4): `setMaxIncrement(<= 0)` selects the largest increment; `K = 0` accepted
+    although documented as `> 0`.
+12. **risk, confirmed** (s4): `MC_INDI_DELAY` change mid-run jumps `t_f` by up to 4 cycles of history.
+13. **gap** (s6): all 19 unit tests run at constant dt with settled inputs; none exercises dt jitter,
+    landed/airborne transitions with moving torque, runtime parameter changes, fault recovery, or the
+    actuator-mismatch loop; no module-level test of `MulticopterRateControl`.
+
+### Orchestrator triage (session 21)
+
+- Fixed: item 1 (1d776dc6dc, D-landyaw).
+- Report limitations (ch. 5 implementation / ch. 9 discussion, "before real flight"): items 2, 3, 4, 5, 6, 7,
+  9, 10, 12, 13. None changes a benchmark result: the benchmark runs at a steady 400 Hz SITL loop (no dt
+  jitter), parameters are fixed per flight, and G2 = 0.
+- Candidate small post-freeze fixes (parameter bounds only, no control-law change): item 8 (document the
+  ratio), item 10 (`MC_INDI_G2_Y` max), item 11 (`DT_MAX` min > 0, `K > 0`). Not done; listed in STATE.
