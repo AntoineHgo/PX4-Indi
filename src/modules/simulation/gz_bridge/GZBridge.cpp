@@ -140,7 +140,7 @@ int GZBridge::init()
 	}
 
 	// ESC mixing interface
-	if (!_mixing_interface_esc.init(_model_name)) {
+	if (!_mixing_interface_esc.init(_world_name, _model_name)) {
 		PX4_ERR("failed to init ESC output");
 		return PX4_ERROR;
 	}

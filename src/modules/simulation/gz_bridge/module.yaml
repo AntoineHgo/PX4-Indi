@@ -78,6 +78,19 @@ parameters:
             default: -45.0
     - group: Simulation
       definitions:
+        SIM_GZ_ESC_FB:
+          description:
+            short: Source of simulated ESC rotor speed feedback
+            long: Selects what esc_status esc_rpm reports. Echo returns the motor speed command
+              sent to Gazebo (no motor dynamics, command units). Joint state reports the rotor speed
+              of the simulated motor in rpm, read from the model's JointStatePublisher system
+              (rotor joints named rotor_N_joint, rotorVelocitySlowdownSim 10).
+          type: enum
+          values:
+            0: Echo motor command
+            1: Rotor joint state
+          default: 0
+          reboot_required: true
         SIM_GZ_EC_SIGNED:
           description:
             short: Signed command for non-motor ESC channels

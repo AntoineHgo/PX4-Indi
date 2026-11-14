@@ -58,13 +58,15 @@ public:
 		int32_t signed_mask = 0;
 		param_get(param_find("SIM_GZ_EC_SIGNED"), &signed_mask);
 		_signed_mask = static_cast<uint32_t>(signed_mask);
+
+		param_get(param_find("SIM_GZ_ESC_FB"), &_esc_feedback);
 	}
 
 	bool updateOutputs(float outputs[MAX_ACTUATORS], unsigned num_outputs, unsigned num_control_groups_updated) override;
 
 	MixingOutput &mixingOutput() { return _mixing_output; }
 
-	bool init(const std::string &model_name);
+	bool init(const std::string &world_name, const std::string &model_name);
 
 	void stop()
 	{
@@ -78,8 +80,17 @@ private:
 	void Run() override;
 
 	void motorSpeedCallback(const gz::msgs::Actuators &actuators);
+	void jointStateCallback(const gz::msgs::Model &model);
+
+	// MulticopterMotorModel spins the rotor joint at the motor speed divided by rotorVelocitySlowdownSim
+	// (10 in all PX4 gz multicopter models) and computes thrust from joint velocity times that factor.
+	static constexpr float ROTOR_VELOCITY_SLOWDOWN_SIM = 10.f;
 
 	uint32_t _signed_mask{0};
+
+	int32_t _esc_feedback{0}; // SIM_GZ_ESC_FB: 0 = echo motor command, 1 = rotor joint velocity
+	float _rotor_rpm[esc_status_s::CONNECTED_ESC_MAX] {};
+	bool _rotor_rpm_valid{false};
 
 	gz::transport::Node &_node;
 	pthread_mutex_t _node_mutex;

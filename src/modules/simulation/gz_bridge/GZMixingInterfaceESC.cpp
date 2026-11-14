@@ -34,8 +34,19 @@
 #include "GZMixingInterfaceESC.hpp"
 #include <lib/mathlib/mathlib.h>
 
-bool GZMixingInterfaceESC::init(const std::string &model_name)
+bool GZMixingInterfaceESC::init(const std::string &world_name, const std::string &model_name)
 {
+	pthread_mutex_init(&_node_mutex, nullptr);
+
+	if (_esc_feedback == 1) {
+		// Rotor speed feedback from the JointStatePublisher system of the model: /world/default/model/x500_0/joint_state
+		std::string joint_state_topic = "/world/" + world_name + "/model/" + model_name + "/joint_state";
+
+		if (!_node.Subscribe(joint_state_topic, &GZMixingInterfaceESC::jointStateCallback, this)) {
+			PX4_ERR("failed to subscribe to %s", joint_state_topic.c_str());
+			return false;
+		}
+	}
 
 	// ESC feedback: /x500/command/motor_speed
 	std::string motor_speed_topic = "/" + model_name + "/command/motor_speed";
@@ -55,8 +66,6 @@ bool GZMixingInterfaceESC::init(const std::string &model_name)
 	}
 
 	_esc_status_pub.advertise();
-
-	pthread_mutex_init(&_node_mutex, nullptr);
 
 	ScheduleNow();
 
@@ -129,7 +138,15 @@ void GZMixingInterfaceESC::motorSpeedCallback(const gz::msgs::Actuators &actuato
 
 	for (int i = 0; i < limited_escs; i++) {
 		esc_status.esc[i].timestamp = hrt_absolute_time();
-		esc_status.esc[i].esc_rpm = actuators.velocity(i);
+
+		if (_esc_feedback == 1) {
+			// Zero until the first joint state arrives
+			esc_status.esc[i].esc_rpm = _rotor_rpm_valid ? (int32_t)roundf(_rotor_rpm[i]) : 0;
+
+		} else {
+			esc_status.esc[i].esc_rpm = actuators.velocity(i);
+		}
+
 		esc_status.esc[i].esc_temperature = 50.f; // arbitrary, fixed ESC temperature
 		esc_status.esc_online_flags |= 1 << i;
 		esc_status.esc[i].actuator_function = (uint8_t)_mixing_output.outputFunction(i);
@@ -147,6 +164,25 @@ void GZMixingInterfaceESC::motorSpeedCallback(const gz::msgs::Actuators &actuato
 		esc_status.timestamp = hrt_absolute_time();
 		_failure_config.update();
 		_esc_status_pub.publish(failure_injection::process_esc(_failure_config, esc_status));
+	}
+
+	pthread_mutex_unlock(&_node_mutex);
+}
+
+void GZMixingInterfaceESC::jointStateCallback(const gz::msgs::Model &model)
+{
+	pthread_mutex_lock(&_node_mutex);
+
+	for (int j = 0; j < model.joint_size(); j++) {
+		const gz::msgs::Joint &joint = model.joint(j);
+		unsigned index = 0;
+
+		// Rotor joints are named rotor_<motor number>_joint
+		if (sscanf(joint.name().c_str(), "rotor_%u_joint", &index) == 1 && index < esc_status_s::CONNECTED_ESC_MAX) {
+			const float rotor_velocity = fabsf((float)joint.axis1().velocity()) * ROTOR_VELOCITY_SLOWDOWN_SIM; // [rad/s]
+			_rotor_rpm[index] = rotor_velocity * 60.f / (2.f * M_PI_F);
+			_rotor_rpm_valid = true;
+		}
 	}
 
 	pthread_mutex_unlock(&_node_mutex);
