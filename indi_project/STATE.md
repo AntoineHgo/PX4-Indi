@@ -112,6 +112,10 @@
 
 ## In progress
 
+- SESSION 17 (2026-11-14) IN FLIGHT: session-16 review (B) was cut off with only its section skeleton on disk, ch. 8
+  draft (A) was committed (2cd1c49235). Relaunched: (B') fable control-law review -> `review/control_law_review_s16.md`
+  (fills the skeleton section by section); (C) sonnet drafts report ch. 9 discussion -> `report/09_discussion.md`.
+  If partial next session, relaunch only for the missing sections.
 - SESSION 16 (2026-11-14) IN FLIGHT: (A) sonnet drafts report ch. 8 results -> `report/08_results.md`;
   (B) fable independent review of the INDI control law -> `review/control_law_review_s16.md`. If a file is
   partial or missing next session, relaunch only for what it lacks. Committed bd5da68490 (re-flown PID hover seeds 1-3).
