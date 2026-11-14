@@ -98,6 +98,7 @@
 
 ## In progress
 
+- SESSION 14 (launch 20261114-062440): held-out batch confirmed running (started 06:23). Subagents in flight: (a) sonnet drafting `report/05_design_implementation.md`, (b) sonnet drafting `report/07_tuning.md`. If cut off: check those files, relaunch only for missing sections.
 - RUNNING end of session 13 (detached, ~30-40 min): held-out/disturbance batch,
   PID defaults + INDI tuned, seeds 1-5: speed 1 {com_shift gust_diag gust_x
   payload_add}, speed 4 {step_diag mismatch_inertia}. Log
