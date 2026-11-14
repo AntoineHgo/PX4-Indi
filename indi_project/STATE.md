@@ -139,6 +139,15 @@ owner decisions when you first act on them.
 
 ## In progress
 
+- SESSION 31 (2026-11-14): r1 analysed (`results/s2_tuning/r1.md`): CORRECTION to s30, c23 J 0.967 beats the
+  defaults c00 1.007 (mostly the noisy hover term; steps: roll 0.82, pitch 0.96, yaw 1.09, rate 0.92). r2 RUNNING
+  (detached, resumable, 4 h timeout), CENTRED ON c23: `setsid indi_project/bench/s2_pid_tune_r2.sh
+  /home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_project/results/s2_tuning/pid/r1/best.json >
+  indi_project/results/s2_tuning_r2.log 2>&1 &` -> `results/s2_tuning/pid/r2/summary.csv`. If no `tune.py --family
+  pid` process is alive and summary.csv is incomplete, re-launch exactly that command (it skips done runs).
+  NEXT: analyse r2 (rule in r1.md: tuned v2 PID baseline = r2 best only if it beats the defaults beyond the seed
+  spread), then step 3 item 12 (delay slew) + rebuild px4_sitl_default AFTER r2 ends. Agents s31: 0.
+
 - SESSION 30 (2026-11-14): notch check (0) PASSED: 10/10 ref runs carry IMU_GYRO_DNF_EN 1. r1 was (re)started at the
   start of the session (same script, resumable); c00 (= defaults) J 1.007, c01-c03 1.18-1.24. DONE step 3 item 5
   (ea451fd253 + bf2c42c9d9 header doc, D-landmodel) and item 7 (5a163c4dec, D-faulthold), 21/21 gtests, format OK.
