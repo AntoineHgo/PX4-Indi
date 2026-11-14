@@ -228,6 +228,12 @@ class Sim:
             int(self.t * 1e3), self.sysid, 1, 1, 0b100111111000 | 0b000000000000, pos[0], pos[1], pos[2],
             0, 0, 0, 0, 0, 0, yaw, 0)
 
+    def send_pva(self, pos, vel, acc, yaw):
+        """Position + velocity + acceleration feedforward (type mask ignores only yaw rate)."""
+        self.mav.mav.set_position_target_local_ned_send(
+            int(self.t * 1e3), self.sysid, 1, 1, 0b100000000000, pos[0], pos[1], pos[2],
+            vel[0], vel[1], vel[2], acc[0], acc[1], acc[2], yaw, 0)
+
     @staticmethod
     def quat(roll, pitch, yaw):
         cr, sr = math.cos(roll / 2), math.sin(roll / 2)
@@ -243,6 +249,42 @@ class Sim:
     def send_rate(self, p, q, r, thrust):
         self.mav.mav.set_attitude_target_send(int(self.t * 1e3), self.sysid, 1, 0b10000000,
                                               [1, 0, 0, 0], p, q, r, thrust)
+
+
+def traj_phase(traj, t):
+    """Phase of a closed trajectory: phase rate ramps 0 -> w (smoothstep, ramp_s), cruises, ramps back to 0, and the
+    total phase is laps * 2 pi, so the path starts and ends at the hold position with zero velocity."""
+    w, tr = traj["w"], traj["ramp_s"]
+    tc = 2 * math.pi * traj["laps"] / w - tr
+    if t <= 0:
+        return 0.0
+    if t < tr:
+        u = t / tr
+        return w * tr * (u ** 3 - u ** 4 / 2)
+    if t < tr + tc:
+        return w * tr / 2 + w * (t - tr)
+    if t < 2 * tr + tc:
+        u = (2 * tr + tc - t) / tr
+        return 2 * math.pi * traj["laps"] - w * tr * (u ** 3 - u ** 4 / 2)
+    return 2 * math.pi * traj["laps"]
+
+
+def traj_pos(traj, phi):
+    """NED offset from the hold position at phase phi (zero at phi = 0)."""
+    if traj["shape"] == "lemniscate":  # Gerono lemniscate, size_x x size_y
+        return [traj["ax"] * math.sin(phi), traj["ay"] * math.sin(2 * phi), 0.0]
+    if traj["shape"] == "circle":  # circle of radius r through the start point, plus a vertical sine (NED z: up = -)
+        r = traj["r"]
+        return [r * (math.cos(phi) - 1.0), r * math.sin(phi), -traj["z_amp"] * math.sin(phi)]
+    raise ValueError(traj["shape"])
+
+
+def traj_pva(traj, t, h=1e-3):
+    """Position, velocity and acceleration setpoints (velocity/acceleration by central differences of the path)."""
+    p0, pm, pp = (traj_pos(traj, traj_phase(traj, tt)) for tt in (t, t - h, t + h))
+    vel = [(pp[i] - pm[i]) / (2 * h) for i in range(3)]
+    acc = [(pp[i] - 2 * p0[i] + pm[i]) / (h * h) for i in range(3)]
+    return p0, vel, acc
 
 
 def hover_thrust(sim):
@@ -366,12 +408,20 @@ def main():
                 meta["motor_fault"].update({"event_us": int(t_req * 1e6), "event_done_us": int(sim.t * 1e6), "applied": new,
                                             "omega_ratio": k_om})
             ev = {"name": name, "t_us": int(sim.t * 1e6), "dur_s": dur, "mode": mode, "axis": axis,
-                  "value": val, "prev": prev, "step": name != "settle" and mode != "position"}
+                  "value": val, "prev": prev, "step": name != "settle" and mode not in ("position", "trajectory")}
             meta["events"].append(ev)
             r = val if axis in ("roll", "rollpitch") else 0.0
             p = val if axis in ("pitch", "rollpitch") else 0.0
             y = val if axis == "yaw" else 0.0
-            if mode == "position":
+            if mode == "trajectory" and name == "traj":
+                traj = sc["traj"]
+                t_seg0 = sim.t
+                meta["trajectory"] = {**traj, "t0_us": int(t_seg0 * 1e6), "dur_s": dur}
+
+                def sp(t_seg0=t_seg0, traj=traj):
+                    p, v, acc = traj_pva(traj, sim.t - t_seg0)
+                    sim.send_pva([hold_pos[i] + p[i] for i in range(3)], v, acc, hold_yaw)
+            elif mode in ("position", "trajectory"):
                 sp = pos_sp
             elif mode == "attitude":
                 rr, pp = math.radians(r), math.radians(p)

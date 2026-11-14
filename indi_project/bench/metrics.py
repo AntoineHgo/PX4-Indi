@@ -299,6 +299,18 @@ def compute(ulog, run):
                            "rms_vertical_m": rms(d[:, 2]), "max_dev_3d_m": float(d3.max()),
                            "max_dev_horizontal_m": float(dh.max()), "max_dev_vertical_m": float(np.abs(d[:, 2]).max())}
 
+    # ---- trajectory scenarios: error against the logged trajectory_setpoint (offboard position, held between samples)
+    tsp = topic(ulog, "trajectory_setpoint")
+    if run.get("trajectory") and lp is not None and tsp is not None:
+        t = lp["timestamp"]
+        m = inwin(t)
+        ref = np.column_stack([zoh(tsp["timestamp"], tsp[f"position[{i}]"], t[m]) for i in range(3)])
+        d = np.column_stack([lp[k][m] for k in ("x", "y", "z")]) - ref
+        dh = np.hypot(d[:, 0], d[:, 1])
+        d3 = np.linalg.norm(d, axis=1)
+        out["trajectory"] = {"rms_3d_m": rms(d3), "rms_horizontal_m": rms(dh), "rms_vertical_m": rms(d[:, 2]),
+                             "max_dev_3d_m": float(np.nanmax(d3))}
+
     # ---- disturbance scenarios (gust_x, payload_add): only when run.json carries a "disturbance" record ----
     dist = run.get("disturbance")
     if dist and lp is not None and att is not None:

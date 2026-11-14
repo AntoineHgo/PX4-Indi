@@ -9,11 +9,19 @@ axis:   which channel the segment values drive (roll | pitch | yaw | rollpitch =
 segments: (name, duration_s, value). `settle` segments are not step events (value 0, lead-in);
           every other segment starts a step from the previous value to `value`.
 """
+import math
 
 STEP_DEG = 15.0
 DIAG_STEP_DEG = 20.0
 YAW_STEP_DEG = 45.0
 RATE_STEP_DPS = 120.0
+
+LEMNISCATE = dict(shape="lemniscate", ax=4.0, ay=2.0, w=5.0 / math.sqrt(32.0), laps=2, ramp_s=3.0)
+CIRCLE_FAST = dict(shape="circle", r=4.0, z_amp=1.0, w=7.0 / 4.0, laps=3, ramp_s=3.0)
+
+
+def _traj_dur(traj):
+    return 2 * math.pi * traj["laps"] / traj["w"] + traj["ramp_s"]
 
 
 def _attitude_steps(axis, amp, dur):
@@ -46,6 +54,24 @@ SCENARIOS = {
     # Held-out H6: simultaneous roll and pitch steps.
     "step_diag": dict(mode="attitude", axis="rollpitch", segments=_attitude_steps("rollpitch", DIAG_STEP_DEG, 3.0)),
     "rate_step_roll": dict(mode="rate", axis="roll", segments=_rate_pulses(3)),
+    # Held-out H5: combined plant mismatch (inertia x0.8 on all three axes, mass x1.15, motor time constants x2),
+    # flown as two runs: the T2 attitude step pattern and the T4 rate pulses (D-h5).
+    "mismatch_combined_att": dict(mode="attitude", axis="roll", segments=_attitude_steps("roll", STEP_DEG, 3.0),
+                                  model_variant=dict(ixx=0.8, iyy=0.8, izz=0.8, mass=1.15, tau=2.0)),
+    "mismatch_combined_rate": dict(mode="rate", axis="roll", segments=_rate_pulses(3),
+                                   model_variant=dict(ixx=0.8, iyy=0.8, izz=0.8, mass=1.15, tau=2.0)),
+    # Trajectories (mode "trajectory"): the segment named "traj" flies a closed path from the hold position with
+    # position, velocity and acceleration feedforward (bench/run_scenario.py traj_pva); other segments hold position.
+    # T5: Gerono lemniscate 8 m x 4 m, peak speed 5 m/s (w = 5 / sqrt(32)), 2 laps.
+    "traj_lemniscate": dict(mode="trajectory", axis=None, traj=LEMNISCATE,
+                            segments=[("settle", 3.0, 0.0), ("traj", _traj_dur(LEMNISCATE), 0.0), ("hold", 3.0, 0.0)]),
+    # Held-out H1: circle radius 4 m at 7 m/s (w = 1.75 rad/s) with a +-1 m vertical sine (2 m peak to peak), 3 laps.
+    "traj_circle_fast": dict(mode="trajectory", axis=None, traj=CIRCLE_FAST,
+                             segments=[("settle", 3.0, 0.0), ("traj", _traj_dur(CIRCLE_FAST), 0.0), ("hold", 3.0, 0.0)]),
+    # Held-out H4: motor 2 thrust x0.6 from the start of the T5 lemniscate.
+    "motor_loss_2": dict(mode="trajectory", axis=None, traj=LEMNISCATE,
+                         motor_fault=dict(segment="traj", motor=2, thrust_scale=0.6),
+                         segments=[("settle", 3.0, 0.0), ("traj", _traj_dur(LEMNISCATE), 0.0), ("hold", 3.0, 0.0)]),
     # Disturbance scenarios (bench/disturbance.py). Position mode; the segment named "dist" starts the disturbance
     # profile (profile time 0 = start of that segment). The key `disturbance` selects the injector profile.
     # gust_x: profile 28 s = 2 ramp + 10 hold + 1 gust + 15 hold at 3 m/s. payload_add: step held 30 s.
