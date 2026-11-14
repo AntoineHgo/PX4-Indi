@@ -251,3 +251,18 @@ the gyro noise in nu_yaw = K_Y (r_sp - r), gain K_Y/G1_Y ~ 0.8.
   tracking that is INDI's measured advantage.
 - Rejected: a separate parameter — enlarges the tuning space for one knob
   whose physical meaning (yaw noise bandwidth) is the same.
+
+## D-r3 (2026-11-14, session 12): INDI round 3 centred at lower yaw gains
+
+- Evidence (`bench/yaw_step_effort.py` on step_yaw seed 1, r2f_yawnu c00 vs PID r2 c00): on each 45 deg yaw
+  step the INDI setpoint term K_Y*r_sp/G1_Y peaks at 2.75 normalised torque (r_sp 3.49 rad/s, clipped by the
+  yaw rate limit), so the yaw torque saturates at 1.0; PID peaks at 0.33. Motor-rate RMS along the yaw
+  allocation direction over [-0.2, +2] s: INDI 11.1 vs PID 1.55 (7x). The unfiltered setpoint path is the
+  cause, confirmed. The INDI yaw rate loop crosses over near K_Y = 5.8 rad/s, PID's near P*G1_Y = 0.2*7.4
+  = 1.5 rad/s: INDI was tuned about 4x faster in yaw.
+- Choice: round 3 centred at K_Y 3.0, YAW_P 4.0 (other gains c11, YAW_CUT 2), span 1.5: K_Y in [2, 4.5],
+  YAW_P in [2.7, 6]. The r2 tuner settled at K_Y 5.8 when hover effort dominated the cost; with D-yawnu that
+  penalty is gone, so the yaw trade-off has to be explored again in a region r2 never sampled.
+- Rejected: a yaw setpoint pre-filter in INDI only (unfair to PID; if adopted it must be offered to both).
+- Rejected: wider span for all parameters (roll/pitch are already near their r2 optimum; one shared span).
+- A first r3 launch centred at c11 (K_Y 5.8) was stopped after a few minutes and its output deleted.

@@ -49,6 +49,11 @@
   Tuning-set score with it: J 1.197 (PID 0.96): hover penalty gone, but
   step_yaw transient effort is ~7x PID and now carries the penalty
   (`results/tuning/r2f_yawnu.md`). PID still wins under the frozen cost.
+- **Session 12:** step_yaw effort cause confirmed (`bench/yaw_step_effort.py`):
+  INDI setpoint term K_Y*r_sp/G1_Y peaks at 2.75, yaw torque saturates at 1.0
+  on every step (PID peak 0.33); INDI yaw loop tuned ~4x faster than PID
+  (K_Y 5.8 vs P*G1 1.5 rad/s). INDI round 3 launched centred at K_Y 3,
+  YAW_P 4 (D-r3).
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -70,6 +75,13 @@
 | 6 | Validation and report | not started |
 
 ## In progress
+
+- RUNNING session 12 (detached): INDI r3 (D-r3), 16 cand x 5 scen x 3 seeds,
+  ~240 flights, ~1.5 h. Log `results/tuning/r3.log` (header = command,
+  resumable), output `results/tuning/indi/r3/summary.csv`. Next session: if
+  no `px4-indi-*` container runs and summary lacks candidates, re-run the
+  header command; then write `results/tuning/r3.md` (compare J with PID 0.96,
+  per-scenario effort ratios, step_yaw effort with `bench/yaw_step_effort.py`).
 
 - DONE session 11: r2f_yawnu scored (J 1.197, `results/tuning/r2f_yawnu.md`).
 - DONE session 11: T8 motor_loss_0 (f3205105bd): runtime SIM_GZ_EC_MIN1/MAX1 x sqrt(0.7) (thrust x0.70), attitude mode, then +45 deg yaw step; PID seed 1: motor 0 0.73 -> 0.905, saturated 1.5 s, peak tilt 5.1 deg, altitude sags 1.2 m (attitude mode, fixed thrust; identical for both controllers). Notes `plan/t8_motor_loss_log.md`.
