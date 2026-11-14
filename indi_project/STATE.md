@@ -114,6 +114,9 @@ owner decisions when you first act on them.
   selectable IMU/physics rate (1000 Hz runs real time). Next: IMU rate choice, vibration noise, then PID re-baseline.
 - **Stage 2 (session 29):** D-notch: ESC-rpm gyro notch in v2 for both controllers (vibration effort gone, tracking
   unchanged). INDI dt-jitter desync fixed (review item 2). v2 PID tuning check r1 running.
+- **Stage 2 (session 30):** step 3 items 5 (D-landmodel: actuator model runs while landed, ea451fd253) and 7
+  (D-faulthold: last output held 3 cycles on a rejected input, 5a163c4dec) done, 21/21 gtests. SITL binary not
+  rebuilt (PID r1 was flying on it). v2 PID tuning r1 running.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -135,6 +138,13 @@ owner decisions when you first act on them.
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+
+- SESSION 30 (2026-11-14): notch check (0) PASSED: 10/10 ref runs carry IMU_GYRO_DNF_EN 1. r1 was (re)started at the
+  start of the session (same script, resumable); c00 (= defaults) J 1.007, c01-c03 1.18-1.24. DONE step 3 item 5
+  (ea451fd253 + bf2c42c9d9 header doc, D-landmodel) and item 7 (5a163c4dec, D-faulthold), 21/21 gtests, format OK.
+  REBUILD px4_sitl_default before any INDI flight (not done: would replace the binary under the running PID round).
+  Remaining step 3: items 4 (after O-5), 10/11 bounds (library: setMaxIncrement(<=0), K=0), 12 (DELAY change
+  mid-run), 13 tests (runtime param change). Agents s30: 0.
 
 - SESSION 29 (2026-11-14): DONE (d2) effort by axis: v2 vibration effort is roll/pitch torque chatter only. DONE
   D-notch: ESC-rpm dynamic notch (IMU_GYRO_DNF_EN 1) in the v2 config for BOTH controllers; PID hover effort 0.7-1.1 ->
@@ -594,4 +604,5 @@ owner decisions when you first act on them.
 - 2026-11-14 session 26: stage 2 started: gz rotor-speed path verified from source (plan/s2_rotor_speed.md); AM32 eRPM note (gaps listed). Agents s26: 1 haiku.
 - 2026-11-14 session 27: stage-2 sim: true rotor speed and AM32 eRPM telemetry model in gz_bridge (SIM_GZ_ESC_FB 1/2), bench --sim v2. Agents: 1 haiku.
 - 2026-11-14 session 27: --imu-rate option (1000 Hz gyro, real time at speed 1).
+- 2026-11-14 session 30: step 3 items 5 (D-landmodel) and 7 (D-faulthold) in the INDI library, 21/21 gtests; v2 PID r1 flying. Agents: 0.
 - 2026-11-14 session 29: D-notch (ESC-rpm notch in v2, both controllers); dt-jitter fix 68cab62e42 (20/20 gtests); v2 PID tuning r1 launched detached. Agents: 0.
