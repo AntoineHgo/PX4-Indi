@@ -441,3 +441,14 @@ These are the owner's decisions, not the orchestrator's; full text in `OWNER_GUI
 - Alternatives rejected: 500 Hz (no cost reason left to compromise); 2000+ Hz (beyond IMU_GYRO_RATEMAX default;
   untested lockstep cost). The logger subsamples at 3.5 ms, so analyses of logged INDI signals at 1 kHz see a subsample.
 - Speed rule unchanged: attitude/rate scenarios may run at speed 4, position scenarios at speed 1 (D-speed).
+
+## D-vib (session 28, 2026-11-14): v2 vibration levels
+
+- Model (6678cbf3dc): per rotor, 1P in-plane sinusoid (mass imbalance) + 2P blade-pass along thrust, ~ rpm^2,
+  first IMU only, from the true rotor joint speeds. Phenomenological; no frame structural modes, no IMU clipping.
+- Nominal v2: SIM_GZ_VIB_ACC 1.0 m/s^2, SIM_GZ_VIB_GYR 0.05 rad/s per rotor at 7000 rpm (expected ~1 m/s^2 accel
+  p-p, half the PX4 docs "strong vibration" mark of 2-3 m/s^2, `docs/en/log/flight_log_analysis.md:16`).
+- Stress (new held-out set candidate): 2.0 / 0.1 (measured 2.1 m/s^2 p-p, at the "strong" mark; `results/s2_vib_check.md`).
+- Gyro amplitude has no quantitative source: chosen to scale with the accel amplitude; the report must say so.
+- Alternatives rejected: band-limited random noise (loses the rotor-speed tie that matters for INDI's differentiated
+  gyro and for notch filtering); vibration in the gz IMU plugin (needs a gz-sim change, outside this repository).
