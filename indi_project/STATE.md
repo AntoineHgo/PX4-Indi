@@ -27,6 +27,10 @@
   tuning scenarios (ratios 0.67-0.98 vs 0.75-1.00) but J 1.17 vs 0.95
   because of motor-rate effort; PID wins r1 under the frozen cost
   (`results/tuning/indi_r1.md`).
+- **Session 9:** untracked files triaged (raw logs ignored, metrics
+  committed). Remaining INDI hover effort is yaw: yaw torque std 9x PID
+  (PID filters yaw torque at 2 Hz by default, INDI was at 10 Hz)
+  (`results/effort_axes_s9.md`). Round 2 for both families launched (D-r2).
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -49,6 +53,12 @@
 
 ## In progress
 
+- Session 9 (2026-11-14): tuning round 2 (D-r2) launched detached, PID then
+  INDI, 16 candidates x 5 scenarios x seeds 1 2 3 each (~480 flights,
+  ~2-3 h). Log `results/tuning/r2.log`, outputs
+  `results/tuning/{pid,indi}/r2/summary.csv`. Next session: if no
+  `px4-indi-*` container runs and a summary lacks candidates, re-run the
+  command in the log header (resumable). Then write `results/tuning/r2.md`.
 - Nothing running. Session 8 finished PID r1 and INDI r1.
 - Session 7 (2026-11-14): PID tuning round 1 launched detached at the end
   of the session: `python3 bench/tune.py --family pid --round-name r1
@@ -69,9 +79,8 @@
 
 0. Session 9 next steps: (a) DONE INDI r1 analysis; (b) DONE: hover position RMS is not
    repeatable per seed (re-fly up to 2.2x the reference, `pid_r1.md`
-   follow-up): find the non-determinism, then >= 8 hover seeds in J; (c) remaining INDI
-   hover effort 6x PID: run check_sync.py on hover/indi_v1_yc10 to see
-   which axis; (d) round 2 for both families (span 1.3 around the best).
+   follow-up): find the non-determinism, then >= 8 hover seeds in J; (c) DONE (session 9): remaining INDI hover effort is yaw
+   (`results/effort_axes_s9.md`); (d) LAUNCHED session 9: round 2 for both families (D-r2).
    Use NAME_TAG for parallel run_batch.sh calls (container names collide).
    Session 7 next steps (done except d): (a) DONE tune.py committed;
    (b) LAUNCHED (see "In progress") PID tuning round 1 on T1-T4
@@ -191,6 +200,7 @@
 | 5 (2026-11-13) | 1 sonnet (INDI lib, 27 tool calls) | 2 runs (step_pitch, step_yaw PID seed1), 0 failures | ~$2.4 used of $3 cap |
 | 7 (2026-11-14) | 1 sonnet (tune.py, 16 tool calls) | 2 INDI runs + 4 smoke tuning flights; PID tuning r1 (~250 flights) left running detached | ~$2.4 of $3 cap |
 | 8 (2026-11-14) | 1 sonnet (yaw cutoff, 14 tool calls) | 1 SITL build, 6 check flights (2 tooling failures), PID r1 finished (240), INDI r1 finished (240, 0 failures) | ~$1.8 of $2.61 |
+| 9 (2026-11-14) | 0 | round 2 launched (~480 flights) | triage + yaw effort analysis |
 | 6 (2026-11-13) | 1 sonnet (module integration, 29 tool calls, ~$0.45) | 1 SITL build, 2 INDI runs (hover, step_roll seed1), 0 failures | $1.63 cap |
 
 ## Journal
@@ -211,3 +221,4 @@
 - 2026-11-14: session 7: `bench/check_sync.py`; INDI filters synchronised; in-loop G1 241/241/7.4 (`indi_v1.params`); yaw noise path found (D-yawfilt); tuning driver spec + agent.
 - 2026-11-14: session 8: PID r1 done (defaults best of 24); MC_INDI_YAW_CUT (lib, gtests, param); yaw cut 10 Hz cuts INDI hover effort 7x; INDI r1 launched.
 - 2026-11-14: session 8: INDI r1 done: better tracking on all tuning scenarios, worse J from effort.
+- 2026-11-14: session 9: untracked files triaged; INDI hover effort traced to yaw; tuning round 2 (both families, 3 seeds) launched.

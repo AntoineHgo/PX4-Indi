@@ -171,3 +171,23 @@ hover motor-rate effort 8x PID's (`results/sync_check_v0.md` sec. 3).
 - Alternative rejected: leaving the yaw cutoff out of the space and fixing it
   at 10 Hz. Rejected because the PID space includes its yaw torque cutoff
   (MC_YAW_TQ_CUTOFF), so equal treatment means both families tune theirs.
+
+## D-r2 (2026-11-14, session 9): tuning round 2 for both families
+
+- Finding that motivates it (`results/effort_axes_s9.md`): after the 10 Hz
+  yaw cutoff, INDI hover yaw torque setpoint still has 9x PID's standard
+  deviation and its sample-to-sample change is the largest of the three
+  axes; roll/pitch torque activity is only ~2x PID's. PID's default
+  `MC_YAW_TQ_CUTOFF` is 2 Hz, so the two families did not filter yaw
+  comparably in round 1 (INDI box 5-20 Hz).
+- PID r2: center = PX4 defaults (r1 winner c00), span 1.5.
+- INDI r2: center = r1 winner c07, except MC_INDI_YAW_CUT centered at 3.5 Hz
+  so the box (2.3-5.3 Hz) reaches PID's 2 Hz yaw filtering; span 1.5.
+- Both: 16 candidates, seeds 1 2 3 (3 instead of 2 to average the
+  non-repeatable hover position RMS, see `pid_r1.md` follow-up), same 5
+  tuning scenarios and frozen cost: 240 flights per family, as in r1.
+- Rejected: span 1.3 (prompt-level suggestion of session 8): with the r1
+  winner at the edge of the yaw box, 1.3 would not reach 2-3 Hz.
+- Rejected: more candidates rather than more seeds: r1 showed ~2 % re-fly
+  noise on J and up to 2.2x on single hover runs, so seed noise, not
+  sampling density, limits the ranking.
