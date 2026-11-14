@@ -106,6 +106,7 @@ owner decisions when you first act on them.
   plant is a gain reduction (safe); dangerous case is plant slower than model, band-pass boost at 1/(2 pi sqrt(tau_e tau_t)).
 - **Session 22:** report has ch. 1-10 + appendix A (bibliography chapter missing). Speed check: PID speed-invariant,
   INDI H6 attitude RMS +4 % at speed 1 (still better than PID 3/3 seeds, margin ~11 % -> ~7 %); H5 loss unchanged.
+- **v1 report closed** at 743acd7140 (session 26). Stage 2 (OWNER_GUIDANCE.md) starts at step 2, sim realism.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -127,6 +128,17 @@ owner decisions when you first act on them.
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+
+- SESSION 26 (2026-11-14): **v1 report closed at 743acd7140** (O-2). Review s25 applied (1 must-fix, 10 should-fix,
+  5 minor; af424cf88a); T8 summarised on its 10 existing seeds (79c41e5b94, D-t8-10); 5 seed-1 time-series figures
+  added to ch. 8 (65073894df), all ch. 8 figure TODOs gone, figures renumbered 8.1-8.8; PDF built and committed
+  (D-pdf-2). O-1..O-10 recorded in DECISIONS.md. Known figure caveat: fig_h4_crash prints "ground contact" at end of
+  log (post-impact re-climbs); caption states first contact ~7.5-8 s and that post-impact traces are not interpreted.
+  NEXT (stage 2, OWNER_GUIDANCE order step 2, sim realism): (a) one sonnet task: find how gz publishes rotor joint
+  velocity and how GZBridge fills esc_status (today esc_rpm echoes the command); write `plan/s2_rotor_speed.md`
+  with the exact change, no code. (b) one haiku task: AM32 + bidirectional DShot eRPM figures from the AM32 source
+  and Betaflight docs (frame rate, latency, resolution, pole count, CRC failures) into `research/notes/am32_erpm.md`
+  with URLs; check `src/drivers/dshot` for what PX4 publishes. Run at most one agent per session.
 
 - SESSION 25 (2026-11-14, closing v1 per O-2): DONE ch. 2 l.11 acquatella checked myself against the text (inconsistency
   real: Eq. 28 drops t_s, Eq. 29 matches K(e+T_I^-1 int e) only), 6 [GAP] items rewritten as limitations (19a0466619);
@@ -522,3 +534,4 @@ owner decisions when you first act on them.
 - 2026-11-14 session 21: review complete and triaged; MC_INDI_G2_Y bounded; figure script + 4 figures; ch. 2 drafted.
 - 2026-11-14 session 23: ch. 12 bibliography; D-noretune (full-T re-tune not run, stated in ch. 7/9); ch. 8 PID count fixed; phase checklist refreshed.
 - 2026-11-14 session 23: ch. 3 equations checked against PDFs (2 corrected, 0 open); ch. 6 two checks resolved; ch. 5 G2_Y range fixed. Agents: 1 haiku.
+- 2026-11-14 session 26: review s25 applied, T8 on 10 seeds, ch. 8 figures, PDF committed; v1 report closed at 743acd7140.

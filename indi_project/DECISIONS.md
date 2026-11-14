@@ -375,3 +375,28 @@ code and is reported as such.
   disturbance gap (ch. 9).
 - Rejected: re-tuning both families on T1-T9 and re-flying H1-H6 (contaminated held-out set, and ~1000 flights of
   budget the project does not have).
+
+## D-pdf-2 (session 26, 2026-11-14): PDF built and committed
+Supersedes D-pdf. `docker/report.Dockerfile` (image px4-indi-report, pandoc + xelatex, report only) and
+`docker/build_report.sh` build `report/report.pdf` from ch. 1-12. The PDF is committed so the owner can read it on
+GitHub; it is rebuilt and recommitted whenever the report changes materially. Alternative (leave it untracked) rejected:
+the owner follows progress from outside.
+
+## D-t8-10 (session 26, 2026-11-14): T8 reported on 10 seeds
+Seeds 4-10 of T8 had been flown in session 14 with the same firmware (empty `git diff 553c4dbdd0 c883907c92 -- src msg
+ROMFS Tools`) and the frozen r4f/c00 parameters, but the report used seeds 1-3. The review s25 (item 1) flagged it.
+Summarised all 10 (`results/t8_motor_loss_10seeds_s26.md`); the numbers match the 3-seed ones within seed spread, so
+no conclusion changed, only the significance statement (p = 0.002 now available). Not a new experiment.
+
+## Owner decisions O-1..O-10 (owner review 2026-11-14, after session 24)
+These are the owner's decisions, not the orchestrator's; full text in `OWNER_GUIDANCE.md`; not re-opened.
+- O-1 scope: stage 2 (v2 controller); DONE only per the owner's definition.
+- O-2 close v1 first: acted on in session 26 (v1 report closed, see STATE.md).
+- O-3 identify ACT_TC (up/down) and delay, re-check v1 post-acceptance (tuning set + H5, 10 seeds).
+- O-4 check whether gz transmits rotor reaction torque; identify G2 if so, else state it cannot be evaluated.
+- O-5 actuator state from measured rotor speed (AM32 bidirectional DShot eRPM), model as fallback.
+- O-6 inversion on u = omega^2; torque vs actuator space is the orchestrator's decision, written before coding.
+- O-7 new frozen held-out set decides v2 under unchanged criteria; H1-H6 re-flown as "seen".
+- O-8 extra scope: sim realism, hardware-readiness fixes, outer-loop flatness INDI; no G scaling/RLS.
+- O-9 outer-loop baseline = stock PX4 pipeline; flatness feedforward not given to PID; ablation where cheap.
+- O-10 order: inner loop first.
