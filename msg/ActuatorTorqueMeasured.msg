@@ -7,4 +7,4 @@ uint64 timestamp_sample		# [us] Oldest ESC telemetry sample (esc_status) used fo
 float32[3] torque		# [-] Measured normalised torque (roll, pitch, yaw)
 
 bool valid			# every rotor of the first effectiveness matrix has a fresh, online, plausible rpm sample
-uint8 motor_valid_mask		# bit i set if the rotor with motor index i (Motor1 = bit 0) has a valid sample
+uint8 motor_valid_mask	# bit i set if the rotor with motor index i (Motor1 = bit 0, motors 1-8 only) has a valid sample
