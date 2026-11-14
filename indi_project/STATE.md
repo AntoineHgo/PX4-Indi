@@ -204,6 +204,19 @@ owner decisions when you first act on them.
   V3_HOVER_DONE: yaw stage 2 `bench/v3_screen_yaw2.sh` (step_yaw + motor_loss_0, seeds 2-3, {pid_tuned, k2.733_c1.665,
   k2.733_c3.0, k4.0_c3.0}, 16 flights, log `results/v3_screen_yaw2.log`, ends V3Y2_SCREEN_DONE, resumable with
   `bash indi_project/bench/v3_screen_yaw2.sh >> indi_project/results/v3_screen_yaw2.log`).
+  DONE: hover effort 5 seeds (`results/v3_hover_effort.md`, D-v3-hover): all v3 configs 2.0-2.4x pid_tuned, Tb 0.3
+  lowest; inherited from v2 (sensor noise in the command, body motion 1.2x); V' criterion 4 will fail. Yaw stage 2
+  (`results/v3_screen_yaw2.md`): FROZEN indi_v3 = Tb 0.3 + K_Y 2.733/YAW_CUT 3.0 (`bench/params/indi_v3.params`,
+  D-v3-freeze). `s2_verdict.py --vprime` added (W1/W2 tilt RMS, D-vprime-metric). RUNNING detached since 00:56:
+  V' = `INDI_V3_PARAMS=$PWD/indi_project/bench/params/indi_v3.params setsid nohup timeout 14400 bash
+  indi_project/bench/vprime.sh >> indi_project/results/vprime.log` (5 entries x 10 seeds x 4 controllers = 200
+  flights, ends VPRIME_DONE, resumable with the same command; validation: watchdog aborts are failures, never re-fly
+  except for host-suspend/estimator-glitch stalls per D-v2-refly). NEXT (session 48): (1) when VPRIME_DONE:
+  `python3 indi_project/bench/glitch_scan.py indi_project/results/vprime/runs` (no CPU-heavy work while it flies),
+  then `python3 indi_project/bench/s2_verdict.py indi_project/results/vprime/runs --vprime --final --b indi_v3`
+  (+ `--b indi_v2` reported post-hoc) and the hover criterion from `bench/v3_hover_effort.py`; write
+  `results/vprime.md`, commit metrics/run.json only; (2) report 7.8/8.10 for v3 (correct the v2 hover 1.26x:
+  ~2x on clean seeds); (3) stage 8 per OWNER_GUIDANCE.
 - SESSION 46 (2026-11-15, launch 20261115-003114): DONE: owner outer-gain diagnostic committed + D-outer-check (v3
   tunes the INDI inner loop only, outer gains fixed at tuned PID's) + report 8.9 paragraph. v3 smoke DONE
   (`results/v3_smoke.md`): ACT_BLD 0 flies as v2 (step_roll 3.63 vs 3.62 deg). V' W1-W5 IMPLEMENTED (sonnet agent,
@@ -1016,4 +1029,5 @@ S42 ORDER (do this first, top to bottom):
   (watchdog deferred until the validation batches end). Agents: 1 sonnet (tilt diagnosis, 18 tool calls).
 - 2026-11-14 s43: V' frozen (D-heldout-v3); v3 blend spec + firmware 3a47bf746e (gtests 40/40); O-12 spec written. Agents: 1 sonnet.
 - 2026-11-14 s44: O-12 part B committed (f064c78d9f), part A staged as patch, watchdog replay done (9ebc74caf6: no false trips; seen seed-2 estimator glitches under host overload), D-watchdog. Agents: 0.
+- 2026-11-15 s47: hover effort 5 seeds (~2x PID, inherited from v2), yaw stage 2, indi_v3 frozen, V' verdict mode, V' launched (200 flights). Agents: 0. Runs: 36 (+200 V').
 - 2026-11-15 s46: outer-gain diagnostic committed (D-outer-check); v3 ACT_BLD 0 smoke = v2; V' implemented; Tb screening: 0.3/1.0 remove motor-loss tilt, 0.1 pruned; stage 2 running. Agents: 1 sonnet. Runs: 19 (+18).
