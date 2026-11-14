@@ -151,6 +151,9 @@ owner decisions when you first act on them.
   in-`mc_rate_control` INDI (frozen v1) and the allocator-side measured torque (v2 omega2) within run-to-run noise,
   tuning set x 3 seeds (`results/s2_o11_regress.md`). frz control: O-3 variant gains on H5 are real (not the
   binary); G2_Y 0.16 breaks yaw. PID r2f done: v2 tuned PID = r1f c05 (D-v2pid). Default build = O-11 tree. Next: G1 v2 (3 seeds), v2 INDI tuning.
+- **Stage 2 (session 39):** G1 v2 identified on 3 seeds from the O-11 regression logs (no new flights): roll/pitch
+  174, yaw 12.2, spread +-3 % (`results/s2_g1_v2.md`). v2 INDI start params (D-v2indi-start) and tuning space
+  (D-v2indi-tune). v2 INDI r1 (24 x 2 seeds) RUNNING.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -172,6 +175,15 @@ owner decisions when you first act on them.
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+- SESSION 39 (2026-11-14): G1 v2 DONE (`results/s2_g1_v2.md`, 3 seeds, reused v2new regression logs). Start params
+  `bench/params/indi_v2_start.params` (D-v2indi-start); tune.py now also reads the mc_indi_rate_control yaml.
+  RUNNING detached since 18:46: `bench/s2_indi_tune_r1.sh` (INDI v2 r1, 24 cand x 2 seeds, 240 flights, jobs 6,
+  4 h timeout, log `results/s2_tuning/indi_r1.log`, output `results/s2_tuning/indi/r1/`) on build/px4_sitl_default
+  (O-11 tree): do not rebuild default while it runs. NEXT: (1) when it ends, write `results/s2_tuning/indi_r1.md`
+  (best vs c00 = frozen gains with identified G1, vs PID r1f c05 J 0.925 and defaults 0.966); (2) r2 (16 x 3
+  seeds, --center the r1 best, same as bench/s2_pid_tune_r2f.sh); (3) v2 held-out V1-V9, 10 seeds, PID defaults,
+  PID r1f c05, INDI v2 tuned.
+
 - SESSION 38 (2026-11-14): r1f done + committed; frz control done: restated in `results/s2_recheck_v1.md` (variant
   gains real; G2_Y 0.16 breaks yaw on the tuning set). Runner: 282c879f4e (MC_INDI_EN at boot, CA_R_W_MAX ->
   MC_INDI_W_MAX on O-11 builds). r2f (PID, 240 flights) RUNNING detached on build/px4_sitl_default since 18:06
@@ -801,3 +813,4 @@ owner decisions when you first act on them.
 - 2026-11-14 s37: O-11 refactor: mc_rate_control + allocator back to base, new module mc_indi_rate_control (builds, gtests pass, not flown). Agents: 1 sonnet.
 - 2026-11-14 s36: held-out v2 frozen (D-heldout-v2, sim hooks V3/V4/V6 + tau_up/down, PID smoke OK); r1f done (c05 0.925 vs 0.966); r2f queued. Agents: 0.
 - 2026-11-14 s38: frz restated, r1f+r2f committed (D-v2pid: tuned PID = r1f c05), runner O-11 param mapping, O-11 regression (60 runs) preserved within noise, ch. 5.3.2 + architecture updated, default build rebuilt on O-11 tree. Agents: 0.
+- 2026-11-14 s39: G1 v2 on 3 seeds (174/174/12.2, reused regression logs), D-v2indi-start/-tune, INDI v2 r1 launched (240 flights). Agents: 0.
