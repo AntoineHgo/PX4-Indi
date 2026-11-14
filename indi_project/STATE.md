@@ -211,7 +211,10 @@ owner decisions when you first act on them.
   1.665 unstable, K_Y 5.5 fails motor_loss_0; survivors K_Y 2.733/cut 3.0 and K_Y 4.0/cut 3.0 (yaw 1.05-1.21x PID,
   no config closes the yaw gap). FLAG: hover effort ~2x PID on seed 1 for ALL INDI configs incl. Tb 0.3 base (V'
   criterion 4 limit 1.5x) -> check hover effort over seeds 2-5 (Tb 0 vs Tb 0.3 vs survivors vs pid_tuned) FIRST.
-  NEXT (session 47): (0) that hover-effort check; (1) yaw stage 2 on the 2 survivors (seeds 2-3); previously: analyse
+  RUNNING detached ~00:57: `bench/v3_hover_effort.sh` (hover seeds 2-5 x
+  {pid_tuned, v3_tb0, v3_tb0.3, k2.733_c3.0, k4.0_c3.0}, 20 flights, log `results/v3_hover_effort.log`, ends
+  V3_HOVER_DONE, resumable). NEXT (session 47): (0) analyse it (effort ratio of 4-seed means, + seed 1 from
+  v3_screen_yaw/v3_screen if same config); if Tb 0.3 raises hover effort vs Tb 0, find why before freezing; (1) yaw stage 2 on the 2 survivors (seeds 2-3); previously: analyse
   the yaw screen (yaw RMS on step_yaw and motor_loss_0, step_yaw + hover effort vs PID; prune > 1.3x best), decide a
   stage 2 or freeze; the original plan was a small yaw
   screen (K_Y, YAW_CUT; O-12 staged, entries step_yaw + motor_loss_0, Tb 0.3, outer gains = PID's) before freezing,
