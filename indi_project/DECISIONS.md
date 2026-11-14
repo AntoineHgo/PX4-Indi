@@ -611,3 +611,13 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
   between the removal commits and the module commit; every commit still builds.
 - **Regression reference binary:** `build/px4_sitl_omega2` (old placement, built from the pre-refactor tree)
   is kept untouched until the O-11 regression check is done; the new tree builds into `build/px4_sitl_o11`.
+
+## D-v2pid (session 38): v2 tuned PID baseline = r1f c05
+
+- **Choice:** the v2 tuned PID baseline is r1f c05 (`bench/params/pid_r1f_c05.json` over `v2_fac.params`); PX4
+  defaults on `v2_fac.params` are the second PID baseline.
+- **Why:** c05 beats the defaults on all three step axes in r1f and again in r2f on 3 seeds (7-15 %). The best
+  r2f candidate c15 (J 0.891 vs 0.911) gains only on the noise-dominated hover term and loses 10 % on rate
+  pulses (`results/s2_tuning/r2f.md`).
+- **Rejected:** c15 (gain inside hover noise); a round 3 (r2f around c05 found no consistent improvement; same
+  stopping rule as v1 r2).
