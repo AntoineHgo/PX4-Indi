@@ -723,3 +723,12 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
   z_amp 1 m) is far below 3 m.
 - **Alternatives rejected:** online saturation trip (saturation is not streamed over MAVLink); tighter tilt (52 deg is
   commanded in H4).
+
+## D-v2-refly-seen (session 45): three seen-set (entry, seed) pairs re-flown
+- **Context:** `bench/glitch_scan.py` over all 420 seen-set flights found one estimator glitch (step_yaw seed 2,
+  indi_v2, 22:41: |vz| 17.6 m/s, 39.5 m height jump, flown while an offline replay loaded the host). Two runs ended in
+  a wall timeout with the simulation stalled (hover seed 6 and mismatch_inertia seed 9, both pid_tuned).
+- **Decision:** all three are setup faults (O-12), not controller failures. Each (entry, seed) is re-flown for all
+  three controllers (`bench/s2_seen_v2_refly.sh`); the originals are kept in `results/s2_seen_v2/runs_suspended/`.
+- **Alternatives rejected:** dropping the seeds (unpaired 9-seed entries, and O-12 forbids dropping seeds); re-flying
+  only the affected controller (a different host load for one side of a paired comparison).

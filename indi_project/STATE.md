@@ -1,5 +1,20 @@
 # INDI project state
 
+## OWNER NOTE 2026-11-15 00:10: outer-gain diagnostic flown by the owner, record and commit it
+
+The owner asked (interactive session) why INDI v2 is slightly worse than tuned PID in nominal flight, and had a
+diagnostic flown after SEEN_V2_DONE and HELDOUT_V2_REFLY_DONE (host otherwise idle, same 18:41 binary and v2 sim
+config): frozen indi_v2 vs indi_v2 with tuned PID's shared outer gains (MC_ROLL_P 3.167 -> 5.122, PITCH_P 5.19 ->
+5.797, YAW_P 2.757 -> 3.238) vs pid_tuned, 5 nominal entries x seeds 1-3, 45 runs, 0 failures. Result: step_roll
+1.20x -> 1.01x PID, step_pitch 1.08x -> 1.04x, step_diag 1.13x -> 1.04x, step_yaw 1.26x -> 1.29x (unchanged: yaw
+deficit is in the INDI yaw rate loop, K_Y / YAW_CUT, not tested), rate pulses 0.92x -> 0.91x. The nominal roll/pitch
+step deficit is the outer-loop tuning, not INDI; with matched outer gains INDI reaches parity. Diagnostic only: the
+frozen v2 verdict stands. Write-up: `results/s2_outer_check.md`. TO DO: (1) commit, untracked, in separate commits:
+`bench/s2_outer_check.sh` + `bench/params/indi_v2_pidouter.params` (tooling), then `results/s2_outer_check.md` +
+run.json/metrics.json under `results/s2_outer_check/runs/` (results, no ULogs); (2) record it in DECISIONS.md and
+use it in report ch. 8; (3) for the v3 tuning, consider fixing the outer gains at tuned PID's and tuning only the
+INDI inner loop (owner advice, judge against the data). Then remove this note.
+
 ## OWNER DECISION 2026-11-14 (during session 41): O-12, read it in `indi_project/OWNER_GUIDANCE.md` now
 
 Abort obviously bad runs with a watchdog, prune bad candidates early with staged screening, and fly extensive
@@ -196,6 +211,11 @@ owner decisions when you first act on them.
 - SESSION 45 (2026-11-14, launch 20261114-230951): seen set at seed 6/10 at 23:10 (~9 min per seed, end ~23:45),
   V re-fly queued behind it. While it flies (no CPU-heavy work, S44 rule 0): report ch. 8 v2 section (8.9) from
   `results/s2_heldout_v2.md` + `results/s2_tilt_diag.md`. After SEEN_V2_DONE + HELDOUT_V2_REFLY_DONE: S44 steps 1-2.
+  Report ch. 7.7 + 8.9 DONE (5c6bd47a1e). SEEN_V2_DONE 23:47, HELDOUT_V2_REFLY_DONE 23:49 (no suspend in journal).
+  glitch_scan: 1 glitch (step_yaw seed2 indi_v2) + 2 sim-stall wall timeouts (hover seed6, mismatch_inertia seed9,
+  pid_tuned) -> D-v2-refly-seen: originals moved to `results/s2_seen_v2/runs_suspended/`, re-fly RUNNING detached
+  00:20 (`bench/s2_seen_v2_refly.sh`, 9 flights, ends SEEN_V2_REFLY_DONE in the seen run.log). Then S42 step 2
+  (verdict --final with --hover-runs), then S44 step 2 (O-12 patch).
 - SESSION 44 (2026-11-14, launch 20261114-225445): seen set at seed 4/10 at 22:55 (slower than estimated: ~6 min
   per seed-entry group; end likely after 01:00), V re-fly still queued behind it. The s43 replay agent was cut off
   after fixing the takeoff window (log `plan/impl_log_o12.md`); the orchestrator reviewed `bench/watchdog_replay.py`
