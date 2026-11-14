@@ -266,3 +266,17 @@ the gyro noise in nu_yaw = K_Y (r_sp - r), gain K_Y/G1_Y ~ 0.8.
 - Rejected: a yaw setpoint pre-filter in INDI only (unfair to PID; if adopted it must be offered to both).
 - Rejected: wider span for all parameters (roll/pitch are already near their r2 optimum; one shared span).
 - A first r3 launch centred at c11 (K_Y 5.8) was stopped after a few minutes and its output deleted.
+
+## D-yawsp (2026-11-14, session 13): YAW_CUT filters the yaw rate error, setpoint included
+
+Context: after r3 (`results/tuning/r3.md`), the only INDI penalty left under the frozen cost is step_yaw motor-rate
+effort (~5x PID). Cause measured: the yaw setpoint step passes unfiltered through K_Y r_sp / G1_Y into the torque
+increment; PID smooths the same step with its default 2 Hz yaw torque output filter (MC_YAW_TQ_CUTOFF), which
+acts on its whole yaw command.
+Choice: nu_yaw = K_Y * lpf(rate_sp - rate) with the YAW_CUT design (firmware 99634a6b71). It gives INDI the same
+structure the PID baseline already has by default, so it is not an advantage offered only to INDI.
+Alternatives rejected: (a) a separate yaw setpoint pre-filter parameter: one more parameter for the same effect;
+(b) changing the effort metric or its weight: the cost is frozen (scenarios.md v1) and changing it after seeing
+INDI lose would be after-the-fact selection; (c) lowering K_Y further: r3 already shows yaw tracking degrading
+while the step in torque remains (proportional to K_Y).
+Cost: added lag on the yaw setpoint path, expected to lower yaw step tracking somewhat (as for PID).
