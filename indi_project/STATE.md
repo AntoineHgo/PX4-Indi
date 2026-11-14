@@ -153,8 +153,10 @@ owner decisions when you first act on them.
   (2) rebuild px4_sitl_default (Docker); (3) one hover flight PID defaults with v2_fac.params: check hover
   actuator_motors median ~0.59 (prediction) and stable; (4) v2 PID tuning check on FAC config: copy
   s2_pid_tune_r1.sh/r2.sh with --base-params bench/params/v2_fac.params and new round names (r1f, r2f), CPU
-  only; (5) O-3/O-4 v1 re-checks post-acceptance (frozen v1 INDI, ACT_TC 0.0125 and 0.025 runs, G2_Y 0.16 run;
-  tuning set + H5 x10) on the v1 config (FAC 0, as v1 was flown); (6) implement D-omega2 (sonnet agent, one
+  only; (5) O-3/O-4 v1 re-checks post-acceptance: READY, launch detached after the rebuild:
+  `setsid indi_project/results/s2_recheck_v1/run.sh > indi_project/results/s2_recheck_v1/run.log 2>&1 &`
+  (f652b9a8d1; 3 variants x (3 hover + 12 steps + 20 H5) = 105 runs, v1 config); compare with v1 frozen
+  `results/runs/*/indi_tuned` and `results/tuning/r4f.md`; can share the CPU with (4) only if JOBS are reduced; (6) implement D-omega2 (sonnet agent, one
   change per commit: eRPM state + validity/fallback in the library with gtests, then module wiring,
   MC_INDI_W_MAX, MC_INDI_ERPM_DLY, MC_INDI_ERPM_TO); identify ERPM_DLY before flying.
 
