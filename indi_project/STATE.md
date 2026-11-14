@@ -145,9 +145,15 @@ owner decisions when you first act on them.
 
 ## In progress
 
-- SESSION 33 (2026-11-14): r2 still RUNNING at start (11/16). IN FLIGHT: sonnet agent "D-omega2 library"
-  (measured-torque path + validity/fallback in `src/lib/indi_rate_control`, gtests, one commit), log
-  `plan/impl_log_omega2_lib.md`. If the session dies: check that file and `git log`; relaunch only what is missing.
+- SESSION 33 (2026-11-14): r2 still RUNNING at start (11/16). DONE (sonnet agent, 29 calls): D-omega2 library part
+  895b55aed8 (setMeasuredTorque/valid per cycle, own delay MC_INDI_ERPM_DLY-to-be + own sync filters, model fed
+  while invalid, switch after kMeasValidCycles=20 valid cycles, immediate fallback; normalisedThrustFromRpm helper),
+  35/35 gtests (23 old unmodified), log `plan/impl_log_omega2_lib.md`. Diff reviewed by me (selection/feeds OK).
+  Open from it: G2 yaw term sees a t_f step at the switch if model != measurement (not mitigated).
+  DONE r1f script + chain `bench/s2_after_rebuild.sh` (recheck v1 then r1f, sequential) (8c4f0faadc).
+  NEXT after r2 ends: analyse r2 -> `results/s2_tuning/r2.md`; rebuild px4_sitl_default; hover check PID+FAC;
+  `setsid indi_project/bench/s2_after_rebuild.sh > /dev/null 2>&1 &`. Then module wiring of D-omega2 (sonnet:
+  esc_status -> u_i -> tau_meas = B u in allocator-normalised units, MC_INDI_W_MAX/ERPM_DLY/ERPM_TO, status field).
 
 - SESSION 32 (2026-11-14): PID r2 still RUNNING at start (6/16), 9/16 at end; same relaunch rule as s31 below.
   DONE O-4 (inline, no agent): `bench/identify_g2.py` (f16d518109), `results/s2_ident_g2.md` + D-g2sim
