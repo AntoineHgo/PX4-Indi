@@ -98,7 +98,14 @@
 
 ## In progress
 
-- NEXT (nothing running): phase 6 on frozen candidates (PID defaults vs
+- RUNNING end of session 13 (detached, ~30-40 min): held-out/disturbance batch,
+  PID defaults + INDI tuned, seeds 1-5: speed 1 {com_shift gust_diag gust_x
+  payload_add}, speed 4 {step_diag mismatch_inertia}. Log
+  `results/heldout_s13.log` (header lists the 4 run_batch.sh calls; runs with
+  existing metrics.json are skipped, so re-run them if incomplete). Output
+  `results/runs/<scenario>/{pid_default,indi_tuned}/seed*/`. NEXT: compare per
+  scenario (mean/std over seeds), commit metrics.json/run.json.
+- NEXT: phase 6 on frozen candidates (PID defaults vs
   INDI tuned = `results/tuning/indi/r4f/c00/params`). (1) T8: run
   `bench/disturbance.py` for peak tilt/recovery at fault onset, find where INDI
   saturates. (2) Held-out set (H2 gust_diag, H3 com_shift, H6 step_diag, H5?) and
