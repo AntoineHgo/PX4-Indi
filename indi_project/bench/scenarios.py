@@ -49,6 +49,11 @@ SCENARIOS = {
                    segments=[("settle", 10.0, 0.0), ("dist", 28.0, 0.0)]),
     "payload_add": dict(mode="position", axis=None, disturbance="payload_add",
                         segments=[("settle", 10.0, 0.0), ("dist", 30.0, 0.0)]),
+    # Held-out H2/H3, same structure as T6/T7 (profiles in bench/disturbance.py).
+    "gust_diag": dict(mode="position", axis=None, disturbance="gust_diag",
+                      segments=[("settle", 10.0, 0.0), ("dist", 27.6, 0.0)]),
+    "com_shift": dict(mode="position", axis=None, disturbance="com_shift",
+                      segments=[("settle", 10.0, 0.0), ("dist", 30.0, 0.0)]),
     # Plant fault (T8): attitude mode (level hold + yaw step). At the start of the segment named "loss" the runner sets
     # SIM_GZ_EC_MIN1/MAX1 (motor 0) to sqrt(scale) x their start value; omega = MIN + (MAX-MIN)*c and gz thrust ~ omega^2, so
     # thrust of motor 0 is `scale` x nominal at every command. Same plant change for every controller.

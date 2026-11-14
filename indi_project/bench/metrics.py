@@ -108,7 +108,7 @@ def disturbance_metrics(dist, lp, att, run, w1):
 
     attitude deviation: tilt angle between the body z axis and its pre-onset value (median of the last 1 s before onset),
       and peak |roll|,|pitch| deviation from the pre-onset median (deg).
-    position deviation: from the hold position; horizontal norm for gust_x, |vertical| for payload_add.
+    position deviation: from the hold position; horizontal norm for gust_x and gust_diag, |vertical| for payload_add and com_shift.
     recovery_s: from onset to the earliest time t >= t_peak such that the error stays <= REC_BAND_M for REC_HOLD_S
       (up to the end of the evaluation window); None if it never does."""
     t0 = dist["onset_us"]
@@ -138,10 +138,10 @@ def disturbance_metrics(dist, lp, att, run, w1):
     ref = run.get("hold_pos_ned") or [float(lp[k][t >= t0][0]) for k in ("x", "y", "z")]
     if m.any():
         dx, dy, dz = lp["x"][m] - ref[0], lp["y"][m] - ref[1], lp["z"][m] - ref[2]
-        err = np.abs(dz) if prof == "payload_add" else np.hypot(dx, dy)
+        err = np.abs(dz) if prof in ("payload_add", "com_shift") else np.hypot(dx, dy)
         tt = t[m] * 1e-6
         i_pk = int(np.argmax(err))
-        res.update({"position_error_kind": "vertical" if prof == "payload_add" else "horizontal",
+        res.update({"position_error_kind": "vertical" if prof in ("payload_add", "com_shift") else "horizontal",
                     "peak_position_dev_m": float(err[i_pk]), "t_peak_s": float(tt[i_pk] - t0 * 1e-6),
                     "peak_dev_north_m": float(dx[np.argmax(np.abs(dx))]), "peak_dev_east_m": float(dy[np.argmax(np.abs(dy))]),
                     "peak_dev_down_m": float(dz[np.argmax(np.abs(dz))]),
