@@ -28,6 +28,17 @@ REPO = os.environ.get("PX4_INDI_REPO", os.path.abspath(os.path.join(os.path.dirn
 # PX4_INDI_BUILD: fly another build directory of the same tree (e.g. a branch build while a batch uses the default).
 BUILD = os.environ.get("PX4_INDI_BUILD", os.path.join(REPO, "build/px4_sitl_default"))
 
+
+
+def o11_build():
+    """True for builds with the separate mc_indi_rate_control module (O-11): INDI is selected by MC_INDI_EN at boot,
+    not by MC_RATE_CTL_TYPE, and the rotor speed scale is MC_INDI_W_MAX instead of CA_R_W_MAX."""
+    try:
+        return "MC_INDI_EN" in open(os.path.join(BUILD, "parameters.xml")).read()
+    except OSError:
+        return False
+
+
 # Same for every controller under test: no GCS, no RC in this harness. Plus full-rate logging profile.
 BASE_PARAMS = {
     "NAV_DLL_ACT": 0, "COM_RC_IN_MODE": 4, "COM_RCL_EXCEPT": 4,
@@ -344,6 +355,12 @@ def main():
     ok = False
     try:
         sim.load_env()
+        if o11_build():  # INDI is a module started at boot (O-11): same params files fly old and new binaries
+            if overlay.pop("MC_RATE_CTL_TYPE", "0").strip() == "1":
+                sim.env["PX4_PARAM_MC_INDI_EN"] = "1"
+                meta["boot_params"] = {"MC_INDI_EN": 1}
+            if "CA_R_W_MAX" in overlay:
+                overlay["MC_INDI_W_MAX"] = overlay.pop("CA_R_W_MAX")
         variant = dict(sc.get("model_variant") or {})
         if a.sim != "v1":  # read once when gz_bridge starts
             variant["rpm"] = True
