@@ -18,7 +18,8 @@ for p in sys.argv[1:]:
         x = ts[f"xyz[{i}]"][m]; out.append(f"tq{i} std {x.std():.4f} drms {np.sqrt(np.mean(np.diff(x)**2)):.4f}")
     am = u.get_dataset("actuator_motors").data
     t = am["timestamp"]*1e-6; m = (t > t[0]+15) & (t < t[0]+45)
-    dm = np.mean([np.sqrt(np.mean((np.diff(am[f"control[{i}]"][m])/np.diff(t[m]))**2)) for i in range(4)])
+    dt = np.diff(t[m]); k = dt > 0  # duplicate timestamps would divide by zero
+    dm = np.mean([np.sqrt(np.mean((np.diff(am[f"control[{i}]"][m])[k]/dt[k])**2)) for i in range(4)])
     av = u.get_dataset("vehicle_angular_velocity").data
     t = av["timestamp"]*1e-6; m = (t > t[0]+15) & (t < t[0]+45)
     w = " ".join(f"w{i} {av[f'xyz[{i}]'][m].std():.4f}" for i in range(3))
