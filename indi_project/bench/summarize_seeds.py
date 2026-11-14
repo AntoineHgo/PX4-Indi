@@ -2,7 +2,8 @@
 """Per-scenario mean/std over seeds of key metrics, two controllers side by side, as a markdown table.
 usage: summarize_seeds.py RUNS_DIR SCENARIO [SCENARIO ...] [--a pid_default] [--b indi_tuned]
 Reads RUNS_DIR/<scenario>/<controller>/seed*/metrics.json. Ratio is mean(b)/mean(a); 'b<a' counts the seeds
-(paired by seed number) where b is lower."""
+(paired by seed number) where b is lower; 'med impr' is the median of 1 - b/a over paired seeds and 'p' the exact
+two-sided Wilcoxon signed-rank p-value on the paired differences (acceptance test of scenarios.md section 6)."""
 import argparse
 import glob
 import json
@@ -34,6 +35,32 @@ def load(runs, scen, ctrl):
     return out
 
 
+def wilcoxon_exact(diffs):
+    """Exact two-sided Wilcoxon signed-rank p-value, zeros dropped, average ranks for ties, n <= 20."""
+    d = [x for x in diffs if x != 0.0]
+    n = len(d)
+    if n == 0:
+        return 1.0
+    order = sorted(range(n), key=lambda i: abs(d[i]))
+    ranks = [0.0] * n
+    i = 0
+    while i < n:
+        j = i
+        while j + 1 < n and abs(d[order[j + 1]]) == abs(d[order[i]]):
+            j += 1
+        for k in range(i, j + 1):
+            ranks[order[k]] = (i + j) / 2.0 + 1.0
+        i = j + 1
+    w_plus = sum(r for r, x in zip(ranks, d) if x > 0)
+    centre = n * (n + 1) / 4.0
+    extreme = 0
+    for mask in range(1 << n):
+        w = sum(ranks[k] for k in range(n) if mask >> k & 1)
+        if abs(w - centre) >= abs(w_plus - centre) - 1e-9:
+            extreme += 1
+    return extreme / float(1 << n)
+
+
 def fmt(v):
     return f"{statistics.mean(v):.3g} ± {statistics.stdev(v):.2g}" if len(v) > 1 else (f"{v[0]:.3g}" if v else "-")
 
@@ -49,7 +76,7 @@ def main():
         ra, rb = load(a.runs, scen, a.a), load(a.runs, scen, a.b)
         seeds = sorted(set(ra) & set(rb))
         print(f"\n### {scen} ({a.a} n={len(ra)}, {a.b} n={len(rb)}, paired {len(seeds)})\n")
-        print(f"| metric | {a.a} | {a.b} | ratio b/a | b<a |\n|---|---|---|---|---|")
+        print(f"| metric | {a.a} | {a.b} | ratio b/a | b<a | med impr | p |\n|---|---|---|---|---|---|---|")
         for name, path in METRICS:
             va = [get(ra[s], path) for s in ra]
             vb = [get(rb[s], path) for s in rb]
@@ -59,8 +86,12 @@ def main():
             ma = statistics.mean(va)
             ratio = statistics.mean(vb) / ma if ma else float('nan')
             pairs = [(get(ra[s], path), get(rb[s], path)) for s in seeds]
-            wins = sum(1 for x, y in pairs if x is not None and y is not None and y < x)
-            print(f"| {name} | {fmt(va)} | {fmt(vb)} | {ratio:.2f} | {wins}/{len(pairs)} |")
+            pairs = [(x, y) for x, y in pairs if x is not None and y is not None]
+            wins = sum(1 for x, y in pairs if y < x)
+            impr = [1.0 - y / x for x, y in pairs if x]
+            med = f"{statistics.median(impr) * 100:.0f} %" if impr else "-"
+            pval = wilcoxon_exact([y - x for x, y in pairs])
+            print(f"| {name} | {fmt(va)} | {fmt(vb)} | {ratio:.2f} | {wins}/{len(pairs)} | {med} | {pval:.3g} |")
 
 
 if __name__ == '__main__':
