@@ -297,3 +297,13 @@ Hover 3-D RMS is driven by sporadic vertical excursions, present for PID and IND
 equal (`results/tuning/r3f_yawsp.md`). The frozen tuning cost is kept unchanged. Consequences: J differences below
 ~0.1 are not treated as meaningful; the final benchmark uses more seeds and reports the horizontal/vertical split
 alongside the frozen metric. Cause of the vertical excursions is open.
+
+## D-freeze (2026-11-14, session 13): INDI tuned candidate frozen at r4f
+
+INDI tuned = `results/tuning/indi/r4f/c00/params` (K_R 23.89, K_P 12.29, K_Y 2.118, ACT_TC 0.01142, YAW_CUT 1.572,
+ROLL_P 6.275, PITCH_P 6.185, YAW_P 3.308; G1 241/241/7.4). Tuning-set J 0.978 vs PID defaults 0.96 (tie within
+noise). Four INDI rounds (r1-r4, ~600 flights) plus three structural fixes (D-yawfilt, D-yawnu, D-yawsp); the last
+two rounds moved J by less than the hover noise, and the remaining INDI deficit (yaw) is explained (`r4.md`). This
+meets the stopping rule "several iterations without improvement, with an explanation". The PID baseline stays at
+PX4 defaults (r1+r2, 64 candidates, none better). Both frozen candidates now go to the held-out and disturbance
+scenarios, which were not used for tuning.
