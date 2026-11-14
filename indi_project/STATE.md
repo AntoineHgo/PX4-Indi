@@ -150,7 +150,7 @@ owner decisions when you first act on them.
 - **Stage 2 (session 38):** O-11 regression DONE: the new module `mc_indi_rate_control` reproduces the old
   in-`mc_rate_control` INDI (frozen v1) and the allocator-side measured torque (v2 omega2) within run-to-run noise,
   tuning set x 3 seeds (`results/s2_o11_regress.md`). frz control: O-3 variant gains on H5 are real (not the
-  binary); G2_Y 0.16 breaks yaw. PID r2f (FAC config) flying.
+  binary); G2_Y 0.16 breaks yaw. PID r2f done: v2 tuned PID = r1f c05 (D-v2pid). Default build = O-11 tree. Next: G1 v2 (3 seeds), v2 INDI tuning.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -188,12 +188,18 @@ owner decisions when you first act on them.
   reference flew under heavier CPU load; v2 borderline on rate_step_roll, 1.3 % better on new). Report ch. 5.3.2
   revised for O-11; ch. 4 unchanged (it describes the stock stack, again = main). O-11 is CLOSED except: motor-loss
   handling with the module (failed-motor column zeroing not ported) to be seen on V9 in v2 validation.
-  NEXT (session 39): (1) r2f (PID, detached, started 18:06, 240 flights) -> when `results/s2_tuning/r2f_queue.log`
-  shows it finished: decide v2 pid_tuned (r2f best vs r1f c05 vs defaults, noise rule as v1 r2), write
-  `results/s2_tuning/r2f.md`. (2) Then rebuild px4_sitl_default (now = O-11 tree) and from then on fly INDI with
-  MC_INDI_EN params (runner translates old files); drop build/px4_sitl_omega2 and build/px4_sitl_o11 by path
-  once default is rebuilt and checked. (3) G1 v2 on 3 seeds (identify_g1.py), then v2 INDI tuning (O-5:
-  G1, ACT_TC, delays, G2 identified, never tuned). Guard blocks the word "reboot" in shell commands: use Edit.
+  DONE also: r2f finished, D-v2pid (v2 tuned PID = r1f c05, `results/s2_tuning/r2f.md`, d1b5be2d22);
+  build/px4_sitl_default REBUILT on the O-11 tree (ninja in Docker, rc 0) and smoke-flown (frz hover: MC_INDI_EN
+  applied, indi_rate_status only, att 0.073 deg, effort 0.036 = o11 build). No batch is flying.
+  build/px4_sitl_o11 is now a duplicate of default and build/px4_sitl_omega2 the old-placement reference: both may
+  be removed by path when disk matters (not needed for any planned run).
+  NEXT (session 39): (1) G1 v2 identification on 3 seeds (`bench/identify_g1.py`; session 35 had seed 1 only:
+  roll/pitch ~175, yaw ~12.4 in u = omega^2 units), ACT_TC/ERPM_DLY already identified (O-3, D-erpmdly); write the
+  v2 INDI starting params from identified values only (O-5: identified, never tuned) on `v2_fac.params` +
+  MC_INDI_EN 1 + MC_INDI_W_MAX 1000. (2) v2 INDI tuning (gains K only, same budget as v2 PID: r1 24 x 2 seeds,
+  r2 16 x 3 seeds, tune.py --family indi with --base-params on the v2 INDI file). (3) Then v2 held-out V1-V9
+  (frozen, `bench/scenarios.md` sec. 8) for PID defaults, PID tuned (r1f c05) and INDI v2, 10 seeds.
+  Guard blocks the word "reboot" in shell commands: use Edit.
 
 - SESSION 37 (2026-11-14): O-11 refactor started. DONE: c1a700e7bb (mc_rate_control back to base),
   462eb68990 (allocator + allocation lib back to base), D-o11 in DECISIONS.md, spec `plan/o11_module_spec.md`.
@@ -794,4 +800,4 @@ owner decisions when you first act on them.
 - 2026-11-14 s35: D-omega2 first flights (measured torque OK, fallback OK, D-erpmdly), G1 v2, held-out v2 draft. Agents: 0.
 - 2026-11-14 s37: O-11 refactor: mc_rate_control + allocator back to base, new module mc_indi_rate_control (builds, gtests pass, not flown). Agents: 1 sonnet.
 - 2026-11-14 s36: held-out v2 frozen (D-heldout-v2, sim hooks V3/V4/V6 + tau_up/down, PID smoke OK); r1f done (c05 0.925 vs 0.966); r2f queued. Agents: 0.
-- 2026-11-14 s38: frz restated, r1f committed, runner O-11 param mapping, O-11 regression (60 runs) preserved within noise, ch. 5.3.2 + architecture updated. Agents: 0.
+- 2026-11-14 s38: frz restated, r1f+r2f committed (D-v2pid: tuned PID = r1f c05), runner O-11 param mapping, O-11 regression (60 runs) preserved within noise, ch. 5.3.2 + architecture updated, default build rebuilt on O-11 tree. Agents: 0.
