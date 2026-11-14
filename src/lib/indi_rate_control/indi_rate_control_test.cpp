@@ -691,7 +691,27 @@ TEST(IndiRateControlTest, LandedYawOutputUnaffectedByYawCutoff)
 		EXPECT_NEAR(torque(2), 0.1f, 1e-4f); // filter reset then apply rounds in float
 	}
 
-	// takeoff: the first airborne cycle continues from the landed values, no step in the yaw command
+	// takeoff: the first airborne cycle adds the modelled torque, settled at the landed output, to the same
+	// increment, the yaw filters continue from the landed values
 	const Vector3f airborne = ctrl.update(Vector3f(), Vector3f(0.f, 0.f, 0.5f), Vector3f(), torque, kDt, false);
-	EXPECT_NEAR(airborne(2), 0.1f, 0.01f);
+	EXPECT_NEAR(airborne(2), 0.2f, 0.01f);
+}
+
+TEST(IndiRateControlTest, LandedKeepsActuatorModelRunning)
+{
+	IndiRateControl ctrl = makeController();
+	ctrl.setMaxIncrement(0.05f);
+	Vector3f torque;
+
+	for (int i = 0; i < 400; i++) { // 1 s on ground (maybe_landed), constant roll rate error 0.5 rad/s
+		torque = ctrl.update(Vector3f(), Vector3f(0.5f, 0.f, 0.f), Vector3f(), torque, kDt, true);
+		EXPECT_FLOAT_EQ(torque(0), 0.05f); // increment only, clamped
+		EXPECT_EQ(ctrl.getFilteredTorque(), Vector3f());
+	}
+
+	// takeoff: the model already follows the applied torque, the step is one bounded increment
+	const Vector3f airborne = ctrl.update(Vector3f(), Vector3f(0.5f, 0.f, 0.f), Vector3f(), torque, kDt, false);
+	EXPECT_NEAR(ctrl.getFilteredTorque()(0), 0.05f, 1e-3f);
+	EXPECT_NEAR(airborne(0), 0.1f, 1e-3f);
+	EXPECT_LE(airborne(0) - torque(0), 0.05f + 1e-3f);
 }

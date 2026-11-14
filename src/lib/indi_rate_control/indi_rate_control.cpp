@@ -185,35 +185,35 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 		designYawFilters(_design_sample_freq);
 	}
 
+	// 3. actuator model, the allocated torque is normalised so bound it to guard the filter against overflow.
+	// Steps 3-5 also run while landed, so that the modelled torque follows the torque actually applied and its
+	// filter chain stays synchronised with the gyro derivative chain, which runs on every cycle
+	Vector3f t_alloc;
+
+	for (int i = 0; i < 3; i++) {
+		t_alloc(i) = math::constrain(torque_allocated_prev(i), -1.f, 1.f);
+	}
+
+	const float actuator_alpha = 1.f - expf(-dt / _actuator_tc);
+	_t_act += actuator_alpha * (t_alloc - _t_act);
+
+	// 4. delay: ring buffer, _delay_head holds the newest sample
+	_delay_head = (_delay_head + 1) % kDelayBufferSize;
+	_t_delay_buffer[_delay_head] = _t_act;
+	const int delay_index = (_delay_head + kDelayBufferSize - _delay_samples) % kDelayBufferSize;
+	const Vector3f t_del = _t_delay_buffer[delay_index];
+
+	// 5. synchronisation filter H, same order as the gyro derivative chain: LPF2p then alpha filter
 	Vector3f t_f;
 
+	for (int i = 0; i < 3; i++) {
+		_t_lpf(i) = _lpf[i].apply(t_del(i));
+		t_f(i) = _alpha[i].update(_t_lpf(i));
+	}
+
 	if (landed) {
-		// 6. on ground the measured acceleration carries no information about the torque,
-		// hold the feedback torque at zero so that no increment can accumulate
-		resetStates();
-
-	} else {
-		// 3. actuator model, the allocated torque is normalised so bound it to guard the filter against overflow
-		Vector3f t_alloc;
-
-		for (int i = 0; i < 3; i++) {
-			t_alloc(i) = math::constrain(torque_allocated_prev(i), -1.f, 1.f);
-		}
-
-		const float actuator_alpha = 1.f - expf(-dt / _actuator_tc);
-		_t_act += actuator_alpha * (t_alloc - _t_act);
-
-		// 4. delay: ring buffer, _delay_head holds the newest sample
-		_delay_head = (_delay_head + 1) % kDelayBufferSize;
-		_t_delay_buffer[_delay_head] = _t_act;
-		const int delay_index = (_delay_head + kDelayBufferSize - _delay_samples) % kDelayBufferSize;
-		const Vector3f t_del = _t_delay_buffer[delay_index];
-
-		// 5. synchronisation filter H, same order as the gyro derivative chain: LPF2p then alpha filter
-		for (int i = 0; i < 3; i++) {
-			_t_lpf(i) = _lpf[i].apply(t_del(i));
-			t_f(i) = _alpha[i].update(_t_lpf(i));
-		}
+		// restart the yaw filters from the current values each landed cycle (bypassed on ground)
+		_yaw_filter_reset_pending = true;
 	}
 
 	// 6b. optional yaw low pass on both members of the feedback pair, same coefficients so they stay synchronised
@@ -239,6 +239,11 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	// 7. desired angular acceleration
 	const Vector3f nu = _gain_k.emult(rate_error);
 
+	// 7b. on ground the measured acceleration carries no information about the torque: hold the feedback torque
+	// out of the law so that no increment can accumulate. At takeoff the law steps by the modelled torque, the
+	// filtered landed output, which the maximum increment bounds like any in-flight increment
+	const Vector3f t_fb = landed ? Vector3f() : t_f;
+
 	// 8. incremental inversion, only yaw has the spin-up term (g2 / dt = 0 for roll and pitch)
 	Vector3f dt_cmd;
 
@@ -262,13 +267,13 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 
 	for (int i = 0; i < 3; i++) {
 		dt_cmd(i) = math::constrain(dt_cmd(i), -_max_increment, _max_increment);
-		t_cmd(i) = math::constrain(t_f(i) + dt_cmd(i), -1.f, 1.f);
+		t_cmd(i) = math::constrain(t_fb(i) + dt_cmd(i), -1.f, 1.f);
 	}
 
 	// 10. logging values
 	_nu = nu;
 	_a_f = a_f;
-	_t_f = t_f;
+	_t_f = t_fb;
 	_dt_cmd = dt_cmd;
 
 	return t_cmd;
