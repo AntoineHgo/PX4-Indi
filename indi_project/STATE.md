@@ -204,11 +204,12 @@ owner decisions when you first act on them.
   tilt (roll/pitch 0.67/1.03 deg vs v2 5.3/7.7, PID 0.80/0.90); Tb 0.1 watchdog trip, pruned; rotation RMS still
   11 vs 8.6 deg PID (yaw remainder, unexplained). RUNNING detached: stage 2 = `SEEDS="2 3" CONFIGS="pid_tuned
   v3_tb0.3 v3_tb1.0" END=V3_STAGE2_DONE bash bench/v3_screen_tb.sh` (18 flights, log `results/v3_screen.log`,
-  resumable with the same command). NEXT (session 47): (1) add seeds 2-3 to `results/v3_screen.md`, pick Tb (prefer
-  the one with lower motor_loss_0 roll/pitch RMS and no failure); (2) look at yaw after the fault in motor_loss_0
-  (rotation RMS remainder) and step_yaw 1.26x (K_Y/YAW_CUT, D-outer-check): decide whether a small yaw screen is
-  needed before freezing; (3) freeze indi_v3 params (`bench/params/indi_v3.params` + DECISIONS D-v3-freeze);
-  (4) V' verdict mode in s2_verdict.py (5 entries, criteria sec. 9), then fly V' (5 x 10 seeds x 4 controllers).
+  resumable with the same command). Stage 2 DONE 00:45, 0 failures: Tb 0.3 SELECTED (D-v3-tb), seeds agree within
+  3 %; motor_loss_0 rotation gap to PID is all yaw (11.2 vs 8.5 deg). NEXT (session 47): (1) decide on a small yaw
+  screen (K_Y, YAW_CUT; O-12 staged, entries step_yaw + motor_loss_0, Tb 0.3, outer gains = PID's) before freezing,
+  or freeze now and report yaw as the known weakness; (2) freeze indi_v3 params (`bench/params/indi_v3.params` =
+  indi_v3_tb0.3 [+ yaw] + DECISIONS D-v3-freeze); (3) V' verdict mode in s2_verdict.py (5 entries, sec. 9 criteria),
+  then fly V' (5 x 10 seeds x 4 controllers: pid_default, pid_tuned, indi_v2, indi_v3); (4) report 7.8/8.10 for v3.
   Pitfall: never edit a bash script while it runs (bash re-reads it by offset; it broke the stage-1 tail, all runs
   were complete, marker appended by hand). Ledger s46: 1 sonnet agent; flights 2 smoke + 15 screen + 2 V' check
   (+18 stage 2 running).

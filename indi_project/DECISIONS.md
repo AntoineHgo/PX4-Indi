@@ -745,3 +745,11 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
 - **Alternatives rejected:** re-tuning the outer gains jointly with INDI (the v2 route: under a hover-noise-dominated J
   it settled on low MC_ROLL_P and cost 20 % on roll steps); re-opening the v2 verdict with the new gains (post-hoc
   change after a held-out result).
+
+## D-v3-tb (session 46): actuator blend time constant MC_INDI_ACT_BLD = 0.3 s
+- **Evidence:** `results/v3_screen.md`, O-12 staged screening on motor_loss_0, mismatch_combined_rate, step_roll
+  (stage 1: Tb 0/0.1/0.3/1.0, seed 1; stage 2: Tb 0.3/1.0, seeds 2-3). Tb 0.3: motor_loss_0 roll/pitch RMS 0.67/1.03
+  deg (v2 5.3/7.7, PID 0.80/0.90), position 3.3 m (PID 3.9); nominal and rate entries unchanged.
+- **Alternatives rejected:** Tb 0.1 (watchdog trip, altitude loss after the fault, seed 1); Tb 1.0 (roll/pitch 1.6x and
+  position 2.6x Tb 0.3's: the slower blend leaves the gap uncorrected longer).
+- **Open before freezing indi_v3:** the yaw rate loop (yaw RMS 1.3x PID after the motor loss, step_yaw 1.26x).
