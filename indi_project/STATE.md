@@ -131,6 +131,16 @@ owner decisions when you first act on them.
 
 ## In progress
 
+- SESSION 28 (2026-11-14): DONE (c1) the 250/285 Hz logged rates are a logger artifact: logger polls every 3500 us
+  (logger.cpp:265) and esc_status is logged at 5 ms (high-rate profile); vehicle_angular_velocity publishes every gyro
+  sample at 1000 Hz (IMU_GYRO_RATEMAX 800: round(1250/1000) = 1), so rate control runs at 1 kHz (logged spacing 3/4 ms,
+  never even-only). run_batch.sh passes IMU_RATE / ERPM_DROP (7d4c809296). IN FLIGHT: lockstep cost at 1000 Hz,
+  `results/s2_imu_cost/` (speed 2, 4 single; 6 parallel at speed 1; batch.log has wall times). (c2) WRITTEN, NOT BUILT:
+  GZBridge SIM_GZ_VIB_ACC/GYR/RPM rotor-speed vibration (1P in-plane + 2P blade-pass, ~rpm^2, needs SIM_GZ_ESC_FB>=1,
+  default 0 so v1 unchanged), uncommitted in src/modules/simulation/gz_bridge. NEXT: build in Docker after the batch,
+  hover check with vibration on, choose amplitudes (PX4 docs flight_log_analysis.md: > 2-3 m/s^2 p-p accel is strong
+  vibration; gyro amplitude has no source yet), add `--vib` to run_scenario.py, D-imurate + D-vib in DECISIONS.
+
 - SESSION 27 (2026-11-14): DONE step 2a rotor speed telemetry: gz_bridge `SIM_GZ_ESC_FB` 1 = true rotor speed
   (8dfe3e9e1a), 2 = AM32/BDShot eRPM model (latency 1 frame, period encoding, 100-eRPM rounding, 14 poles, held drops,
   `SIM_GZ_ERPM_DRP`); bench `--sim v1|v2|v2true --erpm-drop` (`SIM_VERSION` in run_batch.sh). Checks OK
