@@ -61,6 +61,7 @@
 
 ## In progress
 
+- Session 11 (2026-11-14): LAUNCHED detached `python3 bench/tune.py --family indi --round-name r2f_yc2 --n-candidates 1 --seeds 1 2 3 --jobs 6 --sampler-seed 0 --span-factor 1.0 --base-params bench/params/indi_v1.params --center bench/params/indi_c11_yc2.json` (c11 with YAW_CUT 2 Hz, 15 flights), log `results/tuning/r2f_yc2.log`. Resumable: re-run if summary.csv missing.
 - Nothing running. r2 finished and committed (`results/tuning/r2.md`).
 - DONE session 10: T6 gust_x + T7 payload_add (D-dist, commits 160dda984d,
   4681575174); PID-default seed 1: gust 0.61 m / 14.2 deg / recovery 15.9 s,
