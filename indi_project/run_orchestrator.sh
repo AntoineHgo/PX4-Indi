@@ -2,6 +2,7 @@
 # Relaunches the orchestrator until it creates indi_project/DONE.
 # Each launch is a fresh session that resumes from indi_project/STATE.md.
 # Stop it gracefully with: touch indi_project/STOP
+# Lift the 5-hour usage share on demand with: touch indi_project/BYPASS_5H (rm it to restore)
 set -u
 export LC_NUMERIC=C # decimal point in awk and printf, whatever the host locale
 cd "$(dirname "$0")/.."
@@ -28,6 +29,12 @@ FIVE_HOUR_SHARE="${FIVE_HOUR_SHARE:-0.8}"  # leave the top 20 % of every 5-hour 
 WEEKLY_SHARE="${WEEKLY_SHARE:-0.6}"        # stop launching once the weekly window is 60 % used
 MIN_BUDGET_USD="${MIN_BUDGET_USD:-1}"      # below this headroom a session is mostly start-up cost: wait instead
 MAX_BUDGET_USD="${MAX_BUDGET_USD:-3}"      # bounds what one cut-off session can lose
+# Usage left in a 5-hour window is lost at its reset, so in its last FINAL_STRETCH_S seconds the
+# orchestrator may use the whole window (share 1.0). The owner can lift the 5-hour share at any
+# time with `touch indi_project/BYPASS_5H` (remove the file to restore it); the supervisor checks
+# the file every minute, even while waiting. The weekly share still applies in both cases.
+FINAL_STRETCH_S="${FINAL_STRETCH_S:-3600}"
+BYPASS_FILE=indi_project/BYPASS_5H
 WINDOW_USD_DEFAULT=9                       # $ per full 5-hour window, measured on session 1; recalibrated each run
 LIMIT_WAIT="${LIMIT_WAIT:-1800}"           # fallback wait after a failed or very short run
 MAX_RUNS="${MAX_RUNS:-300}"
@@ -37,10 +44,13 @@ log() { echo "[$(date '+%F %T')] $*" | tee -a "$LOG_DIR/supervisor.log"; }
 die() { log "ABORT: $*"; exit 1; }
 
 # sleep until an epoch time by wall clock (bash sleep stops counting during a suspend);
-# returns early if STOP or DONE appears
+# returns early if STOP or DONE appears, or if BYPASS_5H appears while it was absent
 wait_until() {
+	local bypass_at_start=0
+	[ -f "$BYPASS_FILE" ] && bypass_at_start=1
 	while [ "$(date +%s)" -lt "$1" ]; do
 		{ [ -f indi_project/DONE ] || [ -f indi_project/STOP ]; } && return
+		[ "$bypass_at_start" -eq 0 ] && [ -f "$BYPASS_FILE" ] && return
 		sleep 60 9>&-
 	done
 }
@@ -111,7 +121,7 @@ guard_blocks "ls" && die "guard self-test failed (blocks everything)"
 if [ "$(git branch --show-current)" != "$BRANCH" ]; then
 	git switch "$BRANCH" 2>/dev/null || git switch -c "$BRANCH" || die "cannot switch to $BRANCH"
 fi
-log "preflight ok: branch $BRANCH, model $MODEL, effort $EFFORT, shares 5h $FIVE_HOUR_SHARE / weekly $WEEKLY_SHARE, cap \$$MIN_BUDGET_USD-$MAX_BUDGET_USD/session, $(claude --version 2>/dev/null)"
+log "preflight ok: branch $BRANCH, model $MODEL, effort $EFFORT, shares 5h $FIVE_HOUR_SHARE (1.0 in the last ${FINAL_STRETCH_S}s or with $BYPASS_FILE) / weekly $WEEKLY_SHARE, cap \$$MIN_BUDGET_USD-$MAX_BUDGET_USD/session, $(claude --version 2>/dev/null)"
 
 # --- supervise ---
 runs=0
@@ -130,8 +140,17 @@ while [ ! -f indi_project/DONE ] && [ ! -f indi_project/STOP ]; do
 	r7=$(jq -r ".unifiedWindows.seven_day.resetsAt // $((now + LIMIT_WAIT))" <<<"$rl")
 	rejected=$(jq -r '[.unifiedWindows // {} | to_entries[] | select(.value.status == "rejected") | .value.resetsAt] | max // empty' <<<"$rl")
 	w=$(window_usd)
-	headroom=$(fcalc "($FIVE_HOUR_SHARE - $u5) * $w")
-	log "usage: 5-hour $u5, weekly $u7, headroom \$$headroom (window \$$w)"
+	share=$FIVE_HOUR_SHARE
+	share_why=""
+	if [ -f "$BYPASS_FILE" ]; then
+		share=1
+		share_why=", share lifted by $BYPASS_FILE"
+	elif [ $((r5 - now)) -le "$FINAL_STRETCH_S" ]; then
+		share=1
+		share_why=", last $((FINAL_STRETCH_S / 60)) min before the reset: full window"
+	fi
+	headroom=$(fcalc "($share - $u5) * $w")
+	log "usage: 5-hour $u5, weekly $u7, headroom \$$headroom (window \$$w, share $share$share_why)"
 	if [ -n "$rejected" ]; then
 		log "a usage window is exhausted, waiting until $(date -d "@$rejected" '+%F %T')"
 		wait_until $((rejected + 120))
@@ -143,8 +162,14 @@ while [ ! -f indi_project/DONE ] && [ ! -f indi_project/STOP ]; do
 		continue
 	fi
 	if ! fge "$headroom" "$MIN_BUDGET_USD"; then
-		log "5-hour headroom below \$$MIN_BUDGET_USD, waiting for its reset at $(date -d "@$r5" '+%F %T')"
-		wait_until $((r5 + 120))
+		stretch=$((r5 - FINAL_STRETCH_S))
+		if [ "$share" != 1 ] && [ "$stretch" -gt "$now" ]; then
+			log "5-hour headroom below \$$MIN_BUDGET_USD, waiting for the last stretch before its reset at $(date -d "@$stretch" '+%F %T')"
+			wait_until $((stretch + 60))
+		else
+			log "5-hour headroom below \$$MIN_BUDGET_USD, waiting for its reset at $(date -d "@$r5" '+%F %T')"
+			wait_until $((r5 + 120))
+		fi
 		continue
 	fi
 	budget=$headroom

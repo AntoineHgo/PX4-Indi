@@ -27,6 +27,7 @@ path_allowed() {
 	"$REPO"/.git | "$REPO"/.git/* | "$REPO"/indi_project) return 1 ;;
 	"$REPO"/indi_project/guard.sh | "$REPO"/indi_project/claude_settings.json) return 1 ;;
 	"$REPO"/indi_project/run_orchestrator.sh | "$REPO"/indi_project/ORCHESTRATOR_PROMPT.md) return 1 ;;
+	"$REPO"/indi_project/BYPASS_5H) return 1 ;;
 	"$REPO"/* | /tmp/* | "$HOME"/.claude/projects/*) return 0 ;;
 	*) return 1 ;;
 	esac
@@ -52,8 +53,8 @@ Bash)
 	has '(\.ssh|\.gnupg|\.gitconfig|\.bashrc|\.zshrc|\.zshenv|\.profile|\.claude/settings|\.claude\.json|\.config/gh)' && deny "no access to credentials or shell/tool configuration"
 	# supervisor files and git hooks may be read, never modified
 	while IFS= read -r seg; do
-		grep -Eq '(guard\.sh|claude_settings\.json|run_orchestrator\.sh|ORCHESTRATOR_PROMPT\.md|\.git/hooks)' <<<"$seg" || continue
-		grep -Eq '(>|(^|[^[:alnum:]_.-])(tee|mv|cp|rm|ln|chmod|chown|truncate|install|dd|patch)([[:space:]]|$)|(sed|perl)[[:space:]]+[^;|&]*-[[:alnum:]]*i|git[[:space:]]+(checkout|restore|rm|mv|apply|stash)|open\(|write)' <<<"$seg" &&
+		grep -Eq '(guard\.sh|claude_settings\.json|run_orchestrator\.sh|ORCHESTRATOR_PROMPT\.md|BYPASS_5H|\.git/hooks)' <<<"$seg" || continue
+		grep -Eq '(>|(^|[^[:alnum:]_.-])(tee|mv|cp|rm|ln|touch|chmod|chown|truncate|install|dd|patch)([[:space:]]|$)|(sed|perl)[[:space:]]+[^;|&]*-[[:alnum:]]*i|git[[:space:]]+(checkout|restore|rm|mv|apply|stash)|open\(|write)' <<<"$seg" &&
 			deny "supervisor files and git hooks may be read but not modified"
 	done < <(tr ';|&\n' '\n\n\n\n' <<<"$cmd")
 	has '(^|[^[:alnum:]_./-])claude[[:space:]]+[^;|&]*(-p|--print|--dangerously|--permission-mode|--settings)' && deny "no nested claude sessions, use the Agent tool"
