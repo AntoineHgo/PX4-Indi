@@ -58,6 +58,11 @@ SCENARIOS = {
     # flown as two runs: the T2 attitude step pattern and the T4 rate pulses (D-h5).
     "mismatch_combined_att": dict(mode="attitude", axis="roll", segments=_attitude_steps("roll", STEP_DEG, 3.0),
                                   model_variant=dict(ixx=0.8, iyy=0.8, izz=0.8, mass=1.15, tau=2.0)),
+    # Diagnostics for H5 (not part of the benchmark, never used for tuning): each H5 plant change on its own.
+    "diag_h5_tau": dict(mode="attitude", axis="roll", segments=_attitude_steps("roll", STEP_DEG, 3.0),
+                        model_variant=dict(tau=2.0)),
+    "diag_h5_inertia": dict(mode="attitude", axis="roll", segments=_attitude_steps("roll", STEP_DEG, 3.0),
+                            model_variant=dict(ixx=0.8, iyy=0.8, izz=0.8, mass=1.15)),
     "mismatch_combined_rate": dict(mode="rate", axis="roll", segments=_rate_pulses(3),
                                    model_variant=dict(ixx=0.8, iyy=0.8, izz=0.8, mass=1.15, tau=2.0)),
     # Trajectories (mode "trajectory"): the segment named "traj" flies a closed path from the hold position with
