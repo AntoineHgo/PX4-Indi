@@ -362,3 +362,16 @@ code and is reported as such.
   (e.g. `indi_project/docker/report.Dockerfile` with pandoc + texlive-xetex) once all chapters are final,
   so the simulation image stays unchanged and every benchmark result stays reproducible with it.
 - Rejected: adding pandoc/LaTeX to `px4-indi-sim` (rebuild of the simulation image, ~1 GB, no benefit to results).
+
+## D-noretune (session 23, 2026-11-14): the planned full-T re-tune is not run
+
+- Fact: `bench/scenarios.md` v1.1 planned a re-tune of both controllers on the full T set (T1-T9) once T5-T9
+  existed. It was never run: D-freeze froze both candidates on T1-T4 and the held-out set H1-H6 was then flown
+  (sessions 14-15) and the acceptance decided (D-accept).
+- Choice: do not run it now. Any re-tune after the held-out results are known would be tuned with knowledge of
+  the held-out outcome (H5 actuator mismatch, H2/H3 disturbances), which the held-out rule exists to prevent; the
+  acceptance verdict stays the one obtained with the T1-T4 tuning. The report states the omission as a limitation:
+  neither controller was tuned on any disturbance scenario, so a PID with a retuned integrator might narrow the
+  disturbance gap (ch. 9).
+- Rejected: re-tuning both families on T1-T9 and re-flying H1-H6 (contaminated held-out set, and ~1000 flights of
+  budget the project does not have).
