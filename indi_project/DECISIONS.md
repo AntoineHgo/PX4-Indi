@@ -769,3 +769,11 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
   `bench/s2_verdict.py --vprime` before any V' flight of indi_v2/indi_v3. Roll and pitch RMS are still tabulated.
 - Alternatives rejected: rotation-angle RMS (includes yaw, which sec. 9 leaves out); roll alone (motor 1 / motor 2
   losses tilt both axes); two tests per entry (would change the 4-of-5 count).
+
+## D-v3-freeze (session 47, 2026-11-15): indi_v3 frozen before V' flies
+- indi_v3 = Tb 0.3 (D-v3-tb), outer gains = tuned PID's (D-outer-check), K_Y 2.733 / YAW_CUT 3.0
+  (`bench/params/indi_v3.params`, `results/v3_screen_yaw2.md`). Selected on seen/T entries only (step_yaw,
+  motor_loss_0, hover; seeds 1-5 at most), under O-12 staged screening.
+- Alternatives: K_Y 4.0/cut 3.0 (yaw steps 1.05x PID but pitch under motor loss 1.28x PID, hover effort 2.4x);
+  the stage-1 base cut 1.665 (yaw 1.28x/1.33x PID). Known before V': hover effort ~2.1x PID (D-v3-hover), so V'
+  criterion 4 fails; yaw tracking 1.15-1.18x PID.
