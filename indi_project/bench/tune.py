@@ -4,7 +4,7 @@
 Usage (from the repo root):
   python3 indi_project/bench/tune.py --family {pid,indi} --n-candidates 24 --seeds 1 2 --jobs 6 \
       --sampler-seed 0 [--base-params indi_project/bench/params/indi_v1.params] \
-      [--round-name r1] [--center CANDIDATE_JSON] [--span-factor 2.0] \
+      [--round-name r1] [--center CANDIDATE_JSON] [--span-factor 2.0] [--vary NAME ...] \
       [--scenarios hover step_roll ...] [--dry-run]
 
 Candidates: Latin hypercube in log-space, each parameter in [center/span, center*span] (clamped to the parameter
@@ -106,8 +106,9 @@ def load_center(names, base_lines, center_json, meta):
     return center, src
 
 
-def make_candidates(names, center, n, span, sampler_seed, meta):
-    """Candidate 0 = center; candidates 1..n-1 = Latin hypercube in log space over [c/span, c*span]."""
+def make_candidates(names, center, n, span, sampler_seed, meta, vary=None):
+    """Candidate 0 = center; candidates 1..n-1 = Latin hypercube in log space over [c/span, c*span].
+    Parameters not in vary (when given) stay at the center."""
     rng = np.random.default_rng(sampler_seed)
     d, m = len(names), max(n - 1, 0)
     # LHS: one point per stratum of each dimension, strata shuffled independently per dimension
@@ -117,6 +118,9 @@ def make_candidates(names, center, n, span, sampler_seed, meta):
     for i in range(m):
         row = {}
         for j, k in enumerate(names):
+            if vary is not None and k not in vary:
+                row[k] = center[k]
+                continue
             v = math.exp(logc[j] + (2 * u[i, j] - 1) * math.log(span))
             lo, hi = meta.get(k, {}).get("min", -math.inf), meta.get(k, {}).get("max", math.inf)
             row[k] = float(f"{min(max(v, lo), hi):.4g}")
@@ -203,6 +207,7 @@ def main():
     ap.add_argument("--round-name", default="r1")
     ap.add_argument("--center", default=None, help="JSON with the center values (overrides defaults / base params)")
     ap.add_argument("--span-factor", type=float, default=2.0)
+    ap.add_argument("--vary", nargs="+", default=None, help="only these parameters vary, the others stay at the center")
     ap.add_argument("--dry-run", action="store_true", help="print candidates and the run plan, do not fly")
     a = ap.parse_args()
 
@@ -211,7 +216,9 @@ def main():
     base_path = os.path.abspath(a.base_params) if a.base_params else None
     base_lines = read_params_file(base_path)
     center, src = load_center(names, base_lines, a.center, meta)
-    cands = make_candidates(names, center, a.n_candidates, a.span_factor, a.sampler_seed, meta)
+    if a.vary is not None and not set(a.vary) <= set(names):
+        ap.error(f"--vary names must be in {names}")
+    cands = make_candidates(names, center, a.n_candidates, a.span_factor, a.sampler_seed, meta, a.vary)
     root = os.path.join(TUNE_ROOT, a.family, a.round_name)
 
     print(f"[tune] family={a.family} round={a.round_name} n={len(cands)} span={a.span_factor} "
