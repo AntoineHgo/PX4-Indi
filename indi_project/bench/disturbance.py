@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Disturbance injector for the SITL benchmark (T6 gust_x, T7 payload_add). Runs INSIDE the px4-indi-sim container,
+"""Disturbance injector for the SITL benchmark (T6 gust_x, T7 payload_add, H2 gust_diag, H3 com_shift). Runs INSIDE the px4-indi-sim container,
 next to the runner, in the same network namespace as gz.
 
 The ApplyLinkWrench system is loaded at runtime (world service /world/<w>/entity/system/add), no world/model file
@@ -7,7 +7,7 @@ is edited. A one-step wrench (topic /world/<w>/wrench; the persistent topic ACCU
 message, so the profile does not depend on the speed factor. The profile starts at an onset that the runner writes to
 a trigger file (JSON {"onset_px4_s": float}); onset is expressed in PX4/ULog time and converted with CLOCK_OFFSET_S.
 
-  disturbance.py --profile gust_x|payload_add --out DIR [--world default] [--model x500_0] [--stop-after S]
+  disturbance.py --profile gust_x|payload_add|gust_diag|com_shift --out DIR [--world default] [--model x500_0] [--stop-after S]
 
 Writes DIR/disturbance.csv (sim_time_s, px4_time_s, fx, fy, fz, tx, ty, tz; world frame, applied at the CoM) and
 DIR/disturbance.log. Ends on SIGTERM (clears the wrench) or when the profile ended + --stop-after.
@@ -36,6 +36,15 @@ X500_MASS_KG = 2.0 + 4 * 0.016076923076923075  # base_link + 4 rotor links (x500
 GRAVITY = 9.8               # gz world gravity (default.sdf)
 PAYLOAD_FRAC = 0.25
 PAYLOAD_DURATION = 30.0     # s, held until the end of the scenario window
+# H2 gust_diag: same shape as gust_x, base wind and gust in different xy directions. Directions are where the air
+# moves to, angle from world +x towards +y (deg), the convention of gust_x (+x = 0 deg).
+DIAG_BASE_SPEED, DIAG_BASE_DIR = 4.0, 45.0
+DIAG_GUST_AMP, DIAG_GUST_DIR, DIAG_GUST_T = 8.0, 120.0, 0.6
+DIAG_DURATION = WIND_RAMP_T + WIND_HOLD1_T + DIAG_GUST_T + WIND_HOLD2_T  # 27.6 s
+# H3 com_shift: payload_add with a smaller mass whose weight acts 5 cm off the CoM along +y. The offset is kept fixed
+# in the world frame (level-hover approximation: the vehicle holds its spawn yaw and stays near level).
+SHIFT_FRAC = 0.15
+SHIFT_Y = 0.05              # m
 # gz sim time minus PX4 (ULog / MAVLink time_boot_ms) time. Measured, see bench/RUNNER_NOTES.md.
 CLOCK_OFFSET_S = 0.0
 
@@ -69,7 +78,33 @@ def payload_add(t):
     return (0.0, 0.0, fz, 0.0, 0.0, 0.0)
 
 
-PROFILES = {"gust_x": (gust_x, GUST_DURATION), "payload_add": (payload_add, PAYLOAD_DURATION)}
+def wind_diag(t):
+    """Wind vector (vx, vy) in m/s at profile time t for gust_diag."""
+    if t < 0:
+        return 0.0, 0.0
+    base = DIAG_BASE_SPEED * min(t / WIND_RAMP_T, 1.0)
+    t_g = t - WIND_RAMP_T - WIND_HOLD1_T
+    gust = DIAG_GUST_AMP * 0.5 * (1.0 - math.cos(2.0 * math.pi * t_g / DIAG_GUST_T)) if 0 <= t_g < DIAG_GUST_T else 0.0
+    b, g = math.radians(DIAG_BASE_DIR), math.radians(DIAG_GUST_DIR)
+    return base * math.cos(b) + gust * math.cos(g), base * math.sin(b) + gust * math.sin(g)
+
+
+def gust_diag(t):
+    vx, vy = wind_diag(t)
+    v = math.hypot(vx, vy)
+    f = (C_DRAG * vx * v, C_DRAG * vy * v, 0.0)
+    r = (0.0, 0.0, COP_Z)
+    tq = (r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0])
+    return (*f, *tq)
+
+
+def com_shift(t):
+    fz = -SHIFT_FRAC * X500_MASS_KG * GRAVITY if t >= 0 else 0.0
+    return (0.0, 0.0, fz, SHIFT_Y * fz, 0.0, 0.0)  # torque = (0, SHIFT_Y, 0) x (0, 0, fz)
+
+
+PROFILES = {"gust_x": (gust_x, GUST_DURATION), "payload_add": (payload_add, PAYLOAD_DURATION),
+            "gust_diag": (gust_diag, DIAG_DURATION), "com_shift": (com_shift, PAYLOAD_DURATION)}
 
 
 def main():
