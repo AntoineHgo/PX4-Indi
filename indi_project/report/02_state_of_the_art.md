@@ -1,6 +1,6 @@
 # 2. State of the art
 
-This chapter reviews the literature and open-source code on incremental nonlinear dynamic inversion (INDI) for multicopter rate control. It is written for a control engineer who knows PID rate control but not INDI. Derivations are in chapter 3 and are not repeated. Every statement is traced to a reading note through the bibliography keys. Papers were read from text extractions, not page images, so equations that the notes flag as reconstructed are avoided or flagged in the text. Topics on the reading list without a note are marked `[GAP: ...]` and not written from memory.
+This chapter reviews the literature and open-source code on incremental nonlinear dynamic inversion (INDI) for multicopter rate control. It is written for a control engineer who knows PID rate control but not INDI. Derivations are in chapter 3 and are not repeated. Every statement is traced to a reading note through the bibliography keys. Papers were read from text extractions, not page images, so equations that the notes flag as reconstructed are avoided or flagged in the text. Topics on the reading list that were not read are named as limitations of the review and not written from memory.
 
 ## 2.1 From NDI to INDI
 
@@ -8,9 +8,9 @@ Nonlinear dynamic inversion (NDI) writes the plant as $\dot\omega = f(\omega) + 
 
 INDI removes $f$ by measuring it. A first-order expansion about the state and input one sample earlier gives a command equal to the previous actuator value plus $G_0^{-1}(\nu-\dot\omega_0)$, with $\dot\omega_0$ the previous angular acceleration [acquatella2017, Eqs. 14-15]. The approximation is that $f$ does not change over one sample, assumed without a bound on the sample time [acquatella2017, Eq. 12]. Only the control effectiveness remains as model. INDI thus trades model dependence for sensor dependence: it needs an angular acceleration and an actuator state that are consistent in time. Wang et al. call it "sensor-based" and note that it still needs the effectiveness; the phrase "model-independent" does not appear in their paper [wang2019, p. 1118], and this report avoids it.
 
-Time-delay control (TDC) estimates the unmodelled part from its value one delay earlier, and Acquatella et al. show that the TDC and INDI laws are the same expression [acquatella2017, Sec. 3.3]. Sampled at $t_s$ with first-order error dynamics it is an incremental PI with $K=(\bar g t_s)^{-1}$, where $\bar g$ is the effectiveness gain; second-order error dynamics give an incremental PID [acquatella2017, Eqs. 23-30]. The note finds the printed parallel-form constants inconsistent, so only the structure is used `[TO VERIFY against PDF]`. The consequence, drawn in the note and not in the paper, is that with a fixed $\bar g$ an INDI rate loop is a fixed-gain PI, and any advantage over PID must come from scheduling $\bar g$, from measured cancellation of unmodelled terms, or from actuator-state feedback [acquatella2017, note Sec. 7]. The paper's only evidence is one simulated pitch-rate loop under matched conditions, with no mismatch case and no separately tuned PID [acquatella2017, Sec. 4].
+Time-delay control (TDC) estimates the unmodelled part from its value one delay earlier, and Acquatella et al. show that the TDC and INDI laws are the same expression [acquatella2017, Sec. 3.3]. Sampled at $t_s$ with first-order error dynamics it is an incremental PI with $K=(\bar g t_s)^{-1}$, where $\bar g$ is the effectiveness gain; second-order error dynamics give an incremental PID [acquatella2017, Eqs. 23-30]. The printed parallel-form constants are inconsistent: differencing Eq. 27 gives an integral increment $T_I^{-1} t_s e(k-1)$, which Eq. 28 prints without $t_s$, and matching Eq. 24 to Eq. 28 gives $T_I^{-1}=k_P/\bar g$ rather than the $T_I=k_P^{-1}$ of Eq. 29. Eq. 29 holds for the form $K\,(e+T_I^{-1}\!\int e)$, which gives an integral gain $k_P/(\bar g t_s)$ (checked against the paper's text for this report). Only the structure is used here. The consequence, drawn in the note and not in the paper, is that with a fixed $\bar g$ an INDI rate loop is a fixed-gain PI, and any advantage over PID must come from scheduling $\bar g$, from measured cancellation of unmodelled terms, or from actuator-state feedback [acquatella2017, note Sec. 7]. The paper's only evidence is one simulated pitch-rate loop under matched conditions, with no mismatch case and no separately tuned PID [acquatella2017, Sec. 4].
 
-Early INDI work justified dropping the state-dependent term by time-scale separation [smeur2016, Sec. III.A]. Wang et al. call this "not mathematically rigorous" [wang2019, p. 1119], and Steffensen et al. say "the classic INDI derivation contains some inaccuracies" [steffensen2023, p. 6]. Smeur et al. credit the second-order filter used in practice to Bacon and Ostroff [smeur2016, Sec. I]. `[GAP: sieberling2010 (INDI robustness and angular-acceleration prediction), source not yet read]`
+Early INDI work justified dropping the state-dependent term by time-scale separation [smeur2016, Sec. III.A]. Wang et al. call this "not mathematically rigorous" [wang2019, p. 1119], and Steffensen et al. say "the classic INDI derivation contains some inaccuracies" [steffensen2023, p. 6]. Smeur et al. credit the second-order filter used in practice to Bacon and Ostroff [smeur2016, Sec. I]. Sieberling et al.'s robustness analysis and angular-acceleration prediction (2010) was on the reading list but was not read for this report; its results are not used, which is a limitation of this review.
 
 ## 2.2 INDI for multirotors: the MAVLab line
 
@@ -26,7 +26,7 @@ The reference derivation is Smeur, Chu and de Croon [smeur2016]. Angular acceler
 
 ## 2.3 Control effectiveness identification
 
-*Fixed, from bench data.* Tal and Karaman use "static tests" and a regression throttle map with an integral correction for battery voltage [tal2021, Sec. III-E, V-A]. `[GAP: identification procedure and identified values not described in tal2021]` They show in simulation that the incremental loop tolerates large effectiveness error [tal2021, Eqs. 46-48].
+*Fixed, from bench data.* Tal and Karaman use "static tests" and a regression throttle map with an integral correction for battery voltage [tal2021, Sec. III-E, V-A]. The paper does not describe the identification procedure or give the identified values. They show in simulation that the incremental loop tolerates large effectiveness error [tal2021, Eqs. 46-48].
 
 *Offline from one flight.* Smeur et al. solve for $G_1,G_2$ by least squares from a logged flight, avoiding inertia and actuator-force knowledge [smeur2018, Sec. 2.2].
 
@@ -52,7 +52,7 @@ Smeur et al. extend INDI to linear acceleration [smeur2018]. The outer loop rota
 
 Tal and Karaman add differential flatness [tal2021]. Reference jerk and snap give body-rate and angular-acceleration feedforward, INDI laws track linear and angular acceleration, and a nonlinear inversion with closed-loop speed control from optical encoders reaches motor level [tal2021, Sec. II-III]. The position loop is a PD, not INDI, and the authors claim the incremental form removes the need for integral action [tal2021, Sec. III-B]. They show that, with ideal modelling, the angular-acceleration response is set by the motor dynamics, and that disturbance rejection is limited by the filter and motor bandwidth [tal2021, Sec. IV-A]. On a 609 g vehicle at 2 kHz they report 6.6 cm RMS position error at up to 12.9 m/s and 2.1 g; disabling jerk and snap feedforward raised RMS error from 9.0 to 16.8 cm on another trajectory [tal2021, Tables IV-V]. There is no hardware comparison with PID; the only non-incremental baseline is simulated and has no integral action [tal2021, note summary]. The claim that off-the-shelf rate loops cannot use snap is an argument from structure [tal2021, Sec. III-C]. Blaha et al. put an NDI position loop and an attitude loop on their INDI inner loop [blaha2024, Sec. II-A].
 
-`[GAP: UZH comparison of nonlinear MPC and differential-flatness-based control (sun2022), source not yet read]`
+*Limitation of this review.* The UZH comparison of nonlinear MPC and differential-flatness-based control (sun2022) was on the reading list but was not read, so no claim from it is made here.
 
 These designs show what a good inner loop enables, but the effectiveness, filter and actuator issues are decided in the inner loop, and their outer gains are platform-specific.
 
@@ -67,7 +67,7 @@ The reading note on Acquatella et al. derives, and the paper does not state, tha
 **Failure modes in the sources.**
 - *Filter and delay mismatch:* severe oscillation without delay compensation [smeur2016, Fig. 11]. A higher cutoff rejects gusts faster but passes more noise, and INDI was judged noisier than PID in steady flow [smeur2018, Sec. 4.5, 5.1].
 - *Missing $G_2$:* yaw oscillation or no take-off [smeur2016, Sec. VI.D].
-- *Actuator-model error:* the effect of a modelled rather than measured actuator state is not analysed in the papers read; Steffensen et al. assume a measured noise-free state and Tal and Karaman use encoders [steffensen2023, Sec. V; tal2021, Sec. III-E]. `[GAP: INDI with a modelled actuator state, no source in the notes]`
+- *Actuator-model error:* the effect of a modelled rather than measured actuator state is not analysed in the papers read; Steffensen et al. assume a measured noise-free state and Tal and Karaman use encoders [steffensen2023, Sec. V; tal2021, Sec. III-E]. No source read for this review analyses INDI with a modelled rather than measured actuator state; chapter 9 reports what this project observed on that question (the H5 limit cycle).
 - *Saturation:* section 2.4.
 - *Ground contact and engagement:* adaptation diverged at take-off and landing [smeur2016, Sec. VI.C]; Paparazzi suppresses the increment on the ground (section 2.7).
 - *Sensor bias:* accelerometer bias gives a steady position offset in the outer loop [smeur2018, Sec. 4.4].
@@ -90,7 +90,7 @@ The reading note on Acquatella et al. derives, and the paper does not state, tha
 
 None of this reports a measured result, so it offers design lessons only.
 
-`[GAP: indiflight (Betaflight-derived INDI firmware with rotor-speed telemetry, allocation, onboard identification), code not yet read]`
+*Limitation of this review.* indiflight, the Betaflight-derived INDI firmware with rotor-speed telemetry, allocation and onboard identification, was cloned but its code was not read for this report; it is not described here.
 
 ## 2.8 Gaps addressed by this project
 
