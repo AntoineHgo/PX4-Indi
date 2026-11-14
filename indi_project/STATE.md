@@ -202,6 +202,14 @@ owner decisions when you first act on them.
   `plan/o12_partA.patch` (apply from repo root: `git apply -p0 --directory=indi_project indi_project/plan/o12_partA.patch`,
   then delete `plan/o12_wip/`). It deviates from the spec on one point: the altitude-deficit trip uses the hold
   altitude at takeoff completion (5 m), not the live z setpoint (attitude/rate scenarios have none; circle z_amp 1 m).
+  Replay run 1 (landed-flag window): 109 trips in 56 runs, many outside H4 (seen step_pitch seed2 all 3 controllers,
+  v1 r2 c05 x4 runs, ...), all with run.json error=null; the seen-set ones trip AFTER t_window_end (tip-over at
+  touchdown), i.e. the window wrongly included landing. Fixed: replay now uses the online watchdog window from run.json
+  (t_offboard - 5 s .. t_window_end + 4 s). Run 2 DONE (9ebc74caf6, `results/o12_watchdog_replay.md`): trips only on
+  H4, v1 r2 c05 (diverging candidate, J 35.9: correct) and seen-set seed-2 runs (~22:41) with an ESTIMATOR GLITCH
+  (height to 35 m at -17 m/s, snaps back to -0.3 m, no failsafe). Cause suspected: host overload, the s43 replay
+  (4 workers) ran beside 6 sims; the s44 replays (22:58-23:05, 23:15-23:22) did too. D-watchdog recorded. Plan
+  copy `plan/o12_wip/` removed (the patch is the artifact). `plan/o12_partA.patch` is NOT applied yet.
 - SESSION 43 (2026-11-14, launch 20261114-223703): seen set RUNNING (57/420 at 22:37, ~80 min total), V re-fly
   queued behind it. Done: V' frozen (90339483ef, scenarios.md sec. 9, D-heldout-v3); v3 spec `plan/v3_blend_spec.md`.
   D-v3-blend DONE in firmware (3a47bf746e, lib + MC_INDI_ACT_BLD default 0 = v2 bit-identical, 5 new gtests, 40/40;
@@ -683,6 +691,18 @@ owner decisions when you first act on them.
 
 ## Next concrete actions
 
+S44 ORDER (first; then S43 a-c with b done except applying the patch):
+0. NEVER run CPU-heavy analysis (replays, multi-worker log scans) while a batch flies: it caused estimator
+   glitches in the seen set (s44 finding). Light single-file checks only.
+1. When SEEN_V2_DONE and HELDOUT_V2_REFLY_DONE: scan every seen-set flight.ulg for estimator glitches (|vz| > 10 m/s
+   or a height jump > 5 m in 0.5 s inside the window; one process) and list (entry, seed, wall time). Expect seed 2
+   ~22:41 and runs flown 22:58-23:05 and 23:15-23:22. Re-fly each affected (entry, seed) for ALL controllers
+   (D-v2-refly rule; move old runs to runs_suspended/), BEFORE the final verdict tables (S42 step 2).
+2. Apply O-12 part A: `git apply -p0 --directory=indi_project indi_project/plan/o12_partA.patch` (from repo root),
+   one SITL smoke flight (hover, pid_default) to check that the watchdog does not trip and run.json is unchanged
+   otherwise, plus one with `--watchdog off`; commit as feat(indi-bench); delete the patch file in the same commit.
+3. Then S43 step c (v3 build + screening with `tune.py --stages 2`).
+
 S43 ORDER (supersedes S42 steps 3-4; S42 steps 1, 2, 5 still apply):
 a. S42 steps 1-2 (seen set + V re-fly check, final verdict tables). Seen set was 69/420 at 22:40 (~23:50 end).
 b. O-12: implement `plan/o12_watchdog_spec.md` (part A then B, one sonnet task each, separate commits) once no
@@ -793,6 +813,8 @@ S42 ORDER (do this first, top to bottom):
   but the PID had no gain matching (caveat for our fair-baseline design).
 
 ## Known problems
+- (s44) Host overload during a batch (analysis running beside 6 sims) produces estimator glitches in SITL runs
+  (seen set seed 2, ~22:41): such runs are infrastructure faults, re-fly them for all controllers.
 
 - run_batch.sh with CONTROLLERS=indi_tuned and no PARAMS_FILE silently flies PID defaults (no
   bench/params/indi_tuned.params exists). Always pass PARAMS_FILE=<abs>/results/tuning/indi/r4f/c00/params and
@@ -932,3 +954,4 @@ S42 ORDER (do this first, top to bottom):
   queued, motor_loss tilt diagnosed (measured-eRPM state removes integral action), v3 blend drafted, O-12 recorded
   (watchdog deferred until the validation batches end). Agents: 1 sonnet (tilt diagnosis, 18 tool calls).
 - 2026-11-14 s43: V' frozen (D-heldout-v3); v3 blend spec + firmware 3a47bf746e (gtests 40/40); O-12 spec written. Agents: 1 sonnet.
+- 2026-11-14 s44: O-12 part B committed (f064c78d9f), part A staged as patch, watchdog replay done (9ebc74caf6: no false trips; seen seed-2 estimator glitches under host overload), D-watchdog. Agents: 0.

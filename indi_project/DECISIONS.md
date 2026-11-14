@@ -707,3 +707,19 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
   than one session can fly with a fourth controller: 5 x 10 x 4 = 200 flights already).
 - **Freeze time:** before any `indi_v3` flight, including screening flights (screening uses T-set and seen entries
   only, never V').
+
+## D-watchdog (session 44): O-12 run watchdog thresholds and staged screening
+
+- **Choice:** online trips in `bench/run_scenario.py` (patch `plan/o12_partA.patch`, applied after the seen set):
+  tilt > 60 deg for >= 0.5 s; height < 0.3 m; > 3 m below the hold altitude for >= 1 s; non-finite attitude/rates;
+  no ATTITUDE for 10 s wall while PX4 is alive. Active from takeoff completion to the land command. A trip records
+  `run.json` `watchdog`, ends the run as failed (ULog kept, metrics still computed, scored as a failure). Staged
+  screening in `bench/tune.py` (`--stages 2`, prune at 1.3 x best stage-1 J or any failure, keep 4).
+- **Why:** offline replay over 3985 recorded flights (`results/o12_watchdog_replay.md`): the trips hit only H4
+  crashes, a known diverging v1 candidate (r2 c05, J 35.9) and runs with an estimator glitch; sustained tilt of
+  normal runs stays <= 45 deg (p99). Thresholds sit well above normal flight and well below a crash.
+- **Deviation from the spec:** the altitude-deficit trip uses the hold altitude at takeoff completion, not the live z
+  setpoint: attitude/rate scenarios have no position setpoint, and the only commanded altitude change (circle,
+  z_amp 1 m) is far below 3 m.
+- **Alternatives rejected:** online saturation trip (saturation is not streamed over MAVLink); tighter tilt (52 deg is
+  commanded in H4).
