@@ -335,3 +335,7 @@ speed 4, seeds 1-3 (`results/act_tc_sweep_s17/`). Scaling the controller's assum
 inertia and mass unchanged and reuses the stock model; it is equivalent for the loop as long as only the ratio matters,
 which is an assumption to state in the report. This is post-acceptance work: it never changes the verdict of
 `results/acceptance_s15.md`, and it is reported as characterisation, not as a re-tune.
+
+Outcome (session 17): the equivalence assumption above is falsified by the data. No limit cycle for f in 0.33-3,
+whereas plant tau x2 with the stock model limit-cycles (H5 diagnostic). The report states the sweep as a test of
+model error on a fast actuator only, and attributes the H5 instability to a slower physical actuator left unmodelled.

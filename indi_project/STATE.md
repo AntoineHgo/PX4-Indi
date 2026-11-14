@@ -90,6 +90,9 @@
   cycle); criterion 1 fails on H4 (both controllers crash 10/10, alike up to impact). Criterion 4 met (hover effort 1.04x). Criterion 2 met (H1, H2, H3; H6
   at threshold). INDI's strength: disturbance rejection; its weakness: actuator-model mismatch.
   T5 lemniscate: INDI 0.95x position RMS; H1 fast circle 0.73x (infeasible for both) (`results/heldout_s15.md`).
+- **Session 17:** ACT_TC sweep (post-acceptance, 21 runs, `results/act_tc_sweep_s17.md`): MC_INDI_ACT_TC 0.33x-3x on
+  the stock plant gives NO limit cycle (roll-rate RMS 0.129-0.161, graded). The H5 limit cycle needs a physically
+  slower actuator the model does not know; ratio alone does not explain it (D-actsweep assumption falsified).
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -120,7 +123,11 @@
   gz motor tau 0.0125 up / 0.025 down (unchecked); CA_ROTOR_KM 0.05 vs gz 0.016 effect on yaw G1/PID; bench/sim_fidelity.md
   missing (noise/bias/latency undocumented: write it); INDI speed 1 vs 4 check; PID candidate count 64 vs 40 (ch. 9 uses 40);
   flight modes covered.
-  (D) RUNNING detached: ACT_TC sweep (D-actsweep), 21 runs, `results/act_tc_sweep_s17/run.sh`, log `sweep.log`
+  (D) DONE + committed 702e9f3787 (`results/act_tc_sweep_s17.md`). Optional follow-up: plant-tau sweep via
+  model_variant.py key tau (~21 runs) to map the real stability boundary.
+  (B'') fable review relaunched session 17 (order 1,3,5,2,4,6, writes each section as it goes): if partial, relaunch
+  for missing sections only.
+  (old D) ACT_TC sweep (D-actsweep), 21 runs, `results/act_tc_sweep_s17/run.sh`, log `sweep.log`
   (ends with SWEEP_DONE; runs with metrics.json are skipped, so re-run run.sh if incomplete). Output
   `results/runs/step_roll/indi_act<f>/seed<N>_x4/`. NEXT: table of roll-rate RMS / effort / saturation vs 1/f
   (summarize_seeds.py), look for the limit-cycle onset ratio, write `results/act_tc_sweep_s17.md`, commit metrics.
@@ -412,3 +419,4 @@
 - 2026-11-14: session 14: T8 fault-onset metrics; report ch. 5 and ch. 7 drafted (sonnet, 2 agents); held-out seeds 1-5 done (INDI better on all disturbance scenarios, yaw worse when commanded); seeds 6-10 done: INDI attitude better p=0.002 on all 6 scenarios.
 - 2026-11-14 session 15: H5 implemented and flown (10 seeds): INDI loses, ACT_TC-mismatch limit cycle diagnosed; trajectory mode + T5/H1/H4 added, batch launched.
 - 2026-11-14 session 15: T5/H1/H4 flown (10 seeds); acceptance decided: INDI does not outperform PID (H5 criterion 3, H4 criterion 1).
+- 2026-11-14 session 17: ACT_TC sweep summarised (no limit cycle from model error alone); fable control-law review relaunched.
