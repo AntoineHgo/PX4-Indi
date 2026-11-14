@@ -114,7 +114,7 @@
 
 - SESSION 15 DONE: H1/H4/H5 flown and committed, acceptance decided (negative, see summary). NEXT (phase 6):
   (1) metrics.py: end the window at ground contact for crash-capable scenarios, re-score H4/T8; move the session-15
-  inline trajectory/H4 table scripts into `bench/` (reproducibility); (2) T1 hover effort, frozen candidates, 10 seeds
+  inline trajectory/H4 table scripts into `bench/` (reproducibility); (2) T1 hover effort, frozen candidates, 10 seeds: LAUNCHED end of session 15, log `results/hover_s15.log` (re-run header if incomplete), then summarize_seeds.py hover
   (criterion 4); (3) report ch. 8 results + ch. 9 discussion (delegate drafts to sonnet from results/*.md:
   heldout_s14, heldout_s15, heldout_h5_s15, acceptance_s15, t8_motor_loss_s13, tuning/*.md); (4) fable review of the
   control law and of the conclusions; (5) the open REPORT FIXES list below. Optional, clearly labelled as
