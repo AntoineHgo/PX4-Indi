@@ -694,7 +694,9 @@ owner decisions when you first act on them.
 S44 ORDER (first; then S43 a-c with b done except applying the patch):
 0. NEVER run CPU-heavy analysis (replays, multi-worker log scans) while a batch flies: it caused estimator
    glitches in the seen set (s44 finding). Light single-file checks only.
-1. When SEEN_V2_DONE and HELDOUT_V2_REFLY_DONE: scan every seen-set flight.ulg for estimator glitches (|vz| > 10 m/s
+1. When SEEN_V2_DONE and HELDOUT_V2_REFLY_DONE: run `python3 indi_project/bench/glitch_scan.py
+   indi_project/results/s2_seen_v2/runs` (ready, checked on step_yaw indi_v2 seed 1/2; H4 free-fall crashes may also
+   flag, judge those by hand) to scan every seen-set flight.ulg for estimator glitches (|vz| > 10 m/s
    or a height jump > 5 m in 0.5 s inside the window; one process) and list (entry, seed, wall time). Expect seed 2
    ~22:41 and runs flown ~22:57-23:06 (seeds 4-5). Re-fly each affected (entry, seed) for ALL controllers
    (D-v2-refly rule; move old runs to runs_suspended/), BEFORE the final verdict tables (S42 step 2).
