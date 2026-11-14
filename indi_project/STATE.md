@@ -178,6 +178,17 @@ owner decisions when you first act on them.
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+- SESSION 41 (2026-11-14, launch 20261114-202503): V batch (session 40) still RUNNING, healthy (seed 1 done 20:27, no
+  failure). QUEUED detached behind it: `bench/s2_seen_v2.sh` (O-7 seen set on v2: H1 traj_circle_fast, H4 motor_loss_2,
+  H5 mismatch_combined_att/_rate, H6 step_diag, T5 lemniscate, T6 gust_x, T7 payload_add, T1-T4 + rate_step_roll,
+  mismatch_inertia; 14 x 10 seeds x 3 controllers, output `results/s2_seen_v2/runs/`, log `results/s2_seen_v2/run.log`,
+  ends SEEN_V2_DONE; it polls for HELDOUT_V2_DONE before flying; 24 h timeout; resumable with
+  `INDI_PARAMS=.../bench/params/indi_v2_tuned.params setsid timeout 86400 bash indi_project/bench/s2_seen_v2.sh`).
+  Verdict script READY: `bench/s2_verdict.py` (V primary metrics per sec. 8, paired Wilcoxon, criteria 1-4; V9 primary
+  = rotation-angle RMS, fixed before any V9 result). When V ends: `python3 indi_project/bench/s2_verdict.py --final`
+  -> `results/s2_heldout_v2.md`; criterion 4 and seen failures need `--hover-runs results/s2_seen_v2/runs` after the
+  seen set. Do not rebuild build/px4_sitl_default until SEEN_V2_DONE. NEXT while flying: stage 8 design (O-10).
+
 - SESSION 40 (2026-11-14): r1 + r2 done and committed (94c0a2c23d metrics, 1da7218ba1 D-v2indi). RUNNING detached
   since 20:21: `INDI_PARAMS=.../bench/params/indi_v2_tuned.params setsid timeout 43200 bash bench/s2_heldout_v2.sh`
   (420 flights, log `results/s2_heldout_v2/run.log`, ends with HELDOUT_V2_DONE, resumable: relaunch the same command
