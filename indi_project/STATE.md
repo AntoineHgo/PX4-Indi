@@ -147,6 +147,10 @@ owner decisions when you first act on them.
   hooks (48d82eacda gz_bridge SIM_GZ_ERPM_LAT/ERPM_LOSS/THR_SC; 332cb817d9 bench V1-V6), smoke-checked with PID
   (`results/s2_vhooks_check.md`). PID r1f (FAC config): best c05 J 0.925 vs defaults 0.966 (gains on the step axes
   too, not only hover); r2f centred on c05 queued behind the frz control run.
+- **Stage 2 (session 38):** O-11 regression DONE: the new module `mc_indi_rate_control` reproduces the old
+  in-`mc_rate_control` INDI (frozen v1) and the allocator-side measured torque (v2 omega2) within run-to-run noise,
+  tuning set x 3 seeds (`results/s2_o11_regress.md`). frz control: O-3 variant gains on H5 are real (not the
+  binary); G2_Y 0.16 breaks yaw. PID r2f (FAC config) flying.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -179,8 +183,17 @@ owner decisions when you first act on them.
   Compare: `bench/regress_compare.py 'results/s2_recheck_v1/runs/{sc}/indi_frz' 'results/s2_o11_regress/runs/v1new/{sc}'
   hover step_roll step_pitch step_yaw rate_step_roll` (v2: runs/v2old/{sc} vs runs/v2new/{sc}); write
   `results/s2_o11_regress.md`. plan/architecture.md updated (314c0c56a4); report ch. 4-5 still to update.
-  NEXT after regression: write-up, then (r2f end) v2 pid_tuned decision + rebuild px4_sitl_default, then G1 v2 on
-  3 seeds and v2 INDI tuning (O-5). Guard blocks the word "reboot" in shell commands: use Edit for such text.
+  O-11 REGRESSION DONE (`results/s2_o11_regress.md`, 44b783f68b, 712ad46abc): v1 frozen and v2 omega2 both
+  preserved within run-to-run noise (v1 needed a same-load control of the old binary, `run_v1old.sh`: the frz
+  reference flew under heavier CPU load; v2 borderline on rate_step_roll, 1.3 % better on new). Report ch. 5.3.2
+  revised for O-11; ch. 4 unchanged (it describes the stock stack, again = main). O-11 is CLOSED except: motor-loss
+  handling with the module (failed-motor column zeroing not ported) to be seen on V9 in v2 validation.
+  NEXT (session 39): (1) r2f (PID, detached, started 18:06, 240 flights) -> when `results/s2_tuning/r2f_queue.log`
+  shows it finished: decide v2 pid_tuned (r2f best vs r1f c05 vs defaults, noise rule as v1 r2), write
+  `results/s2_tuning/r2f.md`. (2) Then rebuild px4_sitl_default (now = O-11 tree) and from then on fly INDI with
+  MC_INDI_EN params (runner translates old files); drop build/px4_sitl_omega2 and build/px4_sitl_o11 by path
+  once default is rebuilt and checked. (3) G1 v2 on 3 seeds (identify_g1.py), then v2 INDI tuning (O-5:
+  G1, ACT_TC, delays, G2 identified, never tuned). Guard blocks the word "reboot" in shell commands: use Edit.
 
 - SESSION 37 (2026-11-14): O-11 refactor started. DONE: c1a700e7bb (mc_rate_control back to base),
   462eb68990 (allocator + allocation lib back to base), D-o11 in DECISIONS.md, spec `plan/o11_module_spec.md`.
@@ -781,3 +794,4 @@ owner decisions when you first act on them.
 - 2026-11-14 s35: D-omega2 first flights (measured torque OK, fallback OK, D-erpmdly), G1 v2, held-out v2 draft. Agents: 0.
 - 2026-11-14 s37: O-11 refactor: mc_rate_control + allocator back to base, new module mc_indi_rate_control (builds, gtests pass, not flown). Agents: 1 sonnet.
 - 2026-11-14 s36: held-out v2 frozen (D-heldout-v2, sim hooks V3/V4/V6 + tau_up/down, PID smoke OK); r1f done (c05 0.925 vs 0.966); r2f queued. Agents: 0.
+- 2026-11-14 s38: frz restated, r1f committed, runner O-11 param mapping, O-11 regression (60 runs) preserved within noise, ch. 5.3.2 + architecture updated. Agents: 0.
