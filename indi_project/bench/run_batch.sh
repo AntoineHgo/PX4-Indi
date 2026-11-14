@@ -19,6 +19,7 @@ RESULTS=${RESULTS_DIR:-${PROJ_DIR}/results/runs}
 #   RESULTS_DIR  output root (default indi_project/results/runs)
 #   FLAT_LAYOUT=1  output <RESULTS_DIR>/<scenario>/seed<N>[_x<speed>] (no <controller> directory)
 #   NAME_TAG     suffix appended to the container name (unique names for parallel batches)
+#   SIM_VERSION, IMU_RATE, ERPM_DROP  passed to run_scenario.py as --sim, --imu-rate, --erpm-drop
 
 SCENARIOS=${SCENARIOS:-"step_roll hover"}
 CONTROLLERS=${CONTROLLERS:-"pid_default"}
@@ -50,7 +51,8 @@ run_one() { # scenario controller seed speed
 	echo "[batch] $(date +%T) start ${scn}/${ctl}/seed${seed} speed=${speed} -> ${out}"
 	"${RUNSH}" -n "${scn}-${seed}${tag}" -t "${TIMEOUT}" -N \
 		python3 "${BENCH_DIR}/run_scenario.py" --scenario "${scn}" --controller "${ctl}" --seed "${seed}" \
-		--speed "${speed}" --out "${out}" ${SIM_VERSION:+--sim "${SIM_VERSION}"} "${params_arg[@]}" > "${out}/runner.log" 2>&1
+		--speed "${speed}" --out "${out}" ${SIM_VERSION:+--sim "${SIM_VERSION}"} \
+		${IMU_RATE:+--imu-rate "${IMU_RATE}"} ${ERPM_DROP:+--erpm-drop "${ERPM_DROP}"} "${params_arg[@]}" > "${out}/runner.log" 2>&1
 	local rc=$?
 	if [ -f "${out}/flight.ulg" ]; then
 		python3 "${BENCH_DIR}/metrics.py" "${out}/flight.ulg" >> "${out}/runner.log" 2>&1 || { echo "[batch] metrics FAILED for ${out}"; rc=1; }
