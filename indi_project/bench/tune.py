@@ -170,6 +170,14 @@ def fly(scn, seed, speed, label, params_file, results_dir, flat, tag, log_lock):
 
 
 def load_metrics(path):
+    """metrics.json of a completed run; None when missing or when run.json marks the run failed (watchdog trip,
+    crash): metrics.py also runs on a failed run's ULog, but such a run counts as a failure, never as a score."""
+    try:
+        run = json.load(open(os.path.join(path, "run.json")))
+        if run.get("exit_status", "ok") != "ok":
+            return None
+    except (OSError, ValueError):
+        pass
     try:
         return json.load(open(os.path.join(path, "metrics.json")))
     except (OSError, ValueError):
@@ -214,7 +222,18 @@ def main():
     ap.add_argument("--span-factor", type=float, default=2.0)
     ap.add_argument("--vary", nargs="+", default=None, help="only these parameters vary, the others stay at the center")
     ap.add_argument("--dry-run", action="store_true", help="print candidates and the run plan, do not fly")
+    # O-12 staged screening: stage 1 flies every candidate on one seed of a few scenarios, stage 2 flies the
+    # survivors on the full set (stage-1 runs are reused); pruned candidates never fly their remaining runs
+    ap.add_argument("--stages", type=int, choices=(1, 2), default=1)
+    ap.add_argument("--stage1-scenarios", nargs="+", default=None, choices=sorted(SCENARIOS))
+    ap.add_argument("--stage1-seed", type=int, default=None, help="default: the first of --seeds")
+    ap.add_argument("--prune-ratio", type=float, default=1.3, help="drop when stage-1 J > ratio x best stage-1 J")
+    ap.add_argument("--keep", type=int, default=4, help="at most this many candidates go to stage 2")
     a = ap.parse_args()
+    if a.stages == 2:
+        a.stage1_seed = a.seeds[0] if a.stage1_seed is None else a.stage1_seed
+        if not a.stage1_scenarios or not set(a.stage1_scenarios) <= set(a.scenarios) or a.stage1_seed not in a.seeds:
+            ap.error("--stages 2 needs --stage1-scenarios within --scenarios and --stage1-seed within --seeds")
 
     names = SPACES[a.family]
     meta = read_yaml_params(YAMLS)
@@ -234,6 +253,11 @@ def main():
     n_ref = len(a.scenarios) * len(a.seeds)
     print(f"[tune] plan: {n_ref} reference flights (pid_default, skipped if present) + "
           f"{len(cands) * n_ref} candidate flights, jobs={a.jobs}")
+    if a.stages == 2:
+        n1 = len(a.stage1_scenarios)
+        print(f"[tune] staged: stage 1 = {len(cands) * n1} flights ({a.stage1_scenarios} seed{a.stage1_seed}), "
+              f"stage 2 <= {min(a.keep, len(cands)) * (n_ref - n1)} flights (prune ratio {a.prune_ratio}, "
+              f"keep {a.keep})")
     if a.dry_run:
         return 0
 
@@ -288,22 +312,50 @@ def main():
         write_summary()
         print(f"[tune] c{i:02d} done: J={J:.4f} failures={fails}", flush=True)
 
-    with ThreadPoolExecutor(a.jobs) as ex:
-        futs = {}
-        for i in range(len(cands)):
-            pf = os.path.join(root, f"c{i:02d}", "params")
-            for scn in a.scenarios:
-                for s in a.seeds:
-                    fut = ex.submit(fly, scn, s, SCENARIOS[scn][0], f"{a.family}_{a.round_name}_c{i:02d}", pf,
-                                    os.path.join(root, f"c{i:02d}"), True, f"c{i:02d}-{a.family}-{a.round_name}", lock)
-                    futs[fut] = i
-        for f in as_completed(futs):
-            i = futs[f]
-            f.result()
-            with lock:
-                remaining[i] -= 1
-                if remaining[i] == 0:
-                    finish(i)
+    def fly_cands(idx, scenarios, seeds, on_done):
+        with ThreadPoolExecutor(a.jobs) as ex:
+            futs = {}
+            for i in idx:
+                pf = os.path.join(root, f"c{i:02d}", "params")
+                for scn in scenarios:
+                    for s in seeds:
+                        fut = ex.submit(fly, scn, s, SCENARIOS[scn][0], f"{a.family}_{a.round_name}_c{i:02d}", pf,
+                                        os.path.join(root, f"c{i:02d}"), True, f"c{i:02d}-{a.family}-{a.round_name}",
+                                        lock)
+                        futs[fut] = i
+            for f in as_completed(futs):
+                i = futs[f]
+                f.result()
+                with lock:
+                    on_done(i)
+
+    def done_full(i):
+        remaining[i] -= 1
+        if remaining[i] == 0:
+            finish(i)
+
+    survivors = list(range(len(cands)))
+    if a.stages == 2:
+        # stage-1 runs are submitted again in stage 2, where fly() skips them and done_full() counts them
+        fly_cands(survivors, a.stage1_scenarios, [a.stage1_seed], lambda i: None)
+        s1 = {i: score(os.path.join(root, f"c{i:02d}"), a.stage1_scenarios, [a.stage1_seed], refs)
+              for i in survivors}
+        ok = [i for i in survivors if s1[i][2] == 0 and math.isfinite(s1[i][0])]
+        best1 = min((s1[i][0] for i in ok), default=math.inf)
+        reason = {i: "failed run in stage 1" for i in survivors if i not in ok}
+        reason.update({i: f"J1 > {a.prune_ratio} x best ({best1:.4f})" for i in ok if s1[i][0] > a.prune_ratio * best1})
+        ranked = sorted((i for i in ok if i not in reason), key=lambda i: s1[i][0])
+        reason.update({i: f"beyond --keep {a.keep}" for i in ranked[a.keep:]})
+        survivors = ranked[:a.keep]
+        with open(os.path.join(root, "stage1.csv"), "w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["cand", "J1", "failures", "outcome"])
+            for i in sorted(s1):
+                w.writerow([f"c{i:02d}", f"{s1[i][0]:.5f}", s1[i][2], reason.get(i, "stage 2")])
+        print(f"[tune] stage 1 done: best J1={best1:.4f}, stage 2: " + " ".join(f"c{i:02d}" for i in survivors) +
+              f"; pruned {len(reason)}", flush=True)
+
+    fly_cands(survivors, a.scenarios, a.seeds, done_full)
 
     best = sorted(rows, key=lambda i: rows[i]["J"] if math.isfinite(rows[i]["J"]) else math.inf)[:5]
     print("[tune] best 5:")
