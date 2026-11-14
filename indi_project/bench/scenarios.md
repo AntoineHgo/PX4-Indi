@@ -172,6 +172,34 @@ Acceptance for v2 (section 6 rules, same test and thresholds, scaled to 14 entri
 4. INDI hover control effort (T1, v2 configuration) at most 1.5x `pid_tuned`.
 Outcome words as in section 6.
 
+## 9. Stage-2 held-out set V' (frozen for v3, 2026-11-14, session 43, before any v3 INDI flight)
+
+Why: the V outcome is known (`results/s2_heldout_v2.md`) and the v3 change (D-v3-blend, `plan/v3_actuator_blend.md`)
+was designed from it, so V cannot judge v3 without bias. V' probes the same weakness (actuator command/output gap)
+with magnitudes, motors and patterns that no run so far has flown. Choices: DECISIONS.md D-heldout-v3. Same v2
+configuration and CLI flags as section 8, seeds 1-10, speed 4 for attitude patterns, 1 for T8-pattern entries.
+Faults start at the named segment and stay until the end of the run; identical for every controller.
+
+| entry | id | plant change | pattern | primary metric |
+|---|---|---|---|---|
+| vp_loss1_06 | W1 | motor index 1 at 0.6 x thrust (T8 hook) | T8 (motor_loss_0 segments, fault at "loss") | roll and pitch attitude RMS in the window, as T8 |
+| vp_loss2_08 | W2 | motor index 2 at 0.8 x thrust | T8, fault at "loss" | as T8 |
+| vp_gain03_att | W3 | motors 0 and 3 (one side) at 0.85 x thrust each | H5 att step (roll), fault at "up" | roll attitude RMS |
+| vp_sag75_att | W4 | available thrust 100 % -> 75 % over the window (V6 hook) | H5 att step (roll) | roll attitude RMS |
+| vp_tau2_loss2_att | W5 | motor time constants x2 (V1 hook) and motor 2 at 0.8 x thrust from "up" | H5 att step (roll) | roll attitude RMS |
+
+W3 needs the T8 hook extended to a list of motors (benchmark tooling commit, before any V' flight). W5 checks that
+the low-frequency model state of v3 does not bring back the v1 ACT_TC-mismatch limit cycle under a gap.
+
+Controllers: `pid_default`, `pid_tuned` (v2, r1f c05), `indi_v2` (frozen) and `indi_v3` (screened under O-12, then
+frozen before V' flies). Acceptance for v3 (section 6 rules and test, against `pid_tuned`, scaled to 5 entries):
+1. no `indi_v3` run fails in V';
+2. `indi_v3` significantly better (median improvement >= 10 %, p < 0.05) on at least 4 of the 5 entries;
+3. `indi_v3` not significantly worse by more than 10 % on any entry;
+4. hover effort (T1, v2 configuration) at most 1.5x `pid_tuned`.
+v3 results on V and on the seen set are reported as post-hoc and never enter this verdict. Outcome words as in
+section 6.
+
 ## Change log
 
 - v1 (2026-11-13): initial frozen version.
@@ -221,3 +249,4 @@ Outcome words as in section 6.
   ground (altitude 0 m in the window): reported as an outcome, not re-specified.
 - 2026-11-14 (session 36): section 8 added, stage-2 held-out set V frozen (O-7) before any v2 INDI flight on it.
   The v1 sections are unchanged and v1 results stay valid.
+- 2026-11-14 (session 43): section 9 added, held-out set V' frozen for v3 before any v3 flight (D-heldout-v3).

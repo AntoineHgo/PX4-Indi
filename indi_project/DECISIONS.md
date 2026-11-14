@@ -693,3 +693,17 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
   the (entry, seed) is re-flown for all three controllers (`bench/s2_heldout_v2_refly.sh`).
 - **Why:** an infrastructure fault that hit every controller alike, which O-12 allows to be re-flown. Re-flying all
   controllers of that seed keeps the pairing, and does not select on the result.
+
+## D-heldout-v3 (session 43): new held-out set V' before v3 flies
+
+- **Choice:** five entries (W1-W5, `bench/scenarios.md` sec. 9): two single-motor losses on motors and magnitudes
+  not flown before (index 1 at 0.6, index 2 at 0.8), a two-motor gain error on one side (0.85), a deeper sag (0.75)
+  and a gap combined with the actuator-time-constant mismatch. Acceptance scaled from section 6 (4 of 5).
+- **Why:** v3 was designed after seeing V (motor_loss_0 tilt), so V is no longer held out for v3. All five probe
+  the command/output gap that v3 targets, which is fair to PID too (its integrator handles a gap); W5 guards
+  against v3 re-opening the v1 weakness. Reusing existing hooks (T8, V1, V6) keeps the sim code reviewed; only W3
+  needs a list-of-motors extension.
+- **Alternatives rejected:** report v3 on V only, labelled post-hoc (no unbiased evidence); a larger V' (more cost
+  than one session can fly with a fourth controller: 5 x 10 x 4 = 200 flights already).
+- **Freeze time:** before any `indi_v3` flight, including screening flights (screening uses T-set and seen entries
+  only, never V').
