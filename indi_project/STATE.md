@@ -116,6 +116,10 @@
   draft (A) was committed (2cd1c49235). Relaunched: (B') fable control-law review -> `review/control_law_review_s16.md`
   (fills the skeleton section by section); (C) sonnet drafts report ch. 9 discussion -> `report/09_discussion.md`.
   If partial next session, relaunch only for the missing sections.
+  (C) DONE: ch. 9 drafted (~3700 words, trim to ~3000). Open [TO VERIFY] markers in it: full T-set re-tune done?;
+  gz motor tau 0.0125 up / 0.025 down (unchecked); CA_ROTOR_KM 0.05 vs gz 0.016 effect on yaw G1/PID; bench/sim_fidelity.md
+  missing (noise/bias/latency undocumented: write it); INDI speed 1 vs 4 check; PID candidate count 64 vs 40 (ch. 9 uses 40);
+  flight modes covered.
   (D) RUNNING detached: ACT_TC sweep (D-actsweep), 21 runs, `results/act_tc_sweep_s17/run.sh`, log `sweep.log`
   (ends with SWEEP_DONE; runs with metrics.json are skipped, so re-run run.sh if incomplete). Output
   `results/runs/step_roll/indi_act<f>/seed<N>_x4/`. NEXT: table of roll-rate RMS / effort / saturation vs 1/f
