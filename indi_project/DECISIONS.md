@@ -280,3 +280,20 @@ Alternatives rejected: (a) a separate yaw setpoint pre-filter parameter: one mor
 INDI lose would be after-the-fact selection; (c) lowering K_Y further: r3 already shows yaw tracking degrading
 while the step in torque remains (proportional to K_Y).
 Cost: added lag on the yaw setpoint path, expected to lower yaw step tracking somewhat (as for PID).
+
+## D-r4 (2026-11-14, session 13): yaw-only round under D-yawsp
+
+After D-yawsp, c13's yaw tracking dropped to 1.056 x PID while step_yaw effort fell to 1.42 x (penalty threshold
+1.25). Roll/pitch gains are settled (r3) and decoupled from yaw, so r4 varies only MC_INDI_K_Y, MC_INDI_YAW_CUT and
+MC_YAW_P (span 2 around c13, 12 candidates, `tune.py --vary`, added for this) on step_yaw and hover, seeds 1-3.
+Selection rule fixed before seeing results: best step_yaw cost (ratio + effort penalty, the frozen per-run cost)
+averaged over seeds; hover is only a sanity check (D-hovernoise, `results/tuning/r3f_yawsp.md`). The chosen yaw
+set then replaces c13's yaw values, and the combined candidate is re-scored on all 5 tuning scenarios.
+Alternative rejected: a full 8-parameter round (240 flights) to tune 3 parameters.
+
+## D-hovernoise (2026-11-14, session 13): hover term of J is noise-dominated
+
+Hover 3-D RMS is driven by sporadic vertical excursions, present for PID and INDI alike; horizontal RMS is tight and
+equal (`results/tuning/r3f_yawsp.md`). The frozen tuning cost is kept unchanged. Consequences: J differences below
+~0.1 are not treated as meaningful; the final benchmark uses more seeds and reports the horizontal/vertical split
+alongside the frozen metric. Cause of the vertical excursions is open.
