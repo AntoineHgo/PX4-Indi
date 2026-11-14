@@ -81,11 +81,15 @@
   gust_x 0.61x, payload_add 0.75x, inertia mismatch 0.88x, diagonal steps 0.92x; T8 fault-onset peak tilt
   1.6 vs 5.1 deg. Yaw worse whenever yaw is commanded (step_diag 1.30x). Effort equal except gust_diag 1.18x,
   inertia mismatch 1.26x. 10 seeds: attitude RMS lower 10/10, p=0.002 on all 6 (H2 44 %, H3 84 %, H6 10 % borderline); acceptance needs H1, H4, H5 still unflown.
+- **Session 15:** H5 mismatch_combined (10 seeds, `results/heldout_h5_s15.md`): INDI LOSES. Roll-rate RMS 3.9x PID
+  (step pattern) and 1.6x (rate pulses), effort 3.1x, from a 5-7 Hz roll limit cycle. Diagnosed: motor time constant
+  x2 alone causes it (inertia/mass alone do not); with MC_INDI_ACT_TC matched it vanishes. Actuator-model mismatch is
+  INDI's main robustness weakness here. Trajectory mode + T5/H1/H4 implemented; 10-seed batch flying.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
   quoting in the report.
-- **Last updated:** 2026-11-14, session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
+- **Last updated:** 2026-11-14, session 15 (H1/H4/H5 implemented, batches flying). Before that: session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
   library + unit tests committed, not yet wired into mc_rate_control; first
   G1 identification: pitch 211 (R^2 0.90), roll 321 (R^2 0.63), yaw not
   identified; see `results/identification_g1_v0.md`).
@@ -103,6 +107,12 @@
 
 ## In progress
 
+- SESSION 15 RUNNING (detached): H5 batch (`results/h5_s15.log`, mismatch_combined_att/_rate, speed 4, seeds 1-10,
+  both controllers), then trajectory batch (`results/traj_s15.log`: traj_lemniscate T5, traj_circle_fast H1,
+  motor_loss_2 H4, speed 1, seeds 1-10). Runs with metrics.json are skipped, so re-run the log-header commands if
+  incomplete. NEXT: `bench/summarize_seeds.py` on each (trajectory block for T5/H1/H4: rms_3d_m; ground contact for
+  H4 = min altitude in window ~0), write `results/heldout_s15.md`, decide acceptance, commit metrics/run.json.
+  H5 DONE and committed (34b68de63e). Smoke (PID seed 1): H1 3.3 m RMS (infeasible, tilt limit), H4 PID touched the ground (D-h5).
 - SESSION 14 DONE: held-out seeds 1-10 committed (`results/heldout_s14.md`, Wilcoxon in `bench/summarize_seeds.py`).
   NEXT: (1) check `bench/scenarios.md` for H1, H4, H5 definitions and implement/fly them (10 seeds, both
   controllers) to decide acceptance: H1 traj_circle_fast, H4 motor_loss_2 (motor 2 x0.6 during
@@ -370,3 +380,4 @@
 - 2026-11-14: session 13: r4 done (yaw parity with PID is structural under D-yawsp); r4f combined candidate launched.
 - 2026-11-14: session 13: r4f J 0.978 (tie with PID); INDI frozen (D-freeze); T8 motor loss: INDI roll/pitch 5-9x better, yaw worse.
 - 2026-11-14: session 14: T8 fault-onset metrics; report ch. 5 and ch. 7 drafted (sonnet, 2 agents); held-out seeds 1-5 done (INDI better on all disturbance scenarios, yaw worse when commanded); seeds 6-10 done: INDI attitude better p=0.002 on all 6 scenarios.
+- 2026-11-14 session 15: H5 implemented and flown (10 seeds): INDI loses, ACT_TC-mismatch limit cycle diagnosed; trajectory mode + T5/H1/H4 added, batch launched.
