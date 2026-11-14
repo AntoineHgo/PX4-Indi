@@ -154,6 +154,9 @@ owner decisions when you first act on them.
 - **Stage 2 (session 39):** G1 v2 identified on 3 seeds from the O-11 regression logs (no new flights): roll/pitch
   174, yaw 12.2, spread +-3 % (`results/s2_g1_v2.md`). v2 INDI start params (D-v2indi-start) and tuning space
   (D-v2indi-tune). v2 INDI r1 (24 x 2 seeds) RUNNING.
+- **Stage 2 (session 40):** v2 INDI r1+r2 done (480 flights, 1 failure in r1 c12): tuned INDI = r2 c01 J 0.933 vs
+  tuned PID 0.911 on the (seen) tuning set, within hover noise; INDI better on rate pulses, worse on roll/yaw steps
+  (D-v2indi, `results/s2_tuning/indi_r1r2.md`). Held-out set V (420 flights) RUNNING detached since 20:21.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -175,6 +178,16 @@ owner decisions when you first act on them.
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+- SESSION 40 (2026-11-14): r1 + r2 done and committed (94c0a2c23d metrics, 1da7218ba1 D-v2indi). RUNNING detached
+  since 20:21: `INDI_PARAMS=.../bench/params/indi_v2_tuned.params setsid timeout 43200 bash bench/s2_heldout_v2.sh`
+  (420 flights, log `results/s2_heldout_v2/run.log`, ends with HELDOUT_V2_DONE, resumable: relaunch the same command
+  if it died, finished runs are skipped). First triple checked: metrics written, MC_INDI_EN 1 only on indi_v2. Do not
+  rebuild build/px4_sitl_default while it runs. NEXT: (1) when done, analysis script for V under the unchanged
+  acceptance criteria of `bench/scenarios.md` sec. 6 (paired per seed, 3 controllers; one sonnet task, spec it
+  first), write `results/s2_heldout_v2.md` and the v2 verdict; commit metrics.json/run.json only (as for tuning);
+  (2) re-fly H1-H6 on v2 labelled "seen" (O-7); (3) report ch. 7.7/8 v2 sections; (4) then stage 8 (outer-loop
+  flatness INDI design, O-10).
+
 - SESSION 39 (2026-11-14): G1 v2 DONE (`results/s2_g1_v2.md`, 3 seeds, reused v2new regression logs). Start params
   `bench/params/indi_v2_start.params` (D-v2indi-start); tune.py now also reads the mc_indi_rate_control yaml.
   RUNNING detached since 18:46: `bench/s2_indi_tune_r1.sh` (INDI v2 r1, 24 cand x 2 seeds, 240 flights, jobs 6,
@@ -768,6 +781,7 @@ owner decisions when you first act on them.
 | 33 (2026-11-14) | 1 sonnet (omega2 lib, 29 calls, ~$0.6) | 1 SITL build; r2 finished (240); chain launched | ~$2.2 of $3 |
 | 27 (2026-11-14) | 1 haiku (AM32 gaps, 22 calls) | 2 SITL builds, 5 check flights (2 invalid: physics step reset, fixed) | stage-2 sim: rotor speed, eRPM model, IMU rate; ~$2.9 of $3 |
 | 35 | 0 | 1 omega2 build, 7 check flights (omega2), r1f continuing | ~$2.0 of $3 |
+| 40 | 0 | r1/r2 finished (480), held-out V launched (420) | ~$2.2 of $3 |
 | 34 | 1 sonnet (~$0.6, D-omega2 wiring) | 105 (v1 recheck) + r1f running + frz queued | session ~$2.8 |
 
 ## Journal
@@ -824,3 +838,4 @@ owner decisions when you first act on them.
 - 2026-11-14 s36: held-out v2 frozen (D-heldout-v2, sim hooks V3/V4/V6 + tau_up/down, PID smoke OK); r1f done (c05 0.925 vs 0.966); r2f queued. Agents: 0.
 - 2026-11-14 s38: frz restated, r1f+r2f committed (D-v2pid: tuned PID = r1f c05), runner O-11 param mapping, O-11 regression (60 runs) preserved within noise, ch. 5.3.2 + architecture updated, default build rebuilt on O-11 tree. Agents: 0.
 - 2026-11-14 s39: G1 v2 on 3 seeds (174/174/12.2, reused regression logs), D-v2indi-start/-tune, INDI v2 r1 launched (240 flights). Agents: 0.
+- 2026-11-14 s40: INDI v2 r1/r2 analysed, tuned INDI = r2 c01 (D-v2indi), held-out V launched (420 flights). Agents: 0.
