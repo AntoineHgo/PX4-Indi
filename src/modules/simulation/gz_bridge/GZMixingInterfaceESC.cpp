@@ -105,7 +105,8 @@ bool GZMixingInterfaceESC::updateOutputs(float outputs[MAX_ACTUATORS], unsigned 
 		vel->Reserve(active_output_count);
 
 		for (unsigned i = 0; i < active_output_count; ++i) {
-			vel->Add(static_cast<double>(outputs[i]));
+			const float scale = _mixing_output.isMotor(i) ? _motor_speed_scale : 1.f;
+			vel->Add(static_cast<double>(outputs[i] * scale));
 		}
 
 		if (_actuators_pub.Valid()) {
@@ -145,7 +146,9 @@ void GZMixingInterfaceESC::motorSpeedCallback(const gz::msgs::Actuators &actuato
 
 		} else if (_esc_feedback == 2) {
 			// The reply to the previous frame is read with this one: one output period of latency
-			if (_erpm_drop_probability > 0.f && uniformRandom() < _erpm_drop_probability) {
+			const bool lost = (_erpm_loss_mask & (1u << i)) != 0;
+
+			if (lost || (_erpm_drop_probability > 0.f && uniformRandom() < _erpm_drop_probability)) {
 				// CRC failure: the driver keeps returning the last good value with a fresh timestamp
 				_erpm_errors[i]++;
 
@@ -155,7 +158,9 @@ void GZMixingInterfaceESC::motorSpeedCallback(const gz::msgs::Actuators &actuato
 
 			esc_status.esc[i].esc_rpm = _erpm_last_rpm[i];
 			esc_status.esc[i].esc_errorcount = _erpm_errors[i];
-			_erpm_reply_rpm[i] = _rotor_rpm_valid ? _rotor_rpm[i] : 0.f;
+			// SIM_GZ_ERPM_LAT extra frames of latency: delay line ahead of the one-frame reply
+			_erpm_delay[_erpm_delay_idx][i] = _rotor_rpm_valid ? _rotor_rpm[i] : 0.f;
+			_erpm_reply_rpm[i] = _erpm_delay[(_erpm_delay_idx + ERPM_DELAY_LEN - _erpm_latency) % ERPM_DELAY_LEN][i];
 
 		} else {
 			esc_status.esc[i].esc_rpm = actuators.velocity(i);
@@ -172,6 +177,10 @@ void GZMixingInterfaceESC::motorSpeedCallback(const gz::msgs::Actuators &actuato
 		if (actuators.velocity(i) > 0) {
 			esc_status.esc_armed_flags = (1 << limited_escs) - 1;
 		}
+	}
+
+	if (_esc_feedback == 2) {
+		_erpm_delay_idx = (_erpm_delay_idx + 1) % ERPM_DELAY_LEN;
 	}
 
 	if (esc_status.esc_count > 0) {

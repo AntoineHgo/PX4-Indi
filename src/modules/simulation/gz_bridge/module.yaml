@@ -113,6 +113,35 @@ parameters:
           decimal: 3
           default: 0.0
           reboot_required: true
+        SIM_GZ_ERPM_LAT:
+          description:
+            short: Extra eRPM telemetry latency
+            long: Used by SIM_GZ_ESC_FB 2. Frames (ESC output periods) of latency added to the one-frame reply
+              latency of the eRPM model.
+          type: int32
+          min: 0
+          max: 8
+          default: 0
+          reboot_required: true
+        SIM_GZ_ERPM_LOSS:
+          description:
+            short: Motors with total eRPM telemetry loss
+            long: Used by SIM_GZ_ESC_FB 2. Bit i set makes every eRPM frame of motor i fail (held value,
+              esc_errorcount increments). Read at runtime, for timed telemetry-loss scenarios.
+          type: int32
+          min: 0
+          max: 255
+          default: 0
+        SIM_GZ_THR_SC:
+          description:
+            short: Available thrust scale of all motors
+            long: Motor output rotor speeds are multiplied by the square root of this value, so the thrust
+              at a given command scales by it (battery sag model). Read at runtime.
+          type: float
+          min: 0.0
+          max: 1.0
+          decimal: 3
+          default: 1.0
         SIM_GZ_VIB_ACC:
           description:
             short: Simulated IMU vibration, accelerometer amplitude per rotor

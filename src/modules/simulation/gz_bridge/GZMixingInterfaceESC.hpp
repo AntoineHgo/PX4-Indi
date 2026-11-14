@@ -63,7 +63,24 @@ public:
 		param_get(param_find("SIM_GZ_ESC_FB"), &_esc_feedback);
 		param_get(param_find("SIM_GZ_ERPM_POL"), &_erpm_poles);
 		param_get(param_find("SIM_GZ_ERPM_DRP"), &_erpm_drop_probability);
+		param_get(param_find("SIM_GZ_ERPM_LAT"), &_erpm_latency);
+		_erpm_latency = math::constrain(_erpm_latency, (int32_t)0, (int32_t)ERPM_DELAY_LEN - 1);
 		_erpm_poles = math::max(_erpm_poles, (int32_t)2);
+		updateParams();
+	}
+
+	void updateParams() override
+	{
+		OutputModuleInterface::updateParams();
+
+		// Runtime plant changes for the benchmark, read on every parameter update
+		int32_t loss_mask = 0;
+		param_get(param_find("SIM_GZ_ERPM_LOSS"), &loss_mask);
+		_erpm_loss_mask = static_cast<uint32_t>(loss_mask);
+
+		float thrust_scale = 1.f;
+		param_get(param_find("SIM_GZ_THR_SC"), &thrust_scale);
+		_motor_speed_scale = sqrtf(math::constrain(thrust_scale, 0.f, 1.f)); // thrust ~ rotor speed squared
 	}
 
 	bool updateOutputs(float outputs[MAX_ACTUATORS], unsigned num_outputs, unsigned num_control_groups_updated) override;
@@ -102,7 +119,13 @@ private:
 
 	int32_t _erpm_poles{14};
 	float _erpm_drop_probability{0.f};
+	uint32_t _erpm_loss_mask{0}; // SIM_GZ_ERPM_LOSS: motors whose every eRPM frame fails
+	float _motor_speed_scale{1.f}; // sqrt(SIM_GZ_THR_SC), applied to motor outputs
 	float _erpm_reply_rpm[esc_status_s::CONNECTED_ESC_MAX] {}; // speed sampled at the previous frame
+	static constexpr int ERPM_DELAY_LEN = 9; // SIM_GZ_ERPM_LAT up to 8 frames
+	int32_t _erpm_latency{0};
+	float _erpm_delay[ERPM_DELAY_LEN][esc_status_s::CONNECTED_ESC_MAX] {};
+	int _erpm_delay_idx{0};
 	int32_t _erpm_last_rpm[esc_status_s::CONNECTED_ESC_MAX] {}; // last decoded value, held on a dropped frame
 	uint32_t _erpm_errors[esc_status_s::CONNECTED_ESC_MAX] {};
 	uint32_t _random_state{0x12345678u}; // fixed seed: dropouts are repeatable run to run
