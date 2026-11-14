@@ -162,6 +162,45 @@ def disturbance_metrics(dist, lp, att, run, w1):
     return res
 
 
+def motor_fault_metrics(mf, att, asp, am, lp, w1):
+    """Post-event metrics for a weakened motor (run.json["motor_fault"]["event_us"], ULog time), window event..w1.
+
+    tilt error: angle between the body z axis and the setpoint z axis (from vehicle_attitude_setpoint q_d), deg.
+    attitude_rms_deg: RMS of the tilt error; peak_tilt_error_deg: its max; saturation_time_s: time with any motor
+      >= 0.99 or <= 0.01 while airborne; faulty_motor_high_sat_s: time the faulty motor is >= 0.99.
+    motor_mean_*: mean actuator_motors control of the faulty motor vs the mean of the others (post event, in the window)."""
+    t0, k = mf["event_us"], mf["motor"]
+    res = {"event_s": t0 * 1e-6, "motor": k, "thrust_scale": mf["thrust_scale"]}
+
+    def zaxis(qq):
+        w, x, y, z = qq[:, 0], qq[:, 1], qq[:, 2], qq[:, 3]
+        return np.column_stack([2 * (x * z + w * y), 2 * (y * z - w * x), 1 - 2 * (x * x + y * y)])
+    if att is not None and asp is not None:
+        ta = att["timestamp"]
+        m = (ta >= t0) & (ta <= w1)
+        if m.any():
+            qd = np.column_stack([asp[f"q_d[{i}]"] for i in range(4)])
+            idx = np.clip(np.searchsorted(asp["timestamp"], ta[m], side="right") - 1, 0, len(qd) - 1)
+            tilt = np.degrees(np.arccos(np.clip((zaxis(qcols(att, "q")[m]) * zaxis(qd[idx])).sum(axis=1), -1, 1)))
+            res.update({"attitude_rms_deg": rms(tilt), "peak_tilt_error_deg": float(tilt.max())})
+    if am is not None:
+        t = am["timestamp"]
+        m = (t >= t0) & (t <= w1)
+        cols = [c for c in sorted(c for c in am if c.startswith("control[")) if np.isfinite(am[c]).any()]
+        if m.any() and len(cols) > k:
+            u = np.column_stack([am[c] for c in cols])[m]
+            tm = t[m] * 1e-6
+            dt = np.diff(tm, append=tm[-1])
+            z = zoh(lp["timestamp"], lp["z"], t[m]) if lp is not None else np.full(len(tm), -5.0)
+            air = z < -1.0
+            sat = ((u >= 0.99) | (u <= 0.01)).any(axis=1) & air
+            res.update({"saturation_time_s": float(dt[sat].sum()),
+                        "faulty_motor_high_sat_s": float(dt[(u[:, k] >= 0.99) & air].sum()),
+                        "motor_mean_faulty": float(u[:, k].mean()),
+                        "motor_mean_others": float(np.delete(u, k, axis=1).mean())})
+    return res
+
+
 def compute(ulog, run):
     out = {"scenario": run.get("scenario"), "controller": run.get("controller"), "seed": run.get("seed"),
            "speed": run.get("speed"), "warnings": []}
@@ -263,6 +302,12 @@ def compute(ulog, run):
     dist = run.get("disturbance")
     if dist and lp is not None and att is not None:
         out["disturbance"] = disturbance_metrics(dist, lp, att, run, w1)
+
+    # ---- plant-fault scenarios (motor_loss_0): only when run.json carries a "motor_fault" record ----
+    mf = run.get("motor_fault")
+    if mf and "event_us" in mf:
+        out["motor_fault"] = motor_fault_metrics(mf, topic(ulog, "vehicle_attitude"), topic(ulog, "vehicle_attitude_setpoint"),
+                                                 topic(ulog, "actuator_motors"), lp, w1)
 
     # ---- control effort + saturation ----
     am = topic(ulog, "actuator_motors")

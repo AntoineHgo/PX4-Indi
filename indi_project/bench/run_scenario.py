@@ -13,6 +13,7 @@ import glob
 import json
 import math
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -114,6 +115,13 @@ class Sim:
         out = self.cli("px4-param", "set", name, str(value))
         if "error" in out.lower() or "not found" in out.lower():
             raise RunError(f"param set {name} {value} failed: {out.strip()}")
+
+    def get_param(self, name):
+        out = self.cli("px4-param", "show", "-q", name)
+        m = re.search(r"(-?\d+)\s*$", out.strip())
+        if not m:
+            raise RunError(f"param show {name} failed: {out.strip()}")
+        return int(m.group(1))
 
     def cleanup(self):
         try:
@@ -325,8 +333,22 @@ def main():
             meta["disturbance"] = {"profile": sc["disturbance"], "onset_px4_s": onset, "onset_us": int(onset * 1e6),
                                    "csv": "disturbance.csv"}
             json.dump({"onset_px4_s": onset}, open(os.path.join(a.out, "disturbance_trigger.json"), "w"))
+        fault = sc.get("motor_fault")
+        if fault:  # plant change: read nominal MIN/MAX of the motor's gz channel now (param index = motor + 1)
+            ch = fault["motor"] + 1
+            nom = {k: sim.get_param(f"SIM_GZ_EC_{k}{ch}") for k in ("MIN", "MAX")}
+            meta["motor_fault"] = {"motor": fault["motor"], "thrust_scale": fault["thrust_scale"], "nominal": nom,
+                                   "segment": fault["segment"]}
         prev = 0.0
         for name, dur, val in sc["segments"]:
+            if fault and name == fault["segment"]:
+                k_om = math.sqrt(fault["thrust_scale"])
+                new = {k: int(round(v * k_om)) for k, v in nom.items()}
+                t_req = sim.t
+                for k, v in new.items():
+                    sim.set_param(f"SIM_GZ_EC_{k}{ch}", v)
+                meta["motor_fault"].update({"event_us": int(t_req * 1e6), "event_done_us": int(sim.t * 1e6), "applied": new,
+                                            "omega_ratio": k_om})
             ev = {"name": name, "t_us": int(sim.t * 1e6), "dur_s": dur, "mode": mode, "axis": axis,
                   "value": val, "prev": prev, "step": name != "settle" and mode != "position"}
             meta["events"].append(ev)
