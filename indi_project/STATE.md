@@ -198,6 +198,8 @@ owner decisions when you first act on them.
   D-v3-blend DONE in firmware (3a47bf746e, lib + MC_INDI_ACT_BLD default 0 = v2 bit-identical, 5 new gtests, 40/40;
   re-run by the orchestrator: ctest 100 %). Diff reviewed: matches spec. NOT yet compiled in px4_sitl_default
   (module side) and not flown: build after the batch ends (S43 step c).
+  IN FLIGHT: 1 sonnet agent writing `bench/watchdog_replay.py` (O-12 part A offline check only, new file, no change
+  to run_scenario.py), output `results/o12_watchdog_replay.md`, log `plan/impl_log_o12.md`.
 - SESSION 42 (2026-11-14, launch 20261114-222717): V batch DONE 22:25 (HELDOUT_V2_DONE). Verdict
   `results/s2_heldout_v2.md` (3ed1368de5): INDI v2 does NOT outperform PID on V (8 entries worse by >10 %, 1 better).
   Host SUSPENDED 20:45:31 (journalctl) -> seed 3 of com_shift + motor_loss_0 stalled for all controllers; moved to
