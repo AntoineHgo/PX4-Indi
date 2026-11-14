@@ -118,7 +118,7 @@
 
 ## In progress
 
-- SESSION 19 (2026-11-14) IN FLIGHT: (G) sonnet drafts ch. 3 theory -> `report/03_theory.md`; (H) fable fills review
+- SESSION 19: (G) DONE ch. 3 drafted (~4500 words, trim; [TO VERIFY] smeur2016 eqs 7,9,10,22-27, acquatella2017 eqs 4,26,28, wang2019 eq 13; [UNSOURCED] normalised G1, up/down asymmetry; cites [review_s16], add to sources.md; f* peak (tt-te)/(tt+te) checked by orchestrator); (H) fable fills review
   sections 2, 4, 6 + summary in `review/control_law_review_s16.md`; (I) DONE landed-yaw check (`results/landyaw_check_s19.md`, unchanged within noise); was log
   `results/landyaw_check_s19.log` (ends CHECK_DONE; resumable: re-run the header's two run_batch.sh calls), output
   `results/landyaw_check_s19/{step_diag,com_shift}/indi_tuned/seed{1,2,3}[_x4]/metrics.json`. NEXT: compare with
