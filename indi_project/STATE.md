@@ -165,6 +165,13 @@ owner decisions when you first act on them.
 - **Stage 2 (session 40):** v2 INDI r1+r2 done (480 flights, 1 failure in r1 c12): tuned INDI = r2 c01 J 0.933 vs
   tuned PID 0.911 on the (seen) tuning set, within hover noise; INDI better on rate pulses, worse on roll/yaw steps
   (D-v2indi, `results/s2_tuning/indi_r1r2.md`). Held-out set V (420 flights) RUNNING detached since 20:21.
+- **Stage 2 (session 42): held-out V verdict: INDI v2 does NOT outperform PID** (`results/s2_heldout_v2.md`): roll
+  attitude RMS 1.16-1.20x PID on all 7 attitude entries (0/10 seeds better), rate pulses 0.92-0.93x (below the 10 %
+  bar), com_shift 0.43x, motor_loss_0 1.91x worse. Root cause of the motor-loss loss: the measured-eRPM actuator state
+  removes INDI's implicit integral action against any actuator command/output mismatch (steady 13-14 deg tilt,
+  `results/s2_tilt_diag.md`). Fix drafted: `plan/v3_actuator_blend.md` (complementary model/measured state). V seed 3
+  of 2 entries is being re-flown after a host suspend (infrastructure fault, D-v2-refly). Tuned PID beats default PID
+  on V too (fair baseline).
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -660,6 +667,20 @@ owner decisions when you first act on them.
 
 ## Next concrete actions
 
+S42 ORDER (do this first, top to bottom):
+1. Check `results/s2_seen_v2/run.log` for SEEN_V2_DONE and `results/s2_heldout_v2/run.log` for HELDOUT_V2_REFLY_DONE
+   (the re-fly runs `bench/s2_heldout_v2_refly.sh` detached after the seen set). If the refly process died, relaunch:
+   `INDI_PARAMS=$PWD/indi_project/bench/params/indi_v2_tuned.params setsid nohup timeout 86400 bash indi_project/bench/s2_heldout_v2_refly.sh`.
+   Check the journal for further host suspends during the seen set (`journalctl | grep -i suspend`); re-fly every
+   (entry, seed) stalled by one, for all controllers (D-v2-refly).
+2. Re-run `python3 indi_project/bench/s2_verdict.py --final --hover-runs indi_project/results/s2_seen_v2/runs` and
+   update `results/s2_heldout_v2.md` (all 14 entries, criteria 1 and 4), add the seen-set table (O-7), commit the
+   metrics.json/run.json files only.
+3. O-12: watchdog in `bench/run_scenario.py` + staged pruning in `run_batch.sh`/`tune.py` (one sonnet task, spec it
+   first; check that no existing run would have tripped it). Not before step 1 is finished (validation batch running).
+4. v3 decision (`plan/v3_actuator_blend.md`): freeze V' first, then implement D-v3-blend with gtest, screen under O-12.
+5. Report: ch. 7/8 v2 sections with the V verdict and the integral-action finding; O-12 in ch. 7. Then stage 8.
+
 00. Session 11 next steps: (a0) NEXT: on step_yaw seed 1 of
    `results/tuning/indi/r2f_yawnu/c00`, quantify nu_y/G1, yaw torque and
    motor spread around the step to confirm that the unfiltered setpoint
@@ -883,3 +904,6 @@ owner decisions when you first act on them.
   every att entry, roll-rate RMS ~0.90-0.93x on rate entries, com_shift 0.40x, motor_loss_0 rotation RMS 1.91x (yaw
   step included). Run `s2_verdict.py --final` ONLY after HELDOUT_V2_DONE: before that, in-flight runs count as fails.
   Background `until ... sleep` waits ended at once in this session: do not rely on them to wait for batches. Agents: 0.
+- 2026-11-14 s42: V done + verdict (INDI v2 does not outperform PID; 8 entries worse), host suspend -> seed 3 re-fly
+  queued, motor_loss tilt diagnosed (measured-eRPM state removes integral action), v3 blend drafted, O-12 recorded
+  (watchdog deferred until the validation batches end). Agents: 1 sonnet (tilt diagnosis, 18 tool calls).
