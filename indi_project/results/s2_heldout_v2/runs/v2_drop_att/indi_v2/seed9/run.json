@@ -1,0 +1,147 @@
+{
+ "scenario": "v2_drop_att",
+ "controller": "indi_v2",
+ "seed": 9,
+ "speed": 4.0,
+ "sim": "v2",
+ "instance": 0,
+ "params_file": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_project/bench/params/indi_v2_tuned.params",
+ "params_applied": {
+  "NAV_DLL_ACT": 0,
+  "COM_RC_IN_MODE": 4,
+  "COM_RCL_EXCEPT": 4,
+  "SDLOG_PROFILE": 17,
+  "MIS_TAKEOFF_ALT": 5.0,
+  "MC_INDI_G1_R": "174",
+  "MC_INDI_G1_P": "174",
+  "MC_INDI_G1_Y": "12.2",
+  "MC_INDI_ACT_TC": "0.0125",
+  "MC_INDI_ERPM_DLY": "1",
+  "MC_INDI_K_R": "28.77",
+  "MC_INDI_K_P": "16.76",
+  "MC_INDI_K_Y": "2.733",
+  "MC_INDI_YAW_CUT": "1.665",
+  "MC_ROLL_P": "3.167",
+  "MC_PITCH_P": "5.19",
+  "MC_YAW_P": "2.757",
+  "IMU_GYRO_DNF_EN": "1",
+  "THR_MDL_FAC": "0.683",
+  "MC_INDI_W_MAX": "1000"
+ },
+ "git": {
+  "commit": "ce76d1d1e7da9f917445e41be355d0a203988232",
+  "dirty": true
+ },
+ "noise_seed": {
+  "gz_sim_seed": 9,
+  "px4_baro_srand": 1234
+ },
+ "events": [
+  {
+   "name": "settle",
+   "t_us": 39789000,
+   "dur_s": 2.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  },
+  {
+   "name": "up",
+   "t_us": 41793000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": 15.0,
+   "prev": 0.0,
+   "step": true
+  },
+  {
+   "name": "zero1",
+   "t_us": 44794000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": 0.0,
+   "prev": 15.0,
+   "step": true
+  },
+  {
+   "name": "down",
+   "t_us": 47802000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": -15.0,
+   "prev": 0.0,
+   "step": true
+  },
+  {
+   "name": "zero2",
+   "t_us": 50805000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": 0.0,
+   "prev": -15.0,
+   "step": true
+  }
+ ],
+ "phase_log": [],
+ "exit_status": "ok",
+ "error": null,
+ "boot_params": {
+  "MC_INDI_EN": 1
+ },
+ "erpm_drop": 0.01,
+ "vib": {
+  "acc": 1.0,
+  "gyr": 0.05
+ },
+ "sim_params": {
+  "SIM_GZ_ERPM_DRP": 0.2
+ },
+ "imu_rate": 1000,
+ "model_variant": {
+  "scale": {
+   "rpm": true,
+   "imu_rate": 1000
+  },
+  "dir": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_project/results/s2_heldout_v2/runs/v2_drop_att/indi_v2/seed9/model_variant",
+  "stock_models": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/Tools/simulation/gz/models",
+  "original": {
+   "imu_rate": 250.0
+  },
+  "new": {
+   "imu_rate": 1000.0,
+   "joint_state_publisher": [
+    "rotor_0_joint",
+    "rotor_1_joint",
+    "rotor_2_joint",
+    "rotor_3_joint"
+   ]
+  }
+ },
+ "arm_attempts": 1,
+ "t_arm_us": 21794000,
+ "hold_pos_ned": [
+  -0.012752474285662174,
+  -0.03801382705569267,
+  -5.018585205078125
+ ],
+ "hold_yaw_rad": 1.5863624811172485,
+ "hover_thrust_estimate": 0.59314,
+ "t_offboard_us": 36786000,
+ "t_window_start_us": 39789000,
+ "erpm_loss": {
+  "motor": 0,
+  "start": "up",
+  "end": "zero1",
+  "on_us": 41793000,
+  "off_us": 44794000
+ },
+ "t_window_end_us": 53805000,
+ "ulog": "flight.ulg",
+ "wall_time_s": 39.4
+}
