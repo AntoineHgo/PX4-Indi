@@ -854,3 +854,9 @@ owner decisions when you first act on them.
 - 2026-11-14 s38: frz restated, r1f+r2f committed (D-v2pid: tuned PID = r1f c05), runner O-11 param mapping, O-11 regression (60 runs) preserved within noise, ch. 5.3.2 + architecture updated, default build rebuilt on O-11 tree. Agents: 0.
 - 2026-11-14 s39: G1 v2 on 3 seeds (174/174/12.2, reused regression logs), D-v2indi-start/-tune, INDI v2 r1 launched (240 flights). Agents: 0.
 - 2026-11-14 s40: INDI v2 r1/r2 analysed, tuned INDI = r2 c01 (D-v2indi), held-out V launched (420 flights). Agents: 0.
+- 2026-11-14 s41: seen-set batch queued behind V (`bench/s2_seen_v2.sh`, 420 flights), verdict script `bench/s2_verdict.py`,
+  stage-8 design draft (D-s8-early/arch/ff/snap). V seed 1 complete at 20:30, no failure; ~9 min per seed, so V should
+  end ~22:00 and the seen set ~23:30. Single-seed V numbers (NOT a result): INDI roll attitude RMS ~1.15-1.22x PID on
+  every att entry, roll-rate RMS ~0.90-0.93x on rate entries, com_shift 0.40x, motor_loss_0 rotation RMS 1.91x (yaw
+  step included). Run `s2_verdict.py --final` ONLY after HELDOUT_V2_DONE: before that, in-flight runs count as fails.
+  Background `until ... sleep` waits ended at once in this session: do not rely on them to wait for batches. Agents: 0.
