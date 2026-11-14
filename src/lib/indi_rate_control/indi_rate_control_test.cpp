@@ -518,3 +518,97 @@ TEST(IndiRateControlTest, YawCutoffInvalidValuesDisableFilter)
 		}
 	}
 }
+
+namespace
+{
+
+/// Closed loop with white noise on the measured yaw rate only. Returns the RMS of the sample to sample
+/// change of the yaw output, out_roll_pitch receives the sum of the roll and pitch outputs.
+float runYawRateNoise(IndiRateControl &ctrl, float &out_roll_pitch)
+{
+	Lcg noise;
+	Vector3f command;
+	float prev = 0.f;
+	float sum_sq = 0.f;
+	int count = 0;
+	out_roll_pitch = 0.f;
+
+	for (int i = 0; i < 1100; i++) {
+		const Vector3f rate(0.f, 0.f, 0.5f * noise.next());
+		command = ctrl.update(rate, Vector3f(), Vector3f(), command, kDtYaw, false);
+
+		if (i >= 100) { // skip the filter start-up
+			const float delta = command(2) - prev;
+			sum_sq += delta * delta;
+			count++;
+			out_roll_pitch += command(0) + command(1);
+		}
+
+		prev = command(2);
+	}
+
+	return sqrtf(sum_sq / count);
+}
+
+} // namespace
+
+TEST(IndiRateControlTest, YawRateFilterCutoffZeroLeavesOutputsUnchanged)
+{
+	IndiRateControl untouched = makeController();
+	IndiRateControl disabled = makeController();
+	disabled.setYawCutoff(0.f);
+
+	Lcg noise;
+	Vector3f command_a;
+	Vector3f command_b;
+
+	for (int i = 0; i < 500; i++) { // noisy measured rate on all axes
+		const Vector3f rate(0.3f * noise.next(), 0.3f * noise.next(), 0.3f * noise.next());
+		const float sp = (i % 100 < 50) ? 1.f : -0.5f;
+		const Vector3f rate_sp(sp, sp, sp);
+		const Vector3f accel(5.f * noise.next(), 5.f * noise.next(), 5.f * noise.next());
+		command_a = untouched.update(rate, rate_sp, accel, command_a, kDtYaw, false);
+		command_b = disabled.update(rate, rate_sp, accel, command_b, kDtYaw, false);
+
+		EXPECT_EQ(command_a, command_b);
+		EXPECT_EQ(untouched.getNu(), disabled.getNu());
+	}
+}
+
+TEST(IndiRateControlTest, YawRateFilterReducesYawRateNoiseOnly)
+{
+	IndiRateControl off = makeController();
+	IndiRateControl on = makeController();
+	on.setYawCutoff(2.f);
+
+	float roll_pitch_off = 0.f;
+	float roll_pitch_on = 0.f;
+	const float rms_off = runYawRateNoise(off, roll_pitch_off);
+	const float rms_on = runYawRateNoise(on, roll_pitch_on);
+
+	EXPECT_GT(rms_off, 0.f);
+	EXPECT_LT(rms_on, rms_off / 3.f);
+	EXPECT_EQ(roll_pitch_on, roll_pitch_off); // roll and pitch untouched
+	EXPECT_FALSE(on.getFault());
+}
+
+TEST(IndiRateControlTest, YawRateFilterSteadyStateNuIsGainTimesError)
+{
+	IndiRateControl ctrl = makeController();
+	ctrl.setYawCutoff(2.f);
+
+	const float rate_sp = 1.f;
+	const float rate_meas = 0.4f;
+	Vector3f command;
+
+	for (int i = 0; i < 1500; i++) { // 6 s, many filter time constants
+		command = ctrl.update(Vector3f(0.f, 0.f, rate_meas), Vector3f(0.f, 0.f, rate_sp), Vector3f(), command, kDtYaw, false);
+	}
+
+	// the gain is not exposed, so compare with the unfiltered controller which gives K_Y * (r_sp - r) at once
+	IndiRateControl ref = makeController();
+	ref.update(Vector3f(0.f, 0.f, rate_meas), Vector3f(0.f, 0.f, rate_sp), Vector3f(), Vector3f(), kDtYaw, false);
+
+	EXPECT_GT(ref.getNu()(2), 0.f);
+	EXPECT_NEAR(ctrl.getNu()(2), ref.getNu()(2), 1e-4f * ref.getNu()(2));
+}
