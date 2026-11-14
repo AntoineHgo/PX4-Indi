@@ -124,10 +124,10 @@
   appendix A reproduce drafted (haiku), all [TO VERIFY] resolved. Report now has ch. 1-10 + appendix A; missing:
   consolidated bibliography chapter (from research/sources.md), ch. 2 [TO VERIFY]/[GAP] items, REPORT FIXES list
   (session 14 entry), ch. 9.4 speed [TO VERIFY] (batch below), FIGURE for H5 spectrum (optional).
-  IN FLIGHT (O) CPU: INDI speed-1 check, PARAMS_FILE=results/tuning/indi/r4f/c00/params, SCENARIOS="step_diag
-  mismatch_combined_rate" SEEDS="1 2 3" SPEEDS=1 NAME_TAG=spd22b -> results/runs/<sc>/indi_tuned/seed<N> (compare
-  with seed<N>_x4 on rotation_angle_rms_deg / roll_rms_rad_s / motor_rate_rms); log results/speedcheck_indi_s22.log.
-  If the dirs exist with metrics.json, just compare and write results/speedcheck_indi_s22.md, then fix ch. 9.4.
+  DONE (O) INDI speed-1 check (`results/speedcheck_indi_s22.md`, ch. 9.4 updated): rate/effort agree <= 4 %, H5 loss
+  unchanged; H6 attitude RMS +4 % at speed 1 (half the 8 % margin). IN FLIGHT (P) CPU: PID step_diag speed 1 seeds 1-3
+  (CONTROLLERS=pid_default, no PARAMS_FILE, NAME_TAG=spd22p) -> results/runs/step_diag/pid_default/seed<N>; then
+  add the H6 ratio at speed 1 to speedcheck_indi_s22.md and ch. 9.4.
 
 - SESSION 21 (2026-11-14) DONE: review complete + triaged (28eba44030, items 8-13 + triage in its Summary);
   MC_INDI_G2_Y max 100 -> 1 (2bb0ba3ac9, SITL build OK; DT_MAX min 0.01 and K min 1 already guard review item 11
