@@ -161,3 +161,13 @@ commits.
   `<segment>_pitch`), primary metric `rotation_angle_rms_deg`. One PID
   default harness check (seed 1, x4): 6.5 deg, no saturation. Not used for
   tuning.
+- 2026-11-14 (session 12): H2 `gust_diag` and H3 `com_shift` implemented
+  in `bench/disturbance.py` with the T6/T7 models. Directions are where the
+  air moves to, angle from gz world +x towards +y (T6 is +x); the gust is a
+  0.6 s 1-cosine of 8 m/s at 120 deg on top of a 4 m/s base wind at 45 deg
+  (ramp 2 s, hold 10 s, gust, hold 15 s). H3: weight of +15 % mass applied
+  as a force with a 5 cm +y lever arm kept fixed in the world frame
+  (level-hover approximation; mass and inertia of the plant unchanged, as
+  in T7). Metric kinds: gust_diag horizontal, com_shift vertical. PID
+  default harness check (seed 1, speed 1): gust_diag 0.44 m / 11.2 deg /
+  recovery 15.1 s; com_shift 0.21 m / 2.6 deg / recovery 3.9 s.
