@@ -55,7 +55,66 @@ carries no integral action; the DC rejection comes from `1/(1 - H A_est)` acting
 
 ## 2. Yaw path filters (MC_INDI_YAW_CUT on the rate error)
 
-Not covered in this pass.
+Structure (`indi_rate_control.cpp:198-216`): one `LowPassFilter2p` design F (Butterworth, same
+`sample_freq`/`_yaw_cutoff_hz`, :93-97) is instantiated three times and applied to `a_f(2)`, `t_f(2)` and
+`rate_error(2) = rate_sp - rate`. All three instances are (re)settled on the same cycle through
+`_yaw_filter_reset_pending` (:205-211), so the `(a_f, t_f)` pair stays synchronised: both carry F's
+group delay on top of H's. Commit 1d776dc6dc makes `resetStates()` set the pending flag (:128), so the
+landed and fault paths now restart the three filters at the current inputs instead of at zero.
+
+**Effective yaw law.** With F linear and identical on the three terms, and G2 included,
+`dt_cmd_y = [K F e - F a_f + (G2/dt) F(t_f - t_f_prev)] / (G1 + G2/dt) = F(dt_cmd_y,unfiltered)` and
+`t_cmd_y = F t_f + F dt_cmd = F(t_cmd_y,unfiltered)`: up to the two clamps (applied after F) the yaw
+command is exactly the unfiltered INDI law followed by an output low-pass, i.e. the same thing
+`MC_YAW_TQ_CUTOFF` does on the PID branch, including the setpoint prefilter effect. The incremental
+structure is therefore not broken, but the increment is now referenced to `F H A u` instead of
+`H A u`, so the closed loop becomes `u = F (K/G) e / (1 - F H dA)` (notation of section 5). The
+denominator is helped (F lowers `|H dA|` at the 5-7 Hz band, section 5 mitigation 2); the numerator
+adds F's phase at the yaw crossover `K_Y` rad/s.
+
+- **risk, confirmed** `mc_rate_control_params.yaml:355-365` and `indi_rate_control.cpp:219`: no
+  relation is enforced between `MC_INDI_YAW_CUT` (min 0, any positive value accepted, increment 1 Hz)
+  and `MC_INDI_K_Y` (default 10 rad/s = 1.6 Hz crossover). A second-order Butterworth at 10 Hz costs
+  ~13 deg at 1.6 Hz (fine); at 2 Hz, the value used by five of the unit tests, it costs ~75 deg of the
+  ~80 deg nominal margin (plant 1/s, 20 ms actuator, H ~ -5 deg at 1.6 Hz), so the yaw loop oscillates
+  or diverges before the clamps catch it, and the attitude loop closed around it (MC_YAW_P) loses the
+  same phase. The tests only run at zero or constant rate so they cannot see it. Fix: document and
+  enforce `YAW_CUT >= ~3 K_Y / (2 pi)` (e.g. param min 5 Hz, or disable the filter below that ratio
+  as `kMaxYawCutoffRatio` does above).
+- **risk, confirmed** `indi_rate_control.cpp:160-166,85-88`: a change of `MC_INDI_YAW_CUT` alone
+  (enable, disable or retune in flight) goes through `designFilters()`, which also re-settles the
+  roll and pitch H filters at the unfiltered `_t_act`. Whenever the torque is moving, `t_f` jumps by
+  the H group delay (`t_act - t_f`) on all three axes and `t_cmd` steps by the same amount. The unit
+  test `YawCutoffEnableHasNoTransient` uses a settled constant torque so `t_act == t_f` and the step is
+  invisible. Fix: split `designFilters()` so a yaw-cutoff change only touches the yaw filters (and do
+  not re-settle H on a coefficient-only redesign, section 1).
+- **risk, confirmed** `indi_rate_control.cpp:91,100,226,230`: on a redesign that toggles
+  `_yaw_filter_active` (dt clamped to 20 ms makes `0.45 * 50 Hz = 22.5 Hz` the ceiling, so a 30 Hz
+  cutoff deactivates for that cycle and reactivates on the next), `t_f(2)` switches between the
+  F-lagged and the raw value while `_t_f_prev(2)` holds the other kind, so the G2 term produces a
+  one-cycle spike `(G2/dt)(t_f - t_f_prev)/(G1 + G2/dt)` of up to the full lag difference, and `a_f(2)`
+  changes from filtered to raw noise. Bounded by `DT_MAX`, zero with the default `G2 = 0`. Fix: make the
+  active/inactive decision hysteretic or key it on the nominal rate, and reset `_t_f_prev(2)` to the
+  new-kind value on a toggle.
+- **ok, confirmed** G2 spin-up term with the filter: `t_f - t_f_prev` uses the F-filtered `t_f`
+  (:226,230), i.e. the derivative of the filtered command, which is the form Smeur uses
+  (`u_f_dot`), and by linearity it stays consistent with the F-filtered `a_f`. Note the term's
+  weight is `G2/dt`: with the parameter range `MC_INDI_G2_Y` up to 100 and dt = 2.5 ms, `G2/dt = 4e4`
+  against `G1_Y = 30`, so `dt_cmd_y ~ (t_f - t_f_prev)` and the error term `(nu - a_f)/4e4` vanishes:
+  yaw authority is lost silently (bounded, but open loop). Sensible values are `G2 ~ G1 dt` (~0.1); the
+  parameter max should be ~1 (**risk, confirmed**, `mc_rate_control_params.yaml:283-292`).
+- **ok, confirmed** landed path after 1d776dc6dc: `resetStates()` (:108-130) runs every landed cycle
+  and sets the pending flag, so each cycle resets F at `(a_f(2), 0, e(2))` then applies once;
+  `LowPassFilter2p::reset()` settles the delay elements at `input/(1+a1+a2)` so the output is the input
+  within rounding. Yaw on the ground is `(K e - a_f)/G1`, the same P form as roll/pitch; the first
+  airborne cycle continues from the last landed states, no step. Side effects: the yaw rate-error
+  filter is inactive during the `maybe_landed` phase of a takeoff (noise reduction absent, phase lag
+  absent, so the loop is in fact better damped there); the fault path (:150,234) now also restarts
+  without the `b0` scaling. The pending flag is also set when the filter is inactive and is simply
+  never consumed, harmless. Doc mismatch: `indi_rate_control.hpp:135` still says the filter states
+  are "held at zero" while landed.
+- **style** `indi_rate_control.hpp:108-110` says the filter is applied to "the measured rate in nu"
+  while the code and the file header (:47-50) filter the rate *error*, setpoint included.
 
 ## 3. Numerical and operational edge cases
 
