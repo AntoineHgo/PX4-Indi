@@ -191,3 +191,20 @@ hover motor-rate effort 8x PID's (`results/sync_check_v0.md` sec. 3).
 - Rejected: more candidates rather than more seeds: r1 showed ~2 % re-fly
   noise on J and up to 2.2x on single hover runs, so seed noise, not
   sampling density, limits the ranking.
+
+## D-hover-noise (2026-11-14, session 9): non-repeatable hover runs
+
+- Fact: the same seed re-flown gives hover position RMS up to ~2x apart
+  (`pid_r1.md` follow-up); attitude/rate step metrics re-fly within ~2 %.
+- Decision: treat hover position RMS as a noisy metric and average it
+  over seeds (3 in tuning round 2, >= 8 in the final benchmark, paired
+  Wilcoxon as in `bench/scenarios.md`), instead of first hunting the source
+  of non-determinism. The likely source is thread scheduling between the
+  PX4 and Gazebo processes in lockstep, which the seed does not control;
+  removing it would be a simulator change of uncertain cost, while extra
+  seeds cost only CPU.
+- Consequence for the report: hover results are reported as distributions
+  across seeds, and the simulation-limits section states that a seed does
+  not reproduce a hover run exactly.
+- Revisit if, with >= 8 seeds, the hover spread still hides the
+  INDI-PID difference.
