@@ -195,9 +195,9 @@ owner decisions when you first act on them.
 ## In progress
 - SESSION 43 (2026-11-14, launch 20261114-223703): seen set RUNNING (57/420 at 22:37, ~80 min total), V re-fly
   queued behind it. Done: V' frozen (90339483ef, scenarios.md sec. 9, D-heldout-v3); v3 spec `plan/v3_blend_spec.md`.
-  IN FLIGHT: 1 sonnet agent implementing D-v3-blend (lib + MC_INDI_ACT_BLD + gtests), log `plan/impl_log_v3_blend.md`,
-  commits locally, no push, no px4_sitl_default build (batch running). If the session dies: check the log and
-  `git log`, verify the gtest result yourself before relying on it.
+  D-v3-blend DONE in firmware (3a47bf746e, lib + MC_INDI_ACT_BLD default 0 = v2 bit-identical, 5 new gtests, 40/40;
+  re-run by the orchestrator: ctest 100 %). Diff reviewed: matches spec. NOT yet compiled in px4_sitl_default
+  (module side) and not flown: build after the batch ends (S43 step c).
 - SESSION 42 (2026-11-14, launch 20261114-222717): V batch DONE 22:25 (HELDOUT_V2_DONE). Verdict
   `results/s2_heldout_v2.md` (3ed1368de5): INDI v2 does NOT outperform PID on V (8 entries worse by >10 %, 1 better).
   Host SUSPENDED 20:45:31 (journalctl) -> seed 3 of com_shift + motor_loss_0 stalled for all controllers; moved to
@@ -920,3 +920,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-14 s42: V done + verdict (INDI v2 does not outperform PID; 8 entries worse), host suspend -> seed 3 re-fly
   queued, motor_loss tilt diagnosed (measured-eRPM state removes integral action), v3 blend drafted, O-12 recorded
   (watchdog deferred until the validation batches end). Agents: 1 sonnet (tilt diagnosis, 18 tool calls).
+- 2026-11-14 s43: V' frozen (D-heldout-v3); v3 blend spec + firmware 3a47bf746e (gtests 40/40); O-12 spec written. Agents: 1 sonnet.
