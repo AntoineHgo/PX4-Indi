@@ -146,7 +146,12 @@ owner decisions when you first act on them.
   indi_project/results/s2_tuning_r2.log 2>&1 &` -> `results/s2_tuning/pid/r2/summary.csv`. If no `tune.py --family
   pid` process is alive and summary.csv is incomplete, re-launch exactly that command (it skips done runs).
   NEXT: analyse r2 (rule in r1.md: tuned v2 PID baseline = r2 best only if it beats the defaults beyond the seed
-  spread), then step 3 item 12 (delay slew) + rebuild px4_sitl_default AFTER r2 ends. Agents s31: 0.
+  spread). DONE step 3 item 12 (bc43849072, delay slews 1 sample/cycle) and item 11 (cddcff70ad, invalid
+  max increment ignored), 23/23 gtests; items 9/10 and K bounds were already done (designYawFilters separate; YAML
+  G2_Y max 1, DT_MAX min 0.01, K min 1). Step 3 left: item 4 only (after O-5). Rebuild px4_sitl_default AFTER r2.
+  IN FLIGHT (step 4, O-3): sonnet agent "actuator ident" -> `bench/identify_actuator.py` + `results/s2_ident_act.md`
+  (tau up/down + delay from esc_rpm vs actuator_motors, true-speed log s2_escfb_check + v2 eRPM ref logs). If cut
+  off: check that file, relaunch only the missing part. Agents s31: 1 sonnet.
 
 - SESSION 30 (2026-11-14): notch check (0) PASSED: 10/10 ref runs carry IMU_GYRO_DNF_EN 1. r1 was (re)started at the
   start of the session (same script, resumable); c00 (= defaults) J 1.007, c01-c03 1.18-1.24. DONE step 3 item 5
