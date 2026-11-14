@@ -149,9 +149,12 @@ owner decisions when you first act on them.
   spread). DONE step 3 item 12 (bc43849072, delay slews 1 sample/cycle) and item 11 (cddcff70ad, invalid
   max increment ignored), 23/23 gtests; items 9/10 and K bounds were already done (designYawFilters separate; YAML
   G2_Y max 1, DT_MAX min 0.01, K min 1). Step 3 left: item 4 only (after O-5). Rebuild px4_sitl_default AFTER r2.
-  IN FLIGHT (step 4, O-3): sonnet agent "actuator ident" -> `bench/identify_actuator.py` + `results/s2_ident_act.md`
-  (tau up/down + delay from esc_rpm vs actuator_motors, true-speed log s2_escfb_check + v2 eRPM ref logs). If cut
-  off: check that file, relaunch only the missing part. Agents s31: 1 sonnet.
+  DONE (step 4, O-3 part 1, sonnet agent, ~$1.1): `bench/identify_actuator.py`, `results/s2_ident_act.md`: plant
+  tau up/down 12.4/25.0 ms (true speed), 12.2/25.2 ms (eRPM), delay 0-1 ms; matches SDF 12.5/25. UNVERIFIED by me:
+  eRPM extra delay only ~1 ms vs expected ~4 ms frame (check D-erpm model latency before using it for the v2 delay).
+  NEXT: O-3 part 2 = re-fly frozen v1 INDI with ACT_TC up/down identified (library has one tc: use 0.0125 and 0.025,
+  label post-acceptance) on tuning set + H5 x10 AFTER r2 ends and SITL rebuilt; then O-4 (G2 source check).
+  Agents s31: 1 sonnet. Lesson: one sonnet ident task ~= $1.1; budget it as half a session.
 
 - SESSION 30 (2026-11-14): notch check (0) PASSED: 10/10 ref runs carry IMU_GYRO_DNF_EN 1. r1 was (re)started at the
   start of the session (same script, resumable); c00 (= defaults) J 1.007, c01-c03 1.18-1.24. DONE step 3 item 5
