@@ -49,6 +49,12 @@ void IndiRateControl::setActuatorTimeConstant(float actuator_tc)
 	_actuator_tc = math::isFinite(actuator_tc) ? math::constrain(actuator_tc, 0.001f, 0.2f) : 0.02f;
 }
 
+void IndiRateControl::setActuatorBlendTimeConstant(float tb_s)
+{
+	// non positive and non finite values disable the blend, stored as 0
+	_blend_tc = (math::isFinite(tb_s) && (tb_s > 0.f)) ? math::min(tb_s, kMaxBlendTimeConstant) : 0.f;
+}
+
 void IndiRateControl::setFilterCutoffs(float gyro_cutoff_hz, float dgyro_cutoff_hz)
 {
 	// non positive and non finite cutoffs mean pass-through, stored as 0
@@ -167,6 +173,7 @@ void IndiRateControl::resetStates()
 	// filter's feed-through gain on every cycle that resets the states (landed, fault recovery)
 	_yaw_filter_reset_pending = true;
 	_t_f_prev.zero();
+	_blend.zero();
 }
 
 void IndiRateControl::reset()
@@ -305,7 +312,32 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	// drops back to the model at once. No per axis mixing, model and measurement differ in lag and units
 	_meas_valid_cycles = meas_valid ? math::min(_meas_valid_cycles + 1, kMeasValidCycles) : 0;
 	_meas_in_use = (_meas_valid_cycles >= kMeasValidCycles);
-	Vector3f t_f = _meas_in_use ? t_f_meas : t_f_model;
+	Vector3f t_f = t_f_model;
+
+	// 5d. complementary blend: the measurement carries the high frequencies, the model the low ones, so a steady gap
+	// between command and output keeps its integral action. It tracks the difference (bumpless) while the
+	// measurement is not in use, the blend is disabled or on ground
+	const Vector3f t_gap = t_f_model - t_f_meas;
+
+	if (_meas_in_use && (_blend_tc > 0.f) && !landed) {
+		const float blend_alpha = dt / (_blend_tc + dt);
+		_blend += blend_alpha * (t_gap - _blend);
+
+	} else {
+		_blend = t_gap;
+	}
+
+	for (int i = 0; i < 3; i++) {
+		if (!PX4_ISFINITE(_blend(i))) {
+			_blend(i) = PX4_ISFINITE(t_gap(i)) ? t_gap(i) : 0.f;
+		}
+
+		_blend(i) = math::constrain(_blend(i), -kMaxBlend, kMaxBlend);
+	}
+
+	if (_meas_in_use) {
+		t_f = (_blend_tc > 0.f) ? (t_f_meas + _blend) : t_f_meas;
+	}
 
 	if (landed) {
 		// restart the yaw filters from the current values each landed cycle (bypassed on ground)

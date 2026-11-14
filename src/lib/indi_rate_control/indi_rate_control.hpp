@@ -56,6 +56,10 @@
  * rotor speeds. It runs through its own delay and its own copy of H in parallel to the model, and replaces
  * the modelled t_f after kMeasValidCycles consecutive valid cycles. Any invalid cycle falls back to the model
  * at once. While invalid, the measurement path is fed the model's t_act so that the switch back is bumpless.
+ * Optional blend (setActuatorBlendTimeConstant()): t_f = t_f_meas + b, with b a first order low pass of
+ * (t_f_model - t_f_meas). The measurement keeps the high frequencies and the model the low ones, which restores
+ * the integral action of the model state against a steady command/output gap. b tracks the difference while the
+ * measurement is not in use, the blend is disabled or on ground, so every switch is bumpless.
  *
  * There is no integrator. All memory is statically allocated.
  */
@@ -105,6 +109,13 @@ public:
 	 * Set the time constant of the first order actuator model, clamped to [0.001, 0.2] s.
 	 */
 	void setActuatorTimeConstant(float actuator_tc);
+
+	/**
+	 * Set the time constant of the complementary blend between the measured (high frequency) and the modelled
+	 * (low frequency) torque, clamped to <= kMaxBlendTimeConstant s. A value <= 0 or non finite disables the
+	 * blend: the measured torque alone is used when it is in use.
+	 */
+	void setActuatorBlendTimeConstant(float tb_s);
 
 	/**
 	 * Set the cutoffs of the synchronisation filter H, mirroring IMU_GYRO_CUTOFF (second order
@@ -214,6 +225,9 @@ public:
 	/// True if the last update() call used the measured torque as t_f instead of the actuator model
 	bool measurementInUse() const { return _meas_in_use; }
 
+	/// Blend state t_f_model - t_f_meas, low passed, of the last update() call
+	const matrix::Vector3f &getActuatorBlend() const { return _blend; }
+
 	/// Filtered torque of each path in the last update() call (not zeroed on ground, unlike getFilteredTorque())
 	const matrix::Vector3f &getFilteredModelTorque() const { return _t_f_model; }
 	const matrix::Vector3f &getFilteredMeasuredTorque() const { return _t_f_meas; }
@@ -234,6 +248,8 @@ public:
 	static constexpr float kMaxRpmRatio = 1.5f;
 
 private:
+	static constexpr float kMaxBlendTimeConstant = 10.f; ///< s, upper limit of the blend time constant
+	static constexpr float kMaxBlend = 2.f; ///< bound of the blend state per axis, both torques are within [-1, 1]
 	static constexpr int kDelayBufferSize = kMaxDelaySamples + 1;
 	static constexpr float kRedesignRatio = 0.1f; ///< relative sample rate change that triggers a filter redesign
 	static constexpr float kSampleFreqAlpha = 0.01f; ///< low pass on 1/dt for the design rate, so dt jitter does not redesign
@@ -258,6 +274,7 @@ private:
 	float _max_increment{1.f};
 	float _yaw_cutoff_hz{0.f}; ///< 0 = yaw low pass disabled
 	int _meas_delay_samples_target{0};
+	float _blend_tc{0.f}; ///< 0 = blend disabled
 
 	// Filter design bookkeeping
 	float _design_sample_freq{0.f}; ///< sample rate the filters are designed for, 0 = not designed
@@ -288,6 +305,7 @@ private:
 	AlphaFilter<float> _meas_alpha[3];
 	int _meas_valid_cycles{0};           ///< consecutive valid cycles, saturates at kMeasValidCycles
 	bool _meas_in_use{false};
+	matrix::Vector3f _blend; ///< low passed t_f_model - t_f_meas, tracks it when the blend is not active
 
 	math::LowPassFilter2p<float> _yaw_lpf_accel; ///< yaw low pass on the angular acceleration
 	math::LowPassFilter2p<float> _yaw_lpf_torque; ///< same design on the filtered torque

@@ -137,6 +137,17 @@ parameters:
       unit: s
       decimal: 3
       increment: 0.001
+    MC_INDI_ACT_BLD:
+      description:
+        short: INDI actuator state blend time constant
+        long: Time constant of the complementary blend between the measured (high frequency) and the modelled (low frequency) actuator torque. Restores the integral action of the model state against a steady command/output gap. Only used when MC_INDI_W_MAX is set. Set to 0 to disable (measured torque only).
+      type: float
+      default: 0.0
+      min: 0.0
+      max: 10.0
+      unit: s
+      decimal: 2
+      increment: 0.05
     MC_INDI_DT_MAX:
       description:
         short: INDI maximum torque increment

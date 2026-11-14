@@ -1131,3 +1131,124 @@ TEST(IndiRateControlMeasurementTest, NormalisedThrustFromRpm)
 	EXPECT_FALSE(IndiRateControl::normalisedThrustFromRpm(5000.f, INFINITY, u));
 	EXPECT_FLOAT_EQ(u, 0.123f);
 }
+
+TEST(IndiRateControlBlendTest, DisabledIsBitIdenticalToNoSetterCall)
+{
+	const float disabled[] = {0.f, NAN, -0.5f, -INFINITY};
+
+	for (const float tb : disabled) {
+		IndiRateControl ref = makeController();
+		IndiRateControl ctrl = makeController();
+		ctrl.setActuatorBlendTimeConstant(tb);
+
+		for (int i = 0; i < 400; i++) {
+			// valid measurement that differs from the model
+			ref.setMeasuredTorque(Vector3f(0.2f, -0.1f, 0.3f), true);
+			ctrl.setMeasuredTorque(Vector3f(0.2f, -0.1f, 0.3f), true);
+			const Vector3f a = step(ref, i);
+			const Vector3f b = step(ctrl, i);
+			ASSERT_EQ(a, b) << "tb " << tb << " cycle " << i;
+			ASSERT_EQ(ref.getFilteredTorque(), ctrl.getFilteredTorque());
+		}
+
+		ASSERT_TRUE(ctrl.measurementInUse());
+		EXPECT_EQ(ctrl.getFilteredTorque(), ctrl.getFilteredMeasuredTorque());
+	}
+}
+
+TEST(IndiRateControlBlendTest, SteadyGapConvergesToModel)
+{
+	const Vector3f alloc(0.5f, 0.f, 0.f);
+	const Vector3f meas(0.35f, 0.f, 0.f); // 0.7 x the settled model torque
+	IndiRateControl ctrl = makeController();
+	IndiRateControl ref = makeController();
+	ctrl.setActuatorBlendTimeConstant(0.3f);
+
+	// 1200 cycles of kDt are 10 Tb
+	runConstantMeasurement(ctrl, alloc, meas, 1200);
+	runConstantMeasurement(ref, alloc, meas, 1200);
+
+	ASSERT_TRUE(ctrl.measurementInUse());
+	EXPECT_NEAR(ctrl.getFilteredModelTorque()(0), 0.5f, 1e-3f);
+	EXPECT_NEAR(ctrl.getFilteredTorque()(0), ctrl.getFilteredModelTorque()(0), 0.01f * 0.5f);
+	EXPECT_NEAR(ctrl.getActuatorBlend()(0), 0.15f, 1e-3f);
+
+	// without the blend the fed back torque is the measured value
+	EXPECT_NEAR(ref.getFilteredTorque()(0), 0.35f, 1e-3f);
+}
+
+TEST(IndiRateControlBlendTest, HighFrequencyFollowsMeasurement)
+{
+	const Vector3f alloc(0.5f, 0.f, 0.f);
+	IndiRateControl ctrl = makeController();
+	IndiRateControl ref = makeController();
+	ctrl.setActuatorBlendTimeConstant(0.3f);
+	runConstantMeasurement(ctrl, alloc, Vector3f(0.35f, 0.f, 0.f), 1200);
+	runConstantMeasurement(ref, alloc, Vector3f(0.35f, 0.f, 0.f), 1200);
+	const float t_f_before = ctrl.getFilteredTorque()(0);
+	const float ref_before = ref.getFilteredTorque()(0);
+
+	// step of the measured torque only, the allocated torque stays the same
+	runConstantMeasurement(ctrl, alloc, Vector3f(0.65f, 0.f, 0.f), 6);
+	runConstantMeasurement(ref, alloc, Vector3f(0.65f, 0.f, 0.f), 6);
+
+	const float response = ctrl.getFilteredTorque()(0) - t_f_before;
+	const float ref_response = ref.getFilteredTorque()(0) - ref_before;
+	ASSERT_GT(ref_response, 0.05f);
+	EXPECT_GE(response, 0.9f * ref_response);
+}
+
+TEST(IndiRateControlBlendTest, SwitchFromModelToMeasurementIsBumpless)
+{
+	const Vector3f alloc(0.5f, 0.f, 0.f);
+	IndiRateControl ctrl = makeController();
+	ctrl.setActuatorBlendTimeConstant(0.3f);
+
+	// measurement invalid, the model settles
+	for (int i = 0; i < 300; i++) {
+		ctrl.setMeasuredTorque(Vector3f(0.35f, 0.f, 0.f), false);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, false);
+	}
+
+	float t_f_prev = ctrl.getFilteredTorque()(0);
+	float model_prev = ctrl.getFilteredModelTorque()(0);
+	bool switched = false;
+
+	for (int i = 1; i <= kN + 5; i++) {
+		ctrl.setMeasuredTorque(Vector3f(0.35f, 0.f, 0.f), true);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, false);
+		const float t_f = ctrl.getFilteredTorque()(0);
+		const float model = ctrl.getFilteredModelTorque()(0);
+		// the measurement filters are still converging from the model value, a few 1e-4 per cycle, against a gap of 0.15
+		EXPECT_LE(fabsf(t_f - t_f_prev), fabsf(model - model_prev) + 1e-3f) << "cycle " << i;
+		switched = switched || ctrl.measurementInUse();
+		t_f_prev = t_f;
+		model_prev = model;
+	}
+
+	EXPECT_TRUE(switched);
+}
+
+TEST(IndiRateControlBlendTest, LandedBlendTracksWithoutAccumulating)
+{
+	const Vector3f alloc(0.5f, 0.f, 0.f);
+	IndiRateControl ctrl = makeController();
+	ctrl.setActuatorBlendTimeConstant(0.3f);
+
+	// on ground with a gap between model and measurement
+	for (int i = 0; i < 600; i++) {
+		ctrl.setMeasuredTorque(Vector3f(0.35f, 0.f, 0.f), true);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, true);
+		EXPECT_EQ(ctrl.getFilteredTorque(), Vector3f());
+		EXPECT_NEAR(ctrl.getActuatorBlend()(0),
+			    ctrl.getFilteredModelTorque()(0) - ctrl.getFilteredMeasuredTorque()(0), 1e-6f);
+	}
+
+	ASSERT_TRUE(ctrl.measurementInUse());
+
+	// the first airborne value is the modelled torque, no blend memory of its own
+	ctrl.setMeasuredTorque(Vector3f(0.35f, 0.f, 0.f), true);
+	ctrl.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, false);
+	EXPECT_NEAR(ctrl.getFilteredTorque()(0), ctrl.getFilteredModelTorque()(0), 1e-4f);
+	EXPECT_NEAR(ctrl.getFilteredTorque()(0), 0.5f, 1e-3f);
+}

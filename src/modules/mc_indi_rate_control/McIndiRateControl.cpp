@@ -86,6 +86,7 @@ McIndiRateControl::parameters_updated()
 	_indi.setG1(Vector3f(_param_mc_indi_g1_r.get(), _param_mc_indi_g1_p.get(), _param_mc_indi_g1_y.get()));
 	_indi.setG2Yaw(_param_mc_indi_g2_y.get());
 	_indi.setActuatorTimeConstant(_param_mc_indi_act_tc.get());
+	_indi.setActuatorBlendTimeConstant(_param_mc_indi_act_bld.get());
 	_indi.setDelaySamples(_param_mc_indi_delay.get());
 	_indi.setMeasurementDelaySamples(_param_mc_indi_erpm_dly.get());
 	_indi.setMaxIncrement(_param_mc_indi_dt_max.get());
