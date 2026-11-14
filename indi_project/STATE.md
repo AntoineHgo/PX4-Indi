@@ -102,7 +102,7 @@
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
   quoting in the report.
-- **Last updated:** 2026-11-14, session 23 (bibliography, D-noretune). Before that: session 21 (review triaged, G2_Y bound fix, figures, ch. 2 draft). Before that: session 20. Before that: session 16 (ch. 8 draft + control-law review in flight). Before that: session 15 (H1/H4/H5 implemented, batches flying). Before that: session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
+- **Last updated:** 2026-11-14, session 24 (ch. 6/9 markers closed). Before that: session 23 (bibliography, D-noretune). Before that: session 21 (review triaged, G2_Y bound fix, figures, ch. 2 draft). Before that: session 20. Before that: session 16 (ch. 8 draft + control-law review in flight). Before that: session 15 (H1/H4/H5 implemented, batches flying). Before that: session 13. Before that: session 11. Before that: session 10. Before that: session 7. Before that: 2026-11-13, session 5 (architecture written; INDI law
   library + unit tests committed, not yet wired into mc_rate_control; first
   G1 identification: pitch 211 (R^2 0.90), roll 321 (R^2 0.63), yaw not
   identified; see `results/identification_g1_v0.md`).
@@ -119,6 +119,13 @@
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+
+- SESSION 24 (2026-11-14): DONE ch. 6 markers all resolved (7eab4e7647: lockstep is stock SITL, sitl.cmake + GZBridge clockCallback;
+  latency and hover-excursion cause stated as untested limitations); DONE ch. 9 CA_ROTOR_KM marker (fc695dcf8f: in-loop G1 fit is
+  pre-allocator, absorbs KM error; same allocator for PID). ch. 6 and ch. 9: 0 [TO VERIFY].
+  IN FLIGHT: (Q) haiku checks ch. 2 [TO VERIFY] (8) against research/ notes + raw PDFs -> `review/ch2_marker_check_s24.md`
+  (proposed replacement text per marker; does NOT edit the chapter). NEXT: apply its verdicts to ch. 2, then [GAP] (6) items
+  (state as limitations of the review where not covered), then PDF image (D-pdf), fable conclusions review, DONE.
 
 - SESSION 23 (2026-11-14): DONE ch. 12 bibliography (generated from sources.md, all cited keys covered + review_s16);
   D-noretune (full-T re-tune not run, stated in ch. 7/9); ch. 8 PID count 64 -> 40; phase checklist refreshed.
