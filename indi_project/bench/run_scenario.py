@@ -25,7 +25,8 @@ from scenarios import SCENARIOS  # noqa: E402
 from model_variant import build_variant, build_world  # noqa: E402
 
 REPO = os.environ.get("PX4_INDI_REPO", os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-BUILD = os.path.join(REPO, "build/px4_sitl_default")
+# PX4_INDI_BUILD: fly another build directory of the same tree (e.g. a branch build while a batch uses the default).
+BUILD = os.environ.get("PX4_INDI_BUILD", os.path.join(REPO, "build/px4_sitl_default"))
 
 # Same for every controller under test: no GCS, no RC in this harness. Plus full-rate logging profile.
 BASE_PARAMS = {
