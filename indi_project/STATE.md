@@ -216,6 +216,10 @@ owner decisions when you first act on them.
   pid_tuned) -> D-v2-refly-seen: originals moved to `results/s2_seen_v2/runs_suspended/`, re-fly RUNNING detached
   00:20 (`bench/s2_seen_v2_refly.sh`, 9 flights, ends SEEN_V2_REFLY_DONE in the seen run.log). Then S42 step 2
   (verdict --final with --hover-runs), then S44 step 2 (O-12 patch).
+  Re-fly DONE 00:19, second glitch scan clean. FINAL V verdict (ebc0952632, `results/s2_heldout_v2.md`): 14/14 x 10
+  seeds, better 1, worse > 10 % 8, INDI failures 0, hover effort 1.26: INDI v2 does not outperform PID. Seen set (O-7)
+  in the same file: worse on 6 entries (motor_loss_2 3.14x: tuned PID holds it, INDI v2 does not), better only gust_x
+  0.73x. Report 8.9 updated. NEXT: S44 step 2 (apply O-12 part A + smoke), then S43 c (v3 build + screening).
 - SESSION 44 (2026-11-14, launch 20261114-225445): seen set at seed 4/10 at 22:55 (slower than estimated: ~6 min
   per seed-entry group; end likely after 01:00), V re-fly still queued behind it. The s43 replay agent was cut off
   after fixing the takeoff window (log `plan/impl_log_o12.md`); the orchestrator reviewed `bench/watchdog_replay.py`

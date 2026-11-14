@@ -322,8 +322,9 @@ session 36 before any v2 INDI flight (`bench/scenarios.md` sec. 8, D-heldout-v2)
 controllers (PID defaults, tuned PID r1f c05, tuned INDI v2 r2 c01), 420 flights. The comparison is paired per
 seed against the tuned PID, with the Wilcoxon signed-rank test (`bench/s2_verdict.py`, `results/s2_heldout_v2.md`).
 A host suspend stalled seed 3 of com_shift and motor_loss_0 for all controllers; those runs are kept aside as an
-infrastructure fault and re-flown for every controller (D-v2-refly). Until the re-fly is in, those two entries
-have 9 paired seeds. [Final 10-seed values and criteria 1 and 4: pending the re-fly and the seen set.]
+infrastructure fault and re-flown for every controller (D-v2-refly); every entry has 10 paired seeds. No INDI run
+failed (criterion 1), and the hover effort ratio is 1.26 (criterion 4, limit 1.5; ratio of the 10-seed means on the
+seen-set hover runs).
 
 | entry | primary metric | tuned PID | INDI v2 | ratio | INDI lower | p | effort ratio |
 |---|---|---|---|---|---|---|---|
@@ -339,12 +340,12 @@ have 9 paired seeds. [Final 10-seed values and criteria 1 and 4: pending the re-
 | vibration x3, attitude | roll attitude RMS (deg) | 3.10 | 3.63 | 1.17 | 0/10 | 0.002 | 0.79 |
 | battery sag, attitude | roll attitude RMS (deg) | 2.95 | 3.49 | 1.18 | 0/10 | 0.002 | 0.72 |
 | gust_diag | rotation-angle RMS (deg) | 0.95 | 0.89 | 0.93 | 10/10 | 0.002 | 0.99 |
-| com_shift (9 seeds) | rotation-angle RMS (deg) | 0.52 | 0.23 | 0.43 | 9/9 | 0.004 | 1.19 |
-| motor_loss_0 (9 seeds) | rotation-angle RMS (deg) | 8.57 | 16.3 | 1.91 | 0/9 | 0.004 | 0.66 |
+| com_shift | rotation-angle RMS (deg) | 0.52 | 0.23 | 0.43 | 10/10 | 0.002 | 1.20 |
+| motor_loss_0 | rotation-angle RMS (deg) | 8.56 | 16.3 | 1.91 | 0/10 | 0.002 | 0.67 |
 
 **Verdict under the frozen criteria: INDI v2 does not outperform PID on V.** It is significantly better by at least
 10 % on one entry (com_shift; 10 needed) and significantly worse by more than 10 % on eight (none allowed). Eight
-entries are worse on every seed with p = 0.002, so the pending re-fly cannot change the outcome.
+entries are worse on every seed with p = 0.002.
 
 **Reading.** The six actuator and sensor perturbations of V barely move the ratios: on every attitude-pattern entry
 INDI is 1.16-1.20x the tuned PID with 0.72-0.85x its effort, and on every rate-pulse entry it is 0.92-0.93x with
@@ -362,8 +363,10 @@ controller took the actuator state from a model driven by its own command (t_mea
 then appeared as an angular-acceleration error and was integrated away. Measured actuator feedback therefore removes
 INDI's implicit integral action against any command-to-output actuator mismatch. This is the opposite of the usual
 argument for rotor-speed feedback, which is that it makes INDI exact when the motor model is wrong; it is exact about
-the actuator output, and for that very reason blind to the gap between command and output. The seen set shows the
-same mechanism on motor_loss_2 and on the combined-mismatch rate pattern. A v3 design that blends the modelled and
+the actuator output, and for that very reason blind to the gap between command and output. The seen set (O-7, `results/s2_heldout_v2.md`) shows the same mechanism on motor_loss_2, the double failure where both v1
+controllers crashed: the tuned PID now holds position at 4.4 m RMS, INDI v2 at 13.8 m (3.1x, 0/10 seeds better). On the
+rest of the seen set the V pattern repeats: INDI v2 is 1.13-1.19x PID on attitude steps, 0.93-0.95x on rate pulses, and
+clearly better only on the gust (gust_x 0.73x, 10/10 seeds). A v3 design that blends the modelled and
 measured actuator states (`plan/v3_actuator_blend.md`, D-v3-blend) is implemented behind a parameter, default off,
 and has not flown yet.
 
