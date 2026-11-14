@@ -1,5 +1,13 @@
 # INDI project state
 
+## OWNER DECISION 2026-11-14 (during session 41): O-12, read it in `indi_project/OWNER_GUIDANCE.md` now
+
+Abort obviously bad runs with a watchdog, prune bad candidates early with staged screening, and fly extensive
+multi-seed batches only for a promising, screened configuration. Implement this (watchdog + staged tuning)
+before the next tuning or exploration batch, including the stage-8 outer loop. Validation batches of a frozen
+configuration still run in full: an aborted run there is a reported failure, never a dropped seed. Let the
+running held-out V and the queued seen set finish as planned.
+
 ## OWNER DECISION 2026-11-14 (after session 36): O-11, read it in `indi_project/OWNER_GUIDANCE.md` now
 
 Session 36 was stopped by the owner. New owner decision **O-11 (upstream-reviewable architecture)**: INDI moves
@@ -178,6 +186,18 @@ owner decisions when you first act on them.
 | 6 | Validation and report | benchmark done (acceptance s15: INDI does not outperform PID); report ch. 1-12 + appendix drafted; open: [TO VERIFY] in ch. 2/3/6/9, PDF (D-pdf) |
 
 ## In progress
+- SESSION 42 (2026-11-14, launch 20261114-222717): V batch DONE 22:25 (HELDOUT_V2_DONE). Verdict
+  `results/s2_heldout_v2.md` (3ed1368de5): INDI v2 does NOT outperform PID on V (8 entries worse by >10 %, 1 better).
+  Host SUSPENDED 20:45:31 (journalctl) -> seed 3 of com_shift + motor_loss_0 stalled for all controllers; moved to
+  `results/s2_heldout_v2/runs_suspended/`, re-fly queued detached (`bench/s2_heldout_v2_refly.sh`, waits for
+  SEEN_V2_DONE, ends HELDOUT_V2_REFLY_DONE in the V run.log). Seen set RUNNING (started ~22:26).
+  **SUSPECTED DEFECT (load-bearing for the verdict):** in V motor_loss_0 the indi_v2 vehicle holds a STEADY ~9.4 deg
+  diagonal tilt (roll +9.4, pitch -9.4, std 0.05) with a level attitude setpoint from ~t=27 s, BEFORE the fault at
+  42 s, and drifts ~160 m in x; pid_tuned is level (seeds 1, 2 checked, script in session scratch). So the 1.91x on
+  motor_loss_0 is not the fault response. Suspect the O-11 module / mode switch into offboard attitude at speed 1
+  (rate loop not reacting to a steady attitude error). Diagnosis task: `plan/s42_tilt_diag.md` (sonnet agent),
+  output `results/s2_tilt_diag.md`. Until resolved, the V verdict carries this caveat; check whether com_shift,
+  gust_diag and v2_vib3_hover (also speed 1) show it.
 - SESSION 41 (2026-11-14, launch 20261114-202503): V batch (session 40) still RUNNING, healthy (seed 1 done 20:27, no
   failure). QUEUED detached behind it: `bench/s2_seen_v2.sh` (O-7 seen set on v2: H1 traj_circle_fast, H4 motor_loss_2,
   H5 mismatch_combined_att/_rate, H6 step_diag, T5 lemniscate, T6 gust_x, T7 payload_add, T1-T4 + rate_step_roll,
