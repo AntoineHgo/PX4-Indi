@@ -400,3 +400,16 @@ These are the owner's decisions, not the orchestrator's; full text in `OWNER_GUI
 - O-8 extra scope: sim realism, hardware-readiness fixes, outer-loop flatness INDI; no G scaling/RLS.
 - O-9 outer-loop baseline = stock PX4 pipeline; flatness feedforward not given to PID; ablation where cheap.
 - O-10 order: inner loop first.
+
+## D-escfb (session 27, 2026-11-14): rotor speed telemetry in gz, behind a parameter and a bench flag
+
+- Decision: GZBridge parameter `SIM_GZ_ESC_FB` (0 = echo command, v1 default; 1 = rotor joint speed in rpm from
+  JointStatePublisher x rotorVelocitySlowdownSim 10). The JointStatePublisher is added by the bench to the per-run
+  model copy (`model_variant.py` key `rpm`, `run_scenario.py --sim v2`), not to `Tools/simulation/gz/models/x500`.
+- esc_status keeps being published from the command callback, i.e. once per motor output (the DShot frame rate on
+  hardware); the joint callback only stores the latest speed. The eRPM model (rate, latency, quantisation, loss)
+  will sit in that publish path.
+- Alternatives rejected: a new `x500_rpm` model + airframe in Tools (more upstream files, does not compose with the
+  T9/H5 model variants that already copy x500); publishing esc_status from the joint callback (rate tied to the
+  physics step, not to the output rate as on hardware).
+- Evidence: `results/s2_escfb_check.md`.
