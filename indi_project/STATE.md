@@ -37,7 +37,7 @@
   disturbance scenarios (T6, T7) implemented and flown once with PID.
 - **INDI r2:** best J 1.150 (r1 1.167): tracks 12-18 % better than PID
   on hover/attitude/yaw steps, equal on rate pulses, but ~2.3x motor-rate
-  effort; PID still wins under the frozen cost. Hover effort is still the
+  effort; PID still wins under the frozen cost. Hover effort was the
   yaw path (yaw torque std 3x PID at YAW_CUT 4.6 Hz; roll/pitch equal).
 - **Session 11:** c11 with YAW_CUT matched to PID (2 Hz): tracking
   unchanged, hover effort still ~2.1x PID. Remaining yaw chatter is gyro
@@ -46,7 +46,9 @@
   also filters the yaw rate in nu): implemented (d2fb64330f, 17/17
   gtests). Hover check: INDI motor-rate effort 0.041-0.043 vs PID 0.037
   (~1.1x, was ~2.1x), yaw torque chatter gone (`results/yawnu_check_s11.md`).
-  Full 5-scenario x 3-seed scoring of this candidate launched detached.
+  Tuning-set score with it: J 1.197 (PID 0.96): hover penalty gone, but
+  step_yaw transient effort is ~7x PID and now carries the penalty
+  (`results/tuning/r2f_yawnu.md`). PID still wins under the frozen cost.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -69,7 +71,7 @@
 
 ## In progress
 
-- Session 11 end: LAUNCHED detached `python3 bench/tune.py --family indi --round-name r2f_yawnu --n-candidates 1 --seeds 1 2 3 --jobs 6 --sampler-seed 0 --span-factor 1.0 --base-params bench/params/indi_v1.params --center bench/params/indi_c11_yc2.json` (cwd indi_project; firmware with D-yawnu; 15 flights, ~15 min). Log `results/tuning/r2f_yawnu.log` (gitignored), output `results/tuning/indi/r2f_yawnu/summary.csv`. Resumable: re-run if summary lacks c00. Compare J against PID 0.958 and r2 c11 1.150; write `results/tuning/r2f_yawnu.md`.
+- DONE session 11: r2f_yawnu scored (J 1.197, `results/tuning/r2f_yawnu.md`).
 - DONE session 11: T8 motor_loss_0 (f3205105bd): runtime SIM_GZ_EC_MIN1/MAX1 x sqrt(0.7) (thrust x0.70), attitude mode, then +45 deg yaw step; PID seed 1: motor 0 0.73 -> 0.905, saturated 1.5 s, peak tilt 5.1 deg, altitude sags 1.2 m (attitude mode, fixed thrust; identical for both controllers). Notes `plan/t8_motor_loss_log.md`.
 - DONE session 11: D-yawnu implemented (d2fb64330f firmware+3 gtests, 17/17 pass, SITL build OK; 5cbf7478fc param doc; diff reviewed by orchestrator). Hover check flying: c11+YAW_CUT 2 seeds 1-3 -> `results/yawnu_check_s11/hover/seed*/`, log `results/yawnu_check_s11.log` (untracked); if no metrics, re-run the command recorded in `results/yawnu_check_s11.md` or STATE next actions.
 - DONE session 11 (`results/tuning/r2f_yc2.md`): `python3 bench/tune.py --family indi --round-name r2f_yc2 --n-candidates 1 --seeds 1 2 3 --jobs 6 --sampler-seed 0 --span-factor 1.0 --base-params bench/params/indi_v1.params --center bench/params/indi_c11_yc2.json` (c11 with YAW_CUT 2 Hz, 15 flights), log `results/tuning/r2f_yc2.log`. Resumable: re-run if summary.csv missing.
@@ -103,10 +105,13 @@
 
 ## Next concrete actions
 
-00. Session 11 next steps: (a0) NEXT: analyse r2f_yawnu (see In progress);
-   if J < PID's, that is still a tuning-set result only: run INDI round 3
-   (new semantics, centre c11/YAW_CUT 2, span 1.5, 16 cand x 3 seeds) for a
-   tuned optimum, then confirm on held-out scenarios. Also re-fly PID on
+00. Session 11 next steps: (a0) NEXT: on step_yaw seed 1 of
+   `results/tuning/indi/r2f_yawnu/c00`, quantify nu_y/G1, yaw torque and
+   motor spread around the step to confirm that the unfiltered setpoint
+   path causes the 7x effort (CPU+few tokens); then INDI round 3 under the
+   D-yawnu firmware (centre `bench/params/indi_c11_yc2.json`, span 1.5, 16
+   cand x 3 seeds, round-name r3; say the YAW_CUT semantics changed). Any
+   setpoint pre-filter must be offered to PID too (fairness). Also re-fly PID on
    T8 motor_loss_0 seeds 1-3 and INDI likewise. (a) DONE D-yawnu; DONE check hover effort with `bench/indi_terms.py`
    and `bench/effort_axes.py` on c11 + YAW_CUT 2 (expect yaw drms ~0); then
    an INDI round 3 (new YAW_CUT semantics, say so) on the 5 tuning
@@ -274,3 +279,4 @@
 - 2026-11-14: session 10: INDI r2 done (J 1.150 vs PID 0.958; effort from yaw path persists).
 - 2026-11-14: session 11: YAW_CUT 2 Hz control run: effort unchanged; yaw chatter traced to gyro noise in nu; D-yawnu decided.
 - 2026-11-14: session 11: T8 motor_loss_0 scenario added; D-yawnu implemented: INDI hover effort ~1.1x PID (was ~2.1x).
+- 2026-11-14: session 11: D-yawnu scored on tuning set: J 1.197 vs PID 0.96, penalty now from step_yaw effort (~7x PID).
