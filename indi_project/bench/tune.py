@@ -42,6 +42,7 @@ REF_ROOT = os.environ.get("TUNE_REF_ROOT", os.path.join(PROJ_DIR, "results", "ru
 REF_PARAMS = os.environ.get("TUNE_REF_PARAMS") or None
 TUNE_ROOT = os.environ.get("TUNE_OUT_ROOT", os.path.join(PROJ_DIR, "results", "tuning"))
 YAMLS = [os.path.join(REPO_DIR, "src/modules/mc_rate_control/mc_rate_control_params.yaml"),
+         os.path.join(REPO_DIR, "src/modules/mc_indi_rate_control/mc_indi_rate_control_params.yaml"),
          os.path.join(REPO_DIR, "src/modules/mc_att_control/mc_att_control_params.yaml")]
 
 SPACES = {
