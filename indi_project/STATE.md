@@ -146,7 +146,9 @@ owner decisions when you first act on them.
   5 scn x 2 seeds + 10 ref flights, span 2, sampler seed 0, notch in ref and candidates) -> `results/s2_tuning/pid/r1/`
   (summary.csv), ref `results/s2_tuning/ref/`, log `results/s2_tuning_r1.log`. If no process `tune.py --family pid`
   is alive and summary.csv is incomplete, re-launch the same script (skips done runs).
-  NEXT: (1) analyse r1 (J per candidate vs c00 = defaults); (2) r2 as v1 (16 cand x 3 seeds, span 1.5, centred on r1
+  NEXT: (0) first check the notch overlay reached the reference and candidates: `grep -l IMU_GYRO_DNF
+  results/s2_tuning/ref/*/pid_default/*/run.json` must list all 10 ref runs (v2 sim params confirmed in px4.log); if
+  not, the round is invalid: fix and re-fly. (1) analyse r1 (J per candidate vs c00 = defaults); (2) r2 as v1 (16 cand x 3 seeds, span 1.5, centred on r1
   best; write `bench/s2_pid_tune_r2.sh` like r1 with --round-name r2 --n-candidates 16 --seeds 1 2 3 --span-factor
   1.5 [--center best.json]); (3) step 3 remaining items 4 (after O-5), 5, 7, 10/11 bounds, 12, 13 tests: small, one
   per commit, each with a gtest; (4) for v2 INDI: tune.py INDI space must DROP MC_INDI_ACT_TC (owner: G, ACT_TC,
