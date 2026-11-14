@@ -207,7 +207,11 @@ owner decisions when you first act on them.
   resumable with the same command). Stage 2 DONE 00:45, 0 failures: Tb 0.3 SELECTED (D-v3-tb), seeds agree within
   3 %; motor_loss_0 rotation gap to PID is all yaw (11.2 vs 8.5 deg). RUNNING detached 00:47: yaw stage-1 screen `bench/v3_screen_yaw.sh` (K_Y {2.733,4,5.5} x
   YAW_CUT {1.665,3} on Tb 0.3 + pid_tuned, seed 1, step_yaw/motor_loss_0/hover, 21 flights, log
-  `results/v3_screen_yaw.log`, ends V3Y_SCREEN_DONE, resumable with the same command). NEXT (session 47): (1) analyse
+  `results/v3_screen_yaw.log`, ends V3Y_SCREEN_DONE, resumable with the same command). YAW SCREEN DONE (`results/v3_screen_yaw.md`): K_Y >= 4 behind cut
+  1.665 unstable, K_Y 5.5 fails motor_loss_0; survivors K_Y 2.733/cut 3.0 and K_Y 4.0/cut 3.0 (yaw 1.05-1.21x PID,
+  no config closes the yaw gap). FLAG: hover effort ~2x PID on seed 1 for ALL INDI configs incl. Tb 0.3 base (V'
+  criterion 4 limit 1.5x) -> check hover effort over seeds 2-5 (Tb 0 vs Tb 0.3 vs survivors vs pid_tuned) FIRST.
+  NEXT (session 47): (0) that hover-effort check; (1) yaw stage 2 on the 2 survivors (seeds 2-3); previously: analyse
   the yaw screen (yaw RMS on step_yaw and motor_loss_0, step_yaw + hover effort vs PID; prune > 1.3x best), decide a
   stage 2 or freeze; the original plan was a small yaw
   screen (K_Y, YAW_CUT; O-12 staged, entries step_yaw + motor_loss_0, Tb 0.3, outer gains = PID's) before freezing,
