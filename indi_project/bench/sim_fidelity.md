@@ -18,4 +18,4 @@ late, from the model files, and it changes no result. Every value below was read
 Not measured: end-to-end sensor-to-actuator latency in SITL (lockstep makes it one or two control cycles; it is not
 characterised against hardware). Consequences for the conclusions are discussed in report ch. 9: a low-noise,
 bias-free, vibration-free gyro favours INDI, whose angular-acceleration estimate differentiates the gyro, so the
-disturbance-rejection margins measured here are upper bounds for real flight.
+disturbance-rejection margins measured here are likely optimistic for real flight (not tested).
