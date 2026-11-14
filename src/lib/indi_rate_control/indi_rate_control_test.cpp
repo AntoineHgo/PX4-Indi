@@ -721,3 +721,48 @@ TEST(IndiRateControlTest, LandedKeepsActuatorModelRunning)
 	EXPECT_NEAR(airborne(0), 0.1f, 1e-3f);
 	EXPECT_LE(airborne(0) - torque(0), 0.05f + 1e-3f);
 }
+
+TEST(IndiRateControlTest, DelayChangeMidRunMovesOneSamplePerCycle)
+{
+	IndiRateControl ctrl = makeController();
+	ctrl.setFilterCutoffs(0.f, 0.f); // pass-through, so t_f is the delayed actuator model output
+	ctrl.setActuatorTimeConstant(0.001f);
+
+	// applied torque ramps up by 0.002 per cycle; with tc = 1 ms the model tracks it within one ramp step
+	const float slope = 0.002f;
+	Vector3f prev;
+	float t_f_last = 0.f;
+
+	for (int i = 0; i < 40; i++) {
+		prev = Vector3f(slope * i, 0.f, 0.f);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), prev, kDt, false);
+		t_f_last = ctrl.getFilteredTorque()(0);
+	}
+
+	// 0 -> 4 in flight: t_f holds for 4 cycles instead of jumping back 4 cycles of history
+	ctrl.setDelaySamples(4);
+
+	for (int i = 40; i < 50; i++) {
+		prev = Vector3f(slope * i, 0.f, 0.f);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), prev, kDt, false);
+		const float t_f = ctrl.getFilteredTorque()(0);
+		EXPECT_GE(t_f, t_f_last - 1e-6f);
+		EXPECT_LE(t_f - t_f_last, slope + 1e-4f);
+		t_f_last = t_f;
+	}
+
+	// 4 -> 0: one skipped sample per cycle, never a jump of the whole delay
+	ctrl.setDelaySamples(0);
+
+	for (int i = 50; i < 60; i++) {
+		prev = Vector3f(slope * i, 0.f, 0.f);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), prev, kDt, false);
+		const float t_f = ctrl.getFilteredTorque()(0);
+		EXPECT_GE(t_f, t_f_last - 1e-6f);
+		EXPECT_LE(t_f - t_f_last, 2.f * slope + 1e-4f);
+		t_f_last = t_f;
+	}
+
+	// settled at delay 0: the model output trails the applied torque by less than one ramp step
+	EXPECT_NEAR(t_f_last, slope * 59, slope);
+}

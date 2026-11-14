@@ -125,6 +125,7 @@ void IndiRateControl::resetStates()
 	}
 
 	_delay_head = 0;
+	_delay_samples = _delay_samples_target;
 
 	for (int i = 0; i < 3; i++) {
 		_lpf[i].reset(0.f);
@@ -212,7 +213,15 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	const float actuator_alpha = 1.f - expf(-dt / _actuator_tc);
 	_t_act += actuator_alpha * (t_alloc - _t_act);
 
-	// 4. delay: ring buffer, _delay_head holds the newest sample
+	// 4. delay: ring buffer, _delay_head holds the newest sample. A delay change moves one sample per cycle: up
+	// holds t_del for a cycle, down skips one sample
+	if (_delay_samples < _delay_samples_target) {
+		_delay_samples++;
+
+	} else if (_delay_samples > _delay_samples_target) {
+		_delay_samples--;
+	}
+
 	_delay_head = (_delay_head + 1) % kDelayBufferSize;
 	_t_delay_buffer[_delay_head] = _t_act;
 	const int delay_index = (_delay_head + kDelayBufferSize - _delay_samples) % kDelayBufferSize;

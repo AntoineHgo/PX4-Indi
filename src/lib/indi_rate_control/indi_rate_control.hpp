@@ -117,8 +117,10 @@ public:
 
 	/**
 	 * Set the pure delay applied to the actuator model output, clamped to [0, kMaxDelaySamples].
+	 * A change is applied at once by reset(), and otherwise by one sample per update(), so that a change in
+	 * flight moves t_f by at most one cycle of actuator history per cycle instead of jumping several cycles.
 	 */
-	void setDelaySamples(int delay_samples) { _delay_samples = math::constrain(delay_samples, 0, kMaxDelaySamples); }
+	void setDelaySamples(int delay_samples) { _delay_samples_target = math::constrain(delay_samples, 0, kMaxDelaySamples); }
 
 	/**
 	 * Set the per axis limit of the torque increment, non finite or <= 0 values select 1.
@@ -185,7 +187,7 @@ private:
 	float _actuator_tc{0.02f};
 	float _gyro_cutoff_hz{30.f};
 	float _dgyro_cutoff_hz{30.f};
-	int _delay_samples{0};
+	int _delay_samples_target{0};
 	float _max_increment{1.f};
 	float _yaw_cutoff_hz{0.f}; ///< 0 = yaw low pass disabled
 
@@ -203,6 +205,7 @@ private:
 	matrix::Vector3f _t_lpf;   ///< last output of the H low pass, restores it on a sample rate redesign
 	matrix::Vector3f _t_delay_buffer[kDelayBufferSize]; ///< ring buffer of past _t_act
 	int _delay_head{0};        ///< index of the most recent sample in the ring buffer
+	int _delay_samples{0};     ///< delay in use, slewed toward _delay_samples_target by one sample per cycle
 	math::LowPassFilter2p<float> _lpf[3];
 	AlphaFilter<float> _alpha[3];
 	math::LowPassFilter2p<float> _yaw_lpf_accel; ///< yaw low pass on the angular acceleration
