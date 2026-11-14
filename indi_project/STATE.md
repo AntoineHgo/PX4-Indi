@@ -115,6 +115,10 @@
 
 ## In progress
 
+- SESSION 18 (2026-11-14) IN FLIGHT: review file still only a skeleton (2 fable runs cut off). Relaunched smaller:
+  (E) fable reviews sections 1, 3, 5 only of `review/control_law_review_s16.md` (writes each section as done);
+  (F) sonnet drafts report ch. 6 simulation environment -> `report/06_simulation.md`.
+  If partial next session, relaunch only for what the files lack; sections 2, 4, 6 of the review remain.
 - SESSION 17 (2026-11-14) IN FLIGHT: session-16 review (B) was cut off with only its section skeleton on disk, ch. 8
   draft (A) was committed (2cd1c49235). Relaunched: (B') fable control-law review -> `review/control_law_review_s16.md`
   (fills the skeleton section by section); (C) sonnet drafts report ch. 9 discussion -> `report/09_discussion.md`.
