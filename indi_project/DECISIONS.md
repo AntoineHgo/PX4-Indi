@@ -762,3 +762,10 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
 - Alternatives rejected: (a) lower `IMU_DGYRO_CUTOFF` for INDI only: shared parameter, would need an INDI-local
   filter (firmware change, adds delay that the INDI loop is sensitive to), out of the remaining budget for v3;
   (b) select the yaw survivor with the lowest effort: none is lower than the base.
+
+## D-vprime-metric (session 47, 2026-11-15): one primary metric for W1/W2
+- `bench/scenarios.md` sec. 9 gives W1/W2 "roll and pitch attitude RMS in the window, as T8": two numbers. The paired
+  test needs one, so W1/W2 use tilt RMS = sqrt(roll_rms^2 + pitch_rms^2) (RMS of the tilt error), set in
+  `bench/s2_verdict.py --vprime` before any V' flight of indi_v2/indi_v3. Roll and pitch RMS are still tabulated.
+- Alternatives rejected: rotation-angle RMS (includes yaw, which sec. 9 leaves out); roll alone (motor 1 / motor 2
+  losses tilt both axes); two tests per entry (would change the 4-of-5 count).
