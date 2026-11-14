@@ -1,5 +1,13 @@
 # INDI project state
 
+## OWNER REVIEW 2026-11-14 (after session 24): read `indi_project/OWNER_GUIDANCE.md` now
+
+The owner extended the scope to a stage 2 (v2 controller: eRPM actuator state with u = omega^2, simulation
+realism, hardware-readiness fixes, identified ACT_TC/G2, new held-out set, then outer-loop flatness INDI).
+Close the v1 report first (O-2), then follow the order in `OWNER_GUIDANCE.md`. Do NOT create `DONE` after
+the v1 report: the definition of DONE is at the end of that file. Record O-1..O-10 in `DECISIONS.md` as
+owner decisions when you first act on them.
+
 ## Status summary (read this first)
 
 - **Phase:** 6 starting (tuning frozen in session 13: D-freeze); also open: 1 (state of the art) 8 of 12 notes; phase 2 (PX4 analysis) started;

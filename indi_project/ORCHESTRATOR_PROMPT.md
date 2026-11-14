@@ -14,6 +14,10 @@ PX4's multicopter rate and attitude loops are classical PID. We want to know whe
 
 The goal is an INDI controller that outperforms PID. That goal is only worth anything if the comparison is honest, so honesty outranks the goal: if INDI loses on a scenario, or on all of them, the report says so with the data and an analysis of why. A result obtained by weakening the baseline or selecting favourable scenarios after the fact is a failure of this project, not a success.
 
+## Owner guidance (2026-11-14)
+
+The owner reviewed the v1 result and set a stage 2: `indi_project/OWNER_GUIDANCE.md`. Read it right after `STATE.md` on every launch. Its decisions (O-1..O-10) are the owner's and are not re-opened. Its order of work takes precedence over the phase order below once the v1 report is closed.
+
 ## Phases
 
 Work through these in order. Each phase ends with its report chapter drafted and `STATE.md` updated. Later phases will send you back to earlier ones; that is expected. Two exceptions to the order, because of the token budget: smoke-test the Docker image (build `px4_sitl`, fly `gz_x500` headless once) as soon as the image exists, since it costs CPU rather than tokens and every later phase depends on it; and keep phase 1 bounded (see below) rather than exhaustive.
@@ -54,7 +58,7 @@ Subagent work must survive a session being cut off at any moment (the first sess
 - **Commits and pushes.** The supervisor has already put you on the project branch (`feat/indi-control`); stay on it. Commit freely with the `commit` skill and push often with `git push origin feat/indi-control`, so the work is backed up and the owner can follow it on GitHub. The history will be reviewed by a human, so make it easy to review: one logical change per commit, several small commits rather than one large one, each building and passing its tests on its own. Keep firmware changes, simulator changes, benchmark tooling, results, and report chapters in separate commits, and never mix a refactor with a behaviour change. Commit `indi_project/` state, notes, and report as they progress, not only at the end. Never force-push or rewrite pushed history, never push to `main` or to `upstream`, and do not open pull requests.
 - **Boundaries.** Work only inside this repository. No sudo, no host package installation: anything the build or the simulation needs goes into the Docker image. Beyond pushing to `origin`, contact external services only to read public sources. Do not edit `docs/` translations. Give every simulation a wall-clock timeout, and stop stray containers and `px4` processes before each batch. Never run `git clean` or `make distclean`: they delete untracked project files; remove build directories by path instead.
 - **The guard.** A hook (`indi_project/guard.sh`) inspects every shell command and file write and blocks those that cross these boundaries; it requires literal absolute paths in recursive `rm` and in Docker volume mounts. When it blocks something, the message says why: find a compliant way to reach the goal, and do not try to circumvent or modify the guard. If it blocks something the project truly needs, record that in `STATE.md` under known problems and work on something else.
-- **Finishing.** When all deliverables are complete and verified, write a final summary to `STATE.md` and create the empty file `indi_project/DONE`. Create it only then: it stops the supervisor.
+- **Finishing.** When all deliverables are complete and verified, write a final summary to `STATE.md` and create the empty file `indi_project/DONE`. Create it only then: it stops the supervisor. Since the owner review of 2026-11-14, "all deliverables" includes the stage-2 work in `indi_project/OWNER_GUIDANCE.md`; its "Definition of DONE" section is the condition, not the v1 report alone.
 
 ## Layout
 
