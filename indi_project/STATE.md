@@ -117,6 +117,8 @@ owner decisions when you first act on them.
 - **Stage 2 (session 30):** step 3 items 5 (D-landmodel: actuator model runs while landed, ea451fd253) and 7
   (D-faulthold: last output held 3 cycles on a rejected input, 5a163c4dec) done, 21/21 gtests. SITL binary not
   rebuilt (PID r1 was flying on it). v2 PID tuning r1 running.
+- **Stage 2 (session 31):** v2 PID r1 best c23 J 0.967 beats defaults 1.007 (hover-noise dominated); r2 (centred
+  on c23) running detached. Step 3 done except item 4 (after O-5). O-3: gz motor tau identified 12.4/25.0 ms up/down.
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
