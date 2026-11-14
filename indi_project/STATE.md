@@ -118,6 +118,11 @@
 
 ## In progress
 
+- SESSION 22 (2026-11-14): DONE figures referenced in ch. 8 (Fig 8.1-8.3) and ch. 9 (Fig 9.1), review s5 band-pass
+  mechanism + triaged review risks (a-i) added to ch. 9 (0a1ca5a2a5). IN FLIGHT: (M) sonnet drafts
+  `report/01_introduction.md` + `report/10_conclusion.md`; (N) haiku drafts `report/11_appendix_reproduce.md`.
+  If cut off: check those files, relaunch only for what is missing.
+
 - SESSION 21 (2026-11-14) DONE: review complete + triaged (28eba44030, items 8-13 + triage in its Summary);
   MC_INDI_G2_Y max 100 -> 1 (2bb0ba3ac9, SITL build OK; DT_MAX min 0.01 and K min 1 already guard review item 11
   at param level); (K) `bench/make_figures.py` + 4 figures (f7ea7940b7, ab392e193e; ratios match md tables
