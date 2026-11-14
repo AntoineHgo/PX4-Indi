@@ -208,3 +208,24 @@ hover motor-rate effort 8x PID's (`results/sync_check_v0.md` sec. 3).
   not reproduce a hover run exactly.
 - Revisit if, with >= 8 seeds, the hover spread still hides the
   INDI-PID difference.
+
+## D-dist: disturbances via a runtime ApplyLinkWrench wrench driven in sim time (session 10, 2026-11-14)
+
+- Context: T6/T7 (and H2/H3) need wind, gust and payload disturbances that
+  the stock gz_x500 setup lacks. The image has gz-sim 8.15 with the
+  ApplyLinkWrench, WindEffects and DetachableJoint systems and Python
+  gz-transport bindings.
+- Decision: apply a persistent external wrench on the x500 base_link from a
+  Python injector that follows the gz clock, with the profile defined in
+  sim time and logged to CSV. Wind is a quasi-steady drag force
+  F = 0.5 rho CdA v|v| acting 5 cm above the CoM; payload is a downward
+  force step. Spec: `plan/disturbance_spec.md`.
+- Alternatives rejected: (1) WindEffects system: its force model is a
+  crude per-link linear scaling, it cannot apply a torque through a centre
+  of pressure, and the gust timing through its topic is no more precise;
+  (2) DetachableJoint payload: only detaches, so it models a payload drop,
+  not an addition; (3) a PX4-side disturbance module: would touch flight
+  code for a test concern. (4) Editing the stock world files: would change
+  the environment under a running tuning batch.
+- Limitations for the report: drag ignores vehicle velocity and rotor
+  inflow effects; the payload adds weight but not inertial mass.

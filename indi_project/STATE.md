@@ -53,6 +53,11 @@
 
 ## In progress
 
+- Session 10 (2026-11-14): r2 still running at session start (PID c09/16 at
+  02:41, ~1.7 min per candidate). One sonnet agent implementing T6 gust_x +
+  T7 payload_add per `plan/disturbance_spec.md` (D-dist); progress log
+  `plan/impl_log_disturbance.md`. If cut off: read that log, finish what it
+  lacks.
 - Session 9 (2026-11-14): tuning round 2 (D-r2) launched detached, PID then
   INDI, 16 candidates x 5 scenarios x seeds 1 2 3 each (~480 flights,
   ~2-3 h). Log `results/tuning/r2.log`, outputs
