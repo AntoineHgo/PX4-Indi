@@ -129,7 +129,7 @@
   Open minor: acquatella2017 note claims Eqs. 26/28 inconsistent with 29; haiku did not reproduce it (re-check at
   zoom only if ch. 3 relies on it). smeur2016 PDF is `research/raw/foundations/inaoep_14032018.pdf`.
   NEXT: ch. 2 [TO VERIFY] (8) and [GAP] (5), ch. 6 (4 left: lockstep source l.19, delay l.109, l.3, l.113),
-  ch. 9 (2: CA_ROTOR_KM effect on yaw, flight modes covered); then report PDF image (D-pdf); then a fable
+  ch. 9 (1: CA_ROTOR_KM effect on yaw; flight modes resolved s23); then report PDF image (D-pdf); then a fable
   review of conclusions (ch. 8-10 vs results/); then DONE.
 
 - SESSION 22 (2026-11-14): DONE figures referenced in ch. 8 (Fig 8.1-8.3) and ch. 9 (Fig 9.1), review s5 band-pass
