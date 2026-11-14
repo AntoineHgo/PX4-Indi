@@ -516,3 +516,34 @@ These are the owner's decisions, not the orchestrator's; full text in `OWNER_GUI
   R^2 0.966 -> 0.981); (b) fit on the raw logged rate (rejected: confounded with esc_rpm latency, any
   0-14 ms shift fits equally). The simulated G2 is ~1/10 of physical (rotor slowdown 10): the report must say
   that the G2 benefit is under-represented here. Re-check with G2_Y 0.16 follows the O-3 re-check, post-acceptance.
+
+- **D-omega2 (session 32, O-5/O-6) v2 inner loop: u = (omega/omega_max)^2, increment in TORQUE space through
+  PX4's allocator.** PX4's allocator already works in normalised per-motor thrust, which for a rotor is
+  T_i/T_max = (omega_i/omega_max)^2. So the measured actuator state is u_i = (omega_i/omega_max)^2 from eRPM,
+  the measured normalised torque is tau_meas = B u with B the allocator's own effectiveness (CA_ROTOR*
+  geometry, same matrix it inverts), and the law stays tau_cmd = tau_meas,f + G1^-1 (nu - a_f) (+ the yaw
+  spin-up term with measured omega_dot, b of D-g2sim). G1 per unit u is constant (no thrust-level,
+  battery or command-curve dependence: the owner's point), and B^+ is the allocator's existing pseudo-inverse,
+  so actuator-space INDI's G^+ is obtained without new allocation code.
+  - Consistency requirement (the owner's caveat, quantified): the allocator's command curve must map u to the
+    motor command. gz x500 commands omega linearly (omega = 150 + 850 c rad/s), so with THR_MDL_FAC 0 the
+    realised d u / d c at hover is 2 omega 850 / 1000^2 = 1.31: increments land 31 % large, and a non-zero
+    steady tau_meas,f (CoM shift) leaves a steady rate error (1-k)/k tau_f for the attitude loop to absorb.
+    Fix: identify THR_MDL_FAC (or the closest PX4 curve) from logged (actuator_motors, esc_rpm) and set it in
+    the v2 vehicle config for BOTH controllers (it is a vehicle characterisation, not a gain); re-fly the PID
+    defaults/r2 best on it before comparing. Residual curve error enters as a gain error on the increment
+    only, which INDI tolerates (s17 ACT_TC sweep, review s5).
+  - Filter/latency matching: u_i passes the same LPF2p(IMU_GYRO_CUTOFF) + rpm notches path as the gyro
+    derivative, plus a fixed delay = eRPM latency - gyro latency, IDENTIFIED (bench/identify_actuator.py
+    style), not tuned. Parameter MC_INDI_ERPM_DLY.
+  - Fallback (O-5): the v1 first-order model keeps running (D-landmodel). Per-cycle validity per motor
+    (esc_status fresh within MC_INDI_ERPM_TO, online flag, plausible range); if ANY motor is invalid the whole
+    tau_meas switches to the model (no per-motor mixing: model and measurement have different units/lags);
+    back to measurement after N consecutive valid cycles. Both filtered estimates run continuously so the
+    switch is bumpless up to the model error. gtests for loss, stale, return, and switch transients.
+  - omega_max per vehicle: parameter MC_INDI_W_MAX (gz: 1000 rad/s, SIM_GZ_EC_MAX).
+  - Rejected: (1) actuator-space increments delta u = G^+(nu - a_f) with own allocation (Smeur, Tal and Karaman
+    form): reimplements saturation/prioritisation/airmode (Paparazzi WLS), bypasses the allocator that PX4
+    reviewers asked to keep (D-arch-1); its only advantage, exact per-motor inversion, is obtained here
+    through B^+. (2) measured state mapped back to command space c_i = (omega_i - omega_min)/delta: consistent
+    with the allocator without THR_MDL_FAC, but G1 depends on thrust again, which O-6 asks to remove.
