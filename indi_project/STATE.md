@@ -93,6 +93,9 @@
 - **Session 17:** ACT_TC sweep (post-acceptance, 21 runs, `results/act_tc_sweep_s17.md`): MC_INDI_ACT_TC 0.33x-3x on
   the stock plant gives NO limit cycle (roll-rate RMS 0.129-0.161, graded). The H5 limit cycle needs a physically
   slower actuator the model does not know; ratio alone does not explain it (D-actsweep assumption falsified).
+- **Session 19:** review s1/s3/s5 committed; its top bug (yaw filters zeroed every landed cycle) fixed post-freeze
+  (1d776dc6dc, 19/19 gtests, D-landyaw); check re-fly running. Review s5 explains the ACT_TC sweep: model slower than
+  plant is a gain reduction (safe); dangerous case is plant slower than model, band-pass boost at 1/(2 pi sqrt(tau_e tau_t)).
 - **Blocker:** none. Usage budget is the binding constraint.
 - **Caveat on notes:** paper notes are from PDF text extraction; several
   equations are flagged as reconstructed. Check them against the PDFs before
@@ -114,6 +117,14 @@
 | 6 | Validation and report | not started |
 
 ## In progress
+
+- SESSION 19 (2026-11-14) IN FLIGHT: (G) sonnet drafts ch. 3 theory -> `report/03_theory.md`; (H) fable fills review
+  sections 2, 4, 6 + summary in `review/control_law_review_s16.md`; (I) landed-yaw check flights, log
+  `results/landyaw_check_s19.log` (ends CHECK_DONE; resumable: re-run the header's two run_batch.sh calls), output
+  `results/landyaw_check_s19/{step_diag,com_shift}/indi_tuned/seed{1,2,3}[_x4]/metrics.json`. NEXT: compare with
+  `results/runs/{step_diag,com_shift}/indi_tuned/seed1-3` (summarize_seeds.py), write `results/landyaw_check_s19.md`,
+  commit metrics. If partial, relaunch agents only for what their files lack. Remaining review findings to triage:
+  s1 dt-jitter redesign resets t_f (hardware risk), stale allocator status at 400 Hz, maybe_landed P-only law.
 
 - SESSION 18 (2026-11-14) IN FLIGHT: review file still only a skeleton (2 fable runs cut off). Relaunched smaller:
   (E) fable reviews sections 1, 3, 5 only of `review/control_law_review_s16.md` (writes each section as done);
@@ -429,5 +440,6 @@
 - 2026-11-14: session 14: T8 fault-onset metrics; report ch. 5 and ch. 7 drafted (sonnet, 2 agents); held-out seeds 1-5 done (INDI better on all disturbance scenarios, yaw worse when commanded); seeds 6-10 done: INDI attitude better p=0.002 on all 6 scenarios.
 - 2026-11-14 session 15: H5 implemented and flown (10 seeds): INDI loses, ACT_TC-mismatch limit cycle diagnosed; trajectory mode + T5/H1/H4 added, batch launched.
 - 2026-11-14 session 15: T5/H1/H4 flown (10 seeds); acceptance decided: INDI does not outperform PID (H5 criterion 3, H4 criterion 1).
+- 2026-11-14 session 19: landed yaw-filter bug fixed (D-landyaw); review s1/3/5 committed; ch. 3 + review s2/4/6 + fix check in flight.
 - 2026-11-14 session 18: ch. 6 simulation drafted; ch. 7 PID count item resolved; fable review (sections 1,3,5) relaunched.
 - 2026-11-14 session 17: ACT_TC sweep summarised (no limit cycle from model error alone); fable control-law review relaunched.
