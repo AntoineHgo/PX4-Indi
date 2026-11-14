@@ -132,7 +132,7 @@ owner decisions when you first act on them.
   real: Eq. 28 drops t_s, Eq. 29 matches K(e+T_I^-1 int e) only), 6 [GAP] items rewritten as limitations (19a0466619);
   ch. 2-10: 0 markers. Two stale FIGURE TODOs removed (covered by Fig. 8.1/8.3). IN FLIGHT: (F) sonnet: 5 time-series
   figures for ch. 8 in `bench/make_figures.py` (log `review/figs_s25.md`); (R) fable: conclusions review ch. 8-10 vs
-  results/ (`review/conclusions_review_s25.md`). PDF: `docker/report.Dockerfile` + `docker/build_report.sh` written, image px4-indi-report build started (log
+  results/ (`review/conclusions_review_s25.md`). PDF: `docker/report.Dockerfile` + `docker/build_report.sh` written, image px4-indi-report BUILT OK in s25 (log
   research/raw/report_image_build.log); if built, run build_report.sh, check report/report.pdf. NEXT: if (F)/(R) were cut off,
   check their output files first and relaunch only what is missing; apply must-fix review items; commit figures (bench/make_figures.py,
   report/figures, ch. 8/11) as separate commits; then mark "v1 report closed" with the hash. Session 25 burned ~$1.2 on the 2
