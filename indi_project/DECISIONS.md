@@ -621,3 +621,18 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
   pulses (`results/s2_tuning/r2f.md`).
 - **Rejected:** c15 (gain inside hover noise); a round 3 (r2f around c05 found no consistent improvement; same
   stopping rule as v1 r2).
+
+- **D-v2indi-start (session 39) v2 INDI starting point: identified values only (O-5), frozen v1 gains as the search
+  centre.** G1_R = G1_P = 174, G1_Y = 12.2 from 3 seeds (`results/s2_g1_v2.md`); ERPM_DLY 1 (D-erpmdly); ACT_TC
+  0.0125 s = the identified tau_up (`results/s2_ident_act.md`; the plant is asymmetric, 12.5 ms up / 25 ms down,
+  and the single-constant model is only the fallback when eRPM is invalid). Alternatives: tau_down 0.025 or the
+  mean 0.019; tau_up chosen because the v1 frozen value (0.0114) was close to it and the s17 sweep showed no
+  sensitivity over 0.33x-3x on the stock plant, so the choice is low-stakes; it is not tuned. G2_Y stays at its
+  default (frz control: G2_Y 0.16 breaks yaw). Base = `v2_fac.params` (THR_MDL_FAC 0.683, DNF on), MC_INDI_EN 1
+  and MC_INDI_W_MAX 1000 (written as MC_RATE_CTL_TYPE 1 / CA_R_W_MAX 1000, translated by run_scenario.py for O-11
+  builds, so the same file also flies the old binaries).
+- **D-v2indi-tune (session 39) v2 INDI tuning space = gains + YAW_CUT; ACT_TC fixed.** Same budget and sampler as
+  the v2 PID (r1: 24 candidates x 2 seeds, span 2, sampler seed 0; r2: 16 x 3 centred on the r1 best), same
+  frozen cost and same PID-default reference flights (`results/s2_tuning/ref_fac`). Varied: MC_INDI_K_R/K_P/K_Y,
+  MC_INDI_YAW_CUT, MC_ROLL_P/PITCH_P/YAW_P. YAW_CUT is the INDI counterpart of MC_YAW_TQ_CUTOFF, which the PID
+  search varies, so both families tune their yaw filter. Not varied: G1, ACT_TC, ERPM_DLY (identified, O-5).
