@@ -914,3 +914,28 @@ worse track (C: 0.76 m).
 Also recorded: the INDI POS lead over the reference is the expected closed-loop phase of a cascade with full a_ref
 feedforward over a lagging inner loop (p/r ~ 1/(1 - j tau w^3/K)). It is not a reference-timing error: the logged
 stream is 2 ms behind the analytic path.
+
+## D-s8-gnss-delay (session 56, 2026-11-15): SENS_GNSS0_DELAY 0 for the stage-8 set O verdict
+
+Context: on T5 the EKF position runs ~110 ms ahead of `vehicle_local_position_groundtruth` for both controllers
+(`bench/gt_lag.py`: x +112, y +92, z +110 ms), while EKF velocity and attitude agree with ground truth within
+15 ms. Position and velocity ground truth come from the same reception-stamped pose_info, so late stamping in
+gz_bridge (session 55's hypothesis) is ruled out. Cause: `sensor_gps_sim` publishes `sensor_gnss` with
+timestamp_sample == timestamp. `VehicleGPSPosition::resolveSampleTimestamp` then applies the configured
+SENS_GNSS0_DELAY (stock 110 ms) to a GNSS that has no latency in simulation; `vehicle_gnss` carries
+timestamp - 110 ms. The EKF fuses each fix 110 ms too early in its delayed horizon and propagates it forward, so
+its position leads the truth by 110 ms x v (about 0.5 m at 5 m/s, more than pid_tuned's whole 0.38 m track error).
+The PX4 SIH airframes already set SENS_GNSS0_DELAY 0 for this reason; the gz airframes do not.
+Decision: stage-8 set O (verdict pair and any later outer-loop run) flies with `--gnss-delay 0` for every
+controller. Tracking is scored in the EKF frame as frozen in sec. 10, and also reported against ground truth, which
+should now agree. The O-13 pre-check is re-flown for pid_tuned on set O with the new setting before the verdict,
+because the frozen set was checked under the old one.
+Why: a delay-compensation mismatch is an estimator configuration error, not a vehicle property. It distorts
+position tracking (both frames) by an amount that depends on speed and penalises whichever controller tracks the
+estimate more tightly. Matching the configured delay to the simulated sensor is what a correct setup does.
+Alternatives rejected: (a) keep the stock 110 ms, the "stock gz_x500" baseline: it scores controllers against an
+estimate that is 110 ms off the truth. (b) Simulate a 110 ms GNSS latency in the sensor instead: realistic for some
+receivers, but it changes the plant for every earlier stage; it may be added later as a robustness entry. (c) Fix
+`sensor_gps_sim` to stamp a sample time: an upstream change outside this project's scope.
+Not retroactive: inner-loop sets (V, V') are attitude/rate metrics and stand as flown. Their position-hold numbers
+carry this offset, and the report says so.

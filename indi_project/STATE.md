@@ -35,6 +35,17 @@ owner decisions when you first act on them.
 
 ## Status summary (read this first)
 
+- **Latest (session 56, 2026-11-15): the T5 "EKF lead" is a GNSS delay mismatch (D-s8-gnss-delay). `bench/gt_lag.py`
+  (a0402ce161): EKF position leads ground truth by ~110 ms on x/z for both controllers, while velocity and attitude agree
+  within 15 ms, so the gz_bridge reception stamp is ruled out. Cause: `sensor_gps_sim` stamps timestamp_sample ==
+  timestamp, so VehicleGPSPosition applies the stock SENS_GNSS0_DELAY 110 ms to a GNSS with no latency (vehicle_gnss
+  ts - sample = 110 ms). Runner option `--gnss-delay` (d521912000). RUNNING detached: `bench/s8k_gnss_delay.sh`
+  (T5 seed 1, pid_tuned + indi_pos_v3_jlpf, SENS_GNSS0_DELAY 0; log `results/s8k_gnss_delay/s8k.log`, ends S8K_DONE,
+  resumable by re-running) -> `results/s8k_gnss_delay/traj_lemniscate/*/seed1/{metrics.log,gt_lag.log}`.
+  NEXT: (1) when S8K_DONE: confirm the position lag is ~0; compare T5 track/effort/lead for both controllers with
+  session 55 (pid_tuned 0.38 m, D' 0.65 m, +160 ms y); write `results/s8k_gnss_delay.md`; (2) re-fly the O-13 pre-check
+  (pid_tuned, set O, seed 1, `--gnss-delay 0`); add `--gnss-delay 0` to every later stage-8 script;
+  (3) then the open items of session 55 (a_f overshoot, O-12 screening on T5/H1, freeze, set O).**
 - **Latest (session 55, 2026-11-15): causes found (`results/s8j_pos_v3_smoke.md` sec. "Session 55", `bench/s8_track_diag.py`
   a37025b932). (a) Reference timing is fine (logged setpoint = analytic path delayed 2 ms). (b) The INDI POS LEAD is the
   closed-loop phase of the cascade with full a_ref FF over a lagging inner loop, p/r ~ 1/(1 - j tau w^3/K): arm C
