@@ -34,6 +34,8 @@
   T18 determinism pre-study DONE (`design/determinism_s11.md`): A-7 reproduced, arm time spreads 2.2 s in sim time
   with the same seed, roll attitude RMS spread 37 %. run_scenario.py does not write metrics.json (agent ran metrics.py).
   Review r3 not launched (budget < 2x its cost). Untracked `results/pretest_logging_s10_try1/` = T15's failed first try (raw, keep untracked).
+- Session 12 (launch 20261115-215107, cap $3): T19 DONE (runner arms at sim 20 s, hold 39 s, offboard 40 s,
+  runs metrics.py; `design/runner_fixed_times_s12.md`, I read the diff). T20 opus review r3 running. T21 haiku: 3 hovers.
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written (not tested).
 - Blocker: none. No owner question open.
 - Outer-loop architecture study (MISSION section) runs in parallel with stages 1-3: not started.
@@ -72,7 +74,8 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | | | |
+| T21 | haiku | 3 same-seed hovers with fixed-time runner | `design/determinism_s12.md`, `results/det_s12/` | relaunch, cmd in notes |
+| T20 | opus | outer-loop review r3, narrow (A10-A12) | `design/outer_loop_review_r3.md` | relaunch same brief |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -101,6 +104,7 @@
 | 11 | T16 | opus | outer-loop review r2, narrow | done, 7 calls, ~$0.6 (opus ~1/4 of fable r1) |
 | 11 | T17 | sonnet | route check 10 | done, 6 calls, ~$0.2 |
 | 11 | T18 | haiku | determinism pre-study, 3 hovers | done, 12 calls, ~$0.05, 6 min wall |
+| 12 | T19 | sonnet | runner fixed sim-time arm/offboard + metrics call | done, 9 calls, ~$0.4 |
 
 ## Lessons proposed
 - Haiku handles a well-specified log check (10 calls) for ~$0.06: use it for every bounded log/metric check.
