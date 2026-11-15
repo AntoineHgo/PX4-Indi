@@ -1,0 +1,19 @@
+{
+  "env": {
+    "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "3",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5-5"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/indi_flight/guard.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
