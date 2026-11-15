@@ -40,7 +40,8 @@ owner decisions when you first act on them.
   (waits for S8N_DONE, then T1 hover seeds 3-10 for pid_tuned + indi_pos_v3 into `results/s8m_smoke_gnss0/hover`, log
   `results/s8p_hover_effort.log`, ends S8P_DONE; D-s8-hover10). Verdict: `python3 bench/s2_verdict.py
   results/s8n_oset/runs --b indi_pos_v3 --oset --hover-runs results/s8m_smoke_gnss0 --final` (added `--oset`).
-  NEXT: glitch_scan + verdict -> `results/s8n_oset.md`; stage-8 report chapter; DONE check.**
+  In flight: 1 sonnet agent drafting report sec. 5.9 (outer-loop design) + GNSS-delay paragraph in ch. 6.
+  NEXT: glitch_scan + verdict -> `results/s8n_oset.md`; report sec. 8.11 + ch. 9/10 updates; DONE check.**
 - **Latest (session 56, 2026-11-15): the T5 "lead" and the INDI POS gap were a GNSS delay mismatch (D-s8-gnss-delay,
   `results/s8k_gnss_delay.md`). `bench/gt_lag.py`: EKF position led ground truth by ~110 ms (velocity/attitude within
   15 ms). `sensor_gps_sim` stamps timestamp_sample == timestamp, so VehicleGPSPosition applies the stock
