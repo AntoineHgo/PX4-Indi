@@ -95,7 +95,8 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T24 | haiku | S13: G1.6 pre-test (step_roll, traj_lemniscate on quad5in) then 5 same-seed runs x hover/step_roll/traj_lemniscate, speed 1 | results/det_g16/, design/g16_s13.md | re-run missing rN dirs only (same command in g16_s13.md) |
+| T25 | opus | S14: review r5 of A18 (flatness ff), narrow | design/outer_loop_review_r5.md | relaunch same brief if file lacks Verdict |
+| T24 | haiku (agent ended S13; its batch survives as host bash) | S13: G1.6 pre-test (step_roll, traj_lemniscate on quad5in) then 5 same-seed runs x hover/step_roll/traj_lemniscate, speed 1 | results/det_g16/, design/g16_s13.md | batch script /tmp/claude-1001/-home-ahugo-Documents-Drotek-Codes-PX4-Indi/52d81939-c2c5-4141-b338-03f1bc8a732b/scratchpad/g16/batch.sh (status.txt, spread.py there); S14 watches it; if lost, re-run missing rN dirs only |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
