@@ -44,12 +44,15 @@ owner decisions when you first act on them.
   worse > 10 % on any, no failure, hover effort <= 1.5x pid_tuned; verdict pair pid_tuned vs indi_pos_v3 at 10 seeds.
   `bench/params/indi_pos_v3.params` (0120434c2b). Smoke DONE (`results/s8j_pos_v3_smoke.md`): T5 indi_pos_v3 0.64 m vs
   pid_tuned 0.38 m at 2.4x effort; INDI POS runs AHEAD of the reference (+0.25 m along-track, 66 ms lead); hover effort
-  0.109 (< pid_tuned ~0.14, ok). Cause not found yet. Arm C test IN FLIGHT: `bench/s8j2_pos_v3_ff0.sh` (MC_INDIP_FF 0,
-  T5 seed 1) -> `results/s8j_pos_v3_smoke/traj_lemniscate/indi_pos_v3_ff0/seed1`, log `results/s8j2_pos_v3_ff0.log`
-  (ends S8J2_DONE); along/cross split with the scratch script logic in the md (setpoint vs local position, |v_ref| > 1).
-  (Fix the duplicated "Ends S8J2_DONE" comment line 4 of that script after it finishes.)
-  NEXT: if FF 0 removes the lead, inspect the a_ref/jerk feedforward timing (setpoint stream rate vs the difference;
-  `indi_pos_status.jerk_source`); otherwise look at the INDI POS position/velocity gains vs pid_tuned's MPC gains. Find the
+  0.109 (< pid_tuned ~0.14, ok). Arm C (FF 0, T5 seed 1) DONE: effort 0.64 (= PID level) so the FEEDFORWARD causes
+  the 2.4x effort (suspect: jerk differenced from the step-wise offboard a_ref, clamped spikes into omega_ff); tracking
+  0.76 m and the lead GROWS (+0.31 m, 94 ms) so the lead is NOT from the FF. Details and hypotheses:
+  `results/s8j_pos_v3_smoke.md`. Along/cross split script logic: interpolate local position onto trajectory_setpoint
+  times, keep |v_ref| > 1 m/s, along = e.v/|v| (positive = ahead).
+  NEXT (cheap, single-file checks): (1) along-track error vs path phase for D and C (mean may hide alternating overshoot);
+  (2) module p_ref vs logged setpoint timing (IndiPosStatus fields), (3) MC_INDIP_* pos/vel gains vs pid_tuned MPC_XY_*;
+  (4) jerk_source / raw j_ref; candidate fix: runner sends the analytic jerk (path known in closed form) or filter the
+  difference (D-entry, firmware vs bench commit kept separate). Find the
   cause BEFORE any gain screening; then O-12 staged screening on T5/H1 only, freeze indi_pos_v3, fly set O
   (A and D at 10 seeds; C and B at 3 seeds as context).**
 - **Latest (session 53, 2026-11-15): owner stage-8 review CLOSED (note removed; F1-F6 all done). F2: diagnostic
@@ -1181,3 +1184,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s53: s8h: no regression (2.59 Hz PID inner mode, D-hover-spread), owner review note closed; O1-O7 added, O-13 pre-check flying. Runs: +3 (+7 pre-check).
 - 2026-11-15 s53: O-13 pre-check: 5/7 flyable, circle O2/O5 slowed 8 -> 6.5 m/s, re-check running. Session total: agents 0, runs 3 + 7 + 2, builds 1.
 - 2026-11-15 s54: O5 crash diagnosed (com_shift injector world-fixed torque -> yaw saturation at tilt); O2 circle 5 m/s, O5 on vertical sine; set O frozen (sec. 10); indi_pos_v3 params; smoke launched. Agents: 0. Runs: 4 + 3.
+- 2026-11-15 s54: indi_pos_v3 smoke: T5 0.64 m vs PID 0.38 m at 2.4x effort, leads the reference; arm C: FF causes the effort, not the lead. Session total: agents 0, runs 8, builds 2.
