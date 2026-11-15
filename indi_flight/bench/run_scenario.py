@@ -509,6 +509,7 @@ def main():
                     help="O-12 run watchdog; 'off' is for diagnosis only, never in a batch")
     ap.add_argument("--log-from-start", action="store_true",
                     help="logger starts with -f so the log covers the time before arm (default: from arm)")
+    ap.add_argument("--log-poll", default="actuator_motors", help="topic the logger wakes on (logger -p)")
     a = ap.parse_args()
     if a.imu_rate is None:
         a.imu_rate = MODEL_IMU_RATE.get(a.model, 800)
@@ -583,7 +584,11 @@ def main():
         # logger reads SDLOG_PROFILE only at start: restart it so the full-rate profile takes effect
         sim.cli("px4-logger", "stop")
         time.sleep(1)
-        logger_args = ["px4-logger", "start", "-b", "20", "-t"]
+        # -p actuator_motors (last publication of a control cycle): every controller-rate topic is logged in full; the
+        # default 3.5 ms timer logged 800 Hz topics at ~285 Hz, -p sensor_gyro lost 10-20 % downstream at speed 1 and 4
+        # (S16 pre-test, results/pretest_simstep_s16). -b 200 KiB: 20 KiB gave 44 write dropouts at 800 Hz.
+        logger_args = ["px4-logger", "start", "-b", "200", "-t", "-p", a.log_poll]
+        meta["log_poll"] = a.log_poll
         if a.log_from_start:
             logger_args.append("-f")
             meta["log_from_start"] = True
