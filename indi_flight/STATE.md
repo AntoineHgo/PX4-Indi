@@ -72,7 +72,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T36 | A-12 fix: truth in sim time >= 50 Hz at speed 4 | sonnet | `design/a12_fix_s18.md` | relaunch T36 brief from that file |
+| T37 | second key A-12 fix on hover_s4 log | haiku | `results/a12_fix_s18/second_key.md` | relaunch from STATE brief |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -116,6 +116,7 @@
 | 16 | T32 | host bash | pre-test 5 flights (rates, logger poll) | done, 5/5 flew, ~5 min wall, $0 |
 | 16 | T34 | host bash | G1.6 repeat, 1.25 ms world, 15 runs | done, 15/15 first attempt, ~10 min wall, $0 |
 | 16 | T33 | haiku | A-10 esc_status stamps | done, 10 calls, ~$0.05, one wrong claim corrected by me |
+| 18 | T36 | sonnet | A-12 fix (dynamic_pose/info) | done, 18 calls, ~$0.43, commit dbb1a62e29 |
 | 17 | T35 | sonnet | gate_g1.sh + g1_checks.py | done, 14 calls, ~$0.52 |
 
 ## Lessons proposed
