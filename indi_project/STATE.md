@@ -35,6 +35,10 @@ owner decisions when you first act on them.
 
 ## Status summary (read this first)
 
+- **Latest (session 49, 2026-11-15): stage-8 implementation spec written (`plan/s8_impl_spec.md`, D-s8-spec: jerk-ff
+  signs corrected). Task A (library `src/lib/indi_accel_control/` + gtests) delegated to sonnet, log
+  `plan/impl_log_s8_lib.md`. NEXT: verify task A (run its gtests yourself, review the law), commit, then task B (module),
+  task C (G_T ident script), freeze scenarios O1-O7 with the O-13 pid_tuned pre-check.**
 - **Latest (session 48, 2026-11-15): owner hover note closed. Report 8.10 (v3 on V') and 10.5 (stage-2 conclusion)
   written. Causal test (`results/hover_cause.md`): the eRPM state shakes INDI at 4-10 Hz but adds no effort; the tuned
   PID's hover effort doubled in that batch (2-4 Hz roll mode, cause unknown), ratio 0.96 there. D-hover-lpf: no

@@ -794,3 +794,18 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
   replaced before the freeze and the change recorded with the set. Validation flies the verdict pair (pid_tuned,
   frozen INDI) on 10 seeds side by side; other controllers only as labelled context on few seeds. Not retroactive:
   V' stands as flown. Applies to the stage-8 set. Report ch. 6.4 updated (session 48).
+
+## D-s8-spec (session 49, 2026-11-15): stage-8 implementation spec
+
+- `plan/s8_impl_spec.md` fixes the outer-loop law for coding: library `IndiAccelControl` (task A), module
+  `mc_indi_pos_control` as an external mode replacing OFFBOARD with TYPE_RATES (task B), G_T/k_cmd identified from
+  hover logs (task C). Supersedes the design draft where they differ.
+- Jerk feedforward signs derived in FRD: omega_ff = (j.y_b / c, -(j.x_b) / c, 0) with x_b, y_b of the desired
+  attitude. The draft's (-h.y_b, h.x_b) had both signs wrong (check: nose-up pitch rate tilts thrust backwards,
+  jerk along -x_b, so q = -(j.x_b)/c > 0). Yaw feedforward goes through AttitudeControl's yawspeed argument.
+- Thrust in command units: thrust = ||t_c|| / (G_T k_cmd), with k_cmd = mean u per unit thrust_body, both
+  identified (THR_MDL_FAC 0.683 and CA_R_W_MAX 1000 already make k_cmd ~1). Alternative rejected: using
+  MPC_THR_HOVER as the scale, because it is the hover-thrust estimate of the PID arm, not a measured model.
+- Outer-loop attitude/limits/gains come from the stock MPC_* and MC_* parameters, so A and D differ only in the
+  acceleration-to-thrust law and the feedforward (O-9).
+- Stage-8 entries O1-O7 are new paths, pre-checked with pid_tuned before the freeze (O-13).
