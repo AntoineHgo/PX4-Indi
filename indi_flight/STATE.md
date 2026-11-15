@@ -10,6 +10,9 @@
   stage-1 bench/G1 work has priority over design.
 - Session 7 (launch 20261115-182252, cap $1.6): review r2 NOT launched (fable ~$1.2-2.5 > half the cap, rule 21);
   deferred to the first session with cap >= $3. Did port 1a step 1 instead (T9, metrics.py trajectory fix).
+- Session 9 (launch 20261115-204121, cap $1.89): T12 DONE: runner ported to `bench/run_scenario.py` with `sends.csv`
+  (intended sim time of every setpoint/param/sag send), metrics window accepts nav_state 23 (`design/port_1a_runner.md`).
+  Not flown yet; no unit case for nav_state 23 (lesson 20, add one).
 - Session 8 (launch 20261115-182725, cap $1.06): T10 closed items 4b/4c (`design/port_1a_timebase_check.md`):
   no t0 correction (setpoint lag +2..4 ms), no origin correction (estimator bias 2-5 cm reported separately). T11 second key CONFIRMED the
   trajectory metric (`results/second_key_traj.md`, 3 digits on 3 runs). Item 4 metrics.py trajectory part closed.
@@ -34,7 +37,10 @@
    usable for a verdict: needs (a) second key (sonnet, independent re-implementation of the analytic trajectory error
    from raw ULog, compare on 3 archive set-O runs, ~$0.5), (b) groundtruth origin offset vs estimator hold_pos (3 cm
    seen, review used mean-offset removal), (c) lag-scan check. (a), (b), (c) DONE S8 (T10, T11). Remaining: window rule
-   must accept nav_state 23 (external INDI mode), not only 14. NEXT: run_scenario.py sim-time fixes (sonnet ~$0.5).
+   must accept nav_state 23 (external INDI mode), not only 14. Runner port DONE S9 (T12). NEXT: (i) `bench/applied_timing.py` per spec in `design/port_1a_runner.md` + self-test
+   (sonnet ~$0.4); (ii) one pre-test flight of the ported runner in Docker (haiku, check sends.csv + ULog, repo root
+   inside container); (iii) two identical-seed flights -> jitter bound for G1; (iv) sag as sim-time ramp in gz bridge
+   (simulator hook, two keys).
    Then run_scenario.py sim-time fixes (sim_review.md:14,19). Port bench runner/metrics into `indi_flight/bench/` with the review fixes (5 Hz held reference, decimated effort,
    ground-truth stamp, sim-time injections); self-test + second key per script. Errata re-score of set-O/T5.
 5. Simulator items of stage 1 (delayed GNSS, rotor inertia check, battery model, injectors, seeded drops, vibration,
@@ -67,6 +73,7 @@
 | 7 | T9 | sonnet | metrics.py port, M:51 fix, self-test | done, 13 calls, ~$0.47 |
 | 8 | T10 | haiku | time-base + origin check | done, 10 calls, ~$0.06, re-run by me |
 | 8 | T11 | haiku | second key, trajectory error | done, 5 calls, ~$0.07, matches metrics.py |
+| 9 | T12 | sonnet | runner port + sends.csv | done, 12 calls, ~$0.37, compile + metrics tests pass, unflown |
 
 ## Lessons proposed
 - Haiku handles a well-specified log check (10 calls) for ~$0.06: use it for every bounded log/metric check.
