@@ -214,7 +214,8 @@ bool GZBridge::subscribeClock(bool required)
 
 bool GZBridge::subscribePoseInfo(bool required)
 {
-	std::string world_pose_topic = "/world/" + _world_name + "/pose/info";
+	// dynamic poses: published once per step (dynamic_pose_hertz in server.config), pose/info is throttled to ~60 Hz wall
+	std::string world_pose_topic = "/world/" + _world_name + "/dynamic_pose/info";
 
 	if (!_node.Subscribe(world_pose_topic, &GZBridge::poseInfoCallback, this)) {
 		PX4_ERR("failed to subscribe to %s", world_pose_topic.c_str());
