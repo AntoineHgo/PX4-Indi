@@ -394,6 +394,7 @@ McIndiPosControl::hold(hrt_abstime now)
 	indi_pos_status_s status{};
 	status.timestamp = now;
 	status.mean_u = NAN;
+	Quatf(NAN, NAN, NAN, NAN).copyTo(status.q_d);
 	status.thrust = _last_thrust;
 	status.hold_cycles = (uint8_t)_hold_count;
 	status.failure = failure;
@@ -412,6 +413,7 @@ McIndiPosControl::publishStatus(const IndiAccelControl::Output &out, float mean_
 	out.t_f.copyTo(status.t_f);
 	out.t_c.copyTo(status.t_c);
 	out.omega_ff.copyTo(status.omega_ff);
+	out.q_d.copyTo(status.q_d);
 	status.mean_u = mean_u;
 	status.mean_u_valid = mean_u_valid;
 	status.thrust = out.thrust;
