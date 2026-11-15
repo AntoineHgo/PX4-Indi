@@ -35,6 +35,9 @@ owner decisions when you first act on them.
 
 ## Status summary (read this first)
 
+- **IN FLIGHT (session 51, 2026-11-15): task B, one sonnet agent implementing `src/modules/mc_indi_pos_control/` per
+  `plan/s8_impl_spec.md` sec. 3; log in `plan/impl_log_s8_module.md`. If the session dies, check that log and `git status`
+  before relaunching: the agent leaves changes uncommitted; the orchestrator builds, reviews and commits.**
 - **Latest (session 50, 2026-11-15): owner hover-mode note CLOSED (`results/pid_hover_mode.md`, D-hover-spread).
   pid_tuned has a lightly damped 2.57 Hz roll mode whose amplitude varies PER FLIGHT, not per batch: the same seed
   re-flown alone on an idle host gave effort 0.036/0.063 (seed 1) and 0.032/0.022 (seed 2). Not params, build, PX4
