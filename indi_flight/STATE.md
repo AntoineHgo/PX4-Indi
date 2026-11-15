@@ -18,7 +18,8 @@
    mode switch, decide before G3). T35 DONE: `bench/gate_g1.sh g1.1|g1.3|g1.4|g1.6` (`design/gate_g1_cmd_s17.md`):
    g1.1 FAIL (A-12 groundtruth 14.8 Hz vs 50, A-13 gyro gaps, esc_status A-10), g1.3 35/35 agree but most metrics
    lack a second key, g1.4 tests pass, 7 scripts lack self-tests, g1.6(a) FAIL as recorded.
-   NEXT (S18): A-12 first (haiku: groundtruth publish count in gz_bridge vs log) since all tracking uses truth;
+   A-12 cause found S17: truth = gz world pose topic at ~60 Hz WALL (50 Hz logged at speed 1, 14.8 at speed 4).
+   NEXT (S18): A-12 fix first (sonnet: sim-time pose rate in the world SDF / gz_bridge, verify g1.1 at speed 4);
    then second keys for rate/attitude/hover/steps metrics (sonnet, one family), self-tests for the 7 scripts,
    decide gz lockstep vs in-PX4 scheduled mode switch (G1.6a).
 000000. NEXT (S17): (a) DONE S16: G1.6 repeat on 1.25 ms world 15/15 (`results/det_g16_w125/README.md`): tracking
