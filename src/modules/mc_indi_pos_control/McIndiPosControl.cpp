@@ -66,6 +66,9 @@ McIndiPosControl::init()
 		return false;
 	}
 
+	// advertise before the logger starts, otherwise the optional topic is never logged
+	_status_pub.advertise();
+
 	registerMode();
 	ScheduleDelayed(kBackupPeriod);
 	return true;
