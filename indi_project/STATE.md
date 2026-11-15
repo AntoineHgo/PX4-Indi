@@ -62,8 +62,9 @@ owner decisions when you first act on them.
   `bench/ident_gt.py` -> `results/s8_ident_gt.md`, 2ac71c326a): G_T median 16.63 m/s^2 per unit mean u (16.53-16.97,
   10 hover logs), k_cmd 0.9993 (~1 as expected), G_T*mean_u = 9.86 at hover. Identified at the hover point only (low
   R^2 0.34-0.93 within hover): check G_T at other thrust levels from a trajectory log before relying on it in O6.
-  NEXT (owner note at the top first): pid_tuned hover-mode cause from logs (haiku log task launched s49, partial
-  notes in `results/pid_hover_mode.md`; you judge the cause), then task B (module, spec sec. 3, one sonnet task),
+  NEXT (owner note at the top first): pid_tuned hover-mode cause. Log scan DONE (aeb7daf918, `results/pid_hover_mode.md`):
+  params, build and PX4 loop timing identical high vs low, mode present from the start; test the hypotheses listed at
+  the end of that file in order (1: non-lockstep setpoint stream / plugin clock under host load), then task B (module, spec sec. 3, one sonnet task),
   then freeze O1-O7 with the O-13 pid_tuned pre-check. Set MC_INDIP_G_T 16.63, MC_INDIP_K_CMD 1.0.**
 - **Latest (session 48, 2026-11-15): owner hover note closed. Report 8.10 (v3 on V') and 10.5 (stage-2 conclusion)
   written. Causal test (`results/hover_cause.md`): the eRPM state shakes INDI at 4-10 Hz but adds no effort; the tuned
@@ -1107,4 +1108,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s46: outer-gain diagnostic committed (D-outer-check); v3 ACT_BLD 0 smoke = v2; V' implemented; Tb screening: 0.3/1.0 remove motor-loss tilt, 0.1 pruned; stage 2 running. Agents: 1 sonnet. Runs: 19 (+18).
 - 2026-11-15 s47: hover effort 5 seeds (~2x PID, inherited from v2), yaw stage 2, indi_v3 frozen, V' flown (200) and judged: v3 matches tuned PID, does not outperform it (W1/W4 exceed the vehicle for all). Report 7.8. Agents: 0. Runs: 236 (+4 W1 diag).
 - 2026-11-15 s48: owner hover note (a)-(c) closed (tooling, cause file, causal test: eRPM state shakes, no effort; PID reference unstable), D-hover-lpf, report 8.10/10.5, stage-8 code facts. Agents: 1 sonnet. Runs: 9.
-- 2026-11-15 s49: stage-8 impl spec (D-s8-spec, jerk-ff signs fixed), task A library + 18 gtests (2fcf22a017), task C launched. Agents: 1 sonnet (13 calls, ~$0.5), 1 haiku. Runs: 0.
+- 2026-11-15 s49: stage-8 impl spec (D-s8-spec, jerk-ff signs fixed), task A library + 18 gtests (2fcf22a017), task C G_T 16.63/k_cmd 1.0 (2ac71c326a), owner hover-mode note: log scan (aeb7daf918) rules out params/build/loop timing. Agents: 1 sonnet (13 calls, ~$0.5), 2 haiku (~$0.25). Runs: 0.

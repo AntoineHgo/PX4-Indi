@@ -90,3 +90,19 @@ VAV = vehicle_angular_velocity, RCS = rate_ctrl_status, RSP = vehicle_rates_setp
 
 
 Parameters varying within a group (not high-vs-low): none
+
+## Orchestrator reading (session 49), not yet a conclusion
+
+What the scan rules out: parameters (identical in all 12 logs), build (both ver_sw hashes appear in both groups), and
+PX4-side loop timing in sim time (gyro interval and sample-to-publish lag equal). The mode is present from the first
+10 s of the window, not appearing mid-flight, and the PID terms only follow it (torque std 2.7x, integrator std 1.55x).
+Open hypotheses, in the order to test them:
+1. Something not in lockstep with the sim clock that is affected by host load. Seen-set seeds 3-4 flew under the host
+   overload found in s44, and hover_cause flew as a separate batch on 11-15 00:30. Candidates: the runner's offboard/hold
+   setpoint stream (wall-clock rate), and any project gz plugin (eRPM, vibration) that uses wall time. Check the runner's
+   hold path and the plugins' clocks in the code, and the inter-arrival times of trajectory_setpoint/offboard messages in
+   sim time (high vs low).
+2. Sim noise realisation (vibration/eRPM seed) exciting a lightly damped PID mode: check whether the same seed flew low in
+   one batch and high in another (hover_cause seed 1 vs seen seed 1 suggests yes, which would weigh against this one).
+3. Only if the logs cannot decide: fly pid_tuned hover seeds 1-2 on an idle host and again under a deliberate CPU load
+   (O-12 watchdog, side by side).
