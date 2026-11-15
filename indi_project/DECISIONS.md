@@ -959,3 +959,12 @@ O7 (tau x2) that was not screened. More screening of the outer gains for hover e
 criterion is expected to fail and will be reported as a failure with this attribution.
 Alternatives rejected: LPF 5 (above); a wider gain screen (O-12 allows it, but no candidate from the hover-effort
 attribution would plausibly reach 1.5x while the inner loop alone sits at 1.7x).
+
+## D-s8-hover10 (session 57, 2026-11-15): criterion 4 of set O judged on 10 hover seeds
+
+Context: section 10 criterion 4 (hover effort of INDI POS <= 1.5x pid_tuned, T1 v2) had only the two s8m smoke seeds
+(ratio 2.67). The pid_tuned hover effort spreads per flight by up to 3x (D-hover-spread), so two seeds are too few for
+a criterion that decides the outcome. Decision, taken before any seed 3-10 hover flight: fly T1 hover seeds 3-10 for
+the verdict pair under the set-O configuration (`bench/s8p_hover_effort.sh`, after the set-O batch), and judge
+criterion 4 on the mean over seeds 1-10, as `s2_verdict.py --hover-runs` computes it. Alternatives rejected: keep
+n = 2 (fragile either way); use the set-O entries' effort (criterion 4 is defined on hover, not on paths).

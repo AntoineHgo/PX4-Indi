@@ -35,6 +35,12 @@ owner decisions when you first act on them.
 
 ## Status summary (read this first)
 
+- **Latest (session 57, 2026-11-15): set-O verdict `s8n_oset.sh` flying (relaunched 04:14 by s56, log
+  `results/s8n_oset.log`, ends S8N_DONE, ~1 min per flight, 4 at a time). Chained detached: `bench/s8p_hover_effort.sh`
+  (waits for S8N_DONE, then T1 hover seeds 3-10 for pid_tuned + indi_pos_v3 into `results/s8m_smoke_gnss0/hover`, log
+  `results/s8p_hover_effort.log`, ends S8P_DONE; D-s8-hover10). Verdict: `python3 bench/s2_verdict.py
+  results/s8n_oset/runs --b indi_pos_v3 --oset --hover-runs results/s8m_smoke_gnss0 --final` (added `--oset`).
+  NEXT: glitch_scan + verdict -> `results/s8n_oset.md`; stage-8 report chapter; DONE check.**
 - **Latest (session 56, 2026-11-15): the T5 "lead" and the INDI POS gap were a GNSS delay mismatch (D-s8-gnss-delay,
   `results/s8k_gnss_delay.md`). `bench/gt_lag.py`: EKF position led ground truth by ~110 ms (velocity/attitude within
   15 ms). `sensor_gps_sim` stamps timestamp_sample == timestamp, so VehicleGPSPosition applies the stock
@@ -1234,3 +1240,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s55: arm D' jerk LPF: effort 1.44 -> 0.65 (1.10x PID), track unchanged; lead remains; EKF leads groundtruth ~100 ms for both controllers (to verify). Session total: agents 0, runs 1, builds 2.
 - 2026-11-15 s56: EKF lead = SENS_GNSS0_DELAY 110 ms on a zero-latency sim GNSS (D-s8-gnss-delay); T5 with delay 0: INDI POS 0.26 m vs pid_tuned 0.38 m; O-13 pre-check re-fly running. Agents: 0. Runs: 2 (+7 queued).
 - 2026-11-15 s56: set-O pre-check re-flown (all flyable); smoke T5/H1 INDI POS ahead, hover effort 2.7x (fails 1.5x); LPF 5 screened, rejected; indi_pos_v3 frozen (D-s8-freeze); set-O verdict s8n (140 flights) flying detached. Session total: agents 0, runs 23 + 140 queued.
+- 2026-11-15 s57: verdict script --oset; hover criterion-4 seeds 3-10 chained after set O (D-s8-hover10). Agents: 0.
