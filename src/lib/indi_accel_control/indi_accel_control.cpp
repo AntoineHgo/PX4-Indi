@@ -284,7 +284,7 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 		t_c(2) = -math::max(c_min, kMinUpThrust);
 	}
 
-	// tilt: angle between -t_c and -e3, scale the horizontal part keeping t_c,z
+	// tilt: angle between t_c and -e3 (up in NED), scale the horizontal part keeping t_c,z
 	const float h_max = -t_c(2) * tanf(_tilt_max);
 	const float h = Vector2f(t_c(0), t_c(1)).norm();
 
