@@ -44,7 +44,12 @@ owner decisions when you first act on them.
   DONE: set O S8N_DONE 05:03, no glitch, metrics committed. VERDICT criteria 1-3 MET: INDI POS better on 6/7
   (O1 -31 %, O2 -28 %, O3 -32 %, O4 -72 %, O5 -51 %, O7 -30 %, all 10/10 seeds, p 0.002; O6 -4 %, p 0.01), 0 failures,
   0 worse; effort 0.91-1.10x (O4 1.41x). `results/s8n_oset.md` written, criterion 4 placeholder HOVER4 until S8P_DONE.
-  NEXT: fill HOVER4 from the verdict command, commit; report sec. 8.11 + ch. 9/10 updates; DONE check.**
+  DONE: criterion 4 on 10 hover seeds (s8p): 2.02x, NOT MET -> formal outcome "INDI POS does not outperform PID" on
+  set O, tracking criteria 1-3 met by a wide margin. Report: sec. 5.9, 6.5 GNSS paragraph, 8.11, 10.6, A.8 written.
+  NEXT (session 58, then DONE): (1) independent review (fable, else opus; ~$1) of sec. 5.9 + 8.11 + 10.6 against
+  `results/s8n_oset.md` and DECISIONS D-s8-*; fix what it finds; (2) short ch. 9 paragraph on stage 8 limits (FF share
+  unmeasured, O7 not probing actuator lag at outer bandwidth, hover effort); (3) rebuild report.pdf if a toolchain
+  exists (pandoc in the image?), else note it predates stage 8; (4) final summary at top of STATE, create `DONE`.**
 - **Latest (session 56, 2026-11-15): the T5 "lead" and the INDI POS gap were a GNSS delay mismatch (D-s8-gnss-delay,
   `results/s8k_gnss_delay.md`). `bench/gt_lag.py`: EKF position led ground truth by ~110 ms (velocity/attitude within
   15 ms). `sensor_gps_sim` stamps timestamp_sample == timestamp, so VehicleGPSPosition applies the stock
@@ -1246,3 +1251,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s56: set-O pre-check re-flown (all flyable); smoke T5/H1 INDI POS ahead, hover effort 2.7x (fails 1.5x); LPF 5 screened, rejected; indi_pos_v3 frozen (D-s8-freeze); set-O verdict s8n (140 flights) flying detached. Session total: agents 0, runs 23 + 140 queued.
 - 2026-11-15 s57: verdict script --oset; hover criterion-4 seeds 3-10 chained after set O (D-s8-hover10). Agents: 0.
 - 2026-11-15 s57: report sec. 5.9 + ch. 6 GNSS paragraph (1 sonnet agent, 25 calls). Set O at seed 2 of 10.
+- 2026-11-15 s57: set O verdict: tracking better on 6/7 (all 10/10 seeds), 0 fails; hover effort 2.02x fails crit. 4 -> "does not outperform"; report 8.11/10.6/A.8. Agents 1 sonnet; runs 140 + 16.
