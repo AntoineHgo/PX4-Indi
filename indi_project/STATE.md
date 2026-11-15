@@ -35,9 +35,15 @@ owner decisions when you first act on them.
 
 ## Status summary (read this first)
 
-- **IN FLIGHT (session 51, 2026-11-15): task B, one sonnet agent implementing `src/modules/mc_indi_pos_control/` per
-  `plan/s8_impl_spec.md` sec. 3; log in `plan/impl_log_s8_module.md`. If the session dies, check that log and `git status`
-  before relaunching: the agent leaves changes uncommitted; the orchestrator builds, reviews and commits.**
+- **Latest (session 51, 2026-11-15): stage-8 task B DONE in code: `mc_indi_pos_control` module 5cc5fcd01f, message
+  `IndiPosStatus` 6c1d9b4d83 (one sonnet agent, ~$0.95; log and spec deviations in `plan/impl_log_s8_module.md`: omega max
+  read from MC_INDI_W_MAX since CA_R_W_MAX does not exist; zero jerk -> a_ref difference; ESC age 50 ms). Builds; control
+  step reviewed by the orchestrator. Started from `rc.mc_apps` when MC_INDIP_EN 1. NOT yet flown with the mode active.
+  Regression (MC_INDIP_EN 0, pid_tuned hover seeds 1-2, v2 sim): `bench/s8b_regression.sh` -> `results/s8b_regression/`
+  (log `results/s8b_regression.log`, ends S8B_REGRESSION_DONE); compare with `results/pid_hover_mode/runs/idle`.
+  NEXT: (1) check the regression; (2) first activation check of INDI POS (MC_INDIP_EN 1, runner offboard switch on hover,
+  watchdog on): commander accepts registration/arming reply, esc and trajectory_setpoint ages fit 50/100 ms, MC_INDI_W_MAX
+  set in the params; (3) freeze O1-O7 in `bench/scenarios.md` sec. 10 with the O-13 pid_tuned pre-check.**
 - **Latest (session 50, 2026-11-15): owner hover-mode note CLOSED (`results/pid_hover_mode.md`, D-hover-spread).
   pid_tuned has a lightly damped 2.57 Hz roll mode whose amplitude varies PER FLIGHT, not per batch: the same seed
   re-flown alone on an idle host gave effort 0.036/0.063 (seed 1) and 0.032/0.022 (seed 2). Not params, build, PX4
@@ -1028,6 +1034,7 @@ S42 ORDER (do this first, top to bottom):
 | 35 | 0 | 1 omega2 build, 7 check flights (omega2), r1f continuing | ~$2.0 of $3 |
 | 40 | 0 | r1/r2 finished (480), held-out V launched (420) | ~$2.2 of $3 |
 | 34 | 1 sonnet (~$0.6, D-omega2 wiring) | 105 (v1 recheck) + r1f running + frz queued | session ~$2.8 |
+| 51 | 1 sonnet (task B module, 32 calls, ~$0.95) | 1 SITL build, 2 regression hovers | ~$2.0 of $2.78 |
 | 50 | 0 | 8 hover flights (pid_hover_mode: 4 idle, 4 under CPU saturation) | ~$2.2 of $3 |
 
 ## Journal
@@ -1101,3 +1108,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s48: owner hover note (a)-(c) closed (tooling, cause file, causal test: eRPM state shakes, no effort; PID reference unstable), D-hover-lpf, report 8.10/10.5, stage-8 code facts. Agents: 1 sonnet. Runs: 9.
 - 2026-11-15 s49: stage-8 impl spec (D-s8-spec, jerk-ff signs fixed), task A library + 18 gtests (2fcf22a017), task C G_T 16.63/k_cmd 1.0 (2ac71c326a), owner hover-mode note: log scan (aeb7daf918) rules out params/build/loop timing. Agents: 1 sonnet (13 calls, ~$0.5), 2 haiku (~$0.25). Runs: 0.
 - 2026-11-15 s50: pid_tuned hover mode = per-flight spread of a lightly damped 2.57 Hz PID mode (idle re-flights same seed 0.022-0.063); not seed/host load; D-hover-spread; report 8.9/8.10/10.5 corrected; owner note closed.
+- 2026-11-15 s51: stage-8 task B module + message committed (5cc5fcd01f, 6c1d9b4d83); regression hover launched.
