@@ -22,3 +22,23 @@ Follow-up, T7 payload_add (`bench/s8f_delay_payload.sh`, `results/s8f_delay_payl
 the payload while a_f returns to zero, so the two signals decorrelate by construction (t_f and a_f differ by the
 unmodelled force). The identification needs a commanded vertical acceleration with the plant as modelled: add a
 diagnostic z-step (or vertical sine) scenario to `bench/scenarios.py` (diagnostic, outside T/H/V sets) and use it.
+
+## Vertical multisine, session 53 (2026-11-15): lag identified, about zero
+
+`bench/s8g_zsine_delay.sh` flies INDI POS on `diag_z_multisine` (diagnostic, outside T/H/V: harmonics at 0.25, 0.75,
+1.75 and 3.25 Hz, about 0.8 m/s^2 each, 6 periods), v2 sim with vibration, MC_INDIP_DLY = 1.
+`results/s8g_zsine_delay/seed1/delay.txt`, z component:
+
+| estimate | peak lag (logged t_f vs a_f) | corr at peak | raw eRPM lag behind a_f |
+|---|---|---|---|
+| raw | +1 cycle | 1.00 | 0 cycles |
+| whitened (first differences), parabolic interpolation | +0.71 cycles | 0.99 | -0.29 cycles (about -2 ms) |
+
+Reading: with real vertical excitation the two signals correlate at 0.99 and the raw eRPM thrust is synchronous with
+the window-averaged specific force to within a third of a cycle. That matches the physics (rotor thrust acts on the
+acceleration at once, and D-s8-accel-window averages a_f and u over the same window). The 3-4 cycle lead seen in
+hover was an artefact of weak excitation: in hover the z content of both signals is small and dominated by vibration
+residue and slow drift, so the peak was broad and misplaced. With DLY 1 the u path is late by 0.7 cycle; with DLY 0
+the residual mismatch is 0.3 cycle. Identified value for this sim: **MC_INDIP_DLY 0** (set in
+`bench/params/indi_pos_v0.params`; checked by re-flying in `results/s8h_bias_dly0/`). Real hardware must identify
+its own value with the same scenario (DShot eRPM latency, IMU filtering).
