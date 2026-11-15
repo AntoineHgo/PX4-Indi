@@ -2,6 +2,7 @@
 
 ## Status
 - Stage: 1 (evidence and simulator), started session 1 (2026-11-15). Stage 0 done. Session 3: ref airframe model done.
+- Session 4 (launch 20261115-175831): T5 requirements review launched.
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written (not tested).
 - Blocker: none. No owner question open.
 - Outer-loop architecture study (MISSION section) runs in parallel with stages 1-3: not started.
@@ -27,7 +28,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | | | |
+| T5 | requirements review (sonnet, S4) | agent | `design/outer_loop_requirements_review.md` | relaunch same brief if file absent/partial |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
