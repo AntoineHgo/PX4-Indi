@@ -25,6 +25,8 @@
   truth; 27 MB/65 s; metrics + applied_timing run (`design/logging_profile.md`). Closes the open problem below.
   applied_timing on s10: send_pos p50=p95=4 ms (1 step), 0 unmatched (A-8 closed, not reproduced); one changed-payload
   row at 1032 ms = pre-offboard flight-task output, not latency. Payload constant, so still no jitter bound.
+- Session 11 (launch 20261115-214208, cap $3): launched T16 review r2 (opus, narrow, <=12 calls) and T17 route
+  check 10 (sonnet). Untracked `results/pretest_logging_s10_try1/` = T15's failed first try (raw, keep untracked).
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written (not tested).
 - Blocker: none. No owner question open.
 - Outer-loop architecture study (MISSION section) runs in parallel with stages 1-3: not started.
@@ -57,7 +59,8 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | | | |
+| T16 | outer-loop review r2 | opus | design/outer_loop_review_r2.md | relaunch same brief if file incomplete |
+| T17 | route check 10 | sonnet | design/route_check_10.md | relaunch same brief |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
