@@ -251,9 +251,8 @@ owner decisions when you first act on them.
   2 (0/5 >= 10 %) and 4 (hover 2.14x) fail: "INDI does not outperform PID". v3 removes v2's gap failures (v2 9.1x /
   2.7x / 1.9x on W2/W3/W5). W1 trips 10/10 for EVERY controller, W4 ~6/10 for all: V' severity not calibrated
   (design flaw of V', stated, not repaired). RUNNING detached 01:27: `bench/vprime_w1_diag.sh` (W1 seed 1 x 4,
-  watchdog off, `results/vprime_w1_diag.log`, ends VPRIME_W1_DIAG_DONE, resumable). NEXT (session 48): (1) read the
-  diag (height loss, recovery or crash, per controller), append to `results/vprime.md` as post-hoc; commit
-  `bench/vprime_w1_diag.sh` (uncommitted) + metrics/run.json; (2) report 8.10 "v3 on V'" from `results/vprime.md` and
+  watchdog off, `results/vprime_w1_diag.log`, ends VPRIME_W1_DIAG_DONE, resumable). W1 DIAG DONE: every controller
+  descends to the ground, none recovers (appended to `results/vprime.md`). NEXT (session 48): (2) report 8.10 "v3 on V'" from `results/vprime.md` and
   update ch. 9/10 conclusions (v3 = parity with tuned PID on actuator faults, hover effort 2x, yaw 1.15x); (3) stage 8
   (outer-loop INDI) per OWNER_GUIDANCE order.
 - SESSION 46 (2026-11-15, launch 20261115-003114): DONE: owner outer-gain diagnostic committed + D-outer-check (v3
