@@ -2,58 +2,18 @@
 
 ## Status
 - Stage: 1 (evidence and simulator), started session 1 (2026-11-15). Stage 0 done. Session 3: ref airframe model done.
-- Session 4 (launch 20261115-175831): requirements reviewed, candidates r1 drafted, fact 1 closed.
-- Session 5: review r1 DONE (T6): A recommended w/ 5 conditions, B deferred, C rejected.
-- Session 6 (launch 20261115-181651): route check 05 DONE (`design/route_check_05.md`): balance wrong, too much
-  spend on paper design, no gate tested. Acted on: candidates_r2 written by me (cheap); round 2 = one NARROW
-  fable review (deltas only, <=15 calls) because MISSION requires >=2 rounds; then owner question; from S7 on,
-  stage-1 bench/G1 work has priority over design.
-- Session 7 (launch 20261115-182252, cap $1.6): review r2 NOT launched (fable ~$1.2-2.5 > half the cap, rule 21);
-  deferred to the first session with cap >= $3. Did port 1a step 1 instead (T9, metrics.py trajectory fix).
-- Session 9 (launch 20261115-204121, cap $1.89): T12 DONE: runner ported to `bench/run_scenario.py` with `sends.csv`
-  (intended sim time of every setpoint/param/sag send), metrics window accepts nav_state 23 (`design/port_1a_runner.md`).
-  Runner got `--model` (default quad5in). T13 pre-test: quad5in PID hover flies (airframe 4040), sends.csv OK
-  (1600 send_pos, monotonic), metrics.py runs (`design/pretest_runner_s9.md`). No unit case for nav_state 23 (lesson 20).
-- Session 8 (launch 20261115-182725, cap $1.06): T10 closed items 4b/4c (`design/port_1a_timebase_check.md`):
-  no t0 correction (setpoint lag +2..4 ms), no origin correction (estimator bias 2-5 cm reported separately). T11 second key CONFIRMED the
-  trajectory metric (`results/second_key_traj.md`, 3 digits on 3 runs). Item 4 metrics.py trajectory part closed.
-- Session 10 (launch 20261115-204950, cap $1.44): T14 DONE: `bench/applied_timing.py` + self-test (passes, I re-ran it),
-  note `design/port_1a_applied_timing.md`. On the s9 hover it measures log decimation only: trajectory_setpoint logged
-  at 5 Hz and constant payload; params sent pre-log. NOT a jitter bound yet; no second key yet.
-  T15 DONE: runner writes fs/etc/logging/logger_topics.txt (21 topics, interval 0, instance 0); hover pre-test
-  `results/pretest_logging_s10`: 250 Hz IMU/actuator/rates, 125 Hz local pos, 50 Hz trajectory_setpoint and ground
-  truth; 27 MB/65 s; metrics + applied_timing run (`design/logging_profile.md`). Closes the open problem below.
-  applied_timing on s10: send_pos p50=p95=4 ms (1 step), 0 unmatched (A-8 closed, not reproduced); one changed-payload
-  row at 1032 ms = pre-offboard flight-task output, not latency. Payload constant, so still no jitter bound.
-- Session 11 (launch 20261115-214208, cap $3): launched T16 review r2 (opus, narrow, <=12 calls) and T17 route
-  check 10 (sonnet, DONE: `design/route_check_10.md`, on path but slow; next = determinism G1.6, final GATES G1,
-  second keys, sim-time injection hook; r2 noted as against check-05 rule: accepted, it is the one narrow round
-  MISSION requires, already planned S6). T16 review r2 DONE (`design/outer_loop_review_r2.md`): 1 BLOCKING (N1 acceleration-only axes lose drag damping
-  under INDI: descend failsafe, blind land, Altitude xy), 2 MAJOR, 4 MINOR. I wrote `design/outer_loop_candidates_r3.md`
-  (A10 per-axis-group open loop for acceleration-only setpoints, A11 thrust gap = decision 2, A12 minors).
-  T18 determinism pre-study DONE (`design/determinism_s11.md`): A-7 reproduced, arm time spreads 2.2 s in sim time
-  with the same seed, roll attitude RMS spread 37 %. run_scenario.py does not write metrics.json (agent ran metrics.py).
-  Review r3 not launched (budget < 2x its cost). Untracked `results/pretest_logging_s10_try1/` = T15's failed first try (raw, keep untracked).
-- Session 12 (launch 20261115-215107, cap $3): T19 DONE (runner arms at sim 20 s, hold 39 s, offboard 40 s,
-  runs metrics.py; `design/runner_fixed_times_s12.md`, I read the diff). T20 review r3 DONE (`design/outer_loop_review_r3.md`):
-  NO BLOCKING; 4 MAJOR (R3-1 per-group reset impossible, run lib on all axes and override open group; R3-2 lib
-  rejects NaN pos/vel so z cannot keep INDI in blind/no-GPS states; R3-3 open->INDI entry step, needs decaying
-  offset + dwell; R3-8 `||` start fallback contradicts F-1), 4 MINOR. R3-8 decided by F-1: no fallback, start
-  failure refuses arming (to DECISIONS.md). Try 1 of 3 hovers failed: arm denied 20-25 s (height estimate not
-  stable), climb > 8.8 s; constants moved to arm 30 s / offboard 52 s (committed 84b61e5c75). T21 Try 2 DONE (`design/determinism_s12.md`): 3 ok runs,
-  arm 30.28-30.61 s (0.33 s spread, ack latency?), well-conditioned spreads down but still 10-25 % (roll RMS 11.6 %,
-  rotation 17.7 %, max_dev_h 24.9 %, rms_3d 4.7 %). arm_late_s absent although arm > 30.1 s: check the flag.
-- Session 13 (launch 20261115-220341, cap $3): arm/offboard 0.28-0.61 s "latency" = runner observes mode via
-  1 Hz HEARTBEAT (same per-run offset on arm and offboard); arm_late_s correctly absent (tests send time). T22 checks
-  it in the ULogs: DONE (`design/determinism_s13.md`): PX4 offboard at 52.024-52.032 s, re-aligned window leaves the
-  spread (max_dev_h 24.9 %), gyro differs from +28 ms after arm: real SITL non-determinism, log needed from boot. Wrote `design/outer_loop_candidates_r4.md`
-  (A13-A17 answer R3-1..R3-8, no interface change, no new round) and owner question Q1 (confirm A, not blocking).
-- Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written (not tested).
-- Blocker: none. Q1 answered: A confirmed, owner asks to consider differential flatness -> `design/flatness_r1.md`
-  (A18 jerk->omega_ff side channel); narrow review r5 (opus) of A18 is the last step before stage 5.
-- Outer-loop architecture study: 3 review rounds + r4 deltas done; owner confirmation pending (Q1).
+- Sessions 4-13: history in JOURNAL.md (moved S15). S14: G1.6 runs at speed 1 and 4, review r5 BLOCKING (A18).
+- Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written; G1.6 first tested S14 ((a) not met, see next actions).
+- Blocker: none. Q1 closed: A confirmed by owner; flatness A18 reviewed (r5 BLOCKING), answered in
+  `design/flatness_r2.md` (S15): optional increment after base A. Outer-loop study finished; stage 5 = base A.
+- Session 15 (launch 20261115-230225, cap $3): flatness_r2 written; T28 window anchor in flight; IMU 250 Hz found.
 
 ## Next actions (in order)
+000000. S15: SITL IMU rate of quad5in = 250 Hz (`sim/models/quad5in_base/model.sdf:174`). (i) G1.6(a) as written:
+   2 IMU periods = 8 ms, measured offboard spread 4-16 ms -> (a) NOT MET; threshold stays (first test done). Cause:
+   MAVLink mode command over UDP into a non-lockstep gz (S13), bound 16 ms; the window anchor of T28 removes its
+   effect on metrics; record under (c). (ii) G2 needs controller rates 400/800 Hz: IMU must go to >= 800 Hz (1 kHz)
+   in the quad5in model without changing the physics step (sim item, two keys, pre-test PID hover after).
 0000. S15 first: G1.6 runs DONE at speed 1 and 4 (`design/g16_s13.md`, 30/30 ok, no speed effect for PID, D-G1.6-speed).
    T27 ULog check DONE (end of g16_s13.md): offboard spread 4-16 ms; window.start_s = HEARTBEAT view + 3 s (lag up
    to 0.95 s). NEXT (sonnet, ~10 calls, two keys): metrics.py window start from the ULog nav_state transition + 3 s,
