@@ -47,3 +47,16 @@ Open, to be written before code (MISSION "Decisions that are yours"):
   A SITL airframe file (`ROMFS/.../init.d-posix/airframes/4xxx_gz_<name>`) is still needed to start it; it carries
   the `CA_*` geometry and is part of the firmware-side branch only if it is offered upstream (decide at stage 7).
 - Overturn: if the overlay path breaks model resolution for nested includes, or upstream later wants the model.
+
+### D-3 Reference-airframe simulation values after the second key (2026-11-15, session 2)
+- Values: those of `design/ref_airframe_data.md` with the corrections of `design/ref_airframe_check.md`:
+  maxRotVelocity 2700 (14.8 V loaded; battery sag is a later scale on it); rollingMomentCoefficient 5e-8
+  (inertia-scaled from x500, keeps the effect at x500 relative size); rotor link izz 5e-5 (= 10 x J_r 5e-6, compensates
+  rotorVelocitySlowdownSim 10 so the reaction torque is the physical J_r dw/dt), ixx=iyy 2.5e-5, subtracted from
+  base_link; legs and collision box resized to a 5-inch frame; `SIM_GZ_EC_MIN` 0, `THR_MDL_FAC` 1 (exact
+  linearisation since w = w_max s), `MPC_THR_HOVER` ~0.13.
+- Alternatives: keep x500 rolling moment 1e-6 (20x larger relative disturbance); slowdown 1 (rejected: 446 Hz joint
+  speed aliases at a 4 ms physics step); EC_MIN 150 or 600 (idle thrust 36 % of weight at 600, an ESC property the
+  INDI loop sees only through telemetry; idle is added later as a plant variant if needed).
+- Overturn: a gz run showing the rotor reaction torque does not scale as izz x d(w/10)/dt (sign or size), or J_r
+  sources disagreeing by more than 2x once the web re-check is done (J_r is ASSUMED today).
