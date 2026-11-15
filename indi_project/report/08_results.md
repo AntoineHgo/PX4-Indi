@@ -324,10 +324,11 @@ seed against the tuned PID, with the Wilcoxon signed-rank test (`bench/s2_verdic
 A host suspend stalled seed 3 of com_shift and motor_loss_0 for all controllers; those runs are kept aside as an
 infrastructure fault and re-flown for every controller (D-v2-refly); every entry has 10 paired seeds. No INDI run
 failed (criterion 1), and the hover effort ratio is 1.26 (criterion 4, limit 1.5; ratio of the 10-seed means on the
-seen-set hover runs). That margin is smaller than it looks: pid_tuned's hover effort was 0.064-0.066 on seen-set seeds
-3-4, flown under host overload (D-watchdog), against 0.021-0.031 on the other seeds, while indi_v2 stayed at
-0.044-0.052. On clean seeds INDI's hover effort is about 2x PID's, which the five-seed v3 check confirmed
-(`results/v3_hover_effort.md`, section 7.8).
+seen-set hover runs). That ratio is less informative than it looks: pid_tuned's hover effort was 0.064-0.066 on
+seen-set seeds 3-4 against 0.021-0.031 on the other seeds, while indi_v2 stayed at 0.044-0.052. The high values were
+first blamed on host overload and the low ones taken as the clean reference. Section 8.10 shows that both are draws
+from one wide per-flight distribution of the tuned PID (a lightly damped 2.57 Hz roll mode). The same seed flown
+twice on an idle host spans 0.022-0.063, so neither value is the clean one (`results/pid_hover_mode.md`).
 
 | entry | primary metric | tuned PID | INDI v2 | ratio | INDI lower | p | effort ratio |
 |---|---|---|---|---|---|---|---|
@@ -445,7 +446,19 @@ measured torque disabled (model actuator state), and the tuned PID. Disabling th
 4-10 Hz roll acceleration 2-4x but left its motor-rate effort unchanged (0.049 vs 0.049): the coarse eRPM state shakes
 the vehicle, it does not cause the effort. The same batch also showed that the reference moves: the tuned PID flew at
 0.046-0.057 with a 2-4 Hz roll oscillation, against 0.021-0.031 in the five-seed check, so on this batch the INDI/PID
-effort ratio was 0.96. INDI's own hover effort was the same in every batch. The 2.14x of criterion 4 stands as flown,
-but it was measured against the low-effort state of a PID whose hover effort varies by a factor of two between
-batches for a reason not yet identified. An INDI-only synchronous low pass was therefore not built (D-hover-lpf).
+effort ratio was 0.96. INDI's own hover effort was the same in every batch. An INDI-only synchronous low pass was
+therefore not built (D-hover-lpf).
+
+**Cause of the PID spread (post-hoc, `results/pid_hover_mode.md`).** The varying reference is a lightly damped
+closed-loop mode of the tuned PID at 2.57 Hz. Its frequency is the same in every flight; its amplitude changes from
+flight to flight. Parameters, build, PX4 loop timing, rotor speed and vibration aliasing are identical between
+high- and low-effort flights. The same seed flew high in one batch and low in another. Pid_tuned hover seeds 1-2 were
+then re-flown twice each, one flight at a time on an idle host. They gave efforts 0.036/0.063 (seed 1) and
+0.032/0.022 (seed 2), covering the whole range previously attributed to "two batches". The gz/PX4 co-simulation is
+not bit-reproducible per seed, and this PID mode amplifies that run-to-run difference; INDI's damping hides it. The
+"two states" were a sampling effect of 3-5 draws per batch, not host load (CPU saturation does break flights outright,
+but it was not present at that level). The 2.14x of criterion 4 and the 0.96 above are therefore both draws from one
+distribution, and the hover-effort criterion as defined (ratio of two five-seed means) cannot tell them apart. The
+verdict stands as flown and the frozen pid_tuned is unchanged. Comparisons from stage 8 on use pooled medians and
+per-flight ranges over at least 10 PID hover flights.
 
