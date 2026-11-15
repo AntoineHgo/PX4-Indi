@@ -28,6 +28,7 @@ REPO = os.environ.get("PX4_INDI_REPO", os.path.abspath(os.path.join(os.path.dirn
 # ported to indi_flight/bench: inputs (scenarios, model_variant, disturbance, params) live next to this file, outputs
 # default under indi_flight/results/. REPO stays the PX4 repo root (build dir, docker launcher indi_project/docker).
 RESULTS_DIR = os.path.join(REPO, "indi_flight", "results")
+MODELS_DIR = os.path.join(REPO, "indi_flight", "sim", "models")  # quad5in reference airframe (F-3)
 # PX4_INDI_BUILD: fly another build directory of the same tree (e.g. a branch build while a batch uses the default).
 BUILD = os.environ.get("PX4_INDI_BUILD", os.path.join(REPO, "build/px4_sitl_default"))
 
@@ -121,11 +122,16 @@ class Sim:
     def load_env(self):
         out = subprocess.run(["bash", "-c", f"source {BUILD}/gz_env.sh; env -0"], capture_output=True, check=True).stdout
         env = dict(kv.split("=", 1) for kv in out.decode().split("\0") if "=" in kv)
-        env.update(HEADLESS="1", PX4_SIM_MODEL="gz_x500", PX4_SIM_SPEED_FACTOR=str(self.a.speed))
+        env.update(HEADLESS="1", PX4_SIM_MODEL=f"gz_{self.a.model}", PX4_SIM_SPEED_FACTOR=str(self.a.speed))
+        if self.a.model != "x500":
+            env["PX4_GZ_MODELS"] = MODELS_DIR
+            env["GZ_SIM_RESOURCE_PATH"] = MODELS_DIR + ":" + env.get("GZ_SIM_RESOURCE_PATH", "")
         self.env = env
 
     def apply_model_variant(self, spec):
         """Per-run model copy with scaled values; PX4 spawns $PX4_GZ_MODELS/x500, x500_base resolves via the path."""
+        if self.a.model != "x500":
+            raise SystemExit("model variants are x500-only until the stage-1b port of model_variant.py")
         vdir, rec = build_variant(spec, self.out, self.env["PX4_GZ_MODELS"])
         self.env["PX4_GZ_MODELS"] = vdir
         self.env["GZ_SIM_RESOURCE_PATH"] = vdir + ":" + self.env.get("GZ_SIM_RESOURCE_PATH", "")
@@ -425,6 +431,7 @@ def main():
     ap.add_argument("--controller", required=True)
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--speed", type=float, default=1.0)
+    ap.add_argument("--model", default="quad5in", help="gz model: quad5in (reference airframe) or x500 (archive)")
     ap.add_argument("--params", default=None, help="file with lines 'NAME VALUE' applied before arming")
     ap.add_argument("--out", default=None, help="run dir; default indi_flight/results/<scenario>_<controller>_s<seed>")
     ap.add_argument("--instance", type=int, default=0)
