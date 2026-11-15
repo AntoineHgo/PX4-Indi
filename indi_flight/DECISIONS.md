@@ -80,3 +80,11 @@ Open, to be written before code (MISSION "Decisions that are yours"):
 - Alternatives: F-a (no feed-forward), F-b (outer module runs the attitude loop, rejected: mode-dependent rate
   setpoint publishers).
 - Overturn: review r5 finds a mode or edge that A18 breaks; tracking test shows no gain.
+
+## D-G1.6-speed (session 14): batch speed factor = 4
+- Choice: campaigns run at PX4_SIM_SPEED_FACTOR 4 (~40 s wall per 95 s sim run, one container).
+- Alternatives: 1 (2.5x the wall time); 8+ (not tested, gz RTF on this host unknown).
+- Reason: 30 same-seed runs (`design/g16_s13.md`): s4 means within the s1 same-seed spread on step and trajectory
+  metrics, spreads of the same order.
+- Overturned if: INDI runs show a speed-factor effect beyond the same-seed spread (A-4), or the s4 hover outlier
+  (max_dev 0.063 m, run r5) turns out to be a speed-factor artefact.

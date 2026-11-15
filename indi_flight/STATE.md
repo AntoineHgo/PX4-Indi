@@ -54,10 +54,9 @@
 - Outer-loop architecture study: 3 review rounds + r4 deltas done; owner confirmation pending (Q1).
 
 ## Next actions (in order)
-0000. S15 first: G1.6 at speed 1 DONE (`design/g16_s13.md`: 15/15 ok, well-conditioned spreads 0.2-7 %). When
-   T26 ends: `G16_ROOT=indi_flight/results/det_g16_s4 python3 -I indi_flight/bench/g16_spread.py`, compare with s1,
-   add to g16_s13.md, commit metrics/run/sends. Then G1.6 open items 1-2 of g16_s13.md (ULog mode instants for the 30
-   runs; what sets window.start_s, spread 0.34-0.55 s) as one haiku task. Record D-G1.6-speed (factor 4) in DECISIONS.md.
+0000. S15 first: G1.6 runs DONE at speed 1 and 4 (`design/g16_s13.md`, 30/30 ok, no speed effect for PID, D-G1.6-speed).
+   Next: one haiku task on the 30 ULogs for g16_s13.md open items 1, 2, 5 (mode instants; what sets window.start_s,
+   spread up to 0.95 s; s4 hover r5 max_dev 0.063 m instant). Then write the G1.6 verdict, (b) deferred to G3/G5 thresholds.
 000. S15: A18 r5 verdict BLOCKING (`design/outer_loop_review_r5.md`): F1 yaw-rate double count (also live bug A-9),
    F2-F4 MAJOR (no stamp in vehicle_rates_setpoint, accumulation into held _rates_setpoint, frame desired vs
    estimated body). A18 stays OUT of base A; write `design/flatness_r2.md` answering F1-F9 (cheap, me), no new
@@ -95,7 +94,6 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T26 | host bash (no agent) | G1.6 same-seed batch at speed factor 4, 15 runs | results/det_g16_s4/ (status.txt) | if not BATCH_DONE and no process: `bash indi_flight/bench/g16_batch_s4.sh` after removing incomplete rN dirs (script re-flies all; edit loops to skip done runs) |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -129,6 +127,7 @@
 | 12 | T21a | haiku | 3 hovers try 1 | stopped at run 1 (arm late), 3 calls, ~$0.03 |
 | 12 | T21 | haiku | 3 hovers try 2 | done, 11 calls, ~$0.05, 6.5 min wall |
 | 14 | T24 | host bash | G1.6 speed 1, 15 runs | done, 15/15 first attempt, 26 min wall, $0 |
+| 14 | T26 | host bash | G1.6 speed 4, 15 runs | done, 15/15 first attempt, ~11 min wall, $0 |
 | 14 | T25 | opus | review r5 of A18 | done, 10 calls, ~$0.7, BLOCKING (yaw-rate double count) |
 
 ## Lessons proposed
