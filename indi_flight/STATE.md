@@ -54,6 +54,10 @@
 - Outer-loop architecture study: 3 review rounds + r4 deltas done; owner confirmation pending (Q1).
 
 ## Next actions (in order)
+0000. S15 first: G1.6 at speed 1 DONE (`design/g16_s13.md`: 15/15 ok, well-conditioned spreads 0.2-7 %). When
+   T26 ends: `G16_ROOT=indi_flight/results/det_g16_s4 python3 -I indi_flight/bench/g16_spread.py`, compare with s1,
+   add to g16_s13.md, commit metrics/run/sends. Then G1.6 open items 1-2 of g16_s13.md (ULog mode instants for the 30
+   runs; what sets window.start_s, spread 0.34-0.55 s) as one haiku task. Record D-G1.6-speed (factor 4) in DECISIONS.md.
 000. S15: A18 r5 verdict BLOCKING (`design/outer_loop_review_r5.md`): F1 yaw-rate double count (also live bug A-9),
    F2-F4 MAJOR (no stamp in vehicle_rates_setpoint, accumulation into held _rates_setpoint, frame desired vs
    estimated body). A18 stays OUT of base A; write `design/flatness_r2.md` answering F1-F9 (cheap, me), no new
@@ -62,14 +66,6 @@
    table in section 1) + `src/modules/mc_indi_rate_control` ff entry point; output `design/outer_loop_review_r5.md`.
    (b) G1.6 run: 5 same-seed runs x (hover, one step, one trajectory) at speed 1 -> spreads vs thresholds (haiku).
    (c) G1.1-G1.5 commands (`bench/gate_g1.sh`), remaining second keys. Determinism cause found S13 (gz no lockstep).
-0. S13: (a) determinism: spreads stay 10-25 % with windows aligned to 0.33 s: (i) why arm lands 0.28-0.61 s after
-   30 s and why arm_late_s is missing; (ii) cause below the runner (gz/PX4 threading): bisect with speed factor
-   and compare gz ground truth vs PX4 timestamps on r1..r3; then define the G1.6 tolerance in GATES.md.(b) DONE S13 (r4 + Q1).
-   (c) final GATES.md G1 and remaining second keys.
-0'. S12 (done/partly): (a) runner: arm and offboard at fixed sim times, and call metrics.py at the end (sonnet, ~12 calls, two keys:
-   haiku re-checks sends.csv vs run.json); re-fly 3 same-seed hovers (haiku, as T18 brief); if spread persists, the
-   cause is below the runner (gz/PX4 threading), bisect with speed factor. (b) outer-loop review r3, opus, narrow.
-   (c) then final GATES.md G1 and remaining second keys (route check 10).
 1. Reference airframe model DONE (session 3): `design/ref_airframe_model.md`, flies with stock PID (hover u 0.1367,
    eRPM 998.7 rad/s, steps settle). Its open items 1-4 (reaction-torque scaling test, gyro log rate, run1 esc_rpm 0,
    run-to-run spread) are folded into the simulator work of item 4.
@@ -99,7 +95,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T24 | haiku (agent ended S13; its batch survives as host bash) | S13: G1.6 pre-test (step_roll, traj_lemniscate on quad5in) then 5 same-seed runs x hover/step_roll/traj_lemniscate, speed 1 | results/det_g16/, design/g16_s13.md | batch script /tmp/claude-1001/-home-ahugo-Documents-Drotek-Codes-PX4-Indi/52d81939-c2c5-4141-b338-03f1bc8a732b/scratchpad/g16/batch.sh (status.txt, spread.py there); S14 watches it; if lost, re-run missing rN dirs only |
+| T26 | host bash (no agent) | G1.6 same-seed batch at speed factor 4, 15 runs | results/det_g16_s4/ (status.txt) | if not BATCH_DONE and no process: `bash indi_flight/bench/g16_batch_s4.sh` after removing incomplete rN dirs (script re-flies all; edit loops to skip done runs) |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -132,6 +128,7 @@
 | 12 | T20 | opus | outer-loop review r3, narrow | done, 8 calls, ~$1.0 |
 | 12 | T21a | haiku | 3 hovers try 1 | stopped at run 1 (arm late), 3 calls, ~$0.03 |
 | 12 | T21 | haiku | 3 hovers try 2 | done, 11 calls, ~$0.05, 6.5 min wall |
+| 14 | T24 | host bash | G1.6 speed 1, 15 runs | done, 15/15 first attempt, 26 min wall, $0 |
 | 14 | T25 | opus | review r5 of A18 | done, 10 calls, ~$0.7, BLOCKING (yaw-rate double count) |
 
 ## Lessons proposed
