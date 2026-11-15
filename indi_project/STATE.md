@@ -48,7 +48,7 @@ owner decisions when you first act on them.
   set O, tracking criteria 1-3 met by a wide margin. Report: sec. 5.9, 6.5 GNSS paragraph, 8.11, 10.6, A.8 written.
   NEXT (session 58, then DONE): (1) independent review (fable, else opus; ~$1) of sec. 5.9 + 8.11 + 10.6 against
   `results/s8n_oset.md` and DECISIONS D-s8-*; fix what it finds; (2) short ch. 9 paragraph on stage 8 limits (FF share
-  unmeasured, O7 not probing actuator lag at outer bandwidth, hover effort); (3) rebuild report.pdf if a toolchain
+  ... DONE in s57 as sec. 9.6); (3) rebuild report.pdf if a toolchain
   exists (pandoc in the image?), else note it predates stage 8; (4) final summary at top of STATE, create `DONE`.**
 - **Latest (session 56, 2026-11-15): the T5 "lead" and the INDI POS gap were a GNSS delay mismatch (D-s8-gnss-delay,
   `results/s8k_gnss_delay.md`). `bench/gt_lag.py`: EKF position led ground truth by ~110 ms (velocity/attitude within
