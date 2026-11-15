@@ -14,7 +14,7 @@
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
-00000000. S19 NEXT: (1) pre-test 1 flight at speed 4 (host bash, $0): confirm attitude/angular-velocity truth now
+00000000. S19 NEXT: (1) pre-test 1 flight at speed 4 (T38, NOT run S18: on host run_scenario.py fails, WORLDS_DIR -> ../../indi_flight/sim/worlds; launch it the way T32/T36 did, inside Docker, see `results/pretest_simstep_s16/README.md` and `design/a12_fix_s18.md`; out dir `results/a12_fix_s18/pretest_truth_topics`): confirm attitude/angular-velocity truth now
    logged at 800 Hz (added to LOG_TOPICS S18) and g1.1 truth rows pass; (2) second keys for rate/attitude/hover/steps
    metrics (sonnet, one family per session); (3) self-tests for the 7 scripts (g1.4); (4) A-13 gyro gaps, A-10;
    (5) decide gz lockstep vs in-PX4 scheduled mode switch (G1.6a). vehicle_local_position 88.9 vs 125 Hz still open (g1.1).
@@ -76,7 +76,6 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T38 | pre-test truth topics, hover s4 | host bash | `results/a12_fix_s18/pretest_truth_topics/` | `python3 bench/run_scenario.py --scenario hover --controller pid_default --seed 1 --speed 4 --out results/a12_fix_s18/pretest_truth_topics`, then `bench/gate_g1.sh g1.1 <dir>` |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
