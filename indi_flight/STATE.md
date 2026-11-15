@@ -49,10 +49,15 @@
   spread (max_dev_h 24.9 %), gyro differs from +28 ms after arm: real SITL non-determinism, log needed from boot. Wrote `design/outer_loop_candidates_r4.md`
   (A13-A17 answer R3-1..R3-8, no interface change, no new round) and owner question Q1 (confirm A, not blocking).
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written (not tested).
-- Blocker: none. Q1 open (outer-loop architecture A, not blocking; stage 5 waits for it).
+- Blocker: none. Q1 answered: A confirmed, owner asks to consider differential flatness -> `design/flatness_r1.md`
+  (A18 jerk->omega_ff side channel); narrow review r5 (opus) of A18 is the last step before stage 5.
 - Outer-loop architecture study: 3 review rounds + r4 deltas done; owner confirmation pending (Q1).
 
 ## Next actions (in order)
+00. S14: (a) review r5 (opus, narrow, <=10 calls): `design/flatness_r1.md` vs arXiv 1809.04048 (source check of the
+   table in section 1) + `src/modules/mc_indi_rate_control` ff entry point; output `design/outer_loop_review_r5.md`.
+   (b) G1.6 run: 5 same-seed runs x (hover, one step, one trajectory) at speed 1 -> spreads vs thresholds (haiku).
+   (c) G1.1-G1.5 commands (`bench/gate_g1.sh`), remaining second keys. Determinism cause found S13 (gz no lockstep).
 0. S13: (a) determinism: spreads stay 10-25 % with windows aligned to 0.33 s: (i) why arm lands 0.28-0.61 s after
    30 s and why arm_late_s is missing; (ii) cause below the runner (gz/PX4 threading): bisect with speed factor
    and compare gz ground truth vs PX4 timestamps on r1..r3; then define the G1.6 tolerance in GATES.md.(b) DONE S13 (r4 + Q1).
@@ -90,7 +95,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T23 | haiku | S13: 2 same-seed hovers logged from boot; first divergence time; pre-arm gyro identical?; gz lockstep check | design/determinism_s13b.md | re-launch brief from STATE |
+| - | none | | | |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);

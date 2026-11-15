@@ -72,3 +72,11 @@ Open, to be written before code (MISSION "Decisions that are yours"):
 - Decision: same-seed spread is bounded in absolute terms, against the gate thresholds that consume each metric, and every later verdict must exceed the measured spread (GATES.md G1.6 a-d).
 - Alternatives: 2 % relative (rejected: ill-conditioned at the noise floor, 10-25 % on 3 cm deviations); bit-exact replay (needs lockstep between gz and PX4 and wall-clock-free MAVLink sends; out of reach unless T23 shows a cheap cause).
 - Overturn: T23 (`design/determinism_s13b.md`) finds a single fixable cause that makes runs bit-identical, or the measured spread exceeds 10 % of a gate threshold.
+
+## D-outer-arch (session 13): architecture A confirmed by the owner (Q1), plus A18 flatness feed-forward
+- Decision: A (A1-A17, `design/outer_loop_candidates_r2..r4.md`). Owner asked to consider differential flatness
+  (arXiv 1809.04048): A18 = jerk -> omega_ff side channel to the INDI rate module (`design/flatness_r1.md`, F-c).
+  It is implemented after base A and kept only if a measured tracking gain exceeds the same-seed spread.
+- Alternatives: F-a (no feed-forward), F-b (outer module runs the attitude loop, rejected: mode-dependent rate
+  setpoint publishers).
+- Overturn: review r5 finds a mode or edge that A18 breaks; tracking test shows no gain.

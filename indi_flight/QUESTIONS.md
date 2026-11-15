@@ -27,4 +27,11 @@
 **Meanwhile.** Stage 1 (G1 evidence and simulator) continues. Stage 5 code does not start before your answer.
 **Blocked:** no.
 
-**Answer:**
+**Answer:** Option A seems correct. I'm wondering using differential flatness as done in https://arxiv.org/pdf/1809.04048. Consider seriously this
+
+**Response (s13).** A taken as confirmed. The flatness proposal is studied in `design/flatness_r1.md`. A already
+implements the paper's incremental acceleration law (LIB:273). What A lacks is the jerk -> body-rate feed-forward,
+which `vehicle_attitude_setpoint` cannot carry. Proposed A18: a side-channel topic from the INDI position module to
+the INDI rate module, so stock modules stay at zero diff. The jerk comes from `trajectory_setpoint` (Auto and Orbit
+only). A18 is accepted on a measured tracking test. Next: narrow review r5 of A18, then stage 5 (base A first).
+Status: closed unless you object to A18.
