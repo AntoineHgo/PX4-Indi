@@ -35,7 +35,7 @@ owner decisions when you first act on them.
 
 ## Status summary (read this first)
 
-- **Latest (session 58, 2026-11-15): IN FLIGHT: fable review of sec. 5.9/8.11/9.6/10.6 vs `results/s8n_oset.md` + D-s8-*, output `report/review_s8.md` (if missing or partial on relaunch, relaunch only for what is missing). Then: fix findings, rebuild PDF (`docker/build_report.sh`, image px4-indi-report exists), final summary, `DONE`.**
+- **Latest (session 58, 2026-11-15): fable review DONE, `report/review_s8.md` (2 major, 11 minor; verdict: sections honest about the failed criterion). MAJOR: 10.6 says O4 payload 15 %, it is 25 %; 9.6/10.6 propose a lower specific-force bandwidth as untested remedy for hover effort, but D-s8-freeze / 5.9.4 record it was tested (LPF 5) and did not help. PDF toolchain verified (`docker/build_report.sh`, clean build, title now "INDI control for multicopters in PX4"); report.pdf in the tree is a trial build NOT yet committed (rebuild after fixes). NEXT (session 59, ~$1): (1) apply the 2 major + minor findings from review_s8.md yourself (proposed texts are in the file; check each against s8n_oset.md); (2) rebuild PDF, commit it; (3) final summary at top of STATE; (4) create `DONE`. Session 58 spent ~$2.4 of $3, mostly the fable review.**
 - **Latest (session 57, 2026-11-15): set-O verdict `s8n_oset.sh` flying (relaunched 04:14 by s56, log
   `results/s8n_oset.log`, ends S8N_DONE, ~1 min per flight, 4 at a time). Chained detached: `bench/s8p_hover_effort.sh`
   (waits for S8N_DONE, then T1 hover seeds 3-10 for pid_tuned + indi_pos_v3 into `results/s8m_smoke_gnss0/hover`, log
@@ -1253,3 +1253,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s57: verdict script --oset; hover criterion-4 seeds 3-10 chained after set O (D-s8-hover10). Agents: 0.
 - 2026-11-15 s57: report sec. 5.9 + ch. 6 GNSS paragraph (1 sonnet agent, 25 calls). Set O at seed 2 of 10.
 - 2026-11-15 s57: set O verdict: tracking better on 6/7 (all 10/10 seeds), 0 fails; hover effort 2.02x fails crit. 4 -> "does not outperform"; report 8.11/10.6/A.8. Agents 1 sonnet; runs 140 + 16.
+- 2026-11-15 s58: fable review of stage-8 sections (2 major, 11 minor, report/review_s8.md); PDF toolchain verified. Agents 1 fable; runs 0.
