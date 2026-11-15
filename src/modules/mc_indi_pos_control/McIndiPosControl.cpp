@@ -61,7 +61,7 @@ McIndiPosControl::~McIndiPosControl()
 bool
 McIndiPosControl::init()
 {
-	if (!_local_position_sub.registerCallback()) {
+	if (!_local_position_sub.registerCallback() || !_sensor_combined_sub.registerCallback()) {
 		PX4_ERR("callback registration failed");
 		return false;
 	}
@@ -238,7 +238,16 @@ McIndiPosControl::updateSensors(hrt_abstime now)
 
 	sensor_combined_s sensor;
 
-	if (_sensor_combined_sub.update(&sensor)) {
+	// the sensor_combined callback schedules Run() on every sample, so none is skipped
+	while (_sensor_combined_sub.update(&sensor)) {
+		const float sample_dt = sensor.accelerometer_integral_dt * 1e-6f;
+		const Vector3f f(sensor.accelerometer_m_s2);
+
+		if (f.isAllFinite() && (sample_dt > 0.f) && (sample_dt < kMaxDt)) {
+			_dv_sum += f * sample_dt;
+			_dv_dt_sum += sample_dt;
+		}
+
 		_sensor_combined = sensor;
 		_have_sensor = true;
 	}
@@ -289,7 +298,42 @@ McIndiPosControl::updateSensors(hrt_abstime now)
 		_mean_u_valid = ok && (seen == ((1u << kNumMotors) - 1u));
 		_mean_u = _mean_u_valid ? (u_sum / (float)kNumMotors) : NAN;
 		_esc_time = (esc_status.timestamp != 0) ? esc_status.timestamp : now;
+
+		// same window as the specific force, so both see the same averaging delay
+		if (_mean_u_valid) {
+			_u_window_sum += _mean_u;
+			_u_window_count++;
+
+		} else {
+			_u_window_valid = false;
+		}
 	}
+}
+
+void
+McIndiPosControl::closeInputWindow()
+{
+	if (_dv_dt_sum > 0.f) {
+		_f_b = _dv_sum / _dv_dt_sum;
+
+	} else {
+		// no new sample since the last cycle: keep the latest one
+		_f_b = Vector3f(_sensor_combined.accelerometer_m_s2);
+	}
+
+	if (_u_window_count > 0 && _u_window_valid) {
+		_mean_u = _u_window_sum / (float)_u_window_count;
+
+	} else if (!_u_window_valid) {
+		_mean_u_valid = false;
+		_mean_u = NAN;
+	}
+
+	_dv_sum.zero();
+	_dv_dt_sum = 0.f;
+	_u_window_sum = 0.f;
+	_u_window_count = 0;
+	_u_window_valid = true;
 }
 
 void
@@ -364,11 +408,13 @@ McIndiPosControl::runCycle(hrt_abstime now, bool new_position)
 {
 	// only while the external mode is active: otherwise the stock chain owns vehicle_rates_setpoint
 	if (!_active) {
+		closeInputWindow();
 		return;
 	}
 
 	// landed: no control law, zero rates and minimum thrust
 	if (_landed) {
+		closeInputWindow();
 		_needs_reset = true;
 		_hold_count = 0;
 		_failure_reported = false;
@@ -390,6 +436,8 @@ McIndiPosControl::runCycle(hrt_abstime now, bool new_position)
 	if (!new_position && !local_position_stale) {
 		return;
 	}
+
+	closeInputWindow();
 
 	const auto fresh = [now](bool have, hrt_abstime t) {
 		return have && (t <= now) && ((now - t) <= kStaleTimeout);
@@ -424,7 +472,7 @@ McIndiPosControl::runCycle(hrt_abstime now, bool new_position)
 	_last_cycle_time = _local_position.timestamp;
 
 	const bool esc_fresh = _mean_u_valid && (_esc_time <= now) && ((now - _esc_time) <= kEscMaxAge);
-	const Vector3f f_b(_sensor_combined.accelerometer_m_s2);
+	const Vector3f f_b = _f_b;
 
 	if (_needs_reset) {
 		_indi.reset(f_b, esc_fresh ? _mean_u : NAN);
@@ -489,6 +537,7 @@ McIndiPosControl::Run()
 {
 	if (should_exit()) {
 		_local_position_sub.unregisterCallback();
+		_sensor_combined_sub.unregisterCallback();
 		ScheduleClear();
 
 		if (_mode_state == ModeState::REGISTERED) {

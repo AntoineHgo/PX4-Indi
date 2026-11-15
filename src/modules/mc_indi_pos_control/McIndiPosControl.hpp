@@ -129,11 +129,12 @@ private:
 	void measureRate(hrt_abstime t);
 
 	void publishStatus(const IndiAccelControl::Output &out, float mean_u, bool mean_u_valid);
+	void closeInputWindow();
 
 	// ----- subscriptions / publications
 	uORB::SubscriptionCallbackWorkItem _local_position_sub{this, ORB_ID(vehicle_local_position)};
 	uORB::Subscription _vehicle_attitude_sub{ORB_ID(vehicle_attitude)};
-	uORB::Subscription _sensor_combined_sub{ORB_ID(sensor_combined)};
+	uORB::SubscriptionCallbackWorkItem _sensor_combined_sub{this, ORB_ID(sensor_combined)};	///< every sample, see updateSensors()
 	uORB::Subscription _esc_status_sub{ORB_ID(esc_status)};
 	uORB::Subscription _trajectory_setpoint_sub{ORB_ID(trajectory_setpoint)};
 	uORB::Subscription _land_detected_sub{ORB_ID(vehicle_land_detected)};
@@ -159,6 +160,15 @@ private:
 	bool _have_sensor{false};
 	bool _have_trajectory{false};
 	bool _landed{true};
+
+	// Specific force and mean u averaged over the samples since the previous control cycle. The law runs at the
+	// local position rate, below the rotor 1P frequency: the latest sample alone would alias the vibration.
+	matrix::Vector3f _dv_sum{};		///< m/s, sum of accelerometer_m_s2 * dt over the window
+	float _dv_dt_sum{0.f};		///< s
+	matrix::Vector3f _f_b{};		///< m/s^2, last window average
+	float _u_window_sum{0.f};
+	int _u_window_count{0};
+	bool _u_window_valid{true};
 
 	// ESC based mean thrust
 	float _mean_u{NAN};
