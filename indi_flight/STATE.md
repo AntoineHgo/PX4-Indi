@@ -13,10 +13,9 @@
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
-000000. NEXT (S17): (a) RUNNING S16 `bench/g16_batch_w125.sh` -> `results/det_g16_w125/status.txt` (resume: check
-   status, re-run missing flights). Re-fly PID baseline + G1.6 short repeat on the 1.25 ms world (5 runs x hover/step_roll/
-   traj_lemniscate, speed 4, `bench/g16_batch_s4.sh` copied with new out dir, ~12 min wall, $0) then re-score;
-   G1.6(a) re-test (2 periods = 2.5 ms, expected NOT met, cause = UDP mode command into non-lockstep gz).
+000000. NEXT (S17): (a) DONE S16: G1.6 repeat on 1.25 ms world 15/15 (`results/det_g16_w125/README.md`): tracking
+   matches 4 ms world within spread; G1.6(a) NOT MET (7.5-11 ms vs 2.5 ms), cause (c) unchanged -> record in GATES.md
+   G1.6 verdict. Effort doubled in manoeuvres: A-11 (haiku: recompute effort decimated to 285/250 Hz, close it).
    (b) A-10 partly explained S16 (`design/anomaly_a10_s16.md`); closing test: esc_status publish vs logged count.
    (c) G1.1-G1.5 commands (`bench/gate_g1.sh`), remaining second keys. Stage-3 item: cycle-count params
    (MC_INDI_DELAY, MC_INDI_ERPM_DLY, MC_INDI_DT_MAX) to time units. eRPM latency counts ESC output frames
@@ -104,6 +103,7 @@
 | 15 | T29 | haiku | second key window bounds | done, 2 calls, ~$0.05, AGREE 30/30 (<1 ms) |
 | 16 | T31 | sonnet | implement D-SIM-STEP | done, 11 calls, ~$0.45 |
 | 16 | T32 | host bash | pre-test 5 flights (rates, logger poll) | done, 5/5 flew, ~5 min wall, $0 |
+| 16 | T34 | host bash | G1.6 repeat, 1.25 ms world, 15 runs | done, 15/15 first attempt, ~10 min wall, $0 |
 | 16 | T33 | haiku | A-10 esc_status stamps | done, 10 calls, ~$0.05, one wrong claim corrected by me |
 
 ## Lessons proposed
