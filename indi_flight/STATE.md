@@ -40,14 +40,17 @@
   rejects NaN pos/vel so z cannot keep INDI in blind/no-GPS states; R3-3 open->INDI entry step, needs decaying
   offset + dwell; R3-8 `||` start fallback contradicts F-1), 4 MINOR. R3-8 decided by F-1: no fallback, start
   failure refuses arming (to DECISIONS.md). Try 1 of 3 hovers failed: arm denied 20-25 s (height estimate not
-  stable), climb > 8.8 s; constants moved to arm 30 s / offboard 52 s (committed 84b61e5c75). T21 retry flying.
+  stable), climb > 8.8 s; constants moved to arm 30 s / offboard 52 s (committed 84b61e5c75). T21 Try 2 DONE (`design/determinism_s12.md`): 3 ok runs,
+  arm 30.28-30.61 s (0.33 s spread, ack latency?), well-conditioned spreads down but still 10-25 % (roll RMS 11.6 %,
+  rotation 17.7 %, max_dev_h 24.9 %, rms_3d 4.7 %). arm_late_s absent although arm > 30.1 s: check the flag.
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written (not tested).
 - Blocker: none. No owner question open.
 - Outer-loop architecture study (MISSION section) runs in parallel with stages 1-3: not started.
 
 ## Next actions (in order)
-0. S13: (a) read `design/determinism_s12.md` Try 2 (T21): if spreads stay large with aligned windows, the cause
-   is below the runner (gz/PX4 threading), bisect with speed factor. (b) write `outer_loop_candidates_r4.md` (deltas
+0. S13: (a) determinism: spreads stay 10-25 % with windows aligned to 0.33 s: (i) why arm lands 0.28-0.61 s after
+   30 s and why arm_late_s is missing; (ii) cause below the runner (gz/PX4 threading): bisect with speed factor
+   and compare gz ground truth vs PX4 timestamps on r1..r3; then define the G1.6 tolerance in GATES.md. (b) write `outer_loop_candidates_r4.md` (deltas
    for R3-1..R3-8, cheap, by me), record R3-8 in DECISIONS.md, then owner question (one-page summary, not blocking).
    Review rounds: 3 done, last one no BLOCKING; r4 deltas need no new full round unless a delta changes interfaces.
    (c) final GATES.md G1 and remaining second keys.
@@ -84,7 +87,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T21 | haiku | 3 same-seed hovers with fixed-time runner | `design/determinism_s12.md`, `results/det_s12/` | relaunch, cmd in notes |
+| - | none | | | |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -116,6 +119,7 @@
 | 12 | T19 | sonnet | runner fixed sim-time arm/offboard + metrics call | done, 9 calls, ~$0.4 |
 | 12 | T20 | opus | outer-loop review r3, narrow | done, 8 calls, ~$1.0 |
 | 12 | T21a | haiku | 3 hovers try 1 | stopped at run 1 (arm late), 3 calls, ~$0.03 |
+| 12 | T21 | haiku | 3 hovers try 2 | done, 11 calls, ~$0.05, 6.5 min wall |
 
 ## Lessons proposed
 - Haiku handles a well-specified log check (10 calls) for ~$0.06: use it for every bounded log/metric check.
