@@ -35,6 +35,18 @@ owner decisions when you first act on them.
 
 ## Status summary (read this first)
 
+- **Latest (session 55, 2026-11-15): causes found (`results/s8j_pos_v3_smoke.md` sec. "Session 55", `bench/s8_track_diag.py`
+  a37025b932). (a) Reference timing is fine (logged setpoint = analytic path delayed 2 ms). (b) The INDI POS LEAD is the
+  closed-loop phase of the cascade with full a_ref FF over a lagging inner loop, p/r ~ 1/(1 - j tau w^3/K): arm C
+  (tau ~0.2 s) predicted ~90 ms, measured +90 ms; D (tau ~20 ms) still +160 ms on y with 7 % a_f overshoot (open).
+  pid_tuned lags because rotor drag (~0.12 m/s^2 per m/s) is uncompensated. (c) D's 2.4x EFFORT = differenced jerk
+  staircase (50 Hz stream held at 125 Hz, ~7x the smooth step size into the rate setpoint). Fix b9fb3ce5a9: 2nd-order
+  LPF at MC_INDIP_LPF_CUT on the differenced jerk (gtest added, 19/19), D-s8-jerk-lpf. RUNNING/DONE: arm D' T5 seed 1
+  `bench/s8j3_pos_v3_jlpf.sh` (log `results/s8j_pos_v3_smoke/s8j3.log`, ends S8J3_DONE, resumable by re-running) ->
+  `s8j_pos_v3_smoke/traj_lemniscate/indi_pos_v3_jlpf/seed1`. NEXT: read its metrics.log and
+  `python3 indi_project/bench/s8_track_diag.py <run dir>`; if effort ~PID level and track <= D, go to O-12 staged
+  screening on T5/H1 (outer gains MPC_XY_P / MPC_XY_VEL_P_ACC as INDI POS-only params would be needed: today the
+  module reads the MPC_* params shared with pid_tuned, so screening them needs MC_INDIP gain params first; decide).**
 - **Latest (session 54, 2026-11-15): stage-8 set O FROZEN (`bench/scenarios.md` sec. 10, a889176009, D-s8-oset).
   O5 diagnosis: the com_shift injector applies its offset torque fixed in the WORLD frame. At the circle's 15-35 deg
   tilts it projects onto body yaw, yaw saturates (CW motors 1.0, CCW 0.62, yaw 60 deg off), then thrust is lost. This
@@ -1185,3 +1197,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s53: O-13 pre-check: 5/7 flyable, circle O2/O5 slowed 8 -> 6.5 m/s, re-check running. Session total: agents 0, runs 3 + 7 + 2, builds 1.
 - 2026-11-15 s54: O5 crash diagnosed (com_shift injector world-fixed torque -> yaw saturation at tilt); O2 circle 5 m/s, O5 on vertical sine; set O frozen (sec. 10); indi_pos_v3 params; smoke launched. Agents: 0. Runs: 4 + 3.
 - 2026-11-15 s54: indi_pos_v3 smoke: T5 0.64 m vs PID 0.38 m at 2.4x effort, leads the reference; arm C: FF causes the effort, not the lead. Session total: agents 0, runs 8, builds 2.
+- 2026-11-15 s55: T5 lead explained (cascade + FF over inner lag, not timing); D effort = differenced-jerk staircase, LPF fix b9fb3ce5a9; arm D' flying. Agents: 0. Runs: 1, builds 2 (gtest, sitl).

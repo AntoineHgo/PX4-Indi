@@ -896,3 +896,21 @@ simulator change that would alter H3 / T-set history, and it costs budget the st
 offset in the model variant: this loses the step disturbance.
 Consequence: O5 tests a CoM-shift step only in near-level flight. The report states this, and that O4's payload_add is
 a world-fixed force without payload inertia.
+
+D-s8-jerk-lpf (session 55, 2026-11-15): low-pass filter the differenced jerk in the INDI POS law
+
+Context: arm D (indi_pos_v3) on T5 had 2.4x pid_tuned's motor-rate effort, arm C (jerk FF off) 1.1x. `omega_ff` had
+the analytic magnitude, but it was a 20 ms staircase: a 50 Hz offboard stream, differenced and held at a 125 Hz loop
+(`results/s8j_pos_v3_smoke.md`, session 55).
+Decision: filter the differenced jerk with the measurement filter (2nd-order, MC_INDIP_LPF_CUT, default 10 Hz)
+before the feedforward (b9fb3ce5a9). A jerk supplied in `trajectory_setpoint.jerk` is used unfiltered.
+Why: the steps carry no information (the path is smooth), and they reach the rate setpoint directly. Filtering adds
+~20 ms of group delay to a feedforward that runs ahead of the inner loop's ~200 ms lag, so little is lost. Reusing
+the existing cut-off adds no parameter.
+Alternatives rejected: (a) the runner sends the analytic jerk. MAVLink SET_POSITION_TARGET_LOCAL_NED has no jerk
+field, so this would need a non-standard path that a real offboard user would not have. (b) A separate jerk cut-off
+parameter: no evidence yet that it needs a different value. (c) FF off: it brings back the 200 ms inner lag and a
+worse track (C: 0.76 m).
+Also recorded: the INDI POS lead over the reference is the expected closed-loop phase of a cascade with full a_ref
+feedforward over a lagging inner loop (p/r ~ 1/(1 - j tau w^3/K)). It is not a reference-timing error: the logged
+stream is 2 ms behind the analytic path.
