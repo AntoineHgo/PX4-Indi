@@ -45,7 +45,8 @@
   rotation 17.7 %, max_dev_h 24.9 %, rms_3d 4.7 %). arm_late_s absent although arm > 30.1 s: check the flag.
 - Session 13 (launch 20261115-220341, cap $3): arm/offboard 0.28-0.61 s "latency" = runner observes mode via
   1 Hz HEARTBEAT (same per-run offset on arm and offboard); arm_late_s correctly absent (tests send time). T22 checks
-  it in the ULogs and re-scores det_s12 with a ULog-aligned window. Wrote `design/outer_loop_candidates_r4.md`
+  it in the ULogs: DONE (`design/determinism_s13.md`): PX4 offboard at 52.024-52.032 s, re-aligned window leaves the
+  spread (max_dev_h 24.9 %), gyro differs from +28 ms after arm: real SITL non-determinism, log needed from boot. Wrote `design/outer_loop_candidates_r4.md`
   (A13-A17 answer R3-1..R3-8, no interface change, no new round) and owner question Q1 (confirm A, not blocking).
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written (not tested).
 - Blocker: none. Q1 open (outer-loop architecture A, not blocking; stage 5 waits for it).
@@ -89,7 +90,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T22 | haiku | S13: ULog arm/offboard instants + re-scored det_s12 with ULog-aligned window | design/determinism_s13.md | re-launch brief from STATE |
+| T23 | haiku | S13: 2 same-seed hovers logged from boot; first divergence time; pre-arm gyro identical?; gz lockstep check | design/determinism_s13b.md | re-launch brief from STATE |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
