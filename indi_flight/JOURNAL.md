@@ -11,3 +11,4 @@
 - 2026-11-15 S7: metrics.py ported with analytic trajectory reference (T9), self-test passes; review r2 deferred to a >= $3 session.
 - 2026-11-15 S8: T10 metrics time base verified (no t0/origin correction), timebase_check.py added.
 - 2026-11-15 S8: T11 second key confirms metrics.py trajectory error (3 digits, 3 runs).
+- 2026-11-15 S11: route check 10; outer-loop review r2 (1 blocking, N1) and candidates r3; determinism pre-study reproduces A-7 (arm time spread 2.2 s sim).
