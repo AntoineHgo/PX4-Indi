@@ -253,6 +253,34 @@ McIndiPosControl::updateSensors(hrt_abstime now)
 		_have_sensor = true;
 	}
 
+	// estimator in-run accel bias, used only when it belongs to the accelerometer behind sensor_combined (as in
+	// VehicleAcceleration): without a velocity integrator in the law, a bias would become a steady position offset
+	sensor_selection_s selection;
+
+	if (_sensor_selection_sub.update(&selection)) {
+		_accel_device_id = selection.accel_device_id;
+	}
+
+	estimator_selector_status_s selector_status;
+
+	if (_estimator_selector_status_sub.update(&selector_status)) {
+		_estimator_sensor_bias_sub.ChangeInstance(selector_status.primary_instance);
+	}
+
+	estimator_sensor_bias_s bias;
+
+	if (_estimator_sensor_bias_sub.update(&bias)) {
+		const Vector3f accel_bias(bias.accel_bias);
+
+		if (bias.accel_bias_valid && (bias.accel_device_id != 0) && (bias.accel_device_id == _accel_device_id)
+		    && accel_bias.isAllFinite()) {
+			_accel_bias = accel_bias;
+
+		} else {
+			_accel_bias.zero();
+		}
+	}
+
 	trajectory_setpoint_s trajectory;
 
 	if (_trajectory_setpoint_sub.update(&trajectory)) {
@@ -321,6 +349,8 @@ McIndiPosControl::closeInputWindow()
 		// no new sample since the last cycle: keep the latest one
 		_f_b = Vector3f(_sensor_combined.accelerometer_m_s2);
 	}
+
+	_f_b -= _accel_bias;
 
 	if (_u_window_count > 0 && _u_window_valid) {
 		_mean_u = _u_window_sum / (float)_u_window_count;

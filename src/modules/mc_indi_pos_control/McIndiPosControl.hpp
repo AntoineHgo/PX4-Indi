@@ -48,11 +48,14 @@
 #include <uORB/topics/arming_check_reply.h>
 #include <uORB/topics/arming_check_request.h>
 #include <uORB/topics/esc_status.h>
+#include <uORB/topics/estimator_selector_status.h>
+#include <uORB/topics/estimator_sensor_bias.h>
 #include <uORB/topics/indi_pos_status.h>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/register_ext_component_reply.h>
 #include <uORB/topics/register_ext_component_request.h>
 #include <uORB/topics/sensor_combined.h>
+#include <uORB/topics/sensor_selection.h>
 #include <uORB/topics/setpoint_config.h>
 #include <uORB/topics/trajectory_setpoint.h>
 #include <uORB/topics/unregister_ext_component.h>
@@ -136,6 +139,9 @@ private:
 	uORB::Subscription _vehicle_attitude_sub{ORB_ID(vehicle_attitude)};
 	uORB::SubscriptionCallbackWorkItem _sensor_combined_sub{this, ORB_ID(sensor_combined)};	///< every sample, see updateSensors()
 	uORB::Subscription _esc_status_sub{ORB_ID(esc_status)};
+	uORB::Subscription _estimator_selector_status_sub{ORB_ID(estimator_selector_status)};
+	uORB::Subscription _estimator_sensor_bias_sub{ORB_ID(estimator_sensor_bias)};
+	uORB::Subscription _sensor_selection_sub{ORB_ID(sensor_selection)};
 	uORB::Subscription _trajectory_setpoint_sub{ORB_ID(trajectory_setpoint)};
 	uORB::Subscription _land_detected_sub{ORB_ID(vehicle_land_detected)};
 	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
@@ -165,7 +171,9 @@ private:
 	// local position rate, below the rotor 1P frequency: the latest sample alone would alias the vibration.
 	matrix::Vector3f _dv_sum{};		///< m/s, sum of accelerometer_m_s2 * dt over the window
 	float _dv_dt_sum{0.f};		///< s
-	matrix::Vector3f _f_b{};		///< m/s^2, last window average
+	matrix::Vector3f _f_b{};		///< m/s^2, last window average, estimator accel bias removed
+	matrix::Vector3f _accel_bias{};		///< m/s^2, estimator in-run bias of the selected accelerometer, else zero
+	uint32_t _accel_device_id{0};		///< selected accelerometer (sensor_combined source)
 	float _u_window_sum{0.f};
 	int _u_window_count{0};
 	bool _u_window_valid{true};
