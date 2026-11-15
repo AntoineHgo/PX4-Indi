@@ -35,6 +35,18 @@ owner decisions when you first act on them.
 
 ## Status summary (read this first)
 
+- **Latest (session 54, 2026-11-15): stage-8 set O FROZEN (`bench/scenarios.md` sec. 10, a889176009, D-s8-oset).
+  O5 diagnosis: the com_shift injector applies its offset torque fixed in the WORLD frame. At the circle's 15-35 deg
+  tilts it projects onto body yaw, yaw saturates (CW motors 1.0, CCW 0.62, yaw 60 deg off), then thrust is lost. This
+  happens at 8, 6.5 and 5 m/s: an injector artefact. O5 now = com_shift on the near-level vertical sine
+  (`o5_zsine_com_shift`: 0.19 m, 0.75 deg, no saturation); O2 = circle at 5 m/s (0.58 m, no saturation).
+  Pre-check table in sec. 10 and `results/s8i_o13_precheck.md`. Acceptance for INDI POS: better on >= 5 of 7, not
+  worse > 10 % on any, no failure, hover effort <= 1.5x pid_tuned; verdict pair pid_tuned vs indi_pos_v3 at 10 seeds.
+  `bench/params/indi_pos_v3.params` (0120434c2b). Smoke IN FLIGHT: `bench/s8j_pos_v3_smoke.sh` (rebuild + T5 indi_pos_v3,
+  T1 hover indi_pos_v3, T5 pid_tuned; seed 1) -> `results/s8j_pos_v3_smoke/`, log `results/s8j_pos_v3_smoke.log`
+  (ends S8J_DONE). NEXT: read the smoke (T5 traj rms vs pid_tuned, hover effort vs 1.5x pid_tuned and attitude); then
+  O-12 staged screening on T5/H1 only (MC_INDIP_* gains; `bench/tune.py --stages`), freeze indi_pos_v3, then fly set O
+  (A and D at 10 seeds; C and B at 3 seeds as context).**
 - **Latest (session 53, 2026-11-15): owner stage-8 review CLOSED (note removed; F1-F6 all done). F2: diagnostic
   `diag_z_multisine` (9bb3edf08d): raw eRPM thrust synchronous with a_f within 0.3-0.4 cycle (corr 0.99-1.00); the hover
   3-4 cycle estimate was an artefact. MC_INDIP_DLY 0 in `bench/params/indi_pos_v0.params` (D-s8-delay-final).
@@ -1163,3 +1175,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s53: F2 lag identified on a vertical multisine (synchronous, DLY 0), F3 accel bias fix; s8h regression running. Agents: 0. Runs: 1 (+2 queued).
 - 2026-11-15 s53: s8h: no regression (2.59 Hz PID inner mode, D-hover-spread), owner review note closed; O1-O7 added, O-13 pre-check flying. Runs: +3 (+7 pre-check).
 - 2026-11-15 s53: O-13 pre-check: 5/7 flyable, circle O2/O5 slowed 8 -> 6.5 m/s, re-check running. Session total: agents 0, runs 3 + 7 + 2, builds 1.
+- 2026-11-15 s54: O5 crash diagnosed (com_shift injector world-fixed torque -> yaw saturation at tilt); O2 circle 5 m/s, O5 on vertical sine; set O frozen (sec. 10); indi_pos_v3 params; smoke launched. Agents: 0. Runs: 4 + 3.
