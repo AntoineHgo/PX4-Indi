@@ -36,9 +36,10 @@ owner decisions when you first act on them.
 ## Status summary (read this first)
 
 - **Latest (session 49, 2026-11-15): stage-8 implementation spec written (`plan/s8_impl_spec.md`, D-s8-spec: jerk-ff
-  signs corrected). Task A (library `src/lib/indi_accel_control/` + gtests) delegated to sonnet, log
-  `plan/impl_log_s8_lib.md`. NEXT: verify task A (run its gtests yourself, review the law), commit, then task B (module),
-  task C (G_T ident script), freeze scenarios O1-O7 with the O-13 pid_tuned pre-check.**
+  signs corrected). Task A DONE: `IndiAccelControl` library 2fcf22a017, 18 gtests pass (re-run by orchestrator in
+  Docker; law lines reviewed against the spec; deviations in `plan/impl_log_s8_lib.md`). Task C (G_T/k_cmd ident,
+  `bench/ident_gt.py` -> `results/s8_ident_gt.md`) delegated to haiku. NEXT: check task C, then task B (module, one
+  sonnet task, spec sec. 3; needs a fresh session budget ~$0.8), then freeze O1-O7 with the O-13 pid_tuned pre-check.**
 - **Latest (session 48, 2026-11-15): owner hover note closed. Report 8.10 (v3 on V') and 10.5 (stage-2 conclusion)
   written. Causal test (`results/hover_cause.md`): the eRPM state shakes INDI at 4-10 Hz but adds no effort; the tuned
   PID's hover effort doubled in that batch (2-4 Hz roll mode, cause unknown), ratio 0.96 there. D-hover-lpf: no
@@ -1081,3 +1082,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s46: outer-gain diagnostic committed (D-outer-check); v3 ACT_BLD 0 smoke = v2; V' implemented; Tb screening: 0.3/1.0 remove motor-loss tilt, 0.1 pruned; stage 2 running. Agents: 1 sonnet. Runs: 19 (+18).
 - 2026-11-15 s47: hover effort 5 seeds (~2x PID, inherited from v2), yaw stage 2, indi_v3 frozen, V' flown (200) and judged: v3 matches tuned PID, does not outperform it (W1/W4 exceed the vehicle for all). Report 7.8. Agents: 0. Runs: 236 (+4 W1 diag).
 - 2026-11-15 s48: owner hover note (a)-(c) closed (tooling, cause file, causal test: eRPM state shakes, no effort; PID reference unstable), D-hover-lpf, report 8.10/10.5, stage-8 code facts. Agents: 1 sonnet. Runs: 9.
+- 2026-11-15 s49: stage-8 impl spec (D-s8-spec, jerk-ff signs fixed), task A library + 18 gtests (2fcf22a017), task C launched. Agents: 1 sonnet (13 calls, ~$0.5), 1 haiku. Runs: 0.
