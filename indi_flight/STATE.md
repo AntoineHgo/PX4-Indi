@@ -17,7 +17,7 @@
    status, re-run missing flights). Re-fly PID baseline + G1.6 short repeat on the 1.25 ms world (5 runs x hover/step_roll/
    traj_lemniscate, speed 4, `bench/g16_batch_s4.sh` copied with new out dir, ~12 min wall, $0) then re-score;
    G1.6(a) re-test (2 periods = 2.5 ms, expected NOT met, cause = UDP mode command into non-lockstep gz).
-   (b) A-10 (esc_status zero-dt pairs): haiku, read gz_bridge ESC publish + count in step_roll_sp4 log.
+   (b) A-10 partly explained S16 (`design/anomaly_a10_s16.md`); closing test: esc_status publish vs logged count.
    (c) G1.1-G1.5 commands (`bench/gate_g1.sh`), remaining second keys. Stage-3 item: cycle-count params
    (MC_INDI_DELAY, MC_INDI_ERPM_DLY, MC_INDI_DT_MAX) to time units. eRPM latency counts ESC output frames
    (= controller cycles; SIM_GZ_ERPM_LAT default 0 -> 1 frame), `design/sim_step_impl_s16.md`.
@@ -104,6 +104,7 @@
 | 15 | T29 | haiku | second key window bounds | done, 2 calls, ~$0.05, AGREE 30/30 (<1 ms) |
 | 16 | T31 | sonnet | implement D-SIM-STEP | done, 11 calls, ~$0.45 |
 | 16 | T32 | host bash | pre-test 5 flights (rates, logger poll) | done, 5/5 flew, ~5 min wall, $0 |
+| 16 | T33 | haiku | A-10 esc_status stamps | done, 10 calls, ~$0.05, one wrong claim corrected by me |
 
 ## Lessons proposed
 - Haiku handles a well-specified log check (10 calls) for ~$0.06: use it for every bounded log/metric check.
