@@ -35,13 +35,23 @@
   with the same seed, roll attitude RMS spread 37 %. run_scenario.py does not write metrics.json (agent ran metrics.py).
   Review r3 not launched (budget < 2x its cost). Untracked `results/pretest_logging_s10_try1/` = T15's failed first try (raw, keep untracked).
 - Session 12 (launch 20261115-215107, cap $3): T19 DONE (runner arms at sim 20 s, hold 39 s, offboard 40 s,
-  runs metrics.py; `design/runner_fixed_times_s12.md`, I read the diff). T20 opus review r3 running. T21 haiku: 3 hovers.
+  runs metrics.py; `design/runner_fixed_times_s12.md`, I read the diff). T20 review r3 DONE (`design/outer_loop_review_r3.md`):
+  NO BLOCKING; 4 MAJOR (R3-1 per-group reset impossible, run lib on all axes and override open group; R3-2 lib
+  rejects NaN pos/vel so z cannot keep INDI in blind/no-GPS states; R3-3 open->INDI entry step, needs decaying
+  offset + dwell; R3-8 `||` start fallback contradicts F-1), 4 MINOR. R3-8 decided by F-1: no fallback, start
+  failure refuses arming (to DECISIONS.md). Try 1 of 3 hovers failed: arm denied 20-25 s (height estimate not
+  stable), climb > 8.8 s; constants moved to arm 30 s / offboard 52 s (committed 84b61e5c75). T21 retry flying.
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written (not tested).
 - Blocker: none. No owner question open.
 - Outer-loop architecture study (MISSION section) runs in parallel with stages 1-3: not started.
 
 ## Next actions (in order)
-0. S12: (a) runner: arm and offboard at fixed sim times, and call metrics.py at the end (sonnet, ~12 calls, two keys:
+0. S13: (a) read `design/determinism_s12.md` Try 2 (T21): if spreads stay large with aligned windows, the cause
+   is below the runner (gz/PX4 threading), bisect with speed factor. (b) write `outer_loop_candidates_r4.md` (deltas
+   for R3-1..R3-8, cheap, by me), record R3-8 in DECISIONS.md, then owner question (one-page summary, not blocking).
+   Review rounds: 3 done, last one no BLOCKING; r4 deltas need no new full round unless a delta changes interfaces.
+   (c) final GATES.md G1 and remaining second keys.
+0'. S12 (done/partly): (a) runner: arm and offboard at fixed sim times, and call metrics.py at the end (sonnet, ~12 calls, two keys:
    haiku re-checks sends.csv vs run.json); re-fly 3 same-seed hovers (haiku, as T18 brief); if spread persists, the
    cause is below the runner (gz/PX4 threading), bisect with speed factor. (b) outer-loop review r3, opus, narrow.
    (c) then final GATES.md G1 and remaining second keys (route check 10).
@@ -75,7 +85,6 @@
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | T21 | haiku | 3 same-seed hovers with fixed-time runner | `design/determinism_s12.md`, `results/det_s12/` | relaunch, cmd in notes |
-| T20 | opus | outer-loop review r3, narrow (A10-A12) | `design/outer_loop_review_r3.md` | relaunch same brief |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -105,6 +114,8 @@
 | 11 | T17 | sonnet | route check 10 | done, 6 calls, ~$0.2 |
 | 11 | T18 | haiku | determinism pre-study, 3 hovers | done, 12 calls, ~$0.05, 6 min wall |
 | 12 | T19 | sonnet | runner fixed sim-time arm/offboard + metrics call | done, 9 calls, ~$0.4 |
+| 12 | T20 | opus | outer-loop review r3, narrow | done, 8 calls, ~$1.0 |
+| 12 | T21a | haiku | 3 hovers try 1 | stopped at run 1 (arm late), 3 calls, ~$0.03 |
 
 ## Lessons proposed
 - Haiku handles a well-specified log check (10 calls) for ~$0.06: use it for every bounded log/metric check.
