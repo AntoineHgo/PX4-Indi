@@ -28,7 +28,10 @@
 - Session 11 (launch 20261115-214208, cap $3): launched T16 review r2 (opus, narrow, <=12 calls) and T17 route
   check 10 (sonnet, DONE: `design/route_check_10.md`, on path but slow; next = determinism G1.6, final GATES G1,
   second keys, sim-time injection hook; r2 noted as against check-05 rule: accepted, it is the one narrow round
-  MISSION requires, already planned S6). T18 determinism pre-study launched. Untracked `results/pretest_logging_s10_try1/` = T15's failed first try (raw, keep untracked).
+  MISSION requires, already planned S6). T16 review r2 DONE (`design/outer_loop_review_r2.md`): 1 BLOCKING (N1 acceleration-only axes lose drag damping
+  under INDI: descend failsafe, blind land, Altitude xy), 2 MAJOR, 4 MINOR. I wrote `design/outer_loop_candidates_r3.md`
+  (A10 per-axis-group open loop for acceleration-only setpoints, A11 thrust gap = decision 2, A12 minors).
+  T18 determinism pre-study launched. Untracked `results/pretest_logging_s10_try1/` = T15's failed first try (raw, keep untracked).
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written (not tested).
 - Blocker: none. No owner question open.
 - Outer-loop architecture study (MISSION section) runs in parallel with stages 1-3: not started.
@@ -40,6 +43,8 @@
 2. Outer-loop study: r2 DONE S6 (`design/outer_loop_candidates_r2.md`: A amended A1-A9 closing F1-F17,
    requirement amendments R1a-R52, 3 open questions). NEXT (S7 start, ~$1.2): review round 2, fable, narrow brief:
    candidates_r2 vs review_r1 findings + the 3 open questions + source; output `design/outer_loop_review_r2.md`.
+   r2 DONE S11 (1 BLOCKING). NEXT: round 3, opus, NARROW (A10-A12 of candidates_r3 vs review_r2 + source, <=8 calls,
+   ~$0.6); if no BLOCKING, then the owner question below (not blocking).
    If no BLOCKING: fold R1a-R52 into requirements, write owner question (one-page summary) in QUESTIONS.md, do
    NOT block (continue stage 1). Module rename decision (A1: rewrite mc_indi_pos_control in place) goes to
    DECISIONS.md with the owner answer.
@@ -61,7 +66,6 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T16 | outer-loop review r2 | opus | design/outer_loop_review_r2.md | relaunch same brief if file incomplete |
 | T18 | determinism pre-study, 3 PID hovers seed 1 | haiku | design/determinism_s11.md, results/det_s11/ | relaunch same brief |
 
 ## Open problems
@@ -88,6 +92,7 @@
 | 9 | T13 | haiku | pre-test flight of runner | done, 12 calls, ~$0.1, found x500 hard-code (fixed), then flew |
 | 10 | T14 | sonnet | applied_timing.py + self-test | done, 6 calls, ~$0.34 |
 | 10 | T15 | haiku | logger topics file + pre-test flight | done, 27 calls, ~$0.1, 21 min wall (one rerun) |
+| 11 | T16 | opus | outer-loop review r2, narrow | done, 7 calls, ~$0.6 (opus ~1/4 of fable r1) |
 | 11 | T17 | sonnet | route check 10 | done, 6 calls, ~$0.2 |
 
 ## Lessons proposed
@@ -95,4 +100,6 @@
 - At a $1.6 cap: one sonnet agent of ~15 calls (~$0.5) plus state and commit; no fable work.
 - At a $3 cap launch one agent per session (session 2: two sonnet agents ~$1.4 in 30 min, both cut).
 - A fable review of ~1 KLOC of design + source costs ~$2.5: give it a whole session.
+- Opus with a narrow brief (one interface, <=12 calls, early skeleton write) reviews ~200 lines of design + source
+  for ~$0.6: use opus, not fable, for design review rounds.
 - Web-research agents cost about 3x a code-read agent of the same call count; brief them at 20 calls.
