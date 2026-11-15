@@ -33,3 +33,31 @@ The conclusion rests on one simulated airframe and no hardware flight. The distu
 Section 9.5 lists what remains before real flight and is not repeated here. The first item follows directly from this report: decide how the actuator state is obtained on hardware, from ESC telemetry or from a measured and verified time constant, and test sensitivity to mismatch in both directions on more than one airframe. Identification of the control effectiveness and motor time constant on a real vehicle, SIH and hardware-in-the-loop tests, a decision on whether yaw should stay on PID, and a staged flight protocol with criteria fixed in advance complete the list.
 
 On this evidence, INDI is worth pursuing where disturbance rejection matters and the actuator dynamics can be measured. It should not replace the PID rate loop as a default without a way to detect or bound the actuator-model error.
+
+## 10.5 Stage 2: measured actuator state and the v3 blend
+
+Stage 2 moved INDI into its own module (`mc_indi_rate_control`, O-11), gave it the actuator state from simulated ESC
+rotor-speed telemetry (v2), added realistic sensing (1 kHz gyro, vibration, eRPM quantisation, latency and drop-outs),
+retuned the PID baseline for that simulation, and judged the result on two new held-out sets frozen in advance.
+
+**The answer does not change: INDI does not outperform PID.** INDI v2 lost on V, 8 of 14 entries worse by more than
+10 % (section 8.9). INDI v3 reaches parity with the tuned PID on V', within 5 % on every completed entry and never
+significantly worse, but better by 10 % on none (section 8.10).
+
+**The stage's main finding is a mechanism.** Feeding the measured rotor speed back as the actuator state makes INDI
+exact about the torque the rotors produce and therefore blind to any gap between command and output: the fixed point
+holds that gap with a standing rate error, and on a motor fault v2 settled at a 13-14 deg tilt where v1 and PID
+recovered (section 8.9). Measured actuator feedback removes the implicit integral action of the model-based INDI. The
+v3 blend, measured state above 1/(2 pi Tb) and modelled state below it, restores that action and removes every
+actuator-gap failure of v2 (9.1x, 2.7x and 1.9x the tuned PID become 0.95x, 1.01x and 0.99x). Hardware INDI built on
+ESC telemetry should be designed with this in mind.
+
+**Hover effort stays about 2x PID's** in every stage-2 version. Most of it is structural: the acceleration feedback
+at gain 1/G1 passes 30-80 Hz gyro and vibration noise to the torque command, which only a lower, synchronised INDI
+filter cut-off could reduce, at a cost in phase (section 8.10).
+
+**Two V' entries measure the vehicle, not the controllers**: the x500 cannot hold altitude with one motor at 0.6
+thrust, and loses it in about half the runs at 75 % battery thrust, whatever the controller. Their severity was not
+checked before V' was frozen.
+
+The outer-loop (linear acceleration) INDI of stage 8 had not been evaluated when this section was written.
