@@ -62,3 +62,9 @@ controller; W4 vp_sag75_att pid_default 7, pid_tuned 6, indi_v2 3, indi_v3 6 of 
   (only W3/W5 were harness-checked), so their severity was not calibrated; that is a design flaw of V', recorded here
   rather than repaired after the fact. A watchdog-off diagnostic of W1 (post-hoc) is the next step.
 - indi_v2 has fewer W4 trips (3 vs 6) but 2-9x worse attitude wherever it survives the gap entries.
+
+## Post-hoc W1 diagnostic (watchdog off, seed 1, `bench/vprime_w1_diag.sh`)
+Every controller descends from the 5 m hold to the ground after the motor-1 fault (minimum height -0.1 to 0.0 m, at
+t = 38-41 s for pid_default, pid_tuned and indi_v3, t = 60 s for indi_v2; flight ends on the ground). None recovers:
+with motor 1 limited to 0.6 thrust at a hover throttle of ~0.59, the x500 cannot hold altitude whatever the
+controller. W1 measures the vehicle, not the controllers, and its 10/10 failures are identical for all four.
