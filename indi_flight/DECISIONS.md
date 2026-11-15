@@ -39,3 +39,11 @@ Open, to be written before code (MISSION "Decisions that are yours"):
 - Reason: every gate result is on this airframe; a separate model with its own sourced values table keeps the
   x500 untouched for the G6 outlook and makes each value traceable.
 - Overturn: if an existing PX4 gz model already matches the 5-inch class within 20 % on every value of the table.
+
+### D-2 Reference-airframe model lives in `indi_flight/sim/models/`, served via `PX4_GZ_MODELS` (2026-11-15)
+- Alternatives: add it to `Tools/simulation/gz/models` (a submodule: PX4-gazebo-models, a change there is an
+  upstream PR to another repo); generate it per run from x500 (the archive's `model_variant.py` approach).
+- Reason: no submodule diff, versioned with the evidence, and the runner already overrides `PX4_GZ_MODELS` per run.
+  A SITL airframe file (`ROMFS/.../init.d-posix/airframes/4xxx_gz_<name>`) is still needed to start it; it carries
+  the `CA_*` geometry and is part of the firmware-side branch only if it is offered upstream (decide at stage 7).
+- Overturn: if the overlay path breaks model resolution for nested includes, or upstream later wants the model.

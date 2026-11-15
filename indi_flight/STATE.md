@@ -7,9 +7,11 @@
 - Outer-loop architecture study (MISSION section) runs in parallel with stages 1-3: not started.
 
 ## Next actions (in order)
-1. Reference airframe (F-3): sourced data table `design/ref_airframe_data.md` (task T1, in flight / check result),
-   then build the gz model `indi_flight`-owned (decide location: `Tools/simulation/gz` model dir vs bench overlay;
-   firmware airframe file needed for SITL), check it flies with stock PID (one hover, one step).
+1. Reference airframe (F-3): table `design/ref_airframe_data.md` done (T1): 0.610 kg 4S, I = 1.4/1.5/2.7e-3,
+   arm 0.0795 m, kT 1.5e-6, kQ/kT 0.0127 m, w_max 2800 rad/s, tau 33 ms, J_rotor 5e-6 (ASSUMED), 14 poles,
+   T/W 7.9, hover ~1000 rad/s (u ~0.13). Before use: second key (sonnet, no access to T1 reasoning) re-checks
+   sources and arithmetic of every row and the SDF mapping, output `design/ref_airframe_check.md`. Note kT varies
+   ~20 % hover to full speed (thrust curve is not pure omega^2: matters for decision 3 and THR_MDL_FAC). Then build the gz model in `indi_flight/sim/models/` (D-2) plus a SITL airframe file, check it flies with stock PID (one hover, one step).
 2. Outer-loop study step 1: `design/outer_loop_requirements.md` from the `mc_pos_control` source (sonnet code read,
    one interface: source to checklist).
 3. Write GATES.md for G1 before its first test.
@@ -21,7 +23,6 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T1 | source reference 5-inch ~600 g quad physical data | sonnet | `design/ref_airframe_data.md` | re-launch with same brief if file incomplete |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -31,6 +32,7 @@
 ## Agent ledger (stage 1)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 1 | T1 | sonnet | sourced airframe data | done, 42 calls, ~$1.0 (above 30-call brief) |
 
 ## Lessons proposed
-(none)
+- Web-research agents cost about 3x a code-read agent of the same call count; brief them at 20 calls.
