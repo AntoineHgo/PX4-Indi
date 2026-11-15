@@ -1,5 +1,26 @@
 # INDI project state
 
+## OWNER NOTE 2026-11-15 01:50: the pid_tuned 2-4 Hz hover mode is REQUIRED work, not optional
+
+`results/hover_cause.md` showed pid_tuned's hover effort varies 2x between batches (0.021-0.031 in
+`results/v3_hover_effort` and the clean seen-set seeds; 0.046-0.066 in `results/hover_cause` and seen-set seeds 3-4),
+with a strong 2-4 Hz roll oscillation in the high state (true roll acceleration ~10 rad/s^2 in 2-4 Hz vs ~1-2 in the
+low state; seen-set seed 1 already showed ~4x seed 5 in that band, `bench/gt_accel_bands.py`). Every hover comparison
+depends on this reference: criterion 4 in v1, V, the seen set and V' (2.14x), and the stage-8 hover and position
+comparisons to come. INDI's own hover effort is stable (0.043-0.059 in every batch). Owner instruction:
+(1) Find the cause BEFORE freezing or flying the stage-8 validation set; it outranks the "Optional, cheap" item in
+S48 next actions, which it replaces. Start from logs (CPU, no flight): compare the high-state runs (`hover_cause`
+pid seeds 1-3, seen-set seeds 3-4) with the low-state runs (`v3_hover_effort`, seen-set seeds 1, 2, 5) on dt jitter
+and control-loop timing in the ULog, host load at flight time, the mode's onset (present from takeoff or appearing
+mid-flight), and the rate-loop terms (P/I/D, integrator). Hypotheses to separate: host load or lockstep timing; a
+marginally stable PID mode (I gain, outer P 5.12, D on noisy derivative); a sim-side cause (eRPM/vibration seeds).
+Fly only what the logs cannot decide, under O-12 (few seeds, side by side, host otherwise idle).
+(2) If it is host or timing, record the rule that keeps it out of validation batches (e.g. a max load per batch) and
+say which earlier hover figures were affected; if it is the PID tuning, say so, and keep the frozen pid_tuned
+unchanged for the stage-2 verdicts. Either way, write `results/pid_hover_mode.md`, then correct the hover-effort
+statements in report 8.9/8.10/10.5 and DECISIONS (D-hover-lpf rests on it). The frozen verdicts stand as flown.
+Then remove this note.
+
 ## OWNER DECISION 2026-11-15 (during session 47): O-13, read it in `indi_project/OWNER_GUIDANCE.md` now
 
 Validation sets: fly every entry once with pid_tuned BEFORE freezing and fix or replace any entry the tuned PID
@@ -38,8 +59,12 @@ owner decisions when you first act on them.
 - **Latest (session 49, 2026-11-15): stage-8 implementation spec written (`plan/s8_impl_spec.md`, D-s8-spec: jerk-ff
   signs corrected). Task A DONE: `IndiAccelControl` library 2fcf22a017, 18 gtests pass (re-run by orchestrator in
   Docker; law lines reviewed against the spec; deviations in `plan/impl_log_s8_lib.md`). Task C (G_T/k_cmd ident,
-  `bench/ident_gt.py` -> `results/s8_ident_gt.md`) delegated to haiku. NEXT: check task C, then task B (module, one
-  sonnet task, spec sec. 3; needs a fresh session budget ~$0.8), then freeze O1-O7 with the O-13 pid_tuned pre-check.**
+  `bench/ident_gt.py` -> `results/s8_ident_gt.md`, 2ac71c326a): G_T median 16.63 m/s^2 per unit mean u (16.53-16.97,
+  10 hover logs), k_cmd 0.9993 (~1 as expected), G_T*mean_u = 9.86 at hover. Identified at the hover point only (low
+  R^2 0.34-0.93 within hover): check G_T at other thrust levels from a trajectory log before relying on it in O6.
+  NEXT (owner note at the top first): pid_tuned hover-mode cause from logs (haiku log task launched s49, partial
+  notes in `results/pid_hover_mode.md`; you judge the cause), then task B (module, spec sec. 3, one sonnet task),
+  then freeze O1-O7 with the O-13 pid_tuned pre-check. Set MC_INDIP_G_T 16.63, MC_INDIP_K_CMD 1.0.**
 - **Latest (session 48, 2026-11-15): owner hover note closed. Report 8.10 (v3 on V') and 10.5 (stage-2 conclusion)
   written. Causal test (`results/hover_cause.md`): the eRPM state shakes INDI at 4-10 Hz but adds no effort; the tuned
   PID's hover effort doubled in that batch (2-4 Hz roll mode, cause unknown), ratio 0.96 there. D-hover-lpf: no
@@ -265,7 +290,7 @@ owner decisions when you first act on them.
   buffer; arming_check reply as mc_raptor; check the mc_pos_control attitude publish is gated by the control-mode
   flags); (2) G_T identification from v2 hover logs (CPU, script); (3) freeze stage-8 scenarios in `bench/scenarios.md`
   sec. 10 BEFORE any flight, after the O-13 feasibility check (each entry once with pid_tuned; O-13 recorded s48); (4) implementation spec, then one sonnet task per step (library + gtest, module, mode
-  registration). Optional, cheap: find the pid_tuned 2-4 Hz hover mode (compare `results/hover_cause` pid seed 1 with
+  registration). REQUIRED, see the owner note at the top (01:50): find the pid_tuned 2-4 Hz hover mode (compare `results/hover_cause` pid seed 1 with
   `results/v3_hover_effort` pid seeds; check CPU load / dt jitter in the ULog).
 - SESSION 46 (2026-11-15, launch 20261115-003114): DONE: owner outer-gain diagnostic committed + D-outer-check (v3
   tunes the INDI inner loop only, outer gains fixed at tuned PID's) + report 8.9 paragraph. v3 smoke DONE
