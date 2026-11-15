@@ -488,6 +488,8 @@ def main():
                          "110 ms makes the EKF lead the truth by 110 ms (D-s8-gnss-delay); unset keeps the stock value")
     ap.add_argument("--watchdog", choices=("on", "off"), default="on",
                     help="O-12 run watchdog; 'off' is for diagnosis only, never in a batch")
+    ap.add_argument("--log-from-start", action="store_true",
+                    help="logger starts with -f so the log covers the time before arm (default: from arm)")
     a = ap.parse_args()
     if a.out is None:
         a.out = os.path.join(RESULTS_DIR, f"{a.scenario}_{a.controller}_s{a.seed}")
@@ -551,7 +553,11 @@ def main():
         # logger reads SDLOG_PROFILE only at start: restart it so the full-rate profile takes effect
         sim.cli("px4-logger", "stop")
         time.sleep(1)
-        sim.cli("px4-logger", "start", "-b", "20", "-t")
+        logger_args = ["px4-logger", "start", "-b", "20", "-t"]
+        if a.log_from_start:
+            logger_args.append("-f")
+            meta["log_from_start"] = True
+        sim.cli(*logger_args)
         sim.wait_log("Ready for takeoff", 180)
         sim.connect()
         sim.run(1.0, what="warmup")  # first ATTITUDE tick makes sim.t valid (it is 0.0 before connect/pump)
