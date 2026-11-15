@@ -79,6 +79,7 @@ class Sim:
         self.yaw = 0.0
         self.armed = False
         self.main_mode = None
+        self.sub_mode = None
         self.landed_state = None
         self.mav = None
         self.sysid = a.instance + 1
@@ -237,6 +238,7 @@ class Sim:
         elif ty == "HEARTBEAT" and m.get_srcSystem() == self.sysid and m.type != 6:
             self.armed = bool(m.base_mode & 128)
             self.main_mode = (m.custom_mode >> 16) & 0xFF
+            self.sub_mode = (m.custom_mode >> 24) & 0xFF
         elif ty == "EXTENDED_SYS_STATE":
             self.landed_state = m.landed_state
         return False
@@ -479,9 +481,13 @@ def main():
         # offboard: stream setpoints, then switch mode
         pos_sp = lambda: sim.send_pos(hold_pos, hold_yaw)  # noqa: E731
         sim.run(1.0, sp=pos_sp, what="pre_offboard_stream")
+        # stage 8: INDI POS replaces offboard and is reported as AUTO (4) / EXTERNALn (sub mode >= 11)
+        indip = meta.get("boot_params", {}).get("MC_INDIP_EN") == 1
         sim.cmd(176, 1, 6)
-        sim.run(None, sp=pos_sp, until=lambda: sim.main_mode == 6, wall_timeout=30, what="offboard_engage")
+        sim.run(None, sp=pos_sp, until=lambda: sim.main_mode == 6 or (indip and sim.main_mode == 4 and (sim.sub_mode or 0) >= 11),
+                wall_timeout=30, what="offboard_engage")
         meta["t_offboard_us"] = int(sim.t * 1e6)
+        meta["offboard_custom_mode"] = [sim.main_mode, sim.sub_mode]
         sim.run(3.0, sp=pos_sp, what="offboard_settle")
 
         # ---- scenario ----
