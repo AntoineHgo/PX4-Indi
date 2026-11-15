@@ -107,3 +107,10 @@ estimate, which is what a real vehicle would see. If the estimator really leads 
 favours the controller that lags in truth. Check before the set-O verdict: (a) how gz_bridge stamps groundtruth
 (sim time of the pose vs hrt at publish); (b) EKF vs ground-truth velocity cross-correlation on a hover step; (c) report
 both frames in the verdict if the offset is real.
+Lead on (a): `GZBridge::poseInfoCallback` stamps `vehicle_local_position_groundtruth` with `hrt_absolute_time()` at
+message RECEPTION, not with the pose's own `header().stamp()`; velocity and acceleration are finite differences over
+the reception intervals. If gz delivers pose_info after the lockstep clock has moved on, ground truth is stamped late,
+and the EKF appears to "lead" it. That is the more likely explanation (an EKF running 100 ms ahead of the truth would
+be unusual). Not yet proven: compare the header stamp with hrt in the bridge (debug print, no commit), or
+cross-correlate gt velocity with velocity integrated from the IMU over a fast manoeuvre. Until then, the EKF-frame
+metric stands, and the ground-truth phase numbers above are not used.

@@ -46,8 +46,8 @@ owner decisions when you first act on them.
   `bench/s8j3_pos_v3_jlpf.sh` (log `results/s8j_pos_v3_smoke/s8j3.log`, ends S8J3_DONE, resumable by re-running) ->
   `s8j_pos_v3_smoke/traj_lemniscate/indi_pos_v3_jlpf/seed1`. FINDING (unverified, load-bearing):
   EKF position runs ~100 ms AHEAD of `vehicle_local_position_groundtruth` for both controllers on T5; in truth pid_tuned
-  lags 120-150 ms and INDI is near phase (table in `results/s8j_pos_v3_smoke.md`). NEXT: (1) settle this first: how the
-  gz bridge stamps groundtruth (src/modules/simulation/gz_bridge) vs a real EKF lead; EKF vs gt velocity xcorr on hover;
+  lags 120-150 ms and INDI is near phase (table in `results/s8j_pos_v3_smoke.md`). NEXT: (1) settle this first: gz_bridge stamps
+  groundtruth with hrt at RECEPTION of pose_info, not the pose header stamp (likely artefact, unproven); EKF vs gt velocity xcorr on hover;
   if real, the verdict reports tracking in both frames (D-entry); (2) a_f/a_c y overshoot (8 %) vs frequency; (3) then O-12 staged screening on T5/H1 of
   the outer gains for INDI only (the INDI POS params file may set MPC_XY_P / MPC_XY_VEL_P_ACC; pid_tuned keeps its own,
   no new firmware params needed), freeze indi_pos_v3 (now with the jerk filter), fly set O.**
