@@ -9,4 +9,4 @@ PX4_INDI_IMAGE=px4-indi-report exec "${SCRIPT_DIR}/run.sh" -n report -t 600 -N \
 	"cd '${REPORT_DIR}' && pandoc [01][0-9]_*.md -o report.pdf --pdf-engine=xelatex \
 	--resource-path=. --toc -V geometry:margin=25mm \
 	-V mainfont='DejaVu Serif' -V monofont='DejaVu Sans Mono' -V colorlinks=true \
-	--metadata title='INDI rate control for multicopters in PX4'"
+	--metadata title='INDI control for multicopters in PX4'"
