@@ -10,7 +10,14 @@
 1. Reference airframe model DONE (session 3): `design/ref_airframe_model.md`, flies with stock PID (hover u 0.1367,
    eRPM 998.7 rad/s, steps settle). Its open items 1-4 (reaction-torque scaling test, gyro log rate, run1 esc_rpm 0,
    run-to-run spread) are folded into the simulator work of item 4.
-2. Outer-loop study step 1: T4 (session 3) -> `design/outer_loop_requirements.md`. Then step 2 (two candidates).
+2. Outer-loop study: step 1 DONE (T4, `design/outer_loop_requirements.md`, R1-R36, UNVERIFIED list in its sec. 7).
+   Next: (a) independent review of that file, one interface source -> checklist (sonnet, 20 calls, output
+   `design/outer_loop_requirements_review.md`), focused on its UNVERIFIED items and missing behaviours; (b) step 2,
+   two candidates on one template. Facts that shape candidates: mc_pos_control runs only at the local-position
+   rate (R36, 50-100 Hz?) and reads neither attitude, IMU specific force nor thrust feedback (R33); it hosts
+   GotoControl (R7); the land detector and hover-thrust estimator depend on the thrust_body scale (R16, R24).
+   Defect: rc.mc_apps starts mc_pos_control unconditionally (line 49) and `MC_INDIP_EN` starts mc_indi_pos_control
+   in addition, not instead (lines 68-70): R1 fails today.
 3. Write GATES.md for G1 before its first test (draft exists).
 4. Port bench runner/metrics into `indi_flight/bench/` with the review fixes (5 Hz held reference, decimated effort,
    ground-truth stamp, sim-time injections); self-test + second key per script. Errata re-score of set-O/T5.
@@ -20,7 +27,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T4 | outer-loop requirements from mc_pos_control source (session 3 relaunch, 25-call brief) | sonnet | `design/outer_loop_requirements.md` | if file incomplete, relaunch on the missing sections only |
+| - | none | | | |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -34,7 +41,7 @@
 | 1 | T2 | sonnet | second key, arithmetic/SDF | done, 14 calls, ~$0.8, 10 WRONG items |
 | 2 | T3 | sonnet | gz model + PID check | done (verified and committed in session 3) |
 | 2 | T4 | sonnet | outer-loop requirements | cut by cap, nothing written |
-| 3 | T4 | sonnet | outer-loop requirements, relaunch | running |
+| 3 | T4 | sonnet | outer-loop requirements, relaunch | done, 31 calls, ~$0.75, 36 items, 305 lines |
 
 ## Lessons proposed
 - At a $3 cap launch one agent per session (session 2: two sonnet agents ~$1.4 in 30 min, both cut).
