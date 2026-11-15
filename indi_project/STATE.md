@@ -58,7 +58,16 @@ owner decisions when you first act on them.
   synchronous with a_f within 0.3 cycle; the hover 3-4 cycle lead was an excitation artefact. MC_INDIP_DLY 0 set in
   `bench/params/indi_pos_v0.params` (40742345e7, D-s8-delay-final; firmware default stays 1, hardware must identify).
   F3: estimator accel bias subtracted (41326ec474, D-s8-accel-bias; untested in sim: gz IMU has no bias).
-  RUNNING (detached): `bench/s8h_bias_dly0.sh` -> `results/s8h_bias_dly0/{hover,diag_z_multisine}_seed1/`
+  s8h RESULT: multisine re-check with DLY 0 confirms the lag (-0.40 cycle, corr 1.00), BUT the hover REGRESSED:
+  attitude 0.70 deg (s8e 0.15), effort 0.142 (0.044), a_f x/y std 0.084 (0.026), hover z lag -3 at corr 0.97 (an
+  oscillation). EKF accel bias is tiny (std <= 0.003 m/s^2, 1 Hz): F3 is unlikely the cause; DLY 0 suspected.
+  A/B RUNNING: hover F3 + DLY 1 -> `results/s8h_bias_dly0/hover_seed1_dly1/` (log line S8H_DLY1_DONE in
+  `results/s8h_bias_dly0.log`). If it matches s8e (0.15 deg), DLY 0 destabilises the loop although it is the
+  synchronous value: then analyse why (a delay on the eRPM-state feedback adds phase margin? compare with the inner
+  loop sync study) before choosing; revert params to DLY 1 meanwhile and update D-s8-delay-final.
+  Also RUNNING: O-13 pre-check `bench/s8i_o13_precheck.sh` (pid_tuned, O1-O7 seed 1, 98c1fe0660) ->
+  `results/s8i_o13_precheck/<entry>/pid_tuned/seed1/`, log `results/s8i_o13_precheck.log` ends S8I_DONE.
+  Earlier: (detached): `bench/s8h_bias_dly0.sh` -> `results/s8h_bias_dly0/{hover,diag_z_multisine}_seed1/`
   (log `results/s8h_bias_dly0.log` ends S8H_DONE): regression hover with F3 + DLY 0 (compare s8e: 0.15 deg,
   0.023 m, effort 0.044) and multisine lag re-check (expect peak near -0.3 with DLY 0).
   NEXT: (1) read s8h; if the hover matches s8e, write `results/s8h_bias_dly0.md`, remove the owner note at the top;
