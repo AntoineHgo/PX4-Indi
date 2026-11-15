@@ -64,8 +64,10 @@ SETPOINT_PERIOD = 0.02  # sim seconds between offboard setpoints
 # s11 pre-study: the arm happened at sim 15.4-17.6 s (wall time spent in param sets, logger restart, wait_log,
 # arm retries), arm->offboard took 15-16 s. T_ARM_S sits >2 s after the latest observed ready time. T_OFFBOARD_S
 # leaves room for the climb (~8-9 s observed) + 5 s hover (HOVER_MIN_S) + 1 s pre-stream (PRESTREAM_S) with margin.
-T_ARM_S = 20.0
-T_OFFBOARD_S = T_ARM_S + 20.0  # 40 s
+# s12 pre-test: at sim 20-25 s the arming check fails ("height estimate not stable"), and the climb took > 8.8 s
+# (it missed the 34 s deadline after a 25.2 s arm). Arm at 30 s, give the climb 16 s.
+T_ARM_S = 30.0
+T_OFFBOARD_S = T_ARM_S + 22.0  # 52 s
 HOVER_MIN_S = 5.0  # hover between end of climb and hold capture (as before)
 PRESTREAM_S = 1.0  # position-setpoint stream before the offboard switch (as before)
 T_HOLD_S = T_OFFBOARD_S - PRESTREAM_S  # hold_pos/hold_yaw captured here (fixed sim time)
