@@ -54,7 +54,8 @@ ESC telemetry should be designed with this in mind.
 
 **Hover effort stays about 2x PID's** in every stage-2 version. Most of it is structural: the acceleration feedback
 at gain 1/G1 passes 30-80 Hz gyro and vibration noise to the torque command, which only a lower, synchronised INDI
-filter cut-off could reduce, at a cost in phase (section 8.10).
+filter cut-off could reduce, at a cost in phase (section 8.10). The ratio itself is fragile: in one re-flown batch the tuned PID's
+hover effort doubled (a 2-4 Hz roll mode of unknown cause) and the ratio fell to 0.96, while INDI's stayed the same.
 
 **Two V' entries measure the vehicle, not the controllers**: the x500 cannot hold altitude with one motor at 0.6
 thrust, and loses it in about half the runs at 75 % battery thrust, whatever the controller. Their severity was not
