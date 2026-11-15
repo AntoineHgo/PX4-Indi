@@ -4,7 +4,8 @@
   metrics.py flight.ulg [--run-json run.json] [--out metrics.json]
 
 Evaluation window = run.json [t_window_start_us, t_window_end_us] (sim time = ULog time base), intersected with the
-span where vehicle_status.nav_state == 14 (offboard). Without run.json only the offboard span is used.
+span where vehicle_status.nav_state is 14 (offboard) or 23 (external INDI position mode registered through the
+external mode API). Without run.json only that span is used.
 """
 import argparse
 import json
@@ -56,12 +57,15 @@ def qcols(d, prefix):
     return np.column_stack([d[f"{prefix}[{i}]"] for i in range(4)])
 
 
+OFFBOARD_NAV_STATES = (14, 23)  # 14 offboard, 23 external mode slot used by the INDI position mode
+
+
 def offboard_span(ulog):
     s = topic(ulog, "vehicle_status")
     if s is None:
         return None
     t, n = s["timestamp"], s["nav_state"]
-    on = np.where(n == 14)[0]
+    on = np.where(np.isin(n, OFFBOARD_NAV_STATES))[0]
     if not on.size:
         return None
     end = t[on[-1] + 1] if on[-1] + 1 < len(t) else t[-1]
@@ -292,7 +296,7 @@ def compute(ulog, run):
     elif ob is not None:
         w0, w1 = max(w0, ob[0]), min(w1, ob[1])
     else:
-        out["warnings"].append("no nav_state==14 span found in vehicle_status")
+        out["warnings"].append("no nav_state in (14 offboard, 23 external INDI mode) span found in vehicle_status")
     out["window"] = {"start_s": w0 * 1e-6, "end_s": w1 * 1e-6, "duration_s": (w1 - w0) * 1e-6,
                      "offboard_span_s": [ob[0] * 1e-6, ob[1] * 1e-6] if ob else None}
     inwin = lambda t: (t >= w0) & (t <= w1)  # noqa: E731
