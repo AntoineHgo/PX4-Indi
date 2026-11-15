@@ -45,9 +45,10 @@ owner decisions when you first act on them.
   indi_v3 rate params (spec sec. 5): build `bench/params/indi_pos_v3.params` = indi_v3 params + MC_INDIP_* .
   O1-O7 entries in `bench/scenarios.py` (98c1fe0660). O-13 pre-check DONE (`results/s8i_o13_precheck.md`): O1, O3,
   O4, O6, O7 flyable; O2/O5 circle at 8 m/s infeasible (20 % saturation; O5 watchdog crash) -> slowed to 6.5 m/s.
-  RUNNING: `bench/s8i2_o13_circle.sh` (O2/O5 re-check), log `results/s8i2_o13_circle.log` ends S8I2_DONE.
-  NEXT: (1) read the O2/O5 re-check (metrics.json in results/s8i_o13_precheck/o2_circle_z|o5_circle_com_shift/
-  pid_tuned/seed1; flyable = no watchdog, saturation small, traj rms comparable to O1); add its row to the .md; (2) freeze O1-O7 in
+  Re-check at 6.5 m/s DONE: O2 still marginal (1.55 m rms, 7.6 % sat), O5 crashes again (watchdog height < 0.3 m at
+  sim t 43.1 s, same time as at 8 m/s). NEXT: (1) diagnose O5 (z(t), motor outputs at t 40-43 s, com_shift profile vs
+  circle; flight in results/s8i_o13_precheck/o5_circle_com_shift/pid_tuned/seed1); pick a circle pid_tuned flies
+  cleanly (no vertical sine, or 5 m/s) or move com_shift to the lemniscate; re-check with the same script pattern; (2) freeze O1-O7 in
   `bench/scenarios.md` sec. 10 (+ D-entry); (3) indi_pos_v3 params, smoke on O1 seen-path equivalent (T5), then staged
   screening (O-12) on T5/H1 only.**
 - **Latest (session 52, 2026-11-15): owner stage-8 review (note above) mostly addressed. DONE, one commit each:

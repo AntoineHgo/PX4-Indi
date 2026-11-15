@@ -17,3 +17,9 @@ Replacement (O-13: an entry pid_tuned cannot fly is replaced, not kept): the cir
 (centripetal 8.45 m/s^2, about 1.4 g of total thrust, close to O1, which pid_tuned flies without saturation).
 Old runs kept in `results/s8i_o13_precheck/replaced_circle_8ms/`. Re-check: `bench/s8i2_o13_circle.sh` ->
 `results/s8i_o13_precheck/{o2_circle_z,o5_circle_com_shift}/pid_tuned/seed1/`, log `results/s8i2_o13_circle.log` (ends S8I2_DONE).
+
+Re-check at 6.5 m/s (`bench/s8i2_o13_circle.sh`): O2 traj rms 1.55 m, attitude 11.8 deg, saturation 7.6 % (still
+marginal, O1 is 0.44 m with no saturation); O5 crashed again by the same watchdog (height < 0.3 m at sim t 43.1 s,
+same time as at 8 m/s). OPEN: the identical crash time suggests the com_shift onset or profile combined with the circle,
+not the speed alone. Next: read z(t) and the motor outputs of O5 around t 40-43 s and the com_shift profile; candidates:
+drop the vertical sine from the circle, slow to 5 m/s, or move com_shift to the lemniscate. Not frozen.
