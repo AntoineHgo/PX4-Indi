@@ -106,3 +106,67 @@ Open hypotheses, in the order to test them:
    one batch and high in another (hover_cause seed 1 vs seen seed 1 suggests yes, which would weigh against this one).
 3. Only if the logs cannot decide: fly pid_tuned hover seeds 1-2 on an idle host and again under a deliberate CPU load
    (O-12 watchdog, side by side).
+
+## Session 50: tests and conclusion
+
+### Log checks (CPU only)
+
+- Rotor speed and vibration aliasing: mean rotor rpm is 7352-7354 for every motor in all 12 logs (std 6-7 rpm); with
+  the 285.7 Hz gyro rate, the 1P line aliases to 122.5 Hz in both groups, far from 2-4 Hz. Ruled out.
+- Mode frequency: the ground-truth roll-rate peak in 0.5-10 Hz is at 2.56-2.57 Hz in all 5 high runs and in 4 of 7 low
+  runs (the other 3 peak below 1 Hz, where the mode is barely present). The mode is the same in both groups; only its
+  amplitude differs.
+- Seed realisation (hypothesis 2): same build (f64586465a), same params, same seed, different state. Seeds 2 and 3 flew
+  high in `hover_cause` and low in `v3_hover_effort`. Refuted.
+- Runner setpoint stream (hypothesis 1, runner part): `run_scenario.py` sends the setpoint on ATTITUDE messages, paced
+  in sim time, and the hover setpoint is a constant position. It cannot drive a 2.5 Hz mode.
+- Command-to-rotor delay: the actuator_motors -> esc rpm cross-correlation peak is 15-20 ms in high runs and 10-17 ms
+  in low runs, but the cross-spectral phase at 5-30 Hz is too noisy (rpm std 7 rpm, quantised) to confirm a
+  delay difference. Undecided from logs.
+
+### Flight test (`bench/pid_hover_mode_test.sh`, analysis `bench/pid_hover_mode.py`)
+
+pid_tuned (r1f/c05) hover, v2 sim config, speed 1, seeds 1-2 each flown twice, ONE flight at a time on an otherwise
+idle host (load average < 2.3 at the start, no other container), 01:57-02:03 on 2026-11-15:
+
+| flight | band 2-4 Hz roll rate RMS rad/s | roll torque std | motor-rate effort 1/s |
+|---|---|---|---|
+| idle seed1 r1 | 0.0036 | 0.00039 | 0.036 |
+| idle seed1 r2 | 0.0072 | 0.00072 | 0.063 |
+| idle seed2 r1 | 0.0030 | 0.00032 | 0.032 |
+| idle seed2 r2 | 0.0006 | 0.00015 | 0.022 |
+
+The same seed, flown alone twice in a row on an idle host, covers the whole range that was attributed to "two
+batches" (band 0.0006-0.0075, effort 0.021-0.066). Under deliberate CPU saturation (16 busy loops on 16 cores) the
+flights degrade differently: they break instead of entering the high state.
+
+| flight (16 busy loops) | outcome | band 2-4 Hz RMS rad/s |
+|---|---|---|
+| load seed1 r1 | watchdog: height < 0.3 m at sim t = 28 s (take-off) | - |
+| load seed2 r1 | completed | 0.0025 (low) |
+| load seed1 r2 | wall timeout in climb (sim t = 94 s) | - |
+| load seed2 r2 | hover window completed, wall timeout in landing | 0.0022 (low) |
+
+Saturating the host breaks the co-simulation (stalls, failed take-off), but the two hover windows it completed were
+in the low state. Host load is not what moves the mode to high amplitude.
+
+### Conclusion
+
+1. **The 2-4 Hz mode is a lightly damped closed-loop mode of the tuned PID at 2.57 Hz.** Its frequency is fixed, but
+   its amplitude varies by up to 12x from one flight to the next. Neither the seed nor any logged parameter, build or
+   PX4 timing quantity sets it. The gz/PX4 co-simulation is not bit-reproducible: per-flight effects such as message
+   ordering between gz and PX4 and the rotor vibration phases accumulated during take-off are not controlled by the
+   seed. Which of these sets the amplitude was not isolated; the batch, the seed and host load at the levels the
+   batches ran at are excluded as the switch.
+2. **It is neither host load at batch level nor a batch artefact.** The "high batch / low batch" split was a sampling
+   effect: 3-5 draws per batch from a wide per-flight distribution. Severe host load does break flights outright (the
+   saturated run above), so the existing rules stay in force: no CPU-heavy analysis while a batch flies (S44), and at
+   most the batch sizes used so far.
+3. **It is a property of the PID tuning, not of the simulator alone.** INDI flown in the same batches did not show the
+   spread (0.043-0.059 everywhere), so the tuned PID is the more lightly damped loop at 2.57 Hz. Per the owner note,
+   the frozen pid_tuned is kept unchanged for the stage-2 verdicts.
+4. **Consequence for hover-effort comparisons.** A pid_tuned hover-effort value is a draw from a distribution spanning
+   ~0.02-0.066, so an INDI/PID hover-effort ratio from 5 flights can land anywhere between ~0.9x and ~2.5x. The
+   criterion-4 values (1.26 on the seen set, 2.14 on V') and the 0.96 of `hover_cause` are all draws from this one
+   distribution. None of them is "the clean" reference. Rule for stage 8 and later: compare hover effort only as pooled
+   medians with the per-flight range over at least 10 PID flights, never as a ratio of two small batch means.
