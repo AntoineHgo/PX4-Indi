@@ -240,6 +240,11 @@ Acceptance for INDI POS (section 6 test: paired Wilcoxon by seed, two-sided, alp
 Outcome words as in section 6. Secondary metrics (attitude RMS, saturation time, effort per entry) are reported but do
 not decide.
 
+Amendment (session 56, 2026-11-15, before any INDI POS flight on set O): every controller flies set O with
+SENS_GNSS0_DELAY 0 (`run_scenario.py --gnss-delay 0`, D-s8-gnss-delay), because the simulated GNSS has no latency and
+the stock 110 ms makes the EKF lead the truth. The O-13 pre-check was re-flown under it (`results/s8l_o13_gnss0.md`):
+all seven entries flyable, set unchanged; O4 is thrust-limited (pid_tuned saturated 33 % of the window, recovered).
+
 ## Change log
 
 - v1 (2026-11-13): initial frozen version.
