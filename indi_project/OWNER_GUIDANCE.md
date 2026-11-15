@@ -118,6 +118,26 @@ it, and if it does, record why in `DECISIONS.md`.
     and the seen-set batch queued in session 41 run to completion as planned.
   - Record O-12 in `DECISIONS.md` as an owner decision and say in report ch. 7 (tuning methodology) that
     staged pruning was used from this point on.
+- **O-13 Lean, pre-checked validation sets (owner, 2026-11-15, after the V' batch).** V' flew 200 flights
+  (5 entries x 10 seeds x 4 controllers); only 100 decide the verdict, and W1 (motor 1 at 0.6 thrust) proved
+  infeasible for every controller, both PIDs included, so its 40 flights only reported an obvious failure.
+  From now on, for every new held-out or validation set:
+  - **Feasibility check before freezing.** Fly every entry once (seed 1) with `pid_tuned` before the set is
+    frozen. An entry the tuned PID cannot fly (watchdog trip, crash, loss of the scenario's objective) is
+    fixed (milder fault, shorter window, ...) or replaced *before* the freeze, and the check and any change are
+    recorded with the set. An entry that is infeasible for every controller tells nothing about INDI vs PID.
+    This check uses PID only, so it cannot bias the set toward INDI.
+  - **Verdict pair at full seed count, the rest only if needed.** A validation batch flies the two
+    controllers of the verdict (the tuned PID baseline and the frozen INDI candidate) on all seeds (10).
+    `pid_default`, earlier INDI versions or other references fly only to answer a stated question, and with
+    the fewest seeds that answer it (e.g. 3), labelled as context, never in the verdict. Keep the verdict
+    pair side by side in the same batch slot so both see the same host load.
+  - **Not retroactive.** V' stands as flown and frozen, W1 included (reported as failed for every
+    controller per O-12). O-12's honesty limit is unchanged: once a set is frozen, nothing in it is dropped
+    or re-flown because of its result.
+  - Record O-13 in `DECISIONS.md` as an owner decision, apply it to the stage-8 (outer loop) validation set
+    and any later set, and say in report ch. 6 (benchmark method) that validation sets are feasibility-checked
+    with PID before freezing from this point on.
 
 ## Order of work
 
