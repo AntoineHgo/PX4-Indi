@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """v2 verdict on the held-out set V under the unchanged section-6 rules (bench/scenarios.md sec. 8).
-usage: s2_verdict.py [RUNS_DIR] [--b indi_v2] [--a pid_tuned] [--hover-runs DIR] [--final] [--seen | --vprime]
+usage: s2_verdict.py [RUNS_DIR] [--b indi_v2] [--a pid_tuned] [--hover-runs DIR] [--final] [--seen | --vprime | --oset]
 --vprime judges the v3 held-out set V' (sec. 9: 5 entries, criterion 2 needs 4 of 5; RUNS_DIR results/vprime/runs).
+--oset judges the stage-8 set O (sec. 10: 7 entries, trajectory RMS 3D, criterion 2 needs 5 of 7;
+RUNS_DIR results/s8n_oset/runs, --b indi_pos_v3).
 --seen tabulates the O-7 seen set (results/s2_seen_v2/runs) with the v1 primary metrics instead of V (reported only,
 not part of the V verdict).
 Per V entry: primary metric (sec. 8 table), paired by seed, median improvement 1 - b/a and the exact two-sided
@@ -37,6 +39,9 @@ SEEN = {"hover": HOVER, "step_roll": ATT, "step_pitch": "attitude_tracking.pitch
         "mismatch_combined_att": ATT, "mismatch_combined_rate": RATE, "step_diag": ROT}
 VPRIME = {"vp_loss1_06": TILT, "vp_loss2_08": TILT, "vp_gain03_att": ATT, "vp_sag75_att": ATT,
           "vp_tau2_loss2_att": ATT}
+TRAJ = "trajectory.rms_3d_m"
+OSET = {e: TRAJ for e in ("o1_lemniscate", "o2_circle_z", "o3_lemniscate_gust", "o4_lemniscate_payload",
+                          "o5_zsine_com_shift", "o6_zsine_mass", "o7_lemniscate_tau2")}
 SEEDS = [f"seed{i}" for i in range(1, 11)]
 FINAL = False
 
@@ -71,6 +76,7 @@ def main():
     ap.add_argument("--final", action="store_true", help="batch ended: a run without run.json failed")
     ap.add_argument("--seen", action="store_true", help="tabulate the O-7 seen set instead of V")
     ap.add_argument("--vprime", action="store_true", help="judge V' (sec. 9) instead of V")
+    ap.add_argument("--oset", action="store_true", help="judge the stage-8 set O (sec. 10) instead of V")
     a = ap.parse_args()
     global FINAL, PRIMARY
     FINAL = a.final
@@ -78,8 +84,10 @@ def main():
         PRIMARY = SEEN
     elif a.vprime:
         PRIMARY = VPRIME
-    set_name = "the seen set" if a.seen else "V'" if a.vprime else "V"
-    need_better = 4 if a.vprime else 10
+    elif a.oset:
+        PRIMARY = OSET
+    set_name = "the seen set" if a.seen else "V'" if a.vprime else "O" if a.oset else "V"
+    need_better = 4 if a.vprime else 5 if a.oset else 10
 
     print(f"| entry | primary metric | {a.a} mean | {a.b} mean | ratio | b<a | med impr | p | effort ratio | "
           f"fails {a.a}/{a.b} | verdict |\n|---|---|---|---|---|---|---|---|---|---|---|")
