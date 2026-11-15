@@ -14,6 +14,8 @@ EKF accelerometer bias (no velocity integrator: bias -> steady position offset b
 (5) clamp rates + omega_ff to MC_*RATE_MAX. (6) fix the INDI POS attitude metric (no vehicle_attitude_setpoint).
 Before freezing O1-O7: check the gz x500 drag model (pertinence of the trajectory entries), apply O-13 and
 D-hover-spread. Commit the review file with the first fix, record the findings in DECISIONS.md, then remove this note.
+STATUS (session 52): F1, F4, F5, F6 done and committed, drag checked, review committed, D-s8-review recorded;
+F2 preliminary (not applied), F3 open. Remove this note when F2 and F3 are closed.
 
 ## OWNER DECISION 2026-11-15 (during session 47): O-13, read it in `indi_project/OWNER_GUIDANCE.md` now
 
@@ -50,18 +52,23 @@ owner decisions when you first act on them.
 
 ## Status summary (read this first)
 
-- **Latest (session 52, 2026-11-15): owner stage-8 review (note above) being worked. DONE: F1 accel aliasing fixed
-  (c1502ffcc4, window average of every sensor_combined sample + same window for mean u; v2-vibration hover 5.47 ->
-  0.25 deg, 0.21 -> 0.024 m, `results/s8c_accel_window.md`); F5 rate clamp after feedforward (33f029eb03); F4 level
-  fallback (f8031dde10, not exercised in flight, no module gtest); drag check `results/s8_drag_check.md` (rotor drag
-  only, ~0.12 m/s^2 per m/s, IMU has no bias); D-s8-review + D-s8-accel-window in DECISIONS. Regression hover after
-  F4/F5 (`results/s8d_fix45/`): horizontal 0.020 m fine, but vertical max dev 0.33 m and ref z -4.93 (window start
-  before climb settled? one hold cycle seen): OPEN, inspect z(t) around the nav_state 23 switch.
-  IN FLIGHT/UNCOMMITTED: F6 q_d added to IndiPosStatus + module + metrics.py (uses indi_pos_status q_d when present);
-  check flight `bench/s8e_qd_metric.sh` -> `results/s8e_qd_metric/hover_seed1/`, log ends S8E_ACCEL_DONE. If it
-  builds and attitude rms is sane, commit as 3 commits (msg, module, bench).
-  NEXT: F2 delay identification (cross-correlate a_f vs t_f in hover/step logs, delay the leading signal), F3 EKF
-  accel bias (firmware, or limitation: sim has none), then freeze O1-O7 (O-13 pre-check, D-hover-spread).**
+- **Latest (session 52, 2026-11-15): owner stage-8 review (note above) mostly addressed. DONE, one commit each:
+  F1 accel aliasing (c1502ffcc4: every sensor_combined sample averaged over the control cycle, same window for mean u;
+  v2-vibration hover 5.47 -> 0.25 deg, 0.21 -> 0.024 m, `results/s8c_accel_window.md`); F5 rate clamp after the
+  feedforward (33f029eb03); F4 level-attitude fallback (f8031dde10; not exercised in flight, no module gtest);
+  F6 q_d in IndiPosStatus (8fd1d49df0, 889915692a) + metrics.py uses it (d56a4e1ac1): INDI POS hover 0.15 deg,
+  0.023 m, effort 0.044 (`results/s8e_qd_metric/`). Drag check `results/s8_drag_check.md` (rotor drag only,
+  ~0.12 m/s^2 per m/s, no body drag, IMU has no bias). F2 preliminary (`results/s8_delay_ident.md`, D-s8-delay):
+  eRPM LEADS a_f by ~3-4 cycles in hover, so delaying u is the right direction but DLY 1 too small; not applied.
+  Decisions D-s8-review, D-s8-accel-window, D-s8-delay recorded. Open observation: `results/s8d_fix45` hover had a
+  0.33 m vertical transient (ref z -4.93, one hold cycle); s8e did not repeat it; inspect z(t) if it recurs.
+  DETACHED: `bench/s8f_delay_payload.sh` (INDI POS on T7 payload_add, vertical excitation) ->
+  `results/s8f_delay_payload/seed1/delay.txt`, log ends S8F_DELAY_DONE.
+  NEXT: (1) read delay.txt: if the lag is confirmed (~3-4), look for its cause (gz IMU/bridge or v2 eRPM source),
+  set MC_INDIP_DLY in `bench/params/indi_pos_v0.params`, update D-s8-delay; (2) F3: subtract estimator_sensor_bias
+  accel bias in the module (sim has no bias: state it as untested) or record as a limitation; (3) then remove the
+  owner note at the top, freeze O1-O7 in `bench/scenarios.md` sec. 10 with the O-13 pid_tuned pre-check and
+  D-hover-spread; staged INDI POS screening (O-12). Expect the effort criterion to be hard (residual a_f noise).**
 - **Latest (session 51, 2026-11-15): stage-8 task B DONE in code: `mc_indi_pos_control` module 5cc5fcd01f, message
   `IndiPosStatus` 6c1d9b4d83 (one sonnet agent, ~$0.95; log and spec deviations in `plan/impl_log_s8_module.md`: omega max
   read from MC_INDI_W_MAX since CA_R_W_MAX does not exist; zero jerk -> a_ref difference; ESC age 50 ms). Builds; control
@@ -1153,3 +1160,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s51: stage-8 task B module + message committed (5cc5fcd01f, 6c1d9b4d83); regression hover launched.
 - 2026-11-15 s51: regression PASS; INDI POS first activation held hover (try 1); status-advertise + runner engage fixes; try 2 launched.
 - 2026-11-15 s51: INDI POS try 2 flies end to end; attitude jitter 5.5 deg from accel noise in t_c (results/s8b_activation.md).
+- 2026-11-15 s52: owner review F1 (accel window, 5.47 -> 0.25 deg with vibration), F4, F5, F6 fixed; drag checked; F2 preliminary (eRPM leads ~3-4 cycles); payload_add delay flight detached. Ledger s52: 0 agents; 5 builds, 4 flights.
