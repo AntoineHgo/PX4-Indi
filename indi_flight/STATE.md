@@ -43,16 +43,18 @@
   stable), climb > 8.8 s; constants moved to arm 30 s / offboard 52 s (committed 84b61e5c75). T21 Try 2 DONE (`design/determinism_s12.md`): 3 ok runs,
   arm 30.28-30.61 s (0.33 s spread, ack latency?), well-conditioned spreads down but still 10-25 % (roll RMS 11.6 %,
   rotation 17.7 %, max_dev_h 24.9 %, rms_3d 4.7 %). arm_late_s absent although arm > 30.1 s: check the flag.
+- Session 13 (launch 20261115-220341, cap $3): arm/offboard 0.28-0.61 s "latency" = runner observes mode via
+  1 Hz HEARTBEAT (same per-run offset on arm and offboard); arm_late_s correctly absent (tests send time). T22 checks
+  it in the ULogs and re-scores det_s12 with a ULog-aligned window. Wrote `design/outer_loop_candidates_r4.md`
+  (A13-A17 answer R3-1..R3-8, no interface change, no new round) and owner question Q1 (confirm A, not blocking).
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written (not tested).
-- Blocker: none. No owner question open.
-- Outer-loop architecture study (MISSION section) runs in parallel with stages 1-3: not started.
+- Blocker: none. Q1 open (outer-loop architecture A, not blocking; stage 5 waits for it).
+- Outer-loop architecture study: 3 review rounds + r4 deltas done; owner confirmation pending (Q1).
 
 ## Next actions (in order)
 0. S13: (a) determinism: spreads stay 10-25 % with windows aligned to 0.33 s: (i) why arm lands 0.28-0.61 s after
    30 s and why arm_late_s is missing; (ii) cause below the runner (gz/PX4 threading): bisect with speed factor
-   and compare gz ground truth vs PX4 timestamps on r1..r3; then define the G1.6 tolerance in GATES.md. (b) write `outer_loop_candidates_r4.md` (deltas
-   for R3-1..R3-8, cheap, by me), record R3-8 in DECISIONS.md, then owner question (one-page summary, not blocking).
-   Review rounds: 3 done, last one no BLOCKING; r4 deltas need no new full round unless a delta changes interfaces.
+   and compare gz ground truth vs PX4 timestamps on r1..r3; then define the G1.6 tolerance in GATES.md.(b) DONE S13 (r4 + Q1).
    (c) final GATES.md G1 and remaining second keys.
 0'. S12 (done/partly): (a) runner: arm and offboard at fixed sim times, and call metrics.py at the end (sonnet, ~12 calls, two keys:
    haiku re-checks sends.csv vs run.json); re-fly 3 same-seed hovers (haiku, as T18 brief); if spread persists, the
@@ -87,7 +89,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | | | |
+| T22 | haiku | S13: ULog arm/offboard instants + re-scored det_s12 with ULog-aligned window | design/determinism_s13.md | re-launch brief from STATE |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
