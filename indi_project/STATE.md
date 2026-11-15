@@ -1,23 +1,11 @@
 # INDI project state
 
-## OWNER NOTE 2026-11-15 01:10: cause of INDI's ~2x hover effort, read `results/s2_hover_effort_cause.md` now
+## OWNER DECISION 2026-11-15 (during session 47): O-13, read it in `indi_project/OWNER_GUIDANCE.md` now
 
-The owner had the hover-effort excess investigated (analysis of v2 seen-set hover logs, no flight). Two causes:
-(1) DOMINANT, structural: INDI feeds the filtered angular acceleration back at gain 1/G1 (0.0057; regression 0.0065-
-0.0072 torque per rad/s^2 vs pid_tuned 0.0033-0.0036). Above 30 Hz the acceleration estimate is gyro/vibration noise,
-equal for both controllers; ~75 % of the excess effort is 30-80 Hz. No INDI gain changes it; only an INDI-only filter
-applied synchronously to a_f and the actuator state would (firmware, phase cost). (2) SECONDARY, v2-specific: at hover
-the eRPM telemetry has only 3-4 levels per motor (14-29 rpm steps); the measured torque fed back at gain 1 carries
-0.5-10 Hz content not explained by the command, and the true roll acceleration is 5-12x PID's at 4-10 Hz (real
-shaking, hidden by body-rate std; the s47 "command noise, not body motion" reading holds only above ~30 Hz).
-Cause 2 is correlation only. TO DO: (a) commit, separately: `bench/hover_effort_split.py`, `bench/accel_gain.py`,
-`bench/gt_accel_bands.py`, `bench/erpm_torque_resid.py` (tooling, untracked), then `results/s2_hover_effort_cause.md`;
-(b) once no validation batch flies, fly the causal test in sec. 4 of that file (hover, seeds 1-3: indi_v2, indi_v2 +
-`MC_INDI_W_MAX 0`, pid_tuned; check measured_torque_in_use = 0) and add the result; (c) indi_v3 was frozen at 00:56,
-before this note (01:10): the V' verdict stands as flown. Report V' criterion 4 (~2x > 1.5x) with this cause analysis
-(structural 1/G1 noise gain, not a tuning miss). An INDI-only synchronous low pass is a post-V' design change, i.e. a
-new candidate (not v3), screened under O-12 if pursued; decide and record in DECISIONS.md and the report (ch. 8.10).
-Order: after VPRIME_DONE, the V' verdict and your W1 post-hoc diagnostic first, then (a)-(c). Then remove this note.
+Validation sets: fly every entry once with pid_tuned BEFORE freezing and fix or replace any entry the tuned PID
+cannot fly (V' W1 was infeasible for all controllers); fly only the verdict pair (pid_tuned + frozen INDI) at 10 seeds,
+other controllers only for a stated question with few seeds, labelled as context. Not retroactive: V' stands as flown.
+Applies to the stage-8 set and later. Record O-13 in DECISIONS.md, then keep this pointer like O-11/O-12.
 
 ## OWNER DECISION 2026-11-14 (during session 41): O-12, read it in `indi_project/OWNER_GUIDANCE.md` now
 
@@ -47,6 +35,10 @@ owner decisions when you first act on them.
 
 ## Status summary (read this first)
 
+- **Latest (session 48, 2026-11-15): owner hover note closed. Report 8.10 (v3 on V') and 10.5 (stage-2 conclusion)
+  written. Causal test (`results/hover_cause.md`): the eRPM state shakes INDI at 4-10 Hz but adds no effort; the tuned
+  PID's hover effort doubled in that batch (2-4 Hz roll mode, cause unknown), ratio 0.96 there. D-hover-lpf: no
+  INDI-only low pass now. Stage 8 started: code facts in `plan/s8_verify.md`. NEXT: stage-8 implementation spec.**
 - **Latest (session 47, 2026-11-15): indi_v3 frozen and judged on V' (`results/vprime.md`): it matches the tuned PID
   on actuator-fault entries (within 5 %, never worse) and removes v2's actuator-gap failures, but does not outperform
   PID: 0/5 entries >= 10 % better, hover effort 2.1x PID, two V' entries (W1, W4) exceed the vehicle for every
@@ -262,6 +254,14 @@ owner decisions when you first act on them.
   stage-8 open questions 1-3 + [verify] items of `plan/s8_outer_loop_design.md` -> `plan/s8_verify.md` (relaunch only
   for what that file lacks). Then analyse with `bench/v3_hover_effort.py`-style effort +
   `bench/gt_accel_bands.py`, check measured_torque_in_use = 0 for wmax0, write `results/hover_cause.md`, (c) decision.
+  SESSION 48 DONE: causal test flown (9 runs) and reported; agent (sonnet, 37 calls, ~$0.6) wrote `plan/s8_verify.md`.
+  NEXT (session 49): (1) fold `plan/s8_verify.md` into `plan/s8_outer_loop_design.md` (settle open questions 1-3:
+  raw accel from sensor_combined + own LPF2p; collective thrust from mean u via normalisedThrustFromRpm, own delay
+  buffer; arming_check reply as mc_raptor; check the mc_pos_control attitude publish is gated by the control-mode
+  flags); (2) G_T identification from v2 hover logs (CPU, script); (3) freeze stage-8 scenarios in `bench/scenarios.md`
+  sec. 10 BEFORE any flight; (4) implementation spec, then one sonnet task per step (library + gtest, module, mode
+  registration). Optional, cheap: find the pid_tuned 2-4 Hz hover mode (compare `results/hover_cause` pid seed 1 with
+  `results/v3_hover_effort` pid seeds; check CPU load / dt jitter in the ULog).
 - SESSION 46 (2026-11-15, launch 20261115-003114): DONE: owner outer-gain diagnostic committed + D-outer-check (v3
   tunes the INDI inner loop only, outer gains fixed at tuned PID's) + report 8.9 paragraph. v3 smoke DONE
   (`results/v3_smoke.md`): ACT_BLD 0 flies as v2 (step_roll 3.63 vs 3.62 deg). V' W1-W5 IMPLEMENTED (sonnet agent,
@@ -1076,3 +1076,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-14 s44: O-12 part B committed (f064c78d9f), part A staged as patch, watchdog replay done (9ebc74caf6: no false trips; seen seed-2 estimator glitches under host overload), D-watchdog. Agents: 0.
 - 2026-11-15 s46: outer-gain diagnostic committed (D-outer-check); v3 ACT_BLD 0 smoke = v2; V' implemented; Tb screening: 0.3/1.0 remove motor-loss tilt, 0.1 pruned; stage 2 running. Agents: 1 sonnet. Runs: 19 (+18).
 - 2026-11-15 s47: hover effort 5 seeds (~2x PID, inherited from v2), yaw stage 2, indi_v3 frozen, V' flown (200) and judged: v3 matches tuned PID, does not outperform it (W1/W4 exceed the vehicle for all). Report 7.8. Agents: 0. Runs: 236 (+4 W1 diag).
+- 2026-11-15 s48: owner hover note (a)-(c) closed (tooling, cause file, causal test: eRPM state shakes, no effort; PID reference unstable), D-hover-lpf, report 8.10/10.5, stage-8 code facts. Agents: 1 sonnet. Runs: 9.
