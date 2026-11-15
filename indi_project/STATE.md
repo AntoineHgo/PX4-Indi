@@ -255,6 +255,11 @@ owner decisions when you first act on them.
   descends to the ground, none recovers (appended to `results/vprime.md`). NEXT (session 48): (2) report 8.10 "v3 on V'" from `results/vprime.md` and
   update ch. 9/10 conclusions (v3 = parity with tuned PID on actuator faults, hover effort 2x, yaw 1.15x); (3) stage 8
   (outer-loop INDI) per OWNER_GUIDANCE order.
+- SESSION 48 (2026-11-15, launch 20261115-012956): owner note (a) DONE: tooling b77290f3a0, cause analysis 59dbfd60f3.
+  (b) RUNNING detached: `setsid nohup timeout 7200 bash indi_project/bench/hover_cause_test.sh >>
+  indi_project/results/hover_cause.log` (hover seeds 1-3 x {pid_tuned, indi_v2, indi_v2_wmax0}, 9 flights, 3 parallel,
+  ends HOVER_CAUSE_DONE, resumable with the same command). Then analyse with `bench/v3_hover_effort.py`-style effort +
+  `bench/gt_accel_bands.py`, check measured_torque_in_use = 0 for wmax0, write `results/hover_cause.md`, (c) decision.
 - SESSION 46 (2026-11-15, launch 20261115-003114): DONE: owner outer-gain diagnostic committed + D-outer-check (v3
   tunes the INDI inner loop only, outer gains fixed at tuned PID's) + report 8.9 paragraph. v3 smoke DONE
   (`results/v3_smoke.md`): ACT_BLD 0 flies as v2 (step_roll 3.63 vs 3.62 deg). V' W1-W5 IMPLEMENTED (sonnet agent,
