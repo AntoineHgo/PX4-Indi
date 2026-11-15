@@ -2,7 +2,8 @@
 
 ## Status
 - Stage: 1 (evidence and simulator), started session 1 (2026-11-15). Stage 0 done. Session 3: ref airframe model done.
-- Session 4 (launch 20261115-175831): requirements reviewed, candidates r1 drafted, fact 1 closed. Route check due S5.
+- Session 4 (launch 20261115-175831): requirements reviewed, candidates r1 drafted, fact 1 closed.
+- Session 5 (launch 20261115-181002): review round 1 (T6, fable) launched. Route check 05 due (after T6 if budget).
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written (not tested).
 - Blocker: none. No owner question open.
 - Outer-loop architecture study (MISSION section) runs in parallel with stages 1-3: not started.
@@ -30,7 +31,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | | | |
+| T6 | outer-loop review round 1 | fable | `design/outer_loop_review_r1.md` | relaunch same brief if file incomplete |
 
 ## Open problems
 - G1 logging: vehicle_acceleration logged at 20.8 Hz in T3 (logger cap, SDLOG_PROFILE 17); the outer-loop
