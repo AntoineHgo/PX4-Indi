@@ -53,7 +53,9 @@ owner decisions when you first act on them.
   Try 2 DONE (`results/s8b_activation.md`): full run OK, status 125 Hz, no holds, mean_u valid 100 %, thrust 0.59,
   BUT attitude rms 5.5 deg (PID 0.1): a_f noise 1.1 m/s^2 passes into t_c (likely aliasing of vibration by taking the
   latest accel sample per cycle).
-  NEXT: (1) fly hover with --vib-acc 0 to split vibration vs loop dynamics; (2) fix accel input (average samples
+  Detached at session end: `bench/s8b_vib0.sh` (--vib-acc 0) -> `results/s8b_activation/hover_seed1_vib0/check.txt`,
+  log `results/s8b_vib0.log` ends S8B_VIB0_DONE.
+  NEXT: (1) read the vib0 check (a_f/t_c std, attitude rms) to split vibration vs loop dynamics; (2) fix accel input (average samples
   between cycles or vehicle_acceleration; D-entry), re-check; also verify the attitude metric for INDI POS (no
   vehicle_attitude_setpoint published); (3) freeze O1-O7 in `bench/scenarios.md` sec. 10 with the O-13 pid_tuned
   pre-check; then staged INDI POS screening (O-12).**
