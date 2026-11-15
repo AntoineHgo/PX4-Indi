@@ -122,7 +122,7 @@ private:
 	/** Rate / thrust setpoint publication */
 	void publishRates(const matrix::Vector3f &rates, float thrust);
 
-	/** Repeat the last setpoint (up to kMaxHoldCycles cycles), then level rates with the last thrust */
+	/** Repeat the last setpoint (up to kMaxHoldCycles cycles), then a level attitude with the last thrust */
 	void hold(hrt_abstime now);
 
 

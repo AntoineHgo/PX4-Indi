@@ -364,11 +364,29 @@ McIndiPosControl::hold(hrt_abstime now)
 		publishRates(_last_rates, _last_thrust);
 
 	} else {
-		// level attitude rates with the last thrust, the supervising watchdog judges the mode failure
-		publishRates(Vector3f(), _last_thrust);
+		// Level the vehicle at the current yaw with the last thrust; the supervising watchdog judges the mode
+		// failure. Zero rates would only freeze the current tilt and keep accelerating sideways.
+		Vector3f rates{};
+		const bool attitude_fresh = _have_attitude && (_attitude.timestamp <= now)
+					    && ((now - _attitude.timestamp) <= kStaleTimeout);
+
+		if (attitude_fresh) {
+			const Quatf q(_attitude.q);
+			const Quatf q_level(Eulerf(0.f, 0.f, Eulerf(q).psi()));
+
+			if (q.isAllFinite() && _attitude_control.setAttitudeSetpoint(q_level, 0.f)) {
+				const Vector3f level_rates = matrix::constrain(_attitude_control.update(q), -_rate_limit, _rate_limit);
+
+				if (level_rates.isAllFinite()) {
+					rates = level_rates;
+				}
+			}
+		}
+
+		publishRates(rates, _last_thrust);
 
 		if (!_failure_reported) {
-			PX4_ERR("hold limit exceeded: level rates, last thrust");
+			PX4_ERR("hold limit exceeded: level attitude, last thrust");
 			_failure_reported = true;
 		}
 	}
