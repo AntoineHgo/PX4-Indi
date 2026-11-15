@@ -50,8 +50,13 @@ owner decisions when you first act on them.
   Fixed: status advertised at init (fix commit), runner accepts AUTO/sub_mode >= 11 when MC_INDIP_EN (sub-mode value
   11 for EXTERNAL1 is UNVERIFIED: check run.json offboard_custom_mode). Try 2 (rebuild + re-fly) launched:
   `results/s8b_activation.log`, check `results/s8b_activation/hover_seed1/check.txt`.
-  NEXT: (1) read try 2 (mean_u_valid fraction, hold_cycles, jerk_source, thrust ~ hover); (2) freeze O1-O7 in
-  `bench/scenarios.md` sec. 10 with the O-13 pid_tuned pre-check; then staged INDI POS screening (O-12).**
+  Try 2 DONE (`results/s8b_activation.md`): full run OK, status 125 Hz, no holds, mean_u valid 100 %, thrust 0.59,
+  BUT attitude rms 5.5 deg (PID 0.1): a_f noise 1.1 m/s^2 passes into t_c (likely aliasing of vibration by taking the
+  latest accel sample per cycle).
+  NEXT: (1) fly hover with --vib-acc 0 to split vibration vs loop dynamics; (2) fix accel input (average samples
+  between cycles or vehicle_acceleration; D-entry), re-check; also verify the attitude metric for INDI POS (no
+  vehicle_attitude_setpoint published); (3) freeze O1-O7 in `bench/scenarios.md` sec. 10 with the O-13 pid_tuned
+  pre-check; then staged INDI POS screening (O-12).**
 - **Latest (session 50, 2026-11-15): owner hover-mode note CLOSED (`results/pid_hover_mode.md`, D-hover-spread).
   pid_tuned has a lightly damped 2.57 Hz roll mode whose amplitude varies PER FLIGHT, not per batch: the same seed
   re-flown alone on an idle host gave effort 0.036/0.063 (seed 1) and 0.032/0.022 (seed 2). Not params, build, PX4
@@ -1118,3 +1123,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s50: pid_tuned hover mode = per-flight spread of a lightly damped 2.57 Hz PID mode (idle re-flights same seed 0.022-0.063); not seed/host load; D-hover-spread; report 8.9/8.10/10.5 corrected; owner note closed.
 - 2026-11-15 s51: stage-8 task B module + message committed (5cc5fcd01f, 6c1d9b4d83); regression hover launched.
 - 2026-11-15 s51: regression PASS; INDI POS first activation held hover (try 1); status-advertise + runner engage fixes; try 2 launched.
+- 2026-11-15 s51: INDI POS try 2 flies end to end; attitude jitter 5.5 deg from accel noise in t_c (results/s8b_activation.md).
