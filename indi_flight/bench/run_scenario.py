@@ -22,13 +22,21 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from scenarios import SCENARIOS  # noqa: E402
-from model_variant import build_variant, build_world  # noqa: E402
+from model_variant import build_variant  # noqa: E402
 
 REPO = os.environ.get("PX4_INDI_REPO", os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 # ported to indi_flight/bench: inputs (scenarios, model_variant, disturbance, params) live next to this file, outputs
 # default under indi_flight/results/. REPO stays the PX4 repo root (build dir, docker launcher indi_project/docker).
 RESULTS_DIR = os.path.join(REPO, "indi_flight", "results")
 MODELS_DIR = os.path.join(REPO, "indi_flight", "sim", "models")  # quad5in reference airframe (F-3)
+# D-SIM-STEP (s15): ONE world for every run, physics step 1.25 ms (800 Hz); the stock world (4 ms) is not used. The repo is
+# mounted at its own path in the container (indi_project/docker/run.sh), so the host path is valid there, like MODELS_DIR.
+WORLDS_DIR = os.path.join(REPO, "indi_flight", "sim", "worlds")
+# gz IMU rate of each reference model; --imu-rate changes the sensor only, never the physics step
+MODEL_IMU_RATE = {"quad5in": 800, "x500": 250}
+RATES_HZ = (800, 400, 267)  # selectable controller rates (G2): IMU_GYRO_RATEMAX; PX4 decimates by round(800/RATEMAX) = 1, 2, 3
+# Fixed across rates so only the rate varies: PX4 defaults, set explicitly so a changed default cannot leak in
+IMU_GYRO_CUTOFF_HZ, IMU_DGYRO_CUTOFF_HZ = 40, 20
 # PX4_INDI_BUILD: fly another build directory of the same tree (e.g. a branch build while a batch uses the default).
 BUILD = os.environ.get("PX4_INDI_BUILD", os.path.join(REPO, "build/px4_sitl_default"))
 
@@ -56,6 +64,7 @@ LOG_TOPICS = [
     "vehicle_local_position_groundtruth", "actuator_motors", "esc_status", "vehicle_thrust_setpoint",
     "vehicle_torque_setpoint", "sensor_combined", "vehicle_status", "vehicle_control_mode", "vehicle_land_detected",
     "parameter_update", "hover_thrust_estimate", "control_allocator_status", "indi_pos_status",
+    "vehicle_imu_status", "sensor_gyro",  # D-SIM-STEP pre-test evidence: gyro rate (sensor_gyro ~ IMU rate, 800 Hz)
 ]
 TAKEOFF_ALT = 5.0
 ALT_KP, ALT_KD = 0.04, 0.10  # thrust per m / per m/s of altitude error in attitude/rate scenarios
@@ -77,6 +86,13 @@ WD_TILT_DEG, WD_TILT_HOLD_S = 60.0, 0.5  # MPC_TILTMAX_AIR 45 deg; largest comma
 WD_MIN_HEIGHT_M = 0.3  # ground contact while airborne
 WD_BELOW_M, WD_BELOW_HOLD_S = 3.0, 1.0  # height deficit below the hold altitude; worst recorded excursions < 1 m
 WD_NO_TICK_S = 10.0  # wall seconds without ATTITUDE while PX4 is alive (host suspend, stall)
+
+
+def world_step_s():
+    """max_step_size [s] read from the world file the run uses (recorded in run.json; gz log must agree)."""
+    m = re.search(r"<max_step_size>([^<]+)</max_step_size>",
+                  open(os.path.join(WORLDS_DIR, "default.sdf"), encoding="utf-8").read())
+    return float(m.group(1)) if m else None
 
 
 class RunError(Exception):
@@ -144,6 +160,7 @@ class Sim:
         out = subprocess.run(["bash", "-c", f"source {BUILD}/gz_env.sh; env -0"], capture_output=True, check=True).stdout
         env = dict(kv.split("=", 1) for kv in out.decode().split("\0") if "=" in kv)
         env.update(HEADLESS="1", PX4_SIM_MODEL=f"gz_{self.a.model}", PX4_SIM_SPEED_FACTOR=str(self.a.speed))
+        env["PX4_GZ_WORLDS"] = WORLDS_DIR  # px4-rc.gzsim reads max_step_size from $PX4_GZ_WORLDS/$PX4_GZ_WORLD.sdf
         if self.a.model != "x500":
             env["PX4_GZ_MODELS"] = MODELS_DIR
             env["GZ_SIM_RESOURCE_PATH"] = MODELS_DIR + ":" + env.get("GZ_SIM_RESOURCE_PATH", "")
@@ -180,10 +197,7 @@ class Sim:
         raise RunError(f"timeout ({timeout}s wall) waiting for '{pattern}' in {path}")
 
     def start_gz(self):
-        world = os.path.join(self.env["PX4_GZ_WORLDS"], "default.sdf")
-        if self.a.imu_rate != 250:
-            world = build_world(self.a.imu_rate, self.out, self.env["PX4_GZ_WORLDS"])
-            self.env["PX4_GZ_WORLDS"] = os.path.dirname(world)  # px4-rc.gzsim re-applies its max_step_size
+        world = os.path.join(self.env["PX4_GZ_WORLDS"], "default.sdf")  # fixed 1.25 ms world, same for every run
         self.gz = self.spawn(["gz", "sim", "--verbose=1", "-r", "-s", "--seed", str(self.a.seed), world], "gz.log")
         t0 = time.time()
         while time.time() - t0 < 120:
@@ -479,7 +493,12 @@ def main():
     ap.add_argument("--sim", choices=("v1", "v2", "v2true"), default="v1",
                     help="v1: stock gz_x500 (esc_rpm echoes the command); v2: stage-2 sim, rotor speed through the "
                          "eRPM telemetry model; v2true: stage-2 sim, exact rotor speed in esc_rpm")
-    ap.add_argument("--imu-rate", type=int, default=250, help="gz IMU rate and physics rate in Hz (stock 250)")
+    ap.add_argument("--imu-rate", type=int, default=None,
+                    help="gz IMU sensor rate in Hz; default = the model's own (quad5in 800, x500 250). Does NOT change "
+                         "the physics step (fixed 1.25 ms world, D-SIM-STEP)")
+    ap.add_argument("--rate-hz", type=int, choices=RATES_HZ, default=800,
+                    help="controller rate = IMU_GYRO_RATEMAX (800: stock PX4 multicopter default, rc.mc_defaults; 400; "
+                         "267 = 800/3, the 'reported 250 Hz' point). Sets vehicle_angular_velocity rate")
     ap.add_argument("--vib-acc", type=float, default=0.0, help="v2: IMU vibration accel amplitude per rotor [m/s^2]")
     ap.add_argument("--vib-gyr", type=float, default=0.0, help="v2: IMU vibration gyro amplitude per rotor [rad/s]")
     ap.add_argument("--erpm-drop", type=float, default=0.0, help="v2: probability of a dropped eRPM frame")
@@ -491,6 +510,8 @@ def main():
     ap.add_argument("--log-from-start", action="store_true",
                     help="logger starts with -f so the log covers the time before arm (default: from arm)")
     a = ap.parse_args()
+    if a.imu_rate is None:
+        a.imu_rate = MODEL_IMU_RATE.get(a.model, 800)
     if a.out is None:
         a.out = os.path.join(RESULTS_DIR, f"{a.scenario}_{a.controller}_s{a.seed}")
     os.makedirs(a.out, exist_ok=True)
@@ -499,7 +520,10 @@ def main():
     meta = {"scenario": a.scenario, "controller": a.controller, "seed": a.seed, "speed": a.speed, "sim": a.sim,
             "instance": a.instance, "params_file": a.params, "params_applied": {}, "git": git_info(),
             "noise_seed": {"gz_sim_seed": a.seed, "px4_baro_srand": 1234}, "events": [], "phase_log": [],
-            "exit_status": "running", "error": None}
+            "exit_status": "running", "error": None,
+            "physics_step_s": world_step_s(), "world": os.path.join(WORLDS_DIR, "default.sdf"),
+            "imu_rate": a.imu_rate, "rate_hz": a.rate_hz,
+            "imu_filter_hz": {"IMU_GYRO_CUTOFF": IMU_GYRO_CUTOFF_HZ, "IMU_DGYRO_CUTOFF": IMU_DGYRO_CUTOFF_HZ}}
     overlay = {}
     if a.params:
         for line in open(a.params):
@@ -507,6 +531,9 @@ def main():
             if line:
                 k, v = line.split(None, 1)
                 overlay[k] = v.strip()
+    clash = {"IMU_GYRO_RATEMAX", "IMU_GYRO_CUTOFF", "IMU_DGYRO_CUTOFF"} & set(overlay)
+    if clash:  # the rate and its filters are set by --rate-hz only, so a params file cannot change them unseen
+        raise SystemExit(f"params file sets {sorted(clash)}: use --rate-hz (filter cutoffs are fixed)")
     sim = Sim(a)
     t_wall0 = time.time()
     ok = False
@@ -537,9 +564,12 @@ def main():
         for k, v in (sc.get("sim_params") or {}).items():  # scenario plant settings, override the CLI ones
             sim.env[f"PX4_PARAM_{k}"] = str(v)
             meta.setdefault("sim_params", {})[k] = v
-        if a.imu_rate != 250:
+        # controller rate: read at boot, so rc.mc_defaults (400 -> 800 set-default) sees the value; cutoffs pinned
+        sim.env["PX4_PARAM_IMU_GYRO_RATEMAX"] = str(a.rate_hz)
+        sim.env["PX4_PARAM_IMU_GYRO_CUTOFF"] = str(IMU_GYRO_CUTOFF_HZ)
+        sim.env["PX4_PARAM_IMU_DGYRO_CUTOFF"] = str(IMU_DGYRO_CUTOFF_HZ)
+        if a.imu_rate != MODEL_IMU_RATE.get(a.model, 800):  # sensor rate only; the model copy carries it
             variant["imu_rate"] = a.imu_rate
-            meta["imu_rate"] = a.imu_rate
         if variant:
             meta["model_variant"] = sim.apply_model_variant(variant)
         sim.start_gz()

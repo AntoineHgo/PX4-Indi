@@ -7,8 +7,8 @@ Supported keys:
   tau             motor timeConstantUp and timeConstantDown of all four rotors (x500/model.sdf)
   tau_up          timeConstantUp only (multiplies with tau); for the asymmetric-actuator scenario (V2)
   tau_down        timeConstantDown only (multiplies with tau)
-  imu_rate        x500_base imu_sensor <update_rate> in Hz (stock 250); the world physics step must match
-                  (run_scenario.py --imu-rate writes the world copy)
+  imu_rate        x500_base imu_sensor <update_rate> in Hz (stock 250). The physics step is NOT coupled to it
+                  (D-SIM-STEP: every run uses indi_flight/sim/worlds/default.sdf, 1.25 ms)
   rpm             True: add a JointStatePublisher (every physics step) to x500, the stage-2 rotor speed source
                   read by GZBridge when SIM_GZ_ESC_FB=1 (plan/s2_rotor_speed.md); no effect on the dynamics
 
@@ -98,15 +98,3 @@ def build_variant(spec, out_dir, stock_models):
         tree.write(x_path)
         rec["new"]["joint_state_publisher"] = [f"rotor_{i}_joint" for i in range(4)]
     return root, rec
-
-
-def build_world(rate_hz, out_dir, stock_worlds):
-    """World copy with the physics step at 1/rate_hz (stock default.sdf: 0.004 s, 250 Hz). Returns its path."""
-    path = os.path.join(os.path.abspath(out_dir), "world", "default.sdf")
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    tree = ET.parse(os.path.join(stock_worlds, "default.sdf"))
-    physics = tree.getroot().find("world").find("physics")
-    physics.find("max_step_size").text = repr(1.0 / rate_hz)
-    physics.find("real_time_update_rate").text = str(int(rate_hz))
-    tree.write(path)
-    return path
