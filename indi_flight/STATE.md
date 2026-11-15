@@ -76,6 +76,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T38 | pre-test truth topics, hover s4 | host bash | `results/a12_fix_s18/pretest_truth_topics/` | `python3 bench/run_scenario.py --scenario hover --controller pid_default --seed 1 --speed 4 --out results/a12_fix_s18/pretest_truth_topics`, then `bench/gate_g1.sh g1.1 <dir>` |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
