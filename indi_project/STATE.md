@@ -258,7 +258,9 @@ owner decisions when you first act on them.
 - SESSION 48 (2026-11-15, launch 20261115-012956): owner note (a) DONE: tooling b77290f3a0, cause analysis 59dbfd60f3.
   (b) RUNNING detached: `setsid nohup timeout 7200 bash indi_project/bench/hover_cause_test.sh >>
   indi_project/results/hover_cause.log` (hover seeds 1-3 x {pid_tuned, indi_v2, indi_v2_wmax0}, 9 flights, 3 parallel,
-  ends HOVER_CAUSE_DONE, resumable with the same command). Then analyse with `bench/v3_hover_effort.py`-style effort +
+  ends HOVER_CAUSE_DONE, resumable with the same command). Report 8.10 + 10.5 DONE (committed). AGENT IN FLIGHT (sonnet):
+  stage-8 open questions 1-3 + [verify] items of `plan/s8_outer_loop_design.md` -> `plan/s8_verify.md` (relaunch only
+  for what that file lacks). Then analyse with `bench/v3_hover_effort.py`-style effort +
   `bench/gt_accel_bands.py`, check measured_torque_in_use = 0 for wmax0, write `results/hover_cause.md`, (c) decision.
 - SESSION 46 (2026-11-15, launch 20261115-003114): DONE: owner outer-gain diagnostic committed + D-outer-check (v3
   tunes the INDI inner loop only, outer gains fixed at tuned PID's) + report 8.9 paragraph. v3 smoke DONE
