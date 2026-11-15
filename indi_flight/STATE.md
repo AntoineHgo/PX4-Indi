@@ -15,7 +15,12 @@
 ## Next actions (in order)
 0000000. S17 (launch 20261115-233009, cap $2.16): A-11 CLOSED (`results/a11_effort_rate.md`, effort rate dependent,
    G4 at fixed bandwidth); G1.6 verdict in GATES.md ((a) NOT met, (c) met; remedy: lockstep gz or in-PX4 scheduled
-   mode switch, decide before G3). T35 (sonnet) writing `bench/gate_g1.sh` G1.1/G1.3/G1.4/G1.6 + `design/gate_g1_cmd_s17.md`.
+   mode switch, decide before G3). T35 DONE: `bench/gate_g1.sh g1.1|g1.3|g1.4|g1.6` (`design/gate_g1_cmd_s17.md`):
+   g1.1 FAIL (A-12 groundtruth 14.8 Hz vs 50, A-13 gyro gaps, esc_status A-10), g1.3 35/35 agree but most metrics
+   lack a second key, g1.4 tests pass, 7 scripts lack self-tests, g1.6(a) FAIL as recorded.
+   NEXT (S18): A-12 first (haiku: groundtruth publish count in gz_bridge vs log) since all tracking uses truth;
+   then second keys for rate/attitude/hover/steps metrics (sonnet, one family), self-tests for the 7 scripts,
+   decide gz lockstep vs in-PX4 scheduled mode switch (G1.6a).
 000000. NEXT (S17): (a) DONE S16: G1.6 repeat on 1.25 ms world 15/15 (`results/det_g16_w125/README.md`): tracking
    matches 4 ms world within spread; G1.6(a) NOT MET (7.5-11 ms vs 2.5 ms), cause (c) unchanged -> record in GATES.md
    G1.6 verdict. Effort doubled in manoeuvres: A-11 (haiku: recompute effort decimated to 285/250 Hz, close it).
@@ -65,7 +70,6 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T35 | gate_g1.sh items 1,3,4,6 | sonnet | `bench/gate_g1.sh`, `design/gate_g1_cmd_s17.md` | relaunch brief from the design file |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -109,6 +113,7 @@
 | 16 | T32 | host bash | pre-test 5 flights (rates, logger poll) | done, 5/5 flew, ~5 min wall, $0 |
 | 16 | T34 | host bash | G1.6 repeat, 1.25 ms world, 15 runs | done, 15/15 first attempt, ~10 min wall, $0 |
 | 16 | T33 | haiku | A-10 esc_status stamps | done, 10 calls, ~$0.05, one wrong claim corrected by me |
+| 17 | T35 | sonnet | gate_g1.sh + g1_checks.py | done, 14 calls, ~$0.52 |
 
 ## Lessons proposed
 - Haiku handles a well-specified log check (10 calls) for ~$0.06: use it for every bounded log/metric check.

@@ -63,3 +63,4 @@
   (A13-A17 answer R3-1..R3-8, no interface change, no new round) and owner question Q1 (confirm A, not blocking).
 
 - 2026-11-15 S16: Q1 (outer-loop architecture) closed: owner confirmed A; flatness studied as A18, optional stage-5 increment after base A (`design/flatness_r2.md`).
+- 2026-11-15 S17: A-11 closed (effort rate dependent), G1.6 verdict recorded, gate_g1.sh for G1.1/3/4/6, A-12/A-13 opened.
