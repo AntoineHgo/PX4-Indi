@@ -90,3 +90,20 @@ position), checked against ground truth (`vehicle_local_position_groundtruth`) i
 stock MPC outer gains (K = K_v K_p ~ 1.7) are low for a loop whose lead scales as tau w^2 / K. The INDI POS params file
 can set MPC_XY_P / MPC_XY_VEL_P_ACC for INDI runs only, without touching pid_tuned's params, so (iii) can be screened
 without new firmware parameters.
+
+### EKF against ground truth (session 55, inline check, T5 seed 1, cruise window, per-axis shift/gain vs analytic path)
+
+| run | EKF x | EKF y | ground truth x | ground truth y |
+|---|---|---|---|---|
+| pid_tuned | -40 ms, 0.99 | -20 ms, 1.11 | -150 ms, 0.96 | -120 ms, 1.02 |
+| D' (indi_pos_v3_jlpf) | +20 ms, 0.92 | +160 ms, 1.02 | -90 ms, 0.89 | +70 ms, 0.93 |
+
+(ground truth: mean offset over the window removed, 0.02-0.12 m.) For BOTH controllers the EKF position runs ~90-110 ms
+AHEAD of `vehicle_local_position_groundtruth`. The gap between the controllers is the same in both frames (INDI 60-180 ms
+ahead of PID). In ground truth, pid_tuned LAGS by 120-150 ms, and INDI POS is closer to in phase. UNVERIFIED and
+load-bearing for the metric: it is either a real estimator timing error (the EKF output predictor running ahead of the
+truth), or a timestamping delay of the groundtruth topic in the gz bridge. metrics.py scores tracking on the EKF
+estimate, which is what a real vehicle would see. If the estimator really leads the truth, the EKF-based score
+favours the controller that lags in truth. Check before the set-O verdict: (a) how gz_bridge stamps groundtruth
+(sim time of the pose vs hrt at publish); (b) EKF vs ground-truth velocity cross-correlation on a hover step; (c) report
+both frames in the verdict if the offset is real.

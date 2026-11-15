@@ -44,9 +44,11 @@ owner decisions when you first act on them.
   LPF at MC_INDIP_LPF_CUT on the differenced jerk (gtest added, 19/19), D-s8-jerk-lpf. DONE: arm D' T5 seed 1 = effort 0.65 (1.10x PID, was 2.4x), track 0.65 m (unchanged), vertical 0.011 m;
   lead unchanged (+0.31 m, +160 ms y) -> separate cause, now the whole gap to PID (0.38 m). Arm D'
   `bench/s8j3_pos_v3_jlpf.sh` (log `results/s8j_pos_v3_smoke/s8j3.log`, ends S8J3_DONE, resumable by re-running) ->
-  `s8j_pos_v3_smoke/traj_lemniscate/indi_pos_v3_jlpf/seed1`. NEXT: (1) cheap: is
-  `vehicle_local_position_groundtruth` logged? If yes, run the diag against it (EKF delay in the position feedback acts
-  as an inner lag -> lead); (2) a_f/a_c y overshoot (8 %) vs frequency; (3) then O-12 staged screening on T5/H1 of
+  `s8j_pos_v3_smoke/traj_lemniscate/indi_pos_v3_jlpf/seed1`. FINDING (unverified, load-bearing):
+  EKF position runs ~100 ms AHEAD of `vehicle_local_position_groundtruth` for both controllers on T5; in truth pid_tuned
+  lags 120-150 ms and INDI is near phase (table in `results/s8j_pos_v3_smoke.md`). NEXT: (1) settle this first: how the
+  gz bridge stamps groundtruth (src/modules/simulation/gz_bridge) vs a real EKF lead; EKF vs gt velocity xcorr on hover;
+  if real, the verdict reports tracking in both frames (D-entry); (2) a_f/a_c y overshoot (8 %) vs frequency; (3) then O-12 staged screening on T5/H1 of
   the outer gains for INDI only (the INDI POS params file may set MPC_XY_P / MPC_XY_VEL_P_ACC; pid_tuned keeps its own,
   no new firmware params needed), freeze indi_pos_v3 (now with the jerk filter), fly set O.**
 - **Latest (session 54, 2026-11-15): stage-8 set O FROZEN (`bench/scenarios.md` sec. 10, a889176009, D-s8-oset).
@@ -1200,3 +1202,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s54: O5 crash diagnosed (com_shift injector world-fixed torque -> yaw saturation at tilt); O2 circle 5 m/s, O5 on vertical sine; set O frozen (sec. 10); indi_pos_v3 params; smoke launched. Agents: 0. Runs: 4 + 3.
 - 2026-11-15 s54: indi_pos_v3 smoke: T5 0.64 m vs PID 0.38 m at 2.4x effort, leads the reference; arm C: FF causes the effort, not the lead. Session total: agents 0, runs 8, builds 2.
 - 2026-11-15 s55: T5 lead explained (cascade + FF over inner lag, not timing); D effort = differenced-jerk staircase, LPF fix b9fb3ce5a9; arm D' flying. Agents: 0. Runs: 1, builds 2 (gtest, sitl).
+- 2026-11-15 s55: arm D' jerk LPF: effort 1.44 -> 0.65 (1.10x PID), track unchanged; lead remains; EKF leads groundtruth ~100 ms for both controllers (to verify). Session total: agents 0, runs 1, builds 2.
