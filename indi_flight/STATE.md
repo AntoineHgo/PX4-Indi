@@ -13,6 +13,9 @@
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
+0000000. S17 (launch 20261115-233009, cap $2.16): A-11 CLOSED (`results/a11_effort_rate.md`, effort rate dependent,
+   G4 at fixed bandwidth); G1.6 verdict in GATES.md ((a) NOT met, (c) met; remedy: lockstep gz or in-PX4 scheduled
+   mode switch, decide before G3). T35 (sonnet) writing `bench/gate_g1.sh` G1.1/G1.3/G1.4/G1.6 + `design/gate_g1_cmd_s17.md`.
 000000. NEXT (S17): (a) DONE S16: G1.6 repeat on 1.25 ms world 15/15 (`results/det_g16_w125/README.md`): tracking
    matches 4 ms world within spread; G1.6(a) NOT MET (7.5-11 ms vs 2.5 ms), cause (c) unchanged -> record in GATES.md
    G1.6 verdict. Effort doubled in manoeuvres: A-11 (haiku: recompute effort decimated to 285/250 Hz, close it).
@@ -62,6 +65,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T35 | gate_g1.sh items 1,3,4,6 | sonnet | `bench/gate_g1.sh`, `design/gate_g1_cmd_s17.md` | relaunch brief from the design file |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
