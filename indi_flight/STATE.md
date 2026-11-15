@@ -95,7 +95,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | | | |
+| T24 | haiku | S13: G1.6 pre-test (step_roll, traj_lemniscate on quad5in) then 5 same-seed runs x hover/step_roll/traj_lemniscate, speed 1 | results/det_g16/, design/g16_s13.md | re-run missing rN dirs only (same command in g16_s13.md) |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
