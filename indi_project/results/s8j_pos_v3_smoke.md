@@ -114,3 +114,10 @@ and the EKF appears to "lead" it. That is the more likely explanation (an EKF ru
 be unusual). Not yet proven: compare the header stamp with hrt in the bridge (debug print, no commit), or
 cross-correlate gt velocity with velocity integrated from the IMU over a fast manoeuvre. Until then, the EKF-frame
 metric stands, and the ground-truth phase numbers above are not used.
+
+## Session 56 correction
+
+Superseded by `results/s8k_gnss_delay.md` (D-s8-gnss-delay): the EKF-vs-ground-truth offset is not a gz_bridge stamping
+artefact. It comes from SENS_GNSS0_DELAY 110 ms applied to the zero-latency simulated GNSS. With the delay set to 0, the INDI
+POS lead disappears (T5 0.649 -> 0.262 m; pid_tuned 0.383 m). The cascade-phase explanation above is not the main
+cause of the arm-D/D' gap. The ground-truth phase numbers above were measured under the mismatched delay.

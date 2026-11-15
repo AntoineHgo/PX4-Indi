@@ -35,17 +35,21 @@ owner decisions when you first act on them.
 
 ## Status summary (read this first)
 
-- **Latest (session 56, 2026-11-15): the T5 "EKF lead" is a GNSS delay mismatch (D-s8-gnss-delay). `bench/gt_lag.py`
-  (a0402ce161): EKF position leads ground truth by ~110 ms on x/z for both controllers, while velocity and attitude agree
-  within 15 ms, so the gz_bridge reception stamp is ruled out. Cause: `sensor_gps_sim` stamps timestamp_sample ==
-  timestamp, so VehicleGPSPosition applies the stock SENS_GNSS0_DELAY 110 ms to a GNSS with no latency (vehicle_gnss
-  ts - sample = 110 ms). Runner option `--gnss-delay` (d521912000). RUNNING detached: `bench/s8k_gnss_delay.sh`
-  (T5 seed 1, pid_tuned + indi_pos_v3_jlpf, SENS_GNSS0_DELAY 0; log `results/s8k_gnss_delay/s8k.log`, ends S8K_DONE,
-  resumable by re-running) -> `results/s8k_gnss_delay/traj_lemniscate/*/seed1/{metrics.log,gt_lag.log}`.
-  NEXT: (1) when S8K_DONE: confirm the position lag is ~0; compare T5 track/effort/lead for both controllers with
-  session 55 (pid_tuned 0.38 m, D' 0.65 m, +160 ms y); write `results/s8k_gnss_delay.md`; (2) QUEUED detached behind S8K_DONE: O-13 pre-check re-fly `bench/s8l_o13_gnss0.sh`
-  (pid_tuned, set O, seed 1, `--gnss-delay 0`, log `results/s8l_o13_gnss0.log`, ends S8L_DONE, resumable) -> compare with `results/s8i_o13_precheck.md`; add `--gnss-delay 0` to every later stage-8 script;
-  (3) then the open items of session 55 (a_f overshoot, O-12 screening on T5/H1, freeze, set O).**
+- **Latest (session 56, 2026-11-15): the T5 "lead" and the INDI POS gap were a GNSS delay mismatch (D-s8-gnss-delay,
+  `results/s8k_gnss_delay.md`). `bench/gt_lag.py`: EKF position led ground truth by ~110 ms (velocity/attitude within
+  15 ms). `sensor_gps_sim` stamps timestamp_sample == timestamp, so VehicleGPSPosition applies the stock
+  SENS_GNSS0_DELAY 110 ms to a zero-latency GNSS. Runner `--gnss-delay` (d521912000). T5 seed 1 with delay 0:
+  INDI POS (indi_pos_v3 + jerk LPF) **0.262 m vs pid_tuned 0.383 m**, effort 1.12x, a_c follows a_ref within 20-30 ms,
+  EKF-vs-gt lag 0-4 ms (pid_tuned barely changed: 0.378 -> 0.383). Session 55's cascade-lead explanation is superseded.
+  RUNNING detached: O-13 pre-check re-fly `bench/s8l_o13_gnss0.sh` (pid_tuned, set O, seed 1, `--gnss-delay 0`,
+  log `results/s8l_o13_gnss0.log`, ends S8L_DONE, resumable by re-running) -> `results/s8l_o13_gnss0/<entry>/pid_tuned/seed1`.
+  NEXT: (1) when S8L_DONE: table vs `results/s8i_o13_precheck.md` (feasibility: no watchdog abort, saturation, track),
+  write `results/s8l_o13_gnss0.md`, amend `bench/scenarios.md` sec. 10 (set O flies with SENS_GNSS0_DELAY 0, pre-check
+  re-done; D-entry); (2) hover T1 smoke for indi_pos_v3 with delay 0 (effort criterion <= 1.5x); (3) O-12 staged
+  screening on T5/H1 only if needed (T5 already beats pid_tuned; screening may be skipped: record the choice), freeze
+  indi_pos_v3 (= params file + jerk-LPF firmware b9fb3ce5a9), then fly set O, verdict pair pid_tuned vs indi_pos_v3
+  at 10 seeds, `--gnss-delay 0` in every stage-8 script; (4) report: add the GNSS delay finding to the simulation
+  chapter's limits (inner-loop V/V' position-hold numbers carry it).**
 - **Latest (session 55, 2026-11-15): causes found (`results/s8j_pos_v3_smoke.md` sec. "Session 55", `bench/s8_track_diag.py`
   a37025b932). (a) Reference timing is fine (logged setpoint = analytic path delayed 2 ms). (b) The INDI POS LEAD is the
   closed-loop phase of the cascade with full a_ref FF over a lagging inner loop, p/r ~ 1/(1 - j tau w^3/K): arm C
@@ -1131,6 +1135,7 @@ S42 ORDER (do this first, top to bottom):
 | 34 | 1 sonnet (~$0.6, D-omega2 wiring) | 105 (v1 recheck) + r1f running + frz queued | session ~$2.8 |
 | 51 | 1 sonnet (task B module, 32 calls, ~$0.95) | 1 SITL build, 2 regression hovers | ~$2.0 of $2.78 |
 | 50 | 0 | 8 hover flights (pid_hover_mode: 4 idle, 4 under CPU saturation) | ~$2.2 of $3 |
+| 56 | 0 | 2 T5 check flights + 7 pre-check (s8l) | GNSS delay cause; ~$1.9 of $3 |
 | 55 | 0 | 1 SITL build + gtest build, 1 flight (T5 arm D') | lead/effort diagnosis, jerk LPF; ~$2.4 of $3 |
 
 ## Journal
@@ -1215,3 +1220,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s54: indi_pos_v3 smoke: T5 0.64 m vs PID 0.38 m at 2.4x effort, leads the reference; arm C: FF causes the effort, not the lead. Session total: agents 0, runs 8, builds 2.
 - 2026-11-15 s55: T5 lead explained (cascade + FF over inner lag, not timing); D effort = differenced-jerk staircase, LPF fix b9fb3ce5a9; arm D' flying. Agents: 0. Runs: 1, builds 2 (gtest, sitl).
 - 2026-11-15 s55: arm D' jerk LPF: effort 1.44 -> 0.65 (1.10x PID), track unchanged; lead remains; EKF leads groundtruth ~100 ms for both controllers (to verify). Session total: agents 0, runs 1, builds 2.
+- 2026-11-15 s56: EKF lead = SENS_GNSS0_DELAY 110 ms on a zero-latency sim GNSS (D-s8-gnss-delay); T5 with delay 0: INDI POS 0.26 m vs pid_tuned 0.38 m; O-13 pre-check re-fly running. Agents: 0. Runs: 2 (+7 queued).
