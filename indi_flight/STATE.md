@@ -3,7 +3,7 @@
 ## Status
 - Stage: 1 (evidence and simulator), started session 1 (2026-11-15). Stage 0 done. Session 3: ref airframe model done.
 - Session 4 (launch 20261115-175831): requirements reviewed, candidates r1 drafted, fact 1 closed.
-- Session 5 (launch 20261115-181002): review round 1 (T6, fable) launched. Route check 05 due (after T6 if budget).
+- Session 5 (launch 20261115-181002): review r1 DONE (T6): A 0B/5M/7m recommended w/ 5 conditions, B deferred, C rejected (1 BLOCKING). Route check 05 NOT run (budget): do it first in S6.
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written (not tested).
 - Blocker: none. No owner question open.
 - Outer-loop architecture study (MISSION section) runs in parallel with stages 1-3: not started.
@@ -18,7 +18,7 @@
    copy + stock PositionControl kinematics with I=0 + INDI stage; B dual-rate; C own law; R-a/b/c rejected).
    T5 DONE S4: 15 new items (4 BLOCKING, inherited by A/B via the shell copy), R9 corrected; candidates
    re-checked. Fact 1 CLOSED S4: local position 125 Hz in SITL -> A preferred. Rnew items folded as R37-R51
-   (S4). NEXT: (b) review round 1, fable, ~$1.2, launch at session
+   (S4). NEXT: route check 05 (sonnet); fold r1 findings F1-F5 + requirement defects (R1,R14,R24,R25,R33,R41,R47) into candidates_r2 (A only + B note); then (b-done) review round 1, fable, ~$1.2, launch at session
    start: brief = candidates_r1 vs requirements(+review) + source, find the mode/transition each candidate breaks,
    output `design/outer_loop_review_r1.md`; (c) round 2, then owner question with one-page summary.
    Defect: rc.mc_apps starts mc_pos_control unconditionally (line 49), MC_INDIP_EN adds the INDI module: R1 fails.
@@ -31,7 +31,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T6 | outer-loop review round 1 | fable | `design/outer_loop_review_r1.md` | relaunch same brief if file incomplete |
+| - | none | | | |
 
 ## Open problems
 - G1 logging: vehicle_acceleration logged at 20.8 Hz in T3 (logger cap, SDLOG_PROFILE 17); the outer-loop
@@ -49,7 +49,9 @@
 | 2 | T4 | sonnet | outer-loop requirements | cut by cap, nothing written |
 | 3 | T4 | sonnet | outer-loop requirements, relaunch | done, 31 calls, ~$0.75, 36 items, 305 lines |
 | 4 | T5 | sonnet | requirements review | done, 16 calls, ~$0.5, 15 new items (4 blocking) |
+| 5 | T6 | fable | outer-loop review r1 | done, 13 calls, ~$2.5 (2x estimate) |
 
 ## Lessons proposed
 - At a $3 cap launch one agent per session (session 2: two sonnet agents ~$1.4 in 30 min, both cut).
+- A fable review of ~1 KLOC of design + source costs ~$2.5: give it a whole session.
 - Web-research agents cost about 3x a code-read agent of the same call count; brief them at 20 calls.
