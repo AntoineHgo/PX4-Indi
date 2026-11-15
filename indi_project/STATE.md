@@ -44,7 +44,14 @@ owner decisions when you first act on them.
   DONE: O-13 pre-check re-fly (`results/s8l_o13_gnss0.md`): all 7 flyable, set unchanged, O4 thrust-limited (33 % sat);
   scenarios.md sec. 10 amended (c04bb47da8). RUNNING detached: `bench/s8m_smoke_gnss0.sh` (T1 hover seeds 1-2, H1 seed 1,
   T5 seed 2; pid_tuned + indi_pos_v3; log `results/s8m_smoke_gnss0.log`, ends S8M_DONE, resumable).
-  NEXT: (2) when S8M_DONE: hover T1 smoke for indi_pos_v3 with delay 0 (effort criterion <= 1.5x); (3) O-12 staged
+  DONE s8m: T5 seed 2 INDI POS 0.278 vs pid_tuned 0.383 m; H1 seed 1 1.89 vs 2.66 m (both saturate 17-22 %, INDI effort
+  1.4x); HOVER EFFORT INDI POS 0.087/0.081 vs pid_tuned 0.026/0.037 = ~2.7x (criterion 4 <= 1.5x FAILS; indi_v3 inner
+  loop alone was 2.0-2.4x in V', D-v3-hover). RUNNING detached: O-12 stage-1 screen `bench/s8o_screen_lpf.sh` (indi_v3
+  under the stock outer loop on hover seeds 1-2 = effort attribution; MC_INDIP_LPF_CUT 5 on hover 1-2, T5 1, H1 1;
+  log `results/s8o_screen_lpf.log`, ends S8O_DONE, outputs under `results/s8m_smoke_gnss0/`). Verdict batch script
+  `bench/s8n_oset.sh` written, NOT launched: launch it detached (timeout ~14400) after the freeze.
+  NEXT: (2) when S8O_DONE: pick LPF 10 or 5 (track T5/H1 vs hover effort), record D-s8-freeze, freeze
+  `indi_pos_v3` (if 5 wins, copy lpf5 into indi_pos_v3.params in its own commit), launch s8n; hover T1 smoke for indi_pos_v3 with delay 0 (effort criterion <= 1.5x); (3) O-12 staged
   screening on T5/H1 only if needed (T5 already beats pid_tuned; screening may be skipped: record the choice), freeze
   indi_pos_v3 (= params file + jerk-LPF firmware b9fb3ce5a9), then fly set O, verdict pair pid_tuned vs indi_pos_v3
   at 10 seeds, `--gnss-delay 0` in every stage-8 script; (4) report: add the GNSS delay finding to the simulation
