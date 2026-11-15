@@ -8,6 +8,8 @@
   spend on paper design, no gate tested. Acted on: candidates_r2 written by me (cheap); round 2 = one NARROW
   fable review (deltas only, <=15 calls) because MISSION requires >=2 rounds; then owner question; from S7 on,
   stage-1 bench/G1 work has priority over design.
+- Session 7 (launch 20261115-182252, cap $1.6): review r2 NOT launched (fable ~$1.2-2.5 > half the cap, rule 21);
+  deferred to the first session with cap >= $3. Did port 1a step 1 instead (T9, metrics.py trajectory fix).
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written (not tested).
 - Blocker: none. No owner question open.
 - Outer-loop architecture study (MISSION section) runs in parallel with stages 1-3: not started.
@@ -25,7 +27,11 @@
 3. Write GATES.md for G1 before its first test (draft exists).
 4. Port plan DONE S6 (`design/bench_port_plan.md`, headers only, UNVERIFIED bodies). Port 1a first (sonnet,
    one script family per agent, ~$0.8 each: metrics.py fix M:51 + self-test, then run_scenario.py sim-time fixes).
-   Port bench runner/metrics into `indi_flight/bench/` with the review fixes (5 Hz held reference, decimated effort,
+   S7: metrics.py trajectory fix DONE (T9, `design/port_1a_metrics.md`, self-test passes, I re-ran it). NOT yet
+   usable for a verdict: needs (a) second key (sonnet, independent re-implementation of the analytic trajectory error
+   from raw ULog, compare on 3 archive set-O runs, ~$0.5), (b) groundtruth origin offset vs estimator hold_pos (3 cm
+   seen, review used mean-offset removal), (c) lag-scan check that ULog timestamp == MAVLink time_boot_ms.
+   Then run_scenario.py sim-time fixes (sim_review.md:14,19). Port bench runner/metrics into `indi_flight/bench/` with the review fixes (5 Hz held reference, decimated effort,
    ground-truth stamp, sim-time injections); self-test + second key per script. Errata re-score of set-O/T5.
 5. Simulator items of stage 1 (delayed GNSS, rotor inertia check, battery model, injectors, seeded drops, vibration,
    variants, noise profiles, determinism). Source web re-check of J_rotor (ASSUMED) still pending.
@@ -54,8 +60,10 @@
 | 5 | T6 | fable | outer-loop review r1 | done, 13 calls, ~$2.5 (2x estimate) |
 | 6 | T7 | sonnet | route check 05 | done, 7 calls, ~$0.3 |
 | 6 | T8 | haiku | bench inventory + defect map | done, 7 calls, ~$0.15, design/bench_port_plan.md |
+| 7 | T9 | sonnet | metrics.py port, M:51 fix, self-test | done, 13 calls, ~$0.47 |
 
 ## Lessons proposed
+- At a $1.6 cap: one sonnet agent of ~15 calls (~$0.5) plus state and commit; no fable work.
 - At a $3 cap launch one agent per session (session 2: two sonnet agents ~$1.4 in 30 min, both cut).
 - A fable review of ~1 KLOC of design + source costs ~$2.5: give it a whole session.
 - Web-research agents cost about 3x a code-read agent of the same call count; brief them at 20 calls.
