@@ -1,0 +1,4 @@
+# Identification scripts review (s59)
+Measured log rates (o1_lemniscate pid_tuned seed1): vehicle_angular_velocity 250 Hz regular (ts_sample 4 ms); torque/thrust_setpoint ~286 Hz irregular (dt 3-8 ms); actuator_motors same; esc_status 250 Hz irregular (dt std 1.8 ms, max 16 ms, many stale values); sensor_combined 250 Hz; vehicle_local_position 125 Hz; vehicle_land_detected ~1 Hz; *_groundtruth 58.8 Hz (local_pos_gt irregular, std 6.5 ms).
+- identify_g1: torque ZOH (searchsorted right) onto av timestamp_sample (L61-63): ZOH of 286 Hz onto 250 Hz, torque stamp vs sample stamp mix; filters assume exact fs=250; np.diff of xyz_derivative (already filtered) and of model; R^2 on 1-sample increments (L96), not on acceleration; closed-loop bias unaddressed; tc/delay degenerate (roll 321 vs pitch 211). Synthetic test: open loop G=60 recovered 59.4 (tc, delay exact), mild closed loop 62.2 but tc ok, delay 0 vs 1 (true).
+- others: see final report.
