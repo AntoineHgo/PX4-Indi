@@ -234,6 +234,10 @@ def compute(ulog, run):
 
     # ---- attitude tracking ----
     att, asp = topic(ulog, "vehicle_attitude"), topic(ulog, "vehicle_attitude_setpoint")
+    # INDI POS publishes rates, not vehicle_attitude_setpoint: its q_d is logged in indi_pos_status
+    ips = topic(ulog, "indi_pos_status")
+    if ips is not None and "q_d[0]" in ips:
+        asp = ips
     euler = None
     if att is not None:
         ta = att["timestamp"]
