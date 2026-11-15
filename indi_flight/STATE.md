@@ -93,6 +93,7 @@
 
 ## Tasks in flight
 | id | task | agent | output | resume |
+| T27 | haiku | G1.6 ULog checks (mode instants, window.start_s anchor, s4 hover r5 outlier) | design/g16_ulog_s14.md | relaunch same brief (in JOURNAL S14) if file incomplete |
 |---|---|---|---|---|
 
 ## Open problems
