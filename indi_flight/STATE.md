@@ -6,14 +6,19 @@
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written; G1.6 first tested S14 ((a) not met, see next actions).
 - Blocker: none. Q1 closed: A confirmed by owner; flatness A18 reviewed (r5 BLOCKING), answered in
   `design/flatness_r2.md` (S15): optional increment after base A. Outer-loop study finished; stage 5 = base A.
-- Session 15 (launch 20261115-230225, cap $3): flatness_r2 written; T28 window anchor done; IMU 250 Hz found.
+- Session 15 (launch 20261115-230225, cap $3): flatness_r2 written; window anchored (T28, T29 2nd key);
+  D-SIM-STEP decided (1.25 ms world, IMU 800 Hz), implementation next session.
 
 ## Next actions (in order)
-000000. S15: SITL IMU rate of quad5in = 250 Hz (`sim/models/quad5in_base/model.sdf:174`). (i) G1.6(a) as written:
-   2 IMU periods = 8 ms, measured offboard spread 4-16 ms -> (a) NOT MET; threshold stays (first test done). Cause:
-   MAVLink mode command over UDP into a non-lockstep gz (S13), bound 16 ms; the window anchor of T28 removes its
-   effect on metrics; record under (c). (ii) G2 needs controller rates 400/800 Hz: IMU must go to >= 800 Hz (1 kHz)
-   in the quad5in model without changing the physics step (sim item, two keys, pre-test PID hover after).
+000000. NEXT (S16): implement D-SIM-STEP (DECISIONS.md, plan `design/imu_rate_plan_s15.md`): sonnet, ~15 calls:
+   1.25 ms world (copy of default.sdf under indi_flight/sim), quad5in IMU update_rate 800, remove the step/imu_rate
+   coupling in run_scenario.py:182-186 (+ model_variant.py:103-112), IMU_GYRO_RATEMAX per rate, add vehicle_imu_status
+   and sensor_gyro to LOG_TOPICS. Second key (haiku): a pre-test PID hover showing step 1.25 ms in the world file,
+   gyro ~800 Hz, vehicle_angular_velocity 800/400 Hz within 1 %, speed-4 wall ratio, logger drops. Then re-fly PID
+   baseline + G1.6 short repeat. Plan open items: rc.mc_defaults not read; unit of MC_INDI_ERPM_DLY latency.
+   G1.6(a) as written: 2 IMU periods = 8 ms at 250 Hz, measured 4-16 ms -> NOT MET (threshold stays). Cause: mode
+   command over UDP into non-lockstep gz; bound 16 ms; metrics no longer depend on it (window anchored). Re-test (a)
+   on the 800 Hz world (2 periods = 2.5 ms): expected to fail too; then (a) is reported failed with its cause (c).
 0000. G1.6 window anchor DONE S15 (T28 + my end fix, `design/window_anchor_s15.md`, commits 988c2ff59a, 593a8b4fad):
    start spread 4-16 ms, fixed duration; same-seed spreads unchanged (<30 %) -> spread is flight non-determinism
    (gz not lockstepped), G1.6(c) cause stated. Second key T29 AGREE 30/30 (`results/second_key_window_s15.md`).
@@ -56,7 +61,6 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T30 | S15: plan SITL IMU 1 kHz, read-only | sonnet | `design/imu_rate_plan_s15.md` | re-launch if file incomplete |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -94,6 +98,7 @@
 | 14 | T27 | haiku | G1.6 ULog checks | done, 6 calls, ~$0.05 |
 | 14 | T25 | opus | review r5 of A18 | done, 10 calls, ~$0.7, BLOCKING (yaw-rate double count) |
 | 15 | T28 | sonnet | metrics window anchor + re-score 30 | done, 13 calls, ~$0.35 |
+| 15 | T30 | sonnet | plan SITL IMU rate, read-only | done, 9 calls, ~$0.3 -> D-SIM-STEP |
 | 15 | T29 | haiku | second key window bounds | done, 2 calls, ~$0.05, AGREE 30/30 (<1 ms) |
 
 ## Lessons proposed

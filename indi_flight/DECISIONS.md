@@ -88,3 +88,18 @@ Open, to be written before code (MISSION "Decisions that are yours"):
   metrics, spreads of the same order.
 - Overturned if: INDI runs show a speed-factor effect beyond the same-seed spread (A-4), or the s4 hover outlier
   (max_dev 0.063 m, run r5) turns out to be a speed-factor artefact.
+
+## D-SIM-STEP (session 15): one physics step for every run, 1.25 ms, IMU 800 Hz
+- Problem (`design/imu_rate_plan_s15.md`): the runner world has a 4 ms step, so the IMU (and the rate loop) cannot
+  exceed 250 Hz; G2 needs 400 and 800 Hz. `run_scenario.py:182-186` sets the step to 1/imu_rate (breaks the rule
+  "variants do not change the physics step with the IMU rate"). PX4 decimates the gyro by round(sensor/RATEMAX).
+- Choice: a fixed 1.25 ms step (800 Hz) world for all runs, IMU 800 Hz. 800 Hz and 400 Hz are exact (decimation 1, 2).
+  The G2 "250 Hz reported" point runs at 800/3 = 267 Hz and is labelled so. The runner's step/IMU coupling is removed.
+- Alternatives: 1 ms step, IMU 1 kHz (250 exact, 400 -> 333 Hz, 800 -> 1 kHz: the two pass rates not exact,
+  rejected); 0.25 ms step, IMU 4 kHz (all exact, 5x physics and 5x IMU messages at speed 4, CPU unmeasured: kept as
+  the fallback); per-rate step (rejected, rule).
+- Consequence: 4 ms-step results (G1.6 set, PID references) are not comparable with later runs; the PID baseline and a
+  short G1.6 repeat (5 runs x 3 scenarios, speed 4) are re-flown on the new world. Cycle-count parameters
+  (MC_INDI_DELAY, MC_INDI_ERPM_DLY, MC_INDI_DT_MAX) are converted to time or scaled per rate in stage 3.
+- Overturned if: the 1.25 ms world does not reach speed factor 4 on this host, or a pre-test shows a step-size effect on
+  the plant (rotor dynamics, contact) beyond the same-seed spread; then measure the 0.25 ms option.
