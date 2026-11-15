@@ -77,6 +77,7 @@ void IndiAccelControl::setFilter(float sample_freq_hz, float cutoff_hz)
 {
 	_lpf_f.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
 	_lpf_u.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
+	_lpf_j.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
 }
 
 void IndiAccelControl::setThrustModel(float g_t, float k_cmd)
@@ -108,6 +109,7 @@ void IndiAccelControl::reset(const Vector3f &f_b, float mean_u)
 	_time = 0.f;
 	_a_ref_prev.zero();
 	_j_diff.zero();
+	_lpf_j.reset(_j_diff);
 
 	for (int i = 0; i < 3; i++) {
 		_t_a_ref_prev[i] = 0.f;
@@ -144,6 +146,10 @@ void IndiAccelControl::updateJerkDifference(const Vector3f &a_ref, const bool a_
 
 		// else: a_ref unchanged, hold the last difference
 	}
+
+	// A setpoint stream slower than the loop makes the held difference a staircase: smooth it with the
+	// measurement filter cut-off so that its steps do not reach the rate setpoint.
+	_j_diff_f = _lpf_j.apply(_j_diff);
 }
 
 Quatf IndiAccelControl::bodyzToAttitude(Vector3f body_z, const float yaw_sp)
@@ -228,7 +234,7 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 			j_used(i) = math::constrain(in.j_ref(i), -kMaxJerk, kMaxJerk);
 
 		} else {
-			j_used(i) = _j_diff(i);
+			j_used(i) = _j_diff_f(i);
 			from_diff = true;
 		}
 	}

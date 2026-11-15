@@ -567,3 +567,31 @@ TEST_F(IndiAccelControlTest, JerkBackwardDifferenceAndHold)
 	ASSERT_TRUE(_ctrl.update(in, out));
 	EXPECT_EQ(out.j_used(0), 0.f);
 }
+
+TEST_F(IndiAccelControlTest, JerkDifferenceFiltered)
+{
+	// a_ref ramp at 5 m/s^3 that only changes every second cycle (setpoint stream at half the loop rate)
+	_ctrl.setFilter(100.f, 10.f);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt);
+	IndiAccelControl::Input in = hoverInput();
+	in.j_ref = Vector3f(kNaN, kNaN, kNaN);
+	IndiAccelControl::Output out;
+	float a = 0.f;
+
+	for (int i = 0; i < 100; i++) {
+		if ((i % 2) == 0) {
+			a = 5.f * in.dt * i;
+		}
+
+		in.a_ref = Vector3f(a, 0.f, 0.f);
+		ASSERT_TRUE(_ctrl.update(in, out));
+
+		// the filter smooths the onset: the raw difference jumps to 5 at the first change
+		if (i == 2) {
+			EXPECT_LT(out.j_used(0), 2.5f);
+		}
+	}
+
+	EXPECT_NEAR(out.j_used(0), 5.f, 0.01f);
+	EXPECT_TRUE(out.jerk_from_difference);
+}

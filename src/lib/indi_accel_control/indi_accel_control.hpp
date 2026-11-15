@@ -169,7 +169,7 @@ private:
 		return PX4_ISFINITE(v(0)) && PX4_ISFINITE(v(1)) && PX4_ISFINITE(v(2));
 	}
 
-	/// jerk reference from the a_ref difference, per axis, holds between changes of a_ref
+	/// jerk reference from the a_ref difference, per axis, holds between changes of a_ref, then low-pass filtered
 	void updateJerkDifference(const matrix::Vector3f &a_ref, const bool a_valid[3], float dt);
 
 	// configuration
@@ -199,4 +199,6 @@ private:
 	float _t_a_ref_prev[3] {};
 	bool _a_ref_prev_valid[3] {};
 	matrix::Vector3f _j_diff{};
+	math::LowPassFilter2p<matrix::Vector3f> _lpf_j{};
+	matrix::Vector3f _j_diff_f{};	///< _j_diff low-pass filtered, used as the jerk reference
 };
