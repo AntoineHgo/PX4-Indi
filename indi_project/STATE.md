@@ -35,6 +35,7 @@ owner decisions when you first act on them.
 
 ## Status summary (read this first)
 
+- **Latest (session 58, 2026-11-15): IN FLIGHT: fable review of sec. 5.9/8.11/9.6/10.6 vs `results/s8n_oset.md` + D-s8-*, output `report/review_s8.md` (if missing or partial on relaunch, relaunch only for what is missing). Then: fix findings, rebuild PDF (`docker/build_report.sh`, image px4-indi-report exists), final summary, `DONE`.**
 - **Latest (session 57, 2026-11-15): set-O verdict `s8n_oset.sh` flying (relaunched 04:14 by s56, log
   `results/s8n_oset.log`, ends S8N_DONE, ~1 min per flight, 4 at a time). Chained detached: `bench/s8p_hover_effort.sh`
   (waits for S8N_DONE, then T1 hover seeds 3-10 for pid_tuned + indi_pos_v3 into `results/s8m_smoke_gnss0/hover`, log
