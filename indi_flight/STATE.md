@@ -8,17 +8,18 @@
   `design/flatness_r2.md` (S15): optional increment after base A. Outer-loop study finished; stage 5 = base A.
 - Session 15 (launch 20261115-230225, cap $3): flatness_r2 written; window anchored (T28, T29 2nd key);
   D-SIM-STEP decided (1.25 ms world, IMU 800 Hz), implementation next session.
+- Session 16 (launch 20261115-231016, cap $3): D-SIM-STEP implemented (T31, commit 72598e3159) and pre-tested
+  (`results/pretest_simstep_s16/README.md`): 1.25 ms step, IMU 800 Hz, RATEMAX 800/400 applied, PID flies, speed 4
+  ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
-000000. NEXT (S16): implement D-SIM-STEP (DECISIONS.md, plan `design/imu_rate_plan_s15.md`): sonnet, ~15 calls:
-   1.25 ms world (copy of default.sdf under indi_flight/sim), quad5in IMU update_rate 800, remove the step/imu_rate
-   coupling in run_scenario.py:182-186 (+ model_variant.py:103-112), IMU_GYRO_RATEMAX per rate, add vehicle_imu_status
-   and sensor_gyro to LOG_TOPICS. Second key (haiku): a pre-test PID hover showing step 1.25 ms in the world file,
-   gyro ~800 Hz, vehicle_angular_velocity 800/400 Hz within 1 %, speed-4 wall ratio, logger drops. Then re-fly PID
-   baseline + G1.6 short repeat. Plan open items: rc.mc_defaults not read; unit of MC_INDI_ERPM_DLY latency.
-   G1.6(a) as written: 2 IMU periods = 8 ms at 250 Hz, measured 4-16 ms -> NOT MET (threshold stays). Cause: mode
-   command over UDP into non-lockstep gz; bound 16 ms; metrics no longer depend on it (window anchored). Re-test (a)
-   on the 800 Hz world (2 periods = 2.5 ms): expected to fail too; then (a) is reported failed with its cause (c).
+000000. NEXT (S17): (a) re-fly PID baseline + G1.6 short repeat on the 1.25 ms world (5 runs x hover/step_roll/
+   traj_lemniscate, speed 4, `bench/g16_batch_s4.sh` copied with new out dir, ~12 min wall, $0) then re-score;
+   G1.6(a) re-test (2 periods = 2.5 ms, expected NOT met, cause = UDP mode command into non-lockstep gz).
+   (b) A-10 (esc_status zero-dt pairs): haiku, read gz_bridge ESC publish + count in step_roll_sp4 log.
+   (c) G1.1-G1.5 commands (`bench/gate_g1.sh`), remaining second keys. Stage-3 item: cycle-count params
+   (MC_INDI_DELAY, MC_INDI_ERPM_DLY, MC_INDI_DT_MAX) to time units. eRPM latency counts ESC output frames
+   (= controller cycles; SIM_GZ_ERPM_LAT default 0 -> 1 frame), `design/sim_step_impl_s16.md`.
 0000. G1.6 window anchor DONE S15 (T28 + my end fix, `design/window_anchor_s15.md`, commits 988c2ff59a, 593a8b4fad):
    start spread 4-16 ms, fixed duration; same-seed spreads unchanged (<30 %) -> spread is flight non-determinism
    (gz not lockstepped), G1.6(c) cause stated. Second key T29 AGREE 30/30 (`results/second_key_window_s15.md`).
@@ -100,6 +101,8 @@
 | 15 | T28 | sonnet | metrics window anchor + re-score 30 | done, 13 calls, ~$0.35 |
 | 15 | T30 | sonnet | plan SITL IMU rate, read-only | done, 9 calls, ~$0.3 -> D-SIM-STEP |
 | 15 | T29 | haiku | second key window bounds | done, 2 calls, ~$0.05, AGREE 30/30 (<1 ms) |
+| 16 | T31 | sonnet | implement D-SIM-STEP | done, 11 calls, ~$0.45 |
+| 16 | T32 | host bash | pre-test 5 flights (rates, logger poll) | done, 5/5 flew, ~5 min wall, $0 |
 
 ## Lessons proposed
 - Haiku handles a well-specified log check (10 calls) for ~$0.06: use it for every bounded log/metric check.
@@ -109,4 +112,6 @@
 - Opus with a narrow brief (one interface, <=12 calls, early skeleton write) reviews ~200 lines of design + source
   for ~$0.6: use opus, not fable, for design review rounds.
 - Web-research agents cost about 3x a code-read agent of the same call count; brief them at 20 calls.
+- PX4 logger default timer (3.5 ms) silently decimates topics above 285 Hz; poll on the last topic of the control
+  cycle (`-p actuator_motors`) and check logged rates (`bench/check_rates.py`) before any high-rate analysis (S16).
 - Anchor every analysis window on an event in the log, never on the runner's view of it: the 1 Hz HEARTBEAT view moved the window start by up to 0.95 s (S15).
