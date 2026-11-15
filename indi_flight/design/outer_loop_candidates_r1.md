@@ -100,3 +100,14 @@ turn out to fight the INDI stage.
    vertical priority + XY margin (R27, PC:163-186) and tilt limit must be re-done on the INDI thrust vector. INDI
    increments from the measured thrust, so it needs no integrator anti-windup (to show in the prototype).
 3. Where the hover thrust enters a_ref -> thrust in INDI (only through T_meas scale: check R24/R25 consistency).
+
+## Re-check against the requirements review (T5, `outer_loop_requirements_review.md`)
+
+- Rnew-1 (take-off machine runs with PC off, skip=true, so a manual -> altitude switch in air does not re-enter
+  spool-up), Rnew-2 (SYS_VEHICLE_RESP / MPC_*_VEL_ALL remapping lives in mc_pos_control), Rnew-4 (want_takeoff
+  as the only take-off trigger), Rnew-5 (silent when vehicle_local_position stops): A and B inherit all four by
+  copying the shell; C must keep the shell too. Any candidate that rewrites the shell must list them explicitly.
+- R9 correction (an all-NaN axis invalidates the whole setpoint; altitude and descend modes carry an xy
+  acceleration setpoint): A and B inherit stock validity rules; the INDI stage receives a finite xy a_ref in
+  those modes. C must reproduce PC:231-234 exactly.
+- Fact 1 (local-position rate) is still open: it decides A vs B.
