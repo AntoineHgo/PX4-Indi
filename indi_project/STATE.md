@@ -15,7 +15,8 @@ EKF accelerometer bias (no velocity integrator: bias -> steady position offset b
 Before freezing O1-O7: check the gz x500 drag model (pertinence of the trajectory entries), apply O-13 and
 D-hover-spread. Commit the review file with the first fix, record the findings in DECISIONS.md, then remove this note.
 STATUS (session 52): F1, F4, F5, F6 done and committed, drag checked, review committed, D-s8-review recorded;
-F2 preliminary (not applied), F3 open. Remove this note when F2 and F3 are closed.
+F2 preliminary (not applied), F3 open. Session 53: F2 closed (DLY 0 identified), F3 fixed in code; remove this note
+once the s8h regression check passes.
 
 ## OWNER DECISION 2026-11-15 (during session 47): O-13, read it in `indi_project/OWNER_GUIDANCE.md` now
 
@@ -51,6 +52,18 @@ the v1 report: the definition of DONE is at the end of that file. Record O-1..O-
 owner decisions when you first act on them.
 
 ## Status summary (read this first)
+
+- **Latest (session 53, 2026-11-15): owner review F2 and F3 closed in code. F2: new diagnostic scenario
+  `diag_z_multisine` (9bb3edf08d) flown with INDI POS (`results/s8g_zsine_delay/`): z corr 0.99, raw eRPM thrust
+  synchronous with a_f within 0.3 cycle; the hover 3-4 cycle lead was an excitation artefact. MC_INDIP_DLY 0 set in
+  `bench/params/indi_pos_v0.params` (40742345e7, D-s8-delay-final; firmware default stays 1, hardware must identify).
+  F3: estimator accel bias subtracted (41326ec474, D-s8-accel-bias; untested in sim: gz IMU has no bias).
+  RUNNING (detached): `bench/s8h_bias_dly0.sh` -> `results/s8h_bias_dly0/{hover,diag_z_multisine}_seed1/`
+  (log `results/s8h_bias_dly0.log` ends S8H_DONE): regression hover with F3 + DLY 0 (compare s8e: 0.15 deg,
+  0.023 m, effort 0.044) and multisine lag re-check (expect peak near -0.3 with DLY 0).
+  NEXT: (1) read s8h; if the hover matches s8e, write `results/s8h_bias_dly0.md`, remove the owner note at the top;
+  (2) freeze O1-O7 in `bench/scenarios.md` sec. 10 with the O-13 pid_tuned pre-check and D-hover-spread; (3) staged
+  INDI POS screening (O-12).**
 
 - **Latest (session 52, 2026-11-15): owner stage-8 review (note above) mostly addressed. DONE, one commit each:
   F1 accel aliasing (c1502ffcc4: every sensor_combined sample averaged over the control cycle, same window for mean u;
@@ -1161,3 +1174,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s51: regression PASS; INDI POS first activation held hover (try 1); status-advertise + runner engage fixes; try 2 launched.
 - 2026-11-15 s51: INDI POS try 2 flies end to end; attitude jitter 5.5 deg from accel noise in t_c (results/s8b_activation.md).
 - 2026-11-15 s52: owner review F1 (accel window, 5.47 -> 0.25 deg with vibration), F4, F5, F6 fixed; drag checked; F2 preliminary (eRPM leads ~3-4 cycles); payload_add delay flight detached. Ledger s52: 0 agents; 5 builds, 4 flights.
+- 2026-11-15 s53: F2 lag identified on a vertical multisine (synchronous, DLY 0), F3 accel bias fix; s8h regression running. Agents: 0. Runs: 1 (+2 queued).
