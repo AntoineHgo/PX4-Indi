@@ -98,6 +98,13 @@ Final comparisons are paired by seed (10 seeds) with a two-sided Wilcoxon signed
 
 Two held-out scenarios exceed what the airframe and default position controller allow, and were flown unchanged, since softening a held-out scenario after seeing a result would be selection after the fact (D-h5). H1 needs about 52 deg of tilt against `MPC_TILTMAX_AIR` of 45 deg, and in H4 both controllers crash (D-accept). Part of the benchmark outcome therefore reflects scenario severity, not rate-loop quality.
 
+**Validation-set hygiene (O-13, from the stage-8 set on).** After V', where one entry (W1) proved infeasible for
+every controller, each new held-out set is feasibility-checked before it is frozen: every entry is flown once
+(seed 1) with the tuned PID only, and an entry the tuned PID cannot fly is made milder or replaced before the freeze.
+The check uses PID alone, so it cannot bias the set toward INDI. Validation batches fly the verdict pair (tuned PID
+and the frozen INDI candidate) side by side on all 10 seeds; other controllers fly only as labelled context, on few
+seeds. V and V' were frozen before this rule and stand as flown.
+
 ## 6.5 Fidelity limits and their effect on the conclusions
 
 `scenarios.md` section 7 asked for a fidelity check before T6 to T9 and H were flown. The note was written in session 17, after the benchmark (`sim_fidelity.md`). It changes no result, but it was not available when the scenarios were designed.

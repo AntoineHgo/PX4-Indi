@@ -259,7 +259,7 @@ owner decisions when you first act on them.
   raw accel from sensor_combined + own LPF2p; collective thrust from mean u via normalisedThrustFromRpm, own delay
   buffer; arming_check reply as mc_raptor; check the mc_pos_control attitude publish is gated by the control-mode
   flags); (2) G_T identification from v2 hover logs (CPU, script); (3) freeze stage-8 scenarios in `bench/scenarios.md`
-  sec. 10 BEFORE any flight; (4) implementation spec, then one sonnet task per step (library + gtest, module, mode
+  sec. 10 BEFORE any flight, after the O-13 feasibility check (each entry once with pid_tuned; O-13 recorded s48); (4) implementation spec, then one sonnet task per step (library + gtest, module, mode
   registration). Optional, cheap: find the pid_tuned 2-4 Hz hover mode (compare `results/hover_cause` pid seed 1 with
   `results/v3_hover_effort` pid seeds; check CPU load / dt jitter in the ULog).
 - SESSION 46 (2026-11-15, launch 20261115-003114): DONE: owner outer-gain diagnostic committed + D-outer-check (v3

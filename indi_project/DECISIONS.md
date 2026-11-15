@@ -787,3 +787,10 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
   advantage; the remaining budget goes to stage 8 (Definition of DONE).
 - Alternatives: build it as indi_v4 and screen under O-12 (rejected for now, reasons above); lower MC_INDI filter
   cut-off globally (same phase cost, and it changes the frozen v3).
+
+## O-13 (owner decision, 2026-11-15): lean, pre-checked validation sets
+- Owner's decision, not re-opened (text in `OWNER_GUIDANCE.md`): every new held-out/validation set is
+  feasibility-checked with pid_tuned (seed 1, every entry) before freezing; infeasible entries are fixed or
+  replaced before the freeze and the change recorded with the set. Validation flies the verdict pair (pid_tuned,
+  frozen INDI) on 10 seeds side by side; other controllers only as labelled context on few seeds. Not retroactive:
+  V' stands as flown. Applies to the stage-8 set. Report ch. 6.4 updated (session 48).
