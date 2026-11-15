@@ -823,3 +823,24 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
 - Alternatives: retune the PID to damp the mode (rejected: it changes the frozen baseline mid-project; noted as
   future work); force bit-reproducible gz/PX4 lockstep (not available in the stack); fly more seeds of hover only
   (adopted implicitly through the >= 10 pooled rule).
+
+## D-s8-review (session 52, 2026-11-15): owner review of the stage-8 code, findings and responses
+- Source: `review/s8_owner_review.md` (owner). Signs, jerk feedforward and architecture verified correct there.
+- F1 accelerometer aliasing (critical): fixed by averaging every `sensor_combined` sample over the control cycle
+  (module scheduled on sensor_combined too), mean u averaged over the same window (D-s8-accel-window below).
+- F2 MC_INDIP_DLY delays the late signal with an inner-loop value: open, identify a_f / t_f lag by cross-correlation.
+- F3 EKF accel bias not subtracted: open. The gz x500 IMU has no bias term (`results/s8_drag_check.md`), so the sim
+  does not exercise it; fix in firmware or state as a limitation.
+- F4 failure fallback holds tilt (zero rates): open. F5 feedforward added after the rate limits: open.
+- F6 INDI POS attitude metric: open; use position rms for INDI POS until fixed.
+- Pertinence: gz x500 has rotor drag only (~0.12 m/s^2 per m/s, < 1 m/s^2 at 7 m/s) and no body drag; trajectory
+  entries are not expected to discriminate strongly (`results/s8_drag_check.md`).
+
+## D-s8-accel-window (session 52, 2026-11-15): boxcar over the control cycle for the specific force
+- Decision: integrate all accelerometer samples between control cycles (dt-weighted mean of `sensor_combined`),
+  same window for the eRPM mean u. Result `results/s8c_accel_window.md`: attitude 5.47 -> 0.25 deg, position
+  0.21 -> 0.024 m with v2 vibration on.
+- Alternatives: `vehicle_acceleration` (filtered at sensor rate and bias corrected, but a 30 Hz second-order LPF
+  still leaks ~6 % at 122.5 Hz into the 125 Hz subsampling and adds a lag that u would need to copy; rejected for
+  now, kept as the option if F3 is fixed through it); integrating `vehicle_imu` delta_velocity (same boxcar, but needs
+  the selected instance from `sensor_selection`; no gain over sensor_combined, which carries the same integration).
