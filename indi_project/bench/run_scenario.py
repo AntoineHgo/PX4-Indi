@@ -496,8 +496,10 @@ def main():
         axis, mode = sc["axis"], sc["mode"]
         meta["t_window_start_us"] = int(sim.t * 1e6)
         if sc.get("disturbance"):
-            # onset = start of the segment named "dist" (PX4 time); the injector (started earlier, idle) reads it
-            onset = sim.t + sum(d for n, d, _ in sc["segments"][:[n for n, _, _ in sc["segments"]].index("dist")])
+            # onset = start of the segment named by `dist_segment` (default "dist", PX4 time); the injector (started
+            # earlier, idle) reads it
+            dist_seg = sc.get("dist_segment", "dist")
+            onset = sim.t + sum(d for n, d, _ in sc["segments"][:[n for n, _, _ in sc["segments"]].index(dist_seg)])
             meta["disturbance"] = {"profile": sc["disturbance"], "onset_px4_s": onset, "onset_us": int(onset * 1e6),
                                    "csv": "disturbance.csv"}
             json.dump({"onset_px4_s": onset}, open(os.path.join(a.out, "disturbance_trigger.json"), "w"))

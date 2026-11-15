@@ -18,6 +18,19 @@ RATE_STEP_DPS = 120.0
 
 LEMNISCATE = dict(shape="lemniscate", ax=4.0, ay=2.0, w=5.0 / math.sqrt(32.0), laps=2, ramp_s=3.0)
 CIRCLE_FAST = dict(shape="circle", r=4.0, z_amp=1.0, w=7.0 / 4.0, laps=3, ramp_s=3.0)
+# Stage-8 outer-loop set O1-O7 (plan/s8_impl_spec.md sec. 5; new paths, never used for tuning; frozen in scenarios.md
+# sec. 10 only after the O-13 pid_tuned pre-check). O1: Gerono lemniscate 10 m x 5 m, peak speed 6 m/s (at phi = 0 the
+# speed is w sqrt(ax^2 + 4 ay^2)). O2: circle r 5 m at 8 m/s with a vertical sine of 1.5 m peak to peak.
+# O6: vertical sine 2 m peak to peak, period 4 s (2.5 m/s^2 peak).
+LEMNISCATE_O1 = dict(shape="lemniscate", ax=5.0, ay=2.5, w=6.0 / math.sqrt(50.0), laps=2, ramp_s=3.0)
+CIRCLE_O2 = dict(shape="circle", r=5.0, z_amp=0.75, w=8.0 / 5.0, laps=3, ramp_s=3.0)
+ZSINE_O6 = dict(shape="zmulti", harm=[1], amps=[1.0], w=math.pi / 2, laps=4, ramp_s=2.0)
+
+
+def _traj_segments(traj, hold_s=3.0):
+    return [("settle", 3.0, 0.0), ("traj", _traj_dur(traj), 0.0), ("hold", hold_s, 0.0)]
+
+
 # Diagnostic vertical multisine (stage-8 finding 2, a_f / t_f lag identification): base period 4 s, harmonics 1, 3, 7, 13
 # (0.25 to 3.25 Hz), each with an acceleration amplitude of about 0.8 m/s^2, 6 periods.
 Z_MULTISINE = dict(shape="zmulti", harm=[1, 3, 7, 13], amps=[0.3, 0.036, 0.0066, 0.0019], w=math.pi / 2, laps=6,
@@ -77,6 +90,20 @@ SCENARIOS = {
     # Held-out H1: circle radius 4 m at 7 m/s (w = 1.75 rad/s) with a +-1 m vertical sine (2 m peak to peak), 3 laps.
     "traj_circle_fast": dict(mode="trajectory", axis=None, traj=CIRCLE_FAST,
                              segments=[("settle", 3.0, 0.0), ("traj", _traj_dur(CIRCLE_FAST), 0.0), ("hold", 3.0, 0.0)]),
+    # Stage-8 set O (see LEMNISCATE_O1). Disturbances start with the path (dist_segment "traj"); the hold after the path
+    # is long enough for the whole injector profile (gust_x 28 s, payload_add / com_shift 30 s).
+    "o1_lemniscate": dict(mode="trajectory", axis=None, traj=LEMNISCATE_O1, segments=_traj_segments(LEMNISCATE_O1)),
+    "o2_circle_z": dict(mode="trajectory", axis=None, traj=CIRCLE_O2, segments=_traj_segments(CIRCLE_O2)),
+    "o3_lemniscate_gust": dict(mode="trajectory", axis=None, traj=LEMNISCATE_O1, disturbance="gust_x",
+                               dist_segment="traj", segments=_traj_segments(LEMNISCATE_O1, 12.0)),
+    "o4_lemniscate_payload": dict(mode="trajectory", axis=None, traj=LEMNISCATE_O1, disturbance="payload_add",
+                                  dist_segment="traj", segments=_traj_segments(LEMNISCATE_O1, 13.0)),
+    "o5_circle_com_shift": dict(mode="trajectory", axis=None, traj=CIRCLE_O2, disturbance="com_shift",
+                                dist_segment="traj", segments=_traj_segments(CIRCLE_O2, 16.0)),
+    "o6_zsine_mass": dict(mode="trajectory", axis=None, traj=ZSINE_O6, segments=_traj_segments(ZSINE_O6),
+                          model_variant=dict(mass=1.15)),
+    "o7_lemniscate_tau2": dict(mode="trajectory", axis=None, traj=LEMNISCATE_O1, segments=_traj_segments(LEMNISCATE_O1),
+                               model_variant=dict(tau=2.0)),
     # Diagnostic only (outside the T/H/V sets, never used for tuning or a verdict): vertical excitation for the a_f / t_f
     # lag identification of INDI POS (bench/ident_s8_delay.py).
     "diag_z_multisine": dict(mode="trajectory", axis=None, traj=Z_MULTISINE,
