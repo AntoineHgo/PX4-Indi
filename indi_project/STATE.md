@@ -62,9 +62,9 @@ owner decisions when you first act on them.
   eRPM LEADS a_f by ~3-4 cycles in hover, so delaying u is the right direction but DLY 1 too small; not applied.
   Decisions D-s8-review, D-s8-accel-window, D-s8-delay recorded. Open observation: `results/s8d_fix45` hover had a
   0.33 m vertical transient (ref z -4.93, one hold cycle); s8e did not repeat it; inspect z(t) if it recurs.
-  DETACHED: `bench/s8f_delay_payload.sh` (INDI POS on T7 payload_add, vertical excitation) ->
-  `results/s8f_delay_payload/seed1/delay.txt`, log ends S8F_DELAY_DONE.
-  NEXT: (1) read delay.txt: if the lag is confirmed (~3-4), look for its cause (gz IMU/bridge or v2 eRPM source),
+  Payload_add delay flight DONE: inconclusive (corr 0.11, a mass step decorrelates a_f and t_f by construction).
+  NEXT: (1) add a diagnostic vertical step / sine scenario (outside T/H/V) and identify the lag on it with
+  `bench/ident_s8_delay.py`; if ~3-4 cycles is confirmed, look for its cause (gz IMU/bridge or v2 eRPM source),
   set MC_INDIP_DLY in `bench/params/indi_pos_v0.params`, update D-s8-delay; (2) F3: subtract estimator_sensor_bias
   accel bias in the module (sim has no bias: state it as untested) or record as a limitation; (3) then remove the
   owner note at the top, freeze O1-O7 in `bench/scenarios.md` sec. 10 with the O-13 pid_tuned pre-check and

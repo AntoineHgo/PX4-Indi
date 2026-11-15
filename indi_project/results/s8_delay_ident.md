@@ -16,3 +16,9 @@ Delaying u (what MC_INDIP_DLY does) is therefore the right direction, contrary t
 ~30 ms accelerometer lag is not explained yet (the physics gives thrust -> acceleration instantly; candidates:
 gz IMU / bridge pipeline, the v2 eRPM source). Not applied: confirm on a log with vertical excitation (z step or
 trajectory), find the cause of the lag, then set MC_INDIP_DLY from it (identification, not tuning, O-5).
+
+Follow-up, T7 payload_add (`bench/s8f_delay_payload.sh`, `results/s8f_delay_payload/seed1/delay.txt`): z peak at
+-5 cycles with correlation 0.11 at every lag: INCONCLUSIVE. A mass step is the wrong excitation: u rises to carry
+the payload while a_f returns to zero, so the two signals decorrelate by construction (t_f and a_f differ by the
+unmodelled force). The identification needs a commanded vertical acceleration with the plant as modelled: add a
+diagnostic z-step (or vertical sine) scenario to `bench/scenarios.py` (diagnostic, outside T/H/V sets) and use it.
