@@ -1,0 +1,64 @@
+module_name: mc_indi_pos_control
+parameters:
+- group: Multicopter INDI Position Control
+  definitions:
+    MC_INDIP_EN:
+      description:
+        short: Start the INDI position controller
+        long: Start mc_indi_pos_control, an outer-loop acceleration INDI controller that runs as an external flight mode and outputs rate setpoints.
+      type: boolean
+      default: 0
+      reboot_required: true
+    MC_INDIP_OFFB:
+      description:
+        short: Replace the offboard mode
+        long: The external mode INDI POS takes the place of the internal offboard mode, so an offboard request selects it.
+      type: boolean
+      default: 1
+      reboot_required: true
+    MC_INDIP_LPF_CUT:
+      description:
+        short: Acceleration and thrust filter cut-off
+        long: Cut-off of the identical second order low pass filters on the accelerometer and on the measured mean rotor thrust. Set to 0 to disable both.
+      type: float
+      unit: Hz
+      min: 0
+      max: 100
+      decimal: 1
+      increment: 0.5
+      default: 10.0
+    MC_INDIP_G_T:
+      description:
+        short: Specific thrust per unit mean rotor thrust
+        long: Acceleration produced by a mean normalised rotor thrust of 1, identified from hover data.
+      type: float
+      unit: m/s^2
+      min: 1
+      max: 100
+      decimal: 2
+      increment: 0.1
+      default: 16.63
+    MC_INDIP_K_CMD:
+      description:
+        short: Mean rotor thrust per unit thrust command
+        long: Normalised mean rotor thrust that results from a unit thrust_body command, identified from hover data.
+      type: float
+      min: 0.1
+      max: 10
+      decimal: 3
+      increment: 0.01
+      default: 1.0
+    MC_INDIP_DLY:
+      description:
+        short: Measured thrust delay
+        long: Delay of the ESC based mean rotor thrust in controller cycles, to match its latency to that of the accelerometer.
+      type: int32
+      min: 0
+      max: 4
+      default: 1
+    MC_INDIP_FF:
+      description:
+        short: Jerk feedforward
+        long: Add the body rate feedforward computed from the jerk reference of the trajectory setpoint.
+      type: boolean
+      default: 1

@@ -63,3 +63,9 @@ if param compare -s MC_RAPTOR_ENABLE 1
 then
 	mc_raptor start
 fi
+
+# Outer-loop INDI position controller (external mode), only on a board that has it built in.
+if param compare -s MC_INDIP_EN 1
+then
+	mc_indi_pos_control start
+fi

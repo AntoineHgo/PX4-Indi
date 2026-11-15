@@ -1,0 +1,8 @@
+menuconfig MODULES_MC_INDI_POS_CONTROL
+	bool "mc_indi_pos_control"
+	default n
+	depends on MODULES_MC_POS_CONTROL && MODULES_MC_ATT_CONTROL
+	---help---
+		Enable support for mc_indi_pos_control, an outer-loop (acceleration) INDI position controller
+		that runs as an external flight mode and outputs vehicle_rates_setpoint.
+		The stock position, attitude and rate controllers keep running for the other modes.
