@@ -311,3 +311,183 @@ Notes where `plan/architecture.md` and the code differ; the chapter follows the 
 - Note: architecture.md cites `wang2019` for tolerance to $G_1$ errors, which is not in `research/sources.md`; it is not used in this chapter.
 
 Unverified: the 18-test count and the test thresholds come from reading `indi_rate_control_test.cpp`; the tests were not re-run for this chapter; the yaw-filter figures are copied from the cited result files and decisions as written.
+
+## 5.9 Stage 8: outer-loop (linear-acceleration) INDI
+
+### 5.9.1 Requirements and scope
+
+Stage 8 adds a second INDI loop outside the one of sections 5.1 to 5.8. The rate loop of stage 1 is frozen as `indi_v3` (D-v3-freeze) and is not modified; the new loop, called INDI POS in the flight-mode list, controls linear acceleration and sets the rate and thrust setpoints that the frozen rate loop tracks. The design was drafted while the inner-loop validation was still flying, on paper only, because the owner's rule O-10 forbids starting the outer loop before the inner loop is validated and a paper design costs no simulation time (D-s8-early). The implementation specification is `plan/s8_impl_spec.md` (D-s8-spec); where it and the earlier design draft differ, the specification wins.
+
+The requirements that drive the design are:
+
+1. **The stock pipeline stays untouched and is the baseline.** `mc_pos_control`, `mc_att_control` and the rest of the stock modules are not modified (O-11 spirit, D-s8-arch). Arm A of the comparison is the stock pipeline with `pid_tuned`; arm D is INDI POS on the frozen `indi_v3` rate loop.
+2. **The comparison isolates the acceleration-to-thrust law and the feedforward.** Position and velocity gains, velocity and tilt limits, and the attitude loop are the stock parameters (`MPC_*`, `MC_*`), so arms A and D differ only in the law that turns an acceleration command into a thrust vector, and in the feedforward (D-s8-spec, O-9). A further arm with the jerk feedforward switched off (`MC_INDIP_FF` 0) is the ablation of the feedforward.
+3. **Identified, not tuned, constants.** The thrust-model constants and the measurement delay are obtained by identification from logs (5.9.4, 5.9.5), the same discipline as for `MC_INDI_ACT_TC` (D-s8-spec, D-s8-delay-final).
+4. **Safe on failure and on the ground.** Invalid or stale inputs and the landed state must give a defined, bounded output (5.9.3, 5.9.7).
+5. **No integrator.** The incremental form supplies the disturbance rejection that a velocity integrator gives the stock loop (D-s8-spec, D-s8-accel-bias).
+
+Out of scope in the first version: snap (angular-acceleration) feedforward, because `vehicle_rates_setpoint` has no field for it and a message change was avoided until the jerk-only result shows whether the feedforward matters (D-s8-ff / D-s8-snap). This is recorded as a limitation against the published method this design follows (5.9.8).
+
+### 5.9.2 Control law
+
+#### Notation and conventions
+
+World frame NED, body frame FRD, $R=R(q)$ the rotation from body to world, $g=(0,0,+9.80665)$ m/s$^2$ (D-s8-spec). The specific thrust vector is $t=-c\,z_b$ with $c>0$ and $z_b=R\,e_3$. The accelerometer measures the specific force $f_b=R^\top(a-g)$, so the measured acceleration is $a_f=R f_{b,f}+g$.
+
+| Symbol | Code name | Meaning | Unit |
+|---|---|---|---|
+| $p,\ v$ | `p`, `v` | position and velocity (estimator) | m, m/s |
+| $p_{ref},\ v_{ref},\ a_{ref},\ j_{ref}$ | `p_ref` ... `j_ref` | reference from `trajectory_setpoint` | m, m/s, m/s$^2$, m/s$^3$ |
+| $K_p,\ K_v$ | `k_pos`, `k_vel` | position and velocity gains (stock `MPC_XY_P`, `MPC_Z_P`, `MPC_XY_VEL_P_ACC`, `MPC_Z_VEL_P_ACC`) | 1/s, 1/s |
+| $a_c$ | `a_c` | commanded acceleration | m/s$^2$ |
+| $f_{b,f}$ | `_lpf_f` output | filtered specific force | m/s$^2$ |
+| $a_f$ | `a_f` | measured acceleration | m/s$^2$ |
+| $u_f$ | `_lpf_u` output | filtered mean normalised rotor thrust | 1 |
+| $G_T$ | `MC_INDIP_G_T` | specific thrust per unit mean rotor thrust | m/s$^2$ |
+| $t_f,\ t_c$ | `t_f`, `t_c` | measured and commanded specific thrust vector | m/s$^2$ |
+| $\omega_{ff}$ | `omega_ff` | body-rate feedforward from jerk | rad/s |
+
+#### Acceleration command
+
+The outer loop is the stock cascade without an integrator. The velocity setpoint is clamped to the stock limits (horizontal norm to `MPC_XY_VEL_MAX`, vertical to `MPC_Z_VEL_MAX_UP` / `MPC_Z_VEL_MAX_DN`):
+
+$$
+v_{sp} = K_p\,(p_{ref}-p) + v_{ref}, \qquad a_c = K_v\,(v_{sp}-v) + a_{ref}
+$$
+
+A NaN position reference removes the position term on that axis (velocity-only, as stock); a NaN velocity reference gives zero velocity feedforward with the position term kept; a NaN acceleration reference gives zero (D-s8-spec).
+
+#### Incremental law
+
+The same idea as 5.2.2, applied to translation: the thrust vector that produced the measured acceleration is known, and the command is that vector plus the acceleration error,
+
+$$
+t_c = t_f + (a_c - a_f), \qquad t_f = -G_T\,u_f\,z_b
+$$
+
+where $u_f$ is the mean normalised rotor thrust computed from the four rotor speeds with `IndiRateControl::normalisedThrustFromRpm` (D-s8-arch, D-s8-spec). As in the inner loop, the reference acceleration is a measurement and so contains drag, gusts and payload without a model of them. If the rotor-speed measurement is invalid, the previous cycle's thrust command times `MC_INDIP_K_CMD` replaces $u$, the same fallback rule as the inner loop on eRPM loss (D-s8-spec).
+
+#### Saturation and thrust vector
+
+Vertical priority, as in stock PX4 (D-s8-spec): $t_c$ must point up ($t_{c,z}\le-\epsilon$), otherwise it is replaced by the minimum thrust; the angle between $-t_c$ and $-e_3$ is limited to `MPC_TILTMAX_AIR` by scaling the horizontal part and keeping $t_{c,z}$; and the thrust command is
+
+$$
+c=\|t_c\|, \qquad \text{thrust}=\mathrm{clamp}\!\left(\frac{c}{G_T\,k_{cmd}},\ \texttt{MPC\_THR\_MIN},\ \texttt{MPC\_THR\_MAX}\right)
+$$
+
+with $k_{cmd}$ (`MC_INDIP_K_CMD`) the mean rotor thrust per unit `thrust_body` command. If the maximum is hit, the horizontal part is shrunk first so that the vertical component is kept. The scale $G_T k_{cmd}$ is identified, not taken from `MPC_THR_HOVER`, which is the hover-thrust estimate of the stock arm and not a measured model (D-s8-spec, rejected alternative).
+
+#### Attitude and rate setpoint
+
+The desired body z axis is $z_{b,d}=-t_c/c$. With the yaw reference it gives the desired attitude $q_d$ through the stock function `ControlMath::bodyzToAttitude`; a NaN yaw reference keeps the current yaw. The attitude error is turned into a rate setpoint by a module-owned `AttitudeControl`, configured from the same `MC_*_P`, `MC_*RATE_MAX` and reference-model parameters as `mc_att_control` (D-s8-arch, D-s8-spec).
+
+#### Jerk and flatness feedforward
+
+For a quadrotor the thrust direction follows from the commanded acceleration (differential flatness), so the rate at which the thrust vector must rotate follows from the jerk. Differentiating $t=-c\,z_b$ with $\dot z_b=q\,x_b-p\,y_b$ ($p,q$ the body roll and pitch rates) gives $j\cdot x_b=-c\,q$ and $j\cdot y_b=c\,p$, hence
+
+$$
+\omega_{ff} = \left(\frac{j_{ref}\cdot y_b}{c},\ -\frac{j_{ref}\cdot x_b}{c},\ 0\right)
+$$
+
+with $x_b,y_b$ the body axes of the desired attitude $q_d$ and $c$ from the saturation step. Each component is limited to $\pm3$ rad/s and the feedforward is zero for $c<1$ m/s$^2$. The module publishes $\omega_{sp}=\texttt{AttitudeControl}(q_d)+\omega_{ff}$, limited to the rate limits after the sum (5.9.7, F5). The yaw rate reference goes through the yaw-speed argument of `AttitudeControl` and is not added to $\omega_{ff}$ (D-s8-spec). The signs were derived in FRD; the first draft had both signs wrong. Check: a nose-up pitch rate tilts the thrust backwards, i.e. jerk along $-x_b$, so $q=-(j\cdot x_b)/c>0$ (D-s8-spec).
+
+The jerk comes from `trajectory_setpoint.jerk` if it is set, otherwise from a backward difference of $a_{ref}$ over successive changes of $a_{ref}$, held between updates and clamped to $\pm50$ m/s$^3$ (D-s8-ff / D-s8-snap, D-s8-spec). MAVLink position-target messages carry no jerk, so the difference path is the one flown. Its lag is about 10 ms at 50 Hz, about 1 deg of phase on the fastest frozen trajectory (D-s8-ff / D-s8-snap).
+
+#### Filtering of the specific force and of the jerk
+
+The specific force and the mean rotor thrust pass through second-order low-pass filters with the same cut-off and sample rate (`MC_INDIP_LPF_CUT`), so that $a_f$ and $t_f$ have identical dynamics, the outer-loop counterpart of the filter matching of 5.3.4 (D-s8-spec). Only the filtered $f_b$ is rotated by the current attitude $q$; $q$ itself is not filtered.
+
+The differenced jerk is low-pass filtered with a second-order filter at the same cut-off before it enters $\omega_{ff}$ (D-s8-jerk-lpf). Reason: a 50 Hz offboard stream, differenced and held by a 125 Hz loop, made $\omega_{ff}$ a 20 ms staircase with the right magnitude but a step at every update. The steps carry no information (the path is smooth) and reached the rate setpoint directly; with them arm D had 2.4 times the motor-rate effort of `pid_tuned` on the seen lemniscate (T5), against 1.1 times with the feedforward off (`results/s8j_pos_v3_smoke.md`). The filter adds about 20 ms of group delay to a feedforward that runs ahead of the inner loop's roughly 200 ms lag. A jerk supplied in `trajectory_setpoint.jerk` is used unfiltered. Rejected: having the runner send the analytic jerk (no such field in MAVLink `SET_POSITION_TARGET_LOCAL_NED`, a non-standard path no real offboard user would have), a separate jerk cut-off parameter (no evidence it needs a different value), and switching the feedforward off (it brings back the inner-loop lag and a worse track, 0.76 m for arm C) (D-s8-jerk-lpf).
+
+### 5.9.3 Architecture
+
+#### A separate module registered as an external mode (D-s8-arch)
+
+**Chosen.** The law is in a new library `src/lib/indi_accel_control/` (class `IndiAccelControl`: no uORB, no parameters, fixed-size state, every float input checked with `PX4_ISFINITE`), the PX4 wiring is in a new module `src/modules/mc_indi_pos_control/`. The module registers as an external mode named "INDI POS", in the same way as `mc_raptor`, and publishes `vehicle_rates_setpoint` with the setpoint type RATES. With `MC_INDIP_OFFB` = 1 (default) it replaces the OFFBOARD navigation state, so the benchmark runner's existing offboard switch selects it without a runner change (D-s8-spec).
+
+**What it replaces, and what it does not.** In this mode the stock position controller (`mc_pos_control`) and the stock attitude PID (`mc_att_control`) are not the source of the setpoint: the module computes the acceleration command, thrust and desired attitude itself and runs its own `AttitudeControl` instance, configured like the stock one (5.9.2). Below it, the rate loop is whichever one the airframe runs; in arm D it is the frozen `indi_v3` of sections 5.2 to 5.5, unchanged. The baseline arm keeps the stock pipeline: with INDI POS not started (`MC_INDIP_EN` = 0, default) or not selected, nothing in the flown behaviour changes, and the stock modules have no diff (D-s8-arch, D-s8-spec).
+
+**Rejected (D-s8-arch).** A parameter branch inside `PositionControl`, because it changes a stock module. A copy of `mc_pos_control`, because it is too large. The attitude PD of the published INDI method, because it needs a new message and would mix two changes in one comparison; the stock `AttitudeControl` and `bodyzToAttitude` are reused instead.
+
+#### Engagement and cycle
+
+The module is built behind its own Kconfig option (depends on `MODULES_MC_POS_CONTROL` and `MODULES_MC_ATT_CONTROL`) and started by the POSIX startup script only when `MC_INDIP_EN` = 1 (D-s8-spec). On the inactive-to-active edge it publishes `setpoint_config` with type RATES and resets the library from the current measurements, so that the first cycle gives a zero increment; it unregisters on exit. It runs on `vehicle_local_position` updates and on every `sensor_combined` sample (5.9.4), measures its own $\Delta t$, and publishes `vehicle_rates_setpoint` (roll, pitch, yaw rates and `thrust_body` $=(0,0,-\text{thrust})$) and the new log message `indi_pos_status` (commanded, measured and modelled acceleration and thrust vectors, $\omega_{ff}$, mean rotor thrust, thrust, the jerk source, the attitude setpoint).
+
+#### Failure and ground behaviour
+
+- **Hold rule.** If the library returns false, or an input is older than 0.1 s, the last rates setpoint is repeated for up to 3 cycles. After that the module publishes the rates that level the vehicle at the current yaw, with the last thrust, and reports a mode failure; the supervising watchdog of the benchmark (D-watchdog) judges it (D-s8-spec, and 5.9.7, F4, for the level-attitude fallback).
+- **Landed or maybe landed.** The law does not run: zero rates and minimum thrust are published (D-s8-spec), the same reasoning as the inner loop on the ground (5.3.5), where $a_f\approx0$ whatever the thrust would make an incremental law integrate.
+
+### 5.9.4 Measurement path
+
+The outer loop has no integrator, so any error in $a_f$ or $t_f$ goes straight into the thrust vector. Four choices on the measurement path were made after the owner's review of the first implementation (5.9.7) and each is backed by a measurement.
+
+#### Accelerometer window average (D-s8-accel-window)
+
+The first implementation fed the law the latest `sensor_combined` sample. With the v2 simulator vibration, the control loop subsampled the accelerometer at about 125 Hz and so aliased vibration near that rate into the specific force (owner review finding F1, critical). **Chosen:** the module is scheduled on every `sensor_combined` sample and feeds the law the dt-weighted mean of all samples since the previous control cycle (a boxcar over the control cycle of about 8 ms, with near-zero gain at 125 Hz and about 0.02 at 122.5 Hz on top of the 4 ms IMU integration); the mean rotor thrust is averaged over the same window, so $a_f$ and $u_f$ keep the same dynamics. Measured on one hover flight with vibration on (`results/s8c_accel_window.md`): attitude RMS 5.47 to 0.25 deg and position RMS 0.21 to 0.024 m. The attitude figure of INDI POS was still a suspect metric when this was measured (5.9.7, F6). **Rejected:** `vehicle_acceleration`, which is bias-corrected but filtered at the sensor rate by a 30 Hz second-order low-pass that still leaks about 6 % at 122.5 Hz into the 125 Hz subsampling and adds a lag that $u$ would have to copy; integrating `vehicle_imu` `delta_velocity`, which is the same boxcar but needs the selected instance from `sensor_selection` and gains nothing over `sensor_combined`.
+
+#### Estimator accelerometer bias (D-s8-accel-bias)
+
+An accelerometer bias $b$ in $a_f$ becomes, in a law without a velocity integrator, a steady position offset of about $b/(K_pK_v)$. **Chosen:** subtract `estimator_sensor_bias.accel_bias` of the primary estimator instance (from `estimator_selector_status`) from the window-averaged specific force, only when `accel_bias_valid` is set, the vector is finite, and its `accel_device_id` equals the `sensor_selection` accelerometer behind `sensor_combined`; otherwise the bias is zero. This is the rule of `VehicleAcceleration::SensorBiasUpdate`. **Rejected:** reading `vehicle_acceleration` (one sample per publication and its own low-pass, which breaks the window average and the filter match); adding a velocity integrator (changes the law and its tuning, and the bias would still load the integrator); stating it as a limitation only (the fix is small and standard). In the simulator the bias path is not exercised, because the Gazebo IMU has no bias term (`results/s8_drag_check.md`); the estimator bias that the fix subtracts was tiny in flight (mean at most 0.009 m/s$^2$) and the fix was checked for regression only (`results/s8h_bias_dly0.md`).
+
+#### Measurement delay: `MC_INDIP_DLY` 0 (D-s8-delay-final)
+
+`MC_INDIP_DLY` delays the mean-rotor-thrust sample by an integer number of cycles (clamped to 0 to 4) to match its latency to that of the accelerometer, the role `MC_INDI_ERPM_DLY` has in the inner loop. Its first value, 1, was copied from the inner loop. A hover cross-correlation suggested the thrust led the specific force by 3 to 4 cycles (D-s8-delay, preliminary), but that estimate was an excitation artefact: in hover the vertical content of both signals is small, so the peak was broad and misplaced. **Identified** on a vertical multisine flight (`diag_z_multisine`, harmonics at 0.25, 0.75, 1.75 and 3.25 Hz, about 0.8 m/s$^2$ each): the z cross-correlation of the logged $t_f$ and $a_f$ peaks at 0.99, and the raw eRPM thrust is 0.29 cycle ahead of $a_f$ (whitened, interpolated), that is synchronous within one cycle, as the physics suggests since rotor thrust acts on acceleration at once and both signals are averaged over the same window. With `MC_INDIP_DLY` = 1 the thrust path would be late by 0.7 cycle; with 0 the residual is 0.3 cycle. **Decision:** `MC_INDIP_DLY` 0 for the simulator configuration, the integer closest to the identified lag. This is identification, not tuning (O-5). Re-flown with 0 (`results/s8h_bias_dly0.md`), the multisine lag is $-0.40$ cycle with correlation 1.00. **Rejected:** keeping 1 (0.7 cycle mismatch against 0.3), and a fractional delay (below the noise of the estimate, adds code). The firmware default stays 1, because the hardware value is unknown and eRPM over DShot typically arrives one frame late; the hardware value must be identified with the same scenario.
+
+#### Jerk low-pass cut-off: `MC_INDIP_LPF_CUT` 10 Hz (D-s8-jerk-lpf, D-s8-freeze)
+
+The measurement filter and the jerk filter share one cut-off (5.9.2). 10 Hz was the first value and was frozen after an O-12 stage-1 screen on seen entries against 5 Hz (D-s8-freeze). 5 Hz lowered the manoeuvre effort by 17 to 22 % with equal tracking, but on one seed per entry only, and it doubles the group delay in the acceleration feedback, a risk for the entry with a doubled motor time constant that was not screened; the hover effort, the failing criterion, was not lowered by it (the cause is not the filter bandwidth). **Rejected:** 5 Hz, and a wider screen of the outer gains for hover effort, which is not budgeted and for which no candidate was expected to reach the 1.5 times criterion while the inner loop alone sits at 1.7 times (D-s8-freeze).
+
+### 5.9.5 Parameters
+
+The module's parameters are `MC_INDIP_*` (`mc_indi_pos_control_params.yaml`). Gains, velocity and tilt limits and the attitude-loop settings are not duplicated: they are the stock `MPC_*` and `MC_*` parameters, so the two arms share them (D-s8-spec). The table gives the values of the frozen configuration `bench/params/indi_pos_v3.params` (arm D: INDI POS on the frozen `indi_v3` rate loop, D-s8-freeze). Parameters the file does not set take the firmware default, which is the value shown.
+
+| Parameter | Value in the frozen configuration | Meaning (decision) |
+|---|---|---|
+| `MC_INDIP_EN` | 1 (set in the file; default 0) | Start the module at boot (D-s8-spec) |
+| `MC_INDIP_OFFB` | 1 (default) | Replace the OFFBOARD navigation state with INDI POS (D-s8-spec) |
+| `MC_INDIP_LPF_CUT` | 10 Hz (default) | Cut-off of the second-order filters on the specific force and mean rotor thrust, and of the jerk low-pass (D-s8-jerk-lpf, D-s8-freeze) |
+| `MC_INDIP_G_T` | 16.63 m/s$^2$ (default) | $G_T$, acceleration per unit mean normalised rotor thrust |
+| `MC_INDIP_K_CMD` | 1.0 (default) | $k_{cmd}$, mean rotor thrust per unit `thrust_body` command |
+| `MC_INDIP_DLY` | 0 (set in the file; firmware default 1) | Delay of the mean-rotor-thrust sample in control cycles, range 0 to 4 (D-s8-delay-final) |
+| `MC_INDIP_FF` | 1 (default) | Jerk feedforward on; 0 is the feedforward ablation arm (D-s8-spec) |
+
+$G_T$ and $k_{cmd}$ are identified, not tuned (D-s8-spec): least-squares fits through the origin on the hover windows of 10 logs (`bench/ident_gt.py`, `results/s8_ident_gt.md`). $G_T$ is the slope of the measured specific force magnitude on the mean normalised rotor thrust, and $k_{cmd}$ the slope of the mean rotor thrust on the commanded `thrust_body`. Over the 10 logs $G_T$ = 16.631 (range 16.527 to 16.966) and $k_{cmd}$ = 0.9993 (range 0.9992 to 0.9997); the firmware defaults 16.63 and 1.0 are these values rounded. The identification assumes `THR_MDL_FAC` 0.683 and `CA_R_W_MAX` 1000, which the frozen file sets.
+
+### 5.9.6 Unit tests
+
+The library has a gtest file, `src/lib/indi_accel_control/IndiAccelControlTest.cpp`, with 19 tests (`TEST_F` count from reading the file; the tests were not run for this chapter). They cover:
+
+- **Equilibrium and increment:** hover equilibrium ($t_c=t_f$ when $a_c=a_f$, hover thrust, level $q_d$); a pure increment ($a_c-a_f=(0,0,-1)$ raises the thrust by $1/(G_Tk_{cmd})$); a model error that the measured acceleration removes.
+- **Saturation and safety:** the tilt limit keeps the vertical component; thrust saturation keeps the vertical component; the thrust points up and respects the minimum; a non-finite input returns false and leaves the output untouched; a NaN yaw keeps the current yaw; reset gives a zero increment on the first cycle.
+- **Measurement path:** filter matching (the same step on $f_b$ and $u$ gives identical normalised responses); the delay clamp; an invalid mean $u$ uses the previous thrust command.
+- **References:** NaN handling and velocity limits; `bodyzToAttitude` against expected attitudes.
+- **Jerk feedforward:** the sign case (nose up gives jerk along $-x_b$); disabled and low-thrust cases; a coordinated turn (constant-speed circle with analytic $a$, $j$ and expected rates); backward difference and hold; and filtering of the differenced jerk.
+
+These test the algebra and the guard conditions of the library. The module wiring (scheduling, window averaging, estimator bias, hold and landed behaviour) has no unit test; the module directory contains no test file, and those paths are covered only by the SITL runs.
+
+### 5.9.7 Owner review findings and fixes
+
+The owner reviewed the stage-8 code in session 52 (`review/s8_owner_review.md`, summarised in D-s8-review). Signs, jerk feedforward and architecture were verified correct. Six findings were raised; the responses below are from the decision log and the module's commit history.
+
+| Finding | Response |
+|---|---|
+| F1 accelerometer aliasing (critical) | Fixed: boxcar over the control cycle, 5.9.4 (D-s8-accel-window) |
+| F2 `MC_INDIP_DLY` delays the late signal with an inner-loop value | Resolved by identification: delay 0 for the simulator, hardware value to be identified, 5.9.4 (D-s8-delay-final, which supersedes D-s8-delay) |
+| F3 estimator accelerometer bias not subtracted | Fixed in firmware, not exercised in simulation, 5.9.4 (D-s8-accel-bias) |
+| F4 failure fallback holds tilt with zero rates | Fixed in the module (commit "level the vehicle when the hold limit is exceeded"): after 3 held cycles the module publishes the rates of a level attitude at the current yaw with the last thrust, because zero rates only freeze the tilt and keep accelerating sideways |
+| F5 feedforward added after the rate limits | Fixed in the module (commit "limit body rates after the jerk feedforward"): the sum of the attitude-loop rate and $\omega_{ff}$ is limited again |
+| F6 attitude metric of INDI POS | The module now logs the attitude setpoint in `indi_pos_status` (commit "log the attitude setpoint in indi_pos_status"); until then, position RMS was used for INDI POS (D-s8-review) |
+
+The review also checked pertinence: the Gazebo x500 has rotor drag only (about 0.12 m/s$^2$ per m/s, below 1 m/s$^2$ at 7 m/s) and no body drag, so the trajectory entries are not expected to discriminate strongly between a feedforward-free and a drag-aware outer loop (`results/s8_drag_check.md`, D-s8-review).
+
+### 5.9.8 Limitations of the outer loop
+
+- **No snap feedforward** (D-s8-ff / D-s8-snap). Only the jerk term is fed forward; the published method uses both, and the angular-acceleration term would need a field that `vehicle_rates_setpoint` does not have.
+- **Differenced jerk.** MAVLink offboard setpoints carry no jerk, so the flown jerk is a differenced and low-pass-filtered $a_{ref}$ with about 10 ms of difference lag at 50 Hz plus about 20 ms of filter group delay (D-s8-ff / D-s8-snap, D-s8-jerk-lpf).
+- **Fixed thrust model.** $G_T$ and $k_{cmd}$ are hover-point constants identified for one airframe; there is no online adaptation, and a mass or effectiveness change is an error in them.
+- **Noise passes into the command.** With no integrator and a measured acceleration, accelerometer noise reaches $t_c$. On one hover flight after the window-average fix, the residual noise of $a_f$ (standard deviation 0.065 m/s$^2$) gave a $t_c$ deviation of 0.054 and a motor effort of 0.10, against a `pid_tuned` per-flight range of 0.022 to 0.063 (`results/s8c_accel_window.md`, a single diagnostic flight). At the freeze, the hover effort of INDI POS was about 2.7 times `pid_tuned` on two screening seeds, of which about 0.02 was attributed to the inner `indi_v3` loop and about 0.03 to the outer loop; the 5 Hz variant did not lower it (D-s8-freeze).
+- **Hardware items open.** The measurement delay was identified on the simulator only; the firmware default stays 1 (D-s8-delay-final). The accelerometer-bias path is not exercised in the simulator (D-s8-accel-bias).
+- **Attitude-loop duplication.** The module owns an `AttitudeControl` instance configured from the stock parameters (5.9.2), so it follows the stock attitude settings but is a second copy of that wiring.
+- **Test set.** Set O (D-s8-oset) contains a payload entry that is a world-fixed force without payload inertia, and a centre-of-mass shift entry flown only on a near-level vertical sine, because the disturbance injector's level-hover approximation produced an artefact at large tilt on the circle. These limit what the stage-8 flights can show about those two disturbances.
+- **Simulation only.** Gazebo x500 with the simulator's known estimator timing issue (chapter 6 records the GNSS delay); no hardware flights.
