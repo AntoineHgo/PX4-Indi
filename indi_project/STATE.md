@@ -1,5 +1,39 @@
 # INDI project state
 
+## FINAL SUMMARY (session 59, 2026-11-15): project DONE
+
+All deliverables of the mission and of the owner's stage 2 (`OWNER_GUIDANCE.md`, Definition of DONE) are complete;
+`indi_project/DONE` exists. Read the report: `indi_project/report/report.pdf` (99 pages, built by
+`docker/build_report.sh` from the chapter Markdown files in `report/`).
+
+- **Firmware (branch `feat/indi-control`).** INDI angular-rate control in its own module `mc_indi_rate_control`
+  (O-11: `mc_rate_control` and the allocator as on `main`, PID stays the default, INDI selected by parameter);
+  v1 (modelled actuator state), v2 (ESC eRPM state, u = omega^2), v3 (blend: measured above 1/(2 pi Tb), modelled
+  below). Outer-loop flatness INDI in `mc_indi_pos_control` + `src/lib/indi_accel_control`. Unit tests alongside.
+- **Benchmark.** Docker image `px4-indi-sim`, Gazebo `gz_x500` headless lockstep, one-command runner per scenario /
+  controller / seed (`bench/`), simulator extensions (gusts, payload, CoM shift, motor degradation, sensor realism,
+  eRPM telemetry) applied identically to both controllers, held-out sets frozen before INDI flew on them, PID baseline
+  both PX4 default and retuned (`pid_tuned`).
+- **Results, honestly: under the pre-registered rules INDI never "outperforms PID".**
+  - Stage 1 (v1 rate loop, held-out H set): "does not outperform" (fails on H5 combined mismatch, 1.58x roll-rate RMS;
+    H4 double failure crashes both controllers), `results/acceptance_s15.md`, report 8.2.
+  - Stage 2 (v2 on held-out V): loses, 8/14 entries worse by > 10 %; mechanism found: measured actuator state removes
+    INDI's implicit integral action. v3 blend on held-out V': parity with `pid_tuned` (within 5 % on every entry,
+    never significantly worse, better by 10 % on none). Report 8.9, 8.10, 10.5.
+  - Stage 8 (outer-loop INDI POS vs stock PX4 pipeline, held-out O, 10 seeds): trajectory RMS error 28-72 % lower on
+    6 of 7 entries, 10/10 seeds each, p = 0.002, 0 failures, 0.9-1.1x effort (1.4x with payload); but hover effort
+    2.02x `pid_tuned` fails the pre-registered <= 1.5x criterion, so the formal outcome is again "does not
+    outperform PID". Baseline has no flatness feedforward (O-9) and the FF share was not measured. Report 8.11, 10.6.
+  - Hover effort about 2x PID is the constant cost of INDI across all stages (structural acceleration feedback).
+- **Not verified:** anything on hardware; real GNSS latency effect on INDI POS; FF-0 ablation on set O; cause of the
+  outer-loop share of hover effort (a lower specific-force filter did not reduce it).
+- **Final session (59):** applied the fable review of the stage-8 sections (`report/review_s8.md`, 2 major + 11 minor;
+  median hover ratio checked: 2.45x, same outcome), fixed the matching tilt comment in `indi_accel_control.cpp`,
+  rebuilt the PDF, created `DONE`.
+
+The sections below are the working history, kept for the record.
+
+
 ## OWNER DECISION 2026-11-15 (during session 47): O-13, read it in `indi_project/OWNER_GUIDANCE.md` now
 
 Validation sets: fly every entry once with pid_tuned BEFORE freezing and fix or replace any entry the tuned PID
@@ -1254,3 +1288,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s57: report sec. 5.9 + ch. 6 GNSS paragraph (1 sonnet agent, 25 calls). Set O at seed 2 of 10.
 - 2026-11-15 s57: set O verdict: tracking better on 6/7 (all 10/10 seeds), 0 fails; hover effort 2.02x fails crit. 4 -> "does not outperform"; report 8.11/10.6/A.8. Agents 1 sonnet; runs 140 + 16.
 - 2026-11-15 s58: fable review of stage-8 sections (2 major, 11 minor, report/review_s8.md); PDF toolchain verified. Agents 1 fable; runs 0.
+- 2026-11-15 s59: review s8 applied (2 major, 11 minor), tilt comment fixed, report.pdf rebuilt (99 p.), final summary written, DONE created. Agents 0; runs 0.
