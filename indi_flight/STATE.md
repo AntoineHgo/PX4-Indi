@@ -26,7 +26,9 @@
   applied_timing on s10: send_pos p50=p95=4 ms (1 step), 0 unmatched (A-8 closed, not reproduced); one changed-payload
   row at 1032 ms = pre-offboard flight-task output, not latency. Payload constant, so still no jitter bound.
 - Session 11 (launch 20261115-214208, cap $3): launched T16 review r2 (opus, narrow, <=12 calls) and T17 route
-  check 10 (sonnet). Untracked `results/pretest_logging_s10_try1/` = T15's failed first try (raw, keep untracked).
+  check 10 (sonnet, DONE: `design/route_check_10.md`, on path but slow; next = determinism G1.6, final GATES G1,
+  second keys, sim-time injection hook; r2 noted as against check-05 rule: accepted, it is the one narrow round
+  MISSION requires, already planned S6). T18 determinism pre-study launched. Untracked `results/pretest_logging_s10_try1/` = T15's failed first try (raw, keep untracked).
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written (not tested).
 - Blocker: none. No owner question open.
 - Outer-loop architecture study (MISSION section) runs in parallel with stages 1-3: not started.
@@ -60,7 +62,7 @@
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | T16 | outer-loop review r2 | opus | design/outer_loop_review_r2.md | relaunch same brief if file incomplete |
-| T17 | route check 10 | sonnet | design/route_check_10.md | relaunch same brief |
+| T18 | determinism pre-study, 3 PID hovers seed 1 | haiku | design/determinism_s11.md, results/det_s11/ | relaunch same brief |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -86,6 +88,7 @@
 | 9 | T13 | haiku | pre-test flight of runner | done, 12 calls, ~$0.1, found x500 hard-code (fixed), then flew |
 | 10 | T14 | sonnet | applied_timing.py + self-test | done, 6 calls, ~$0.34 |
 | 10 | T15 | haiku | logger topics file + pre-test flight | done, 27 calls, ~$0.1, 21 min wall (one rerun) |
+| 11 | T17 | sonnet | route check 10 | done, 6 calls, ~$0.2 |
 
 ## Lessons proposed
 - Haiku handles a well-specified log check (10 calls) for ~$0.06: use it for every bounded log/metric check.
