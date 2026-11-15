@@ -13,7 +13,8 @@
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
-000000. NEXT (S17): (a) re-fly PID baseline + G1.6 short repeat on the 1.25 ms world (5 runs x hover/step_roll/
+000000. NEXT (S17): (a) RUNNING S16 `bench/g16_batch_w125.sh` -> `results/det_g16_w125/status.txt` (resume: check
+   status, re-run missing flights). Re-fly PID baseline + G1.6 short repeat on the 1.25 ms world (5 runs x hover/step_roll/
    traj_lemniscate, speed 4, `bench/g16_batch_s4.sh` copied with new out dir, ~12 min wall, $0) then re-score;
    G1.6(a) re-test (2 periods = 2.5 ms, expected NOT met, cause = UDP mode command into non-lockstep gz).
    (b) A-10 (esc_status zero-dt pairs): haiku, read gz_bridge ESC publish + count in step_roll_sp4 log.
