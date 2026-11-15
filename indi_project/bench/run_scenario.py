@@ -345,6 +345,8 @@ def traj_pos(traj, phi):
     if traj["shape"] == "circle":  # circle of radius r through the start point, plus a vertical sine (NED z: up = -)
         r = traj["r"]
         return [r * (math.cos(phi) - 1.0), r * math.sin(phi), -traj["z_amp"] * math.sin(phi)]
+    if traj["shape"] == "zmulti":  # vertical multisine, harmonics k of the phase with amplitudes a (m)
+        return [0.0, 0.0, -sum(a * math.sin(k * phi) for k, a in zip(traj["harm"], traj["amps"]))]
     raise ValueError(traj["shape"])
 
 

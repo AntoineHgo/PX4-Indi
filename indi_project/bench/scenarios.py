@@ -18,6 +18,10 @@ RATE_STEP_DPS = 120.0
 
 LEMNISCATE = dict(shape="lemniscate", ax=4.0, ay=2.0, w=5.0 / math.sqrt(32.0), laps=2, ramp_s=3.0)
 CIRCLE_FAST = dict(shape="circle", r=4.0, z_amp=1.0, w=7.0 / 4.0, laps=3, ramp_s=3.0)
+# Diagnostic vertical multisine (stage-8 finding 2, a_f / t_f lag identification): base period 4 s, harmonics 1, 3, 7, 13
+# (0.25 to 3.25 Hz), each with an acceleration amplitude of about 0.8 m/s^2, 6 periods.
+Z_MULTISINE = dict(shape="zmulti", harm=[1, 3, 7, 13], amps=[0.3, 0.036, 0.0066, 0.0019], w=math.pi / 2, laps=6,
+                   ramp_s=2.0)
 
 
 def _traj_dur(traj):
@@ -73,6 +77,10 @@ SCENARIOS = {
     # Held-out H1: circle radius 4 m at 7 m/s (w = 1.75 rad/s) with a +-1 m vertical sine (2 m peak to peak), 3 laps.
     "traj_circle_fast": dict(mode="trajectory", axis=None, traj=CIRCLE_FAST,
                              segments=[("settle", 3.0, 0.0), ("traj", _traj_dur(CIRCLE_FAST), 0.0), ("hold", 3.0, 0.0)]),
+    # Diagnostic only (outside the T/H/V sets, never used for tuning or a verdict): vertical excitation for the a_f / t_f
+    # lag identification of INDI POS (bench/ident_s8_delay.py).
+    "diag_z_multisine": dict(mode="trajectory", axis=None, traj=Z_MULTISINE,
+                             segments=[("settle", 3.0, 0.0), ("traj", _traj_dur(Z_MULTISINE), 0.0), ("hold", 3.0, 0.0)]),
     # Held-out H4: motor 2 thrust x0.6 from the start of the T5 lemniscate.
     "motor_loss_2": dict(mode="trajectory", axis=None, traj=LEMNISCATE,
                          motor_fault=dict(segment="traj", motor=2, thrust_scale=0.6),

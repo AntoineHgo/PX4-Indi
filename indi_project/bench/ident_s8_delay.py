@@ -42,6 +42,15 @@ def main():
         lag, c, cs = xcorr_lag(a, t)
         print(f'{ax}: peak lag {lag:+d} cycles (corr {c:.2f}), raw eRPM lags a_f by {lag - dly:+d} cycles; '
               f'corr at -4..+1: ' + ' '.join(f'{cs[k]:.2f}' for k in range(-4, 2)))
+        # first differences whiten the low-frequency content that makes the raw peak broad; parabolic interpolation
+        # around the peak gives a sub-cycle estimate
+        lag, c, cs = xcorr_lag(np.diff(a), np.diff(t))
+        frac = 0.0
+        if -MAX_LAG < lag < MAX_LAG:
+            den = cs[lag - 1] - 2 * cs[lag] + cs[lag + 1]
+            frac = 0.5 * (cs[lag - 1] - cs[lag + 1]) / den if den < 0 else 0.0
+        print(f'{ax} (diff): peak lag {lag + frac:+.2f} cycles (corr {c:.2f}), raw eRPM lags a_f by '
+              f'{lag + frac - dly:+.2f} cycles; corr at -6..+1: ' + ' '.join(f'{cs[k]:.2f}' for k in range(-6, 2)))
 
 
 if __name__ == '__main__':
