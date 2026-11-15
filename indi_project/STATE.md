@@ -1,23 +1,5 @@
 # INDI project state
 
-## OWNER NOTE 2026-11-15 02:45: stage-8 code review, read `review/s8_owner_review.md` now
-
-The owner reviewed the INDI POS library and module. Law signs, jerk feedforward and architecture are verified correct.
-Before ANY stage-8 screening or comparison flight, fix and re-check, one commit each (firmware, then gtest/bench):
-(1) accelerometer aliasing (confirmed: 5.47 -> 0.33 deg, 0.21 -> 0.037 m with vib off; rotor 1P ~122.5 Hz folds to
-~2.5 Hz by latest-sample subsampling at 125 Hz): integrate every vehicle_imu delta_velocity between cycles or use
-vehicle_acceleration, same chain for u; re-fly hover WITH v2 vibration. (2) MC_INDIP_DLY delays the eRPM signal,
-which the spec itself says is already the late one, and its value 1 is the inner loop's 1 ms copied as an 8 ms outer
-cycle: identify the a_f / t_f lag by cross-correlation, delay the leading signal, record a decision. (3) subtract the
-EKF accelerometer bias (no velocity integrator: bias -> steady position offset b/(Kp Kv)) or state it as a limitation.
-(4) failure fallback publishes zero rates (freezes tilt), not level: command level attitude or release the mode.
-(5) clamp rates + omega_ff to MC_*RATE_MAX. (6) fix the INDI POS attitude metric (no vehicle_attitude_setpoint).
-Before freezing O1-O7: check the gz x500 drag model (pertinence of the trajectory entries), apply O-13 and
-D-hover-spread. Commit the review file with the first fix, record the findings in DECISIONS.md, then remove this note.
-STATUS (session 52): F1, F4, F5, F6 done and committed, drag checked, review committed, D-s8-review recorded;
-F2 preliminary (not applied), F3 open. Session 53: F2 closed (DLY 0 identified), F3 fixed in code; remove this note
-once the s8h regression check passes.
-
 ## OWNER DECISION 2026-11-15 (during session 47): O-13, read it in `indi_project/OWNER_GUIDANCE.md` now
 
 Validation sets: fly every entry once with pid_tuned BEFORE freezing and fix or replace any entry the tuned PID
@@ -53,27 +35,20 @@ owner decisions when you first act on them.
 
 ## Status summary (read this first)
 
-- **Latest (session 53, 2026-11-15): owner review F2 and F3 closed in code. F2: new diagnostic scenario
-  `diag_z_multisine` (9bb3edf08d) flown with INDI POS (`results/s8g_zsine_delay/`): z corr 0.99, raw eRPM thrust
-  synchronous with a_f within 0.3 cycle; the hover 3-4 cycle lead was an excitation artefact. MC_INDIP_DLY 0 set in
-  `bench/params/indi_pos_v0.params` (40742345e7, D-s8-delay-final; firmware default stays 1, hardware must identify).
-  F3: estimator accel bias subtracted (41326ec474, D-s8-accel-bias; untested in sim: gz IMU has no bias).
-  s8h RESULT: multisine re-check with DLY 0 confirms the lag (-0.40 cycle, corr 1.00), BUT the hover REGRESSED:
-  attitude 0.70 deg (s8e 0.15), effort 0.142 (0.044), a_f x/y std 0.084 (0.026), hover z lag -3 at corr 0.97 (an
-  oscillation). EKF accel bias is tiny (std <= 0.003 m/s^2, 1 Hz): F3 is unlikely the cause; DLY 0 suspected.
-  A/B RUNNING: hover F3 + DLY 1 -> `results/s8h_bias_dly0/hover_seed1_dly1/` (log line S8H_DLY1_DONE in
-  `results/s8h_bias_dly0.log`). If it matches s8e (0.15 deg), DLY 0 destabilises the loop although it is the
-  synchronous value: then analyse why (a delay on the eRPM-state feedback adds phase margin? compare with the inner
-  loop sync study) before choosing; revert params to DLY 1 meanwhile and update D-s8-delay-final.
-  Also RUNNING: O-13 pre-check `bench/s8i_o13_precheck.sh` (pid_tuned, O1-O7 seed 1, 98c1fe0660) ->
-  `results/s8i_o13_precheck/<entry>/pid_tuned/seed1/`, log `results/s8i_o13_precheck.log` ends S8I_DONE.
-  Earlier: (detached): `bench/s8h_bias_dly0.sh` -> `results/s8h_bias_dly0/{hover,diag_z_multisine}_seed1/`
-  (log `results/s8h_bias_dly0.log` ends S8H_DONE): regression hover with F3 + DLY 0 (compare s8e: 0.15 deg,
-  0.023 m, effort 0.044) and multisine lag re-check (expect peak near -0.3 with DLY 0).
-  NEXT: (1) read s8h; if the hover matches s8e, write `results/s8h_bias_dly0.md`, remove the owner note at the top;
-  (2) freeze O1-O7 in `bench/scenarios.md` sec. 10 with the O-13 pid_tuned pre-check and D-hover-spread; (3) staged
-  INDI POS screening (O-12).**
-
+- **Latest (session 53, 2026-11-15): owner stage-8 review CLOSED (note removed; F1-F6 all done). F2: diagnostic
+  `diag_z_multisine` (9bb3edf08d): raw eRPM thrust synchronous with a_f within 0.3-0.4 cycle (corr 0.99-1.00); the hover
+  3-4 cycle estimate was an artefact. MC_INDIP_DLY 0 in `bench/params/indi_pos_v0.params` (D-s8-delay-final).
+  F3: EKF accel bias subtracted (41326ec474, D-s8-accel-bias; sim has no IMU bias, path untested).
+  Regression check `results/s8h_bias_dly0.md`: hover attitude 0.70 deg / effort 0.14 vs s8e 0.15 / 0.044, but the A/B
+  with DLY 1 is identical and 98-99 % of roll-rate power is the known 2.59 Hz pid_tuned inner mode (D-hover-spread;
+  s8c pre-F3 had it too): no regression. indi_pos_v0 runs on the PID inner loop, so stage-8 arm D MUST use the
+  indi_v3 rate params (spec sec. 5): build `bench/params/indi_pos_v3.params` = indi_v3 params + MC_INDIP_* .
+  O1-O7 entries in `bench/scenarios.py` (98c1fe0660). O-13 pre-check RUNNING/finished:
+  `bench/s8i_o13_precheck.sh` -> `results/s8i_o13_precheck/<entry>/pid_tuned/seed1/metrics.json`, log ends S8I_DONE.
+  NEXT: (1) read the pre-check (did pid_tuned fly each entry: no crash/watchdog, trajectory rms sane; O2/O5 at 8 m/s
+  r 5 m need ~1.9 g, may be infeasible -> replace by a milder circle and re-check); (2) freeze O1-O7 in
+  `bench/scenarios.md` sec. 10 (+ D-entry); (3) indi_pos_v3 params, smoke on O1 seen-path equivalent (T5), then staged
+  screening (O-12) on T5/H1 only.**
 - **Latest (session 52, 2026-11-15): owner stage-8 review (note above) mostly addressed. DONE, one commit each:
   F1 accel aliasing (c1502ffcc4: every sensor_combined sample averaged over the control cycle, same window for mean u;
   v2-vibration hover 5.47 -> 0.25 deg, 0.21 -> 0.024 m, `results/s8c_accel_window.md`); F5 rate clamp after the
@@ -1184,3 +1159,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s51: INDI POS try 2 flies end to end; attitude jitter 5.5 deg from accel noise in t_c (results/s8b_activation.md).
 - 2026-11-15 s52: owner review F1 (accel window, 5.47 -> 0.25 deg with vibration), F4, F5, F6 fixed; drag checked; F2 preliminary (eRPM leads ~3-4 cycles); payload_add delay flight detached. Ledger s52: 0 agents; 5 builds, 4 flights.
 - 2026-11-15 s53: F2 lag identified on a vertical multisine (synchronous, DLY 0), F3 accel bias fix; s8h regression running. Agents: 0. Runs: 1 (+2 queued).
+- 2026-11-15 s53: s8h: no regression (2.59 Hz PID inner mode, D-hover-spread), owner review note closed; O1-O7 added, O-13 pre-check flying. Runs: +3 (+7 pre-check).

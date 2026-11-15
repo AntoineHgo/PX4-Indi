@@ -875,3 +875,6 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
   eRPM over DShot typically arrives one frame late); recorded as a hardware item: identify it with the same scenario.
 - Alternatives: keep 1 (rejected: 0.7 cycle mismatch against 0.3); fractional delay (rejected: below the noise of the
   estimate, adds code).
+- Session 53 addendum to D-s8-delay-final: re-flown with DLY 0 (`results/s8h_bias_dly0.md`), multisine lag -0.40 cycle,
+  corr 1.00. Hover attitude/effort changes in s8h were traced to the pid_tuned 2.59 Hz inner mode (same with DLY 1),
+  not to DLY 0 or to D-s8-accel-bias. Stage-8 arm D runs on the indi_v3 rate loop (spec sec. 5), not on indi_pos_v0's PID.
