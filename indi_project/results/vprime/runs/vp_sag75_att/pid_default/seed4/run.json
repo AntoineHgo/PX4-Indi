@@ -1,0 +1,194 @@
+{
+ "scenario": "vp_sag75_att",
+ "controller": "pid_default",
+ "seed": 4,
+ "speed": 4.0,
+ "sim": "v2",
+ "instance": 0,
+ "params_file": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_project/bench/params/v2_fac.params",
+ "params_applied": {
+  "NAV_DLL_ACT": 0,
+  "COM_RC_IN_MODE": 4,
+  "COM_RCL_EXCEPT": 4,
+  "SDLOG_PROFILE": 17,
+  "MIS_TAKEOFF_ALT": 5.0,
+  "IMU_GYRO_DNF_EN": "1",
+  "THR_MDL_FAC": "0.683"
+ },
+ "git": {
+  "commit": "b26d37aa5291934ac314415757da7c57aa07aa7f",
+  "dirty": false
+ },
+ "noise_seed": {
+  "gz_sim_seed": 4,
+  "px4_baro_srand": 1234
+ },
+ "events": [
+  {
+   "name": "settle",
+   "t_us": 39577000,
+   "dur_s": 2.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  },
+  {
+   "name": "up",
+   "t_us": 41594000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": 15.0,
+   "prev": 0.0,
+   "step": true
+  },
+  {
+   "name": "zero1",
+   "t_us": 44596000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": 0.0,
+   "prev": 15.0,
+   "step": true
+  },
+  {
+   "name": "down",
+   "t_us": 47600000,
+   "dur_s": 3.0,
+   "mode": "attitude",
+   "axis": "roll",
+   "value": -15.0,
+   "prev": 0.0,
+   "step": true
+  }
+ ],
+ "phase_log": [],
+ "exit_status": "failed",
+ "error": "WatchdogTrip: watchdog: > 3.0 m below hold altitude for 1.0 s (sim t=48.38, value=3.25)",
+ "erpm_drop": 0.01,
+ "vib": {
+  "acc": 1.0,
+  "gyr": 0.05
+ },
+ "imu_rate": 1000,
+ "model_variant": {
+  "scale": {
+   "rpm": true,
+   "imu_rate": 1000
+  },
+  "dir": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_project/results/vprime/runs/vp_sag75_att/pid_default/seed4/model_variant",
+  "stock_models": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/Tools/simulation/gz/models",
+  "original": {
+   "imu_rate": 250.0
+  },
+  "new": {
+   "imu_rate": 1000.0,
+   "joint_state_publisher": [
+    "rotor_0_joint",
+    "rotor_1_joint",
+    "rotor_2_joint",
+    "rotor_3_joint"
+   ]
+  }
+ },
+ "arm_attempts": 1,
+ "t_arm_us": 21564000,
+ "hold_pos_ned": [
+  0.027538346126675606,
+  0.01992437057197094,
+  -5.048614501953125
+ ],
+ "hold_yaw_rad": 1.5826151371002197,
+ "hover_thrust_estimate": 0.59704,
+ "t_offboard_us": 36566000,
+ "t_window_start_us": 39577000,
+ "thrust_sag": {
+  "scale": 0.75,
+  "t0_us": 39577000,
+  "dur_s": 14.0,
+  "steps": [
+   [
+    39589000,
+    0.9998
+   ],
+   [
+    40085000,
+    0.9909
+   ],
+   [
+    40584000,
+    0.982
+   ],
+   [
+    41081000,
+    0.9731
+   ],
+   [
+    41594000,
+    0.964
+   ],
+   [
+    42100000,
+    0.9549
+   ],
+   [
+    42592000,
+    0.9462
+   ],
+   [
+    43081000,
+    0.9374
+   ],
+   [
+    43588000,
+    0.9284
+   ],
+   [
+    44102000,
+    0.9192
+   ],
+   [
+    44584000,
+    0.9106
+   ],
+   [
+    45096000,
+    0.9014
+   ],
+   [
+    45577000,
+    0.8929
+   ],
+   [
+    46087000,
+    0.8837
+   ],
+   [
+    46585000,
+    0.8749
+   ],
+   [
+    47077000,
+    0.8661
+   ],
+   [
+    47589000,
+    0.8569
+   ],
+   [
+    48088000,
+    0.848
+   ]
+  ]
+ },
+ "watchdog": {
+  "reason": "> 3.0 m below hold altitude for 1.0 s",
+  "t_sim_s": 48.38,
+  "value": 3.254119873046875
+ },
+ "ulog": "flight.ulg",
+ "wall_time_s": 36.5
+}
