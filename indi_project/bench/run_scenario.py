@@ -391,6 +391,9 @@ def main():
     ap.add_argument("--vib-acc", type=float, default=0.0, help="v2: IMU vibration accel amplitude per rotor [m/s^2]")
     ap.add_argument("--vib-gyr", type=float, default=0.0, help="v2: IMU vibration gyro amplitude per rotor [rad/s]")
     ap.add_argument("--erpm-drop", type=float, default=0.0, help="v2: probability of a dropped eRPM frame")
+    ap.add_argument("--gnss-delay", type=int, default=None,
+                    help="SENS_GNSS0_DELAY [ms]; the gz GNSS has no latency but stamps no sample time, so the stock "
+                         "110 ms makes the EKF lead the truth by 110 ms (D-s8-gnss-delay); unset keeps the stock value")
     ap.add_argument("--watchdog", choices=("on", "off"), default="on",
                     help="O-12 run watchdog; 'off' is for diagnosis only, never in a batch")
     a = ap.parse_args()
@@ -432,6 +435,9 @@ def main():
                 sim.env["PX4_PARAM_SIM_GZ_VIB_ACC"] = str(a.vib_acc)
                 sim.env["PX4_PARAM_SIM_GZ_VIB_GYR"] = str(a.vib_gyr)
                 meta["vib"] = {"acc": a.vib_acc, "gyr": a.vib_gyr}
+        if a.gnss_delay is not None:
+            sim.env["PX4_PARAM_SENS_GNSS0_DELAY"] = str(a.gnss_delay)
+            meta["gnss_delay"] = a.gnss_delay
         for k, v in (sc.get("sim_params") or {}).items():  # scenario plant settings, override the CLI ones
             sim.env[f"PX4_PARAM_{k}"] = str(v)
             meta.setdefault("sim_params", {})[k] = v
