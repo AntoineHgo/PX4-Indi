@@ -90,3 +90,20 @@ The script reads `results/runs/` and the reference tables in `indi_project/resul
 - The trajectory tables and the H4 table were produced by inline scripts that are not yet in `bench/`. Their numbers cannot be regenerated from the repository until those scripts are added.
 - Seeding is partial. `--seed` controls the Gazebo sensor noise (`gz sim --seed`). The baro simulation in the PX4 SITL sensor module (`SensorBaroSim`) calls `srand(1234)` and is not seed-controlled. `run.json` records both values (`noise_seed`).
 - The SITL firmware build command in A.2 is recorded in a log, not wrapped in a script.
+
+## A.8 Stage 8 (outer-loop INDI, set O)
+
+From the repository root, with the `px4-indi-sim` image and the SITL build at the frozen firmware (b9fb3ce5a9 or later
+without changes to `src/modules/mc_indi_pos_control`):
+
+```
+setsid nohup timeout 14400 bash indi_project/bench/s8n_oset.sh >> indi_project/results/s8n_oset.log    # 140 flights
+bash indi_project/bench/s8m_smoke_gnss0.sh; bash indi_project/bench/s8p_hover_effort.sh                 # hover seeds 1-10
+python3 indi_project/bench/glitch_scan.py indi_project/results/s8n_oset/runs
+python3 indi_project/bench/s2_verdict.py indi_project/results/s8n_oset/runs --b indi_pos_v3 --oset --final \
+    --hover-runs indi_project/results/s8m_smoke_gnss0
+```
+
+The verdict command prints the section 8.11 table and criteria 1-4. Known gap: the secondary-metric table of
+`results/s8n_oset.md` (attitude RMS, saturation, max deviation, vertical RMS per entry) came from an inline script that
+averages those `metrics.json` fields over the 10 seeds; it is not yet in `bench/`.

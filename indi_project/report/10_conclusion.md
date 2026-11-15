@@ -65,3 +65,19 @@ thrust, and loses it in about half the runs at 75 % battery thrust, whatever the
 checked before V' was frozen.
 
 The outer-loop (linear acceleration) INDI of stage 8 had not been evaluated when this section was written.
+
+## 10.6 Stage 8: outer-loop INDI
+
+The linear-acceleration INDI with flatness feedforward (section 5.9), flown over the `indi_v3` rate loop against the
+stock PX4 position/attitude/rate pipeline with `pid_tuned` gains, reduced the trajectory RMS error on the held-out set O
+by 28-72 % on six of seven entries, on every one of 10 seeds (exact Wilcoxon p = 0.002), with no failure and at
+0.9-1.1x control effort on the paths (1.4x carrying a payload). The largest gains are where the translational dynamics
+are disturbed: a 15 % payload (72 %) and a centre-of-mass shift (51 %). A thrust-effectiveness error (mass x1.15) gave
+only 4 %, because that path is easy for both. It fails the pre-registered hover-effort criterion: 2.02x `pid_tuned`
+over 10 seeds against a limit of 1.5x, about half from the INDI rate loop and half from the outer loop. By the
+pre-registered rule the outcome is therefore "does not outperform PID", with the tracking criteria met by a wide
+margin. Two qualifications bound the tracking result: the baseline does not get the reference feedforward that is part
+of the INDI design (O-9), and its share of the gain was not measured on set O. Also, the comparison was valid only
+after a simulator artefact was found and removed: the stock 110 ms GNSS delay applied to a zero-latency simulated
+receiver put the estimate 110 ms ahead of the truth (section 6.5). Reducing hover effort, for example with a lower
+outer-loop specific-force bandwidth in hover, and an FF-0 ablation on set O are the next steps before flight.
