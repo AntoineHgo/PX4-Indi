@@ -1147,7 +1147,7 @@ S42 ORDER (do this first, top to bottom):
 | 34 | 1 sonnet (~$0.6, D-omega2 wiring) | 105 (v1 recheck) + r1f running + frz queued | session ~$2.8 |
 | 51 | 1 sonnet (task B module, 32 calls, ~$0.95) | 1 SITL build, 2 regression hovers | ~$2.0 of $2.78 |
 | 50 | 0 | 8 hover flights (pid_hover_mode: 4 idle, 4 under CPU saturation) | ~$2.2 of $3 |
-| 56 | 0 | 2 T5 check flights + 7 pre-check (s8l) | GNSS delay cause; ~$1.9 of $3 |
+| 56 | 0 | 2 (s8k) + 7 (s8l) + 8 (s8m) + 6 (s8o); s8n set-O verdict (140) left flying | GNSS delay cause, freeze; ~$2.7 of $3 |
 | 55 | 0 | 1 SITL build + gtest build, 1 flight (T5 arm D') | lead/effort diagnosis, jerk LPF; ~$2.4 of $3 |
 
 ## Journal
@@ -1233,3 +1233,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s55: T5 lead explained (cascade + FF over inner lag, not timing); D effort = differenced-jerk staircase, LPF fix b9fb3ce5a9; arm D' flying. Agents: 0. Runs: 1, builds 2 (gtest, sitl).
 - 2026-11-15 s55: arm D' jerk LPF: effort 1.44 -> 0.65 (1.10x PID), track unchanged; lead remains; EKF leads groundtruth ~100 ms for both controllers (to verify). Session total: agents 0, runs 1, builds 2.
 - 2026-11-15 s56: EKF lead = SENS_GNSS0_DELAY 110 ms on a zero-latency sim GNSS (D-s8-gnss-delay); T5 with delay 0: INDI POS 0.26 m vs pid_tuned 0.38 m; O-13 pre-check re-fly running. Agents: 0. Runs: 2 (+7 queued).
+- 2026-11-15 s56: set-O pre-check re-flown (all flyable); smoke T5/H1 INDI POS ahead, hover effort 2.7x (fails 1.5x); LPF 5 screened, rejected; indi_pos_v3 frozen (D-s8-freeze); set-O verdict s8n (140 flights) flying detached. Session total: agents 0, runs 23 + 140 queued.
