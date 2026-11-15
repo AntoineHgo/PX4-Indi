@@ -60,3 +60,10 @@ Open, to be written before code (MISSION "Decisions that are yours"):
   INDI loop sees only through telemetry; idle is added later as a plant variant if needed).
 - Overturn: a gz run showing the rotor reaction torque does not scale as izz x d(w/10)/dt (sign or size), or J_r
   sources disagreeing by more than 2x once the web re-check is done (J_r is ASSUMED today).
+
+## D-start-fallback (session 12, from review r3 R3-8)
+- Decision: `rc.mc_apps` starts `mc_indi_rate_control` / `mc_indi_pos_control` with no `|| mc_*_control start`
+  fallback when the INDI parameter is set. If an INDI module fails to start, the vehicle refuses to arm and reports why.
+- Alternatives: stock fallback pattern (rejected: a silent PID fallback and a mixed INDI/PID stack, against F-1);
+  announced fallback (rejected: F-1 forbids an escape route).
+- Overturn: only by the owner (F-1).
