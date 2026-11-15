@@ -1,0 +1,81 @@
+#!/bin/sh
+#
+# @name Gazebo quad5in (5-inch reference airframe)
+#
+# @type Quadrotor
+#
+# Model: indi_flight/sim/models/quad5in (served through PX4_GZ_MODELS), values in
+# indi_flight/design/ref_airframe_model.md
+
+. ${R}etc/init.d/rc.mc_defaults
+
+PX4_SIMULATOR=${PX4_SIMULATOR:=gz}
+PX4_GZ_WORLD=${PX4_GZ_WORLD:=default}
+PX4_SIM_MODEL=${PX4_SIM_MODEL:=quad5in}
+
+param set-default SIM_GZ_EN 1
+
+param set-default CA_AIRFRAME 0
+param set-default CA_ROTOR_COUNT 4
+
+# geometry: X layout, 225 mm motor-to-motor diagonal; KM = momentConstant (kQ/kT) = 0.01267 m
+param set-default CA_ROTOR0_PX 0.0795
+param set-default CA_ROTOR0_PY 0.0795
+param set-default CA_ROTOR0_KM 0.01267
+
+param set-default CA_ROTOR1_PX -0.0795
+param set-default CA_ROTOR1_PY -0.0795
+param set-default CA_ROTOR1_KM 0.01267
+
+param set-default CA_ROTOR2_PX 0.0795
+param set-default CA_ROTOR2_PY -0.0795
+param set-default CA_ROTOR2_KM -0.01267
+
+param set-default CA_ROTOR3_PX -0.0795
+param set-default CA_ROTOR3_PY 0.0795
+param set-default CA_ROTOR3_KM -0.01267
+
+param set-default SIM_GZ_EC_FUNC1 101
+param set-default SIM_GZ_EC_FUNC2 102
+param set-default SIM_GZ_EC_FUNC3 103
+param set-default SIM_GZ_EC_FUNC4 104
+
+# command = w / w_max (w_max = maxRotVelocity 2700 rad/s); with THR_MDL_FAC 1 the thrust command is linear in thrust
+param set-default SIM_GZ_EC_MIN1 0
+param set-default SIM_GZ_EC_MIN2 0
+param set-default SIM_GZ_EC_MIN3 0
+param set-default SIM_GZ_EC_MIN4 0
+
+param set-default SIM_GZ_EC_MAX1 2700
+param set-default SIM_GZ_EC_MAX2 2700
+param set-default SIM_GZ_EC_MAX3 2700
+param set-default SIM_GZ_EC_MAX4 2700
+
+param set-default THR_MDL_FAC 1
+# hover: w_h = 998.6 rad/s, (w_h / 2700)^2 = 0.137
+param set-default MPC_THR_HOVER 0.137
+param set-default MPC_THR_MIN 0.05
+param set-default NAV_DLL_ACT 2
+
+# eRPM telemetry model (14 poles)
+param set-default SIM_GZ_ESC_FB 2
+param set-default SIM_GZ_ERPM_POL 14
+
+# Drag specific force: EKF2_MCOEF = 4 w_h c / m = 4 * 998.6 * 7.5e-5 / 0.610
+param set-default EKF2_BCOEF_X 0.0
+param set-default EKF2_BCOEF_Y 0.0
+param set-default EKF2_MCOEF 0.49
+
+# stock PID, scaled for the small fast quad (rationale in ref_airframe_model.md)
+param set-default MC_ROLLRATE_P 0.03
+param set-default MC_ROLLRATE_I 0.06
+param set-default MC_ROLLRATE_D 0.0006
+param set-default MC_PITCHRATE_P 0.03
+param set-default MC_PITCHRATE_I 0.06
+param set-default MC_PITCHRATE_D 0.0006
+param set-default MC_YAWRATE_P 0.1
+param set-default MC_YAWRATE_I 0.05
+param set-default MC_YAWRATE_D 0.0
+param set-default MC_ROLL_P 8.0
+param set-default MC_PITCH_P 8.0
+param set-default MC_YAW_P 3.0
