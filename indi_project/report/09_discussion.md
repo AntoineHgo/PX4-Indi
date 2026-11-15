@@ -91,16 +91,18 @@ The set-O result (section 8.11) is a clear tracking improvement, but three limit
 1. **The feedforward share is unmeasured.** INDI POS receives the reference acceleration and jerk; the stock pipeline
    runs without a flatness feedforward (O-9). On the nominal paths O1, O2 and O7, part of the 28-32 % gain may come from
    the feedforward rather than from the incremental law. The one FF-0 ablation (one seed on T5) was flown before the
-   GNSS-delay fix and cannot separate the two. The disturbance entries O4 and O5 are less exposed to this: their gains
-   (72 %, 51 %) come mostly from the measured specific force.
+   GNSS-delay fix and cannot separate the two. The disturbance entries O4 and O5 are less exposed to this: on the same paths
+   without the disturbance the gain is 31 % (O1) and 4 % (O6), so most of the 72 % and 51 % is attributable to the
+   response to the disturbance rather than to the feedforward.
 2. **O7 did not probe the expected weakness.** Doubling the motor time constants changed neither controller by more
-   than 1 % against O1. At the outer-loop bandwidth these paths do not excite the actuator lag that hurt the stage-1
+   than about 1 % against O1 (`pid_tuned` +0.1 %, INDI POS +1.2 %). At the outer-loop bandwidth these paths do not excite the actuator lag that hurt the stage-1
    rate loop, so set O says nothing new about that weakness.
 3. **Hover effort is the cost.** In hover INDI POS moves the motors twice as much as `pid_tuned` (2.02x over 10 seeds).
    About half of this comes from the INDI rate loop (stage 2b showed the same) and half from the outer loop's
    specific-force feedback. The level is far from saturation, but on hardware it means more heat and current ripple in
-   the motors and ESCs, and it fails a criterion fixed in advance. Lowering it, for example by scheduling the
-   specific-force filter by flight phase, is untested.
+   the motors and ESCs, and it fails a criterion fixed in advance. A lower specific-force filter cut-off (5 Hz) did not
+   reduce it on the two screening seeds (D-s8-freeze), so the remedy is not the filter bandwidth; the outer-loop share
+   has no identified cause yet, and no other reduction was tried.
 
 Before flight there is one more fidelity question. The simulated GNSS has no latency, and a real receiver does. INDI
 POS feeds back the estimator's acceleration and position, so its sensitivity to a correctly modelled receiver delay

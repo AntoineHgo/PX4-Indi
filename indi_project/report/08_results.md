@@ -466,7 +466,8 @@ per-flight ranges over at least 10 PID hover flights.
 ## 8.11 Stage 8: outer-loop INDI on the held-out set O
 
 **Protocol.** Set O (`bench/scenarios.md` sec. 10) was frozen in session 54, before any INDI POS flight on it, after
-the O-13 pre-check showed that `pid_tuned` can fly every entry (`results/s8l_o13_gnss0.md`). Arm A is the stock
+the O-13 pre-check showed that `pid_tuned` can fly every entry (`results/s8i_o13_precheck.md`); the pre-check was re-flown for `pid_tuned`
+under SENS_GNSS0_DELAY 0 before the verdict (`results/s8l_o13_gnss0.md`, set unchanged). Arm A is the stock
 PX4 pipeline (`mc_pos_control`, attitude PID, rate PID) with the `pid_tuned` gains; arm D is INDI POS (section 5.9)
 over the frozen `indi_v3` rate loop, frozen as `indi_pos_v3` (D-s8-freeze) after staged screening on the seen entries
 T5/H1 only. Both fly the same offboard references with SENS_GNSS0_DELAY 0 (section 6.5, D-s8-gnss-delay), 10 seeds,
@@ -486,10 +487,12 @@ baseline does not receive it (O-9). Primary metric: trajectory RMS 3D in the win
 **Acceptance.** Criterion 1 (no INDI POS failure): met, 0 of 70. Criterion 2 (significantly better by at least 10 % on
 at least 5 of 7): met, 6 of 7. Criterion 3 (no entry significantly worse by more than 10 %): met. Criterion 4 (hover
 effort at most 1.5x `pid_tuned`, T1, judged on 10 seeds per D-s8-hover10): **not met**, 2.02x (mean motor-rate RMS 0.088 against 0.044;
-`pid_tuned` spreads 0.021-0.075 per seed, INDI POS 0.067-0.118). Under the section-6 outcome words the formal result is
+`pid_tuned` spreads 0.021-0.075 per seed, INDI POS 0.067-0.118). This is the ratio of means, which D-s8-hover10 chose
+over the pooled-median rule of D-hover-spread; the per-seed ranges barely overlap and the median ratio (0.084 against
+0.034, 2.45x) gives the same outcome. Under the section-6 outcome words the formal result is
 therefore **"INDI POS does not outperform PID"** on set O, although every tracking criterion is met with margin. The
 s8o screen attributes the hover excess about half to the INDI rate loop (as in stage 2b) and half to the outer loop's
-specific-force feedback (plausibly accelerometer vibration reaching the thrust vector, not isolated); the absolute effort stays small
+specific-force feedback (cause not isolated; halving the specific-force filter cut-off to 5 Hz did not lower it, D-s8-freeze); the absolute effort stays small
 (no saturation in hover), but the criterion was fixed in advance and is reported as failed.
 
 **Where the gain comes from.** The largest gains are on the entries that disturb the translational dynamics. With the
@@ -499,7 +502,7 @@ effort. The CoM shift (O5) halves the error. On the nominal paths (O1, O2, O7) a
 28-32 % at near-equal effort; there the reference feedforward contributes, and its share was not measured on set O (the
 only FF-0 ablation was one seed on T5 under the stock GNSS delay, section 5.9). Two entries did less than designed:
 O6's mass error is easy for both controllers (0.1 m), so the 4 % gain is significant but small; and doubling the motor
-time constants (O7) changed neither controller by more than 1 % against O1, so on these paths O7 does not test the
+time constants (O7) changed neither controller by more than about 1 % against O1 (`pid_tuned` +0.1 %, INDI POS +1.2 %), so on these paths O7 does not test the
 actuator-lag weakness found for the rate loop in stage 1.
 
 **Caveats.** Attitude RMS is measured against each pipeline's own attitude setpoint and is not a comparison between

@@ -94,11 +94,12 @@ The script reads `results/runs/` and the reference tables in `indi_project/resul
 ## A.8 Stage 8 (outer-loop INDI, set O)
 
 From the repository root, with the `px4-indi-sim` image and the SITL build at the frozen firmware (b9fb3ce5a9 or later
-without changes to `src/modules/mc_indi_pos_control`):
+without changes to `src/lib/indi_accel_control` or `src/modules/mc_indi_pos_control`):
 
 ```
 setsid nohup timeout 14400 bash indi_project/bench/s8n_oset.sh >> indi_project/results/s8n_oset.log    # 140 flights
 bash indi_project/bench/s8m_smoke_gnss0.sh; bash indi_project/bench/s8p_hover_effort.sh                 # hover seeds 1-10
+# s8p waits for S8N_DONE in the set-O log and writes seeds 3-10 next to the s8m seeds 1-2
 python3 indi_project/bench/glitch_scan.py indi_project/results/s8n_oset/runs
 python3 indi_project/bench/s2_verdict.py indi_project/results/s8n_oset/runs --b indi_pos_v3 --oset --final \
     --hover-runs indi_project/results/s8m_smoke_gnss0
