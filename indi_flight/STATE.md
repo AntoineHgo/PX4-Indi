@@ -55,8 +55,10 @@
 
 ## Next actions (in order)
 0000. S15 first: G1.6 runs DONE at speed 1 and 4 (`design/g16_s13.md`, 30/30 ok, no speed effect for PID, D-G1.6-speed).
-   Next: one haiku task on the 30 ULogs for g16_s13.md open items 1, 2, 5 (mode instants; what sets window.start_s,
-   spread up to 0.95 s; s4 hover r5 max_dev 0.063 m instant). Then write the G1.6 verdict, (b) deferred to G3/G5 thresholds.
+   T27 ULog check DONE (end of g16_s13.md): offboard spread 4-16 ms; window.start_s = HEARTBEAT view + 3 s (lag up
+   to 0.95 s). NEXT (sonnet, ~10 calls, two keys): metrics.py window start from the ULog nav_state transition + 3 s,
+   self-test case; re-score 30 runs, recompute spreads (g16_spread.py, G16_ROOT). Check SITL IMU rate for (a).
+   s4 hover r5: real 6 cm vertical excursion mid-window: add to A-7 bound. Then G1.6 verdict.
 000. S15: A18 r5 verdict BLOCKING (`design/outer_loop_review_r5.md`): F1 yaw-rate double count (also live bug A-9),
    F2-F4 MAJOR (no stamp in vehicle_rates_setpoint, accumulation into held _rates_setpoint, frame desired vs
    estimated body). A18 stays OUT of base A; write `design/flatness_r2.md` answering F1-F9 (cheap, me), no new
@@ -93,7 +95,6 @@
 
 ## Tasks in flight
 | id | task | agent | output | resume |
-| T27 | haiku | G1.6 ULog checks (mode instants, window.start_s anchor, s4 hover r5 outlier) | design/g16_ulog_s14.md | relaunch same brief (in JOURNAL S14) if file incomplete |
 |---|---|---|---|---|
 
 ## Open problems
@@ -129,6 +130,7 @@
 | 12 | T21 | haiku | 3 hovers try 2 | done, 11 calls, ~$0.05, 6.5 min wall |
 | 14 | T24 | host bash | G1.6 speed 1, 15 runs | done, 15/15 first attempt, 26 min wall, $0 |
 | 14 | T26 | host bash | G1.6 speed 4, 15 runs | done, 15/15 first attempt, ~11 min wall, $0 |
+| 14 | T27 | haiku | G1.6 ULog checks | done, 6 calls, ~$0.05 |
 | 14 | T25 | opus | review r5 of A18 | done, 10 calls, ~$0.7, BLOCKING (yaw-rate double count) |
 
 ## Lessons proposed
