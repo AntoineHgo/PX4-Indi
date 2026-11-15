@@ -939,3 +939,23 @@ receivers, but it changes the plant for every earlier stage; it may be added lat
 `sensor_gps_sim` to stamp a sample time: an upstream change outside this project's scope.
 Not retroactive: inner-loop sets (V, V') are attitude/rate metrics and stand as flown. Their position-hold numbers
 carry this offset, and the report says so.
+
+## D-s8-freeze (session 56, 2026-11-15): indi_pos_v3 frozen with MC_INDIP_LPF_CUT 10 Hz
+
+Context: O-12 stage-1 screen on seen entries with SENS_GNSS0_DELAY 0 (`results/s8m_smoke_gnss0/`, scripts s8m/s8o):
+| config | T5 track [m] | H1 track [m] | T5 / H1 effort | hover effort (seeds 1, 2) |
+|---|---|---|---|---|
+| pid_tuned | 0.383 (s1, s2) | 2.660 | 0.63 / 1.33 | 0.026, 0.037 |
+| indi_pos_v3 (LPF 10) | 0.262 (s1), 0.278 (s2) | 1.888 | 0.70 / 1.85 | 0.087, 0.081 |
+| indi_pos_v3_lpf5 | 0.274 (s1) | 1.853 | 0.58 / 1.45 | 0.108, 0.088 |
+| indi_v3 rate + stock outer | - | - | - | 0.052, 0.053 |
+Decision: freeze `bench/params/indi_pos_v3.params` as is (LPF 10 Hz) with the firmware at b9fb3ce5a9 (jerk LPF); fly
+set O with `bench/s8n_oset.sh` (pid_tuned vs indi_pos_v3, 10 seeds).
+Why: the criterion that fails is hover effort (about 2.7x pid_tuned against <= 1.5x). The 5 Hz filter does not lower
+it, so the cause is not the filter bandwidth. About 0.02 of the excess is the inner indi_v3 loop (1.7x, known from
+V', D-v3-hover) and about 0.03 is the outer loop. 5 Hz lowers manoeuvre effort by 17-22 % with equal tracking, on one
+seed per entry. That is weak evidence, and it doubles the group delay in the INDI acceleration feedback, a risk on
+O7 (tau x2) that was not screened. More screening of the outer gains for hover effort is not budgeted: the hover
+criterion is expected to fail and will be reported as a failure with this attribution.
+Alternatives rejected: LPF 5 (above); a wider gain screen (O-12 allows it, but no candidate from the hover-effort
+attribution would plausibly reach 1.5x while the inner loop alone sits at 1.7x).

@@ -50,8 +50,14 @@ owner decisions when you first act on them.
   under the stock outer loop on hover seeds 1-2 = effort attribution; MC_INDIP_LPF_CUT 5 on hover 1-2, T5 1, H1 1;
   log `results/s8o_screen_lpf.log`, ends S8O_DONE, outputs under `results/s8m_smoke_gnss0/`). Verdict batch script
   `bench/s8n_oset.sh` written, NOT launched: launch it detached (timeout ~14400) after the freeze.
-  NEXT: (2) when S8O_DONE: pick LPF 10 or 5 (track T5/H1 vs hover effort), record D-s8-freeze, freeze
-  `indi_pos_v3` (if 5 wins, copy lpf5 into indi_pos_v3.params in its own commit), launch s8n; hover T1 smoke for indi_pos_v3 with delay 0 (effort criterion <= 1.5x); (3) O-12 staged
+  DONE s8o: LPF 5 does not lower hover effort; hover effort split pid 0.031 / indi_v3+stock outer 0.052 / INDI POS 0.084.
+  FROZEN indi_pos_v3 (LPF 10, firmware b9fb3ce5a9), D-s8-freeze. RUNNING detached since ~04:00: set-O VERDICT
+  `setsid nohup timeout 14400 bash indi_project/bench/s8n_oset.sh >> indi_project/results/s8n_oset.log` (140 flights,
+  ends S8N_DONE, resumable with the same command; aborts are failures, never re-flown except D-v2-refly stalls).
+  NEXT: (2) when S8N_DONE: glitch_scan, then a verdict script for set O (adapt `s2_verdict.py`: criteria in
+  scenarios.md sec. 10: better on >= 5 of 7, not worse > 10 % on any, no failure, hover effort <= 1.5x from s8m T1
+  seeds 1-2 + more hover seeds if needed), `results/s8n_oset.md`, commit metrics/run.json only; (3) report chapter
+  for stage 8 (outer loop) incl. GNSS delay finding and hover-effort failure attribution; (4) Definition of DONE check; hover T1 smoke for indi_pos_v3 with delay 0 (effort criterion <= 1.5x); (3) O-12 staged
   screening on T5/H1 only if needed (T5 already beats pid_tuned; screening may be skipped: record the choice), freeze
   indi_pos_v3 (= params file + jerk-LPF firmware b9fb3ce5a9), then fly set O, verdict pair pid_tuned vs indi_pos_v3
   at 10 seeds, `--gnss-delay 0` in every stage-8 script; (4) report: add the GNSS delay finding to the simulation
