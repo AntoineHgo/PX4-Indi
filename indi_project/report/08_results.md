@@ -462,3 +462,46 @@ distribution, and the hover-effort criterion as defined (ratio of two five-seed 
 verdict stands as flown and the frozen pid_tuned is unchanged. Comparisons from stage 8 on use pooled medians and
 per-flight ranges over at least 10 PID hover flights.
 
+
+## 8.11 Stage 8: outer-loop INDI on the held-out set O
+
+**Protocol.** Set O (`bench/scenarios.md` sec. 10) was frozen in session 54, before any INDI POS flight on it, after
+the O-13 pre-check showed that `pid_tuned` can fly every entry (`results/s8l_o13_gnss0.md`). Arm A is the stock
+PX4 pipeline (`mc_pos_control`, attitude PID, rate PID) with the `pid_tuned` gains; arm D is INDI POS (section 5.9)
+over the frozen `indi_v3` rate loop, frozen as `indi_pos_v3` (D-s8-freeze) after staged screening on the seen entries
+T5/H1 only. Both fly the same offboard references with SENS_GNSS0_DELAY 0 (section 6.5, D-s8-gnss-delay), 10 seeds,
+140 flights, no estimator glitch, no re-fly. The flatness (jerk) feedforward is part of the INDI POS design and the
+baseline does not receive it (O-9). Primary metric: trajectory RMS 3D in the window. Data: `results/s8n_oset.md`.
+
+| entry | pid_tuned [m] | INDI POS [m] | INDI better (seeds) | median improvement | p (Wilcoxon) | effort ratio | verdict |
+|---|---|---|---|---|---|---|---|
+| O1 lemniscate | 0.456 | 0.316 | 10/10 | 31 % | 0.002 | 1.10 | better |
+| O2 circle + vertical sine | 0.585 | 0.422 | 10/10 | 28 % | 0.002 | 1.03 | better |
+| O3 lemniscate + gust | 0.409 | 0.277 | 10/10 | 32 % | 0.002 | 1.10 | better |
+| O4 lemniscate + payload | 0.783 | 0.217 | 10/10 | 72 % | 0.002 | 1.41 | better |
+| O5 vertical sine + CoM shift | 0.163 | 0.079 | 10/10 | 51 % | 0.002 | 1.03 | better |
+| O6 vertical sine, mass x1.15 | 0.101 | 0.097 | 8/10 | 4 % | 0.010 | 0.91 | better < 10 % |
+| O7 lemniscate, motor tau x2 | 0.456 | 0.320 | 10/10 | 30 % | 0.002 | 1.10 | better |
+
+**Acceptance.** Criterion 1 (no INDI POS failure): met, 0 of 70. Criterion 2 (significantly better by at least 10 % on
+at least 5 of 7): met, 6 of 7. Criterion 3 (no entry significantly worse by more than 10 %): met. Criterion 4 (hover
+effort at most 1.5x `pid_tuned`, T1, judged on 10 seeds per D-s8-hover10): **not met**, 2.02x (mean motor-rate RMS 0.088 against 0.044;
+`pid_tuned` spreads 0.021-0.075 per seed, INDI POS 0.067-0.118). Under the section-6 outcome words the formal result is
+therefore **"INDI POS does not outperform PID"** on set O, although every tracking criterion is met with margin. The
+s8o screen attributes the hover excess about half to the INDI rate loop (as in stage 2b) and half to the outer loop's
+specific-force feedback (plausibly accelerometer vibration reaching the thrust vector, not isolated); the absolute effort stays small
+(no saturation in hover), but the criterion was fixed in advance and is reported as failed.
+
+**Where the gain comes from.** The largest gains are on the entries that disturb the translational dynamics. With the
+payload (O4) the stock pipeline sags 0.19 m vertical RMS and saturates the motors 33.5 % of the window, while INDI POS
+sees the extra load in the measured specific force at once, holds 0.03 m vertical RMS and saturates 22.9 %, at 1.41x
+effort. The CoM shift (O5) halves the error. On the nominal paths (O1, O2, O7) and with the gust (O3) the gain is
+28-32 % at near-equal effort; there the reference feedforward contributes, and its share was not measured on set O (the
+only FF-0 ablation was one seed on T5 under the stock GNSS delay, section 5.9). Two entries did less than designed:
+O6's mass error is easy for both controllers (0.1 m), so the 4 % gain is significant but small; and doubling the motor
+time constants (O7) changed neither controller by more than 1 % against O1, so on these paths O7 does not test the
+actuator-lag weakness found for the rate loop in stage 1.
+
+**Caveats.** Attitude RMS is measured against each pipeline's own attitude setpoint and is not a comparison between
+pipelines; it is reported in `results/s8n_oset.md` only. All evidence is SITL (Gazebo x500, v2 sensor and actuator
+model); the GNSS has no latency there, which a real receiver does have.

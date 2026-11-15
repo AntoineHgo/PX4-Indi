@@ -21,7 +21,15 @@ p = 0.00195 is the smallest exact two-sided p with 10 pairs (all 10 seeds on the
 
 Criteria (sec. 10): 1. no INDI POS failure on O: **met** (0/70). 2. significantly better by >= 10 % on >= 5 of 7:
 **met** (6/7). 3. no entry significantly worse by > 10 %: **met** (0). 4. hover effort <= 1.5x pid_tuned:
-HOVER4.
+**not met**: 2.02x on 10 seeds per controller (mean motor-rate RMS 0.088 vs 0.044; pid_tuned per seed 0.021-0.075, INDI POS 0.067-0.118; all 20 runs ok; `bench/s8p_hover_effort.sh`, D-s8-hover10; the 2-seed smoke value was 2.67x).
+
+**Formal outcome (sec. 6 words): INDI POS does not outperform PID on set O**, because criterion 4 fails. Criteria 1-3, the
+tracking criteria, are met clearly (6 of 7 entries better, 10/10 seeds on each, no failure, nothing worse). The hover
+effort attribution (D-s8-freeze, s8o screen): pid_tuned ~0.03, indi_v3 rate loop under the stock outer loop ~0.05,
+INDI POS ~0.08 on seeds 1-2, so about half the excess comes from the INDI rate loop (as in V', D-v3-hover) and half
+from the outer loop's specific-force feedback; motor-rate RMS in hover is small in absolute terms (no saturation),
+but the criterion was fixed in advance and is reported as failed.
+
 
 ## Secondary metrics (means over 10 seeds; reported, not deciding)
 
