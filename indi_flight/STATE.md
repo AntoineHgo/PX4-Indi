@@ -11,14 +11,14 @@
 1. Reference airframe model DONE (session 3): `design/ref_airframe_model.md`, flies with stock PID (hover u 0.1367,
    eRPM 998.7 rad/s, steps settle). Its open items 1-4 (reaction-torque scaling test, gyro log rate, run1 esc_rpm 0,
    run-to-run spread) are folded into the simulator work of item 4.
-2. Outer-loop study: step 1 DONE (T4, `design/outer_loop_requirements.md`, R1-R36, UNVERIFIED list in its sec. 7).
-   Next: (a) independent review of that file, one interface source -> checklist (sonnet, 20 calls, output
-   `design/outer_loop_requirements_review.md`), focused on its UNVERIFIED items and missing behaviours; (b) step 2,
-   two candidates on one template. Facts that shape candidates: mc_pos_control runs only at the local-position
-   rate (R36, 50-100 Hz?) and reads neither attitude, IMU specific force nor thrust feedback (R33); it hosts
-   GotoControl (R7); the land detector and hover-thrust estimator depend on the thrust_body scale (R16, R24).
-   Defect: rc.mc_apps starts mc_pos_control unconditionally (line 49) and `MC_INDIP_EN` starts mc_indi_pos_control
-   in addition, not instead (lines 68-70): R1 fails today.
+2. Outer-loop study: step 1 DONE (T4, `design/outer_loop_requirements.md`, R1-R36). Requirements review T5
+   launched S4 (output `design/outer_loop_requirements_review.md`): merge its BLOCKING items into the
+   requirements file. Step 2 round-1 draft DONE S4: `design/outer_loop_candidates_r1.md` (A single-rate shell
+   copy + stock PositionControl kinematics with I=0 + INDI stage; B dual-rate; C own law; R-a/b/c rejected).
+   Before review round 1: (a) re-check candidates against T5's new items; (b) measure vehicle_local_position
+   rate/latency vs IMU in SITL on quad5in (open fact 1, haiku); (c) then fable reviewer, brief: candidates vs
+   requirements + source, find the mode/transition each breaks, output `design/outer_loop_review_r1.md`.
+   Defect: rc.mc_apps starts mc_pos_control unconditionally (line 49), MC_INDIP_EN adds the INDI module: R1 fails.
 3. Write GATES.md for G1 before its first test (draft exists).
 4. Port bench runner/metrics into `indi_flight/bench/` with the review fixes (5 Hz held reference, decimated effort,
    ground-truth stamp, sim-time injections); self-test + second key per script. Errata re-score of set-O/T5.
