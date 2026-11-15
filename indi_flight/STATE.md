@@ -6,7 +6,7 @@
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written; G1.6 first tested S14 ((a) not met, see next actions).
 - Blocker: none. Q1 closed: A confirmed by owner; flatness A18 reviewed (r5 BLOCKING), answered in
   `design/flatness_r2.md` (S15): optional increment after base A. Outer-loop study finished; stage 5 = base A.
-- Session 15 (launch 20261115-230225, cap $3): flatness_r2 written; T28 window anchor in flight; IMU 250 Hz found.
+- Session 15 (launch 20261115-230225, cap $3): flatness_r2 written; T28 window anchor done; IMU 250 Hz found.
 
 ## Next actions (in order)
 000000. S15: SITL IMU rate of quad5in = 250 Hz (`sim/models/quad5in_base/model.sdf:174`). (i) G1.6(a) as written:
@@ -14,11 +14,11 @@
    MAVLink mode command over UDP into a non-lockstep gz (S13), bound 16 ms; the window anchor of T28 removes its
    effect on metrics; record under (c). (ii) G2 needs controller rates 400/800 Hz: IMU must go to >= 800 Hz (1 kHz)
    in the quad5in model without changing the physics step (sim item, two keys, pre-test PID hover after).
-0000. S15 first: G1.6 runs DONE at speed 1 and 4 (`design/g16_s13.md`, 30/30 ok, no speed effect for PID, D-G1.6-speed).
-   T27 ULog check DONE (end of g16_s13.md): offboard spread 4-16 ms; window.start_s = HEARTBEAT view + 3 s (lag up
-   to 0.95 s). NEXT (sonnet, ~10 calls, two keys): metrics.py window start from the ULog nav_state transition + 3 s,
-   self-test case; re-score 30 runs, recompute spreads (g16_spread.py, G16_ROOT). Check SITL IMU rate for (a).
-   s4 hover r5: real 6 cm vertical excursion mid-window: add to A-7 bound. Then G1.6 verdict.
+0000. G1.6 window anchor DONE S15 (T28 + my end fix, `design/window_anchor_s15.md`, commits 988c2ff59a, 593a8b4fad):
+   start spread 4-16 ms, fixed duration; same-seed spreads unchanged (<30 %) -> spread is flight non-determinism
+   (gz not lockstepped), G1.6(c) cause stated. Second key T29 (haiku) -> `results/second_key_window_s15.md`.
+   G1.6 verdict: (a) NOT met (16 ms vs 8 ms), (b) pending gate thresholds of G3/G5, (c) done, (d) = rule in force.
+   Next G1 work: G1.1-G1.5 commands (`bench/gate_g1.sh`), remaining second keys; IMU 1 kHz (item above).
 000. S15: A18 r5 verdict BLOCKING (`design/outer_loop_review_r5.md`): F1 yaw-rate double count (also live bug A-9),
    F2-F4 MAJOR (no stamp in vehicle_rates_setpoint, accumulation into held _rates_setpoint, frame desired vs
    estimated body). A18 stays OUT of base A; `design/flatness_r2.md` DONE S15 (F1-F9 accepted, A18 = review's minimal spec,
@@ -56,7 +56,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T28 | S15: metrics.py window start from ULog nav_state + 3 s, self-test, re-score 30 G1.6 runs | sonnet | `design/window_anchor_s15.md` | re-launch same brief if file incomplete |
+| T29 | S15: second key, window bounds from raw ULog | haiku | `results/second_key_window_s15.md` | re-launch if file incomplete |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -93,6 +93,7 @@
 | 14 | T26 | host bash | G1.6 speed 4, 15 runs | done, 15/15 first attempt, ~11 min wall, $0 |
 | 14 | T27 | haiku | G1.6 ULog checks | done, 6 calls, ~$0.05 |
 | 14 | T25 | opus | review r5 of A18 | done, 10 calls, ~$0.7, BLOCKING (yaw-rate double count) |
+| 15 | T28 | sonnet | metrics window anchor + re-score 30 | done, 13 calls, ~$0.35 |
 
 ## Lessons proposed
 - Haiku handles a well-specified log check (10 calls) for ~$0.06: use it for every bounded log/metric check.
