@@ -41,11 +41,10 @@ owner decisions when you first act on them.
   SENS_GNSS0_DELAY 110 ms to a zero-latency GNSS. Runner `--gnss-delay` (d521912000). T5 seed 1 with delay 0:
   INDI POS (indi_pos_v3 + jerk LPF) **0.262 m vs pid_tuned 0.383 m**, effort 1.12x, a_c follows a_ref within 20-30 ms,
   EKF-vs-gt lag 0-4 ms (pid_tuned barely changed: 0.378 -> 0.383). Session 55's cascade-lead explanation is superseded.
-  RUNNING detached: O-13 pre-check re-fly `bench/s8l_o13_gnss0.sh` (pid_tuned, set O, seed 1, `--gnss-delay 0`,
-  log `results/s8l_o13_gnss0.log`, ends S8L_DONE, resumable by re-running) -> `results/s8l_o13_gnss0/<entry>/pid_tuned/seed1`.
-  NEXT: (1) when S8L_DONE: table vs `results/s8i_o13_precheck.md` (feasibility: no watchdog abort, saturation, track),
-  write `results/s8l_o13_gnss0.md`, amend `bench/scenarios.md` sec. 10 (set O flies with SENS_GNSS0_DELAY 0, pre-check
-  re-done; D-entry); (2) hover T1 smoke for indi_pos_v3 with delay 0 (effort criterion <= 1.5x); (3) O-12 staged
+  DONE: O-13 pre-check re-fly (`results/s8l_o13_gnss0.md`): all 7 flyable, set unchanged, O4 thrust-limited (33 % sat);
+  scenarios.md sec. 10 amended (c04bb47da8). RUNNING detached: `bench/s8m_smoke_gnss0.sh` (T1 hover seeds 1-2, H1 seed 1,
+  T5 seed 2; pid_tuned + indi_pos_v3; log `results/s8m_smoke_gnss0.log`, ends S8M_DONE, resumable).
+  NEXT: (2) when S8M_DONE: hover T1 smoke for indi_pos_v3 with delay 0 (effort criterion <= 1.5x); (3) O-12 staged
   screening on T5/H1 only if needed (T5 already beats pid_tuned; screening may be skipped: record the choice), freeze
   indi_pos_v3 (= params file + jerk-LPF firmware b9fb3ce5a9), then fly set O, verdict pair pid_tuned vs indi_pos_v3
   at 10 seeds, `--gnss-delay 0` in every stage-8 script; (4) report: add the GNSS delay finding to the simulation
