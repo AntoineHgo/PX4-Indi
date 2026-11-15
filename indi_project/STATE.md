@@ -1,5 +1,24 @@
 # INDI project state
 
+## OWNER NOTE 2026-11-15 01:10: cause of INDI's ~2x hover effort, read `results/s2_hover_effort_cause.md` now
+
+The owner had the hover-effort excess investigated (analysis of v2 seen-set hover logs, no flight). Two causes:
+(1) DOMINANT, structural: INDI feeds the filtered angular acceleration back at gain 1/G1 (0.0057; regression 0.0065-
+0.0072 torque per rad/s^2 vs pid_tuned 0.0033-0.0036). Above 30 Hz the acceleration estimate is gyro/vibration noise,
+equal for both controllers; ~75 % of the excess effort is 30-80 Hz. No INDI gain changes it; only an INDI-only filter
+applied synchronously to a_f and the actuator state would (firmware, phase cost). (2) SECONDARY, v2-specific: at hover
+the eRPM telemetry has only 3-4 levels per motor (14-29 rpm steps); the measured torque fed back at gain 1 carries
+0.5-10 Hz content not explained by the command, and the true roll acceleration is 5-12x PID's at 4-10 Hz (real
+shaking, hidden by body-rate std; the s47 "command noise, not body motion" reading holds only above ~30 Hz).
+Cause 2 is correlation only. TO DO: (a) commit, separately: `bench/hover_effort_split.py`, `bench/accel_gain.py`,
+`bench/gt_accel_bands.py`, `bench/erpm_torque_resid.py` (tooling, untracked), then `results/s2_hover_effort_cause.md`;
+(b) once no validation batch flies, fly the causal test in sec. 4 of that file (hover, seeds 1-3: indi_v2, indi_v2 +
+`MC_INDI_W_MAX 0`, pid_tuned; check measured_torque_in_use = 0) and add the result; (c) indi_v3 was frozen at 00:56,
+before this note (01:10): the V' verdict stands as flown. Report V' criterion 4 (~2x > 1.5x) with this cause analysis
+(structural 1/G1 noise gain, not a tuning miss). An INDI-only synchronous low pass is a post-V' design change, i.e. a
+new candidate (not v3), screened under O-12 if pursued; decide and record in DECISIONS.md and the report (ch. 8.10).
+Order: after VPRIME_DONE, the V' verdict and your W1 post-hoc diagnostic first, then (a)-(c). Then remove this note.
+
 ## OWNER DECISION 2026-11-14 (during session 41): O-12, read it in `indi_project/OWNER_GUIDANCE.md` now
 
 Abort obviously bad runs with a watchdog, prune bad candidates early with staged screening, and fly extensive
@@ -28,6 +47,10 @@ owner decisions when you first act on them.
 
 ## Status summary (read this first)
 
+- **Latest (session 47, 2026-11-15): indi_v3 frozen and judged on V' (`results/vprime.md`): it matches the tuned PID
+  on actuator-fault entries (within 5 %, never worse) and removes v2's actuator-gap failures, but does not outperform
+  PID: 0/5 entries >= 10 % better, hover effort 2.1x PID, two V' entries (W1, W4) exceed the vehicle for every
+  controller. Next: W1 diagnostic, report 8.10 + conclusions, then stage 8 (outer-loop INDI).**
 - **Phase:** 6 starting (tuning frozen in session 13: D-freeze); also open: 1 (state of the art) 8 of 12 notes; phase 2 (PX4 analysis) started;
   phase 3 runner v0 works (pymavlink, seeded gz, one command per run).
   Benchmark spec frozen (`bench/scenarios.md` v1) before any INDI code.
@@ -223,6 +246,16 @@ owner decisions when you first act on them.
   entry is reported as failed for every controller (criterion 1 then fails for v3). AFTER VPRIME_DONE (not while it
   flies): post-hoc diagnostic, W1 seed 1 x 4 controllers with `--watchdog off` into `results/vprime_w1_diag/`, to
   show whether any controller would recover (reported post-hoc only, never in the verdict).
+  V' DONE 01:25 (`results/vprime.md`, bad1a44fae): indi_v3 vs pid_tuned within 5 % on every completed entry (W2 0.95x
+  p 0.002, W3 1.01x, W4 0.96x, W5 0.99x p 0.049), criterion 3 met; criteria 1 (W1 10/10 + W4 6/10 trips, as for PID),
+  2 (0/5 >= 10 %) and 4 (hover 2.14x) fail: "INDI does not outperform PID". v3 removes v2's gap failures (v2 9.1x /
+  2.7x / 1.9x on W2/W3/W5). W1 trips 10/10 for EVERY controller, W4 ~6/10 for all: V' severity not calibrated
+  (design flaw of V', stated, not repaired). RUNNING detached 01:27: `bench/vprime_w1_diag.sh` (W1 seed 1 x 4,
+  watchdog off, `results/vprime_w1_diag.log`, ends VPRIME_W1_DIAG_DONE, resumable). NEXT (session 48): (1) read the
+  diag (height loss, recovery or crash, per controller), append to `results/vprime.md` as post-hoc; commit
+  `bench/vprime_w1_diag.sh` (uncommitted) + metrics/run.json; (2) report 8.10 "v3 on V'" from `results/vprime.md` and
+  update ch. 9/10 conclusions (v3 = parity with tuned PID on actuator faults, hover effort 2x, yaw 1.15x); (3) stage 8
+  (outer-loop INDI) per OWNER_GUIDANCE order.
 - SESSION 46 (2026-11-15, launch 20261115-003114): DONE: owner outer-gain diagnostic committed + D-outer-check (v3
   tunes the INDI inner loop only, outer gains fixed at tuned PID's) + report 8.9 paragraph. v3 smoke DONE
   (`results/v3_smoke.md`): ACT_BLD 0 flies as v2 (step_roll 3.63 vs 3.62 deg). V' W1-W5 IMPLEMENTED (sonnet agent,
@@ -1036,4 +1069,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-14 s43: V' frozen (D-heldout-v3); v3 blend spec + firmware 3a47bf746e (gtests 40/40); O-12 spec written. Agents: 1 sonnet.
 - 2026-11-14 s44: O-12 part B committed (f064c78d9f), part A staged as patch, watchdog replay done (9ebc74caf6: no false trips; seen seed-2 estimator glitches under host overload), D-watchdog. Agents: 0.
 - 2026-11-15 s46: outer-gain diagnostic committed (D-outer-check); v3 ACT_BLD 0 smoke = v2; V' implemented; Tb screening: 0.3/1.0 remove motor-loss tilt, 0.1 pruned; stage 2 running. Agents: 1 sonnet. Runs: 19 (+18).
-- 2026-11-15 s47: hover effort 5 seeds (~2x PID, inherited from v2), yaw stage 2, indi_v3 frozen, V' verdict mode, V' launched (200 flights). Agents: 0. Runs: 36 (+200 V').
+- 2026-11-15 s47: hover effort 5 seeds (~2x PID, inherited from v2), yaw stage 2, indi_v3 frozen, V' flown (200) and judged: v3 matches tuned PID, does not outperform it (W1/W4 exceed the vehicle for all). Report 7.8. Agents: 0. Runs: 236 (+4 W1 diag).
