@@ -852,3 +852,26 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
 - Decision: keep MC_INDIP_DLY 1 until the lag is confirmed on a vertically excited log and its cause found; then set
   it from the identified lag. Alternatives: set 3-4 now from hover only (rejected: broad peak, unexplained cause);
   delay a_f instead (rejected: a_f is the late signal here).
+
+## D-s8-accel-bias (session 53, 2026-11-15): estimator accel bias removed from the INDI POS specific force
+- Finding F3 of the owner review: the outer law has no velocity integrator, so an accelerometer bias b in a_f becomes
+  a steady position offset of about b / (Kp Kv).
+- Decision: subtract `estimator_sensor_bias.accel_bias` (primary estimator instance via `estimator_selector_status`)
+  from the window-averaged specific force, only when `accel_bias_valid`, finite, and its `accel_device_id` matches
+  `sensor_selection.accel_device_id` (the accelerometer behind `sensor_combined`); otherwise zero. Same rule as
+  `VehicleAcceleration::SensorBiasUpdate`. Alternatives: read `vehicle_acceleration` (rejected: one sample per
+  publication and its own low-pass, which breaks the window average of D-s8-accel-window and the a_f / t_f filter
+  match); add a velocity integrator (rejected: changes the law and its tuning, and still lets the bias load the
+  integrator); state it as a limitation only (rejected: the fix is small and standard).
+- Limitation: the gz IMU has no bias (`results/s8_drag_check.md`), so the bias path is not exercised in simulation;
+  it is checked for regression only (hover with the fix must match the hover without it).
+
+## D-s8-delay-final (session 53, 2026-11-15): MC_INDIP_DLY 0, identified on a vertical multisine
+- Supersedes the preliminary D-s8-delay. On `diag_z_multisine` (vertical excitation 0.25-3.25 Hz) the z cross-correlation
+  of a_f and t_f peaks at 0.99 with the raw eRPM thrust 0.29 cycles AHEAD of a_f (whitened, interpolated), i.e.
+  synchronous within a cycle (`results/s8_delay_ident.md`). The hover estimate (3-4 cycles) was an excitation artefact.
+- Decision: MC_INDIP_DLY 0 for the sim configuration (`bench/params/indi_pos_v0.params`), the integer closest to the
+  identified lag; this is identification, not tuning (O-5). The firmware default stays 1 for now (hardware value unknown;
+  eRPM over DShot typically arrives one frame late); recorded as a hardware item: identify it with the same scenario.
+- Alternatives: keep 1 (rejected: 0.7 cycle mismatch against 0.3); fractional delay (rejected: below the noise of the
+  estimate, adds code).
