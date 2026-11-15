@@ -1120,6 +1120,7 @@ S42 ORDER (do this first, top to bottom):
 | 34 | 1 sonnet (~$0.6, D-omega2 wiring) | 105 (v1 recheck) + r1f running + frz queued | session ~$2.8 |
 | 51 | 1 sonnet (task B module, 32 calls, ~$0.95) | 1 SITL build, 2 regression hovers | ~$2.0 of $2.78 |
 | 50 | 0 | 8 hover flights (pid_hover_mode: 4 idle, 4 under CPU saturation) | ~$2.2 of $3 |
+| 55 | 0 | 1 SITL build + gtest build, 1 flight (T5 arm D') | lead/effort diagnosis, jerk LPF; ~$2.4 of $3 |
 
 ## Journal
 
