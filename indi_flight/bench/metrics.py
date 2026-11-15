@@ -3,9 +3,13 @@
 
   metrics.py flight.ulg [--run-json run.json] [--out metrics.json]
 
-Evaluation window = run.json [t_window_start_us, t_window_end_us] (sim time = ULog time base), intersected with the
-span where vehicle_status.nav_state is 14 (offboard) or 23 (external INDI position mode registered through the
-external mode API). Without run.json only that span is used.
+Evaluation window = [ULog offboard anchor + OFFBOARD_SETTLE_S, + run.json duration] (sim time = ULog time base),
+intersected with the span where vehicle_status.nav_state is 14 (offboard) or 23 (external INDI position mode registered
+through the external mode API). The anchor is the first armed vehicle_status sample with nav_state in that set (the real
+PX4 transition); run.json t_window_start_us (MAVLink heartbeat at 1 Hz + 3.0 s, jitters by up to ~1 s between same-seed
+runs) is only recorded as window.runjson_start_s, and used as fallback if the log has no such sample. The window END is
+start + the run.json duration (t_window_end_us - t_window_start_us), so the window length is the same in every run.
+Without run.json only the span is used.
 """
 import argparse
 import json
@@ -58,6 +62,22 @@ def qcols(d, prefix):
 
 
 OFFBOARD_NAV_STATES = (14, 23)  # 14 offboard, 23 external mode slot used by the INDI position mode
+
+
+OFFBOARD_SETTLE_S = 3.0  # runner's offboard_settle segment: scenario window starts this long after the transition
+
+
+def offboard_anchor_us(ulog):
+    """Timestamp (us) of the first armed vehicle_status sample with nav_state in OFFBOARD_NAV_STATES; None if none.
+    Armed = arming_state == 2 (ARMING_STATE_ARMED); if the topic has no arming_state, every sample counts as armed."""
+    s = topic(ulog, "vehicle_status")
+    if s is None:
+        return None
+    ok = np.isin(s["nav_state"], OFFBOARD_NAV_STATES)
+    if "arming_state" in s:
+        ok &= (np.asarray(s["arming_state"]) == 2)
+    idx = np.where(ok)[0]
+    return int(s["timestamp"][idx[0]]) if idx.size else None
 
 
 def offboard_span(ulog):
@@ -289,16 +309,31 @@ def compute(ulog, run):
            "speed": run.get("speed"), "warnings": []}
     ob = offboard_span(ulog)
     w0, w1 = run.get("t_window_start_us"), run.get("t_window_end_us")
+    rj_start = w0
+    anchor = offboard_anchor_us(ulog)
+    src = "runjson"
     if w0 is None and ob is None:
         raise SystemExit("no scenario window (no run.json window and no offboard span in log)")
     if w0 is None:
         w0, w1 = ob
+        src = "offboard_span"
+    elif anchor is not None:
+        dur = w1 - w0  # nominal duration; both run.json bounds carry the same heartbeat offset
+        w0 = int(anchor + OFFBOARD_SETTLE_S * 1e6)
+        w1 = w0 + dur
+        src = f"ulog_nav_state+{OFFBOARD_SETTLE_S:.1f}"
+        if ob is not None:
+            w1 = min(w1, ob[1])
     elif ob is not None:
         w0, w1 = max(w0, ob[0]), min(w1, ob[1])
     else:
         out["warnings"].append("no nav_state in (14 offboard, 23 external INDI mode) span found in vehicle_status")
+    if src == "runjson":
+        out["warnings"].append("window start from run.json (no armed offboard nav_state sample in ULog)")
     out["window"] = {"start_s": w0 * 1e-6, "end_s": w1 * 1e-6, "duration_s": (w1 - w0) * 1e-6,
-                     "offboard_span_s": [ob[0] * 1e-6, ob[1] * 1e-6] if ob else None}
+                     "offboard_span_s": [ob[0] * 1e-6, ob[1] * 1e-6] if ob else None,
+                     "start_source": src, "runjson_start_s": rj_start * 1e-6 if rj_start is not None else None,
+                     "ulog_anchor_s": anchor * 1e-6 if anchor is not None else None}
     inwin = lambda t: (t >= w0) & (t <= w1)  # noqa: E731
 
     # ---- rate tracking ----

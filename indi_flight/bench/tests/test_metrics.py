@@ -99,7 +99,7 @@ def test_compute_end_to_end():
     lp = {"timestamp": t, "x": est[:, 0], "y": est[:, 1], "z": est[:, 2]}
     gt = {"timestamp": t, "x": tru[:, 0], "y": tru[:, 1], "z": tru[:, 2]}
     tsp = {"timestamp": t_sp, **{f"position[{i}]": sp[:, i] for i in range(3)}}
-    vs = {"timestamp": np.array([t[0], t[-1]]), "nav_state": np.array([14, 14])}
+    vs = {"timestamp": np.array([t[0] - 3_000_000, t[-1]]), "nav_state": np.array([14, 14])}  # anchor+3 s = t[0]
     run = {"scenario": "synthetic", "t_window_start_us": int(t[0]), "t_window_end_us": int(t[-1]),
            "hold_pos_ned": list(HOLD), "trajectory": {**traj, "t0_us": T0, "dur_s": dur(traj)}}
     out = M.compute(_fake_ulog({"vehicle_local_position": lp, "vehicle_local_position_groundtruth": gt,
@@ -121,8 +121,28 @@ def test_compute_end_to_end():
           f"zoh_legacy {tr['zoh_legacy']['rms_3d_m']:.3f} m")
 
 
+def test_window_anchor_from_ulog():
+    """Window start = ULog nav_state transition (armed) + 3.0 s, NOT run.json t_window_start_us (here 0.7 s later)."""
+    t = np.arange(0, 20_000_000, 10_000, dtype=np.int64)
+    lp = {"timestamp": t, "x": np.zeros(t.size), "y": np.zeros(t.size), "z": np.zeros(t.size)}
+    tr_us = 5_300_000  # PX4 enters offboard here; an earlier non-armed nav_state 14 sample must be ignored
+    vs = {"timestamp": np.array([0, 1_000_000, tr_us, 18_000_000]), "nav_state": np.array([14, 2, 14, 2]),
+          "arming_state": np.array([1, 2, 2, 2])}
+    run = {"scenario": "synthetic", "t_window_start_us": tr_us + 3_700_000, "t_window_end_us": 15_000_000}
+    out = M.compute(_fake_ulog({"vehicle_local_position": lp, "vehicle_status": vs}), run)
+    w = out["window"]
+    assert abs(w["start_s"] - (tr_us * 1e-6 + 3.0)) < 1e-9, w
+    assert abs(w["runjson_start_s"] - 9.0) < 1e-9 and w["start_source"] == "ulog_nav_state+3.0", w
+    assert abs(w["end_s"] - 14.3) < 1e-9 and abs(w["duration_s"] - 6.0) < 1e-9, w  # end = start + run.json duration
+    # no armed offboard sample: fall back to run.json start
+    vs2 = {"timestamp": np.array([0, 1_000_000]), "nav_state": np.array([2, 2]), "arming_state": np.array([1, 2])}
+    w2 = M.compute(_fake_ulog({"vehicle_local_position": lp, "vehicle_status": vs2}), run)["window"]
+    assert w2["start_source"] == "runjson" and abs(w2["start_s"] - 9.0) < 1e-9, w2
+    print(f"ok window anchor: start {w['start_s']:.3f} s = transition {tr_us*1e-6:.3f} + 3.0 (run.json {w['runjson_start_s']:.3f})")
+
+
 def main():
-    for f in (test_trajectory_functions, test_exact_and_lag, test_zoh_defect_and_fix, test_compute_end_to_end):
+    for f in (test_window_anchor_from_ulog, test_trajectory_functions, test_exact_and_lag, test_zoh_defect_and_fix, test_compute_end_to_end):
         f()
     print("ALL PASS")
     return 0
