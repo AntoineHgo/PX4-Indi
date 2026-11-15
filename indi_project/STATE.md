@@ -43,10 +43,11 @@ owner decisions when you first act on them.
   with DLY 1 is identical and 98-99 % of roll-rate power is the known 2.59 Hz pid_tuned inner mode (D-hover-spread;
   s8c pre-F3 had it too): no regression. indi_pos_v0 runs on the PID inner loop, so stage-8 arm D MUST use the
   indi_v3 rate params (spec sec. 5): build `bench/params/indi_pos_v3.params` = indi_v3 params + MC_INDIP_* .
-  O1-O7 entries in `bench/scenarios.py` (98c1fe0660). O-13 pre-check RUNNING/finished:
-  `bench/s8i_o13_precheck.sh` -> `results/s8i_o13_precheck/<entry>/pid_tuned/seed1/metrics.json`, log ends S8I_DONE.
-  NEXT: (1) read the pre-check (did pid_tuned fly each entry: no crash/watchdog, trajectory rms sane; O2/O5 at 8 m/s
-  r 5 m need ~1.9 g, may be infeasible -> replace by a milder circle and re-check); (2) freeze O1-O7 in
+  O1-O7 entries in `bench/scenarios.py` (98c1fe0660). O-13 pre-check DONE (`results/s8i_o13_precheck.md`): O1, O3,
+  O4, O6, O7 flyable; O2/O5 circle at 8 m/s infeasible (20 % saturation; O5 watchdog crash) -> slowed to 6.5 m/s.
+  RUNNING: `bench/s8i2_o13_circle.sh` (O2/O5 re-check), log `results/s8i2_o13_circle.log` ends S8I2_DONE.
+  NEXT: (1) read the O2/O5 re-check (metrics.json in results/s8i_o13_precheck/o2_circle_z|o5_circle_com_shift/
+  pid_tuned/seed1; flyable = no watchdog, saturation small, traj rms comparable to O1); add its row to the .md; (2) freeze O1-O7 in
   `bench/scenarios.md` sec. 10 (+ D-entry); (3) indi_pos_v3 params, smoke on O1 seen-path equivalent (T5), then staged
   screening (O-12) on T5/H1 only.**
 - **Latest (session 52, 2026-11-15): owner stage-8 review (note above) mostly addressed. DONE, one commit each:
@@ -1160,3 +1161,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s52: owner review F1 (accel window, 5.47 -> 0.25 deg with vibration), F4, F5, F6 fixed; drag checked; F2 preliminary (eRPM leads ~3-4 cycles); payload_add delay flight detached. Ledger s52: 0 agents; 5 builds, 4 flights.
 - 2026-11-15 s53: F2 lag identified on a vertical multisine (synchronous, DLY 0), F3 accel bias fix; s8h regression running. Agents: 0. Runs: 1 (+2 queued).
 - 2026-11-15 s53: s8h: no regression (2.59 Hz PID inner mode, D-hover-spread), owner review note closed; O1-O7 added, O-13 pre-check flying. Runs: +3 (+7 pre-check).
+- 2026-11-15 s53: O-13 pre-check: 5/7 flyable, circle O2/O5 slowed 8 -> 6.5 m/s, re-check running. Session total: agents 0, runs 3 + 7 + 2, builds 1.
