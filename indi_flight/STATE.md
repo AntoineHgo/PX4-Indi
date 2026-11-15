@@ -16,7 +16,7 @@
    in the quad5in model without changing the physics step (sim item, two keys, pre-test PID hover after).
 0000. G1.6 window anchor DONE S15 (T28 + my end fix, `design/window_anchor_s15.md`, commits 988c2ff59a, 593a8b4fad):
    start spread 4-16 ms, fixed duration; same-seed spreads unchanged (<30 %) -> spread is flight non-determinism
-   (gz not lockstepped), G1.6(c) cause stated. Second key T29 (haiku) -> `results/second_key_window_s15.md`.
+   (gz not lockstepped), G1.6(c) cause stated. Second key T29 AGREE 30/30 (`results/second_key_window_s15.md`).
    G1.6 verdict: (a) NOT met (16 ms vs 8 ms), (b) pending gate thresholds of G3/G5, (c) done, (d) = rule in force.
    Next G1 work: G1.1-G1.5 commands (`bench/gate_g1.sh`), remaining second keys; IMU 1 kHz (item above).
 000. S15: A18 r5 verdict BLOCKING (`design/outer_loop_review_r5.md`): F1 yaw-rate double count (also live bug A-9),
@@ -56,7 +56,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T29 | S15: second key, window bounds from raw ULog | haiku | `results/second_key_window_s15.md` | re-launch if file incomplete |
+| T30 | S15: plan SITL IMU 1 kHz, read-only | sonnet | `design/imu_rate_plan_s15.md` | re-launch if file incomplete |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -94,6 +94,7 @@
 | 14 | T27 | haiku | G1.6 ULog checks | done, 6 calls, ~$0.05 |
 | 14 | T25 | opus | review r5 of A18 | done, 10 calls, ~$0.7, BLOCKING (yaw-rate double count) |
 | 15 | T28 | sonnet | metrics window anchor + re-score 30 | done, 13 calls, ~$0.35 |
+| 15 | T29 | haiku | second key window bounds | done, 2 calls, ~$0.05, AGREE 30/30 (<1 ms) |
 
 ## Lessons proposed
 - Haiku handles a well-specified log check (10 calls) for ~$0.06: use it for every bounded log/metric check.
