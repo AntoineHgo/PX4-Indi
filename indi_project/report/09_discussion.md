@@ -83,3 +83,25 @@ The following are required or advisable before flying the controller on hardware
 7. **Yaw.** Decide whether the yaw filtering is acceptable on a real airframe, with its real G1_Y and noise, and whether yaw should stay on PID in a hybrid configuration. This hybrid has not been implemented or tested.
 8. **More vehicles and a wider benchmark.** At least one second airframe with different inertia and motor dynamics, mismatch factors on both sides, a re-tune of both controllers on the full set including disturbance scenarios, and the benchmark reproducibility items of section 9.4 (inline scripts into `bench/`, a crash-aware metric window, trajectory start phase as a seed parameter).
 9. **A staged flight protocol.** First tethered or net-protected hover with an immediate switch back to PID, then small attitude steps, then disturbances. The criteria for each stage should be fixed before flying, as the simulation benchmark did.
+
+## 9.6 Stage 8: what the outer-loop result does and does not show
+
+The set-O result (section 8.11) is a clear tracking improvement, but three limits bound what it shows.
+
+1. **The feedforward share is unmeasured.** INDI POS receives the reference acceleration and jerk; the stock pipeline
+   runs without a flatness feedforward (O-9). On the nominal paths O1, O2 and O7, part of the 28-32 % gain may come from
+   the feedforward rather than from the incremental law. The one FF-0 ablation (one seed on T5) was flown before the
+   GNSS-delay fix and cannot separate the two. The disturbance entries O4 and O5 are less exposed to this: their gains
+   (72 %, 51 %) come mostly from the measured specific force.
+2. **O7 did not probe the expected weakness.** Doubling the motor time constants changed neither controller by more
+   than 1 % against O1. At the outer-loop bandwidth these paths do not excite the actuator lag that hurt the stage-1
+   rate loop, so set O says nothing new about that weakness.
+3. **Hover effort is the cost.** In hover INDI POS moves the motors twice as much as `pid_tuned` (2.02x over 10 seeds).
+   About half of this comes from the INDI rate loop (stage 2b showed the same) and half from the outer loop's
+   specific-force feedback. The level is far from saturation, but on hardware it means more heat and current ripple in
+   the motors and ESCs, and it fails a criterion fixed in advance. Lowering it, for example by scheduling the
+   specific-force filter by flight phase, is untested.
+
+Before flight there is one more fidelity question. The simulated GNSS has no latency, and a real receiver does. INDI
+POS feeds back the estimator's acceleration and position, so its sensitivity to a correctly modelled receiver delay
+should be checked in simulation, with a delayed GNSS and a matching SENS_GNSS0_DELAY, before any flight.
