@@ -100,8 +100,10 @@ SCENARIOS = {
                                dist_segment="traj", segments=_traj_segments(LEMNISCATE_O1, 12.0)),
     "o4_lemniscate_payload": dict(mode="trajectory", axis=None, traj=LEMNISCATE_O1, disturbance="payload_add",
                                   dist_segment="traj", segments=_traj_segments(LEMNISCATE_O1, 13.0)),
-    "o5_circle_com_shift": dict(mode="trajectory", axis=None, traj=CIRCLE_O2, disturbance="com_shift",
-                                dist_segment="traj", segments=_traj_segments(CIRCLE_O2, 16.0)),
+    # O5 flies com_shift on the near-level vertical sine: the injector's world-fixed torque (level-hover approximation)
+    # projects onto body yaw at the circle's 15-35 deg tilts and saturated yaw for pid_tuned (results/s8i_o13_precheck.md).
+    "o5_zsine_com_shift": dict(mode="trajectory", axis=None, traj=ZSINE_O6, disturbance="com_shift",
+                               dist_segment="traj", segments=_traj_segments(ZSINE_O6, 16.0)),
     "o6_zsine_mass": dict(mode="trajectory", axis=None, traj=ZSINE_O6, segments=_traj_segments(ZSINE_O6),
                           model_variant=dict(mass=1.15)),
     "o7_lemniscate_tau2": dict(mode="trajectory", axis=None, traj=LEMNISCATE_O1, segments=_traj_segments(LEMNISCATE_O1),
