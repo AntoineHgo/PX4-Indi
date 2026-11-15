@@ -41,12 +41,14 @@ owner decisions when you first act on them.
   (tau ~0.2 s) predicted ~90 ms, measured +90 ms; D (tau ~20 ms) still +160 ms on y with 7 % a_f overshoot (open).
   pid_tuned lags because rotor drag (~0.12 m/s^2 per m/s) is uncompensated. (c) D's 2.4x EFFORT = differenced jerk
   staircase (50 Hz stream held at 125 Hz, ~7x the smooth step size into the rate setpoint). Fix b9fb3ce5a9: 2nd-order
-  LPF at MC_INDIP_LPF_CUT on the differenced jerk (gtest added, 19/19), D-s8-jerk-lpf. RUNNING/DONE: arm D' T5 seed 1
+  LPF at MC_INDIP_LPF_CUT on the differenced jerk (gtest added, 19/19), D-s8-jerk-lpf. DONE: arm D' T5 seed 1 = effort 0.65 (1.10x PID, was 2.4x), track 0.65 m (unchanged), vertical 0.011 m;
+  lead unchanged (+0.31 m, +160 ms y) -> separate cause, now the whole gap to PID (0.38 m). Arm D'
   `bench/s8j3_pos_v3_jlpf.sh` (log `results/s8j_pos_v3_smoke/s8j3.log`, ends S8J3_DONE, resumable by re-running) ->
-  `s8j_pos_v3_smoke/traj_lemniscate/indi_pos_v3_jlpf/seed1`. NEXT: read its metrics.log and
-  `python3 indi_project/bench/s8_track_diag.py <run dir>`; if effort ~PID level and track <= D, go to O-12 staged
-  screening on T5/H1 (outer gains MPC_XY_P / MPC_XY_VEL_P_ACC as INDI POS-only params would be needed: today the
-  module reads the MPC_* params shared with pid_tuned, so screening them needs MC_INDIP gain params first; decide).**
+  `s8j_pos_v3_smoke/traj_lemniscate/indi_pos_v3_jlpf/seed1`. NEXT: (1) cheap: is
+  `vehicle_local_position_groundtruth` logged? If yes, run the diag against it (EKF delay in the position feedback acts
+  as an inner lag -> lead); (2) a_f/a_c y overshoot (8 %) vs frequency; (3) then O-12 staged screening on T5/H1 of
+  the outer gains for INDI only (the INDI POS params file may set MPC_XY_P / MPC_XY_VEL_P_ACC; pid_tuned keeps its own,
+  no new firmware params needed), freeze indi_pos_v3 (now with the jerk filter), fly set O.**
 - **Latest (session 54, 2026-11-15): stage-8 set O FROZEN (`bench/scenarios.md` sec. 10, a889176009, D-s8-oset).
   O5 diagnosis: the com_shift injector applies its offset torque fixed in the WORLD frame. At the circle's 15-35 deg
   tilts it projects onto body yaw, yaw saturates (CW motors 1.0, CCW 0.62, yaw 60 deg off), then thrust is lost. This

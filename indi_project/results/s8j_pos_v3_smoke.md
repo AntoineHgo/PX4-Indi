@@ -72,3 +72,21 @@ x runs at the lemniscate phase rate w = 0.88 rad/s, y at 2w = 1.77 rad/s.
    supply the analytic jerk without a custom path; filtering is the fair option (D-s8-jerk-lpf).
 Test: arm D' = indi_pos_v3 after b9fb3ce5a9, T5 seed 1 (`bench/s8j3_pos_v3_jlpf.sh` ->
 `s8j_pos_v3_smoke/traj_lemniscate/indi_pos_v3_jlpf/seed1`).
+
+### Arm D' result (T5 seed 1, firmware b9fb3ce5a9, clean tree)
+
+| run | traj rms 3D (m) | vertical rms (m) | max dev (m) | attitude rms (deg) | motor rate rms (1/s) | along mean (m) | y shift (ms) |
+|---|---|---|---|---|---|---|---|
+| pid_tuned | 0.38 | 0.030 | 1.17 | 7.2 | 0.59 | -0.08 | -20 |
+| D (raw difference) | 0.64 | 0.027 | 1.72 | 3.2 | 1.44 | +0.29 | +160 |
+| D' (filtered difference) | 0.65 | 0.011 | 1.78 | 3.3 | 0.65 (1.10x) | +0.31 | +160 |
+
+The jerk filter removes the excess effort (1.44 -> 0.65, now 1.10x pid_tuned) at unchanged horizontal tracking, and the
+vertical error drops by 2.5x. The effort cause is confirmed. The lead (+0.3 m along-track, +160 ms on y) is
+unchanged, so it has a different cause; it now dominates the gap to pid_tuned (0.65 vs 0.38 m). Open candidates:
+(i) the 8 % a_f-over-a_c overshoot on y (inner gain not flat in frequency; x 0.92, y 1.08); (ii) an EKF position
+delay in the feedback path, which acts like an inner lag in the same formula (the law uses raw accel but EKF
+position), checked against ground truth (`vehicle_local_position_groundtruth`) if it is logged; (iii) the
+stock MPC outer gains (K = K_v K_p ~ 1.7) are low for a loop whose lead scales as tau w^2 / K. The INDI POS params file
+can set MPC_XY_P / MPC_XY_VEL_P_ACC for INDI runs only, without touching pid_tuned's params, so (iii) can be screened
+without new firmware parameters.
