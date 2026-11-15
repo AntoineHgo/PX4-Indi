@@ -64,3 +64,4 @@
 
 - 2026-11-15 S16: Q1 (outer-loop architecture) closed: owner confirmed A; flatness studied as A18, optional stage-5 increment after base A (`design/flatness_r2.md`).
 - 2026-11-15 S17: A-11 closed (effort rate dependent), G1.6 verdict recorded, gate_g1.sh for G1.1/3/4/6, A-12/A-13 opened.
+- S18: A-12 closed (dynamic_pose/info, truth 800 Hz at speed 4), second key T37 agrees.
