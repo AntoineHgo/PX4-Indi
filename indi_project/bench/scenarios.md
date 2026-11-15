@@ -200,6 +200,46 @@ frozen before V' flies). Acceptance for v3 (section 6 rules and test, against `p
 v3 results on V and on the seen set are reported as post-hoc and never enter this verdict. Outcome words as in
 section 6.
 
+## 10. Stage-8 outer-loop set O (frozen, 2026-11-15, session 54, before any INDI POS flight on it)
+
+Why: stage 8 replaces the stock position/trajectory pipeline (mc_pos_control, attitude PID) by INDI POS with jerk
+feedforward on top of the frozen `indi_v3` rate loop (`plan/s8_impl_spec.md`). The comparison is against the stock
+pipeline with `pid_tuned` (O-9); the flatness feedforward is part of the INDI design and is not given to the baseline.
+All entries are new paths or parameters that no tuning run has flown. Same v2 simulator configuration and CLI flags as
+section 8 (`--sim v2 --imu-rate 1000 --erpm-drop 0.01 --vib-acc 1.0 --vib-gyr 0.05`), speed 1, seeds 1-10.
+Disturbances start with the path (segment "traj") and are identical for every controller. Entries in
+`bench/scenarios.py` (`o1_*` .. `o7_*`); choices: DECISIONS.md D-s8-oset.
+
+| entry | id | path | disturbance / plant change | primary metric |
+|---|---|---|---|---|
+| o1_lemniscate | O1 | Gerono lemniscate 10 m x 5 m, peak 6 m/s, 2 laps | none | trajectory RMS 3D in the window |
+| o2_circle_z | O2 | circle r 5 m at 5 m/s + vertical sine 1.5 m p-p, 3 laps | none | trajectory RMS 3D |
+| o3_lemniscate_gust | O3 | O1 | gust_x (T6 profile) | trajectory RMS 3D |
+| o4_lemniscate_payload | O4 | O1 | payload_add (T7 profile) | trajectory RMS 3D |
+| o5_zsine_com_shift | O5 | vertical sine of O6, nominal mass | com_shift (H3 profile; world-fixed wrench, valid near level only) | trajectory RMS 3D |
+| o6_zsine_mass | O6 | vertical sine 2 m p-p, period 4 s, 4 periods | mass x1.15 (G_T model error) | trajectory RMS 3D |
+| o7_lemniscate_tau2 | O7 | O1 | motor time constants x2 (expected INDI weakness) | trajectory RMS 3D |
+
+O-13 pre-check (`results/s8i_o13_precheck.md`): every entry flown once with `pid_tuned` before freezing. The circle of
+O2 was slowed twice (8 m/s: 20 % motor saturation; 6.5 m/s: 7.6 %, 1.55 m). O5 crashed on the circle at all three
+speeds because the injector's world-fixed torque projects onto body yaw at large tilt (an injector artefact), so O5
+moved to the near-level vertical sine (D-s8-oset). pid_tuned seed 1 on the frozen entries, trajectory RMS 3D / attitude
+RMS / motor saturation: O1 0.44 m / 7.9 deg / 0; O2 0.58 m / 6.3 deg / 0; O3 0.40 m / 6.9 deg / 0; O4 0.74 m / 4.7 deg /
+8.7 % (carrying the payload through the path); O5 0.19 m / 0.75 deg / 0; O6 0.16 m / 0.17 deg / 0; O7 0.44 m / 7.9 deg / 0.
+
+Arms (spec sec. 5): A = stock pipeline + `pid_tuned` (`results/s2_tuning/pid/r1f/c05/params`); D = INDI POS +
+`indi_v3` rate (`bench/params/indi_pos_v3.params`, frozen after O-12 staged screening on T5/H1 only, never on O).
+Verdict pair A vs D at 10 seeds (O-13). Context arms, few seeds and labelled as context: C = D with MC_INDIP_FF 0
+(feedforward ablation, O-9), B = stock pipeline + `indi_v3` rate.
+
+Acceptance for INDI POS (section 6 test: paired Wilcoxon by seed, two-sided, alpha 0.05), against arm A:
+1. no D run fails on O (a watchdog abort is a failure, never a dropped seed);
+2. D significantly better (median improvement >= 10 %, p < 0.05) on at least 5 of the 7 entries;
+3. D not significantly worse by more than 10 % on any entry;
+4. hover effort of D (T1, v2 configuration) at most 1.5x `pid_tuned`.
+Outcome words as in section 6. Secondary metrics (attitude RMS, saturation time, effort per entry) are reported but do
+not decide.
+
 ## Change log
 
 - v1 (2026-11-13): initial frozen version.
@@ -250,3 +290,5 @@ section 6.
 - 2026-11-14 (session 36): section 8 added, stage-2 held-out set V frozen (O-7) before any v2 INDI flight on it.
   The v1 sections are unchanged and v1 results stay valid.
 - 2026-11-14 (session 43): section 9 added, held-out set V' frozen for v3 before any v3 flight (D-heldout-v3).
+- 2026-11-15 (session 54): section 10 added, stage-8 set O frozen after the O-13 pid_tuned pre-check and before any
+  INDI POS flight on it (D-s8-oset).

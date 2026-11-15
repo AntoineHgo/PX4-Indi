@@ -878,3 +878,21 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
 - Session 53 addendum to D-s8-delay-final: re-flown with DLY 0 (`results/s8h_bias_dly0.md`), multisine lag -0.40 cycle,
   corr 1.00. Hover attitude/effort changes in s8h were traced to the pid_tuned 2.59 Hz inner mode (same with DLY 1),
   not to DLY 0 or to D-s8-accel-bias. Stage-8 arm D runs on the indi_v3 rate loop (spec sec. 5), not on indi_pos_v0's PID.
+
+## D-s8-oset (session 54, 2026-11-15): stage-8 set O after the O-13 pre-check
+
+Context: O-13 requires every entry to be flown once with pid_tuned, and an entry it cannot fly to be replaced, before
+the set is frozen (`results/s8i_o13_precheck.md`).
+Decision: O2 = circle r 5 m at **5 m/s** with the 1.5 m vertical sine (8 m/s: 20 % motor saturation; 6.5 m/s: 7.6 %,
+1.55 m rms; 5 m/s: 0.58 m rms, no saturation). O5 = com_shift step on the **vertical sine** of O6 at nominal mass
+(`o5_zsine_com_shift`), not on the circle.
+Why: O5 crashed at 8, 6.5 and 5 m/s. The 5 m/s log shows yaw saturation, caused by the injector's world-fixed offset
+torque projecting onto body yaw at large tilts. That is an artefact of the level-hover approximation in
+`bench/disturbance.py`, not a physical CoM-shift effect. Keeping the entry on a near-level path keeps the injector
+inside its validity domain, and it is applied identically to both controllers.
+Alternatives rejected: (a) a body-frame, specific-force-aligned injector. It is physically better, but it is a
+simulator change that would alter H3 / T-set history, and it costs budget the stage-8 verdict does not need.
+(b) com_shift on the lemniscate: 8 deg rms attitude with larger peaks, so the same artefact is likely. (c) A static CoM
+offset in the model variant: this loses the step disturbance.
+Consequence: O5 tests a CoM-shift step only in near-level flight. The report states this, and that O4's payload_add is
+a world-fixed force without payload inertia.
