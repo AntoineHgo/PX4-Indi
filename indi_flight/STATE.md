@@ -16,8 +16,8 @@
    requirements file. Step 2 round-1 draft DONE S4: `design/outer_loop_candidates_r1.md` (A single-rate shell
    copy + stock PositionControl kinematics with I=0 + INDI stage; B dual-rate; C own law; R-a/b/c rejected).
    T5 DONE S4: 15 new items (4 BLOCKING, inherited by A/B via the shell copy), R9 corrected; candidates
-   re-checked. Fact 1 CLOSED S4: local position 125 Hz in SITL -> A preferred. NEXT: (a) fold T5's Rnew items
-   into the requirements file sec. 6 (haiku, mechanical); (b) review round 1, fable, ~$1.2, launch at session
+   re-checked. Fact 1 CLOSED S4: local position 125 Hz in SITL -> A preferred. Rnew items folded as R37-R51
+   (S4). NEXT: (b) review round 1, fable, ~$1.2, launch at session
    start: brief = candidates_r1 vs requirements(+review) + source, find the mode/transition each candidate breaks,
    output `design/outer_loop_review_r1.md`; (c) round 2, then owner question with one-page summary.
    Defect: rc.mc_apps starts mc_pos_control unconditionally (line 49), MC_INDIP_EN adds the INDI module: R1 fails.

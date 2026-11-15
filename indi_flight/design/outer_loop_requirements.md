@@ -86,10 +86,12 @@ B11 Failure cascade (MPC:603-626): update fails -> reuse `_last_valid_setpoint` 
 B12 Failsafe setpoint (MPC:667-713): xy velocity finite -> vxy=0 ("stop and wait"); else acc_xy=0 and
    vz=MPC_LAND_SPEED ("blind land"); z velocity finite -> vz=0 unless set; else acc_z=0.3 m/s^2
    ("blind descent"). Warnings rate-limited to 2 s.
+  Corrected (review S4): when vz state is also invalid, `velocity[2] = NAN` and `acceleration[2] = 0.3` replace the blind-land vz = MPC_LAND_SPEED set earlier (MPC:699-709). Blind land only survives when vz is finite. The xy test uses states.velocity (filtered, NaN if invalid).
 B13 Stale-setpoint failsafe: if pos-ctrl enabled and no trajectory_setpoint newer than the enable time
    arrived, a failsafe setpoint is generated (MPC:448-456); no output at all until a setpoint with
    timestamp >= enable time exists (MPC:458-459). There is NO timeout on setpoint age once running
    (only the OFFBOARD want_takeoff 1 s test, MPC:473).
+  Corrected (review S4): "no output until a setpoint with timestamp >= enable time" holds only for the first cycle(s) (see R42, review Rnew-6). The failsafe setpoint's timestamp is timestamp_sample (MPC:454, 667-679), so output starts the next cycle.
 B14 EKF resets (MPC:718-780): when counters differ from latched values, deltas are added to the current and
    fallback setpoints (xy pos, z pos, vxy vel, vz vel, heading wrap_pi) only if setpoint.timestamp is
    nonzero and older than local_position.timestamp; velocity LP filters are shifted by delta_vxy/delta_vz
@@ -102,6 +104,7 @@ B16 Tilt limit: MPC_TILTMAX_LND until state >= flight, then MPC_TILTMAX_AIR; sle
    (MPC:53, 533-535); MPC_TILTMAX_AIR clamped to MAX_SAFE_TILT_DEG (value UNVERIFIED, in MPCh) and
    MPC_TILTMAX_LND <= AIR (MPC:170-190); limit applied to body_z (CMath limitTilt, PC:217-218).
    Published as takeoff_status.tilt_limit.
+  Corrected (review S4): the MAX_SAFE_TILT_DEG value is 89 (MPCh:228), as R26 already states; the UNVERIFIED tag does not apply (internal inconsistency only).
 B17 Thrust limits: min = MPC_THR_MIN in flight, 0 (floored 1e-3) before; max MPC_THR_MAX (MPC:540-542; PC:63-68).
    Vertical prioritised with a horizontal margin MPC_THR_XY_MARG; horizontal saturated to remaining
    thrust budget (PC:163-186). Collective thrust = min(thrust_z/cos(tilt), -thr_min) (PC:223).
@@ -215,6 +218,7 @@ Interfaces
 - R5 Publish takeoff_status (state enum 0-5 with identical semantics, tilt_limit) on change, also when PC
   off; advertise at construction. Consumers LD, FMM, Auto task, navigator depend on it. Src: MPC:54,
   652-660; LD.cpp:118; FMM:349-360.
+  Corrected (review S4): published values are 1..5 (disarmed=1, spoolup=2, ready=3, rampup=4, flight=5). 0 is UNINITIALIZED and is never produced by TakeoffState (msg/TakeoffStatus.msg:5-10; Takeoff.hpp:48-54). Consumers compare `< RAMPUP` (=4) (FMM:357).
 - R6 Keep consuming trajectory_setpoint (pos/vel/acc/yaw/yawspeed, any axis NaN) and vehicle_constraints
   unchanged; no change to FlightModeManager, Navigator or mavlink offboard. Src: sec. 1.
 - R7 Provide goto_setpoint behaviour (GotoControl) or explicitly record that it is dropped;
@@ -228,6 +232,7 @@ Mode coverage
 - R9 Altitude-only control (xy setpoints NaN, ALTCTL) and climb-rate-only (DESCEND) must be handled: an
   axis with all-NaN setpoint is left uncontrolled with no integrator build-up, while a valid setpoint
   on the remaining axes still yields a valid output. Src: PC:227-253, MPC:594-599; CM:70-76, 100-106.
+  Corrected (review S4): an axis with all of pos/vel/acc NaN makes the whole setpoint INVALID (PC:231-234, "every axis x, y, z needs to have some setpoint"). Altitude and Descend modes work because xy carries an ACCELERATION setpoint (Descend: FlightTaskDescend.cpp:64, 72). xy pos/vel NaN with finite acc is the "uncontrolled" case and only resets the xy integrator (MPC:594-599). A candidate must not assume xy can be omitted entirely (ManualAltitude xy output not read; inferred from PC:231-234).
 - R10 Offboard acceleration setpoints (xy+z acceleration only, no velocity/position) are executed as an
   acceleration command; pos/vel/acc may be mixed per axis and xy must come in pairs. Src: PC:233-239;
   CM:122-129.
@@ -255,8 +260,10 @@ Validity, failsafe, resets
 - R19 On invalid input: reuse last valid setpoint if < 200 ms old, else failsafe setpoint (stop xy / blind
   land / blind descent a_z=0.3), never output NaN to vehicle_attitude_setpoint; warnings rate-limited 2 s.
   Src: MPC:603-626, 667-713; PC:123-124.
+  Corrected (review S4): "never output NaN" is a design property, not a guard: the result of the last `_control.update` is not checked (MPC:627). Safety comes from the failsafe setpoint being finite by construction.
 - R20 No setpoint after PC enabled -> failsafe setpoint; no output until a setpoint with timestamp >=
   enable time exists; setpoint cleared on PC disable. Src: MPC:400-406, 448-459.
+  Corrected (review S4): "no output until a setpoint with timestamp >= enable time" holds only for the first cycle(s) (see R42, review Rnew-6). The failsafe setpoint's timestamp is timestamp_sample (MPC:454, 667-679), so output starts the next cycle.
 - R21 NaN/invalid estimate handling: invalid vxy -> NaN state and filter reset, invalid vz likewise; do
   not propagate NaN into the output. Src: MPC:305-370.
 - R22 EKF reset handling for xy, z, vxy, vz and heading counters: shift setpoint and stored fallback by the
@@ -297,9 +304,28 @@ Arming / system
 - R36 Run-time cost: stays within the work-queue budget at the local-position rate (typical 50-100 Hz);
   perf counter present. Src: MPC:372-388 (cycle perf). Rate itself UNVERIFIED (EKF publish rate).
 
+From review (S4)
+- R37 BLOCKING: The takeoff state machine must also run while PC is disabled, with skip_takeoff=true and want_takeoff=false. Armed therefore forces state FLIGHT (TO:102-104), so Manual/Stabilized to Altitude/Position in air does not re-enter spoolup/ramp or idle thrust. On the ground, landed then drops FLIGHT to ready_for_takeoff on the first PC-on cycle (TO:91-95). R13 and R32 do not state this. (MPC:645-650; TO:102-104)
+- R38 BLOCKING: SYS_VEHICLE_RESP, MPC_XY_VEL_ALL and MPC_Z_VEL_ALL are applied by mc_pos_control as writes to params owned by other consumers: MPC_ACC_HOR, MPC_ACC_HOR_MAX, MPC_MAN_Y_MAX, MPC_MAN_Y_TAU, MPC_TILTMAX_AIR (seen) and further ones declared at MPCh:186-197. If the replacement does not perform this remap, the knobs silently stop working for the flight tasks. R30 treats them as the module's own params. Whether the FMM tasks read these params was not grepped. (MPC:118-134, 166-168; MPCh:186-197)
+- R39 MINOR: mc_pos_control also enforces cross-module parameter sanity and commits to storage: tilt air <= 89 and land <= air, MPC_XY_CRUISE <= MPC_XY_VEL_MAX, MPC_VEL_MANUAL/BACK/SIDE, MPC_Z_V_AUTO_UP/DN <= MAX_UP/DN, MPC_THR_HOVER within [MIN, MAX]. MPC_TKO_SPEED and MPC_LAND_SPEED are clamped locally only (no commit). Without this, tasks see unvalidated limits. (MPC:170-290, 296-297)
+- R40 BLOCKING: Takeoff can start only from want_takeoff in vehicle_constraints (ready_for_takeoff to rampup, TO:72-75). Producers are FlightTaskAuto (FlightTaskAuto.cpp:236, 276: unsmoothed vz < -0.3), ManualAltitude (:316), ManualAcceleration (:93), AutoFollowTarget (:480), and OFFBOARD derived in MPC:470-492. The default is false (FlightTask.cpp:224). R11 covers only offboard; the replacement must keep reading constraints.want_takeoff as the sole trigger. Before rampup the output is idle for every mode (MPC:505, 522-526).
+- R41 BLOCKING: Outputs and takeoff_status are produced only inside `if (_local_pos_sub.update(...))` (MPC:389-662) and there is no else. If vehicle_local_position stops, the 100 ms backup wake (MPC:382) publishes nothing: no attitude setpoint, no vehicle_local_position_setpoint, no takeoff_status. ATT then holds the last thrust_body/q_d (ATT:327-344 has no staleness check in the lines read). A replacement needs an explicit decision on a stale local position, since the existing module offers no protection beyond Commander. (ATT staleness handling elsewhere unverified.)
+- R42 MINOR: The failsafe setpoint is LATCHED. After the enable edge with no trajectory_setpoint, MPC:451-455 stores a failsafe setpoint stamped with timestamp_sample. From the next cycle `_setpoint.timestamp >= _time_position_control_enabled`, so that frozen setpoint is reused until a real trajectory_setpoint arrives. It is not regenerated each cycle. (MPC:451-459)
+- R43 MINOR: In OFFBOARD, constraints.want_takeoff and speed limits are overwritten every cycle after the speed_up clamp. speed_down NaN falls back to MPC_Z_VEL_MAX_DN (MPC:537-538). On the failsafe path constraints are reset to `{0, NAN, NAN, false}` (MPC:622). (R6 and B6 mention only part.)
+- R44 MINOR: LD derives in_ground_effect from takeoff_state (RAMPUP always; FLIGHT if below LNDMC_ALT_GND_EFFECT height; also in_descend and no horizontal movement). takeoff_status must therefore stay in RAMPUP for the whole ramp. (LD:329-334, 116-120)
+- R45 MINOR: takeoff_status.tilt_limit is consumed by StickAccelerationXY to cap Position-mode stick acceleration at tan(tilt_limit)*g (StickAccelerationXY.cpp:193-200). It must be published, and slewed at 0.2 rad/s from MPC_TILTMAX_LND to AIR. R5/R26 list the field but not this consumer; the default when no message exists was not checked.
+- R46 MINOR: LD and HTE depend on parameters and signals the outer loop's thrust scale must match. LD uses MPC_THR_HOVER and MPC_THR_MIN (via `_params`) and hover_thrust_estimate directly in its low-throttle thresholds (LD:105-114, 222-234, 287-288). HTE starts from MPC_THR_HOVER, bounds the estimate by +/-HTE_THR_RANGE (HTE:72, 90-91), only runs when armed and `_in_air` (dist_bottom > 1 m, HTE:128-132, 158), and needs vehicle_thrust_setpoint and vehicle_attitude fresh within 20 ms plus control_allocator_status (HTE:165-172). It fuses -local_pos.az against allocated thrust (HTE:190). Extends R24.
+- R47 MINOR: The hover-thrust estimate is pushed into the controller on every valid message (MPC:423-431), but MPC_THR_HOVER overwrites it each cycle until state is FLIGHT (MPC:513-515). The estimate therefore takes effect only once flying. The z integrator is shifted on each update so thrust stays continuous (PC:75-92). R25 states the end result, not this ordering.
+- R48 MINOR: z and vz validity are independent (MPC:320, 348; EKF2.cpp:1731 TODO says modules do not always handle v_z_valid != z_valid). The z_deriv blend requires both z_valid and v_z_valid (MPC:582-584). R21/R31 do not state the independence.
+- R49 MINOR: GotoControl detail beyond R7. The goto setpoint times out after 500 ms and is cleared when disabled (GotoControl.cpp:51-65). It runs only when no new trajectory_setpoint arrived this cycle (MPC:437-438). Its smoother is reset on invalid position (GotoControl.cpp:79-89) and on EKF resets (MPC:754-778).
+- R50 MINOR: vehicle_local_position_setpoint consumers beyond R4: mavlink POSITION_TARGET_LOCAL_NED and POSITION_TARGET_GLOBAL_INT streams, so GCS shows setpoints (streams/*.hpp:58, :62). FlightTask applies a timeout (`_timeout`) and sets the feedback to NaN when stale (FlightTask.cpp:193-201).
+- R51 MINOR: Build and start integration: voxl2 start scripts also start mc_pos_control (see (a)-11), and the VTOL script starts it with `vtol` (rc.vtol_apps:20). A replacement must be wired into each, plus board px4board and linker lists (not grepped).
+
 ## 7. UNVERIFIED summary
 Publisher of vehicle_local_position (assumed EKF2); publisher of goto_setpoint and external-mode
 trajectory_setpoint; MAVLink offboard attitude path; PositionTriplet and stabilization_required flag
 details (SPT, CM); Descend task xy behaviour; Acro rate path; AttitudeControl internals (yaw weight,
 gains); failsafe-to-nav_state mapping (COM_*); arbitration between existing mc_indi_pos_control and
 mc_pos_control; whether other modules check that mc_pos_control runs; logger/mavlink consumers.
+
+Resolutions: see outer_loop_requirements_review.md section (a); still unknown: Acro rate path (a-7); AttitudeControl internals (a-8); COM_* failsafe-to-nav_state mapping (a-9); setpoint type registered by mc_indi_pos_control, arbitration partial (a-10); Descend xy selection between FlightTaskDescend.cpp:64 and :72 (a-6); non-VTOL branch of the MAVLink attitude publish (a-3); logger consumers of vehicle_local_position_setpoint (a-12); vehicle_local_position publish rate (R36); whether FMM tasks read the SYS_VEHICLE_RESP-remapped params (R38); ManualAltitude/ManualAcceleration xy outputs and FlightTaskOrbit takeoff (d); FlightModeManager.hpp:141, WeatherVane.hpp:69, vtol_att_control mc_virtual consumption and board CONFIG_MODULES_* lists (d); ATT behaviour on a stale vehicle_attitude_setpoint (d); GotoControl internals beyond lines 50-100 and PositionControl/ControlMath thrustToAttitude near-horizontal behaviour (d).
