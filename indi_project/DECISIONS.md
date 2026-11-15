@@ -844,3 +844,11 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
   still leaks ~6 % at 122.5 Hz into the 125 Hz subsampling and adds a lag that u would need to copy; rejected for
   now, kept as the option if F3 is fixed through it); integrating `vehicle_imu` delta_velocity (same boxcar, but needs
   the selected instance from `sensor_selection`; no gain over sensor_combined, which carries the same integration).
+
+## D-s8-delay (session 52, 2026-11-15, preliminary): direction of the INDI POS measurement delay
+- Finding (`results/s8_delay_ident.md`): in hover the eRPM thrust leads the window-averaged specific force by
+  ~3-4 cycles (24-32 ms, broad peak). The spec's reason for MC_INDIP_DLY (eRPM late) is wrong for this sim, but the
+  direction of the delay (on u) is right; its value 1 was copied from the inner loop and is too small.
+- Decision: keep MC_INDIP_DLY 1 until the lag is confirmed on a vertically excited log and its cause found; then set
+  it from the identified lag. Alternatives: set 3-4 now from hover only (rejected: broad peak, unexplained cause);
+  delay a_f instead (rejected: a_f is the late signal here).
