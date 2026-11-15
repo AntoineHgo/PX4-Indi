@@ -370,8 +370,8 @@ the actuator output, and for that very reason blind to the gap between command a
 controllers crashed: the tuned PID now holds position at 4.4 m RMS, INDI v2 at 13.8 m (3.1x, 0/10 seeds better). On the
 rest of the seen set the V pattern repeats: INDI v2 is 1.13-1.19x PID on attitude steps, 0.93-0.95x on rate pulses, and
 clearly better only on the gust (gust_x 0.73x, 10/10 seeds). A v3 design that blends the modelled and
-measured actuator states (`plan/v3_actuator_blend.md`, D-v3-blend) is implemented behind a parameter, default off,
-and has not flown yet.
+measured actuator states (`plan/v3_actuator_blend.md`, D-v3-blend) is implemented behind a parameter, default off;
+its screening is in section 7.8 and its held-out result in section 8.10.
 
 **Why the attitude entries lose: the outer loop, not INDI.** INDI replaces only the rate loop; the attitude (outer)
 P gains are shared parameters, and the v2 INDI tuning had chosen lower ones than the tuned PID (MC_ROLL_P 3.17 vs
@@ -386,3 +386,57 @@ the diagnostic; it changes how the v3 tuning is set up (outer gains fixed at the
 **Baseline fairness.** The tuned PID is also better than PID defaults on V (attitude entries 0.92-0.94x, gust_diag
 0.80x, com_shift 0.65x, motor_loss_0 0.88x, equal on rate entries), so the retuning produced a genuinely stronger
 baseline on unseen scenarios, not an artefact of the tuning set.
+
+## 8.10 Stage 2b: the v3 controller on the held-out set V'
+
+V' (`bench/scenarios.md` sec. 9, D-heldout-v3) was frozen before the v3 controller flew and targets the weakness V
+exposed: five entries built around actuator gaps (W1 motor 1 at 0.6 thrust, W2 motor 2 at 0.8, W3 actuator time
+constant x2 with motor 2 at 0.8 on attitude steps, W4 battery sag to 75 % thrust, W5 eRPM gain error 0.3 on
+attitude steps). indi_v3 (Tb 0.3 s, K_Y 2.733, YAW_CUT 3 Hz, outer gains fixed at the tuned PID's; section 7.8) was
+frozen before V' flew. 5 entries x 10 seeds x four controllers (PID defaults, tuned PID, INDI v2, INDI v3), 200
+flights, the controllers of one (entry, seed) flown side by side. The O-12 watchdog was on: an aborted run is a
+failure and was not re-flown. No host suspend occurred and `bench/glitch_scan.py` found no estimator glitch.
+Tables: `results/vprime.md`, from `bench/s2_verdict.py --vprime --final`. W1/W2 are judged on tilt RMS, as no
+attitude setpoint pattern is flown there (D-vprime-metric).
+
+| entry | primary metric | tuned PID | INDI v3 | ratio | INDI lower | p | effort ratio | INDI v2 ratio |
+|---|---|---|---|---|---|---|---|---|
+| W1 motor 1 at 0.6 | tilt RMS (deg) | 10/10 fail | 10/10 fail | - | - | - | - | 10/10 fail |
+| W2 motor 2 at 0.8 | tilt RMS (deg) | 0.777 | 0.736 | 0.95 | 10/10 | 0.002 | 0.78 | 9.06 |
+| W3 tau x2 + motor 2 at 0.8, attitude | roll attitude RMS (deg) | 3.16 | 3.12 | 0.99 | 8/10 | 0.049 | 1.17 | 1.93 |
+| W4 battery sag 75 %, attitude | roll attitude RMS (deg) | 3.10 (4 runs) | 2.99 (4 runs) | 0.96 | 2/3 | 0.75 | 1.00 | 0.95 |
+| W5 eRPM gain 0.3, attitude | roll attitude RMS (deg) | 2.97 | 2.99 | 1.01 | 6/10 | 0.85 | 1.16 | 2.71 |
+
+Watchdog failures ("> 3 m below the hold altitude for 1 s"): W1 10/10 for every controller; W4 PID defaults 7, tuned
+PID 6, INDI v2 3, INDI v3 6 of 10; none elsewhere.
+
+**Verdict under the frozen criteria: INDI v3 does not outperform PID on V'.** Criterion 2 fails (0 of 5 entries
+significantly better by 10 %, 4 needed), criterion 1 fails (W1 and W4 failures, which the tuned PID shares exactly
+on W1 and in number on W4), criterion 4 fails (hover effort 2.14x the tuned PID over five seeds, limit 1.5).
+Criterion 3 is met: v3 is not worse than the tuned PID by more than 10 % on any entry, and on no entry is it
+significantly worse at all.
+
+**What v3 achieves.** The blend restores the integral action that the measured actuator state had removed (section
+8.9): where v2 was 9.1x, 1.9x and 2.7x the tuned PID on W2, W3 and W5, v3 is 0.95x, 0.99x and 1.01x. It is the first
+INDI version that is not worse than the tuned PID on any held-out entry. It is parity, not an advantage: on these
+actuator-fault entries both controllers are limited by the thrust that remains, not by the rate loop, and the
+disturbance-rejection margin INDI showed against external torques (com_shift 0.43x on V, section 8.9) has no
+counterpart here.
+
+**W1 and W4 measure the vehicle.** With motor 1 limited to 0.6 thrust at a hover throttle of about 0.59, no
+controller can hold altitude. A post-hoc diagnostic with the watchdog off (W1 seed 1, all four controllers,
+`bench/vprime_w1_diag.sh`) shows every controller descending from the 5 m hold to the ground and none recovering.
+W4 trips about half the runs of every controller. Neither entry had been flown before V' was frozen, so their
+severity was not calibrated; this is a flaw in the design of V', reported here and not repaired after the fact.
+Their failures count against INDI under criterion 1 as written, but they do not separate the controllers.
+
+**Hover effort.** INDI's hover motor-rate effort is about 2x the tuned PID's in every stage-2 version (v2 and all v3
+configurations, `results/v3_hover_effort.md`). An analysis of the seen-set hover logs (`results/s2_hover_effort_cause.md`)
+attributes most of it to a structural property of the control law rather than to a tuning choice: the filtered
+angular acceleration is fed back to the torque command at gain 1/G1 (about 0.0057 per rad/s^2, measured
+0.0065-0.0072, against an effective 0.0033-0.0036 for the tuned PID's derivative path), and above 30 Hz that estimate
+is gyro and vibration noise, the same for both controllers. About 75 % of the excess lies in 30-80 Hz. No INDI gain
+changes this term; only a lower cut-off of the INDI filter, applied synchronously to the acceleration and to the
+actuator state, would, at a cost in phase. A secondary, v2-specific contribution was suspected from the coarse eRPM
+quantisation at hover (3-4 levels per motor); its causal test is reported below.
+
