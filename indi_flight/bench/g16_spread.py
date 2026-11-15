@@ -40,7 +40,7 @@ for sc in sorted(os.listdir(ROOT)):
         rel = spread / abs(mean) if mean != 0 else float("nan")
         rows[p] = dict(mean=mean, min=mn, max=mx, spread=spread, rel=rel, ill=abs(mean) < 1e-3, n=n, vals=v)
     result[sc] = dict(runs=used, rows=rows)
-json.dump(result, open(os.path.join(ROOT, "spread.json"), "w"), indent=1)
+json.dump(result, open(os.environ.get("G16_SPREAD_OUT", os.path.join(ROOT, "spread.json")), "w"), indent=1)
 def fmt(x):
     return "nan" if x != x else "%.4g" % x
 if __name__ == "__main__" and "--table" in sys.argv:
