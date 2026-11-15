@@ -440,3 +440,12 @@ changes this term; only a lower cut-off of the INDI filter, applied synchronousl
 actuator state, would, at a cost in phase. A secondary, v2-specific contribution was suspected from the coarse eRPM
 quantisation at hover (3-4 levels per motor); its causal test is reported below.
 
+**Causal test (post-hoc, `results/hover_cause.md`).** Hover seeds 1-3 were re-flown with INDI v2, INDI v2 with the
+measured torque disabled (model actuator state), and the tuned PID. Disabling the measured torque cut INDI's true
+4-10 Hz roll acceleration 2-4x but left its motor-rate effort unchanged (0.049 vs 0.049): the coarse eRPM state shakes
+the vehicle, it does not cause the effort. The same batch also showed that the reference moves: the tuned PID flew at
+0.046-0.057 with a 2-4 Hz roll oscillation, against 0.021-0.031 in the five-seed check, so on this batch the INDI/PID
+effort ratio was 0.96. INDI's own hover effort was the same in every batch. The 2.14x of criterion 4 stands as flown,
+but it was measured against the low-effort state of a PID whose hover effort varies by a factor of two between
+batches for a reason not yet identified. An INDI-only synchronous low pass was therefore not built (D-hover-lpf).
+

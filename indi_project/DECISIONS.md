@@ -777,3 +777,13 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
 - Alternatives: K_Y 4.0/cut 3.0 (yaw steps 1.05x PID but pitch under motor loss 1.28x PID, hover effort 2.4x);
   the stage-1 base cut 1.665 (yaw 1.28x/1.33x PID). Known before V': hover effort ~2.1x PID (D-v3-hover), so V'
   criterion 4 fails; yaw tracking 1.15-1.18x PID.
+
+## D-hover-lpf (session 48, 2026-11-15): no INDI-only synchronous low pass now
+- Decision: the INDI-only synchronous low pass on a_f and the actuator state (owner note 2026-11-15, cause 1) is not
+  built as a new candidate in stage 2. Recorded as future work in report 8.10.
+- Reasons: the causal test (`results/hover_cause.md`) showed the PID hover-effort reference itself varies 2x between
+  batches (0.021-0.031 vs 0.046-0.057, 2-4 Hz roll mode of unknown cause), so a filter tuned to close a 2x gap would
+  be aimed at an unstable target; the phase cost would weaken the disturbance rejection that is INDI's one clear
+  advantage; the remaining budget goes to stage 8 (Definition of DONE).
+- Alternatives: build it as indi_v4 and screen under O-12 (rejected for now, reasons above); lower MC_INDI filter
+  cut-off globally (same phase cost, and it changes the frozen v3).
