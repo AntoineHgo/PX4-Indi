@@ -3,7 +3,7 @@
 # MC_INDIP_EN 1, watchdog on). Diagnostic, not part of any verdict. Waits for the regression. Ends S8B_ACTIVATION_DONE.
 cd /home/ahugo/Documents/Drotek/Codes/PX4-Indi
 P=/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_project
-until grep -q "S8B_REGRESSION_DONE\|S8B_BUILD_FAILED" $P/results/s8b_regression.log 2>/dev/null; do sleep 20; done
+indi_project/docker/run.sh -n s8b-build -t 3000 "make px4_sitl_default" > $P/results/s8b_activation/build.log 2>&1 || { echo S8B_BUILD_FAILED; exit 1; }
 out=$P/results/s8b_activation/hover_seed1
 mkdir -p $out
 indi_project/docker/run.sh -n s8b-act -t 600 -N python3 indi_project/bench/run_scenario.py --scenario hover \

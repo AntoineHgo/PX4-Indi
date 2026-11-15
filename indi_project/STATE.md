@@ -38,14 +38,20 @@ owner decisions when you first act on them.
 - **Latest (session 51, 2026-11-15): stage-8 task B DONE in code: `mc_indi_pos_control` module 5cc5fcd01f, message
   `IndiPosStatus` 6c1d9b4d83 (one sonnet agent, ~$0.95; log and spec deviations in `plan/impl_log_s8_module.md`: omega max
   read from MC_INDI_W_MAX since CA_R_W_MAX does not exist; zero jerk -> a_ref difference; ESC age 50 ms). Builds; control
-  step reviewed by the orchestrator. Started from `rc.mc_apps` when MC_INDIP_EN 1. NOT yet flown with the mode active.
+  step reviewed by the orchestrator. Started from `rc.mc_apps` when MC_INDIP_EN 1. First activation flown (below).
   Regression (MC_INDIP_EN 0, pid_tuned hover seeds 1-2, v2 sim): `bench/s8b_regression.sh` -> `results/s8b_regression/`
   (log `results/s8b_regression.log`, ends S8B_REGRESSION_DONE); compare with `results/pid_hover_mode/runs/idle`.
   Activation check queued behind it: `bench/s8b_activation.sh` -> `results/s8b_activation/hover_seed1/check.txt`
   (runner passes MC_INDIP_EN as a boot param; params `bench/params/indi_pos_v0.params`).
-  NEXT: (1) check the regression; (2) read the activation check of INDI POS (MC_INDIP_EN 1, runner offboard switch on hover,
-  watchdog on): commander accepts registration/arming reply, esc and trajectory_setpoint ages fit 50/100 ms, MC_INDI_W_MAX
-  set in the params; (3) freeze O1-O7 in `bench/scenarios.md` sec. 10 with the O-13 pid_tuned pre-check.**
+  Regression PASSED (`results/s8b_regression.md`: attitude rms 0.075/0.088 deg vs idle refs 0.058-0.159).
+  Activation try 1 (`results/s8b_activation/hover_seed1_try1`): commander accepted registration (mode_id 23) and arming;
+  offboard switch -> nav_state 23 (EXTERNAL1), INDI POS held the hover 30 s (z -5.06 -> -5.07 m), but the runner timed
+  out waiting for main mode 6 and indi_pos_status was not logged (optional topic not advertised at logger start).
+  Fixed: status advertised at init (fix commit), runner accepts AUTO/sub_mode >= 11 when MC_INDIP_EN (sub-mode value
+  11 for EXTERNAL1 is UNVERIFIED: check run.json offboard_custom_mode). Try 2 (rebuild + re-fly) launched:
+  `results/s8b_activation.log`, check `results/s8b_activation/hover_seed1/check.txt`.
+  NEXT: (1) read try 2 (mean_u_valid fraction, hold_cycles, jerk_source, thrust ~ hover); (2) freeze O1-O7 in
+  `bench/scenarios.md` sec. 10 with the O-13 pid_tuned pre-check; then staged INDI POS screening (O-12).**
 - **Latest (session 50, 2026-11-15): owner hover-mode note CLOSED (`results/pid_hover_mode.md`, D-hover-spread).
   pid_tuned has a lightly damped 2.57 Hz roll mode whose amplitude varies PER FLIGHT, not per batch: the same seed
   re-flown alone on an idle host gave effort 0.036/0.063 (seed 1) and 0.032/0.022 (seed 2). Not params, build, PX4
@@ -1111,3 +1117,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s49: stage-8 impl spec (D-s8-spec, jerk-ff signs fixed), task A library + 18 gtests (2fcf22a017), task C G_T 16.63/k_cmd 1.0 (2ac71c326a), owner hover-mode note: log scan (aeb7daf918) rules out params/build/loop timing. Agents: 1 sonnet (13 calls, ~$0.5), 2 haiku (~$0.25). Runs: 0.
 - 2026-11-15 s50: pid_tuned hover mode = per-flight spread of a lightly damped 2.57 Hz PID mode (idle re-flights same seed 0.022-0.063); not seed/host load; D-hover-spread; report 8.9/8.10/10.5 corrected; owner note closed.
 - 2026-11-15 s51: stage-8 task B module + message committed (5cc5fcd01f, 6c1d9b4d83); regression hover launched.
+- 2026-11-15 s51: regression PASS; INDI POS first activation held hover (try 1); status-advertise + runner engage fixes; try 2 launched.
