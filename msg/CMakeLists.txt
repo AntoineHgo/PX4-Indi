@@ -124,6 +124,7 @@ set(msg_files
 	HealthReport.msg
 	HeaterStatus.msg
 	HoverThrustEstimate.msg
+	IndiPosStatus.msg
 	IndiRateStatus.msg
 	InputRc.msg
 	InternalCombustionEngineControl.msg
