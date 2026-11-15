@@ -1,26 +1,5 @@
 # INDI project state
 
-## OWNER NOTE 2026-11-15 01:50: the pid_tuned 2-4 Hz hover mode is REQUIRED work, not optional
-
-`results/hover_cause.md` showed pid_tuned's hover effort varies 2x between batches (0.021-0.031 in
-`results/v3_hover_effort` and the clean seen-set seeds; 0.046-0.066 in `results/hover_cause` and seen-set seeds 3-4),
-with a strong 2-4 Hz roll oscillation in the high state (true roll acceleration ~10 rad/s^2 in 2-4 Hz vs ~1-2 in the
-low state; seen-set seed 1 already showed ~4x seed 5 in that band, `bench/gt_accel_bands.py`). Every hover comparison
-depends on this reference: criterion 4 in v1, V, the seen set and V' (2.14x), and the stage-8 hover and position
-comparisons to come. INDI's own hover effort is stable (0.043-0.059 in every batch). Owner instruction:
-(1) Find the cause BEFORE freezing or flying the stage-8 validation set; it outranks the "Optional, cheap" item in
-S48 next actions, which it replaces. Start from logs (CPU, no flight): compare the high-state runs (`hover_cause`
-pid seeds 1-3, seen-set seeds 3-4) with the low-state runs (`v3_hover_effort`, seen-set seeds 1, 2, 5) on dt jitter
-and control-loop timing in the ULog, host load at flight time, the mode's onset (present from takeoff or appearing
-mid-flight), and the rate-loop terms (P/I/D, integrator). Hypotheses to separate: host load or lockstep timing; a
-marginally stable PID mode (I gain, outer P 5.12, D on noisy derivative); a sim-side cause (eRPM/vibration seeds).
-Fly only what the logs cannot decide, under O-12 (few seeds, side by side, host otherwise idle).
-(2) If it is host or timing, record the rule that keeps it out of validation batches (e.g. a max load per batch) and
-say which earlier hover figures were affected; if it is the PID tuning, say so, and keep the frozen pid_tuned
-unchanged for the stage-2 verdicts. Either way, write `results/pid_hover_mode.md`, then correct the hover-effort
-statements in report 8.9/8.10/10.5 and DECISIONS (D-hover-lpf rests on it). The frozen verdicts stand as flown.
-Then remove this note.
-
 ## OWNER DECISION 2026-11-15 (during session 47): O-13, read it in `indi_project/OWNER_GUIDANCE.md` now
 
 Validation sets: fly every entry once with pid_tuned BEFORE freezing and fix or replace any entry the tuned PID
@@ -56,6 +35,14 @@ owner decisions when you first act on them.
 
 ## Status summary (read this first)
 
+- **Latest (session 50, 2026-11-15): owner hover-mode note CLOSED (`results/pid_hover_mode.md`, D-hover-spread).
+  pid_tuned has a lightly damped 2.57 Hz roll mode whose amplitude varies PER FLIGHT, not per batch: the same seed
+  re-flown alone on an idle host gave effort 0.036/0.063 (seed 1) and 0.032/0.022 (seed 2). Not params, build, PX4
+  timing, rotor rpm, vibration aliasing, seed, or batch-level host load (CPU saturation breaks flights, and the hover
+  windows that completed were low). Report 8.9/8.10/10.5 and D-hover-lpf corrected; frozen verdicts stand as flown.
+  Rule from stage 8 on: hover effort as pooled medians + per-flight range over >= 10 flights per controller.
+  NEXT: stage-8 task B (module + parameters + status message, `plan/s8_impl_spec.md` sec. 3, one sonnet task), then
+  freeze O1-O7 with the O-13 pid_tuned pre-check; set MC_INDIP_G_T 16.63, MC_INDIP_K_CMD 1.0.**
 - **Latest (session 49, 2026-11-15): stage-8 implementation spec written (`plan/s8_impl_spec.md`, D-s8-spec: jerk-ff
   signs corrected). Task A DONE: `IndiAccelControl` library 2fcf22a017, 18 gtests pass (re-run by orchestrator in
   Docker; law lines reviewed against the spec; deviations in `plan/impl_log_s8_lib.md`). Task C (G_T/k_cmd ident,
@@ -1038,6 +1025,7 @@ S42 ORDER (do this first, top to bottom):
 | 35 | 0 | 1 omega2 build, 7 check flights (omega2), r1f continuing | ~$2.0 of $3 |
 | 40 | 0 | r1/r2 finished (480), held-out V launched (420) | ~$2.2 of $3 |
 | 34 | 1 sonnet (~$0.6, D-omega2 wiring) | 105 (v1 recheck) + r1f running + frz queued | session ~$2.8 |
+| 50 | 0 | 8 hover flights (pid_hover_mode: 4 idle, 4 under CPU saturation) | ~$2.2 of $3 |
 
 ## Journal
 
@@ -1109,3 +1097,4 @@ S42 ORDER (do this first, top to bottom):
 - 2026-11-15 s47: hover effort 5 seeds (~2x PID, inherited from v2), yaw stage 2, indi_v3 frozen, V' flown (200) and judged: v3 matches tuned PID, does not outperform it (W1/W4 exceed the vehicle for all). Report 7.8. Agents: 0. Runs: 236 (+4 W1 diag).
 - 2026-11-15 s48: owner hover note (a)-(c) closed (tooling, cause file, causal test: eRPM state shakes, no effort; PID reference unstable), D-hover-lpf, report 8.10/10.5, stage-8 code facts. Agents: 1 sonnet. Runs: 9.
 - 2026-11-15 s49: stage-8 impl spec (D-s8-spec, jerk-ff signs fixed), task A library + 18 gtests (2fcf22a017), task C G_T 16.63/k_cmd 1.0 (2ac71c326a), owner hover-mode note: log scan (aeb7daf918) rules out params/build/loop timing. Agents: 1 sonnet (13 calls, ~$0.5), 2 haiku (~$0.25). Runs: 0.
+- 2026-11-15 s50: pid_tuned hover mode = per-flight spread of a lightly damped 2.57 Hz PID mode (idle re-flights same seed 0.022-0.063); not seed/host load; D-hover-spread; report 8.9/8.10/10.5 corrected; owner note closed.

@@ -787,6 +787,8 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
   advantage; the remaining budget goes to stage 8 (Definition of DONE).
 - Alternatives: build it as indi_v4 and screen under O-12 (rejected for now, reasons above); lower MC_INDI filter
   cut-off globally (same phase cost, and it changes the frozen v3).
+- Update (session 50): the "2x between batches" is a per-flight spread of the tuned PID (lightly damped 2.57 Hz
+  mode, amplitude not set by seed), see D-hover-spread. The decision stands: the target is still not a fixed 2x gap.
 
 ## O-13 (owner decision, 2026-11-15): lean, pre-checked validation sets
 - Owner's decision, not re-opened (text in `OWNER_GUIDANCE.md`): every new held-out/validation set is
@@ -809,3 +811,15 @@ D-omega2-wire. Implementation choices made by the orchestrator (D-o11):
 - Outer-loop attitude/limits/gains come from the stock MPC_* and MC_* parameters, so A and D differ only in the
   acceleration-to-thrust law and the feedforward (O-9).
 - Stage-8 entries O1-O7 are new paths, pre-checked with pid_tuned before the freeze (O-13).
+
+## D-hover-spread (session 50, 2026-11-15): pid_tuned hover effort is a per-flight distribution
+- Finding (`results/pid_hover_mode.md`): the 2-4 Hz roll mode of pid_tuned is a lightly damped closed-loop mode at
+  2.57 Hz whose amplitude varies per flight. The same seed re-flown alone on an idle host gives effort 0.022-0.063.
+  It is not set by params, build, PX4 timing, rotor rpm, vibration aliasing or seed. Batch-level host load is not
+  the switch, but CPU saturation (16 busy loops) breaks flights outright.
+- Decision: pid_tuned stays frozen and unchanged (owner note). The stage-2 verdicts stand as flown. From stage 8 on,
+  hover effort is compared as pooled medians with per-flight ranges over >= 10 flights per controller, never as a
+  ratio of two small batch means. Batches keep the S44 rule (no CPU-heavy work while flying) and their present size.
+- Alternatives: retune the PID to damp the mode (rejected: it changes the frozen baseline mid-project; noted as
+  future work); force bit-reproducible gz/PX4 lockstep (not available in the stack); fly more seeds of hover only
+  (adopted implicitly through the >= 10 pooled rule).
