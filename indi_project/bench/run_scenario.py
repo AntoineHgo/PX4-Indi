@@ -415,6 +415,9 @@ def main():
                 meta["boot_params"] = {"MC_INDI_EN": 1}
             if "CA_R_W_MAX" in overlay:
                 overlay["MC_INDI_W_MAX"] = overlay.pop("CA_R_W_MAX")
+            if overlay.pop("MC_INDIP_EN", "0").strip() == "1":  # stage 8: outer-loop INDI module, started at boot
+                sim.env["PX4_PARAM_MC_INDIP_EN"] = "1"
+                meta.setdefault("boot_params", {})["MC_INDIP_EN"] = 1
         variant = dict(sc.get("model_variant") or {})
         if a.sim != "v1":  # read once when gz_bridge starts
             variant["rpm"] = True

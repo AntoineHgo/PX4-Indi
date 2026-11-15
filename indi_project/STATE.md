@@ -41,7 +41,9 @@ owner decisions when you first act on them.
   step reviewed by the orchestrator. Started from `rc.mc_apps` when MC_INDIP_EN 1. NOT yet flown with the mode active.
   Regression (MC_INDIP_EN 0, pid_tuned hover seeds 1-2, v2 sim): `bench/s8b_regression.sh` -> `results/s8b_regression/`
   (log `results/s8b_regression.log`, ends S8B_REGRESSION_DONE); compare with `results/pid_hover_mode/runs/idle`.
-  NEXT: (1) check the regression; (2) first activation check of INDI POS (MC_INDIP_EN 1, runner offboard switch on hover,
+  Activation check queued behind it: `bench/s8b_activation.sh` -> `results/s8b_activation/hover_seed1/check.txt`
+  (runner passes MC_INDIP_EN as a boot param; params `bench/params/indi_pos_v0.params`).
+  NEXT: (1) check the regression; (2) read the activation check of INDI POS (MC_INDIP_EN 1, runner offboard switch on hover,
   watchdog on): commander accepts registration/arming reply, esc and trajectory_setpoint ages fit 50/100 ms, MC_INDI_W_MAX
   set in the params; (3) freeze O1-O7 in `bench/scenarios.md` sec. 10 with the O-13 pid_tuned pre-check.**
 - **Latest (session 50, 2026-11-15): owner hover-mode note CLOSED (`results/pid_hover_mode.md`, D-hover-spread).
