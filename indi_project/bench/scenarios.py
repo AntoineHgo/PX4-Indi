@@ -20,10 +20,11 @@ LEMNISCATE = dict(shape="lemniscate", ax=4.0, ay=2.0, w=5.0 / math.sqrt(32.0), l
 CIRCLE_FAST = dict(shape="circle", r=4.0, z_amp=1.0, w=7.0 / 4.0, laps=3, ramp_s=3.0)
 # Stage-8 outer-loop set O1-O7 (plan/s8_impl_spec.md sec. 5; new paths, never used for tuning; frozen in scenarios.md
 # sec. 10 only after the O-13 pid_tuned pre-check). O1: Gerono lemniscate 10 m x 5 m, peak speed 6 m/s (at phi = 0 the
-# speed is w sqrt(ax^2 + 4 ay^2)). O2: circle r 5 m at 8 m/s with a vertical sine of 1.5 m peak to peak.
+# speed is w sqrt(ax^2 + 4 ay^2)). O2: circle r 5 m at 6.5 m/s with a vertical sine of 1.5 m peak to peak (8 m/s was
+# replaced after the O-13 pre-check: pid_tuned saturated 20 % of the time and crashed on O5, results/s8i_o13_precheck.md).
 # O6: vertical sine 2 m peak to peak, period 4 s (2.5 m/s^2 peak).
 LEMNISCATE_O1 = dict(shape="lemniscate", ax=5.0, ay=2.5, w=6.0 / math.sqrt(50.0), laps=2, ramp_s=3.0)
-CIRCLE_O2 = dict(shape="circle", r=5.0, z_amp=0.75, w=8.0 / 5.0, laps=3, ramp_s=3.0)
+CIRCLE_O2 = dict(shape="circle", r=5.0, z_amp=0.75, w=6.5 / 5.0, laps=3, ramp_s=3.0)
 ZSINE_O6 = dict(shape="zmulti", harm=[1], amps=[1.0], w=math.pi / 2, laps=4, ramp_s=2.0)
 
 
