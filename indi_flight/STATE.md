@@ -54,6 +54,10 @@
 - Outer-loop architecture study: 3 review rounds + r4 deltas done; owner confirmation pending (Q1).
 
 ## Next actions (in order)
+000. S15: A18 r5 verdict BLOCKING (`design/outer_loop_review_r5.md`): F1 yaw-rate double count (also live bug A-9),
+   F2-F4 MAJOR (no stamp in vehicle_rates_setpoint, accumulation into held _rates_setpoint, frame desired vs
+   estimated body). A18 stays OUT of base A; write `design/flatness_r2.md` answering F1-F9 (cheap, me), no new
+   review until stage 5 base A works. Stage 5 starts with base A only (Q1 confirmed).
 00. S14: (a) review r5 (opus, narrow, <=10 calls): `design/flatness_r1.md` vs arXiv 1809.04048 (source check of the
    table in section 1) + `src/modules/mc_indi_rate_control` ff entry point; output `design/outer_loop_review_r5.md`.
    (b) G1.6 run: 5 same-seed runs x (hover, one step, one trajectory) at speed 1 -> spreads vs thresholds (haiku).
@@ -95,7 +99,6 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T25 | opus | S14: review r5 of A18 (flatness ff), narrow | design/outer_loop_review_r5.md | relaunch same brief if file lacks Verdict |
 | T24 | haiku (agent ended S13; its batch survives as host bash) | S13: G1.6 pre-test (step_roll, traj_lemniscate on quad5in) then 5 same-seed runs x hover/step_roll/traj_lemniscate, speed 1 | results/det_g16/, design/g16_s13.md | batch script /tmp/claude-1001/-home-ahugo-Documents-Drotek-Codes-PX4-Indi/52d81939-c2c5-4141-b338-03f1bc8a732b/scratchpad/g16/batch.sh (status.txt, spread.py there); S14 watches it; if lost, re-run missing rN dirs only |
 
 ## Open problems
@@ -129,6 +132,7 @@
 | 12 | T20 | opus | outer-loop review r3, narrow | done, 8 calls, ~$1.0 |
 | 12 | T21a | haiku | 3 hovers try 1 | stopped at run 1 (arm late), 3 calls, ~$0.03 |
 | 12 | T21 | haiku | 3 hovers try 2 | done, 11 calls, ~$0.05, 6.5 min wall |
+| 14 | T25 | opus | review r5 of A18 | done, 10 calls, ~$0.7, BLOCKING (yaw-rate double count) |
 
 ## Lessons proposed
 - Haiku handles a well-specified log check (10 calls) for ~$0.06: use it for every bounded log/metric check.
