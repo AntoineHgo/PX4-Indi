@@ -198,6 +198,7 @@ private:
 	hrt_abstime _rate_t0{0};
 	hrt_abstime _last_cycle_time{0};
 	float _last_thrust{0.f};
+	matrix::Vector3f _rate_limit{};	///< rad/s, MC_*RATE_MAX
 	matrix::Vector3f _last_rates{};
 	int _hold_count{0};
 	bool _failure_reported{false};

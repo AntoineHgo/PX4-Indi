@@ -109,8 +109,9 @@ McIndiPosControl::parameters_updated()
 
 	using math::radians;
 
-	_attitude_control.setRateLimit(Vector3f(radians(_param_mc_rollrate_max.get()), radians(_param_mc_pitchrate_max.get()),
-						radians(_param_mc_yawrate_max.get())));
+	_rate_limit = Vector3f(radians(_param_mc_rollrate_max.get()), radians(_param_mc_pitchrate_max.get()),
+			       radians(_param_mc_yawrate_max.get()));
+	_attitude_control.setRateLimit(_rate_limit);
 
 	_attitude_control.setRefModelFrequency(_param_mc_ref_w_n.get());
 	_attitude_control.setFeedForwardGain(_param_mc_ref_ff.get());
@@ -516,7 +517,8 @@ McIndiPosControl::runCycle(hrt_abstime now, bool new_position)
 		return;
 	}
 
-	const Vector3f rates = _attitude_control.update(in.q) + out.omega_ff;
+	// the feedforward comes after the attitude loop's own limit: limit the sum again
+	const Vector3f rates = matrix::constrain(_attitude_control.update(in.q) + out.omega_ff, -_rate_limit, _rate_limit);
 
 	if (!rates.isAllFinite() || !PX4_ISFINITE(out.thrust)) {
 		hold(now);
