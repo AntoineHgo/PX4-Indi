@@ -23,7 +23,9 @@
    NOT block (continue stage 1). Module rename decision (A1: rewrite mc_indi_pos_control in place) goes to
    DECISIONS.md with the owner answer.
 3. Write GATES.md for G1 before its first test (draft exists).
-4. Port bench runner/metrics into `indi_flight/bench/` with the review fixes (5 Hz held reference, decimated effort,
+4. Port plan DONE S6 (`design/bench_port_plan.md`, headers only, UNVERIFIED bodies). Port 1a first (sonnet,
+   one script family per agent, ~$0.8 each: metrics.py fix M:51 + self-test, then run_scenario.py sim-time fixes).
+   Port bench runner/metrics into `indi_flight/bench/` with the review fixes (5 Hz held reference, decimated effort,
    ground-truth stamp, sim-time injections); self-test + second key per script. Errata re-score of set-O/T5.
 5. Simulator items of stage 1 (delayed GNSS, rotor inertia check, battery model, injectors, seeded drops, vibration,
    variants, noise profiles, determinism). Source web re-check of J_rotor (ASSUMED) still pending.
@@ -51,6 +53,7 @@
 | 4 | T5 | sonnet | requirements review | done, 16 calls, ~$0.5, 15 new items (4 blocking) |
 | 5 | T6 | fable | outer-loop review r1 | done, 13 calls, ~$2.5 (2x estimate) |
 | 6 | T7 | sonnet | route check 05 | done, 7 calls, ~$0.3 |
+| 6 | T8 | haiku | bench inventory + defect map | done, 7 calls, ~$0.15, design/bench_port_plan.md |
 
 ## Lessons proposed
 - At a $3 cap launch one agent per session (session 2: two sonnet agents ~$1.4 in 30 min, both cut).
