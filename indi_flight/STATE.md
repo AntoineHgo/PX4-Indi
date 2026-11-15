@@ -109,3 +109,4 @@
 - Opus with a narrow brief (one interface, <=12 calls, early skeleton write) reviews ~200 lines of design + source
   for ~$0.6: use opus, not fable, for design review rounds.
 - Web-research agents cost about 3x a code-read agent of the same call count; brief them at 20 calls.
+- Anchor every analysis window on an event in the log, never on the runner's view of it: the 1 Hz HEARTBEAT view moved the window start by up to 0.95 s (S15).
