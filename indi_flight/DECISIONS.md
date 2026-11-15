@@ -67,3 +67,8 @@ Open, to be written before code (MISSION "Decisions that are yours"):
 - Alternatives: stock fallback pattern (rejected: a silent PID fallback and a mixed INDI/PID stack, against F-1);
   announced fallback (rejected: F-1 forbids an escape route).
 - Overturn: only by the owner (F-1).
+
+## D-G1.6 (session 13): determinism criterion
+- Decision: same-seed spread is bounded in absolute terms, against the gate thresholds that consume each metric, and every later verdict must exceed the measured spread (GATES.md G1.6 a-d).
+- Alternatives: 2 % relative (rejected: ill-conditioned at the noise floor, 10-25 % on 3 cm deviations); bit-exact replay (needs lockstep between gz and PX4 and wall-clock-free MAVLink sends; out of reach unless T23 shows a cheap cause).
+- Overturn: T23 (`design/determinism_s13b.md`) finds a single fixable cause that makes runs bit-identical, or the measured spread exceeds 10 % of a gate threshold.
