@@ -2,7 +2,7 @@
 
 ## Status
 - Stage: 1 (evidence and simulator), started session 1 (2026-11-15). Stage 0 done. Session 3: ref airframe model done.
-- Session 4 (launch 20261115-175831): T5 requirements review launched.
+- Session 4 (launch 20261115-175831): requirements reviewed, candidates r1 drafted, fact 1 closed. Route check due S5.
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written (not tested).
 - Blocker: none. No owner question open.
 - Outer-loop architecture study (MISSION section) runs in parallel with stages 1-3: not started.
@@ -15,9 +15,11 @@
    launched S4 (output `design/outer_loop_requirements_review.md`): merge its BLOCKING items into the
    requirements file. Step 2 round-1 draft DONE S4: `design/outer_loop_candidates_r1.md` (A single-rate shell
    copy + stock PositionControl kinematics with I=0 + INDI stage; B dual-rate; C own law; R-a/b/c rejected).
-   Before review round 1: (a) re-check candidates against T5's new items; (b) measure vehicle_local_position
-   rate/latency vs IMU in SITL on quad5in (open fact 1, haiku); (c) then fable reviewer, brief: candidates vs
-   requirements + source, find the mode/transition each breaks, output `design/outer_loop_review_r1.md`.
+   T5 DONE S4: 15 new items (4 BLOCKING, inherited by A/B via the shell copy), R9 corrected; candidates
+   re-checked. Fact 1 CLOSED S4: local position 125 Hz in SITL -> A preferred. NEXT: (a) fold T5's Rnew items
+   into the requirements file sec. 6 (haiku, mechanical); (b) review round 1, fable, ~$1.2, launch at session
+   start: brief = candidates_r1 vs requirements(+review) + source, find the mode/transition each candidate breaks,
+   output `design/outer_loop_review_r1.md`; (c) round 2, then owner question with one-page summary.
    Defect: rc.mc_apps starts mc_pos_control unconditionally (line 49), MC_INDIP_EN adds the INDI module: R1 fails.
 3. Write GATES.md for G1 before its first test (draft exists).
 4. Port bench runner/metrics into `indi_flight/bench/` with the review fixes (5 Hz held reference, decimated effort,
@@ -28,9 +30,11 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T5 | requirements review (sonnet, S4) | agent | `design/outer_loop_requirements_review.md` | relaunch same brief if file absent/partial |
+| - | none | | | |
 
 ## Open problems
+- G1 logging: vehicle_acceleration logged at 20.8 Hz in T3 (logger cap, SDLOG_PROFILE 17); the outer-loop
+  analysis needs it at the controller rate. Fix in the bench logging profile.
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
   open per item: `sim_review.md` for simulator work, `module_parity.md` for stage 3/5, `test_review.md` for stage 3,
   `ident_review.md` for stage 4, `remetric.py`/`hover.py` for the errata.
@@ -43,6 +47,7 @@
 | 2 | T3 | sonnet | gz model + PID check | done (verified and committed in session 3) |
 | 2 | T4 | sonnet | outer-loop requirements | cut by cap, nothing written |
 | 3 | T4 | sonnet | outer-loop requirements, relaunch | done, 31 calls, ~$0.75, 36 items, 305 lines |
+| 4 | T5 | sonnet | requirements review | done, 16 calls, ~$0.5, 15 new items (4 blocking) |
 
 ## Lessons proposed
 - At a $3 cap launch one agent per session (session 2: two sonnet agents ~$1.4 in 30 min, both cut).

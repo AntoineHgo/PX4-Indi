@@ -110,4 +110,10 @@ turn out to fight the INDI stage.
 - R9 correction (an all-NaN axis invalidates the whole setpoint; altitude and descend modes carry an xy
   acceleration setpoint): A and B inherit stock validity rules; the INDI stage receives a finite xy a_ref in
   those modes. C must reproduce PC:231-234 exactly.
-- Fact 1 (local-position rate) is still open: it decides A vs B.
+- Fact 1 CLOSED (S4, from `results/t3_ref_airframe/run2/flight.ulg`, quad5in, stock PID, SITL lockstep):
+  vehicle_local_position 125.0 Hz (dt 8.00 ms median and p95), vehicle_attitude and sensor_combined 250 Hz
+  (IMU_INTEG_RATE 250), vehicle_attitude_setpoint 125 Hz one-to-one with local position, timestamp -
+  timestamp_sample = 0 (lockstep). At 125 Hz one period costs 14 deg of phase at 5 Hz, 4 deg at 1.5 Hz: adequate
+  for an acceleration loop under a 1-2 Hz velocity loop. **A stays preferred**; B is the fallback if G2's delay
+  margin fails on A. Not known: the rate and latency on hardware (IMU_INTEG_RATE default 200 Hz, EKF2 timing):
+  goes to the bring-up checklist (G8).
