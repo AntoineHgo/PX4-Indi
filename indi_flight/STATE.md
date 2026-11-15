@@ -8,6 +8,7 @@
   `design/flatness_r2.md` (S15): optional increment after base A. Outer-loop study finished; stage 5 = base A.
 - Session 15 (launch 20261115-230225, cap $3): flatness_r2 written; window anchored (T28, T29 2nd key);
   D-SIM-STEP decided (1.25 ms world, IMU 800 Hz), implementation next session.
+- Session 18 (launch 20261115-233746, cap $1.62): T36 A-12 fix (sonnet).
 - Session 16 (launch 20261115-231016, cap $3): D-SIM-STEP implemented (T31, commit 72598e3159) and pre-tested
   (`results/pretest_simstep_s16/README.md`): 1.25 ms step, IMU 800 Hz, RATEMAX 800/400 applied, PID flies, speed 4
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
@@ -71,6 +72,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T36 | A-12 fix: truth in sim time >= 50 Hz at speed 4 | sonnet | `design/a12_fix_s18.md` | relaunch T36 brief from that file |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
