@@ -42,10 +42,15 @@ owner decisions when you first act on them.
   (`o5_zsine_com_shift`: 0.19 m, 0.75 deg, no saturation); O2 = circle at 5 m/s (0.58 m, no saturation).
   Pre-check table in sec. 10 and `results/s8i_o13_precheck.md`. Acceptance for INDI POS: better on >= 5 of 7, not
   worse > 10 % on any, no failure, hover effort <= 1.5x pid_tuned; verdict pair pid_tuned vs indi_pos_v3 at 10 seeds.
-  `bench/params/indi_pos_v3.params` (0120434c2b). Smoke IN FLIGHT: `bench/s8j_pos_v3_smoke.sh` (rebuild + T5 indi_pos_v3,
-  T1 hover indi_pos_v3, T5 pid_tuned; seed 1) -> `results/s8j_pos_v3_smoke/`, log `results/s8j_pos_v3_smoke.log`
-  (ends S8J_DONE). NEXT: read the smoke (T5 traj rms vs pid_tuned, hover effort vs 1.5x pid_tuned and attitude); then
-  O-12 staged screening on T5/H1 only (MC_INDIP_* gains; `bench/tune.py --stages`), freeze indi_pos_v3, then fly set O
+  `bench/params/indi_pos_v3.params` (0120434c2b). Smoke DONE (`results/s8j_pos_v3_smoke.md`): T5 indi_pos_v3 0.64 m vs
+  pid_tuned 0.38 m at 2.4x effort; INDI POS runs AHEAD of the reference (+0.25 m along-track, 66 ms lead); hover effort
+  0.109 (< pid_tuned ~0.14, ok). Cause not found yet. Arm C test IN FLIGHT: `bench/s8j2_pos_v3_ff0.sh` (MC_INDIP_FF 0,
+  T5 seed 1) -> `results/s8j_pos_v3_smoke/traj_lemniscate/indi_pos_v3_ff0/seed1`, log `results/s8j2_pos_v3_ff0.log`
+  (ends S8J2_DONE); along/cross split with the scratch script logic in the md (setpoint vs local position, |v_ref| > 1).
+  (Fix the duplicated "Ends S8J2_DONE" comment line 4 of that script after it finishes.)
+  NEXT: if FF 0 removes the lead, inspect the a_ref/jerk feedforward timing (setpoint stream rate vs the difference;
+  `indi_pos_status.jerk_source`); otherwise look at the INDI POS position/velocity gains vs pid_tuned's MPC gains. Find the
+  cause BEFORE any gain screening; then O-12 staged screening on T5/H1 only, freeze indi_pos_v3, fly set O
   (A and D at 10 seeds; C and B at 3 seeds as context).**
 - **Latest (session 53, 2026-11-15): owner stage-8 review CLOSED (note removed; F1-F6 all done). F2: diagnostic
   `diag_z_multisine` (9bb3edf08d): raw eRPM thrust synchronous with a_f within 0.3-0.4 cycle (corr 0.99-1.00); the hover
