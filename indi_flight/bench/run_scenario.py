@@ -48,6 +48,15 @@ BASE_PARAMS = {
     "NAV_DLL_ACT": 0, "COM_RC_IN_MODE": 4, "COM_RCL_EXCEPT": 4,
     "SDLOG_PROFILE": 17, "MIS_TAKEOFF_ALT": 5.0,
 }
+# Logged at every update (interval 0). PX4 adds these to the SDLOG_PROFILE set and overrides the interval of any
+# topic the profile already logs; read from <rootfs>/fs/etc/logging/logger_topics.txt (see start_px4).
+LOG_TOPICS = [
+    "trajectory_setpoint", "vehicle_attitude_setpoint", "vehicle_rates_setpoint", "vehicle_angular_velocity",
+    "vehicle_acceleration", "vehicle_attitude", "vehicle_local_position", "vehicle_local_position_setpoint",
+    "vehicle_local_position_groundtruth", "actuator_motors", "esc_status", "vehicle_thrust_setpoint",
+    "vehicle_torque_setpoint", "sensor_combined", "vehicle_status", "vehicle_control_mode", "vehicle_land_detected",
+    "parameter_update", "hover_thrust_estimate", "control_allocator_status", "indi_pos_status",
+]
 TAKEOFF_ALT = 5.0
 ALT_KP, ALT_KD = 0.04, 0.10  # thrust per m / per m/s of altitude error in attitude/rate scenarios
 SETPOINT_PERIOD = 0.02  # sim seconds between offboard setpoints
@@ -176,6 +185,10 @@ class Sim:
 
     def start_px4(self):
         os.makedirs(self.rootfs, exist_ok=True)
+        topics_dir = os.path.join(self.rootfs, "fs", "etc", "logging")  # SITL storage root is ./fs
+        os.makedirs(topics_dir, exist_ok=True)
+        with open(os.path.join(topics_dir, "logger_topics.txt"), "w") as f:
+            f.writelines(f"{t} 0 0\n" for t in LOG_TOPICS)  # instance 0 only: multi-instance adds exhaust the 255 slots
         self.px4 = self.spawn([f"{BUILD}/bin/px4", "-i", str(self.a.instance), "-d", "-w", self.rootfs,
                                f"{BUILD}/etc"], "px4.log")
         self.wait_log("Startup script returned successfully", 180)
