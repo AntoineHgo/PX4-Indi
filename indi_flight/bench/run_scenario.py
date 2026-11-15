@@ -60,6 +60,16 @@ LOG_TOPICS = [
 TAKEOFF_ALT = 5.0
 ALT_KP, ALT_KD = 0.04, 0.10  # thrust per m / per m/s of altitude error in attitude/rate scenarios
 SETPOINT_PERIOD = 0.02  # sim seconds between offboard setpoints
+# G1.6 determinism (s12): arm and offboard happen at FIXED sim times, so same-seed runs fly the same time slice.
+# s11 pre-study: the arm happened at sim 15.4-17.6 s (wall time spent in param sets, logger restart, wait_log,
+# arm retries), arm->offboard took 15-16 s. T_ARM_S sits >2 s after the latest observed ready time. T_OFFBOARD_S
+# leaves room for the climb (~8-9 s observed) + 5 s hover (HOVER_MIN_S) + 1 s pre-stream (PRESTREAM_S) with margin.
+T_ARM_S = 20.0
+T_OFFBOARD_S = T_ARM_S + 20.0  # 40 s
+HOVER_MIN_S = 5.0  # hover between end of climb and hold capture (as before)
+PRESTREAM_S = 1.0  # position-setpoint stream before the offboard switch (as before)
+T_HOLD_S = T_OFFBOARD_S - PRESTREAM_S  # hold_pos/hold_yaw captured here (fixed sim time)
+LATE_TOL_S = 0.1  # an arm later than T_ARM_S + this is flagged as arm_late_s in run.json
 # O-12 watchdog (D-watchdog), active from takeoff completion to the landing command
 WD_TILT_DEG, WD_TILT_HOLD_S = 60.0, 0.5  # MPC_TILTMAX_AIR 45 deg; largest commanded tilt ~52 deg (H4)
 WD_MIN_HEIGHT_M = 0.3  # ground contact while airborne
@@ -432,6 +442,22 @@ def hover_thrust(sim):
     return None
 
 
+def run_metrics(out_dir):
+    """Run bench/metrics.py on <out_dir>/flight.ulg -> <out_dir>/metrics.json. Never raises; returns a status string."""
+    try:
+        r = subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "metrics.py"),
+                            os.path.join(out_dir, "flight.ulg"), "--run-json", os.path.join(out_dir, "run.json"),
+                            "--out", os.path.join(out_dir, "metrics.json")],
+                           capture_output=True, text=True, timeout=300)
+        if r.returncode == 0:
+            return "ok"
+        tail = (r.stderr or r.stdout).strip().splitlines()[-1:] or [""]
+        print("METRICS FAILED:", r.stderr, file=sys.stderr)
+        return f"failed rc={r.returncode}: {tail[0][:200]}"
+    except Exception as e:  # noqa: BLE001
+        return f"failed: {type(e).__name__}: {e}"
+
+
 def git_info():
     def g(*a):
         return subprocess.run(["git", "-C", REPO, *a], capture_output=True, text=True).stdout.strip()
@@ -526,23 +552,37 @@ def main():
         sim.cli("px4-logger", "start", "-b", "20", "-t")
         sim.wait_log("Ready for takeoff", 180)
         sim.connect()
-        sim.run(1.0, what="warmup")
+        sim.run(1.0, what="warmup")  # first ATTITUDE tick makes sim.t valid (it is 0.0 before connect/pump)
+        meta["t_arm_target_s"], meta["t_offboard_target_s"] = T_ARM_S, T_OFFBOARD_S
+        meta["t_before_arm_wait_s"] = sim.t
+        sim.run(None, until=lambda: sim.t >= T_ARM_S, wall_timeout=120 + 2 * T_ARM_S / a.speed, what="wait_t_arm")
+        t_arm_sent = sim.t
         for attempt in range(40):  # "Ready for takeoff" can be transient right after boot: retry
             if sim.cmd(400, 1):
                 break
+            meta["arm_rejected_t_s"] = meta.get("arm_rejected_t_s", []) + [sim.t]
             sim.run(1.0, what="arm_retry")
         else:
             raise RunError("arm rejected 40 times")
         meta["arm_attempts"] = attempt + 1
+        meta["t_arm_sent_s"] = t_arm_sent
+        if sim.t - T_ARM_S > LATE_TOL_S:  # visible in run.json: this run flies a shifted time slice
+            meta["arm_late_s"] = round(sim.t - T_ARM_S, 3)
         sim.run(None, until=lambda: sim.armed, wall_timeout=20, what="armed")
         meta["t_arm_us"] = int(sim.t * 1e6)
         if not sim.cmd(22, float("nan"), 0, 0, float("nan"), float("nan"), float("nan"), float("nan")):
             raise RunError("takeoff rejected")
-        sim.run(None, until=lambda: sim.pos and sim.pos[2] <= -(TAKEOFF_ALT - 0.3), wall_timeout=120 + 60 / a.speed,
-                what="climb")
+        sim.run(None, until=lambda: (sim.pos and sim.pos[2] <= -(TAKEOFF_ALT - 0.3)) or sim.t > T_HOLD_S - HOVER_MIN_S,
+                wall_timeout=120 + 60 / a.speed, what="climb")
+        meta["t_climb_done_s"] = sim.t
+        if not (sim.pos and sim.pos[2] <= -(TAKEOFF_ALT - 0.3)) or sim.t > T_HOLD_S - HOVER_MIN_S:
+            raise RunError(f"climb not finished by t={T_HOLD_S - HOVER_MIN_S:.1f} s (sim t={sim.t:.2f}); "
+                           f"T_OFFBOARD_S={T_OFFBOARD_S} would slip")
         sim.wd_start()
-        sim.run(5.0, what="hover_before_offboard")
+        sim.run(None, until=lambda: sim.t >= T_HOLD_S, wall_timeout=120 + 2 * (T_HOLD_S - sim.t) / a.speed,
+                what="hover_before_offboard")
         hold_pos, hold_yaw = sim.pos, sim.yaw
+        meta["t_hold_s"] = sim.t
         meta["hold_pos_ned"], meta["hold_yaw_rad"] = hold_pos, hold_yaw
         ht = hover_thrust(sim)
         meta["hover_thrust_estimate"] = ht
@@ -554,7 +594,11 @@ def main():
 
         # offboard: stream setpoints, then switch mode
         pos_sp = lambda: sim.send_pos(hold_pos, hold_yaw)  # noqa: E731
-        sim.run(1.0, sp=pos_sp, what="pre_offboard_stream")
+        sim.run(None, sp=pos_sp, until=lambda: sim.t >= T_OFFBOARD_S, wall_timeout=60 + 2 * PRESTREAM_S / a.speed,
+                what="pre_offboard_stream")
+        meta["t_offboard_sent_s"] = sim.t
+        if sim.t - T_OFFBOARD_S > LATE_TOL_S:
+            meta["offboard_late_s"] = round(sim.t - T_OFFBOARD_S, 3)
         # stage 8: INDI POS replaces offboard and is reported as AUTO (4) / EXTERNALn (sub mode >= 11)
         indip = meta.get("boot_params", {}).get("MC_INDIP_EN") == 1
         sim.cmd(176, 1, 6)
@@ -679,6 +723,12 @@ def main():
         meta["wall_time_s"] = round(time.time() - t_wall0, 1)
         meta["exit_status"] = "ok" if ok else "failed"
         json.dump(meta, open(os.path.join(a.out, "run.json"), "w"), indent=1)
+        if os.path.exists(os.path.join(a.out, "flight.ulg")):  # metrics read run.json (window): it is written above
+            meta["metrics_status"] = run_metrics(a.out)
+            json.dump(meta, open(os.path.join(a.out, "run.json"), "w"), indent=1)
+        else:
+            meta["metrics_status"] = "skipped: no flight.ulg"
+            json.dump(meta, open(os.path.join(a.out, "run.json"), "w"), indent=1)
         # keep the out dir small: drop the per-run rootfs (params/dataman/log copies)
         shutil.rmtree(sim.rootfs, ignore_errors=True)
     return 0 if ok else 1
