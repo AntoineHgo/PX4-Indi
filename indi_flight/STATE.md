@@ -21,6 +21,13 @@
 5. Simulator items of stage 1 (delayed GNSS, rotor inertia, battery model, injectors, seeded drops, vibration,
    variants, noise profiles, determinism).
 
+## Session 2 end note (budget)
+- T3 and T4 were still running when the session hit its cap. On disk, UNCOMMITTED and UNVERIFIED: `sim/models/quad5in{,_base}`,
+  `ROMFS/.../airframes/4040_gz_quad5in` + CMakeLists entry, `bench/`, `results/` (T3). T4 had written nothing at $2.0.
+  Next launch: check `git status`; if `design/ref_airframe_model.md` / `design/outer_loop_requirements.md` exist, review
+  them, else relaunch with a 20-call brief. Read the T3 diff before committing (firmware/ROMFS commit separate from sim).
+- Lesson proposed: two sonnet agents cost ~$1.4 together in 30 min here; at a $3 cap launch one agent per session.
+
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
