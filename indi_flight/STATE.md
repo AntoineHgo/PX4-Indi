@@ -61,8 +61,8 @@
    s4 hover r5: real 6 cm vertical excursion mid-window: add to A-7 bound. Then G1.6 verdict.
 000. S15: A18 r5 verdict BLOCKING (`design/outer_loop_review_r5.md`): F1 yaw-rate double count (also live bug A-9),
    F2-F4 MAJOR (no stamp in vehicle_rates_setpoint, accumulation into held _rates_setpoint, frame desired vs
-   estimated body). A18 stays OUT of base A; write `design/flatness_r2.md` answering F1-F9 (cheap, me), no new
-   review until stage 5 base A works. Stage 5 starts with base A only (Q1 confirmed).
+   estimated body). A18 stays OUT of base A; `design/flatness_r2.md` DONE S15 (F1-F9 accepted, A18 = review's minimal spec,
+   optional stage-5 increment after base A, 3-part acceptance), no new review until stage 5 base A works. Stage 5 starts with base A only (Q1 confirmed).
 00. S14: (a) review r5 (opus, narrow, <=10 calls): `design/flatness_r1.md` vs arXiv 1809.04048 (source check of the
    table in section 1) + `src/modules/mc_indi_rate_control` ff entry point; output `design/outer_loop_review_r5.md`.
    (b) G1.6 run: 5 same-seed runs x (hover, one step, one trajectory) at speed 1 -> spreads vs thresholds (haiku).
@@ -96,6 +96,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T28 | S15: metrics.py window start from ULog nav_state + 3 s, self-test, re-score 30 G1.6 runs | sonnet | `design/window_anchor_s15.md` | re-launch same brief if file incomplete |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
