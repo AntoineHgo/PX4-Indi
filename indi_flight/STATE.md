@@ -50,7 +50,13 @@ S41 (launch 20261116-092054, cap $1.98): (1) DONE seed 2 model-only AMP 0.005 (`
    PM 24.0 deg / GM 6.0 dB / DM 14 ms -> A-21 closing test 1 PASS (PM 25.3/26.3/24.0). (2) DONE T84 haiku second key
    (`results/stage2_s41/second_key_m3a.md`): AGREE when periods 2-3 are used as the primary does (all bins <=20 Hz
    within 0.5 dB/3 deg, PM within 0.25 deg); full window incl. period 1 DISAGREES (transient). m3a_csv/m3a_margins
-   second-keyed. T85 sonnet closing test 2: IN FLIGHT (see Tasks). Old plan: (1) A-21 closing test (1) rest: model-only AMP 0.005 seed 2 (1 flight,
+   second-keyed. (3) DONE T85 sonnet closing test 2 (`results/stage2_s41/a21_model_vs_measured.md`, UNKEYED):
+   firmware matches margins_models.py element by element; the gap is the MODEL: it omits the attitude P loop
+   (MC_ROLL_P 8 closes around the M3a break, alone gives PM 23.5/GM 4.6) and G1 fits 1.30x the default (~417 vs 320,
+   unverified), plus ~1 step (1.26 ms) delay/lag (gz command latency suspected).
+S42 NEXT: (a) add attitude loop to margins_models.py (sonnet) + haiku second key; (b) G1 by regressing angular accel
+   on torque_sp from existing logs (haiku); (c) actuator_motors step in sim v2 to measure gz command latency;
+   (d) 400 Hz injection (delay doubles if 1 step). A-21 closes when model incl. attitude loop matches within G2 tol. Old plan: (1) A-21 closing test (1) rest: model-only AMP 0.005 seed 2 (1 flight,
    host bash, ~3 min each: `indi_project/docker/run.sh -n X -t 600 -- python3 indi_flight/bench/run_scenario.py
    --scenario hover_long --controller indi_m3a --model quad5in --seed N --speed 4 --params <inj_model_long.params
    with AMP> --out ...`, then `checks.py RUN AMP 20 3`, `bench/m3a_csv.py`, `bench/m3a_margins_pretest.py`);
@@ -65,7 +71,6 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T85 | A-21 closing test 2, model vs measured per bin | sonnet | results/stage2_s41/a21_model_vs_measured.md | relaunch |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -93,10 +98,13 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 38 | T80 | haiku | GM jump check | done, 5 calls, ~$0.06, explained (phase plateau) |
 | 40 | T83 | haiku | M3a pre-test flights + checks | done, 12 calls, ~$0.3, (b) blocked by runner, fixed by me |
 | 40 | T82 | sonnet | route check 40 | done, 5 calls, ~$0.15 |
+| 41 | T85 | sonnet | A-21 model vs measured | done, 15 calls, ~$0.6, model omits attitude loop |
 | 41 | T84 | haiku | second key m3a FRF (2 rounds) | done, 13 calls, ~$0.3, AGREE on periods 2-3 |
 | 39 | T81 | sonnet | M3a plumbing + build + 1 hover | done, 27 calls, ~$0.93, test not linked, fixed by me |
 
 ## Lessons proposed
+- S41: a loop-gain model must contain every loop the break closes around, outer loops included; the M3a model
+  lacked the attitude P loop and a 17 deg PM gap was spent on as an anomaly (A-21).
 - S39: a sonnet implement+build+fly task asked to add a unit test spent its last calls on a link error; tell it the
   gtest kind (unit = pure code) and the test build dir, or leave the test run to a separate step.
 - S37: a sonnet task writing ~600 lines of numerical code + tests costs ~$0.9 in 9 calls (long writes); the session
