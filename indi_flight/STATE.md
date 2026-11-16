@@ -102,6 +102,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 39 | T81 | sonnet | M3a plumbing + build + 1 hover | done, 27 calls, ~$0.93, test not linked, fixed by me |
 
 ## Lessons proposed
+- S48: before reading a low margin as a plant or gain problem, put every loop the break closes around into the model
+  and test it by predicting a parameter change in flight (two flights, ~$0.1 of CPU, settled what 7 sessions had not).
 - S47: a single clean flight does not prove stability: S45 hovered clean, the same config limit-cycled on replay (bistable
   lightly damped mode). Accept a configuration change on >= 2 seeds, and derive every term of the law (G2 too) before flying.
 - S45: a default effectiveness never derived for the airframe (G1_Y 30 vs plant 215) cost 5 sessions of margins; derive every
