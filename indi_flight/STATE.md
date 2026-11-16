@@ -28,9 +28,10 @@
    with --sched at speeds 1 and 4 (host bash) and a G1.6(a) verdict; (3) G1.5 injectors via player kinds.
 000000000000000. S25 (launch 20261116-030636, cap $3): T52 DONE (7a8ad4786a runner, e7e7dc95b0 results): gz paused start
    does not fix A-17 (spread 8.75/6.25 ms); cause = Commander skips/relative sleep + free-running gz. D-A17 overturned,
-   A-17 PARKED with bound, Q3 asked (restate G1.6a, or lockstep gz), not blocking. S26 NEXT: (1) sonnet: player
-   take-off/land kinds + capture hold position (yaw hard-coded 1.585 today) + option to anchor rows after a mode
-   change on the observed nav_state transition (Q3 option A needs it; harmless under B); 1 pretest; (2) second key;
+   A-17 PARKED with bound, Q3 asked (restate G1.6a, or lockstep gz), not blocking. T53 DONE (sp_hold, anchor nav_state=N, takeoff/land
+   kinds; `design/t53_player_kinds_s25.md`; pretest: anchor = logged nav_state change, rows after it 0 us error).
+   S26 NEXT: (1) second key on T53 (haiku/sonnet, own ULog check of anchor + offsets) and a flight of takeoff/land
+   kinds; untested: anchor never reached (no timeout), sp_hold with invalid position; (2)
    (3) re-fly 5-run G1.6 set (hover, step, traj) --sched at speeds 1 and 4 for G1.6(b); (4) G1.5 injectors via player.
 1-4. Stage-1 items still pending from the old list (rest done, history in JOURNAL): errata re-score of archived set-O/T5;
    window rule must accept nav_state 23; sag as sim-time ramp in gz bridge (two keys); run_scenario sim-time fixes
@@ -104,6 +105,7 @@
 | 24 | T51 | haiku | A-17 Commander phase | done, 5 calls, ~$0.06, confirmed 4/5 |
 | 24 | T50 | haiku | second key player instants | done, 8 calls, ~$0.06, AGREE |
 | 25 | T52 | sonnet | gz paused start + 5 hovers | done, 18 calls, ~$0.45, hypothesis rejected |
+| 25 | T53 | sonnet | player sp_hold/anchor/takeoff/land + pretest | done, 15 calls, ~$0.45, takeoff/land unflown |
 
 ## Lessons proposed
 - Read the sleep/wake rule of a loop before building a timing fix around it: S25 spent a session on a start-up
