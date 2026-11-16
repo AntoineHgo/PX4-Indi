@@ -14,6 +14,9 @@
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
+000000000000. S22 (launch 20261116-020843, cap $1.35): route checks 15/20 were missed -> T44 route check 22 (sonnet,
+   `design/route_check_22.md`); T45 A-16 closing test (haiku, `results/a16_s22/README.md`). A-14: the two runner paths
+   differ ONLY by logger `-f` (run_scenario.py:594), so no code read needed; next = act on route check first.
 00000000000. S21 (launch 20261116-015246, cap $1.8): A-15 fix decided: uORB queue depth comes only from the .msg
    (no runtime queue API), and raising it on VehicleAngularVelocity/VehicleAttitude would change the stock control
    topics. So: new sim-only queued topic `sim_ground_truth` (queue 16) published by gz_bridge in the same pose
@@ -78,6 +81,8 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T44 | route check 22 | sonnet | design/route_check_22.md | relaunch same brief |
+| T45 | A-16 closing test | haiku | results/a16_s22/README.md | relaunch same brief |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
