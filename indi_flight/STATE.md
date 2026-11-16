@@ -12,6 +12,8 @@
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
+S33 (launch 20261116-065633, cap $1.98): B32 speed 1 still running (hover r2 at 06:56). T68 haiku A-19 mechanism ->
+   `results/a19_s33/README.md`; arccos fix in second_key_s29.py (own); G1 status draft in GATES.md (own).
 S32 (launch 20261116-064202, cap $2.70): A-20 fix 4297ba9869 (atomic once-set _alt_ref, built, format clean). B32 G1.6
    re-fly detached (`bench/g16_set_s32.sh` -> `results/g16_set_s32/`, pretest gate then 2x15 runs, then A-20 check).
    T66 haiku second key A-20 diff -> `results/g16_set_s32/second_key_a20.md`; T67 haiku A-19 + attitude 15 % gap ->
@@ -41,6 +43,7 @@ S31 (launch 20261116-042839, cap $1.08): A-14 bridge fix: pretest PASS, B31 15/1
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T68 | A-19 mechanism (logs only) | haiku | `results/a19_s33/README.md` | re-launch with same brief |
 | B32 | G1.6 re-fly, fixed baro, s4 (done, analysed) + s1 (running) | host bash (detached) | `results/g16_set_s32/status.txt` | delete partial dir, `setsid nohup indi_flight/bench/g16_set_s32.sh` |
 | B26 | G1.6 set --sched --sched-anchor, 3 scen x 5, speed 4 (done, analysed S27) then 1 (DONE S28, not analysed) | host bash (detached) | `results/g16_sched_set_s26/speed{4,1}/status.txt` | `setsid nohup indi_flight/bench/g16_sched_set.sh` (delete partial speed dir first) |
 
