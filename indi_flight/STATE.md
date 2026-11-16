@@ -15,61 +15,19 @@
 
 ## Next actions (in order)
 0000000000000. S23 (launch 20261116-024209, cap $3): T46 (sonnet) truth/timestamp_sample in metrics; DONE: A-10/A-13 PARKED with bounds; D-SCHED decided (sim-time scenario player, sim-only module). T46 DONE (a6820c2e60, `design/t46_truth_metrics_s23.md`): metrics on sim_ground_truth + timestamp_sample, hover re-score <1 %. Open from T46: (i) g1.1 still FAILS on max gap (5.0-6.3 ms vs 3.75 ms) for gyro, ang vel, motors, torque sp, esc, truth: the source (sensor_gyro) has the holes (A-13 parked), so the gap rule tests the sim, not the logger -> either fix the sim step holes or ask the owner to amend g1.1 to a bound (gate change after first test = owner question); decide in S24 after looking at the 6.3 ms gaps; (ii) rate/attitude tracking still scored vs estimator, G1.2 wants truth: add truth-based rate/attitude tracking (sonnet, with player work or after). T48 second key AGREE (`results/second_key_t46_s23/README.md`). S24 NEXT: sonnet implements the player (arm, mode, offboard setpoints first) + runner writer + 1 pretest; S25 second key + re-fly 5-run G1.6 set.
-000000000000. S22 (launch 20261116-020843, cap $1.35): route checks 15/20 were missed -> T44 route check 22 (sonnet,
-   `design/route_check_22.md`); T45 A-16 closing test (haiku, `results/a16_s22/README.md`). A-14: the two runner paths
-   differ ONLY by logger `-f` (run_scenario.py:594). DONE: route check 22 (off path: park, go to G1.6a/G1.5/keys);
-   A-14 PARKED with bound, runner default now `--log-from-start` (fdf28977ac); A-16 CLOSED (late-publish pairing,
-   use timestamp_sample; esc_status deficit -> A-10). S23 NEXT = route check 22 items: (1) park A-10/A-13 with
-   bounds, check metrics use timestamp_sample; (2) decide G1.6(a) lockstep vs in-PX4 scheduled switch, re-fly 5 runs;
-   (3) second keys + self-tests; (4) G1.5 injectors (payload, param step); (5) G1 verdict. Stage 2 linear models
-   can start in parallel (no sim needed).
-00000000000. S21 (launch 20261116-015246, cap $1.8): A-15 fix decided: uORB queue depth comes only from the .msg
-   (no runtime queue API), and raising it on VehicleAngularVelocity/VehicleAttitude would change the stock control
-   topics. So: new sim-only queued topic `sim_ground_truth` (queue 16) published by gz_bridge in the same pose
-   callback as the *_groundtruth topics, logged, read by the analysis. T43 (sonnet) implements + 1 speed-4 pretest,
-   writes `results/a15_s21/README.md`. DONE: 56578/56586 samples, gaps = gyro gaps, values equal (commits pushed).
-   A-16 opened (actuator_motors 777 zero-dt pairs). A-14: 6 flights (`results/a14_s21/`), 1 reproduced; EKF height
-   itself 2.26 m high on ground. S22 NEXT: (1) g1.1 rows + metrics.py read `sim_ground_truth` (sonnet, plus a haiku
-   second key); (2) A-14: 0/9 boot-logged vs 3/6 not (p=0.044): sonnet reads run_scenario.py paths with/without
-   `--log-from-start`, then a pair test changing only the suspected step; (3) A-16 closing test (haiku); (4) S19 items (2)-(5).
-0000000000. S20 (launch 20261116-014126, cap $2.61) DONE: T39 g1.1 declared rates fixed (truth at controller rate, EKF 88 Hz
-   = 800/9 explained, GATES.md log), check_truth output path; T40 A-14 intermittent, not a reset/baro, pre-arm unseen;
-   T41 A-15 truth stream misses ~13 % of sim steps at speed 4 (gz_bridge pose, not logger), controller topics only jitter.
-   S21 NEXT: (1) A-15 cause (sonnet, read-only ~12 calls): gz_bridge dynamic_pose/info subscription vs IMU path, transport
-   queue/pacing at speed 4, propose fix (truth from the same step callback as IMU?); one speed-1 flight to compare.
-   T42 DONE (`design/a15_cause_s20.md`): cause likely LOGGER overwrite (message_gaps 24553 = sum of gaps), not gz;
-   Logger cause CONFIRMED by flight (`results/a15_s20/logpoll_truth/`). S21 (1): fix so truth AND controller topics log
-   every sample (sonnet: F2 queue 8 on truth advertise in gz_bridge, check logger drains queues; A-10 esc_status too?), re-run g1.1.
-   (2) A-14 test: 3 runs logging from boot (SDLOG_MODE 1), EKF z vs truth pre-arm (haiku). (3) S19 items (2)-(5) below.
-1. Reference airframe model DONE (session 3): `design/ref_airframe_model.md`, flies with stock PID (hover u 0.1367,
-   eRPM 998.7 rad/s, steps settle). Its open items 1-4 (reaction-torque scaling test, gyro log rate, run1 esc_rpm 0,
-   run-to-run spread) are folded into the simulator work of item 4.
-2. Outer-loop study: r2 DONE S6 (`design/outer_loop_candidates_r2.md`: A amended A1-A9 closing F1-F17,
-   requirement amendments R1a-R52, 3 open questions). NEXT (S7 start, ~$1.2): review round 2, fable, narrow brief:
-   candidates_r2 vs review_r1 findings + the 3 open questions + source; output `design/outer_loop_review_r2.md`.
-   r2 DONE S11 (1 BLOCKING). NEXT: round 3, opus, NARROW (A10-A12 of candidates_r3 vs review_r2 + source, <=8 calls,
-   ~$0.6); if no BLOCKING, then the owner question below (not blocking).
-   If no BLOCKING: fold R1a-R52 into requirements, write owner question (one-page summary) in QUESTIONS.md, do
-   NOT block (continue stage 1). Module rename decision (A1: rewrite mc_indi_pos_control in place) goes to
-   DECISIONS.md with the owner answer.
-3. Write GATES.md for G1 before its first test (draft exists).
-4. Port plan DONE S6 (`design/bench_port_plan.md`, headers only, UNVERIFIED bodies). Port 1a first (sonnet,
-   one script family per agent, ~$0.8 each: metrics.py fix M:51 + self-test, then run_scenario.py sim-time fixes).
-   S7: metrics.py trajectory fix DONE (T9, `design/port_1a_metrics.md`, self-test passes, I re-ran it). NOT yet
-   usable for a verdict: needs (a) second key (sonnet, independent re-implementation of the analytic trajectory error
-   from raw ULog, compare on 3 archive set-O runs, ~$0.5), (b) groundtruth origin offset vs estimator hold_pos (3 cm
-   seen, review used mean-offset removal), (c) lag-scan check. (a), (b), (c) DONE S8 (T10, T11). Remaining: window rule
-   must accept nav_state 23 (external INDI mode), not only 14. Runner port DONE S9 (T12). NEXT: (i) applied_timing.py DONE S10 (T14); its blockers: logging DONE S10 (T15); NEXT session: a moving-payload
-   scenario (steps) and a mid-flight param send; 8 unmatched send_pos rows after 68.3 s unexplained (ANOMALIES); (ii) pre-test flight DONE S9; (iii) two identical-seed flights -> jitter bound for G1; (iv) sag as sim-time ramp in gz bridge
-   (simulator hook, two keys).
-   Then run_scenario.py sim-time fixes (sim_review.md:14,19). Port bench runner/metrics into `indi_flight/bench/` with the review fixes (5 Hz held reference, decimated effort,
-   ground-truth stamp, sim-time injections); self-test + second key per script. Errata re-score of set-O/T5.
+00000000000000. S24 (launch 20261116-025001, cap $3): T49 (sonnet) D-SCHED player in flight (see Tasks). After it: I read the
+   diff + pre-test, second key (haiku/sonnet, S25) of applied-time and mode-instant numbers, re-fly the 5-run G1.6 set with
+   `--sched`. Still open from S23: g1.1 max-gap rule vs sim-side gyro holes (A-13) -> decide fix vs owner question.
+1-4. Stage-1 items still pending from the old list (rest done, history in JOURNAL): errata re-score of archived set-O/T5;
+   window rule must accept nav_state 23; sag as sim-time ramp in gz bridge (two keys); run_scenario sim-time fixes
+   (`sim_review.md`:14,19) now folded into the player; outer-loop A-requirements folded at stage 5.
 5. Simulator items of stage 1 (delayed GNSS, rotor inertia check, battery model, injectors, seeded drops, vibration,
    variants, noise profiles, determinism). Source web re-check of J_rotor (ASSUMED) still pending.
 
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T49 | D-SCHED player: sim-only module (arm, mode, offboard setpoints) + runner `--sched` writer + 1 pretest hover | sonnet | `design/t49_player_s24.md`, `results/player_s24/` | re-brief from the note's last section if cut |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
