@@ -14,18 +14,6 @@
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
-0000000000000. S23 (launch 20261116-024209, cap $3): T46 (sonnet) truth/timestamp_sample in metrics; DONE: A-10/A-13 PARKED with bounds; D-SCHED decided (sim-time scenario player, sim-only module). T46 DONE (a6820c2e60, `design/t46_truth_metrics_s23.md`): metrics on sim_ground_truth + timestamp_sample, hover re-score <1 %. Open from T46: (i) g1.1 still FAILS on max gap (5.0-6.3 ms vs 3.75 ms) for gyro, ang vel, motors, torque sp, esc, truth: the source (sensor_gyro) has the holes (A-13 parked), so the gap rule tests the sim, not the logger -> either fix the sim step holes or ask the owner to amend g1.1 to a bound (gate change after first test = owner question); decide in S24 after looking at the 6.3 ms gaps; (ii) rate/attitude tracking still scored vs estimator, G1.2 wants truth: add truth-based rate/attitude tracking (sonnet, with player work or after). T48 second key AGREE (`results/second_key_t46_s23/README.md`). S24 NEXT: sonnet implements the player (arm, mode, offboard setpoints first) + runner writer + 1 pretest; S25 second key + re-fly 5-run G1.6 set.
-00000000000000. S24 (launch 20261116-025001, cap $3): T49 DONE (b2dab14759 module, 1fdd07bd2f runner, 9b0e66d0e5 results,
-   `design/t49_player_s24.md`): player arms/switches/streams in sim time; 2 hovers: applied-sched 0 us, arm and offboard
-   instants identical (spread 0 us vs 7.5-11 ms before). T50 second key AGREE (`results/player_s24/second_key/`).
-   Commander adds a fixed 6.25 ms (arm) / 16.25 ms (offboard) after the applied row: deterministic, its 10 ms loop;
-   G1.6(a) is the across-run spread, so not a defect. Q2 (G1.1 gap rule) asked, not blocking.
-   5 hovers `--sched` (`results/g16_sched_s24/README.md`): arm/offboard spread 5.0/6.25 ms, still > 2.5 ms -> A-17
-   (Commander 10 ms loop phase). A-17 CONFIRMED 4/5 (`results/a17_s24/`). S25 NEXT: (1) decide A-17 fix without touching
-   Commander (O-11): why its phase varies at SITL start (read-only sonnet ~10 calls), else ask owner to restate
-   G1.6(a) as 'trigger within 1 period + Commander phase bound 10 ms'; (2) sonnet: takeoff/land kinds in the
-   player + capture hold position (yaw hard-coded 1.585 today), then re-fly the full 5-run G1.6 set (hover, step, traj)
-   with --sched at speeds 1 and 4 (host bash) and a G1.6(a) verdict; (3) G1.5 injectors via player kinds.
 000000000000000. S25 (launch 20261116-030636, cap $3): T52 DONE (7a8ad4786a runner, e7e7dc95b0 results): gz paused start
    does not fix A-17 (spread 8.75/6.25 ms); cause = Commander skips/relative sleep + free-running gz. D-A17 overturned,
    A-17 PARKED with bound, Q3 asked (restate G1.6a, or lockstep gz), not blocking. T53 DONE (sp_hold, anchor nav_state=N, takeoff/land
@@ -34,6 +22,18 @@
    1.5 cm off, likely Hold-mode publisher on trajectory_setpoint: re-check with sim_schedule_applied.sp (S26).
    S26 NEXT: (1) that re-check, runner rows for takeoff/land kinds and one flight; untested: anchor never reached (no timeout), sp_hold with invalid position.
    (2) re-fly 5-run G1.6 set (hover, step, traj) --sched at speeds 1 and 4 for G1.6(b); (4) G1.5 injectors via player.
+0000000000000000. S26 (launch 20261116-032411, cap $3): T55 DONE (dbf8425ef0 player att/pva/sp_back rows, 71d13d8a02 runner
+   --sched for attitude + trajectory scenarios, run.json times now based on logged anchor_us; `design/t55_player_setpoints_s26.md`).
+   Pretest step_roll + traj_lemniscate: all rows on time (0 us; anchor wait 15-19 ms), setpoints = analytic ref (0.000 m).
+   T56 second key AGREE 4/4 (`results/second_key_t55_s26/`). Row-1 1.5 cm: Hold mode publishes trajectory_setpoint until
+   offboard is accepted (FlightModeManager.cpp:364); not a player defect. Note: pre-T55 runner segment times were up to
+   0.7 s late vs the player -> any pre-T55 --sched metric is suspect (only hover was --sched, hold metric, small effect).
+   B26 launched detached: G1.6 set (hover, step_roll, traj_lemniscate x5) --sched --sched-anchor, speed 4 then 1.
+   S27 NEXT: (1) route check 27 (sonnet, due: last S22); (2) B26: check status.txt, mode instants (second_key_player.py)
+   and same-seed spread per metric (g16_spread.py) -> G1.6(b)/(c) table, two keys on the spread; (3) G1.5 injectors via
+   player kinds (--sched refuses disturbance/motor_fault/erpm_loss/thrust_sag hooks today); (4) land row instead of MAVLink.
+   Unverified from T55: pva propagation never exercised (rows hit own tick); step_pitch/yaw, circle not flown; 4/861 rows
+   1-2 ticks late in the first lemniscate run (A-13 holes likely, not checked).
 1-4. Stage-1 items still pending from the old list (rest done, history in JOURNAL): errata re-score of archived set-O/T5;
    window rule must accept nav_state 23; sag as sim-time ramp in gz bridge (two keys); run_scenario sim-time fixes
    (`sim_review.md`:14,19) now folded into the player; outer-loop A-requirements folded at stage 5.
@@ -43,7 +43,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T55 | player: attitude + trajectory setpoints in sim time, runner --sched for step/traj, pretest, row-1 sp_hold re-check | sonnet | `design/t55_player_setpoints_s26.md` | read the file, relaunch from its last step |
+| B26 | G1.6 set --sched --sched-anchor, 3 scen x 5, speed 4 then 1 | host bash (detached) | `results/g16_sched_set_s26/speed{4,1}/status.txt` | `setsid nohup indi_flight/bench/g16_sched_set.sh` (delete partial speed dir first) |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -109,8 +109,11 @@
 | 25 | T52 | sonnet | gz paused start + 5 hovers | done, 18 calls, ~$0.45, hypothesis rejected |
 | 25 | T53 | sonnet | player sp_hold/anchor/takeoff/land + pretest | done, 15 calls, ~$0.45, takeoff/land unflown |
 | 25 | T54 | haiku | second key T53 | done, 3 calls, ~$0.05, AGREE (row-1 check artefact open) |
+| 26 | T55 | sonnet | player att/pva rows + runner + 2 pretests | done, 21 calls, ~$1.0 (2x estimate, 11 min) |
+| 26 | T56 | haiku | second key T55 | done, 11 calls, ~$0.2, AGREE 4/4 |
 
 ## Lessons proposed
+- A sonnet implement+build+2-flight task costs ~$1.0 (21 calls): at a $3 cap it is the session's one big task (S26).
 - Read the sleep/wake rule of a loop before building a timing fix around it: S25 spent a session on a start-up
   race while Commander's skip-sleep-on-command line (visible in 20 lines of source) already ruled it out.
 - A pre-test check worded "within N periods of the command" measured Commander's fixed latency; state the
