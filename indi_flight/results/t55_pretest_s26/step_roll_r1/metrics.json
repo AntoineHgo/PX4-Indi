@@ -1,0 +1,160 @@
+{
+ "scenario": "step_roll",
+ "controller": "pid_default",
+ "seed": 1,
+ "speed": 4.0,
+ "warnings": [],
+ "window": {
+  "start_s": 55.01875,
+  "end_s": 69.01875,
+  "duration_s": 14.0,
+  "offboard_span_s": [
+   52.01875,
+   86.75999999999999
+  ],
+  "start_source": "ulog_nav_state+3.0",
+  "runjson_start_s": 55.01875,
+  "ulog_anchor_s": 52.01875
+ },
+ "stamps": {
+  "vehicle_angular_velocity": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_rates_setpoint": {
+   "stamp": "timestamp",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "actuator_motors": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_attitude": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_attitude_setpoint": {
+   "stamp": "timestamp",
+   "sorted": false,
+   "zero_dt_pairs": 3
+  },
+  "sim_ground_truth": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  }
+ },
+ "rate_tracking": {
+  "roll_rms_rad_s": 0.14871717788573138,
+  "pitch_rms_rad_s": 0.0016522143148198208,
+  "yaw_rms_rad_s": 0.0005368907235759774
+ },
+ "attitude_tracking": {
+  "rotation_angle_rms_deg": 2.6077582917771287,
+  "roll_rms_deg": 2.60707093844168,
+  "pitch_rms_deg": 0.021535413542924185,
+  "yaw_rms_deg": 0.05986933890763766
+ },
+ "steps": [
+  {
+   "name": "up",
+   "t0_s": 57.01875,
+   "dur_s": 3.0,
+   "from": 0.0,
+   "to": 15.0,
+   "amplitude": 14.999706857284764,
+   "delay_10pct_s": 0.06399385122639381,
+   "rise_10_90_s": 0.18661492005126382,
+   "overshoot_pct": 0.0,
+   "settle_5pct_s": 0.3012500000000031,
+   "final_error_pct": -0.12502670288085938
+  },
+  {
+   "name": "zero1",
+   "t0_s": 60.01875,
+   "dur_s": 3.0,
+   "from": 15.0,
+   "to": 0.0,
+   "amplitude": -14.981245994567871,
+   "delay_10pct_s": 0.06372055908275566,
+   "rise_10_90_s": 0.18606776050039692,
+   "overshoot_pct": 0.0,
+   "settle_5pct_s": 0.3012500000000031,
+   "final_error_pct": -0.07088184356689453
+  },
+  {
+   "name": "down",
+   "t0_s": 63.01875,
+   "dur_s": 3.0,
+   "from": 0.0,
+   "to": -15.0,
+   "amplitude": -15.00998432841152,
+   "delay_10pct_s": 0.06402865879133174,
+   "rise_10_90_s": 0.18705921743588794,
+   "overshoot_pct": 0.0,
+   "settle_5pct_s": 0.3049999999999997,
+   "final_error_pct": -0.18407106399536133
+  },
+  {
+   "name": "zero2",
+   "t0_s": 66.01875,
+   "dur_s": 3.0,
+   "from": -15.0,
+   "to": 0.0,
+   "amplitude": 14.972723007202148,
+   "delay_10pct_s": 0.06368519310783072,
+   "rise_10_90_s": 0.18594922550975287,
+   "overshoot_pct": 0.011670589447021484,
+   "settle_5pct_s": 0.301249999999996,
+   "final_error_pct": -0.06999373435974121
+  }
+ ],
+ "step_summary": {
+  "delay_10pct_s_mean": 0.06385706555207799,
+  "delay_10pct_s_max": 0.06402865879133174,
+  "delay_10pct_s_n": 4,
+  "rise_10_90_s_mean": 0.1864227808743254,
+  "rise_10_90_s_max": 0.18705921743588794,
+  "rise_10_90_s_n": 4,
+  "overshoot_pct_mean": 0.002917647361755371,
+  "overshoot_pct_max": 0.011670589447021484,
+  "overshoot_pct_n": 4,
+  "settle_5pct_s_mean": 0.3021875000000005,
+  "settle_5pct_s_max": 0.3049999999999997,
+  "settle_5pct_s_n": 4,
+  "n_steps": 4,
+  "n_not_settled": 0
+ },
+ "position": {
+  "ref_ned": [
+   -0.07364446669816971,
+   0.004055113531649113,
+   -5.017486572265625
+  ],
+  "rms_3d_m": 8.294781168118716,
+  "rms_horizontal_m": 8.294581400160986,
+  "rms_vertical_m": 0.057568896179956135,
+  "max_dev_3d_m": 14.173002243041992,
+  "max_dev_horizontal_m": 14.172914505004883,
+  "max_dev_vertical_m": 0.11468505859375
+ },
+ "truth_source": "sim_ground_truth",
+ "effort": {
+  "n_motors": 4,
+  "motor_rate_rms_per_s": 0.33720996614526316,
+  "motor_spread_mean_abs": 0.000567890761885792,
+  "motor_mean": 0.13691791892051697,
+  "saturation_frac_motors": 0.0,
+  "saturation_frac_high": 0.0,
+  "saturation_frac_low": 0.0
+ },
+ "allocator": {
+  "n_samples": 2798,
+  "frac_any_actuator_saturation": 0.0,
+  "frac_torque_not_achieved": 0.0
+ }
+}
