@@ -68,3 +68,4 @@
 - S19: T38 pre-test: attitude/rate truth 800 Hz confirmed; g1.1 FAIL only on esc_status (A-10) and local_position rate; A-14 opened (take-off EKF z residual 2.2 m).
 - 2026-11-16 S20: g1.1 rates fixed (00591b4e10); A-14 intermittent take-off EKF z offset; A-15 truth stream misses ~13 % of sim steps (gz_bridge).
 - 2026-11-16 S20: A-15 cause = logger overwrite of queue-1 topics (confirmed by log-poll flight, 0c94faa5ba); T41 'not logger' withdrawn: logger dropouts != logger_status.message_gaps. Lesson candidate: check message_gaps before blaming a publisher.
+- S21: A-15 fix sim_ground_truth (queue 16) built, pretested, committed; A-16 opened; A-14 6 runs, EKF height 2.26 m high on ground in 1/6.

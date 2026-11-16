@@ -14,6 +14,15 @@
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
+00000000000. S21 (launch 20261116-015246, cap $1.8): A-15 fix decided: uORB queue depth comes only from the .msg
+   (no runtime queue API), and raising it on VehicleAngularVelocity/VehicleAttitude would change the stock control
+   topics. So: new sim-only queued topic `sim_ground_truth` (queue 16) published by gz_bridge in the same pose
+   callback as the *_groundtruth topics, logged, read by the analysis. T43 (sonnet) implements + 1 speed-4 pretest,
+   writes `results/a15_s21/README.md`. DONE: 56578/56586 samples, gaps = gyro gaps, values equal (commits pushed).
+   A-16 opened (actuator_motors 777 zero-dt pairs). A-14: 6 flights (`results/a14_s21/`), 1 reproduced; EKF height
+   itself 2.26 m high on ground. S22 NEXT: (1) g1.1 rows + metrics.py read `sim_ground_truth` (sonnet, plus a haiku
+   second key); (2) A-14 boot-logged repro (host bash loop of `--log-from-start` hovers, $0) + GPS/baro/innovation
+   check; (3) A-16 closing test (haiku); (4) S19 items (2)-(5).
 0000000000. S20 (launch 20261116-014126, cap $2.61) DONE: T39 g1.1 declared rates fixed (truth at controller rate, EKF 88 Hz
    = 800/9 explained, GATES.md log), check_truth output path; T40 A-14 intermittent, not a reset/baro, pre-arm unseen;
    T41 A-15 truth stream misses ~13 % of sim steps at speed 4 (gz_bridge pose, not logger), controller topics only jitter.
@@ -134,6 +143,8 @@
 | 20 | T40 | haiku | A-14 two reruns + a14_check.py | done, 13 calls, ~$0.1 |
 | 20 | T41 | haiku | A-15 gap coincidence | done, 6 calls, ~$0.06 (conclusion revised by T42) |
 | 20 | T42 | sonnet | A-15 cause, read-only | done, 13 calls, ~$0.45 |
+| 21 | T43 | sonnet | sim_ground_truth topic + pretest | done, 11 calls, ~$0.35 |
+| 21 | - | host bash | A-14 six hovers | done, 6/6 flew, ~4 min wall, $0 |
 
 ## Lessons proposed
 - Haiku handles a well-specified log check (10 calls) for ~$0.06: use it for every bounded log/metric check.
