@@ -248,3 +248,5 @@
 
 - 2026-11-16 S44: moved from STATE: - Session 16 (launch 20261115-231016, cap $3): D-SIM-STEP implemented (T31, commit 72598e3159) and pre-tested (`results/pretest_simstep_s16/README.md`): 1.25 ms step, IMU 800 Hz, RATEMAX 800/400 applied, PID flies, speed 4 ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 - 2026-11-16 S44: A-22 closed as artefact; A-23 opened: 17 Hz pitch limit cycle in all INDI M3a flights S39-S41, stage-2 INDI margins void.
+- 2026-11-16 S44: moved from STATE: S40 route check 40 (`design/route_check_40.md`): R1 G2 written in GATES.md (DONE S40) then rate-loop flights (S41-42); R2 stage-3 slice incl. ACT_TC identification + G2 outer-break note (S43-45); R3 G3/G4 harness tasks in parallel; stage 5 from ~S46. Projection ~25 more sessions: tell owner in the Q4 entry.
+- 2026-11-16 S44: A-23 test: PID hover clean; INDI with derived G1 (1756/1599) rate RMS 32x lower, motors still pinned 46 % (chatter).

@@ -54,18 +54,17 @@ S44 (launch 20261116-212207, cap $3) DONE: T90 sonnet A-22 trace (`results/stage
    second key (`results/stage2_s44/limit_cycle_second_key.md`): every INDI M3a flight S39-S41 is in a 17 Hz pitch LIMIT
    CYCLE with motors pinned at 0 on 38 % of samples -> stage-2 INDI margins S40-S43 VOID; A-22 closed as artefact,
    A-23 opened. Plant G1_roll derived 1756 (CT/KM cancel; needs Ixx and hover thrust, not in CA_*) vs default 320.
-S45 NEXT (step back, lesson 24): (0) route check 45 (sonnet, due). (1) A-23 test: one PID hover + one INDI hover with
-   derived G1 R/P/Y on the ref airframe, run bench/limit_cycle_check_s44.py on both (haiku, ~$0.3). (2) add the
-   oscillation check to every pre-test checklist. (3) only then redo M3a margins. Old S44 plan kept below for record:
+S44 also: A-23 test flown (`results/stage2_s44/a23_test/`): PID clean; INDI derived G1 cuts rate RMS 32x but motors
+   still pinned at 0 on 46 % (motor-command chatter, 2nd mechanism). See A-23 note.
+S45 NEXT (step back, lesson 24): (0) route check 45 (sonnet, due; give it A-23). (1) A-23: motor-command PSD + u_cmd vs
+   u_meas on a23_test/indi_g1derived (haiku), then model-only hover with derived G1 (path split). (2) pre-test
+   checklist gets pitch-rate RMS < 0.02 rad/s and motor pin < 1 %. (3) only then redo M3a margins with derived G1. Old S44 plan kept below for record:
 OLD S44 PLAN: (1) A-22 rest, one sonnet task <=15 calls: why allocator gives 0.23/motor (source says 0.354 or 0.707) and
    why a 0.221 hover maps to w ~990 (sqrt map gives 1269): check actuator_outputs instances/topic multiplicity,
    MixingOutput thrust-model code path for gz ESC, effectiveness scaling (CA_ROTOR CT 6.5 vs physical 10.9);
    haiku second key on esc_status (not actuator_outputs). Matters for stage-4 decision 3 (G1 from CA_* derivation).
    (2) Working G1 for margins = 340 (static, end-to-end, regression-consistent) until A-22 closes. (3) (c) motor step
    in sim to separate tau and latency; (a) add attitude loop to margins_models.py (sonnet) + haiku second key.
-S40 route check 40 (`design/route_check_40.md`): R1 G2 written in GATES.md (DONE S40) then rate-loop flights
-   (S41-42); R2 stage-3 slice incl. ACT_TC identification + G2 outer-break note (S43-45); R3 G3/G4 harness tasks in
-   parallel; stage 5 from ~S46. Projection ~25 more sessions: tell owner in the Q4 entry.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
@@ -104,6 +103,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 41 | T85 | sonnet | A-21 model vs measured | done, 15 calls, ~$0.6, model omits attitude loop |
 | 41 | T84 | haiku | second key m3a FRF (2 rounds) | done, 13 calls, ~$0.3, AGREE on periods 2-3 |
 | 44 | T90 | sonnet | A-22 links a,b trace | done, 15 calls, ~$1.0, found limit cycle |
+| 44 | T92 | haiku | A-23 PID + INDI-derived-G1 hovers | done, 11 calls, ~$0.1, PID clean, INDI chatter |
 | 44 | T91 | haiku | second key limit cycle, 3 logs | done, 7 calls, ~$0.1, CONFIRMED |
 | 39 | T81 | sonnet | M3a plumbing + build + 1 hover | done, 27 calls, ~$0.93, test not linked, fixed by me |
 
