@@ -41,20 +41,6 @@
    logged at 800 Hz (added to LOG_TOPICS S18) and g1.1 truth rows pass; (2) second keys for rate/attitude/hover/steps
    metrics (sonnet, one family per session); (3) self-tests for the 7 scripts (g1.4); (4) A-13 gyro gaps, A-10;
    (5) decide gz lockstep vs in-PX4 scheduled mode switch (G1.6a). vehicle_local_position 88.9 vs 125 Hz still open (g1.1).
-0000000. S17 (launch 20261115-233009, cap $2.16): A-11 CLOSED (`results/a11_effort_rate.md`, effort rate dependent,
-   G4 at fixed bandwidth); G1.6 verdict in GATES.md ((a) NOT met, (c) met; remedy: lockstep gz or in-PX4 scheduled
-   mode switch, decide before G3). T35 DONE: `bench/gate_g1.sh g1.1|g1.3|g1.4|g1.6` (`design/gate_g1_cmd_s17.md`):
-   g1.1 FAIL (A-12 groundtruth 14.8 Hz vs 50, A-13 gyro gaps, esc_status A-10), g1.3 35/35 agree but most metrics
-   lack a second key, g1.4 tests pass, 7 scripts lack self-tests, g1.6(a) FAIL as recorded.
-   A-12 cause found S17: truth = gz world pose topic at ~60 Hz WALL (50 Hz logged at speed 1, 14.8 at speed 4).
-   NEXT (S18): A-12 fix first (sonnet: sim-time pose rate in the world SDF / gz_bridge, verify g1.1 at speed 4);
-   then second keys for rate/attitude/hover/steps metrics (sonnet, one family), self-tests for the 7 scripts,
-   decide gz lockstep vs in-PX4 scheduled mode switch (G1.6a).
-0000. G1.6 window anchor DONE S15 (T28 + my end fix, `design/window_anchor_s15.md`, commits 988c2ff59a, 593a8b4fad):
-   start spread 4-16 ms, fixed duration; same-seed spreads unchanged (<30 %) -> spread is flight non-determinism
-   (gz not lockstepped), G1.6(c) cause stated. Second key T29 AGREE 30/30 (`results/second_key_window_s15.md`).
-   G1.6 verdict: (a) NOT met (16 ms vs 8 ms), (b) pending gate thresholds of G3/G5, (c) done, (d) = rule in force.
-   Next G1 work: G1.1-G1.5 commands (`bench/gate_g1.sh`), remaining second keys; IMU 1 kHz (item above).
 000. S15: A18 r5 verdict BLOCKING (`design/outer_loop_review_r5.md`): F1 yaw-rate double count (also live bug A-9),
    F2-F4 MAJOR (no stamp in vehicle_rates_setpoint, accumulation into held _rates_setpoint, frame desired vs
    estimated body). A18 stays OUT of base A; `design/flatness_r2.md` DONE S15 (F1-F9 accepted, A18 = review's minimal spec,
