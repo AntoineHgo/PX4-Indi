@@ -1,0 +1,52 @@
+CMake Warning at build/px4_sitl_o11/_deps/abseil-cpp-src/CMakeLists.txt:177 (message):
+    The default and system-level install directories are unsupported except in LTS   releases of Abseil.  Please set CMAKE_INSTALL_PREFIX to install Abseil in your   source or build tree directly.    
+
+
+-- ADDING TEST STUBS
+targets: functional-IndiMeasuredTorque
+unit-IndiAccelControl
+unit-IndiInjection
+[592/596] Linking CXX static library test/fuzztest/fuzztest/libfuzztest_fuzztest_gtest_main.a
+[593/596] Linking CXX static library platforms/posix/src/px4/common/gtest_runner/libgtest_functional_main.a
+[594/596] Linking CXX executable unit-IndiInjection
+[595/596] Linking CXX executable unit-IndiAccelControl
+[596/596] Linking CXX executable functional-IndiMeasuredTorque
+== functional-IndiMeasuredTorque
+[       OK ] IndiMeasuredTorqueTest.ActuatorsMapBackToAllocatedControl (0 ms)
+[ RUN      ] IndiMeasuredTorqueTest.NanActuatorIsZeroThrust
+[       OK ] IndiMeasuredTorqueTest.NanActuatorIsZeroThrust (0 ms)
+[ RUN      ] IndiMeasuredTorqueTest.RotorSpeedsGiveAllocatedTorque
+[       OK ] IndiMeasuredTorqueTest.RotorSpeedsGiveAllocatedTorque (0 ms)
+[ RUN      ] IndiMeasuredTorqueTest.DisabledWithoutRotorSpeedMax
+[       OK ] IndiMeasuredTorqueTest.DisabledWithoutRotorSpeedMax (0 ms)
+[----------] 4 tests from IndiMeasuredTorqueTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 4 tests from 1 test suite ran. (0 ms total)
+[  PASSED  ] 4 tests.
+== unit-IndiAccelControl
+[       OK ] IndiAccelControlTest.JerkFeedforwardDisabledAndLowThrust (0 ms)
+[ RUN      ] IndiAccelControlTest.JerkFeedforwardCoordinatedTurn
+[       OK ] IndiAccelControlTest.JerkFeedforwardCoordinatedTurn (0 ms)
+[ RUN      ] IndiAccelControlTest.JerkBackwardDifferenceAndHold
+[       OK ] IndiAccelControlTest.JerkBackwardDifferenceAndHold (0 ms)
+[ RUN      ] IndiAccelControlTest.JerkDifferenceFiltered
+[       OK ] IndiAccelControlTest.JerkDifferenceFiltered (0 ms)
+[----------] 19 tests from IndiAccelControlTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 19 tests from 1 test suite ran. (0 ms total)
+[  PASSED  ] 19 tests.
+== unit-IndiInjection
+[       OK ] IndiInjectionTest.OffIsExactZero (0 ms)
+[ RUN      ] IndiInjectionTest.MatchesMarginsEst
+[       OK ] IndiInjectionTest.MatchesMarginsEst (0 ms)
+[ RUN      ] IndiInjectionTest.Gating
+[       OK ] IndiInjectionTest.Gating (0 ms)
+[ RUN      ] IndiInjectionTest.ComponentLimit
+[       OK ] IndiInjectionTest.ComponentLimit (0 ms)
+[----------] 4 tests from IndiInjectionTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 4 tests from 1 test suite ran. (0 ms total)
+[  PASSED  ] 4 tests.

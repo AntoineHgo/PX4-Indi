@@ -35,7 +35,9 @@ S39 (launch 20261116-084309, cap $3) DONE: D-G2-INJ; T81 sonnet M3a plumbing (co
    SITL build OK, 1 pre-test hover flew (`design/t81_m3a_inject_s39.md`, `results/stage2_s39/pretest_m3a/`): u = c + d
    exact (max err 0), indi_rate_status 800 Hz, no fault, generator = margins_est multisine on 15849/15998 samples (rest
    = timestamp-join artefact). Added by me: indi_rate_status.timestamp_sample, MC_INDI_INJ_DLY (default 5 s).
-S40 NEXT (in order): (1) build `px4_sitl_test`, run Indi* unit tests incl. new IndiInjectionTest (NOT RUN yet);
+S40 (launch 20261116-090818, cap $2.7): (1) DONE unit tests in build/px4_sitl_o11 with -DCMAKE_TESTING=ON: rate lib
+   40/40, IndiInjection 4/4, IndiAccelControl 19/19, IndiMeasuredTorque 4/4 PASS; break-check (landed gate removed)
+   fails Gating, restored (`results/stage2_s40/unit_tests*.txt`). Earlier S40 plan items:
    (2) DONE in S39: haiku second key code vs D-G2-BREAK/D-G2-INJ AGREE-WITH-ISSUES (`results/stage2_s39/second_key_inject.md`):
    only -0.0 -> +0.0 at AX 0 (accepted, no effect); S41 analysis must assert fault == 0 and landed == 0 over the window,
    params set before arming. Still to do: generator check on timestamp_sample from a new flight;
@@ -45,6 +47,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T82 | route check 40 | sonnet | `design/route_check_40.md` | relaunch brief in JOURNAL S40 |
+| T83 | S41 pre-test: 2 hovers AMP 0.005 model-only + measured, checks | haiku | `results/stage2_s40/pretest_inj/README.md` | relaunch same brief |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
