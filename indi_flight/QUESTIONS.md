@@ -79,3 +79,5 @@ Not blocked. G1.6 is not marked passed before you answer.
 injection design without using its results for a verdict. Not blocked.
 
 **Update S35 (2026-11-16).** A-20 closed (15/15). A-19 parked with a 1.6 deg bound, and yaw verdicts are stated on the estimate. Route check 35 (`design/route_check_35.md`) recommends option A. Meanwhile, from S36 I write G1 FINAL with the stated limits and start stage 2, with every stage-2 result marked "provisional under Q4-A". If you answer B, those results are re-run after G1 passes in full.
+
+**Update S36 (2026-11-16).** G1 FINAL written in GATES.md (frozen, 5 evidence limits listed, not marked passed). Stage 2 has started; its results are marked "provisional under Q4-A".

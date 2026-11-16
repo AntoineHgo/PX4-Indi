@@ -182,3 +182,4 @@
 - S33 (2026-11-16): arccos fixed in second key; T68 A-19 mechanism candidate (declination/mag bias); B32 speed 1 done, spreads = speed 4; A-20 not closed (bias0 0.72 m 2/30); G1 status draft in GATES.md.
 - S34 (2026-11-16): A-19/A-20 bench-param pre-test (3 runs): A-20 PASS with SENS_BAR_AUTOCAL 0, A-19 declination candidate refuted (+0.36..+0.78 deg).
 - S35 (2026-11-16): A-20 closed (15/15 with SENS_BAR_AUTOCAL 0); A-19 parked by mechanism (1.6 deg, yaw on estimate); route check 35 accepted (stage 2 starts S36); stage-2 margins design note; D-RATE267.
+- S36 2026-11-16: G1 FINAL frozen with evidence limits (provisional under Q4-A); stage 2 started; B26 row retired (superseded by B32).
