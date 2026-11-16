@@ -19,7 +19,8 @@
    T41 A-15 truth stream misses ~13 % of sim steps at speed 4 (gz_bridge pose, not logger), controller topics only jitter.
    S21 NEXT: (1) A-15 cause (sonnet, read-only ~12 calls): gz_bridge dynamic_pose/info subscription vs IMU path, transport
    queue/pacing at speed 4, propose fix (truth from the same step callback as IMU?); one speed-1 flight to compare.
-   T42 IN FLIGHT: sonnet read-only, `design/a15_cause_s20.md` (relaunch brief if missing).
+   T42 DONE (`design/a15_cause_s20.md`): cause likely LOGGER overwrite (message_gaps 24553 = sum of gaps), not gz;
+   S21 (1) becomes: discriminating flight `--log-poll vehicle_local_position_groundtruth` + a15_gaps.py, then fix F2.
    (2) A-14 test: 3 runs logging from boot (SDLOG_MODE 1), EKF z vs truth pre-arm (haiku). (3) S19 items (2)-(5) below.
 000000000. S19 (launch 20261115-234854, cap $1.08): T38 DONE (`results/a12_fix_s18/pretest_truth_topics/README.md`):
    attitude/rate/position truth 800 Hz confirmed; g1.1 FAIL only esc_status (A-10) + local_position 88.9 Hz; A-14 opened.
@@ -130,7 +131,8 @@
 | 19 | T38 | host bash | pre-test hover s4, truth topics | done, 1/1 flew, 40 s wall, $0 |
 | 20 | T39 | sonnet | g1.1 rates + check_truth path | done, 17 calls, ~$0.35 |
 | 20 | T40 | haiku | A-14 two reruns + a14_check.py | done, 13 calls, ~$0.1 |
-| 20 | T41 | haiku | A-15 gap coincidence | done, 6 calls, ~$0.06 |
+| 20 | T41 | haiku | A-15 gap coincidence | done, 6 calls, ~$0.06 (conclusion revised by T42) |
+| 20 | T42 | sonnet | A-15 cause, read-only | done, 13 calls, ~$0.45 |
 
 ## Lessons proposed
 - Haiku handles a well-specified log check (10 calls) for ~$0.06: use it for every bounded log/metric check.
