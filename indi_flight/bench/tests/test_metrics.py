@@ -177,9 +177,98 @@ def test_sample_stamp_over_publish_stamp():
     print(f"ok sample stamp: motor_rate_rms {clean:.3f}/s with timestamp_sample, {bad['effort']['motor_rate_rms_per_s']:.3f}/s with publish stamp")
 
 
+def test_step_metrics_analytic():
+    """step_metrics on closed-form responses. First order (tau 0.1 s): delay_10 = tau ln(1/0.9), rise_10_90 = tau ln 9,
+    settle_5 = tau ln 20, no overshoot, final error = -exp(-dur/tau). Second order (zeta 0.5): overshoot exp(-pi z / sqrt(1-z^2))."""
+    tau, t0, dur, val = 0.1, 1.0, 2.0, 10.0
+    t = np.arange(0.0, 5.0, 0.001)
+    for sgn in (1.0, -1.0):  # a negative step must give the same normalised numbers
+        x = np.where(t < t0, 0.0, sgn * val * (1.0 - np.exp(-(t - t0) / tau)))
+        r = M.step_metrics(t, x, t0, dur, sgn * val, 1.0)
+        assert abs(r["amplitude"] - sgn * val) < 1e-9, r
+        assert abs(r["delay_10pct_s"] - tau * math.log(1 / 0.9)) < 2e-4, r
+        assert abs(r["rise_10_90_s"] - tau * math.log(9.0)) < 2e-4, r
+        assert abs(r["settle_5pct_s"] - tau * math.log(20.0)) < 2e-3, r
+        assert r["overshoot_pct"] == 0.0, r
+        assert abs(r["final_error_pct"] + 100.0 * math.exp(-dur / tau)) < 1e-3, r
+    z, wn = 0.5, 10.0
+    wd, k = wn * math.sqrt(1 - z * z), z / math.sqrt(1 - z * z)
+    ts = np.maximum(t - t0, 0.0)
+    y = np.where(t < t0, 0.0, 1.0 - np.exp(-z * wn * ts) * (np.cos(wd * ts) + k * np.sin(wd * ts)))
+    r = M.step_metrics(t, val * y, t0, dur, val, 1.0)
+    expect = 100.0 * math.exp(-math.pi * z / math.sqrt(1 - z * z))  # 16.30 %
+    assert abs(r["overshoot_pct"] - expect) < 0.1, (r["overshoot_pct"], expect)
+    assert r["settle_5pct_s"] is not None and 0.3 < r["settle_5pct_s"] < 0.7, r
+    # amplitude below the floor is skipped; a response that never reaches the band is "not settled"
+    assert "note" in M.step_metrics(t, np.zeros_like(t), t0, dur, 0.5, 1.0)
+    ramp = np.where(t < t0, 0.0, (t - t0) * 2.0)  # still rising at the end of the 2 s segment, value 10
+    assert M.step_metrics(t, ramp, t0, dur, val, 1.0)["settle_5pct_s"] is None
+    print(f"ok step_metrics: rise {tau*math.log(9):.4f} s, settle {tau*math.log(20):.4f} s, overshoot {expect:.2f} %")
+
+
+def _tracking_run(topics, w0_us=10_000_000, dur_us=4_000_000):
+    """compute() on synthetic topics with an offboard anchor so that the window is [w0, w0 + dur] (anchor + 3 s = w0)."""
+    vs = {"timestamp": np.array([w0_us - 3_000_000, w0_us + 20_000_000]), "nav_state": np.array([14, 14])}
+    run = {"scenario": "synthetic", "t_window_start_us": w0_us, "t_window_end_us": w0_us + dur_us}
+    return M.compute(_fake_ulog({**topics, "vehicle_status": vs}), run)
+
+
+def test_rate_tracking_analytic():
+    """Roll: measured 0.3 const vs setpoint 0.1 const -> rms 0.2. Pitch: measured 0.5 sin(2 pi 2 t), setpoint 0 ->
+    0.5/sqrt2 (8 whole cycles in the 4 s window). Yaw: measured 0, setpoint -0.05 -> 0.05. Setpoint at 100 Hz, ZOH."""
+    ta = np.arange(9_000_000, 16_000_000, 1000, dtype=np.int64)  # 1 kHz
+    ts = np.arange(9_000_000, 16_000_000, 10_000, dtype=np.int64)  # 100 Hz
+    sec = ta * 1e-6
+    av = {"timestamp": ta, "timestamp_sample": ta, "xyz[0]": np.full(ta.size, 0.3),
+          "xyz[1]": 0.5 * np.sin(2 * np.pi * 2.0 * sec), "xyz[2]": np.zeros(ta.size)}
+    rsp = {"timestamp": ts, "roll": np.full(ts.size, 0.1), "pitch": np.zeros(ts.size), "yaw": np.full(ts.size, -0.05)}
+    rt = _tracking_run({"vehicle_angular_velocity": av, "vehicle_rates_setpoint": rsp})["rate_tracking"]
+    assert abs(rt["roll_rms_rad_s"] - 0.2) < 1e-9, rt
+    assert abs(rt["pitch_rms_rad_s"] - 0.5 / math.sqrt(2.0)) < 2e-3, rt
+    assert abs(rt["yaw_rms_rad_s"] - 0.05) < 1e-9, rt
+    # ZOH, not interpolation: a setpoint that steps 0 -> 1 at 11 s against a constant 0 measurement; error is 1 for t >= 11 s
+    # (window 10..14 s, so 3 s of 4 s): rms = sqrt(3/4)
+    rsp2 = {"timestamp": ts, "roll": (ts >= 11_000_000).astype(float), "pitch": np.zeros(ts.size), "yaw": np.zeros(ts.size)}
+    av2 = dict(av, **{"xyz[0]": np.zeros(ta.size), "xyz[1]": np.zeros(ta.size)})
+    rt2 = _tracking_run({"vehicle_angular_velocity": av2, "vehicle_rates_setpoint": rsp2})["rate_tracking"]
+    assert abs(rt2["roll_rms_rad_s"] - math.sqrt(0.75)) < 5e-3, rt2
+    print(f"ok rate tracking: roll {rt['roll_rms_rad_s']:.4f} (0.2), pitch {rt['pitch_rms_rad_s']:.4f} ({0.5/math.sqrt(2):.4f}), "
+          f"yaw {rt['yaw_rms_rad_s']:.4f} (0.05), step ZOH {rt2['roll_rms_rad_s']:.4f} ({math.sqrt(0.75):.4f})")
+
+
+def test_attitude_tracking_analytic():
+    """Constant 0.1 rad roll offset from the setpoint: rotation angle = roll rms = 5.7296 deg, pitch/yaw 0. Then a yaw error
+    across the +-pi cut (measured pi-0.01, setpoint -pi+0.01): wrapped yaw error 0.02 rad, not 2 pi - 0.02; a sign-flipped
+    setpoint quaternion (same rotation) must not change anything."""
+    ta = np.arange(9_000_000, 16_000_000, 4000, dtype=np.int64)  # 250 Hz
+    ts = np.arange(9_000_000, 16_000_000, 20_000, dtype=np.int64)  # 50 Hz
+
+    def tile(q, n):
+        return np.tile(np.asarray(q, float), (n, 1))
+
+    def topics(q_att, q_sp):
+        qa, qs = tile(q_att, ta.size), tile(q_sp, ts.size)
+        return {"vehicle_attitude": {"timestamp": ta, "timestamp_sample": ta, **{f"q[{i}]": qa[:, i] for i in range(4)}},
+                "vehicle_attitude_setpoint": {"timestamp": ts, **{f"q_d[{i}]": qs[:, i] for i in range(4)}}}
+    th = 0.1
+    at = _tracking_run(topics([math.cos(th / 2), math.sin(th / 2), 0, 0], [1, 0, 0, 0]))["attitude_tracking"]
+    e = math.degrees(th)
+    assert abs(at["rotation_angle_rms_deg"] - e) < 1e-6 and abs(at["roll_rms_deg"] - e) < 1e-6, at
+    assert abs(at["pitch_rms_deg"]) < 1e-6 and abs(at["yaw_rms_deg"]) < 1e-6, at
+    ya, yb = math.pi - 0.01, -math.pi + 0.01
+    qa, qb = [math.cos(ya / 2), 0, 0, math.sin(ya / 2)], [math.cos(yb / 2), 0, 0, math.sin(yb / 2)]
+    at2 = _tracking_run(topics(qa, qb))["attitude_tracking"]
+    e2 = math.degrees(0.02)
+    assert abs(at2["yaw_rms_deg"] - e2) < 1e-6 and abs(at2["rotation_angle_rms_deg"] - e2) < 1e-6, at2
+    at3 = _tracking_run(topics(qa, [-v for v in qb]))["attitude_tracking"]
+    assert abs(at3["rotation_angle_rms_deg"] - e2) < 1e-6 and abs(at3["yaw_rms_deg"] - e2) < 1e-6, at3
+    print(f"ok attitude tracking: roll offset {at['roll_rms_deg']:.4f} deg ({e:.4f}), yaw wrap {at2['yaw_rms_deg']:.4f} deg ({e2:.4f})")
+
+
 def main():
     for f in (test_window_anchor_from_ulog, test_trajectory_functions, test_exact_and_lag, test_zoh_defect_and_fix, test_compute_end_to_end,
-              test_sample_stamp_over_publish_stamp):
+              test_sample_stamp_over_publish_stamp,
+              test_step_metrics_analytic, test_rate_tracking_analytic, test_attitude_tracking_analytic):
         f()
     print("ALL PASS")
     return 0
