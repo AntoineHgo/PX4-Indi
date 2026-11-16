@@ -4,7 +4,8 @@
   python3 indi_flight/bench/tests/test_margins_selftest.py      (exit 0 = pass, 1 = any failure)
 
 Tests: 1 open-loop known answer (+1b multi-crossing), 2 closed-loop with noise (instrument vs naive, rejected bins),
-3 time base (lag check, non-integer decimation by sample-and-hold).
+3 time base (lag check, non-integer decimation by sample-and-hold),
+4 models (margins_models.py): analytic L vs time-domain, reduction 7.4, w_n/zeta vs numeric poles. Break check G for test 4: see test4_models notes in models_T78.md.
 
 BREAK CHECKS (run once by temporarily patching margins_est.py, then restored; each patch made the file exit 1):
   A  drop the minus in L = -G_yd/G_xd           -> FAIL test2 "(a) instrument L biased" and test3 "decimated L wrong"
@@ -34,6 +35,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import margins_est as ME  # noqa: E402
+import margins_models as MM  # noqa: E402
 
 TOL_GM_DB, TOL_PM_DEG, TOL_DM_S = 1.0, 3.0, 0.3e-3
 TOL_L_DB, TOL_L_DEG = 1.0, 3.0
@@ -276,8 +278,92 @@ def test3_timebase():
               "decimated L wrong with actual times at fs2=%g" % fs2)
 
 
+# ---------------------------------------------------------------- test 4 (model vs time-domain simulation, margins_models.py)
+def _F_cont(s, fc=40.0):
+    wc = 2 * math.pi * fc
+    return 1.0 / (1.0 + math.sqrt(2.0) * s / wc + (s / wc) ** 2)
+
+
+def _expected_reduction_cont(w, fs, eta, K=20.0, tau=0.033):
+    """eta (K/s) F_w A_r with A_r = e^{-sT/2}/(1 + s tau) (ZOH half-sample delay), built independently of margins_models."""
+    s = 1j * w
+    return eta * K / s * _F_cont(s) * np.exp(-s / fs / 2) / (1 + s * tau)
+
+
+def _expected_reduction_z(w, fs, eta, K=20.0, tau=0.033):
+    """Sampled-data version: K F(z) * eta * [tau(1-a) A0 + T - tau(1-a)]/(z-1) with A0 = (1-a)/(z-a) (the plant w[k]/u)."""
+    T = 1.0 / fs
+    z = np.exp(1j * w * T)
+    a = math.exp(-T / tau)
+    c1 = tau * (1 - a)
+    b, aa = MM.lpf2p_ba(fs, 40.0)
+    F = (b[0] + b[1] / z + b[2] / z ** 2) / (aa[0] + aa[1] / z + aa[2] / z ** 2)
+    return K * F * eta * (c1 * (1 - a) / (z - a) + T - c1) / (z - 1)
+
+
+def test4_models():
+    # (a) analytic L vs time-domain-estimated L, excited bins up to 0.4 fs
+    cfgs = [("INDI model-only n=0 (g 1.2, eta 0.8, d_m 2)", "indi", dict(meas=False, n=0, g=1.2, eta=0.8, d_m=2)),
+            ("INDI meas+blend Tb .1 n=1 eta .5 (lat 1)", "indi", dict(meas=True, n=1, Tb=0.1, eta=0.5, lat=1)),
+            ("PID roll gains (eta 0.9)", "pid", dict(eta=0.9))]
+    for fs in (800.0, 400.0):
+        for name, ctrl, kw in cfgs:
+            td = MM.L_timedomain(fs, ctrl, **kw)
+            w = 2 * np.pi * td["f"]
+            La = (MM.L_indi if ctrl == "indi" else MM.L_pid)(w, fs, **kw)
+            edb, edg = errs(td["L"], La)
+            print("  T4a fs=%3.0f %-45s bins %d (to %.0f Hz) accepted %d  max err %.4f dB %.4f deg" % (
+                fs, name, len(w), td["f"][-1], td["accepted"].sum(), np.abs(edb).max(), np.abs(edg).max()))
+            check(td["f"][-1] >= 0.38 * fs and td["accepted"].all(), "T4a bins/coherence %s fs=%g" % (name, fs))
+            check(np.abs(edb).max() <= 0.5 and np.abs(edg).max() <= 3.0, "T4a model != time domain: %s fs=%g" % (name, fs))
+    # (b) reduction 7.4: n=0, model chain == plant chain (tau_m = tau_r, d_m = lat = 0), model chain knows eta (eta_m = eta)
+    f = np.geomspace(0.1, 150.0, 400)
+    w = 2 * np.pi * f
+    worst = 0.0
+    for fs in (800.0, 400.0):
+        for eta in (1.0, 0.7, 0.4):
+            ref = _expected_reduction_cont(w, fs, eta)
+            for Tb in (0.0, 0.03, 0.1, 1.0):
+                for meas in (True, False):
+                    if not meas and Tb != 0.0:
+                        continue
+                    L = MM.L_indi_cont(w, fs, eta=eta, Tb=Tb, n=0, tau_m=0.033, tau_r=0.033, d_m=0, meas=meas, eta_m=eta)
+                    worst = max(worst, np.max(np.abs(L - ref) / np.abs(ref)))
+    print("  T4b continuous reduction eta(K/s)F_w A_r (n=0, A_m=A_r, eta_m=eta): max rel err %.2e" % worst)
+    check(worst <= 1e-9, "T4b continuous reduction off: %.2e" % worst)
+    lit = np.max(np.abs(MM.L_indi_cont(w, 800.0, eta=0.5, Tb=0.1, n=0, tau_m=0.033, meas=True) - _expected_reduction_cont(w, 800.0, 0.5))
+                 / np.abs(_expected_reduction_cont(w, 800.0, 0.5)))
+    print("  T4b literal 7.4 (A_m = A_r, eta_m = 1, eta = 0.5) leaves a rel residual up to %.2f: the model chain must know eta" % lit)
+    check(lit > 0.1, "T4b: with eta_m=1 and eta=0.5 the reduction should NOT hold")
+    # sampled-data: the reduction is NOT exact (a_f is the backward-difference average of the torque over [k-1,k], the
+    # sampled model/measured torque is taken at k): the residual must vanish first order in T
+    res = []
+    for fs in (400.0, 800.0, 1600.0):
+        fl = np.geomspace(0.5, 10.0, 60)
+        wl = 2 * np.pi * fl
+        refz = _expected_reduction_z(wl, fs, 0.6)
+        Lm = MM.L_indi(wl, fs, eta=0.6, Tb=0.1, n=0, tau_m=0.033, meas=True, eta_m=0.6)
+        res.append(np.max(np.abs(Lm - refz) / np.abs(refz)))
+    print("  T4b sampled-data residual (model path, 0.5-10 Hz) at 400/800/1600 Hz: %s (first order in T)" % np.array2string(np.array(res), precision=4))
+    check(res[0] / res[1] > 1.6 and res[1] / res[2] > 1.6, "T4b sampled residual not O(T)")
+    # (c) w_n / zeta of the polynomial vs numeric dominant closed-loop pole of the low-frequency L
+    for eta in (0.25, 0.5, 0.75):
+        for Tb in (0.03, 0.1, 0.3, 1.0):
+            pl = MM.a1_poly(eta, Tb)
+            _, pn = MM.lowfreq_pole(eta, Tb)
+            err = abs(pn - pl["slow"]) / abs(pl["slow"])
+            msg = "eta %.2f Tb %.2f: poly w_n %.2f zeta %.2f slow %s | numeric %s | rel diff %.2e" % (
+                eta, Tb, pl["wn"], pl["zeta"], np.round(pl["slow"], 3), np.round(pn, 3), err)
+            if pl["zeta"] < 1.0:
+                wn_n, z_n = abs(pn), -pn.real / abs(pn)
+                msg += " | numeric w_n %.2f zeta %.2f" % (wn_n, z_n)
+                check(abs(wn_n - pl["wn"]) / pl["wn"] < 0.05 and abs(z_n - pl["zeta"]) / pl["zeta"] < 0.05, "T4c w_n/zeta " + msg)
+            check(err < 0.05, "T4c pole " + msg)
+            print("  T4c " + msg)
+
+
 def main():
-    tests = [test1_open_loop, test1b_multi_crossing, test2_closed_loop, test3_timebase]
+    tests = [test1_open_loop, test1b_multi_crossing, test2_closed_loop, test3_timebase, test4_models]
     for tfn in tests:
         print(tfn.__name__)
         try:
