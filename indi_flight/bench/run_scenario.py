@@ -67,6 +67,7 @@ LOG_TOPICS = [
     "vehicle_imu_status", "sensor_gyro",  # D-SIM-STEP pre-test evidence: gyro rate (sensor_gyro ~ IMU rate, 800 Hz)
     "vehicle_attitude_groundtruth", "vehicle_angular_velocity_groundtruth",  # A-12 s18: were 100 Hz (profile rate)
     "sim_ground_truth",  # A-15 s21: sim-only truth, uORB queue 16, one sample per sim step
+    "indi_rate_status", "actuator_torque_measured",  # D-G2-INJ s39: c, d, u per cycle and the measured rotor torque
     "sim_schedule_applied",  # D-SCHED s24: row applied by sim_scenario_player (queue 8), only published with --sched
 ]
 TAKEOFF_ALT = 5.0
