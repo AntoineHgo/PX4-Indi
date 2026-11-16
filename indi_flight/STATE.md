@@ -19,7 +19,12 @@ S35 (launch 20261116-074242, cap $3): Q4 still unanswered. S34 pre-test read: A-
    Resume: wait for ALL_DONE in status.txt; A-20 closes if CAL_OFF 0/0, baro_fault 0, bias med arm-5..arm < 0.5 m
    in 15/15 (new column in `bench/a14_close_check.py`, S35, second key T70); A-19: `python3 results/a19a20_s34/a19_mech.py`
    style check on a19/hover_r*; if not < 0.3 deg -> PARK A-19 by mechanism (EKF 3-axis earth-field/bias states).
-   Agents: T70 haiku second key of the bias-median column; T71 sonnet route check 35 -> `design/route_check_35.md`.
+   Agents: T70 haiku second key of the bias-median column: AGREE 7/7 (`results/a20a19_s35/second_key_t70.md`).
+   T71 route check 35 (`design/route_check_35.md`): stage 1 off the shortest path since S31; park A-19 by mechanism
+   now; start stage 2 at S36 in parallel, results marked provisional under Q4-A; escalate Q4 if G1 FINAL not written
+   by end of S36. ACCEPTED. T72 sonnet stage-2 design note `design/stage2_margins_s35.md` (gyro injection in
+   gz_bridge as primary break for PID and INDI, multisine, L=-S_yd/S_xd, blend-mode model for A-1; 267 Hz -> D-RATE267;
+   UNVERIFIED items listed in the note). Needs an opus review (one interface: note vs source) before S37 code.
 S34 (launch 20261116-072614, cap $1.35, no agent): Q4 still unanswered. Combined A-19/A-20 pre-test detached:
    `bench/a19a20_pretest_s34.sh` (params `bench/a19a20_pretest_s34.params`: SENS_BAR_AUTOCAL 0, EKF2_DECL_TYPE 0,
    EKF2_MAG_DECL 2.62 (sensor-field value from T68 logs; gz source not read), EKF2_MAG_B_NOISE 0) -> 

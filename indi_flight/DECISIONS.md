@@ -180,3 +180,10 @@ Open, to be written before code (MISSION "Decisions that are yours"):
   branch, not an O-11 zero-diff module), re-express the gz pressure at the world origin altitude (ISA altitude of
   the gz value + world elevation from the spherical coordinates -> ISA pressure), two keys (simulator hook). Fallback
   unchanged: alternative (1) `EKF2_BARO_CTRL 0`. Closing test unchanged (`bench/a14_close.sh` minus the SDF swap).
+
+## D-RATE267 (S35): G2 "250 Hz reported" is flown at 266.7 Hz
+- Choice: the third controller rate of G2 (reported only, not a pass condition) is 266.7 Hz = 3 physics steps of
+  1.25 ms (D-SIM-STEP), the rate `bench/run_scenario.py:37` already offers.
+- Alternatives: 250 Hz exactly (4 ms = 3.2 physics steps: the controller period would jitter between 3 and 4 steps,
+  adding a non-physical delay variation to a margin measurement); a 1 ms physics step (changes every G1.6 result).
+- Overturn if: a reviewer or the owner needs the exact 250 Hz figure, or the physics step changes.
