@@ -126,6 +126,7 @@
 | 21 | - | host bash | A-14 six hovers | done, 6/6 flew, ~4 min wall, $0 |
 | 22 | T44 | sonnet | route check 22 | done, 6 calls, ~$0.15 |
 | 22 | T45 | haiku | A-16 closing test | done, 6 calls, ~$0.05 |
+| 23 | T47 | haiku | D-SCHED interface map | done, 12 calls, ~$0.1, `design/sched_interfaces_s23.md` (4 UNVERIFIED items) |
 
 ## Lessons proposed
 - Give each anomaly at most 2 sessions, then park it with a written bound and reopen trigger (route check 22).
