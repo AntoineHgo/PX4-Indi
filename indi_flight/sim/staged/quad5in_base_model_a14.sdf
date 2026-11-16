@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Reference airframe (5-inch, 0.61 kg, 225 mm diagonal). Values: indi_flight/design/ref_airframe_model.md -->
+<sdf version='1.9'>
+  <model name='quad5in_base'>
+    <pose>0 0 0.065 0 0 0</pose>
+    <self_collide>false</self_collide>
+    <static>false</static>
+    <link name="base_link">
+      <inertial>
+        <mass>0.566</mass>
+        <inertia>
+          <ixx>1.022e-03</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1.122e-03</iyy>
+          <iyz>0</iyz>
+          <izz>1.944e-03</izz>
+        </inertia>
+      </inertial>
+      <gravity>true</gravity>
+      <velocity_decay />
+      <visual name="body_visual">
+        <pose>0 0 0 0 0 0</pose>
+        <geometry><box><size>0.09 0.04 0.035</size></box></geometry>
+        <material><diffuse>0.15 0.15 0.15 1</diffuse></material>
+      </visual>
+      <visual name="arm_visual_0">
+        <pose>0 0 0 0 0 0.7853981634</pose>
+        <geometry><box><size>0.22486 0.012 0.004</size></box></geometry>
+        <material><diffuse>0.1 0.1 0.1 1</diffuse></material>
+      </visual>
+      <visual name="arm_visual_1">
+        <pose>0 0 0 0 0 -0.7853981634</pose>
+        <geometry><box><size>0.22486 0.012 0.004</size></box></geometry>
+        <material><diffuse>0.1 0.1 0.1 1</diffuse></material>
+      </visual>
+      <collision name="base_link_collision_0">
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.12 0.12 0.04</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+            </ode>
+          </contact>
+          <friction>
+            <ode />
+          </friction>
+        </surface>
+      </collision>
+      <collision name="leg_0">
+        <pose>0.07 0.07 -0.04 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.01 0.01 0.04</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+            </ode>
+          </contact>
+          <friction>
+            <ode />
+          </friction>
+        </surface>
+      </collision>
+      <collision name="leg_1">
+        <pose>0.07 -0.07 -0.04 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.01 0.01 0.04</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+            </ode>
+          </contact>
+          <friction>
+            <ode />
+          </friction>
+        </surface>
+      </collision>
+      <collision name="leg_2">
+        <pose>-0.07 0.07 -0.04 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.01 0.01 0.04</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+            </ode>
+          </contact>
+          <friction>
+            <ode />
+          </friction>
+        </surface>
+      </collision>
+      <collision name="leg_3">
+        <pose>-0.07 -0.07 -0.04 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.01 0.01 0.04</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+            </ode>
+          </contact>
+          <friction>
+            <ode />
+          </friction>
+        </surface>
+      </collision>
+      <sensor name="air_pressure_sensor" type="air_pressure">
+        <gz_frame_id>base_link</gz_frame_id>
+        <always_on>1</always_on>
+        <update_rate>50</update_rate>
+        <air_pressure>
+          <!-- Altitude of the world origin (default.sdf spherical_coordinates elevation), so the raw baro agrees
+               with GNSS. Without it the baro reads sea level, the on-ground baro/GNSS autocal steps it by ~488 m
+               after EKF2 starts, and the EKF2 baro bias is still converging at arm (A-14). -->
+          <reference_altitude>488</reference_altitude>
+          <!-- Noise modeled after BMP390 -->
+          <pressure>
+            <noise type="gaussian">
+              <mean>0</mean>
+              <stddev>3</stddev>
+            </noise>
+          </pressure>
+        </air_pressure>
+      </sensor>
+      <sensor name="magnetometer_sensor" type="magnetometer">
+        <gz_frame_id>base_link</gz_frame_id>
+        <always_on>1</always_on>
+        <update_rate>100</update_rate>
+        <magnetometer>
+          <!-- 3mgauss RMS = 3e-7 tesla, noise modeled after IIS2MDC -->
+          <!-- Noise is in the units of the field: tesla with use_units_gauss=false (PX4 gz_bridge server.config),
+               gauss with the gz-sim default -->
+          <x>
+            <noise type="gaussian">
+              <stddev>3e-7</stddev>
+            </noise>
+          </x>
+          <y>
+            <noise type="gaussian">
+              <stddev>3e-7</stddev>
+            </noise>
+          </y>
+          <z>
+            <noise type="gaussian">
+              <stddev>3e-7</stddev>
+            </noise>
+          </z>
+        </magnetometer>
+      </sensor>
+      <sensor name="imu_sensor" type="imu">
+        <gz_frame_id>base_link</gz_frame_id>
+        <always_on>1</always_on>
+        <update_rate>800</update_rate>
+        <imu>
+          <angular_velocity>
+            <!-- Noise modeled after IIM42653 -->
+            <!-- 0.05 deg/s converted to rad/s -->
+            <x>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.0008726646</stddev>
+              </noise>
+            </x>
+            <y>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.0008726646</stddev>
+              </noise>
+            </y>
+            <z>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.0008726646</stddev>
+              </noise>
+            </z>
+          </angular_velocity>
+          <linear_acceleration>
+            <!-- Noise modeled after IIM42653 -->
+            <!-- X & Y axis: 0.65 mg-rms converted to m/ss -->
+            <x>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.00637</stddev>
+              </noise>
+            </x>
+            <y>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.00637</stddev>
+              </noise>
+            </y>
+            <!-- Z axis: 0.70 mg-rms converted to m/ss-->
+            <z>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.00686</stddev>
+              </noise>
+            </z>
+          </linear_acceleration>
+        </imu>
+      </sensor>
+      <sensor name="navsat_sensor" type="navsat">
+        <gz_frame_id>base_link</gz_frame_id>
+        <always_on>1</always_on>
+        <update_rate>30</update_rate>
+      </sensor>
+    </link>
+    <link name="rotor_0">
+      <gravity>true</gravity>
+      <self_collide>false</self_collide>
+      <velocity_decay />
+      <pose>0.0795 -0.0795 0 0 0 0</pose>
+      <inertial>
+        <mass>0.011</mass>
+        <inertia>
+          <ixx>2.5e-05</ixx>
+          <iyy>2.5e-05</iyy>
+          <izz>5e-05</izz>
+        </inertia>
+      </inertial>
+      <visual name="rotor_0_visual">
+        <pose>0 0 0.012 0 0 0</pose>
+        <geometry><box><size>0.127 0.012 0.002</size></box></geometry>
+        <material><diffuse>0.3 0.3 0.3 1</diffuse></material>
+      </visual>
+      <visual name="rotor_0_visual_motor_bell">
+        <pose>0 0 0.004 0 0 0</pose>
+        <geometry><cylinder><radius>0.014</radius><length>0.016</length></cylinder></geometry>
+        <material><diffuse>0.6 0.1 0.1 1</diffuse></material>
+      </visual>
+      <collision name="rotor_0_collision">
+        <pose>0 0 0 0 0 0 </pose>
+        <geometry>
+          <box>
+            <size>0.127 0.012 0.0008</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+            </ode>
+          </contact>
+          <friction>
+            <ode />
+          </friction>
+        </surface>
+      </collision>
+    </link>
+    <joint name="rotor_0_joint" type="revolute">
+      <parent>base_link</parent>
+      <child>rotor_0</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name="rotor_1">
+      <gravity>true</gravity>
+      <self_collide>false</self_collide>
+      <velocity_decay />
+      <pose>-0.0795 0.0795 0 0 0 0</pose>
+      <inertial>
+        <mass>0.011</mass>
+        <inertia>
+          <ixx>2.5e-05</ixx>
+          <iyy>2.5e-05</iyy>
+          <izz>5e-05</izz>
+        </inertia>
+      </inertial>
+      <visual name="rotor_1_visual">
+        <pose>0 0 0.012 0 0 0</pose>
+        <geometry><box><size>0.127 0.012 0.002</size></box></geometry>
+        <material><diffuse>0.3 0.3 0.3 1</diffuse></material>
+      </visual>
+      <visual name="rotor_1_visual_motor_bell">
+        <pose>0 0 0.004 0 0 0</pose>
+        <geometry><cylinder><radius>0.014</radius><length>0.016</length></cylinder></geometry>
+        <material><diffuse>0.6 0.1 0.1 1</diffuse></material>
+      </visual>
+      <collision name="rotor_1_collision">
+        <pose>0 0 0 0 0 0 </pose>
+        <geometry>
+          <box>
+            <size>0.127 0.012 0.0008</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+            </ode>
+          </contact>
+          <friction>
+            <ode />
+          </friction>
+        </surface>
+      </collision>
+    </link>
+    <joint name="rotor_1_joint" type="revolute">
+      <parent>base_link</parent>
+      <child>rotor_1</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name="rotor_2">
+      <gravity>true</gravity>
+      <self_collide>false</self_collide>
+      <velocity_decay />
+      <pose>0.0795 0.0795 0 0 0 0</pose>
+      <inertial>
+        <mass>0.011</mass>
+        <inertia>
+          <ixx>2.5e-05</ixx>
+          <iyy>2.5e-05</iyy>
+          <izz>5e-05</izz>
+        </inertia>
+      </inertial>
+      <visual name="rotor_2_visual">
+        <pose>0 0 0.012 0 0 0</pose>
+        <geometry><box><size>0.127 0.012 0.002</size></box></geometry>
+        <material><diffuse>0.3 0.3 0.3 1</diffuse></material>
+      </visual>
+      <visual name="rotor_2_visual_motor_bell">
+        <pose>0 0 0.004 0 0 0</pose>
+        <geometry><cylinder><radius>0.014</radius><length>0.016</length></cylinder></geometry>
+        <material><diffuse>0.6 0.1 0.1 1</diffuse></material>
+      </visual>
+      <collision name="rotor_2_collision">
+        <pose>0 0 0 0 0 0 </pose>
+        <geometry>
+          <box>
+            <size>0.127 0.012 0.0008</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+            </ode>
+          </contact>
+          <friction>
+            <ode />
+          </friction>
+        </surface>
+      </collision>
+    </link>
+    <joint name="rotor_2_joint" type="revolute">
+      <parent>base_link</parent>
+      <child>rotor_2</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name="rotor_3">
+      <gravity>true</gravity>
+      <self_collide>false</self_collide>
+      <velocity_decay />
+      <pose>-0.0795 -0.0795 0 0 0 0</pose>
+      <inertial>
+        <mass>0.011</mass>
+        <inertia>
+          <ixx>2.5e-05</ixx>
+          <iyy>2.5e-05</iyy>
+          <izz>5e-05</izz>
+        </inertia>
+      </inertial>
+      <visual name="rotor_3_visual">
+        <pose>0 0 0.012 0 0 0</pose>
+        <geometry><box><size>0.127 0.012 0.002</size></box></geometry>
+        <material><diffuse>0.3 0.3 0.3 1</diffuse></material>
+      </visual>
+      <visual name="rotor_3_visual_motor_bell">
+        <pose>0 0 0.004 0 0 0</pose>
+        <geometry><cylinder><radius>0.014</radius><length>0.016</length></cylinder></geometry>
+        <material><diffuse>0.6 0.1 0.1 1</diffuse></material>
+      </visual>
+      <collision name="rotor_3_collision">
+        <pose>0 0 0 0 0 0 </pose>
+        <geometry>
+          <box>
+            <size>0.127 0.012 0.0008</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+            </ode>
+          </contact>
+          <friction>
+            <ode />
+          </friction>
+        </surface>
+      </collision>
+    </link>
+    <joint name="rotor_3_joint" type="revolute">
+      <parent>base_link</parent>
+      <child>rotor_3</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+  </model>
+</sdf>
