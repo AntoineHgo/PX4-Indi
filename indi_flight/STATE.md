@@ -16,7 +16,12 @@
 ## Next actions (in order)
 000000000000. S22 (launch 20261116-020843, cap $1.35): route checks 15/20 were missed -> T44 route check 22 (sonnet,
    `design/route_check_22.md`); T45 A-16 closing test (haiku, `results/a16_s22/README.md`). A-14: the two runner paths
-   differ ONLY by logger `-f` (run_scenario.py:594), so no code read needed; next = act on route check first.
+   differ ONLY by logger `-f` (run_scenario.py:594). DONE: route check 22 (off path: park, go to G1.6a/G1.5/keys);
+   A-14 PARKED with bound, runner default now `--log-from-start` (fdf28977ac); A-16 CLOSED (late-publish pairing,
+   use timestamp_sample; esc_status deficit -> A-10). S23 NEXT = route check 22 items: (1) park A-10/A-13 with
+   bounds, check metrics use timestamp_sample; (2) decide G1.6(a) lockstep vs in-PX4 scheduled switch, re-fly 5 runs;
+   (3) second keys + self-tests; (4) G1.5 injectors (payload, param step); (5) G1 verdict. Stage 2 linear models
+   can start in parallel (no sim needed).
 00000000000. S21 (launch 20261116-015246, cap $1.8): A-15 fix decided: uORB queue depth comes only from the .msg
    (no runtime queue API), and raising it on VehicleAngularVelocity/VehicleAttitude would change the stock control
    topics. So: new sim-only queued topic `sim_ground_truth` (queue 16) published by gz_bridge in the same pose
@@ -35,23 +40,6 @@
    Logger cause CONFIRMED by flight (`results/a15_s20/logpoll_truth/`). S21 (1): fix so truth AND controller topics log
    every sample (sonnet: F2 queue 8 on truth advertise in gz_bridge, check logger drains queues; A-10 esc_status too?), re-run g1.1.
    (2) A-14 test: 3 runs logging from boot (SDLOG_MODE 1), EKF z vs truth pre-arm (haiku). (3) S19 items (2)-(5) below.
-000000000. S19 (launch 20261115-234854, cap $1.08): T38 DONE (`results/a12_fix_s18/pretest_truth_topics/README.md`):
-   attitude/rate/position truth 800 Hz confirmed; g1.1 FAIL only esc_status (A-10) + local_position 88.9 Hz; A-14 opened.
-   S20 NEXT: (1) small fixes (sonnet or haiku, one agent): `g1_checks.py` add attitude/angular-velocity truth rows;
-   `check_truth_s18.py` output path argument (it overwrites `results/a12_fix_s18/second_key.md`); (2) A-14 closing test
-   (haiku); (3) then items (2)-(5) of the S19 list below. Launch pattern: `bench/pretest_simstep_s16.sh` docker line.
-00000000. S19 NEXT: (1) pre-test 1 flight at speed 4 (T38, NOT run S18: on host run_scenario.py fails, WORLDS_DIR -> ../../indi_flight/sim/worlds; launch it the way T32/T36 did, inside Docker, see `results/pretest_simstep_s16/README.md` and `design/a12_fix_s18.md`; out dir `results/a12_fix_s18/pretest_truth_topics`): confirm attitude/angular-velocity truth now
-   logged at 800 Hz (added to LOG_TOPICS S18) and g1.1 truth rows pass; (2) second keys for rate/attitude/hover/steps
-   metrics (sonnet, one family per session); (3) self-tests for the 7 scripts (g1.4); (4) A-13 gyro gaps, A-10;
-   (5) decide gz lockstep vs in-PX4 scheduled mode switch (G1.6a). vehicle_local_position 88.9 vs 125 Hz still open (g1.1).
-000. S15: A18 r5 verdict BLOCKING (`design/outer_loop_review_r5.md`): F1 yaw-rate double count (also live bug A-9),
-   F2-F4 MAJOR (no stamp in vehicle_rates_setpoint, accumulation into held _rates_setpoint, frame desired vs
-   estimated body). A18 stays OUT of base A; `design/flatness_r2.md` DONE S15 (F1-F9 accepted, A18 = review's minimal spec,
-   optional stage-5 increment after base A, 3-part acceptance), no new review until stage 5 base A works. Stage 5 starts with base A only (Q1 confirmed).
-00. S14: (a) review r5 (opus, narrow, <=10 calls): `design/flatness_r1.md` vs arXiv 1809.04048 (source check of the
-   table in section 1) + `src/modules/mc_indi_rate_control` ff entry point; output `design/outer_loop_review_r5.md`.
-   (b) G1.6 run: 5 same-seed runs x (hover, one step, one trajectory) at speed 1 -> spreads vs thresholds (haiku).
-   (c) G1.1-G1.5 commands (`bench/gate_g1.sh`), remaining second keys. Determinism cause found S13 (gz no lockstep).
 1. Reference airframe model DONE (session 3): `design/ref_airframe_model.md`, flies with stock PID (hover u 0.1367,
    eRPM 998.7 rad/s, steps settle). Its open items 1-4 (reaction-torque scaling test, gyro log rate, run1 esc_rpm 0,
    run-to-run spread) are folded into the simulator work of item 4.
@@ -81,8 +69,6 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T44 | route check 22 | sonnet | design/route_check_22.md | relaunch same brief |
-| T45 | A-16 closing test | haiku | results/a16_s22/README.md | relaunch same brief |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -136,8 +122,11 @@
 | 20 | T42 | sonnet | A-15 cause, read-only | done, 13 calls, ~$0.45 |
 | 21 | T43 | sonnet | sim_ground_truth topic + pretest | done, 11 calls, ~$0.35 |
 | 21 | - | host bash | A-14 six hovers | done, 6/6 flew, ~4 min wall, $0 |
+| 22 | T44 | sonnet | route check 22 | done, 6 calls, ~$0.15 |
+| 22 | T45 | haiku | A-16 closing test | done, 6 calls, ~$0.05 |
 
 ## Lessons proposed
+- Give each anomaly at most 2 sessions, then park it with a written bound and reopen trigger (route check 22).
 - Haiku handles a well-specified log check (10 calls) for ~$0.06: use it for every bounded log/metric check.
 - At a $1.6 cap: one sonnet agent of ~15 calls (~$0.5) plus state and commit; no fable work.
 - At a $3 cap launch one agent per session (session 2: two sonnet agents ~$1.4 in 30 min, both cut).
