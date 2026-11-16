@@ -24,9 +24,15 @@ S37 (launch 20261116-080552, cap $3): (1) DONE note body patched, section 7 item
    `python3 bench/second_key_margins_s37.py <out.md>`); its case B is unstable with 1 crossing, multi-crossing covered by
    self-test 1b only. Estimator not yet run on bench logs (CSV t,d,x,y; sign y = -L x from spec).
 T77 haiku: PID rate gains VERIFIED (`results/stage2_s37/pid_rate_gains.md`, units and MC_GC_EN=0 checked by me).
-S38 NEXT: (1) `margins_models.py` (4.1 analytic + discrete time-domain, 4.2 PID with gains from pid_rate_gains.md) +
-   self-test 4 (sonnet, the session's one big task, <=12 calls); (2) second key of the model (haiku). S39 injection
-   plumbing (M3a in mc_indi_rate_control bench params, log c/d/u at cycle rate; read M3b store point), S40 route check 40, S41 flights.
+S38 (launch 20261116-082041, cap $3) DONE: T78 sonnet `bench/margins_models.py` (sampled-data + continuous L_indi,
+   L_pid, time-domain sim, A-1 table) + self-test 4 ALL PASS (re-run by me; break-checked: dropping t_f fails 4a).
+   T79 haiku second key, independent continuous model: AGREE (INDI model-only 6.5 dB/43.6 deg vs 6.1/42.7 sampled;
+   PID 26.0/67.9 vs 25.8/67.9). Tables `results/stage2_s38/`. Note 7.4 reduction corrected (needs A_m = eta A_r; O(T) skew).
+   FINDING (model, unflown): roll INDI model-only at code defaults PM 42.7/41.6/40.6 deg at 800/400/267 Hz < 45, limited
+   by tau_m 0.02 vs plant tau_r 0.033 (lesson 8: ACT_TC must be identified, stage 3/4); measured path Tb 0 PM 54, blend
+   Tb 0.1 PM 48. Self-test 4a is coding consistency only (same equations both sides); firmware match comes from flights.
+S39 NEXT: injection plumbing (M3a in mc_indi_rate_control bench params, log c/d/u at cycle rate; read M3b store point),
+   sonnet, one big task. S40 route check 40, S41 flights (pre-test first).
 S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_s35/README.md`); A-19 heading-only
    candidate refuted, A-19 PARKED by mechanism (bound 1.6 deg, yaw verdicts on estimate); A-14 hold bound re-set by
    mechanism to +-0.15 m (r14 0.068 m exceeded the old +-0.06 sample bound). T70 second key AGREE 7/7. T71 route
@@ -41,6 +47,11 @@ S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
   open per item: `sim_review.md` for simulator work, `module_parity.md` for stage 3/5, `test_review.md` for stage 3,
   `ident_review.md` for stage 4, `remetric.py`/`hover.py` for the errata.
+
+- S38 model table oddity: INDI measured Tb 0, n 1 roll GM 21.1 dB at 800 Hz but 34.8 at 400 Hz (PM equal); check the
+  phase-crossover location before using the model GM in the S41 cross-check.
+- Unmodelled in margins_models.py (T78 UNVERIFIED list): AlphaFilter coefficient formula, LPF2p coefficients from
+  memory, gz/ESC latency 0, measured path = eta x motor state, yaw, attitude loop; 267 Hz analytic only.
 
 ## Agent ledger (stage 1)
 | session | id | model | task | outcome |
@@ -102,6 +113,8 @@ S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_
 | 37 | T75 | sonnet | margins estimator + self-tests 1-3 | done, 9 calls, ~$0.9, ALL PASS re-run by me |
 | 37 | T76 | haiku | second key margins (analytic) | done, 3 calls, ~$0.06, AGREE 5/5 |
 | 37 | T77 | haiku | PID rate gains read | done, 6 calls, ~$0.06, units fixed by me |
+| 38 | T78 | sonnet | margins_models.py + self-test 4 | done, 15 calls, ~$1.0, ALL PASS re-run by me |
+| 38 | T79 | haiku | second key continuous models | done, 4 calls, ~$0.1, AGREE |
 
 ## Lessons proposed
 - S37: a sonnet task writing ~600 lines of numerical code + tests costs ~$0.9 in 9 calls (long writes); the session

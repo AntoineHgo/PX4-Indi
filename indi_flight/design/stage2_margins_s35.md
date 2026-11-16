@@ -202,3 +202,8 @@ Next: a short r2 check (sonnet, <= 6 calls) of this section against r1 and the s
      path sees it, the model path does not (as 4.1 assumes). At eta 0.5 the hover command about doubles: the pre-test
      checks the motor ceiling (motors <= 0.85, section 2) and drops eta values that hit it.
    - Tb 1.0 slow pole (~1 rad/s, r1 item 4) added to H-A1a as a risk for slow fault recovery; the script prints it.
+- S38 correction to the 7.4 / 4.1 reduction check (T78, second key T79): "n = 0 AND A_m = A_r (any eta, Tb) -> L = eta (K/s)
+  F_w A_r" is false for eta != 1, because the model chain does not know eta. It holds when the model gain equals eta
+  (A_m = eta A_r); verified to 2.4e-15 on the continuous model. In the sampled-data model it is exact only to O(T): the
+  backward-difference derivative puts a_f half a sample behind the sampled torque (residual 0.21 / 0.108 / 0.055 at
+  400 / 800 / 1600 Hz). This skew is a real term of the discrete loop and is kept in `bench/margins_models.py`.

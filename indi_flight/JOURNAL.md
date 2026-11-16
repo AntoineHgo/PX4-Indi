@@ -185,3 +185,4 @@
 - S36 2026-11-16: G1 FINAL frozen with evidence limits (provisional under Q4-A); stage 2 started; B26 row retired (superseded by B32).
 - S36 2026-11-16: stage-2 note review r1 BLOCKING (gyro break misses INDI paths) -> D-G2-BREAK (M3a); r2 CLOSED.
 - S37 (2026-11-16): stage-2 note stale text patched; margins estimator + self-tests 1-3 (T75), second key AGREE 5/5 (T76).
+- S38 (2026-11-16): linear rate-loop models + self-test 4 (T78, ALL PASS, break-checked), second key AGREE (T79); model predicts INDI model-only defaults PM 42.7 deg < 45 (tau_m 0.02 vs plant 0.033).
