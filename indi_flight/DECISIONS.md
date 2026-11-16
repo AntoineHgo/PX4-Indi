@@ -217,3 +217,18 @@ Open, to be written before code (MISSION "Decisions that are yours"):
   firmware-only PR branch either keeps it as a documented system-identification feature or removes it).
 - Overturn if: AX = 0 changes any logged output against the previous build on the unit tests, or the G7 review
   finds a bench feature unacceptable upstream (then a Kconfig option, default n, enabled in SITL only).
+
+## D-G1-DERIVE (S45): rate-loop G1 is derived from airframe data, never regressed from a closed-loop log (provisional, part of decisions 3 and 4)
+- Choice: G1_R/P/Y are computed from the allocator's normalisation and physical data: roll/pitch
+  G1 = sum_i |p_i| T_max,i / (sqrt(2) I) with T_max = m g / (n x_hover) (`results/stage2_s44/a22_links.md` closed form),
+  yaw G1 = n km T_max / Izz (`results/stage2_s45/g1y_derivation.md`). Inputs: CA_ROTORn_* geometry and KM, mass,
+  inertia, hover thrust fraction from a non-saturated hover. Until identification (decision 3) exists, the bench
+  sets the derived values for quad5in (1756 / 1599 / 215) on every INDI flight; the firmware defaults (320/210/30)
+  are not a validated configuration and must change before G6.
+- Alternatives: regression of alpha on u from a flight (S42/S43: returns the delivered fraction under saturation,
+  0.19x the plant, and drove A-23); online adaptive estimate (deferred to decision 3, needs a saturation gate:
+  `torque_setpoint_achieved`, motor pin fraction); tuning (forbidden, lesson 8).
+- Evidence: S44 derived R/P removed the rate oscillation (32x); S45 derived Y removed motor pinning (46 % -> 0 %),
+  second key AGREE.
+- Overturn if: a small-signal regression on a clean (unsaturated) hover differs from the derived value by > 15 %
+  on any axis, or the stage-4 identification gives a different value with an explained cause.

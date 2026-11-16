@@ -38,7 +38,6 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T95 | second key A-23 closing numbers | haiku | `results/stage2_s45/a23_yaw/second_key.md` | relaunch if missing |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -56,6 +55,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | session | id | model | task | outcome |
 |---|---|---|---|---|
 | 45 | T93 | sonnet | route check 45 | done, 7 calls, ~$0.15 |
+| 45 | T95 | haiku | second key A-23 numbers | done, 7 calls, ~$0.06, AGREE (RMS 0.0068/0.0056/0.0017, pin 0 %) |
 | 45 | T94 | haiku | A-23 hover G1_Y 215 + checks | done, 6 calls, ~$0.1, clean hover |
 
 | 36 | T74 | sonnet | r2 check of section 7 | done, 7 calls, ~$0.35, CLOSED |
