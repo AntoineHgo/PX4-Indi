@@ -12,6 +12,13 @@
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
+S34 (launch 20261116-072614, cap $1.35, no agent): Q4 still unanswered. Combined A-19/A-20 pre-test detached:
+   `bench/a19a20_pretest_s34.sh` (params `bench/a19a20_pretest_s34.params`: SENS_BAR_AUTOCAL 0, EKF2_DECL_TYPE 0,
+   EKF2_MAG_DECL 2.62 (sensor-field value from T68 logs; gz source not read), EKF2_MAG_B_NOISE 0) -> 
+   `results/a19a20_s34/` (2 hover + 1 step_roll, speed 4); resume: wait for ALL_DONE in status.txt, then
+   `python3 results/a19a20_s34/a19_mech.py` (copy, writes next to itself) and read `a14_check.md`.
+   Closing criteria (ANOMALIES): A-19 |err| align+1 s < 0.2 deg, hover window < 0.3 deg, magB_x < 0.5 mG;
+   A-20 CAL_BARO0_OFF 0 and median pre-arm bias < 0.5 m. If pass: 15-run set + two keys (S35); route check 35 due.
 S33 (launch 20261116-065633, cap $1.98): B32 speed 1 still running (hover r2 at 06:56). T68 haiku A-19 mechanism ->
    `results/a19_s33/README.md`; arccos fix in second_key_s29.py (own); G1 status draft in GATES.md (own).
    DONE: arccos fixed 8ef678d1b4; T68 A-19 mechanism candidate (ANOMALIES A-19 NEXT): EKF2_MAG_DECL 3.41 vs gz field
