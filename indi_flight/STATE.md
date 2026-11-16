@@ -11,37 +11,7 @@
   paths) answered by D-G2-BREAK (M3a torque-setpoint break) and note section 7; r2 CLOSED.
 - S44: stage-2 INDI margins VOID (A-23 limit cycle, see Next actions).
 ## Next actions (in order)
-S36 DONE: G1 FINAL; T73 r1 BLOCKING answered (note section 7, D-G2-BREAK).
-S36 T74 r2 CLOSED (`design/stage2_note_review_r2.md`): M3a cuts every in-flight path; S38 must log c (pre-injection),
-   d and u at cycle rate.
-S37-S38: margins estimator, models and second keys done (JOURNAL.md); tables `results/stage2_s38/`.
-S39 (launch 20261116-084309, cap $3) DONE: D-G2-INJ; T81 sonnet M3a plumbing (commit feat(mc_indi_rate_control)),
-   SITL build OK, 1 pre-test hover flew (`design/t81_m3a_inject_s39.md`, `results/stage2_s39/pretest_m3a/`): u = c + d
-   exact (max err 0), indi_rate_status 800 Hz, no fault, generator = margins_est multisine on 15849/15998 samples (rest
-   = timestamp-join artefact). Added by me: indi_rate_status.timestamp_sample, MC_INDI_INJ_DLY (default 5 s).
-S40 (launch 20261116-090818, cap $2.7): (1) DONE unit tests in build/px4_sitl_o11 with -DCMAKE_TESTING=ON: rate lib
-   40/40, IndiInjection 4/4, IndiAccelControl 19/19, IndiMeasuredTorque 4/4 PASS; break-check (landed gate removed)
-   fails Gating, restored (`results/stage2_s40/unit_tests*.txt`). Earlier S40 plan items:
-   (2) DONE in S39: haiku second key code vs D-G2-BREAK/D-G2-INJ AGREE-WITH-ISSUES (`results/stage2_s39/second_key_inject.md`):
-   only -0.0 -> +0.0 at AX 0 (accepted, no effect); S41 analysis must assert fault == 0 and landed == 0 over the window,
-   params set before arming. Still to do: generator check on timestamp_sample from a new flight;
-   (3) route check 40 (sonnet). M3b store points partial in the T81 notes (library `_thrust_prev` unread).
-S40 pre-test DONE (`results/stage2_s40/pretest_inj/README.md`): both paths READY with scenario hover_long, DLY 20,
-   NP 3, TP 10, AMP 0.005 (window 52-82 s at 5 m); u=c+d, generator on timestamp_sample, fault/landed all pass.
-   Preliminary roll 800 Hz: measured PM 61/GM 12.2 dB; model-only PM 25/GM 4.3 dB vs linear model 42.7 -> A-21 OPEN.
-S40 also: A-21 linearity AMP 0.01 vs 0.005 PASS (PM 26.3 vs 25.3 deg, GM 5.0 vs 4.3 dB): gap to model is real.
-S41 (launch 20261116-092054, cap $1.98): (1) DONE seed 2 model-only AMP 0.005 (`results/stage2_s41/`): checks pass,
-   PM 24.0 deg / GM 6.0 dB / DM 14 ms -> A-21 closing test 1 PASS (PM 25.3/26.3/24.0). (2) DONE T84 haiku second key
-   (`results/stage2_s41/second_key_m3a.md`): AGREE when periods 2-3 are used as the primary does (all bins <=20 Hz
-   within 0.5 dB/3 deg, PM within 0.25 deg); full window incl. period 1 DISAGREES (transient). m3a_csv/m3a_margins
-   second-keyed. (3) DONE T85 sonnet closing test 2 (`results/stage2_s41/a21_model_vs_measured.md`, UNKEYED):
-   firmware matches margins_models.py element by element; the gap is the MODEL: it omits the attitude P loop
-   (MC_ROLL_P 8 closes around the M3a break, alone gives PM 23.5/GM 4.6) and G1 fits 1.30x the default (~417 vs 320,
-   unverified), plus ~1 step (1.26 ms) delay/lag (gz command latency suspected).
-S42 (launch 20261116-093138, cap $1.26): (b) DONE T86 haiku + my LPF-matched re-fit
-   (`results/stage2_s42/g1_regression_lpf.md`, `bench/g1_regress_lpf_s42.py LOG OUT`): G1/tau/delay ridge, not separable
-   in 2-10 Hz; G1 377-385 if tau 0.033 and delay <=2 samples, 320 if tau 0.02 + 15 ms latency. (c) decides. UNKEYED.
-   T87 haiku analytic G1 = 878 (`results/stage2_s42/g1_analytic.md`, UNKEYED), 2-2.7x the ridge -> A-22 opened.
+S36-S42 detail moved to JOURNAL.md (S45).
 S43 (launch 20261116-114133, cap $2.79) DONE: T88 sonnet A-22 chain (`results/stage2_s43/a22_chain.md`,
    `bench/a22_chain.py`): static roll G1 ~340 = link a (torque_sp -> actuator_motors roll diff 0.92, 0.23/motor)
    x link b (actuator_motors -> (w/wmax)^2, 0.59 at hover, a 0.221 -> w ~976-999) x link c (626 meas vs 621 analytic,
@@ -56,19 +26,19 @@ S44 (launch 20261116-212207, cap $3) DONE: T90 sonnet A-22 trace (`results/stage
    A-23 opened. Plant G1_roll derived 1756 (CT/KM cancel; needs Ixx and hover thrust, not in CA_*) vs default 320.
 S44 also: A-23 test flown (`results/stage2_s44/a23_test/`): PID clean; INDI derived G1 cuts rate RMS 32x but motors
    still pinned at 0 on 46 % (motor-command chatter, 2nd mechanism). See A-23 note.
-S45 NEXT (step back, lesson 24): (0) route check 45 (sonnet, due; give it A-23). (1) A-23: chatter is 46 Hz with yaw torque_sp at
-   the rails (`a23_test/motor_chatter.md`): derive G1_Y (rotor drag/spin-up, decision 5) and fly; check esc 15 ms 'lead'. (2) pre-test
-   checklist gets pitch-rate RMS < 0.02 rad/s and motor pin < 1 %. (3) only then redo M3a margins with derived G1. Old S44 plan kept below for record:
-OLD S44 PLAN: (1) A-22 rest, one sonnet task <=15 calls: why allocator gives 0.23/motor (source says 0.354 or 0.707) and
-   why a 0.221 hover maps to w ~990 (sqrt map gives 1269): check actuator_outputs instances/topic multiplicity,
-   MixingOutput thrust-model code path for gz ESC, effectiveness scaling (CA_ROTOR CT 6.5 vs physical 10.9);
-   haiku second key on esc_status (not actuator_outputs). Matters for stage-4 decision 3 (G1 from CA_* derivation).
-   (2) Working G1 for margins = 340 (static, end-to-end, regression-consistent) until A-22 closes. (3) (c) motor step
-   in sim to separate tau and latency; (a) add attitude loop to margins_models.py (sonnet) + haiku second key.
+S45 (launch 20261116-214129, cap $3) DONE: A-23 CLOSED. Cause: G1 defaults 5-8x low (yaw 7x: derived G1_Y 205-222,
+   `results/stage2_s45/g1y_derivation.md`). Hover with G1 R/P/Y 1756/1599/215 (`results/stage2_s45/a23_yaw/`): motor pin 0 %,
+   rate RMS 0.0068/0.0056/0.0017, achieved 1.0. A-24 opened (45.7 Hz motor tone, std 0.00085). Route check 45
+   (`design/route_check_45.md`): stage 2 margins wait for derived defaults; old margin numbers void, method kept.
+S46 NEXT: (1) `bench/derive_g1.py` (G1 R/P/Y from CA_*, mass, inertia, hover thrust; self-test; second key) = first piece of
+   decision 3/4 (write D-entry: G1 derived, not regressed from a saturated log). (2) pre-test checklist in GATES/runner: pitch
+   RMS < 0.02 rad/s, motor pin < 1 %, achieved > 90 % as exit status of limit_cycle check. (3) S47: ACT_TC from rotor step,
+   attitude P loop into margins_models.py. (4) S48: first valid roll M3a margin row at 800 Hz, two seeds.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T95 | second key A-23 closing numbers | haiku | `results/stage2_s45/a23_yaw/second_key.md` | relaunch if missing |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -85,6 +55,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 45 | T93 | sonnet | route check 45 | done, 7 calls, ~$0.15 |
+| 45 | T94 | haiku | A-23 hover G1_Y 215 + checks | done, 6 calls, ~$0.1, clean hover |
 
 | 36 | T74 | sonnet | r2 check of section 7 | done, 7 calls, ~$0.35, CLOSED |
 | 36 | T73 | opus | review r1 stage-2 note | done, 11 calls, ~$0.8, BLOCKING, answered |
@@ -108,6 +80,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 39 | T81 | sonnet | M3a plumbing + build + 1 hover | done, 27 calls, ~$0.93, test not linked, fixed by me |
 
 ## Lessons proposed
+- S45: a default effectiveness never derived for the airframe (G1_Y 30 vs plant 215) cost 5 sessions of margins; derive every
+  physical parameter from the model/airframe before the first closed-loop measurement, and log it in run metadata.
 - S44: five sessions of margin work ran on a vehicle in a 17 Hz limit cycle; the pre-test checked u=c+d, fault and
   landed but not body-rate spectra. Every pre-test runs a spectral oscillation check on body rates and motor saturation fractions.
 - S43: a static 'analytic' gain from source reading was 2.6x off in two links; measure each link of a chain on the log before trusting a derived plant gain (and a sonnet chain trace with log analysis costs ~$0.9 in 17 calls).
