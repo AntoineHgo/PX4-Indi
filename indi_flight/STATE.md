@@ -28,7 +28,12 @@
    `bench/a14_close.sh` AFTER B26 speed 1 (detached, then pretest + 15 hovers speed 4 -> `results/a14_close_s28/`).
    Check script `bench/a14_close_check.py` (self-test: reproduces old speed4 r2 2.28 m). B26 speed1 traj r1 started
    before the revert but logged 101332 Pa (old model): B26 speed 1 is clean.
-   S29 NEXT: (1) read `results/a14_close_s28/status.txt` + check.md; PASS -> commit model change (git shows
+   T59 DONE (`design/g13_g14_matrix_s28.md`): 3 analytic self-tests added (rate, attitude, step), break-checked 8x.
+   Second key AGREE on 3/7 gate-bearing rows (rate, effort on 1 log only; trajectory); none on attitude, hover
+   position, step. DEFECTS (not fixed): rate/attitude tracking use the EKF estimate, not truth (lesson 3);
+   effort is an unfiltered first difference, not a fixed bandwidth; no spectral detector exists yet.
+   S29 NEXT: (0) fix those two metric defects (sonnet, then haiku second keys over >= 5 logs, G1.3 sample set).
+   (1) read `results/a14_close_s28/status.txt` + check.md; PASS -> commit model change (git shows
    model.sdf modified), close A-14, delete `sim/staged/`; FAIL -> D-A14 alternative (1). (2) B26 speed 1 analysis
    (as speed 4: `second_key_player.py`, `G16_ROOT=... g16_spread.py`), haiku second key; G1.6 set must be re-flown
    with the fixed baro anyway (A-14 touched hover r2/traj r1). (3) route check 27 items 2-5 (G1.3/G1.4 keys,
@@ -114,7 +119,7 @@
 | 27 | T57 | sonnet | route check 27 | done, 10 calls, ~$0.25 |
 | 27 | T58 | sonnet | A-14 mechanism from logs | done, 5 calls, ~$0.3, numbers re-read by me |
 | 28 | B28 | host bash | A-14 closing test (16 hovers) | launched detached, $0 |
-| 28 | T59 | sonnet | G1.3/G1.4 matrix + missing self-tests (route check 27 item 2) | running -> `design/g13_g14_matrix_s28.md`, edits `bench/tests/test_metrics.py` (uncommitted until checked) |
+| 28 | T59 | sonnet | G1.3/G1.4 matrix + missing self-tests (route check 27 item 2) | done, 16 calls, ~$0.45; tests re-run by me (ALL PASS, metrics.py diff empty) |
 
 ## Lessons proposed
 - A shared sim model is live for every running batch: stage a model change and install it after the batch ends (S28 nearly mixed two baro models into B26).
