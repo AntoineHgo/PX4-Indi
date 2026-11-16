@@ -19,6 +19,7 @@
    T41 A-15 truth stream misses ~13 % of sim steps at speed 4 (gz_bridge pose, not logger), controller topics only jitter.
    S21 NEXT: (1) A-15 cause (sonnet, read-only ~12 calls): gz_bridge dynamic_pose/info subscription vs IMU path, transport
    queue/pacing at speed 4, propose fix (truth from the same step callback as IMU?); one speed-1 flight to compare.
+   T42 IN FLIGHT: sonnet read-only, `design/a15_cause_s20.md` (relaunch brief if missing).
    (2) A-14 test: 3 runs logging from boot (SDLOG_MODE 1), EKF z vs truth pre-arm (haiku). (3) S19 items (2)-(5) below.
 000000000. S19 (launch 20261115-234854, cap $1.08): T38 DONE (`results/a12_fix_s18/pretest_truth_topics/README.md`):
    attitude/rate/position truth 800 Hz confirmed; g1.1 FAIL only esc_status (A-10) + local_position 88.9 Hz; A-14 opened.
@@ -38,13 +39,6 @@
    NEXT (S18): A-12 fix first (sonnet: sim-time pose rate in the world SDF / gz_bridge, verify g1.1 at speed 4);
    then second keys for rate/attitude/hover/steps metrics (sonnet, one family), self-tests for the 7 scripts,
    decide gz lockstep vs in-PX4 scheduled mode switch (G1.6a).
-000000. NEXT (S17): (a) DONE S16: G1.6 repeat on 1.25 ms world 15/15 (`results/det_g16_w125/README.md`): tracking
-   matches 4 ms world within spread; G1.6(a) NOT MET (7.5-11 ms vs 2.5 ms), cause (c) unchanged -> record in GATES.md
-   G1.6 verdict. Effort doubled in manoeuvres: A-11 (haiku: recompute effort decimated to 285/250 Hz, close it).
-   (b) A-10 partly explained S16 (`design/anomaly_a10_s16.md`); closing test: esc_status publish vs logged count.
-   (c) G1.1-G1.5 commands (`bench/gate_g1.sh`), remaining second keys. Stage-3 item: cycle-count params
-   (MC_INDI_DELAY, MC_INDI_ERPM_DLY, MC_INDI_DT_MAX) to time units. eRPM latency counts ESC output frames
-   (= controller cycles; SIM_GZ_ERPM_LAT default 0 -> 1 frame), `design/sim_step_impl_s16.md`.
 0000. G1.6 window anchor DONE S15 (T28 + my end fix, `design/window_anchor_s15.md`, commits 988c2ff59a, 593a8b4fad):
    start spread 4-16 ms, fixed duration; same-seed spreads unchanged (<30 %) -> spread is flight non-determinism
    (gz not lockstepped), G1.6(c) cause stated. Second key T29 AGREE 30/30 (`results/second_key_window_s15.md`).
