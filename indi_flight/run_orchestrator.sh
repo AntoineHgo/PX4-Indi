@@ -5,6 +5,7 @@
 # It pauses while indi_flight/WAIT_OWNER exists (the orchestrator creates it with a blocking question in
 # indi_flight/QUESTIONS.md; the owner answers there and removes the file).
 # Lift the 5-hour usage share on demand with: touch indi_flight/BYPASS_5H (rm it to restore)
+# Lift the weekly usage share the same way with: touch indi_flight/BYPASS_7D (rm it to restore)
 set -u
 export LC_NUMERIC=C # decimal point in awk and printf, whatever the host locale
 cd "$(dirname "$0")/.."
@@ -34,9 +35,12 @@ MAX_BUDGET_USD="${MAX_BUDGET_USD:-3}"      # bounds what one cut-off session can
 # Usage left in a 5-hour window is lost at its reset, so in its last FINAL_STRETCH_S seconds the
 # orchestrator may use the whole window (share 1.0). The owner can lift the 5-hour share at any
 # time with `touch indi_flight/BYPASS_5H` (remove the file to restore it); the supervisor checks
-# the file every minute, even while waiting. The weekly share still applies in both cases.
+# the file every minute, even while waiting. The weekly share still applies in both cases, unless
+# the owner also touches indi_flight/BYPASS_7D, which skips the weekly gate (only the owner creates it;
+# a window the API reports as exhausted still stops the launch).
 FINAL_STRETCH_S="${FINAL_STRETCH_S:-3600}"
 BYPASS_FILE=indi_flight/BYPASS_5H
+BYPASS_7D_FILE=indi_flight/BYPASS_7D
 WINDOW_USD_DEFAULT=9                       # $ per full 5-hour window, measured on session 1; recalibrated each run
 LIMIT_WAIT="${LIMIT_WAIT:-1800}"           # fallback wait after a failed or very short run
 MAX_RUNS="${MAX_RUNS:-300}"
@@ -46,13 +50,15 @@ log() { echo "[$(date '+%F %T')] $*" | tee -a "$LOG_DIR/supervisor.log"; }
 die() { log "ABORT: $*"; exit 1; }
 
 # sleep until an epoch time by wall clock (bash sleep stops counting during a suspend);
-# returns early if STOP or DONE appears, or if BYPASS_5H appears while it was absent
+# returns early if STOP or DONE appears, or if BYPASS_5H or BYPASS_7D appears while it was absent
 wait_until() {
-	local bypass_at_start=0
+	local bypass_at_start=0 bypass7_at_start=0
 	[ -f "$BYPASS_FILE" ] && bypass_at_start=1
+	[ -f "$BYPASS_7D_FILE" ] && bypass7_at_start=1
 	while [ "$(date +%s)" -lt "$1" ]; do
 		{ [ -f indi_flight/DONE ] || [ -f indi_flight/STOP ]; } && return
 		[ "$bypass_at_start" -eq 0 ] && [ -f "$BYPASS_FILE" ] && return
+		[ "$bypass7_at_start" -eq 0 ] && [ -f "$BYPASS_7D_FILE" ] && return
 		sleep 60 9>&-
 	done
 }
@@ -123,7 +129,7 @@ guard_blocks "ls" && die "guard self-test failed (blocks everything)"
 if [ "$(git branch --show-current)" != "$BRANCH" ]; then
 	git switch "$BRANCH" 2>/dev/null || git switch -c "$BRANCH" || die "cannot switch to $BRANCH"
 fi
-log "preflight ok: branch $BRANCH, model $MODEL, effort $EFFORT, shares 5h $FIVE_HOUR_SHARE (1.0 in the last ${FINAL_STRETCH_S}s or with $BYPASS_FILE) / weekly $WEEKLY_SHARE, cap \$$MIN_BUDGET_USD-$MAX_BUDGET_USD/session, $(claude --version 2>/dev/null)"
+log "preflight ok: branch $BRANCH, model $MODEL, effort $EFFORT, shares 5h $FIVE_HOUR_SHARE (1.0 in the last ${FINAL_STRETCH_S}s or with $BYPASS_FILE) / weekly $WEEKLY_SHARE (lifted with $BYPASS_7D_FILE), cap \$$MIN_BUDGET_USD-$MAX_BUDGET_USD/session, $(claude --version 2>/dev/null)"
 
 # --- supervise ---
 runs=0
@@ -166,7 +172,9 @@ while [ ! -f indi_flight/DONE ] && [ ! -f indi_flight/STOP ]; do
 		wait_until $((rejected + 120))
 		continue
 	fi
-	if fge "$u7" "$WEEKLY_SHARE"; then
+	if [ -f "$BYPASS_7D_FILE" ]; then
+		log "weekly window at $u7, share $WEEKLY_SHARE lifted by $BYPASS_7D_FILE"
+	elif fge "$u7" "$WEEKLY_SHARE"; then
 		log "weekly window at $u7 >= share $WEEKLY_SHARE, waiting for its reset at $(date -d "@$r7" '+%F %T')"
 		wait_until $((r7 + 120))
 		continue
