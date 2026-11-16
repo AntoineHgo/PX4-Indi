@@ -393,4 +393,10 @@ fi
 . ${R}etc/init.d/rc.logging
 
 mavlink boot_complete
+
+# SITL scenario player (D-SCHED): plays arm, mode and offboard setpoints from a schedule file in simulation time
+if [ -e sim_schedule.txt ]
+then
+	sim_scenario_player start -f sim_schedule.txt
+fi
 replay trystart
