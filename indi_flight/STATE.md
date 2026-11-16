@@ -52,8 +52,10 @@ S49 (launch 20261116-224459, cap $2.28): T102 stage-2 summary table (`results/st
    break point. T103 D-RATE-LEAD note draft (`design/rate_lead_note.md`): new param MC_INDI_LEAD scale 0..1 (default 1,
    0 = current law), insertion at indi_rate_control.cpp step 8 (l.378-382), c_i = lead K_i ACT_TC, 0 when landed; noise
    x1.4-2.3 on the a_f term (G4); filter H is in the model (checked). Stage 3 OPEN.
-NEXT (S50): route check 49 done early (`design/route_check_49.md`), adopted: (1) host-only falsification of the lead
-   first: add 3-5 ms delay, ACT_TC 0.033 to `bench/margins_models.py` lead rows at 400/800 Hz; stop D-RATE-LEAD if
+S49 also: lead falsification sweep (`results/stage2_s49/lead_delay_README.md`, UNKEYED): unmodelled delay calibrated
+   ~2.5 ms on tc33_p8; lead K20 at 400 Hz PM 57.0/GM 10.5, K30 52.8/8.1, K40 fails -> stop rule not triggered, K_R 20.
+NEXT (S50): route check 49 done early (`design/route_check_49.md`), adopted: (1) DONE S49 (see above); next a haiku second key of the sweep
+   (own delay model), then: add 3-5 ms delay, ACT_TC 0.033 to `bench/margins_models.py` lead rows at 400/800 Hz; stop D-RATE-LEAD if
    PM < 50 or GM < 8 dB at 400 Hz (model is 2.3-3.5 dB GM optimistic). (2) If it holds: opus review r1 of the note
    vs src/lib/indi_rate_control (one interface, ~$0.6, needs $1.2 left), then code MC_INDI_LEAD + unit test (break-checked),
    one roll M3a flight on 2 seeds. Not adopted: 'review the diff instead of the note' (design-first rule kept; the
