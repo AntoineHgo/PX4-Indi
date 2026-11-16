@@ -111,3 +111,28 @@
   1-2 ticks late in the first lemniscate run (A-13 holes likely, not checked).
 - 2026-11-16 S27: route check 27 (off path, act on G1 keys); B26 speed 4 analysed; A-14 reopened, mechanism T58 (baro fusion of a 13-15 m mismatch).
 - 2026-11-16 S29: A-14 SDF fix shown impossible (gz-sensors ignores reference_altitude), bridge fix chosen; metric defects fixed (truth tracking, D-EFFORT-BW); A-19 opened.
+
+- S30: agent ledger rows of sessions 1-13 moved from STATE:
+| 1 | T1 | sonnet | sourced airframe data | done, 42 calls, ~$1.0 (above 30-call brief) |
+| 1 | T2 | sonnet | second key, arithmetic/SDF | done, 14 calls, ~$0.8, 10 WRONG items |
+| 2 | T3 | sonnet | gz model + PID check | done (verified and committed in session 3) |
+| 2 | T4 | sonnet | outer-loop requirements | cut by cap, nothing written |
+| 3 | T4 | sonnet | outer-loop requirements, relaunch | done, 31 calls, ~$0.75, 36 items, 305 lines |
+| 4 | T5 | sonnet | requirements review | done, 16 calls, ~$0.5, 15 new items (4 blocking) |
+| 5 | T6 | fable | outer-loop review r1 | done, 13 calls, ~$2.5 (2x estimate) |
+| 6 | T7 | sonnet | route check 05 | done, 7 calls, ~$0.3 |
+| 6 | T8 | haiku | bench inventory + defect map | done, 7 calls, ~$0.15, design/bench_port_plan.md |
+| 7 | T9 | sonnet | metrics.py port, M:51 fix, self-test | done, 13 calls, ~$0.47 |
+| 8 | T10 | haiku | time-base + origin check | done, 10 calls, ~$0.06, re-run by me |
+| 8 | T11 | haiku | second key, trajectory error | done, 5 calls, ~$0.07, matches metrics.py |
+| 9 | T12 | sonnet | runner port + sends.csv | done, 12 calls, ~$0.37, compile + metrics tests pass |
+| 9 | T13 | haiku | pre-test flight of runner | done, 12 calls, ~$0.1, found x500 hard-code (fixed), then flew |
+| 10 | T14 | sonnet | applied_timing.py + self-test | done, 6 calls, ~$0.34 |
+| 10 | T15 | haiku | logger topics file + pre-test flight | done, 27 calls, ~$0.1, 21 min wall (one rerun) |
+| 11 | T16 | opus | outer-loop review r2, narrow | done, 7 calls, ~$0.6 (opus ~1/4 of fable r1) |
+| 11 | T17 | sonnet | route check 10 | done, 6 calls, ~$0.2 |
+| 11 | T18 | haiku | determinism pre-study, 3 hovers | done, 12 calls, ~$0.05, 6 min wall |
+| 12 | T19 | sonnet | runner fixed sim-time arm/offboard + metrics call | done, 9 calls, ~$0.4 |
+| 12 | T20 | opus | outer-loop review r3, narrow | done, 8 calls, ~$1.0 |
+| 12 | T21a | haiku | 3 hovers try 1 | stopped at run 1 (arm late), 3 calls, ~$0.03 |
+| 12 | T21 | haiku | 3 hovers try 2 | done, 11 calls, ~$0.05, 6.5 min wall |

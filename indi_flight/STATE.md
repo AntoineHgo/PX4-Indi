@@ -36,7 +36,16 @@
    (sim-only, two keys), fallback EKF2_BARO_CTRL 0. T61 DONE (`design/metric_fix_s29.md`, D-EFFORT-BW): rate/attitude
    tracking on sim_ground_truth (estimate kept as *_estimate), effort at 400 Hz grid/50 Hz LP; tests ALL PASS (re-run
    by me), 7 breaks checked. New A-19 (constant truth-EKF yaw offset ~0.4-0.65 deg).
-   S30 (launch 20261116-042504, cap $1.62): ZOH second key DONE (7320b3d257): rate 15/15 AGREE.
+   S30 (launch 20261116-042504, cap $1.62): ZOH second key DONE (7320b3d257): rate 15/15 AGREE. T63 DONE: gz_bridge baro
+   at world elevation (4443079c0b, builds in docker, make format clean, ISA self-test `bench/tests/test_baro_elev.py`;
+   elevation = first raw navsat altitude, so spawn z0 counted twice, ~11 Pa/m, unverified). T64 route check 30 DONE
+   (`design/route_check_30.md`): NOT on shortest path; A-14 over its 2-session cap. Acting on it:
+   S31 PLAN (hard stop): (i) haiku second key of the bridge diff + pretest 1-3 hovers speed 4 (check CAL_OFF ~0 Pa,
+   baro vs GNSS height, no step after EKF2 start); if it fails -> EKF2_BARO_CTRL 0, no more A-14 work. (ii) one haiku
+   task: attitude 15 % gap + A-19 closing test, bound if unexplained. (iii) re-fly G1.6 set once, write G1 FINAL with
+   anomalies as evidence limits, start stage 2 (loop-gain injection) in parallel. Simulator items of 1-5 below are
+   DEFERRED to G3/G5 (route check 30 item 4). Escalate to owner if G1 not frozen by end of S31.
+   (Old S30 list, kept for reference:)
    S30 NEXT: (a) gz_bridge baro fix (sonnet) + haiku second key, then a14_close pretest; (b) haiku second keys of the
    new truth/effort metrics over >= 5 logs (G1.3 set) and A-19 closing test; (c) step_metrics still on the estimate;
    (d) route check 30 due (sonnet), freeze G1, start stage 2. T62 DONE (`results/second_key_s29.md`, `bench/second_key_s29.py`): effort 5/5 AGREE (0.03 %); rate
@@ -52,8 +61,6 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T63 | S30 gz_bridge baro re-expressed at world elevation (D-A14) | sonnet bg | `design/a14_bridge_fix_s30.md` | relaunch from that file |
-| T64 | S30 route check 30 | sonnet bg | `design/route_check_30.md` | relaunch |
 | B26 | G1.6 set --sched --sched-anchor, 3 scen x 5, speed 4 (done, analysed S27) then 1 (DONE S28, not analysed) | host bash (detached) | `results/g16_sched_set_s26/speed{4,1}/status.txt` | `setsid nohup indi_flight/bench/g16_sched_set.sh` (delete partial speed dir first) |
 
 ## Open problems
@@ -64,29 +71,6 @@
 ## Agent ledger (stage 1)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
-| 1 | T1 | sonnet | sourced airframe data | done, 42 calls, ~$1.0 (above 30-call brief) |
-| 1 | T2 | sonnet | second key, arithmetic/SDF | done, 14 calls, ~$0.8, 10 WRONG items |
-| 2 | T3 | sonnet | gz model + PID check | done (verified and committed in session 3) |
-| 2 | T4 | sonnet | outer-loop requirements | cut by cap, nothing written |
-| 3 | T4 | sonnet | outer-loop requirements, relaunch | done, 31 calls, ~$0.75, 36 items, 305 lines |
-| 4 | T5 | sonnet | requirements review | done, 16 calls, ~$0.5, 15 new items (4 blocking) |
-| 5 | T6 | fable | outer-loop review r1 | done, 13 calls, ~$2.5 (2x estimate) |
-| 6 | T7 | sonnet | route check 05 | done, 7 calls, ~$0.3 |
-| 6 | T8 | haiku | bench inventory + defect map | done, 7 calls, ~$0.15, design/bench_port_plan.md |
-| 7 | T9 | sonnet | metrics.py port, M:51 fix, self-test | done, 13 calls, ~$0.47 |
-| 8 | T10 | haiku | time-base + origin check | done, 10 calls, ~$0.06, re-run by me |
-| 8 | T11 | haiku | second key, trajectory error | done, 5 calls, ~$0.07, matches metrics.py |
-| 9 | T12 | sonnet | runner port + sends.csv | done, 12 calls, ~$0.37, compile + metrics tests pass |
-| 9 | T13 | haiku | pre-test flight of runner | done, 12 calls, ~$0.1, found x500 hard-code (fixed), then flew |
-| 10 | T14 | sonnet | applied_timing.py + self-test | done, 6 calls, ~$0.34 |
-| 10 | T15 | haiku | logger topics file + pre-test flight | done, 27 calls, ~$0.1, 21 min wall (one rerun) |
-| 11 | T16 | opus | outer-loop review r2, narrow | done, 7 calls, ~$0.6 (opus ~1/4 of fable r1) |
-| 11 | T17 | sonnet | route check 10 | done, 6 calls, ~$0.2 |
-| 11 | T18 | haiku | determinism pre-study, 3 hovers | done, 12 calls, ~$0.05, 6 min wall |
-| 12 | T19 | sonnet | runner fixed sim-time arm/offboard + metrics call | done, 9 calls, ~$0.4 |
-| 12 | T20 | opus | outer-loop review r3, narrow | done, 8 calls, ~$1.0 |
-| 12 | T21a | haiku | 3 hovers try 1 | stopped at run 1 (arm late), 3 calls, ~$0.03 |
-| 12 | T21 | haiku | 3 hovers try 2 | done, 11 calls, ~$0.05, 6.5 min wall |
 | 14 | T24 | host bash | G1.6 speed 1, 15 runs | done, 15/15 first attempt, 26 min wall, $0 |
 | 14 | T26 | host bash | G1.6 speed 4, 15 runs | done, 15/15 first attempt, ~11 min wall, $0 |
 | 14 | T27 | haiku | G1.6 ULog checks | done, 6 calls, ~$0.05 |
@@ -128,6 +112,8 @@
 | 28 | T59 | sonnet | G1.3/G1.4 matrix + missing self-tests (route check 27 item 2) | done, 16 calls, ~$0.45; tests re-run by me (ALL PASS, metrics.py diff empty) |
 | 29 | T60 | haiku | A-14 reference_altitude check | done, 11 calls, ~$0.25, SDF fix impossible |
 | 29 | T61 | sonnet | metric defects 1+2 | done, 16 calls, ~$0.6, tests re-run by me |
+| 30 | T63 | sonnet | gz_bridge baro elevation fix | done, 6 calls, ~$0.25, built by me |
+| 30 | T64 | sonnet | route check 30 | done, 7 calls, ~$0.2 |
 
 ## Lessons proposed
 - A shared sim model is live for every running batch: stage a model change and install it after the batch ends (S28 nearly mixed two baro models into B26).
