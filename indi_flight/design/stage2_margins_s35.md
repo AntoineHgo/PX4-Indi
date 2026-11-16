@@ -53,7 +53,7 @@ checked before implementation. Line refs are to the working tree at S35.
 ### 1.2 Per-loop table (primary = P, cross-check = X)
 | Loop | PID stack | INDI stack | Signals (topic, controller rate?) |
 |---|---|---|---|
-| rate roll/pitch/yaw | P: M1; X: M2 | P: M1; X: M2, M3a | x=sensor_gyro (800 Hz, logged), y=sim_inject.gyro_pre; motors: actuator_motors, vehicle_torque_setpoint (logged, interval 0) |
+| rate roll/pitch/yaw | P: M1; X: M2 | P: M3a (7.1, D-G2-BREAK); X: M2; M1 = gyro-path gain only | x=sensor_gyro (800 Hz, logged), y=sim_inject.gyro_pre; motors: actuator_motors, vehicle_torque_setpoint (logged, interval 0) |
 | attitude | P: M4 `att` rows, L=y/e, e from vehicle_attitude_setpoint, vehicle_attitude (logged) | P: M3c (rate sp break); X: M4 via module-internal e | vehicle_rates_setpoint (logged), indi_pos_status; quaternion error small-angle |
 | velocity | P: M4 `vel` + M5 (velocity-only mode, pos loop open) | P: M4 `vel` (L=v/e_v exact); X: M5, M3b | vehicle_local_position, trajectory_setpoint (logged interval 0, but EKF output rate, UNVERIFIED ~50-100 Hz) |
 | position | P: M4 L=p/e_p (position mode) | same as PID; X: M5 | vehicle_local_position(_setpoint) |
@@ -105,25 +105,27 @@ chain e^{-s d_m T}/(1+s tau_m) with tau_m = MC_INDI_ACT_TC (default 0.02 s) and 
 A_meas = A_r e^{-s n T} (n = MC_INDI_ERPM_DLY, default 1); F_w = IMU gyro low pass (IMU_GYRO_CUTOFF 40 Hz, set at
 `run_scenario.py:39`); H = LPF2p(40 Hz) x alpha(20 Hz) x derivative, same chain on the gyro derivative and the model path
 (by design, McIndiRateControl.cpp:95); g = G1_true/G1_set (default MC_INDI_G1_R = 320 rad/s^2 per unit, MC_INDI_K_R = 20 1/s);
-eta = delivered/allocated torque. Tau_r and the gz motor time constants are in the SDF (UNVERIFIED, read in session A).
+eta = delivered/allocated torque. Tau_r = 0.033 s up and down, all rotors (`indi_flight/sim/models/quad5in/model.sdf:12-13`, VERIFIED r1).
 ### 4.1 INDI rate loop (per axis; yaw adds the G2 spin-up term, omitted)
 Derived from `indi_rate_control.cpp` (steps 3-9: t_act lag, delay buffer, H, measured path, blend, nu = K e, dt = (nu-a_f)/G1):
 - Loop broken at the torque setpoint u (M3a), model-only t_f, plant w' = g G1 A_r u:
   `L = g (K/s) F_w A_r + H (g A_r - A_m)`   (first term: rate loop; second: incremental mismatch loop).
 - With measured torque and blend (`hpp:59-62`; t_f = t_meas + LPF_Tb(t_model - t_meas), blend alpha = dt/(Tb+dt), kMaxBlend 2),
   plant w' = G1 eta A_r u, A_meas = eta A_r e^{-snT}:
-  `L = eta (K/s) F_w A_r - H (A_m - eta A_r e^{-snT}) / (1 + s Tb)` (+ terms that vanish when n = 0, eta = 1).
+  `L = eta (K/s) F_w A_r - H (A_m - eta A_r e^{-snT}) / (1 + s Tb)` (+ the residual H eta A_r (1 - e^{-snT}), zero only for n = 0;
+  Tb = 0 is pure measurement, `MC_INDI_ACT_BLD` = 0, code default, see 7.3).
 - Low-frequency reduction (A ~ 1, H ~ 1): characteristic polynomial `Tb s^2 + eta (1 + K Tb) s + eta K`, i.e. a blend mode at
   w_n = sqrt(eta K / Tb), zeta = eta (1 + K Tb) / (2 sqrt(eta K Tb)). Discretise by z = e^{sT} with the real sample delays;
-  the time-domain version (self-test 4) is the 800/400/267 Hz reference. Checks that must hold: eta = 1, Tb any -> L = (K/s) F_w A_r.
+  the time-domain version (self-test 4) is the 800/400/267 Hz reference. Check that must hold: n = 0 AND A_m = A_r (any eta, Tb) -> L = eta (K/s) F_w A_r (7.4);
+  with the defaults (tau_m 0.02 s, tau_r 0.033 s) the mismatch term is nonzero and is modelled, not assumed away.
 ### 4.2 PID rate loop
-`L = (Kp + Ki/s - Kd s F_d) G1 eta A_r F_w / s`, torque-per-rad/s gains; D on the measured angular acceleration with the
+`L = (Kp + Ki/s + Kd s F_d) G1 eta A_r F_w / s` (D on measured angular acceleration, sign per 7.2), torque-per-rad/s gains; D on the measured angular acceleration with the
 IMU derivative filter (IMU_DGYRO_CUTOFF 20 Hz). Gains, I-term and MC_*RATE_K scaling to be read from mc_rate_control
 source and params (UNVERIFIED, not read this session); G1 from the same MC_INDI_G1_* effectiveness for like-for-like.
 ### 4.3 Anomaly A-1 (`indi_project/results/v3_screen.md` l.22: Tb 0.1 lost altitude after the fault, 1 seed, pruned unexplained)
 - What the model says: the blend replaces the integral action by an extra rate-loop mode at w_n = sqrt(eta K/Tb). With
-  K = 20: Tb 0.1, eta 0.25-0.5 gives w_n 7-10 rad/s, zeta 0.53-0.75; Tb 0.3: w_n 4-6 rad/s; Tb 1.0: 2-3 rad/s, zeta ~0.75;
-  Tb 0.03: zeta ~0.3. So Tb 0.1 puts the mode at the attitude-loop crossover (UNVERIFIED value of the attitude gain; read it)
+  K = 20: Tb 0.1, eta 0.25-0.5 gives w_n 7-10 rad/s, zeta 0.53-0.75 (checked by r1); other Tb values WITHDRAWN (7.3):
+  Tb 1.0 is overdamped (r1: zeta 1.2-1.7, slow real pole near 1 rad/s), Tb 0.03 zeta 0.52-0.73; the script computes the table. So Tb 0.1 puts the mode at the attitude-loop crossover (UNVERIFIED value of the attitude gain; read it)
   where it can cost attitude phase, while Tb 0.3 and 1.0 place it below. For eta near 1 (no fault) nothing differs, which
   matches the nominal entries being indistinguishable (v3_screen.md reading, "within 3 %").
 - Hypothesis H-A1a (linear): at Tb 0.1 and reduced eta the attitude-loop PM and peak |S| are worse than at Tb 0.3.
@@ -185,3 +187,18 @@ source and params (UNVERIFIED, not read this session); G1 from the same MC_INDI_
 6. Still UNVERIFIED (carried to S37): gyro-bias estimator band, msg versioning for new topics, offboard
    velocity-only rows, Python force injection timing, PID rate gains.
 Next: a short r2 check (sonnet, <= 6 calls) of this section against r1 and the source, before S38 plumbing.
+7. S37 residuals of r2 (`stage2_note_review_r2.md`), all MINOR, answered:
+   - Bypass `_t_cmd_last` (lib :191-207): read in S37. `faultOutput` is entered only on non-finite inputs, dt outside
+     [kMinDt, kMaxDt], invalid params (lib :216-226) or a non-finite increment (lib :386-389). A finite d of any size
+     cannot enter it, so the held c-derived output is reached only in fault cycles; the run asserts `fault == 0`.
+   - M3b (r1 item 6): the accel-loop injection must be added to t_c before both the publish and every store that
+     feeds the next cycle's t_f in `mc_indi_pos_control`. Not yet checked in source: S38 plumbing reads it and records
+     the line numbers here before the first M3b flight. No M3b result is used until then.
+   - r1 item 7: the empirical delay-margin check uses w_c of the M1 (gyro) loop, where the added delay multiplies the
+     whole loop; on L_u (M3a) the delay also desynchronises a_f from t_f, so the M3a PM drop is reported, not tested.
+   - r1 item 8: reference model is `indi_flight/sim/models/quad5in{,_base}` (`run_scenario.py:31`), airframe
+     `ROMFS/px4fmu_common/init.d-posix/airframes/4040_gz_quad5in`; not `Tools/simulation/gz/models`.
+   - r1 item 9: SIM_GZ_THR_SC scales rotor speed by sqrt(sc), thrust and torque by sc; with ESC feedback the measured
+     path sees it, the model path does not (as 4.1 assumes). At eta 0.5 the hover command about doubles: the pre-test
+     checks the motor ceiling (motors <= 0.85, section 2) and drops eta values that hit it.
+   - Tb 1.0 slow pole (~1 rad/s, r1 item 4) added to H-A1a as a risk for slow fault recovery; the script prints it.

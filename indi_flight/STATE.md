@@ -17,8 +17,10 @@
 S36 DONE: G1 FINAL; T73 r1 BLOCKING answered (note section 7, D-G2-BREAK).
 S36 T74 r2 CLOSED (`design/stage2_note_review_r2.md`): M3a cuts every in-flight path; S38 must log c (pre-injection),
    d and u at cycle rate.
-S37 NEXT: (1) patch stale text of the note body (l.56, 115, 118, 120) and answer r1 MINOR items 7-9 + M3b in
-   section 7 (myself, short); `_t_cmd_last`/faultOutput read before S38; (2) estimator + synthetic self-tests (sonnet), S38 injection plumbing, S39 flights, S40 route check 40.
+S37 (launch 20261116-080552, cap $3): (1) DONE note body patched, section 7 item 7 answers r2 residuals (fault path
+   unreachable by finite d; M3b store point to be read in S38 plumbing). (2) T75 sonnet: `bench/margins_est.py` +
+   `bench/tests/test_margins_selftest.py` self-tests 1-3 (output files those two). Next: T75 second key (haiku/sonnet,
+   independent GM/PM/DM solve), `margins_models.py` + self-test 4, S38 injection plumbing, S39 flights, S40 route check.
 S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_s35/README.md`); A-19 heading-only
    candidate refuted, A-19 PARKED by mechanism (bound 1.6 deg, yaw verdicts on estimate); A-14 hold bound re-set by
    mechanism to +-0.15 m (r14 0.068 m exceeded the old +-0.06 sample bound). T70 second key AGREE 7/7. T71 route
@@ -28,6 +30,7 @@ S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T75 | margins estimator + self-tests 1-3 | sonnet | bench/margins_est.py, bench/tests/test_margins_selftest.py | re-run `python3 indi_flight/bench/tests/test_margins_selftest.py` |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
