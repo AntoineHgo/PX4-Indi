@@ -57,7 +57,8 @@ S41 (launch 20261116-092054, cap $1.98): (1) DONE seed 2 model-only AMP 0.005 (`
 S42 (launch 20261116-093138, cap $1.26): (b) DONE T86 haiku + my LPF-matched re-fit
    (`results/stage2_s42/g1_regression_lpf.md`, `bench/g1_regress_lpf_s42.py LOG OUT`): G1/tau/delay ridge, not separable
    in 2-10 Hz; G1 377-385 if tau 0.033 and delay <=2 samples, 320 if tau 0.02 + 15 ms latency. (c) decides. UNKEYED.
-S43 NEXT: (c) FIRST (motor step, fixes tau + latency, then G1 from the ridge); (a) add attitude loop to margins_models.py (sonnet) + haiku second key; (b) G1 by regressing angular accel
+   T87 haiku analytic G1 = 878 (`results/stage2_s42/g1_analytic.md`, UNKEYED), 2-2.7x the ridge -> A-22 opened.
+S43 NEXT: A-22 chain trace (sonnet, closes the G1 question with no flight; cheaper than (c)), then (c) (motor step, fixes tau + latency, then G1 from the ridge); (a) add attitude loop to margins_models.py (sonnet) + haiku second key; (b) G1 by regressing angular accel
    on torque_sp from existing logs (haiku); (c) actuator_motors step in sim v2 to measure gz command latency;
    (d) 400 Hz injection (delay doubles if 1 step). A-21 closes when model incl. attitude loop matches within G2 tol. Old plan: (1) A-21 closing test (1) rest: model-only AMP 0.005 seed 2 (1 flight,
    host bash, ~3 min each: `indi_project/docker/run.sh -n X -t 600 -- python3 indi_flight/bench/run_scenario.py
@@ -95,6 +96,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 36 | T73 | opus | review r1 stage-2 note | done, 11 calls, ~$0.8, BLOCKING, answered |
 | 37 | T75 | sonnet | margins estimator + self-tests 1-3 | done, 9 calls, ~$0.9, ALL PASS re-run by me |
 | 37 | T76 | haiku | second key margins (analytic) | done, 3 calls, ~$0.06, AGREE 5/5 |
+| 42 | T87 | haiku | analytic G1 from allocator | done, 8 calls, ~$0.07, 878 vs 320-435, A-22 |
 | 42 | T86 | haiku | G1 regression | done, 7 calls, ~$0.08, missed D-filter on u, superseded by my re-fit |
 | 37 | T77 | haiku | PID rate gains read | done, 6 calls, ~$0.06, units fixed by me |
 | 38 | T78 | sonnet | margins_models.py + self-test 4 | done, 15 calls, ~$1.0, ALL PASS re-run by me |
