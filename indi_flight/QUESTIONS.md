@@ -48,5 +48,9 @@ before you answer.
 - B: build lockstep gz first, keep (a) as written.
 - C: keep (a); G1.6 stays failed.
 
+**Addendum S27 (B26 speed 4, 15 runs):** triggers exact (0 or +1 IMU tick). PX4 response spread 6.25-8.75 ms, but the
+offboard latency is 11.25-20 ms (1-2 Commander ticks), so option A's (a2) would read "response spread within one
+Commander period, latency within two". Provisional verdicts under A are in GATES.md (not marked passed).
+
 **Meanwhile.** I continue with the player (take-off/land kinds, anchoring on the logged transition) and G1.5.
 Not blocked. G1.6 is not marked passed before you answer.

@@ -34,6 +34,14 @@
    player kinds (--sched refuses disturbance/motor_fault/erpm_loss/thrust_sag hooks today); (4) land row instead of MAVLink.
    Unverified from T55: pva propagation never exercised (rows hit own tick); step_pitch/yaw, circle not flown; 4/861 rows
    1-2 ticks late in the first lemniscate run (A-13 holes likely, not checked).
+00000000000000000. S27 (launch 20261116-034335, cap $3): route check 27 DONE (`design/route_check_27.md`: off path, 0 G1 items
+   passed, act: provisional verdicts, then G1.3/G1.4 keys, minimum G1.5, freeze G1, start stage 2 by S30). B26 speed 4
+   analysed (`results/g16_sched_set_s26/speed4/README.md`): triggers exact, response spread 6-9 ms (A-17), step_roll
+   spreads 3-10x tighter than pre-player; A-14 REOPENED (EKF height -2.3 m on the ground between 20 and 29 s in 2/15
+   `-f` runs -> hover at 7.2 m true). Provisional G1.1/G1.6 verdicts in GATES.md (G1.6(c) not met: A-14). Q3 addendum.
+   S28 NEXT: (1) A-14 cause (T58 if not done: `design/a14_cause_s27.md`); (2) B26 speed 1: same analysis as speed 4
+   (`second_key_player.py` per log, `G16_ROOT=... g16_spread.py`, `prearm_zbias.py`), haiku second key on the spread;
+   (3) route check 27 items 2-5 (G1.3/G1.4 keys on gate-bearing metrics, minimum G1.5, freeze G1 S30, stage 2).
 1-4. Stage-1 items still pending from the old list (rest done, history in JOURNAL): errata re-score of archived set-O/T5;
    window rule must accept nav_state 23; sag as sim-time ramp in gz bridge (two keys); run_scenario sim-time fixes
    (`sim_review.md`:14,19) now folded into the player; outer-loop A-requirements folded at stage 5.
