@@ -46,7 +46,9 @@ S40 pre-test DONE (`results/stage2_s40/pretest_inj/README.md`): both paths READY
    NP 3, TP 10, AMP 0.005 (window 52-82 s at 5 m); u=c+d, generator on timestamp_sample, fault/landed all pass.
    Preliminary roll 800 Hz: measured PM 61/GM 12.2 dB; model-only PM 25/GM 4.3 dB vs linear model 42.7 -> A-21 OPEN.
 S40 also: A-21 linearity AMP 0.01 vs 0.005 PASS (PM 26.3 vs 25.3 deg, GM 5.0 vs 4.3 dB): gap to model is real.
-S41 NEXT (in order): (1) A-21 closing test (1) rest: model-only AMP 0.005 seed 2 (1 flight,
+S41 (launch 20261116-092054, cap $1.98): (1) DONE seed 2 model-only AMP 0.005 (`results/stage2_s41/`): checks pass,
+   PM 24.0 deg / GM 6.0 dB / DM 14 ms -> A-21 closing test 1 PASS (PM 25.3/26.3/24.0). T84 haiku second key, T85 sonnet
+   closing test 2: IN FLIGHT (see Tasks). Old plan: (1) A-21 closing test (1) rest: model-only AMP 0.005 seed 2 (1 flight,
    host bash, ~3 min each: `indi_project/docker/run.sh -n X -t 600 -- python3 indi_flight/bench/run_scenario.py
    --scenario hover_long --controller indi_m3a --model quad5in --seed N --speed 4 --params <inj_model_long.params
    with AMP> --out ...`, then `checks.py RUN AMP 20 3`, `bench/m3a_csv.py`, `bench/m3a_margins_pretest.py`);
@@ -61,6 +63,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T84 | second key m3a_csv + margins_pretest | haiku | results/stage2_s41/second_key_m3a.md | relaunch brief from STATE |
+| T85 | A-21 closing test 2, model vs measured per bin | sonnet | results/stage2_s41/a21_model_vs_measured.md | relaunch |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
