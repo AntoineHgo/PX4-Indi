@@ -66,3 +66,4 @@
 - 2026-11-15 S17: A-11 closed (effort rate dependent), G1.6 verdict recorded, gate_g1.sh for G1.1/3/4/6, A-12/A-13 opened.
 - S18: A-12 closed (dynamic_pose/info, truth 800 Hz at speed 4), second key T37 agrees.
 - S19: T38 pre-test: attitude/rate truth 800 Hz confirmed; g1.1 FAIL only on esc_status (A-10) and local_position rate; A-14 opened (take-off EKF z residual 2.2 m).
+- 2026-11-16 S20: g1.1 rates fixed (00591b4e10); A-14 intermittent take-off EKF z offset; A-15 truth stream misses ~13 % of sim steps (gz_bridge).

@@ -14,6 +14,12 @@
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
+0000000000. S20 (launch 20261116-014126, cap $2.61) DONE: T39 g1.1 declared rates fixed (truth at controller rate, EKF 88 Hz
+   = 800/9 explained, GATES.md log), check_truth output path; T40 A-14 intermittent, not a reset/baro, pre-arm unseen;
+   T41 A-15 truth stream misses ~13 % of sim steps at speed 4 (gz_bridge pose, not logger), controller topics only jitter.
+   S21 NEXT: (1) A-15 cause (sonnet, read-only ~12 calls): gz_bridge dynamic_pose/info subscription vs IMU path, transport
+   queue/pacing at speed 4, propose fix (truth from the same step callback as IMU?); one speed-1 flight to compare.
+   (2) A-14 test: 3 runs logging from boot (SDLOG_MODE 1), EKF z vs truth pre-arm (haiku). (3) S19 items (2)-(5) below.
 000000000. S19 (launch 20261115-234854, cap $1.08): T38 DONE (`results/a12_fix_s18/pretest_truth_topics/README.md`):
    attitude/rate/position truth 800 Hz confirmed; g1.1 FAIL only esc_status (A-10) + local_position 88.9 Hz; A-14 opened.
    S20 NEXT: (1) small fixes (sonnet or haiku, one agent): `g1_checks.py` add attitude/angular-velocity truth rows;
@@ -128,6 +134,9 @@
 | 18 | T36 | sonnet | A-12 fix (dynamic_pose/info) | done, 18 calls, ~$0.43, commit dbb1a62e29 |
 | 17 | T35 | sonnet | gate_g1.sh + g1_checks.py | done, 14 calls, ~$0.52 |
 | 19 | T38 | host bash | pre-test hover s4, truth topics | done, 1/1 flew, 40 s wall, $0 |
+| 20 | T39 | sonnet | g1.1 rates + check_truth path | done, 17 calls, ~$0.35 |
+| 20 | T40 | haiku | A-14 two reruns + a14_check.py | done, 13 calls, ~$0.1 |
+| 20 | T41 | haiku | A-15 gap coincidence | done, 6 calls, ~$0.06 |
 
 ## Lessons proposed
 - Haiku handles a well-specified log check (10 calls) for ~$0.06: use it for every bounded log/metric check.
