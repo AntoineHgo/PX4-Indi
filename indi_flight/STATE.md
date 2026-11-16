@@ -20,7 +20,9 @@
    instants identical (spread 0 us vs 7.5-11 ms before). T50 second key AGREE (`results/player_s24/second_key/`).
    Commander adds a fixed 6.25 ms (arm) / 16.25 ms (offboard) after the applied row: deterministic, its 10 ms loop;
    G1.6(a) is the across-run spread, so not a defect. Q2 (G1.1 gap rule) asked, not blocking.
-   S25 NEXT: (1) read `results/g16_sched_s24/` (5 hovers, instants.json each); (2) sonnet: takeoff/land kinds in the
+   5 hovers `--sched` (`results/g16_sched_s24/README.md`): arm/offboard spread 5.0/6.25 ms, still > 2.5 ms -> A-17
+   (Commander 10 ms loop phase). S25 NEXT: (1) A-17 closing test (haiku, ~10 calls, logs exist); if confirmed, sonnet
+   aligns mode rows to the Commander cycle or fixes its SITL start phase, then (2) sonnet: takeoff/land kinds in the
    player + capture hold position (yaw hard-coded 1.585 today), then re-fly the full 5-run G1.6 set (hover, step, traj)
    with --sched at speeds 1 and 4 (host bash) and a G1.6(a) verdict; (3) G1.5 injectors via player kinds.
 1-4. Stage-1 items still pending from the old list (rest done, history in JOURNAL): errata re-score of archived set-O/T5;
@@ -32,7 +34,6 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| G16S | 5 hovers `--sched` + instants (host bash) | - | `results/g16_sched_s24/status.txt` | `bench/g16_sched_hover.sh` |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
