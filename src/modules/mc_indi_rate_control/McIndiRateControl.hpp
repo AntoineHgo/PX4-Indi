@@ -62,6 +62,7 @@
 
 #include <ActuatorEffectivenessMultirotor.hpp>
 
+#include "IndiInjection.hpp"
 #include "IndiMeasuredTorque.hpp"
 
 using namespace time_literals;
@@ -111,12 +112,14 @@ private:
 
 	/**
 	 * Run the INDI rate law, publishes indi_rate_status
-	 * @return normalised torque setpoint
+	 * @param timestamp_sample gyro sample time of this cycle, the clock of the bench injection
+	 * @return normalised torque setpoint u = c + d (d is zero unless the bench injection MC_INDI_INJ_AX is set)
 	 */
 	matrix::Vector3f runIndiRateControl(const matrix::Vector3f &rates, const matrix::Vector3f &angular_accel, float dt,
-					    bool landed);
+					    bool landed, hrt_abstime timestamp_sample, bool armed);
 
 	IndiRateControl _indi; ///< INDI rate law
+	IndiInjection _injection; ///< bench loop-break excitation (MC_INDI_INJ_*), off by default
 
 	ActuatorEffectivenessMultirotor _effectiveness{this}; ///< rotor geometry, same parameters as the control allocator
 	IndiMeasuredTorque _measured_torque_model;
@@ -193,6 +196,13 @@ private:
 		(ParamInt<px4::params::MC_INDI_ERPM_DLY>) _param_mc_indi_erpm_dly,
 		(ParamFloat<px4::params::MC_INDI_ERPM_TO>) _param_mc_indi_erpm_to,
 		(ParamFloat<px4::params::MC_INDI_DT_MAX>) _param_mc_indi_dt_max,
-		(ParamFloat<px4::params::MC_INDI_YAW_CUT>) _param_mc_indi_yaw_cut
+		(ParamFloat<px4::params::MC_INDI_YAW_CUT>) _param_mc_indi_yaw_cut,
+		(ParamInt<px4::params::MC_INDI_INJ_AX>) _param_mc_indi_inj_ax,
+		(ParamFloat<px4::params::MC_INDI_INJ_AMP>) _param_mc_indi_inj_amp,
+		(ParamFloat<px4::params::MC_INDI_INJ_TP>) _param_mc_indi_inj_tp,
+		(ParamFloat<px4::params::MC_INDI_INJ_FMIN>) _param_mc_indi_inj_fmin,
+		(ParamFloat<px4::params::MC_INDI_INJ_FMAX>) _param_mc_indi_inj_fmax,
+		(ParamInt<px4::params::MC_INDI_INJ_NP>) _param_mc_indi_inj_np,
+		(ParamFloat<px4::params::MC_INDI_INJ_DLY>) _param_mc_indi_inj_dly
 	)
 };

@@ -169,3 +169,78 @@ parameters:
       unit: Hz
       decimal: 1
       increment: 1
+    MC_INDI_INJ_AX:
+      description:
+        short: INDI bench excitation axis
+        long: |-
+          Bench and system identification only. Adds a multisine excitation d to the INDI torque setpoint of one axis
+          (u = c + d, also fed back to the INDI actuator model) while armed and not landed, for MC_INDI_INJ_NP
+          periods from the first such cycle. 0 disables it, the torque setpoint is then unchanged.
+      type: enum
+      values:
+        0: Off
+        1: Roll
+        2: Pitch
+        3: Yaw
+      default: 0
+    MC_INDI_INJ_AMP:
+      description:
+        short: INDI bench excitation amplitude
+        long: Bench and system identification only. Amplitude of each sine component of the excitation, in normalised torque.
+      type: float
+      default: 0.02
+      min: 0
+      max: 0.2
+      decimal: 3
+      increment: 0.005
+    MC_INDI_INJ_TP:
+      description:
+        short: INDI bench excitation period
+        long: Bench and system identification only. Period of the multisine excitation, the frequencies are integer multiples of 1/period.
+      type: float
+      default: 20
+      min: 1
+      max: 100
+      unit: s
+      decimal: 1
+      increment: 1
+    MC_INDI_INJ_FMIN:
+      description:
+        short: INDI bench excitation lowest frequency
+        long: Bench and system identification only. Lowest frequency of the excitation, about 10 components per decade up to MC_INDI_INJ_FMAX (at most 64, the highest ones are dropped).
+      type: float
+      default: 0.5
+      min: 0.01
+      max: 50
+      unit: Hz
+      decimal: 2
+      increment: 0.1
+    MC_INDI_INJ_FMAX:
+      description:
+        short: INDI bench excitation highest frequency
+        long: Bench and system identification only. Highest frequency of the excitation.
+      type: float
+      default: 60
+      min: 0.1
+      max: 200
+      unit: Hz
+      decimal: 1
+      increment: 1
+    MC_INDI_INJ_NP:
+      description:
+        short: INDI bench excitation periods
+        long: Bench and system identification only. Number of periods of the excitation after it starts, then it stops.
+      type: int32
+      default: 3
+      min: 1
+      max: 20
+    MC_INDI_INJ_DLY:
+      description:
+        short: INDI bench excitation start delay
+        long: Bench and system identification only. Time from the first armed, airborne cycle to the start of the excitation.
+      type: float
+      unit: s
+      default: 5.0
+      min: 0
+      max: 60
+      decimal: 1

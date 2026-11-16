@@ -92,6 +92,10 @@ McIndiRateControl::parameters_updated()
 	_indi.setMaxIncrement(_param_mc_indi_dt_max.get());
 	_indi.setYawCutoff(_param_mc_indi_yaw_cut.get());
 
+	// bench-only loop-break excitation, rebuilt only when one of its values changed
+	_injection.setParameters(_param_mc_indi_inj_ax.get(), _param_mc_indi_inj_amp.get(), _param_mc_indi_inj_tp.get(),
+				 _param_mc_indi_inj_fmin.get(), _param_mc_indi_inj_fmax.get(), _param_mc_indi_inj_np.get(), _param_mc_indi_inj_dly.get());
+
 	// the actuator model filter must match the sensor filter chain of the angular acceleration
 	float gyro_cutoff = 0.f;
 	float dgyro_cutoff = 0.f;
@@ -175,7 +179,8 @@ McIndiRateControl::updateMeasuredTorque()
 }
 
 Vector3f
-McIndiRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f &angular_accel, float dt, bool landed)
+McIndiRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f &angular_accel, float dt, bool landed,
+				      hrt_abstime timestamp_sample, bool armed)
 {
 	// torque the allocator produced from the previous setpoint, only if its feedback belongs to that setpoint
 	Vector3f torque_allocated_prev = _prev_torque_setpoint;
@@ -192,9 +197,26 @@ McIndiRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f &ang
 				       && torque_measured.isAllFinite();
 	_indi.setMeasuredTorque(torque_measured, measurement_valid);
 
-	const Vector3f torque_setpoint = _indi.update(rates, _rates_setpoint, angular_accel, torque_allocated_prev, dt, landed);
+	// c: controller output
+	const Vector3f torque_setpoint_pre_inject = _indi.update(rates, _rates_setpoint, angular_accel, torque_allocated_prev, dt,
+			landed);
+
+	// d: bench loop-break excitation on one axis, not computed (u == c) when MC_INDI_INJ_AX is 0
+	Vector3f inject{};
+	const int inject_axis = _injection.axis();
+
+	if (inject_axis >= 0) {
+		inject(inject_axis) = _injection.update(timestamp_sample, armed, landed);
+	}
+
+	// u = c + d: the published setpoint and the stored previous setpoint, so every feedback path closes through u
+	const Vector3f torque_setpoint = torque_setpoint_pre_inject + inject;
 
 	indi_rate_status_s indi_rate_status{};
+	indi_rate_status.timestamp_sample = timestamp_sample;
+	torque_setpoint_pre_inject.copyTo(indi_rate_status.torque_sp_pre_inject);
+	inject.copyTo(indi_rate_status.inject);
+	torque_setpoint.copyTo(indi_rate_status.torque_sp);
 	_indi.getNu().copyTo(indi_rate_status.nu);
 	_indi.getFilteredAngularAccel().copyTo(indi_rate_status.angular_accel_filtered);
 	_indi.getFilteredTorque().copyTo(indi_rate_status.torque_filtered);
@@ -309,7 +331,8 @@ McIndiRateControl::Run()
 			}
 
 			// INDI has its own actuator model: no yaw low-pass filter and no battery scaling
-			const Vector3f torque_setpoint = runIndiRateControl(rates, angular_accel, dt, _maybe_landed || _landed);
+			const Vector3f torque_setpoint = runIndiRateControl(rates, angular_accel, dt, _maybe_landed || _landed,
+							 angular_velocity.timestamp_sample, _vehicle_control_mode.flag_armed);
 
 			// publish thrust and torque setpoints
 			vehicle_thrust_setpoint_s vehicle_thrust_setpoint{};
