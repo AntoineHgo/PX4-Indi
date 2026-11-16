@@ -58,6 +58,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| F48 | M3a check flights tc33_p8, tc33_p3 (model prediction test) | host bash | `results/stage2_s48/m3a_check/` (done.txt) | `bash indi_flight/results/stage2_s48/m3a_check/fly.sh` |
+| T101 | second key of lead/att-loop model | sonnet | `results/stage2_s48/lead_second_key.md` | re-brief from STATE |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);

@@ -249,3 +249,17 @@ Open, to be written before code (MISSION "Decisions that are yours"):
 - The firmware parameter description ("about G1_Y x loop period, 0.02") is wrong for this airframe; fix in stage 3.
 - Overturn if: a yaw step or injection identification gives G2 more than 30 % away with an explained cause, or the
   second key (`results/stage2_s47/g2_second_key.md`) disagrees.
+
+## D-RATE-LEAD (S48, PROPOSED for stage 3, not implemented): rate-prediction lead in the INDI rate law
+- Finding (`results/stage2_s48/README.md`): with matched INDI the loop at the torque break is ~ K A(s)(1+P_att/s)/s; the
+  motor lag (tau 33 ms) caps K_R near 20 rad/s and, with MC_ROLL_P 8 (stock cascade), PM is 29 deg; G2 is unreachable by
+  gains alone (needs P_att <= 2.5). Model matches the S47 measurement within 1.3 deg PM / 0.6 dB GM.
+- Choice proposed: nu = K (rate_sp - w) - K tau_c a_f with tau_c = MC_INDI_ACT_TC (identified), i.e. rate prediction one
+  actuator time constant ahead, cancelling the actuator pole: model PM 56-61 deg, GM 11-16 dB at K 20-40, 800 Hz, P_att 8.
+- Alternatives: (a) lower MC_ROLL_P for INDI airframes (slow attitude loop, ~0.4 Hz, rejected for F-2 manual/acro feel);
+  (b) higher K_R (worse, see sweep); (c) full actuator-dynamics inversion in the reference model (more parameters);
+  (d) leave as is and fail G2 (no).
+- Open before code: two keys on the model (T101), flight check that the model predicts parameter changes (m3a_check),
+  noise cost on motor command (G4), interaction with the measured-rotor-speed path and the blend, yaw axis with G2_Y.
+- Overturn if: the flight check disagrees with the model by > 10 deg PM, or the lead's motor-command noise exceeds the G4
+  limit at the K that meets G2.
