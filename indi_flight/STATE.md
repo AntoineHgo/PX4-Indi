@@ -17,20 +17,7 @@
 S36 DONE: G1 FINAL; T73 r1 BLOCKING answered (note section 7, D-G2-BREAK).
 S36 T74 r2 CLOSED (`design/stage2_note_review_r2.md`): M3a cuts every in-flight path; S38 must log c (pre-injection),
    d and u at cycle rate.
-S37 (launch 20261116-080552, cap $3): (1) DONE note body patched, section 7 item 7 answers r2 residuals (fault path
-   unreachable by finite d; M3b store point to be read in S38 plumbing). (2) DONE T75 sonnet: `bench/margins_est.py` +
-   `bench/tests/test_margins_selftest.py` self-tests 1-3 ALL PASS (re-run by me), 7 break checks recorded (commit
-   a2884f4cc9). T76 haiku second key: independent analytic GM/PM/DM, AGREE 5/5 (`results/stage2_s37/second_key_margins.md`,
-   `python3 bench/second_key_margins_s37.py <out.md>`); its case B is unstable with 1 crossing, multi-crossing covered by
-   self-test 1b only. Estimator not yet run on bench logs (CSV t,d,x,y; sign y = -L x from spec).
-T77 haiku: PID rate gains VERIFIED (`results/stage2_s37/pid_rate_gains.md`, units and MC_GC_EN=0 checked by me).
-S38 (launch 20261116-082041, cap $3) DONE: T78 sonnet `bench/margins_models.py` (sampled-data + continuous L_indi,
-   L_pid, time-domain sim, A-1 table) + self-test 4 ALL PASS (re-run by me; break-checked: dropping t_f fails 4a).
-   T79 haiku second key, independent continuous model: AGREE (INDI model-only 6.5 dB/43.6 deg vs 6.1/42.7 sampled;
-   PID 26.0/67.9 vs 25.8/67.9). Tables `results/stage2_s38/`. Note 7.4 reduction corrected (needs A_m = eta A_r; O(T) skew).
-   FINDING (model, unflown): roll INDI model-only at code defaults PM 42.7/41.6/40.6 deg at 800/400/267 Hz < 45, limited
-   by tau_m 0.02 vs plant tau_r 0.033 (lesson 8: ACT_TC must be identified, stage 3/4); measured path Tb 0 PM 54, blend
-   Tb 0.1 PM 48. Self-test 4a is coding consistency only (same equations both sides); firmware match comes from flights.
+S37-S38: margins estimator, models and second keys done (JOURNAL.md); tables `results/stage2_s38/`.
 S39 (launch 20261116-084309, cap $3) DONE: D-G2-INJ; T81 sonnet M3a plumbing (commit feat(mc_indi_rate_control)),
    SITL build OK, 1 pre-test hover flew (`design/t81_m3a_inject_s39.md`, `results/stage2_s39/pretest_m3a/`): u = c + d
    exact (max err 0), indi_rate_status 800 Hz, no fault, generator = margins_est multisine on 15849/15998 samples (rest
@@ -58,16 +45,20 @@ S42 (launch 20261116-093138, cap $1.26): (b) DONE T86 haiku + my LPF-matched re-
    (`results/stage2_s42/g1_regression_lpf.md`, `bench/g1_regress_lpf_s42.py LOG OUT`): G1/tau/delay ridge, not separable
    in 2-10 Hz; G1 377-385 if tau 0.033 and delay <=2 samples, 320 if tau 0.02 + 15 ms latency. (c) decides. UNKEYED.
    T87 haiku analytic G1 = 878 (`results/stage2_s42/g1_analytic.md`, UNKEYED), 2-2.7x the ridge -> A-22 opened.
-S43 NEXT: A-22 chain trace (sonnet, closes the G1 question with no flight; cheaper than (c)), then (c) (motor step, fixes tau + latency, then G1 from the ridge); (a) add attitude loop to margins_models.py (sonnet) + haiku second key; (b) G1 by regressing angular accel
-   on torque_sp from existing logs (haiku); (c) actuator_motors step in sim v2 to measure gz command latency;
-   (d) 400 Hz injection (delay doubles if 1 step). A-21 closes when model incl. attitude loop matches within G2 tol. Old plan: (1) A-21 closing test (1) rest: model-only AMP 0.005 seed 2 (1 flight,
-   host bash, ~3 min each: `indi_project/docker/run.sh -n X -t 600 -- python3 indi_flight/bench/run_scenario.py
-   --scenario hover_long --controller indi_m3a --model quad5in --seed N --speed 4 --params <inj_model_long.params
-   with AMP> --out ...`, then `checks.py RUN AMP 20 3`, `bench/m3a_csv.py`, `bench/m3a_margins_pretest.py`);
-   (2) haiku second key of m3a_csv.py + m3a_margins_pretest.py (independent re-implementation, same window);
-   (3) if A-21 holds: sonnet task, per-bin |L|/arg L model-vs-measured with the coded actuator model (closing test 2),
-   the likely cause being tau_m 0.02 vs plant 0.033 + unmodelled sim lag (lesson 8) -> stage-3 ACT_TC identification
-   moves ahead of the G2 matrix (route check R2). Also: model-only climb near the runner's 46 s limit (try1 abort).
+S43 (launch 20261116-114133, cap $2.79) DONE: T88 sonnet A-22 chain (`results/stage2_s43/a22_chain.md`,
+   `bench/a22_chain.py`): static roll G1 ~340 = link a (torque_sp -> actuator_motors roll diff 0.92, 0.23/motor)
+   x link b (actuator_motors -> (w/wmax)^2, 0.59 at hover, a 0.221 -> w ~976-999) x link c (626 meas vs 621 analytic,
+   on truth). Product reproduces end-to-end u->alpha at 2.5/5/7.9 Hz; tau_eff 35-44 ms. 878 analytic REJECTED.
+   T89 haiku second key (`results/stage2_s43/a22_second_key.md`): link a AGREE (0.222-0.236); link b DISAGREE but its
+   own map is suspect (actuator_outputs zero-filled on 36 % of rows, max 1897 rad/s, R2 0.2): link b UNSETTLED.
+   Log commit 32500e0 vs HEAD: no diff in allocator/mixer/gz_bridge/INDI module/airframe; params as assumed
+   (THR_MDL_FAC 1, EC_MIN 0, EC_MAX 2700, CT 6.5). A-22 narrowed, still open (see ANOMALIES).
+S44 NEXT: (1) A-22 rest, one sonnet task <=15 calls: why allocator gives 0.23/motor (source says 0.354 or 0.707) and
+   why a 0.221 hover maps to w ~990 (sqrt map gives 1269): check actuator_outputs instances/topic multiplicity,
+   MixingOutput thrust-model code path for gz ESC, effectiveness scaling (CA_ROTOR CT 6.5 vs physical 10.9);
+   haiku second key on esc_status (not actuator_outputs). Matters for stage-4 decision 3 (G1 from CA_* derivation).
+   (2) Working G1 for margins = 340 (static, end-to-end, regression-consistent) until A-22 closes. (3) (c) motor step
+   in sim to separate tau and latency; (a) add attitude loop to margins_models.py (sonnet) + haiku second key.
 S40 route check 40 (`design/route_check_40.md`): R1 G2 written in GATES.md (DONE S40) then rate-loop flights
    (S41-42); R2 stage-3 slice incl. ACT_TC identification + G2 outer-break note (S43-45); R3 G3/G4 harness tasks in
    parallel; stage 5 from ~S46. Projection ~25 more sessions: tell owner in the Q4 entry.
@@ -96,6 +87,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 36 | T73 | opus | review r1 stage-2 note | done, 11 calls, ~$0.8, BLOCKING, answered |
 | 37 | T75 | sonnet | margins estimator + self-tests 1-3 | done, 9 calls, ~$0.9, ALL PASS re-run by me |
 | 37 | T76 | haiku | second key margins (analytic) | done, 3 calls, ~$0.06, AGREE 5/5 |
+| 43 | T88 | sonnet | A-22 chain trace + link gains | done, 17 calls, ~$0.87, G1 ~340, links a,b unexplained |
+| 43 | T89 | haiku | second key links a,b | done, 10 calls, ~$0.13, a AGREE, b DISAGREE (suspect map) |
 | 42 | T87 | haiku | analytic G1 from allocator | done, 8 calls, ~$0.07, 878 vs 320-435, A-22 |
 | 42 | T86 | haiku | G1 regression | done, 7 calls, ~$0.08, missed D-filter on u, superseded by my re-fit |
 | 37 | T77 | haiku | PID rate gains read | done, 6 calls, ~$0.06, units fixed by me |
@@ -109,6 +102,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 39 | T81 | sonnet | M3a plumbing + build + 1 hover | done, 27 calls, ~$0.93, test not linked, fixed by me |
 
 ## Lessons proposed
+- S43: a static 'analytic' gain from source reading was 2.6x off in two links; measure each link of a chain on the log before trusting a derived plant gain (and a sonnet chain trace with log analysis costs ~$0.9 in 17 calls).
 - Regressing a filtered signal (angular_accel_filtered) on a command: pass the command through the same filter first; T86 missed it and read the LPF2p group delay as a 20 ms plant delay (S42).
 - S41: a loop-gain model must contain every loop the break closes around, outer loops included; the M3a model
   lacked the attitude P loop and a 17 deg PM gap was spent on as an anomaly (A-21).
