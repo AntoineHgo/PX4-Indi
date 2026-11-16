@@ -23,7 +23,8 @@ S37 (launch 20261116-080552, cap $3): (1) DONE note body patched, section 7 item
    a2884f4cc9). T76 haiku second key: independent analytic GM/PM/DM, AGREE 5/5 (`results/stage2_s37/second_key_margins.md`,
    `python3 bench/second_key_margins_s37.py <out.md>`); its case B is unstable with 1 crossing, multi-crossing covered by
    self-test 1b only. Estimator not yet run on bench logs (CSV t,d,x,y; sign y = -L x from spec).
-S38 NEXT: (1) `margins_models.py` (4.1 analytic + discrete time-domain, 4.2 PID with gains read from 4040 params) +
+T77 haiku: PID rate gains VERIFIED (`results/stage2_s37/pid_rate_gains.md`, units and MC_GC_EN=0 checked by me).
+S38 NEXT: (1) `margins_models.py` (4.1 analytic + discrete time-domain, 4.2 PID with gains from pid_rate_gains.md) +
    self-test 4 (sonnet, the session's one big task, <=12 calls); (2) second key of the model (haiku). S39 injection
    plumbing (M3a in mc_indi_rate_control bench params, log c/d/u at cycle rate; read M3b store point), S40 route check 40, S41 flights.
 S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_s35/README.md`); A-19 heading-only
@@ -100,6 +101,7 @@ S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_
 | 35 | T72 | sonnet | stage-2 margins design note | done, 11 calls, ~$0.7 (168 lines) |
 | 37 | T75 | sonnet | margins estimator + self-tests 1-3 | done, 9 calls, ~$0.9, ALL PASS re-run by me |
 | 37 | T76 | haiku | second key margins (analytic) | done, 3 calls, ~$0.06, AGREE 5/5 |
+| 37 | T77 | haiku | PID rate gains read | done, 6 calls, ~$0.06, units fixed by me |
 
 ## Lessons proposed
 - S37: a sonnet task writing ~600 lines of numerical code + tests costs ~$0.9 in 9 calls (long writes); the session
