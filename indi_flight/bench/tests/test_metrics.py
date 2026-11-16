@@ -102,10 +102,10 @@ def test_compute_end_to_end():
     vs = {"timestamp": np.array([t[0] - 3_000_000, t[-1]]), "nav_state": np.array([14, 14])}  # anchor+3 s = t[0]
     run = {"scenario": "synthetic", "t_window_start_us": int(t[0]), "t_window_end_us": int(t[-1]),
            "hold_pos_ned": list(HOLD), "trajectory": {**traj, "t0_us": T0, "dur_s": dur(traj)}}
-    out = M.compute(_fake_ulog({"vehicle_local_position": lp, "vehicle_local_position_groundtruth": gt,
+    out = M.compute(_fake_ulog({"vehicle_local_position": lp, "sim_ground_truth": gt,
                                 "trajectory_setpoint": tsp, "vehicle_status": vs}), run)
     tr = out["trajectory"]
-    assert tr["time_base"]["status"] == "ok"
+    assert tr["time_base"]["status"] == "ok" and out["truth_source"] == "sim_ground_truth"
     assert tr["truth"]["rms_3d_m"] < 1e-9 and abs(tr["truth"]["rate_hz"] - HZ) < 1e-6
     assert 0.22 < tr["estimate"]["rms_3d_m"] < 0.32  # 100 ms lag, ~0.27 m over this window
     assert tr["zoh_legacy"]["rms_3d_m"] < tr["estimate"]["rms_3d_m"] and abs(tr["zoh_legacy"]["setpoint_rate_hz"] - 5.0) < 1e-6
@@ -141,8 +141,45 @@ def test_window_anchor_from_ulog():
     print(f"ok window anchor: start {w['start_s']:.3f} s = transition {tr_us*1e-6:.3f} + 3.0 (run.json {w['runjson_start_s']:.3f})")
 
 
+def test_sample_stamp_over_publish_stamp():
+    """timestamp has zero-dt pairs (publish jitter) and timestamp_sample is clean: metrics must use the clean one.
+    Also: truth from sim_ground_truth when present, fallback to the stock topic, a non-monotonic stamp gets sorted."""
+    n, dt = 4000, 1250  # 800 Hz
+    ts = (10_000_000 + np.arange(n) * dt).astype(np.int64)
+    tp = ts.copy()
+    tp[1::4] = tp[0::4]  # every 4th sample shares the previous publish stamp: zero-dt pairs
+    assert (np.diff(tp) == 0).sum() == n // 4
+    u = np.column_stack([0.5 + 0.1 * np.sin(2 * np.pi * np.arange(n) / 100.0 + k) for k in range(4)])
+    am = {"timestamp": tp, "timestamp_sample": ts, **{f"control[{k}]": u[:, k] for k in range(4)}}
+    vs = {"timestamp": np.array([7_000_000, 20_000_000]), "nav_state": np.array([14, 14])}  # anchor + 3 s = 10 s
+    run = {"scenario": "synthetic", "t_window_start_us": 13_000_000, "t_window_end_us": 14_000_000}
+    out = M.compute(_fake_ulog({"actuator_motors": am, "vehicle_status": vs}), run)
+    assert out["stamps"]["actuator_motors"] == {"stamp": "timestamp_sample", "sorted": False, "zero_dt_pairs": 0}, out["stamps"]
+    # truth value: du/dt with the clean stamp is 1.25 ms steps: d(0.1 sin)/dt rms ~ 0.1 * 2pi*8 Hz / sqrt2 ~ 3.55 /s
+    clean = out["effort"]["motor_rate_rms_per_s"]
+    assert 3.2 < clean < 3.9, clean
+    # force the publish stamp (what the old code did): zero-dt pairs are dropped, the remaining pairs span 2 ticks -> different
+    am_bad = {k: v for k, v in am.items() if k != "timestamp_sample"}
+    bad = M.compute(_fake_ulog({"actuator_motors": am_bad, "vehicle_status": vs}), run)
+    assert bad["stamps"]["actuator_motors"]["stamp"] == "timestamp" and bad["stamps"]["actuator_motors"]["zero_dt_pairs"] > 0
+    assert abs(bad["effort"]["motor_rate_rms_per_s"] - clean) > 0.05 * clean, (bad["effort"], clean)
+    # non-monotonic sample stamp: sorted, with the columns reordered consistently
+    o = np.arange(n)
+    o[10], o[11] = 11, 10
+    shuf = {k: v[o] for k, v in am.items()}
+    d = M.ctrl_topic(_fake_ulog({"actuator_motors": shuf}), "actuator_motors", notes := {})
+    assert notes["actuator_motors"]["sorted"] and (np.diff(d["timestamp"]) > 0).all() and np.array_equal(d["control[0]"], u[:, 0])
+    # truth source: sim_ground_truth wins, stock topic is the fallback, none -> (None, None)
+    tr = {"timestamp": ts, "timestamp_sample": ts, "x": np.zeros(n), "y": np.zeros(n), "z": np.zeros(n)}
+    assert M.truth_local_position(_fake_ulog({"sim_ground_truth": tr, "vehicle_local_position_groundtruth": tr}))[1] == "sim_ground_truth"
+    assert M.truth_local_position(_fake_ulog({"vehicle_local_position_groundtruth": tr}))[1] == "vehicle_local_position_groundtruth"
+    assert M.truth_local_position(_fake_ulog({}))[0] is None
+    print(f"ok sample stamp: motor_rate_rms {clean:.3f}/s with timestamp_sample, {bad['effort']['motor_rate_rms_per_s']:.3f}/s with publish stamp")
+
+
 def main():
-    for f in (test_window_anchor_from_ulog, test_trajectory_functions, test_exact_and_lag, test_zoh_defect_and_fix, test_compute_end_to_end):
+    for f in (test_window_anchor_from_ulog, test_trajectory_functions, test_exact_and_lag, test_zoh_defect_and_fix, test_compute_end_to_end,
+              test_sample_stamp_over_publish_stamp):
         f()
     print("ALL PASS")
     return 0

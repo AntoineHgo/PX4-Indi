@@ -31,6 +31,50 @@ def topic(ulog, name, multi_id=0):
     return None
 
 
+def tstamp(d):
+    """Sample time [us] of a logged topic dict: timestamp_sample when the field exists and is filled (all > 0), else
+    timestamp. Controller-rate topics must use this: their publish stamp `timestamp` jitters by one tick and forms
+    zero-dt pairs (a16_s22), the sample stamp does not. Event topics (vehicle_status, ...) keep `timestamp`."""
+    ts = d.get("timestamp_sample")
+    if ts is not None and len(ts) and np.all(np.asarray(ts) > 0):
+        return np.asarray(ts)
+    return np.asarray(d["timestamp"])
+
+
+def ctrl_topic(ulog, name, notes=None, multi_id=0):
+    """Controller-rate topic with its time axis replaced: returns a copy of the topic dict whose "timestamp" is tstamp(d)
+    (sorted, with every column, when that stamp is not monotonic). notes[name] records the stamp used, whether a sort was
+    needed and the number of zero-dt pairs left. The original publish stamp is kept as "timestamp_publish"."""
+    d = topic(ulog, name, multi_id)
+    if d is None:
+        return None
+    t = tstamp(d)
+    used = "timestamp_sample" if (d.get("timestamp_sample") is not None and t is not d["timestamp"]
+                                  and np.array_equal(t, np.asarray(d["timestamp_sample"]))) else "timestamp"
+    out = dict(d)
+    out["timestamp_publish"] = np.asarray(d["timestamp"])
+    sorted_ = bool(len(t) > 1 and (np.diff(t.astype(np.int64)) < 0).any())
+    if sorted_:
+        o = np.argsort(t, kind="stable")
+        out = {k: (np.asarray(v)[o] if np.ndim(v) == 1 and len(v) == len(t) else v) for k, v in out.items()}
+        t = t[o]
+    out["timestamp"] = t
+    if notes is not None:
+        notes[name] = {"stamp": used, "sorted": sorted_, "zero_dt_pairs": int((np.diff(t.astype(np.int64)) == 0).sum()) if len(t) > 1 else 0}
+    return out
+
+
+def truth_local_position(ulog, notes=None):
+    """Simulator ground-truth position/velocity (NED). Returns (topic dict, source name).
+    sim_ground_truth (queue 16, logged at every physics step) when in the log; archived logs fall back to the stock
+    vehicle_local_position_groundtruth (queue 1, decimated by the logger); (None, None) if neither."""
+    for name in ("sim_ground_truth", "vehicle_local_position_groundtruth"):
+        d = ctrl_topic(ulog, name, notes)
+        if d is not None:
+            return d, name
+    return None, None
+
+
 def rms(x):
     x = np.asarray(x, float)
     x = x[np.isfinite(x)]
@@ -337,7 +381,10 @@ def compute(ulog, run):
     inwin = lambda t: (t >= w0) & (t <= w1)  # noqa: E731
 
     # ---- rate tracking ----
-    av, rsp = topic(ulog, "vehicle_angular_velocity"), topic(ulog, "vehicle_rates_setpoint")
+    out["stamps"] = {}  # per controller-rate topic: stamp used (timestamp_sample | timestamp), sorted?, zero-dt pairs left
+    ctl = lambda n: ctrl_topic(ulog, n, out["stamps"])  # noqa: E731
+    av, rsp = ctl("vehicle_angular_velocity"), ctl("vehicle_rates_setpoint")
+    am = ctl("actuator_motors")
     if av is not None and rsp is not None:
         ta = av["timestamp"]
         m = inwin(ta)
@@ -348,9 +395,9 @@ def compute(ulog, run):
         out["rate_tracking"] = rt
 
     # ---- attitude tracking ----
-    att, asp = topic(ulog, "vehicle_attitude"), topic(ulog, "vehicle_attitude_setpoint")
+    att, asp = ctl("vehicle_attitude"), ctl("vehicle_attitude_setpoint")
     # INDI POS publishes rates, not vehicle_attitude_setpoint: its q_d is logged in indi_pos_status
-    ips = topic(ulog, "indi_pos_status")
+    ips = ctl("indi_pos_status")
     if ips is not None and "q_d[0]" in ips:
         asp = ips
     euler = None
@@ -423,11 +470,11 @@ def compute(ulog, run):
 
     # ---- trajectory scenarios ----
     # trajectory.truth / .estimate: error against the ANALYTIC reference hold_pos_ned + traj_pva(traj, t - t0)[0] at each
-    # position sample time (no dependence on the 5 Hz trajectory_setpoint log). truth = vehicle_local_position_groundtruth
-    # when logged, estimate = vehicle_local_position. trajectory.zoh_legacy = old ZOH-of-trajectory_setpoint result, kept for
+    # position sample time (no dependence on the 5 Hz trajectory_setpoint log). truth = sim_ground_truth (every physics
+    # step), else vehicle_local_position_groundtruth for archived logs (out["truth_source"]), when logged, estimate = vehicle_local_position. trajectory.zoh_legacy = old ZOH-of-trajectory_setpoint result, kept for
     # the errata only (it rewards a lagging vehicle). The old top-level rms_* keys are gone on purpose.
     tsp = topic(ulog, "trajectory_setpoint")
-    gt = topic(ulog, "vehicle_local_position_groundtruth")
+    gt, out["truth_source"] = truth_local_position(ulog, out["stamps"])
     traj = run.get("trajectory")
     if traj and lp is not None:
         tr = {}
@@ -455,7 +502,7 @@ def compute(ulog, run):
                 pos = np.column_stack([d[k][m] for k in ("x", "y", "z")])
                 tr[key] = {**trajectory_error_analytic(t[m], pos, traj, t0_us, hold), "rate_hz": rate_hz(t[m])}
             if gt is None:
-                out["warnings"].append("trajectory: vehicle_local_position_groundtruth not in log, no truth error")
+                out["warnings"].append("trajectory: neither sim_ground_truth nor vehicle_local_position_groundtruth in log, no truth error")
             elif tr.get("truth") is not None:
                 # diagnostic only (NOT applied): truth - estimate over the last 1 s before t0, to expose an origin mismatch
                 tg = gt["timestamp"]
@@ -478,11 +525,9 @@ def compute(ulog, run):
     # ---- plant-fault scenarios (motor_loss_0): only when run.json carries a "motor_fault" record ----
     mf = run.get("motor_fault")
     if mf and "event_us" in mf:
-        out["motor_fault"] = motor_fault_metrics(mf, topic(ulog, "vehicle_attitude"), topic(ulog, "vehicle_attitude_setpoint"),
-                                                 topic(ulog, "actuator_motors"), lp, w1)
+        out["motor_fault"] = motor_fault_metrics(mf, att, ctl("vehicle_attitude_setpoint"), am, lp, w1)
 
     # ---- control effort + saturation ----
-    am = topic(ulog, "actuator_motors")
     nmot = 4
     if am is not None:
         t = am["timestamp"]
