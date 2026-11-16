@@ -7,15 +7,15 @@
 - Blocker: none. Q2, Q3 open (G1.1 gap rule, G1.6a wording), Q4 open (freeze G1 with limits, S32), not blocking. Q1 closed: A confirmed by owner; flatness A18 reviewed (r5 BLOCKING), answered in
   `design/flatness_r2.md` (S15): optional increment after base A. Outer-loop study finished; stage 5 = base A.
 - S36: G1 FINAL written in GATES.md (frozen with 5 evidence limits, provisional under Q4-A, not marked passed);
-  stage 2 started provisionally; opus review T73 of the stage-2 note running.
+  stage 2 started provisionally; opus review T73 r1 BLOCKING (gyro break misses INDI's model and rotor-speed
+  paths) answered by D-G2-BREAK (M3a torque-setpoint break) and note section 7.
 - Session 16 (launch 20261115-231016, cap $3): D-SIM-STEP implemented (T31, commit 72598e3159) and pre-tested
   (`results/pretest_simstep_s16/README.md`): 1.25 ms step, IMU 800 Hz, RATEMAX 800/400 applied, PID flies, speed 4
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
-S36 (1) DONE: G1 FINAL in GATES.md. (2) opus review T73 of
-   `design/stage2_margins_s35.md` (one interface: note vs source; check its UNVERIFIED list and the blend formula).
-   (3) then S37 estimator + synthetic self-tests (sonnet), S38 injection plumbing, S39 flights, S40 route check 40.
+S36 DONE: G1 FINAL; T73 r1 BLOCKING answered (note section 7, D-G2-BREAK).
+S37 NEXT: (1) r2 check of note section 7 (sonnet, <=6 calls, `design/stage2_note_review_r2.md`); (2) estimator + synthetic self-tests (sonnet), S38 injection plumbing, S39 flights, S40 route check 40.
 S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_s35/README.md`); A-19 heading-only
    candidate refuted, A-19 PARKED by mechanism (bound 1.6 deg, yaw verdicts on estimate); A-14 hold bound re-set by
    mechanism to +-0.15 m (r14 0.068 m exceeded the old +-0.06 sample bound). T70 second key AGREE 7/7. T71 route
@@ -25,7 +25,6 @@ S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T73 | opus review of `design/stage2_margins_s35.md` vs source (S36) | opus agent | `design/stage2_note_review_r1.md` | re-launch with the same brief if the file has no VERDICT line |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -86,9 +85,12 @@ S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_
 | 35 | B35 | host bash | A-20 15 hovers + A-19 2 hovers | 17/17 flew, $0 |
 | 35 | T70 | haiku | second key bias-median column | done, 7 calls, ~$0.1, AGREE 7/7 |
 | 35 | T71 | sonnet | route check 35 | done, 6 calls, ~$0.15 |
+| 36 | T73 | opus | review r1 stage-2 note | done, 11 calls, ~$0.8, BLOCKING, answered |
 | 35 | T72 | sonnet | stage-2 margins design note | done, 11 calls, ~$0.7 (168 lines) |
 
 ## Lessons proposed
+- S36: a design note on a loop with several feedback paths must name every path a break point cuts; the gyro break
+  looked complete for PID and was not for INDI (review r1).
 - S35: a sonnet design note of ~11 calls over several source files costs ~$0.7; brief it at <=10 calls at a $3 cap.
 - S34: a background-wait notification can arrive before the command really ends; check the condition itself
   (status file) before concluding the wait failed.

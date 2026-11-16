@@ -187,3 +187,16 @@ Open, to be written before code (MISSION "Decisions that are yours"):
 - Alternatives: 250 Hz exactly (4 ms = 3.2 physics steps: the controller period would jitter between 3 and 4 steps,
   adding a non-physical delay variation to a margin measurement); a 1 ms physics step (changes every G1.6 result).
 - Overturn if: a reviewer or the owner needs the exact 250 Hz figure, or the physics step changes.
+
+## D-G2-BREAK (S36): INDI rate-loop margins are measured at the torque-setpoint break
+- Choice: for INDI the primary G2 rate-loop break is M3a in `mc_indi_rate_control` (our module, O-11 allows it):
+  a bench-only injection d added to the controller's torque output c, with u = c + d sent to BOTH the publish and
+  the stored previous torque setpoint (`McIndiRateControl.cpp:329` and `:331`), so every feedback path (gyro, measured
+  rotor speed, modelled actuator) closes through u. L = -G_cd/G_ud. The gyro break (M1) is kept for INDI as a
+  secondary result, reported as the gyro-path gain L_o/(1+L_i), not as the loop gain. PID keeps M1 (gyro) as
+  primary and M2 as cross-check (its loop has a single feedback path; `mc_rate_control` stays at zero diff).
+- Alternatives: M1 for both stacks (review r1 finding 1: misses the model and rotor-speed paths of INDI, so its
+  margins are not the loop's); M2 actuator break (leaves the model path closed); injecting in the allocator
+  (breaks the zero-diff rule).
+- Overturn if: the M3a injection changes the controller's behaviour with d = 0 (bit-identical check on one flight),
+  or M3a and the linear model of section 4.1 disagree by more than the G2 tolerance with no explained cause.

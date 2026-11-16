@@ -166,3 +166,22 @@ source and params (UNVERIFIED, not read this session); G1 from the same MC_INDI_
   I + L at the plant input from M2 for the gate, or state the gate is per-axis.
 - Hover linearisation: injections near saturation (low thrust margin, vibration `SIM_GZ_VIB_*`) bias L; keep G1 vibration setting.
 - New msg files and parameters: any change outside INDI and gz_bridge trees breaks O-11; keep every new field in INDI or sim-only topics.
+
+## 7. Review r1 response (S36, `stage2_note_review_r1.md`, BLOCKING) — supersedes sections 1-4 where they differ
+1. Finding 1 (BLOCKING, accepted): INDI primary break moves to M3a with u = c + d fed to both the publish and the
+   stored torque setpoint (D-G2-BREAK). M1 for INDI reports the gyro-path gain L_o/(1+L_i) only. The claim
+   "same L at any break point" holds for PID only.
+2. PID model 4.2: D term is +Kd s on measured angular acceleration (sign fixed); gains read from the airframe params
+   in S37 (still UNVERIFIED).
+3. Blend: `MC_INDI_ACT_BLD` = 0 means pure measurement in code (default); section 4.3 formula is restated with that
+   limit. The damping table of 4.3 is withdrawn: it is computed by the S37 linear-model script (with self-test),
+   not by hand (r1: Tb 1.0 zeta 1.2-1.7, Tb 0.03 zeta 0.52-0.73).
+4. Self-check "eta = 1 gives K/s" holds only with equal modelled and plant motor lags (defaults 0.02 vs 0.033 s);
+   the S37 self-test sets them equal, and a second case keeps them unequal.
+5. Rotor slowdown: VERIFIED (S36): `GZMixingInterfaceESC.cpp:205` multiplies the joint speed by
+   ROTOR_VELOCITY_SLOWDOWN_SIM = 10 (`.hpp:112`), equal to `rotorVelocitySlowdownSim` 10 in
+   `indi_flight/sim/models/quad5in/model.sdf:21`. Hardcoded, not read from the SDF: a model with another value would
+   be wrong silently (stage-3 item: read it or assert it).
+6. Still UNVERIFIED (carried to S37): gyro-bias estimator band, msg versioning for new topics, offboard
+   velocity-only rows, Python force injection timing, PID rate gains.
+Next: a short r2 check (sonnet, <= 6 calls) of this section against r1 and the source, before S38 plumbing.
