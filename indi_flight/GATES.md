@@ -53,3 +53,28 @@ G1 status (2026-11-16, s33). Thresholds unchanged; nothing marked passed (Q2, Q3
   thresholds pending G3/G5. (c) remaining differences with known source and bound: Commander tick (Q3), EKF heading
   error A-19 (mechanism candidate s33: EKF2 declination vs sim field and mag-bias state; hover attitude spread
   0.86-0.93 deg), EKF-truth height A-14/A-20 (<= 0.174 m, 2/30 runs with 0.72 m initial baro bias). (d) in force.
+
+## G1 FINAL (2026-11-16, s36): frozen with evidence limits, provisional under Q4-A
+
+Thresholds above unchanged. G1 is frozen in the state below; it is NOT marked passed: the owner has not answered
+Q2, Q3, Q4. If the owner answers Q4-B, every stage-2 result marked "provisional under Q4-A" is re-run after G1
+passes in full; if Q2 or Q3 is answered B or C, G1.1 or G1.6(a) is reopened as written there.
+
+| item | state | evidence |
+|---|---|---|
+| G1.1 | met under Q2-A (logger completeness -0.014 %, sim holes 0.012 % of steps, single holes <= 6.3 ms); fails the original gap rule on simulator holes (A-13) | S24 numbers, hover speed 4; re-measured on the first stage-2 batch with `bench/gate_g1.sh` |
+| G1.2 | met (truth topic stamped in sim time, metrics read truth) | S21-S23, two keys |
+| G1.3 | met (two keys, atan2 attitude angle in both) | S23, S33 |
+| G1.4 | met (self-tests break-checked) | S28, S32 |
+| G1.5 | deferred: each injector and plant variant gets its G1.5 check before its first campaign (G2 gyro injection, G3 variants, G5 events) | route check 30 |
+| G1.6 | (a) under Q3-A: (a1) met, (a2) response spread within one Commander period, latency within two; (b) spreads recorded, thresholds set with G3/G5; (c) met with stated sources; (d) in force | `results/g16_set_s32/speed{4,1}/README.md`, `results/a20a19_s35/README.md` |
+
+Evidence limits every later verdict carries:
+1. Simulator step holes (A-13): <= 0.05 % of steps, single holes <= 10 ms. Any frequency-response or spectral
+   result leaves out windows containing a hole, or shows it does not change when they are left out.
+2. Commander tick (Q3): mode-change response spread <= 10 ms, latency <= 20 ms. Analysis windows anchor on the
+   logged transition, never on the trigger.
+3. EKF-truth height (A-14): <= 0.15 m in hover windows; position-hold spread <= +-0.15 m. Tracking scored on truth.
+4. EKF heading error (A-19): |truth - EKF yaw| <= 1.6 deg, constant within a hover. Yaw verdicts are stated on the
+   estimate, with the heading error reported beside them; no yaw threshold below 1.6 deg on truth.
+5. Bench parameter sets carry SENS_BAR_AUTOCAL 0 (A-20) and the logger poll `-p actuator_motors` (S16).

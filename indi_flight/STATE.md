@@ -6,15 +6,14 @@
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written; G1.6 first tested S14 ((a) not met, see next actions).
 - Blocker: none. Q2, Q3 open (G1.1 gap rule, G1.6a wording), Q4 open (freeze G1 with limits, S32), not blocking. Q1 closed: A confirmed by owner; flatness A18 reviewed (r5 BLOCKING), answered in
   `design/flatness_r2.md` (S15): optional increment after base A. Outer-loop study finished; stage 5 = base A.
-- S35: A-20 closed, A-19 parked, route check 35 accepted, stage-2 design note written; next S36 G1 FINAL + note review.
+- S36: G1 FINAL written in GATES.md (frozen with 5 evidence limits, provisional under Q4-A, not marked passed);
+  stage 2 started provisionally; opus review T73 of the stage-2 note running.
 - Session 16 (launch 20261115-231016, cap $3): D-SIM-STEP implemented (T31, commit 72598e3159) and pre-tested
   (`results/pretest_simstep_s16/README.md`): 1.25 ms step, IMU 800 Hz, RATEMAX 800/400 applied, PID flies, speed 4
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
-S36 NEXT (route check 35 plan, ACCEPTED): (1) write G1 FINAL in GATES.md: G1 frozen with evidence limits (Q2, Q3,
-   A-14 0.15 m, A-19 1.6 deg on estimate, G1.5 injectors deferred to G3/G5); stage-2 results marked provisional
-   under Q4-A; if G1 FINAL not written by end of S36, escalate Q4 with the cost of option B. (2) opus review of
+S36 (1) DONE: G1 FINAL in GATES.md. (2) opus review T73 of
    `design/stage2_margins_s35.md` (one interface: note vs source; check its UNVERIFIED list and the blend formula).
    (3) then S37 estimator + synthetic self-tests (sonnet), S38 injection plumbing, S39 flights, S40 route check 40.
 S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_s35/README.md`); A-19 heading-only
@@ -26,6 +25,7 @@ S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T73 | opus review of `design/stage2_margins_s35.md` vs source (S36) | opus agent | `design/stage2_note_review_r1.md` | re-launch with the same brief if the file has no VERDICT line |
 | B26 | G1.6 set --sched --sched-anchor, 3 scen x 5, speed 4 (done, analysed S27) then 1 (DONE S28, not analysed) | host bash (detached) | `results/g16_sched_set_s26/speed{4,1}/status.txt` | `setsid nohup indi_flight/bench/g16_sched_set.sh` (delete partial speed dir first) |
 
 ## Open problems
