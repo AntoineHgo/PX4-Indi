@@ -33,14 +33,18 @@ S45 (launch 20261116-214129, cap $3) DONE: A-23 CLOSED. Cause: G1 defaults 5-8x 
 S45 also: T96 `bench/derive_g1.py` + `bench/tests/test_derive_g1.py` written (ALL PASS, re-run by me), UNKEYED: quad5in G1
    R/P/Y 1759/1602/221 (`results/stage2_s45/derive_g1.md`). Roll and pitch share PX4's normalisation scale, so torque per unit
    command is equal and G1_P = G1_R Ixx/Iyy for any arm layout (my reading: B pinv(B) = I). D-G1-DERIVE written.
-S46 NEXT: (1) sonnet/haiku second key of derive_g1.py vs ControlAllocationPseudoInverse.cpp (check `_normalize_rpy`, geninv vs
-   pinv, yaw sign), then set derived G1 in every bench INDI params file. (2) pre-test checklist in GATES/runner: pitch
-   RMS < 0.02 rad/s, motor pin < 1 %, achieved > 90 % as exit status of limit_cycle check. (3) S47: ACT_TC from rotor step,
-   attitude P loop into margins_models.py. (4) S48: first valid roll M3a margin row at 800 Hz, two seeds.
+S46 (launch 20261116-215112, cap $3): `bench/pretest_gate.py` + self-test (break-checked) committed: hover window from first
+   airborne +15 s, rate RMS < 0.02 rad/s, motor pin < 1 %, torque achieved > 90 %, exit 0/1/2. On logs: PID and S45 INDI
+   pass, S44 chatter and S41 limit cycle fail (`results/stage2_s46/pretest_gate_check/`). T97 sonnet second key of G1
+   derivation running -> `results/stage2_s46/g1_second_key.md` (also: which inertia, 1.396e-3 or 1.022e-3, is the plant's).
+S47 NEXT: (1) if T97 AGREE, write `bench/params/quad5in_indi.params` (derived G1) and use it in every INDI run; record G1
+   provenance in run metadata. (2) runner calls pretest_gate.py after every pre-test flight. (3) ACT_TC from rotor step,
+   attitude P loop into margins_models.py. (4) first valid roll M3a margin row at 800 Hz, two seeds.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T97 | G1 second key | sonnet | results/stage2_s46/g1_second_key.md | re-brief if file incomplete |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
