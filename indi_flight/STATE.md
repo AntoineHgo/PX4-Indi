@@ -48,8 +48,10 @@ S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_
   open per item: `sim_review.md` for simulator work, `module_parity.md` for stage 3/5, `test_review.md` for stage 3,
   `ident_review.md` for stage 4, `remetric.py`/`hover.py` for the errata.
 
-- S38 model table oddity: INDI measured Tb 0, n 1 roll GM 21.1 dB at 800 Hz but 34.8 at 400 Hz (PM equal); check the
-  phase-crossover location before using the model GM in the S41 cross-check.
+- S38 GM jump explained (T80, `results/stage2_s38/gm_jump_check.md`): INDI measured Tb 0 phase grazes -180 deg on a
+  plateau 12-27 Hz; at 800 Hz it crosses at 11.9 Hz (21.1 dB), at 400 Hz only at 27 Hz (34.8 dB) though |L| at 11.9 Hz
+  is -22 dB. Model GM is phase-shape sensitive there: in S41 compare measured |L| over the plateau, and report GM
+  together with the minimum |L|^-1 where phase is within 10 deg of -180 (decide in GATES.md before the first G2 test).
 - Unmodelled in margins_models.py (T78 UNVERIFIED list): AlphaFilter coefficient formula, LPF2p coefficients from
   memory, gz/ESC latency 0, measured path = eta x motor state, yaw, attitude loop; 267 Hz analytic only.
 
@@ -115,6 +117,7 @@ S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_
 | 37 | T77 | haiku | PID rate gains read | done, 6 calls, ~$0.06, units fixed by me |
 | 38 | T78 | sonnet | margins_models.py + self-test 4 | done, 15 calls, ~$1.0, ALL PASS re-run by me |
 | 38 | T79 | haiku | second key continuous models | done, 4 calls, ~$0.1, AGREE |
+| 38 | T80 | haiku | GM jump check | done, 5 calls, ~$0.06, explained (phase plateau) |
 
 ## Lessons proposed
 - S37: a sonnet task writing ~600 lines of numerical code + tests costs ~$0.9 in 9 calls (long writes); the session
