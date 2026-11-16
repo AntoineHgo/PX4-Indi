@@ -14,6 +14,7 @@
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
+0000000000000. S23 (launch 20261116-024209, cap $3): T46 (sonnet) truth/timestamp_sample in metrics; DONE: A-10/A-13 PARKED with bounds; D-SCHED decided (sim-time scenario player, sim-only module). S24 NEXT: sonnet implements the player (arm, mode, offboard setpoints first) + runner writer + 1 pretest; S25 second key + re-fly 5-run G1.6 set.
 000000000000. S22 (launch 20261116-020843, cap $1.35): route checks 15/20 were missed -> T44 route check 22 (sonnet,
    `design/route_check_22.md`); T45 A-16 closing test (haiku, `results/a16_s22/README.md`). A-14: the two runner paths
    differ ONLY by logger `-f` (run_scenario.py:594). DONE: route check 22 (off path: park, go to G1.6a/G1.5/keys);
@@ -69,6 +70,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T46 | metrics.py + g1_checks g1.1 read `sim_ground_truth`, controller-rate topics on timestamp_sample, self-test, re-score 1 log | sonnet (S23) | `design/t46_truth_metrics_s23.md` | re-launch from that file |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);

@@ -103,3 +103,23 @@ Open, to be written before code (MISSION "Decisions that are yours"):
   (MC_INDI_DELAY, MC_INDI_ERPM_DLY, MC_INDI_DT_MAX) are converted to time or scaled per rate in stage 3.
 - Overturned if: the 1.25 ms world does not reach speed factor 4 on this host, or a pre-test shows a step-size effect on
   the plant (rotor dynamics, contact) beyond the same-seed spread; then measure the 0.25 ms option.
+
+## D-SCHED (session 23): G1.6(a) remedy = sim-time scenario player inside PX4 (sim-only module)
+- Problem: G1.6(a) NOT MET (mode-instant spread 7.5-11 ms vs 2.5 ms); cause known (G1.6 c): arm, mode commands and
+  the offboard setpoint stream go over MAVLink/UDP from the runner, so each lands on a different IMU tick. The same
+  path also carries G1.5 injections (applied time must be within one physics step of the commanded sim time) and
+  will carry G5 events (mode switches in motion, RC/data-link loss, kill, false maybe_landed).
+- Choice: a sim-only PX4 module (`src/modules/simulation/`, own Kconfig, SITL only, not in the upstream firmware
+  branch) that plays a schedule file written by the runner: rows `t_sim_us, kind, fields` for arm/disarm and mode
+  (vehicle_command on uORB, commander unchanged), offboard_control_mode + trajectory_setpoint, manual_control_setpoint
+  (stick modes), parameter steps, and injector triggers. It runs on the gyro callback and publishes the row on the
+  first tick with hrt >= t_sim; each applied row is logged (new sim topic) with its applied time. The runner keeps
+  MAVLink only for start-up checks and as a fallback for archived scenarios.
+- Alternatives: (1) lockstep gz with PX4 (gz waits for actuator outputs): makes runs closer to bit-exact but touches
+  the gz/PX4 timing contract of every run and does not fix the wall-clock MAVLink sends; kept as a later option if
+  (b) spreads stay above 10 % of a threshold. (2) Restate G1.6(a) as "window anchored on the logged mode change":
+  rejected for now, it weakens the test and leaves G1.5 applied-time unmet anyway. (3) Mode switch only, setpoints
+  still over MAVLink: rejected, the 50 Hz setpoint stream has the same jitter and G5 needs stick inputs in sim time.
+- Cost estimate: one sonnet implementation session (module + runner writer + 1 pre-test), one second-key session.
+- Overturn: the player cannot be built in two sessions, or with it the mode-instant spread is still > 2 IMU periods
+  (then the residual comes from gz/PX4 timing, and lockstep is next).
