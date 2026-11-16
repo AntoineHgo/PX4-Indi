@@ -21,7 +21,8 @@ S34 (launch 20261116-072614, cap $1.35, no agent): Q4 still unanswered. Combined
    A-20 CAL_BARO0_OFF 0 and median pre-arm bias < 0.5 m. If pass: 15-run set + two keys (S35); route check 35 due.
    S34 ended with the batch still flying (started 07:27, ~4 min); results unread. S35 FIRST: check status.txt, run
    the two checks above, check params_applied in each run's meta (SENS_BAR_AUTOCAL, EKF2_*), write README.md there.
-   No stage-2 note this session (budget).
+   No stage-2 note this session (budget). hover_r1 read: A-20 PASS, A-19 NOT fixed (EKF decl 3.67, err +0.52 deg,
+   magB_x -5.8 mG): `results/a19a20_s34/README.md` has the S35 plan.
 S33 (launch 20261116-065633, cap $1.98): B32 speed 1 still running (hover r2 at 06:56). T68 haiku A-19 mechanism ->
    `results/a19_s33/README.md`; arccos fix in second_key_s29.py (own); G1 status draft in GATES.md (own).
    DONE: arccos fixed 8ef678d1b4; T68 A-19 mechanism candidate (ANOMALIES A-19 NEXT): EKF2_MAG_DECL 3.41 vs gz field
