@@ -12,14 +12,6 @@
 - S44: stage-2 INDI margins VOID (A-23 limit cycle, see Next actions).
 ## Next actions (in order)
 S36-S42 detail moved to JOURNAL.md (S45).
-S43 (launch 20261116-114133, cap $2.79) DONE: T88 sonnet A-22 chain (`results/stage2_s43/a22_chain.md`,
-   `bench/a22_chain.py`): static roll G1 ~340 = link a (torque_sp -> actuator_motors roll diff 0.92, 0.23/motor)
-   x link b (actuator_motors -> (w/wmax)^2, 0.59 at hover, a 0.221 -> w ~976-999) x link c (626 meas vs 621 analytic,
-   on truth). Product reproduces end-to-end u->alpha at 2.5/5/7.9 Hz; tau_eff 35-44 ms. 878 analytic REJECTED.
-   T89 haiku second key (`results/stage2_s43/a22_second_key.md`): link a AGREE (0.222-0.236); link b DISAGREE but its
-   own map is suspect (actuator_outputs zero-filled on 36 % of rows, max 1897 rad/s, R2 0.2): link b UNSETTLED.
-   Log commit 32500e0 vs HEAD: no diff in allocator/mixer/gz_bridge/INDI module/airframe; params as assumed
-   (THR_MDL_FAC 1, EC_MIN 0, EC_MAX 2700, CT 6.5). A-22 narrowed, still open (see ANOMALIES).
 S44 (launch 20261116-212207, cap $3) DONE: T90 sonnet A-22 trace (`results/stage2_s44/a22_links.md`) + T91 haiku
    second key (`results/stage2_s44/limit_cycle_second_key.md`): every INDI M3a flight S39-S41 is in a 17 Hz pitch LIMIT
    CYCLE with motors pinned at 0 on 38 % of samples -> stage-2 INDI margins S40-S43 VOID; A-22 closed as artefact,
@@ -48,18 +40,22 @@ S47 (launch 20261116-221436, cap $3): first roll M3a flight with derived G1 inva
    Hypothesis (S47, by hand): matched INDI gives L ~ K_R (1 + P_att/s)/s x A(s) x F(s); MC_INDI_K_R 20 rad/s, airframe
    MC_ROLL_P 8 -> at w_c 22 rad/s: -90 -20 (atan 8/22) -36 (motor 33 ms) = -146 deg + filters/delay ~ measured -158.
    I.e. K_R/P_att = 2.5 and K_R ~ 0.7 x motor bandwidth (30 rad/s): margins limited by the gain defaults, not G1.
-NEXT (S48): (0) explain the low PM with margins_models.py + attitude P loop + G2 (and read MC_INDI rate gains vs
-   MC_ROLL_P: is the INDI rate bandwidth default too low for the attitude gain?); if the model agrees, this is
-   decision 4 (defaults as bandwidths), open it in stage 3, do not tune here. (1) roll M3a at 800 Hz with G1+G2 file: AMP 0.001 and 0.002 (linearity), seeds 1-2, model-only and v2; pretest_gate
-   on the window BEFORE injection (gate window currently overlaps it: add an end-time option). (2) runner appends
-   quad5in_indi_g1.params to every INDI run + G1/G2 provenance in run.json. (3) A-24 PSD re-check with G2. (4) ACT_TC from
-   rotor step, attitude P loop + G2 into margins_models.py. Note: two run.sh flights launched in parallel lost one (no output).
+S48 (launch 20261116-223404, cap $3): low roll PM EXPLAINED (`results/stage2_s48/README.md`): model + attitude P loop
+   matches S47 (PM 23.6 vs 22.3, f_c 3.48 both, GM 4.7 vs 4.1). Matched INDI: L ~ K A(s)(1+P/s)/s, motor lag caps K_R;
+   filters irrelevant; ACT_TC 0.02 vs plant 0.033 costs 5 deg/9.5 dB; G2 by gains alone needs P_att <= 2.5. Remedy
+   proposed D-RATE-LEAD (nu -= K tau_c a_f): model PM 56-61, GM 11-16 dB at K 20-40. A-26 opened (1 Hz phase).
+   Flight checks (model-only, s1): ACT_TC 0.033 P8 -> PM 25.9/GM 10.7 (model 28.6/14.2); P3 -> 42.9/13.4 (model
+   43.8/15.7). A-21 CLOSED. T101 second key: PM/f_c/DM AGREE, GM DISAGREE (flights side with the first key; model GM
+   2-3.5 dB optimistic, unmodelled delay).
+NEXT (S49): (1) stage-2 summary table (PID ref, INDI current, model vs measured) in `results/stage2_s48/README.md`
+   style, then stage 3 opens with D-RATE-LEAD design note + opus review (one interface: note vs src/lib/indi_rate_control),
+   ACT_TC identification from a rotor step, and the unmodelled ~3-5 ms delay added to margins_models (GM gap).
+   (2) Route check due S50. (3) runner appends quad5in_indi_g1.params + provenance in run.json; pretest_gate end-time
+   option (window overlaps injection). (4) A-24 PSD re-check with G2.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| F48 | M3a check flights tc33_p8, tc33_p3 (model prediction test) | host bash | `results/stage2_s48/m3a_check/` (done.txt) | `bash indi_flight/results/stage2_s48/m3a_check/fly.sh` |
-| T101 | second key of lead/att-loop model | sonnet | `results/stage2_s48/lead_second_key.md` | re-brief from STATE |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -76,6 +72,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 48 | T101 | sonnet | second key lead/att-loop margins | done, 3 calls, ~$0.1, PM AGREE, GM DISAGREE (flights side with key 1) |
 | 47 | T98 | sonnet | roll M3a + yaw follow-up F5-F9 | done, 15 calls, ~$0.6, found yaw limit cycle; wrong guess on cause (code change) |
 | 47 | T100 | haiku | G2_Y second key | done, 5 calls, ~$0.1, AGREE 27.0 |
 | 45 | T93 | sonnet | route check 45 | done, 7 calls, ~$0.15 |

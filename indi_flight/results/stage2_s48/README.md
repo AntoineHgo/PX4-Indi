@@ -30,3 +30,21 @@ rate prediction w + tau w'. Model (800 Hz, matched ACT_TC, P_att 8): K20 -> PM 6
 10.7 / 23 ms; K60 -> 41.1 / 7.4. At 400 and 250 Hz, K40: 53.0/9.6 and 49.6/8.6. Cost: the angular-acceleration feedback
 gain becomes (1 + K tau_c) (2.3 at K40), which raises motor-command noise (G4). Equivalent to scaling the a_f term of
 the increment; one parameter, tied to the identified ACT_TC (decision 4: bandwidths that transfer).
+
+## 4. Checks
+- Flight check (`m3a_check/`, model-only path, seed 1, speed 4, AMP 0.001, ACT_TC 0.033, P 8): measured PM 25.9 deg @ 2.92 Hz,
+  GM 10.7 dB @ 7.56 Hz, DM 24.6 ms; model 28.6 @ 2.97, 14.2 dB @ 8.6 Hz, 26.8 ms. Change vs S47 (ACT_TC 0.02 -> 0.033):
+  measured +3.6 deg / +6.6 dB, model +5.0 / +9.5. PM and f_c within 3 deg / 0.05 Hz; GM 3.5 dB optimistic, phase
+  crossing 1 Hz higher in the model: a few ms of loop delay are unmodelled (gz/ESC latency 0 in margins_models, T78 list).
+  pretest_gate rc 1 is the known window overlap with the injection (gate window not yet ended before t0).
+- Second key T101 (`lead_second_key.md`, own continuous model): PM within 0.5-3 deg, f_c within 0.06 Hz, DM within 1.1 ms on
+  all 7 rows: AGREE. GM DISAGREE on 5 rows (second key 11-36 dB, crossings near 31 Hz). The flights decide against the
+  second key's GM (S47 measured 4.1 dB @ 5.6 Hz, model 4.7; tc33 10.7 dB, model 14.2, second key 21.0); its residual term
+  H A (1 - e^{-sT}) is the only structural difference and is not resolved. GM numbers of this note are model values,
+  3-4 dB optimistic; the lead candidate must be judged on a measured GM.
+- Flight check 2 (`m3a_check/tc33_p3`, same but MC_ROLL_P 3, confirmed in run.json): measured PM 42.9 deg @ 2.79 Hz, GM 13.4 dB
+  @ 8.72 Hz, DM 42.7 ms; model 43.8 @ 2.81, 15.7 dB, 43.3 ms. Effect of P 8 -> 3: measured +17.0 deg PM, model +15.2.
+  Both flights: checks rc 0, 18/18 bins accepted. Verdict: the model predicts PM, f_c and DM of parameter changes within
+  3 deg / 0.05 Hz / 2.2 ms; GM is optimistic by 2.3-3.5 dB (unmodelled delay). A-21 CLOSED.
+- Not a G2 result: these are stage-2 explanations, single seed, provisional under Q4-A. No configuration flown here meets
+  G2 (PM >= 45) at P_att >= 3.
