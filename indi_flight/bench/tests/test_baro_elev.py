@@ -38,7 +38,7 @@ def main():
     assert abs(d - (-11.3)) < 0.3, d
     # noise: a 1 Pa perturbation maps to ~(dP/dh at 488)/(dP/dh at 0) Pa
     n = remap(P0 - 1.0, 488.0) - remap(P0, 488.0)
-    assert -1.0 < n < 0.0 and abs(n - (-0.944)) < 0.01, n
+    assert -1.0 < n < 0.0 and abs(n - (-0.954)) < 0.002, n
     print("ok: P(0m,488m)=%.1f Pa dP/dz=%.2f Pa/m noise gain=%.3f" % (p, d, -n))
 
 

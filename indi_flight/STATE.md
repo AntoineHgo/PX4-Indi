@@ -12,12 +12,12 @@
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
-S31 (launch 20261116-042839, cap $1.08): A-14 bridge fix PRE-TEST PASS (`results/a14_bridge_s31/pretest_check.md`:
-   p0 95593 Pa (ISA@~488 m), CAL_OFF -4.9 Pa, bias0 0.20, baro_fault 0, max err 0.055 m). B31 = 15 hovers speed 4
-   running detached (`bench/a14_bridge_s31.sh` -> `results/a14_bridge_s31/status.txt`, check.md at BATCH_DONE).
-   T65 haiku second key of the bridge diff -> `results/a14_bridge_s31/second_key_bridge.md`.
-   S32 NEXT: read B31 check.md + T65; if both OK close A-14 (ANOMALIES, JOURNAL), else EKF2_BARO_CTRL 0 and stop.
-   Then S31 plan items (ii) attitude 15 % gap + A-19, (iii) re-fly G1.6 set, G1 FINAL, stage 2.
+S31 (launch 20261116-042839, cap $1.08): A-14 bridge fix: pretest PASS, B31 15/15 flew; mechanism gone (bias0 <0.5 m,
+   baro_fault 0/15, hold 4.94-5.05 m) but closing test FAILS 9/15 on 0.1 m (max 0.144 m): A-14 PARKED with bound
+   0.15 m (ANOMALIES). T65 second key AGREE-WITH-ISSUES: thread race on `_alt_ref` -> new A-20; test constant fixed.
+   S32 NEXT: (a) A-20 fix (sonnet, small: atomic/once-set ref in gz_bridge) + haiku key, folded into the G1.6 re-fly;
+   (b) S31 plan (ii) attitude 15 % gap + A-19 (haiku); (iii) re-fly G1.6 set with the fixed baro, write G1 FINAL
+   with anomalies as evidence limits, start stage 2. Escalate to owner if G1 not frozen by end of S32.
 000000000000000000. S28 (launch 20261116-040120, cap $3): A-14 ROOT CAUSE found from source + logs (D-A14): gz baro has
    no reference_altitude (sea level) vs world 488 m; SENS_BAR_AUTOCAL steps baro ~488 m on the ground after EKF2
    started; baro bias still converging at arm. Fix staged (`sim/staged/quad5in_base_model_a14.sdf`), installed by
@@ -67,7 +67,6 @@ S31 (launch 20261116-042839, cap $1.08): A-14 bridge fix PRE-TEST PASS (`results
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| B31 | A-14 closing, 15 hovers speed 4, bridge fix | host bash (detached) | `results/a14_bridge_s31/status.txt` | delete r* dirs, `setsid nohup indi_flight/bench/a14_bridge_s31.sh` |
 | B26 | G1.6 set --sched --sched-anchor, 3 scen x 5, speed 4 (done, analysed S27) then 1 (DONE S28, not analysed) | host bash (detached) | `results/g16_sched_set_s26/speed{4,1}/status.txt` | `setsid nohup indi_flight/bench/g16_sched_set.sh` (delete partial speed dir first) |
 
 ## Open problems
@@ -121,8 +120,8 @@ S31 (launch 20261116-042839, cap $1.08): A-14 bridge fix PRE-TEST PASS (`results
 | 29 | T61 | sonnet | metric defects 1+2 | done, 16 calls, ~$0.6, tests re-run by me |
 | 30 | T63 | sonnet | gz_bridge baro elevation fix | done, 6 calls, ~$0.25, built by me |
 | 30 | T64 | sonnet | route check 30 | done, 7 calls, ~$0.2 |
-| 31 | B31 | host bash | A-14 bridge pretest + 15 hovers | pretest PASS, batch running |
-| 31 | T65 | haiku | second key bridge diff | running |
+| 31 | B31 | host bash | A-14 bridge pretest + 15 hovers | 16/16 flew, ~11 min, $0; 9/15 FAIL 0.1 m bound |
+| 31 | T65 | haiku | second key bridge diff | done, 5 calls, ~$0.1, AGREE-WITH-ISSUES (race) |
 
 ## Lessons proposed
 - A shared sim model is live for every running batch: stage a model change and install it after the batch ends (S28 nearly mixed two baro models into B26).
