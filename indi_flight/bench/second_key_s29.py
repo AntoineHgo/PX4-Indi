@@ -21,6 +21,7 @@ indi_flight/results/second_key_s29.md (comparison table).
 import json
 import math
 import os
+import sys
 
 import numpy as np
 from pyulog import ULog
@@ -28,7 +29,9 @@ from pyulog import ULog
 ROOT = '/home/ahugo/Documents/Drotek/Codes/PX4-Indi'
 G = os.path.join(ROOT, 'indi_flight/results/g16_sched_set_s26/speed4')
 S = os.path.join(ROOT, 'indi_flight/results/second_key_s29')
-MD = os.path.join(ROOT, 'indi_flight/results/second_key_s29.md')
+# --zoh: hold the rate setpoint (as the primary does) instead of interpolating it
+ZOH = '--zoh' in sys.argv
+MD = os.path.join(ROOT, 'indi_flight/results/second_key_s29%s.md' % ('_zoh' if ZOH else ''))
 
 RUNS = [('hover', 'r1'), ('hover', 'r2'), ('step_roll', 'r1'),
         ('step_roll', 'r3'), ('traj_lemniscate', 'r1')]
@@ -108,7 +111,11 @@ def rate_and_attitude(ulog, t0, t1):
     ts_r, idx = np.unique(np.asarray(rs['timestamp'], dtype=float) * 1e-6, return_index=True)
     rates = {}
     for ax in ('roll', 'pitch', 'yaw'):
-        sp = np.interp(tt, ts_r, np.asarray(rs[ax], dtype=float)[idx])
+        v = np.asarray(rs[ax], dtype=float)[idx]
+        if ZOH:
+            sp = v[np.clip(np.searchsorted(ts_r, tt, side='right') - 1, 0, None)]
+        else:
+            sp = np.interp(tt, ts_r, v)
         err = w[ax] - sp
         rates[ax] = float(np.sqrt(np.mean(err ** 2)))
 
@@ -186,7 +193,7 @@ def main():
     lines.append('Tolerance (G1.3): max(1 % of primary, absolute). Absolute parts: attitude 0.1 deg; '
                  'effort 0.1 % of FS with FS = 1.0 (normalized motor control, assumed); '
                  'rates have no absolute unit in G1.3 so 1 % relative only.\n')
-    lines.append('Setpoint/attitude conventions: rate setpoint linearly interpolated onto truth times; '
+    lines.append('Setpoint/attitude conventions: rate setpoint %s onto truth times; ' % ('zero-order held' if ZOH else 'linearly interpolated') + 
                  'attitude setpoint zero-order hold; quaternions w-first (PX4 convention).\n')
     lines.append('## Windows (ULog time, us)\n')
     lines.append('| run | window start us | window end us |')
@@ -201,7 +208,7 @@ def main():
         lines.append('| %s | %s | %.6g | %.6g | %+.3f %% | %s |' % (run, metric, p, kv, rel, verdict))
     lines.append('')
     os.makedirs(S, exist_ok=True)
-    with open(os.path.join(S, 'second_key_values.json'), 'w') as f:
+    with open(os.path.join(S, 'second_key_values%s.json' % ('_zoh' if ZOH else '')), 'w') as f:
         json.dump(values, f, indent=1)
     with open(MD, 'w') as f:
         f.write('\n'.join(lines) + '\n')
