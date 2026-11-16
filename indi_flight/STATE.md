@@ -4,7 +4,7 @@
 - Stage: 1 (evidence and simulator), started session 1 (2026-11-15). Stage 0 done. Session 3: ref airframe model done.
 - Sessions 4-13: history in JOURNAL.md (moved S15). S14: G1.6 runs at speed 1 and 4, review r5 BLOCKING (A18).
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written; G1.6 first tested S14 ((a) not met, see next actions).
-- Blocker: none. Q1 closed: A confirmed by owner; flatness A18 reviewed (r5 BLOCKING), answered in
+- Blocker: none. Q2, Q3 open (G1.1 gap rule, G1.6a wording), not blocking. Q1 closed: A confirmed by owner; flatness A18 reviewed (r5 BLOCKING), answered in
   `design/flatness_r2.md` (S15): optional increment after base A. Outer-loop study finished; stage 5 = base A.
 - Session 15 (launch 20261115-230225, cap $3): flatness_r2 written; window anchored (T28, T29 2nd key);
   D-SIM-STEP decided (1.25 ms world, IMU 800 Hz), implementation next session.
@@ -26,6 +26,12 @@
    G1.6(a) as 'trigger within 1 period + Commander phase bound 10 ms'; (2) sonnet: takeoff/land kinds in the
    player + capture hold position (yaw hard-coded 1.585 today), then re-fly the full 5-run G1.6 set (hover, step, traj)
    with --sched at speeds 1 and 4 (host bash) and a G1.6(a) verdict; (3) G1.5 injectors via player kinds.
+000000000000000. S25 (launch 20261116-030636, cap $3): T52 DONE (7a8ad4786a runner, e7e7dc95b0 results): gz paused start
+   does not fix A-17 (spread 8.75/6.25 ms); cause = Commander skips/relative sleep + free-running gz. D-A17 overturned,
+   A-17 PARKED with bound, Q3 asked (restate G1.6a, or lockstep gz), not blocking. S26 NEXT: (1) sonnet: player
+   take-off/land kinds + capture hold position (yaw hard-coded 1.585 today) + option to anchor rows after a mode
+   change on the observed nav_state transition (Q3 option A needs it; harmless under B); 1 pretest; (2) second key;
+   (3) re-fly 5-run G1.6 set (hover, step, traj) --sched at speeds 1 and 4 for G1.6(b); (4) G1.5 injectors via player.
 1-4. Stage-1 items still pending from the old list (rest done, history in JOURNAL): errata re-score of archived set-O/T5;
    window rule must accept nav_state 23; sag as sim-time ramp in gz bridge (two keys); run_scenario sim-time fixes
    (`sim_review.md`:14,19) now folded into the player; outer-loop A-requirements folded at stage 5.
@@ -97,8 +103,11 @@
 | 24 | T49 | sonnet | sim-time scenario player + pretest | done, 29 calls, ~$0.75 |
 | 24 | T51 | haiku | A-17 Commander phase | done, 5 calls, ~$0.06, confirmed 4/5 |
 | 24 | T50 | haiku | second key player instants | done, 8 calls, ~$0.06, AGREE |
+| 25 | T52 | sonnet | gz paused start + 5 hovers | done, 18 calls, ~$0.45, hypothesis rejected |
 
 ## Lessons proposed
+- Read the sleep/wake rule of a loop before building a timing fix around it: S25 spent a session on a start-up
+  race while Commander's skip-sleep-on-command line (visible in 20 lines of source) already ruled it out.
 - A pre-test check worded "within N periods of the command" measured Commander's fixed latency; state the
   determinism check as across-run spread, and latency separately (S24).
 - Give each anomaly at most 2 sessions, then park it with a written bound and reopen trigger (route check 22).

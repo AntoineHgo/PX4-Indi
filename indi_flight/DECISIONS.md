@@ -125,3 +125,22 @@ Open, to be written before code (MISSION "Decisions that are yours"):
   (then the residual comes from gz/PX4 timing, and lockstep is next).
 - Outcome S24: built in one session (b2dab14759); 2 hovers gave 0 us spread on arm and offboard instants (second key
   agrees). hrt is the gz clock in SITL (lockstep scheduler). Commander adds a fixed 6.25/16.25 ms after the applied row.
+
+## D-A17 Commander loop phase: start gz paused, unpause after PX4 start-up (S25, 2026-11-16)
+- Problem: A-17. Commander (zero diff, O-11) runs a 10 ms sleep loop whose phase is set when it starts. gz is
+  started running (`gz sim -r`), so PX4 modules start while the sim clock already advances: the phase is a
+  wall-clock race (2500/3750/6250 us over 5 runs). G1.6(a) asks mode instants within 2.5 ms across runs.
+- Choice: the runner starts gz paused (no `-r`), waits until PX4 start-up is complete (all modules started in
+  frozen sim time), then unpauses through the world control service. Every module then begins its loop at the
+  same sim time in every run. Sim and runner only; no firmware diff.
+- Alternatives: (1) player waits for a Commander publish before a mode row: moves the trigger, not the response,
+  so instants still differ in absolute sim time; (2) restate G1.6(a) relative to a phase-aligned scenario origin:
+  a test change after first test (owner question), kept as fallback; (3) lockstep gz: larger change, not needed
+  for this cause.
+- Overturn: PX4 start-up blocks while time is frozen (rcS sleeps are px4_usleep in lockstep) and no unpause
+  point exists after commander start; or with it the phase still differs across runs.
+- Outcome S25 (T52, `results/a17_paused_s25/README.md`): start-up completes in frozen sim time and all modules
+  start at t=0, yet the arm/offboard spread is 8.75/6.25 ms over 5 runs and r3 shifts phase within the run.
+  Overturned. Cause from source: `Commander.cpp` skips its 10 ms `px4_usleep` while a vehicle_command is pending and
+  sleeps relative to the end of variable work; gz runs free (not lockstepped), so that wall time becomes a random
+  sim-time shift in 1.25 ms steps. Only lockstep gz removes it. A-17 parked (2-session rule), owner Q3.
