@@ -161,3 +161,16 @@ Open, to be written before code (MISSION "Decisions that are yours"):
   a baro fault, EKF z error >= 0.1 m in 15-35 s or hold spread >= 0.05 m; then take alternative (1).
 - Outcome S28 pretest (`results/a14_close_s28/pretest_check.md`): raw pressure unchanged (101324 Pa), bias -488 ->
   baro fault: the edit did not reach the simulated sensor. Not yet overturned: check model load path first.
+
+## D-EFFORT-BW Motor effort metric at a fixed bandwidth (S29, 2026-11-16)
+- Context: `motor_rate_rms_per_s` was a raw first difference at the logged rate (defect 2 of
+  `design/g13_g14_matrix_s28.md`, A-11): its value moves with the log rate and with noise above any motor response.
+- Choice: `actuator_motors` resampled on a uniform 400 Hz sim-time grid, zero-phase 2nd-order Butterworth low-pass
+  at 50 Hz, RMS of the derivative per motor and mean. 400 Hz is the lowest G2 controller rate whose Nyquist (200 Hz)
+  still leaves the filter a decade of roll-off; 50 Hz is about ten times the reference motor bandwidth (tau ~30 ms,
+  ~5 Hz), so the metric keeps every command change the rotor can follow plus the band where ESC heating and audible
+  ripple come from, and drops sensor noise the motor cannot reproduce. The raw value is kept for errata.
+- Alternatives: (1) raw derivative at a fixed log rate: still noise-dominated; (2) filter at the motor bandwidth
+  (~5 Hz): hides command chatter that heats ESCs; (3) true rotor-speed ripple only: kept for G4 as a separate limit.
+- Overturn: G4 sources (stage 1 noise profiles) show command content above 50 Hz that matters on a vehicle, or the
+  250 Hz controller rate must be scored with the same metric (then 250 Hz grid, 50 Hz cut still below Nyquist).

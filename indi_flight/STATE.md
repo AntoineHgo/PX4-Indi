@@ -41,6 +41,9 @@
    (as speed 4: `second_key_player.py`, `G16_ROOT=... g16_spread.py`), haiku second key; G1.6 set must be re-flown
    with the fixed baro anyway (A-14 touched hover r2/traj r1). (3) route check 27 items 2-5 (G1.3/G1.4 keys,
    minimum G1.5, freeze G1 by S30, stage 2).
+0000000000000000000. S29 (launch 20261116-041436, cap $2.34): T60 (haiku, A-14 reference_altitude check -> `design/a14_refalt_s29.md`),
+   T61 (sonnet, metric defects 1+2 of `design/g13_g14_matrix_s28.md` -> `design/metric_fix_s29.md`, effort at 50 Hz
+   fixed bandwidth, D-EFFORT-BW). Both in flight; if cut, relaunch from their output files.
 1-4. Stage-1 items still pending from the old list (rest done, history in JOURNAL): errata re-score of archived set-O/T5;
    window rule must accept nav_state 23; sag as sim-time ramp in gz bridge (two keys); run_scenario sim-time fixes
    (`sim_review.md`:14,19) now folded into the player; outer-loop A-requirements folded at stage 5.
