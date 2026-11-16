@@ -21,8 +21,8 @@
    writes `results/a15_s21/README.md`. DONE: 56578/56586 samples, gaps = gyro gaps, values equal (commits pushed).
    A-16 opened (actuator_motors 777 zero-dt pairs). A-14: 6 flights (`results/a14_s21/`), 1 reproduced; EKF height
    itself 2.26 m high on ground. S22 NEXT: (1) g1.1 rows + metrics.py read `sim_ground_truth` (sonnet, plus a haiku
-   second key); (2) A-14 boot-logged repro (host bash loop of `--log-from-start` hovers, $0) + GPS/baro/innovation
-   check; (3) A-16 closing test (haiku); (4) S19 items (2)-(5).
+   second key); (2) A-14: 0/9 boot-logged vs 3/6 not (p=0.044): sonnet reads run_scenario.py paths with/without
+   `--log-from-start`, then a pair test changing only the suspected step; (3) A-16 closing test (haiku); (4) S19 items (2)-(5).
 0000000000. S20 (launch 20261116-014126, cap $2.61) DONE: T39 g1.1 declared rates fixed (truth at controller rate, EKF 88 Hz
    = 800/9 explained, GATES.md log), check_truth output path; T40 A-14 intermittent, not a reset/baro, pre-arm unseen;
    T41 A-15 truth stream misses ~13 % of sim steps at speed 4 (gz_bridge pose, not logger), controller topics only jitter.

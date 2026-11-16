@@ -20,3 +20,12 @@ z 0.005 m (on the ground). So the EKF height state itself is 2.26 m high while l
 Next: repeat with `--log-from-start` until one reproduces (expected ~1 in 3), then look at the pre-arm height
 sources (sensor_gps alt, baro, estimator_status height innovations, EKF origin set time, the delayed-GNSS
 model) to find which sensor pulls the height.
+
+## Part 2: six more boot-logged runs (r7-r12)
+
+Residual at arm -0.067..0.064 m, max abs arm..+10 s 0.094..0.215 m: none reproduces. Total so far: 0/9 with
+`--log-from-start`, 3/6 without (S20 r0-r2: 2/3, S21 r4-r6: 1/3). If the two groups had the same rate, all 3
+events falling in the 6-run group has probability C(6,3)/C(15,3) = 0.044. So the runner's path without boot
+logging is now the main suspect (what it does before arm when the logger is not started early: parameter
+application, logger restart, timing of the EKF origin relative to them). Next: read `run_scenario.py` for the
+two paths (sonnet, read-only), then a pair test that changes only the suspected step.
