@@ -67,6 +67,7 @@ LOG_TOPICS = [
     "vehicle_imu_status", "sensor_gyro",  # D-SIM-STEP pre-test evidence: gyro rate (sensor_gyro ~ IMU rate, 800 Hz)
     "vehicle_attitude_groundtruth", "vehicle_angular_velocity_groundtruth",  # A-12 s18: were 100 Hz (profile rate)
     "sim_ground_truth",  # A-15 s21: sim-only truth, uORB queue 16, one sample per sim step
+    "sim_schedule_applied",  # D-SCHED s24: row applied by sim_scenario_player (queue 8), only published with --sched
 ]
 TAKEOFF_ALT = 5.0
 ALT_KP, ALT_KD = 0.04, 0.10  # thrust per m / per m/s of altitude error in attitude/rate scenarios
@@ -82,6 +83,12 @@ T_OFFBOARD_S = T_ARM_S + 22.0  # 52 s
 HOVER_MIN_S = 5.0  # hover between end of climb and hold capture (as before)
 PRESTREAM_S = 1.0  # position-setpoint stream before the offboard switch (as before)
 T_HOLD_S = T_OFFBOARD_S - PRESTREAM_S  # hold_pos/hold_yaw captured here (fixed sim time)
+# D-SCHED (--sched): hold setpoint of the schedule file, written before PX4 starts so it cannot be captured from the
+# flight. Position from the hover after take-off (hold_pos_ned of results/a14_s21: x,y within 0.04 m of 0, z -4.9..-5.1);
+# yaw is the quad's heading at take-off (hold_yaw_rad 1.581..1.590 there: gz spawns it facing East, NED yaw pi/2 + 0.014).
+SCHED_HOLD_POS = (0.0, 0.0, -5.0)
+SCHED_HOLD_YAW = 1.585
+SCHED_FILE = "sim_schedule.txt"  # in the PX4 working dir (the run's rootfs); rcS starts sim_scenario_player when present
 LATE_TOL_S = 0.1  # an arm later than T_ARM_S + this is flagged as arm_late_s in run.json
 # O-12 watchdog (D-watchdog), active from takeoff completion to the landing command
 WD_TILT_DEG, WD_TILT_HOLD_S = 60.0, 0.5  # MPC_TILTMAX_AIR 45 deg; largest commanded tilt ~52 deg (H4)
@@ -215,6 +222,14 @@ class Sim:
         os.makedirs(self.rootfs, exist_ok=True)
         topics_dir = os.path.join(self.rootfs, "fs", "etc", "logging")  # SITL storage root is ./fs
         os.makedirs(topics_dir, exist_ok=True)
+        if self.a.sched:  # D-SCHED: arm, offboard switch and setpoint stream played inside PX4 in simulation time
+            rows = [f"{int(T_ARM_S * 1e6)} arm",
+                    "%d sp %.6g %.6g %.6g %.6g" % (int((T_OFFBOARD_S - PRESTREAM_S) * 1e6), *SCHED_HOLD_POS,
+                                                   SCHED_HOLD_YAW),
+                    f"{int(T_OFFBOARD_S * 1e6)} mode_offboard"]
+            text = "# t_sim_us kind fields (written by run_scenario.py --sched)\n" + "\n".join(rows) + "\n"
+            open(os.path.join(self.rootfs, SCHED_FILE), "w").write(text)
+            open(os.path.join(self.out, "sched.txt"), "w").write(text)
         with open(os.path.join(topics_dir, "logger_topics.txt"), "w") as f:
             f.writelines(f"{t} 0 0\n" for t in LOG_TOPICS)  # instance 0 only: multi-instance adds exhaust the 255 slots
         self.px4 = self.spawn([f"{BUILD}/bin/px4", "-i", str(self.a.instance), "-d", "-w", self.rootfs,
@@ -512,6 +527,9 @@ def main():
     # default since S22: A-14 (take-off EKF height offset) seen 3/6 without -f, 0/9 with it (results/a14_s21)
     ap.add_argument("--log-from-start", action=argparse.BooleanOptionalAction, default=True,
                     help="logger starts with -f so the log covers the time before arm (--no-log-from-start: from arm)")
+    ap.add_argument("--sched", action="store_true",
+                    help="D-SCHED: arm, offboard switch and the setpoint stream are played by PX4 (sim_scenario_player, "
+                         "schedule file in sim time) instead of being sent over MAVLink; position scenarios only")
     ap.add_argument("--log-poll", default="actuator_motors", help="topic the logger wakes on (logger -p)")
     a = ap.parse_args()
     if a.imu_rate is None:
@@ -521,6 +539,8 @@ def main():
     os.makedirs(a.out, exist_ok=True)
 
     sc = SCENARIOS[a.scenario]
+    if a.sched and sc["mode"] != "position":
+        raise SystemExit("--sched supports position scenarios only (arm, offboard and a held position setpoint)")
     meta = {"scenario": a.scenario, "controller": a.controller, "seed": a.seed, "speed": a.speed, "sim": a.sim,
             "instance": a.instance, "params_file": a.params, "params_applied": {}, "git": git_info(),
             "noise_seed": {"gz_sim_seed": a.seed, "px4_baro_srand": 1234}, "events": [], "phase_log": [],
@@ -603,18 +623,22 @@ def main():
         meta["t_before_arm_wait_s"] = sim.t
         sim.run(None, until=lambda: sim.t >= T_ARM_S, wall_timeout=120 + 2 * T_ARM_S / a.speed, what="wait_t_arm")
         t_arm_sent = sim.t
-        for attempt in range(40):  # "Ready for takeoff" can be transient right after boot: retry
-            if sim.cmd(400, 1):
-                break
-            meta["arm_rejected_t_s"] = meta.get("arm_rejected_t_s", []) + [sim.t]
-            sim.run(1.0, what="arm_retry")
+        attempt = 0
+        if a.sched:  # the schedule row arms the vehicle at T_ARM_S sim time; no retry
+            meta["sched"] = True
         else:
-            raise RunError("arm rejected 40 times")
+            for attempt in range(40):  # "Ready for takeoff" can be transient right after boot: retry
+                if sim.cmd(400, 1):
+                    break
+                meta["arm_rejected_t_s"] = meta.get("arm_rejected_t_s", []) + [sim.t]
+                sim.run(1.0, what="arm_retry")
+            else:
+                raise RunError("arm rejected 40 times")
         meta["arm_attempts"] = attempt + 1
         meta["t_arm_sent_s"] = t_arm_sent
         if sim.t - T_ARM_S > LATE_TOL_S:  # visible in run.json: this run flies a shifted time slice
             meta["arm_late_s"] = round(sim.t - T_ARM_S, 3)
-        sim.run(None, until=lambda: sim.armed, wall_timeout=20, what="armed")
+        sim.run(None, until=lambda: sim.armed, wall_timeout=30, what="armed")
         meta["t_arm_us"] = int(sim.t * 1e6)
         if not sim.cmd(22, float("nan"), 0, 0, float("nan"), float("nan"), float("nan"), float("nan")):
             raise RunError("takeoff rejected")
@@ -639,7 +663,7 @@ def main():
             return max(0.1, min(0.95, thr0 / tilt + ALT_KP * e + ALT_KD * sim.vz))
 
         # offboard: stream setpoints, then switch mode
-        pos_sp = lambda: sim.send_pos(hold_pos, hold_yaw)  # noqa: E731
+        pos_sp = None if a.sched else (lambda: sim.send_pos(hold_pos, hold_yaw))  # noqa: E731
         sim.run(None, sp=pos_sp, until=lambda: sim.t >= T_OFFBOARD_S, wall_timeout=60 + 2 * PRESTREAM_S / a.speed,
                 what="pre_offboard_stream")
         meta["t_offboard_sent_s"] = sim.t
@@ -647,7 +671,8 @@ def main():
             meta["offboard_late_s"] = round(sim.t - T_OFFBOARD_S, 3)
         # stage 8: INDI POS replaces offboard and is reported as AUTO (4) / EXTERNALn (sub mode >= 11)
         indip = meta.get("boot_params", {}).get("MC_INDIP_EN") == 1
-        sim.cmd(176, 1, 6)
+        if not a.sched:  # with --sched the mode_offboard row of the schedule file switches the mode
+            sim.cmd(176, 1, 6)
         sim.run(None, sp=pos_sp, until=lambda: sim.main_mode == 6 or (indip and sim.main_mode == 4 and (sim.sub_mode or 0) >= 11),
                 wall_timeout=30, what="offboard_engage")
         meta["t_offboard_us"] = int(sim.t * 1e6)
