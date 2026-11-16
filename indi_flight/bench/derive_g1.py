@@ -1,0 +1,247 @@
+#!/usr/bin/env python3
+"""Derive the INDI rate-loop control effectiveness G1 (roll, pitch, yaw) from PX4 CA_* airframe data.
+
+Replicates the PX4 control allocation chain:
+  ActuatorEffectivenessRotors.cpp:197   moment = ct * (p x axis) - ct * km * axis ; thrust = ct * axis
+  ControlAllocationPseudoInverse.cpp:69 M = geninv(E)                            (n x 6)
+  ControlAllocationPseudoInverse.cpp:88-130  roll/pitch shared scale, yaw scale (signed max), thrust scales
+  ControlAllocationPseudoInverse.cpp:155-170 column normalisation, then |x| < 1e-3 set to 0 (:175-181)
+
+Physical G1: T_max per rotor = m g / (n x_hover) (thrust linear in the actuator command a_i),
+torque per unit normalised command k = T_max * E(ct=1)[0:3, :] @ Mn[:, k],
+G1_k = |torque_kk| / I_k  [rad/s^2 per unit normalised command].
+
+Usage:
+  python3 derive_g1.py --px4-airframe FILE --mass 0.61 --ixx 1.396e-3 --iyy 1.5326e-3 --izz 2.5e-3 \
+      --hover 0.137 --out derive_g1.md
+"""
+import argparse
+import math
+import sys
+
+import numpy as np
+
+GRAVITY = 9.81
+FLT_EPSILON = 1.1920929e-07  # C float32 FLT_EPSILON
+ALLOC_AXES = ['roll', 'pitch', 'yaw', 'thrust_x', 'thrust_y', 'thrust_z']
+
+
+def read_params(path, out):
+    """Collect CA_* entries from 'NAME VALUE', 'param set NAME VALUE' or 'param set-default NAME VALUE' lines."""
+    with open(path) as fh:
+        for raw in fh:
+            tok = raw.split('#', 1)[0].split()
+            if tok[:1] == ['param']:
+                tok = tok[1:]
+            if tok[:1] in (['set'], ['set-default']):
+                tok = tok[1:]
+            if len(tok) >= 2 and tok[0].startswith('CA_'):
+                out[tok[0]] = tok[1]
+    return out
+
+
+def read_rotors(params):
+    if 'CA_ROTOR_COUNT' not in params:
+        raise SystemExit('CA_ROTOR_COUNT missing')
+    n = int(float(params['CA_ROTOR_COUNT']))
+    rotors = []
+    for i in range(n):
+        def val(suffix, default=None):
+            key = f'CA_ROTOR{i}_{suffix}'
+            if key in params:
+                return float(params[key])
+            if default is None:
+                raise SystemExit(f'{key} missing')
+            return default
+
+        p = np.array([val('PX'), val('PY'), val('PZ', 0.0)])
+        axis = np.array([val('AX', 0.0), val('AY', 0.0), val('AZ', -1.0)])
+        norm = np.linalg.norm(axis)
+        if norm > FLT_EPSILON:
+            axis = axis / norm
+        rotors.append({'i': i, 'p': p, 'axis': axis, 'km': val('KM')})
+    return rotors
+
+
+def effectiveness_ct1(rotors):
+    """6 x n effectiveness (rows 0-2 torque, 3-5 thrust) with ct = 1."""
+    E = np.zeros((6, len(rotors)))
+    for col, r in enumerate(rotors):
+        ct = 1.0
+        E[0:3, col] = ct * np.cross(r['p'], r['axis']) - ct * r['km'] * r['axis']
+        E[3:6, col] = ct * r['axis']
+    return E
+
+
+def px4_normalised_allocation(E):
+    """Replicates ControlAllocationPseudoInverse geninv + scale + normalisation (normalize_rpy assumed true)."""
+    M = np.linalg.pinv(E)  # n x 6, Moore-Penrose (PX4 uses geninv)
+    scale = np.ones(6)
+
+    rp = []
+    for col in (0, 1):
+        nz = int(np.sum(np.abs(M[:, col]) > 1e-3))
+        rp.append(math.sqrt(np.sum(M[:, col] ** 2) / (nz / 2.0)) if nz > 0 else 1.0)
+    scale[0] = scale[1] = max(rp)
+    scale[2] = M[:, 2].max()  # PX4 uses the signed max()
+
+    for axis_idx in (2, 1, 0):  # PX4 loop order
+        col = 3 + axis_idx
+        absv = np.abs(M[:, col])
+        nz = int(np.sum(absv > FLT_EPSILON))
+        scale[col] = absv.sum() / nz if nz > 0 else scale[5]
+
+    Mn = M.copy()
+    if scale[0] > FLT_EPSILON:
+        Mn[:, 0] /= scale[0]
+        Mn[:, 1] /= scale[1]
+    if scale[2] > FLT_EPSILON:
+        Mn[:, 2] /= scale[2]
+    if scale[3] > FLT_EPSILON:  # PX4 tests scale[3] only, then divides all three thrust columns
+        Mn[:, 3] /= scale[3]
+        Mn[:, 4] /= scale[4]
+        Mn[:, 5] /= scale[5]
+    Mn[np.abs(Mn) < 1e-3] = 0.0
+    return Mn, M, scale
+
+
+def derive(params, mass, ixx, iyy, izz, hover):
+    rotors = read_rotors(params)
+    n = len(rotors)
+    E = effectiveness_ct1(rotors)
+    Mn, M, scale = px4_normalised_allocation(E)
+    Tmax = mass * GRAVITY / (n * hover)
+    B = Tmax * E[0:3, :]  # torque per unit motor command a_i = T_i / T_max
+    Gmat = B @ Mn[:, 0:3]  # row = torque axis (R, P, Y), col = normalised command
+    inertia = np.array([ixx, iyy, izz])
+    return {
+        'rotors': rotors,
+        'E': E,
+        'M': M,
+        'Mn': Mn,
+        'scale': scale,
+        'Tmax': Tmax,
+        'Gmat': Gmat,
+        'G1': np.abs(np.diag(Gmat)) / inertia,
+        'coupling': Gmat / inertia[:, None],
+    }
+
+
+def render(cmd, sources, mass, ixx, iyy, izz, hover, res):
+    rotors, Mn, scale = res['rotors'], res['Mn'], res['scale']
+    G1, C, Tmax = res['G1'], res['coupling'], res['Tmax']
+    L = []
+    L.append('# derive_g1: INDI rate-loop effectiveness G1 from CA_* airframe data')
+    L.append('')
+    L.append('Generated by `indi_flight/bench/derive_g1.py`.')
+    L.append('')
+    L.append(f'Command: `{cmd}`')
+    L.append('')
+    L.append('## Inputs')
+    L.append('')
+    L.append('| item | value |')
+    L.append('|---|---|')
+    L.append(f'| CA_* source | {", ".join(sources)} |')
+    L.append(f'| rotor count n | {len(rotors)} |')
+    L.append(f'| mass [kg] | {mass} |')
+    L.append(f'| ixx, iyy, izz [kg m^2] | {ixx:.4g}, {iyy:.4g}, {izz:.4g} |')
+    L.append(f'| hover thrust fraction x_hover | {hover} |')
+    L.append(f'| T_max per rotor [N] = m g / (n x_hover) | {Tmax:.5g} |')
+    L.append('')
+    L.append('## Rotors (CA_* as read; CT ignored, ct = 1 in the allocation)')
+    L.append('')
+    L.append('| i | PX | PY | PZ | AX | AY | AZ | KM |')
+    L.append('|---|---|---|---|---|---|---|---|')
+    for r in rotors:
+        p, a = r['p'], r['axis']
+        L.append(f'| {r["i"]} | {p[0]:+.5g} | {p[1]:+.5g} | {p[2]:+.5g} | {a[0]:+.3g} | {a[1]:+.3g} | '
+                 f'{a[2]:+.3g} | {r["km"]:+.5g} |')
+    L.append('')
+    L.append('## Normalised allocation matrix Mn (rows: motor a_i per unit normalised command)')
+    L.append('')
+    L.append('| motor | ' + ' | '.join(ALLOC_AXES) + ' |')
+    L.append('|---|' + '---|' * len(ALLOC_AXES))
+    for i in range(Mn.shape[0]):
+        L.append(f'| {i} | ' + ' | '.join(f'{v:+.5f}' for v in Mn[i]) + ' |')
+    L.append('')
+    L.append('## Normalisation scales (PX4 updateControlAllocationMatrixScale)')
+    L.append('')
+    L.append('| axis | scale |')
+    L.append('|---|---|')
+    for name, s in zip(ALLOC_AXES, scale):
+        L.append(f'| {name} | {s:.6g} |')
+    L.append('')
+    L.append('## G1 (diagonal: torque per unit normalised command / inertia)')
+    L.append('')
+    L.append('| axis | torque per unit [N m] | inertia [kg m^2] | G1 [rad/s^2 per unit] |')
+    L.append('|---|---|---|---|')
+    for k, (name, I) in enumerate(zip(['roll', 'pitch', 'yaw'], [ixx, iyy, izz])):
+        L.append(f'| {name} | {res["Gmat"][k, k]:+.5g} | {I:.4g} | {G1[k]:.5g} |')
+    L.append('')
+    L.append('## Couplings (rad/s^2 per unit normalised command; row = response axis, col = commanded axis)')
+    L.append('')
+    L.append('| response \\ command | roll | pitch | yaw |')
+    L.append('|---|---|---|---|')
+    for k, name in enumerate(['roll', 'pitch', 'yaw']):
+        L.append(f'| {name} | ' + ' | '.join(f'{v:+.4g}' for v in C[k]) + ' |')
+    L.append('')
+    L.append('## Assumptions and UNVERIFIED')
+    L.append('')
+    L.append('- UNVERIFIED: `_normalize_rpy` assumed true for the rotor effectiveness (taken from the '
+             'effectiveness module, not read in this run).')
+    L.append('- numpy `pinv` stands in for PX4 `geninv`; same Moore-Penrose result for this full-rank case, '
+             'thresholds may differ.')
+    L.append('- Thrust linear in the actuator command (THR_MDL_FAC matched, per the airframe comment): '
+             'physical T_i = T_max a_i. Not checked against the simulated thrust curve here.')
+    L.append('- x_hover is an input (0.137 from MPC_THR_HOVER / sim), not measured from the log.')
+    L.append('- Yaw sign follows the PX4 CA_ROTORn_KM convention; the gz turning direction vs KM sign is not '
+             'checked here.')
+    L.append('- Propeller torque disable flags and tilt/yaw-by-thrust-disabled options are not replicated.')
+    L.append('- Off-diagonal couplings are ~0 for this symmetric layout; they are nonzero when the roll/pitch/yaw '
+             'rows are not orthogonal.')
+    L.append('')
+    return '\n'.join(L)
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description='Derive INDI G1 (roll, pitch, yaw) from PX4 CA_* parameters.')
+    ap.add_argument('--params', help='PX4 param file: "NAME VALUE" or "param set[-default] NAME VALUE"')
+    ap.add_argument('--px4-airframe', help='airframe init script; its CA_* lines override --params')
+    ap.add_argument('--mass', type=float, required=True, help='vehicle mass [kg]')
+    ap.add_argument('--ixx', type=float, required=True, help='[kg m^2]')
+    ap.add_argument('--iyy', type=float, required=True, help='[kg m^2]')
+    ap.add_argument('--izz', type=float, required=True, help='[kg m^2]')
+    ap.add_argument('--hover', type=float, required=True, help='hover thrust fraction x_hover (0..1)')
+    ap.add_argument('--out', required=True, help='markdown output path')
+    args = ap.parse_args(argv)
+
+    if not args.params and not args.px4_airframe:
+        ap.error('give --params and/or --px4-airframe')
+    if not (0.0 < args.hover <= 1.0):
+        ap.error('--hover must be in (0, 1]')
+
+    params, sources = {}, []
+    if args.params:
+        read_params(args.params, params)
+        sources.append(args.params)
+    if args.px4_airframe:
+        read_params(args.px4_airframe, params)
+        sources.append(args.px4_airframe)
+
+    res = derive(params, args.mass, args.ixx, args.iyy, args.izz, args.hover)
+    md = render(' '.join(sys.argv), sources, args.mass, args.ixx, args.iyy, args.izz, args.hover, res)
+    with open(args.out, 'w') as fh:
+        fh.write(md)
+
+    G1 = res['G1']
+    print(f'G1 roll  = {G1[0]:.5g} rad/s^2 per unit')
+    print(f'G1 pitch = {G1[1]:.5g} rad/s^2 per unit')
+    print(f'G1 yaw   = {G1[2]:.5g} rad/s^2 per unit')
+    print('couplings (rad/s^2 per unit; row response, col command):')
+    print(np.array2string(res['coupling'], precision=4, suppress_small=True))
+    print(f'wrote {args.out}')
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

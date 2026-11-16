@@ -30,8 +30,11 @@ S45 (launch 20261116-214129, cap $3) DONE: A-23 CLOSED. Cause: G1 defaults 5-8x 
    `results/stage2_s45/g1y_derivation.md`). Hover with G1 R/P/Y 1756/1599/215 (`results/stage2_s45/a23_yaw/`): motor pin 0 %,
    rate RMS 0.0068/0.0056/0.0017, achieved 1.0. A-24 opened (45.7 Hz motor tone, std 0.00085). Route check 45
    (`design/route_check_45.md`): stage 2 margins wait for derived defaults; old margin numbers void, method kept.
-S46 NEXT: (1) `bench/derive_g1.py` (G1 R/P/Y from CA_*, mass, inertia, hover thrust; self-test; second key) = first piece of
-   decision 3/4 (write D-entry: G1 derived, not regressed from a saturated log). (2) pre-test checklist in GATES/runner: pitch
+S45 also: T96 `bench/derive_g1.py` + `bench/tests/test_derive_g1.py` written (ALL PASS, re-run by me), UNKEYED: quad5in G1
+   R/P/Y 1759/1602/221 (`results/stage2_s45/derive_g1.md`). Roll and pitch share PX4's normalisation scale, so torque per unit
+   command is equal and G1_P = G1_R Ixx/Iyy for any arm layout (my reading: B pinv(B) = I). D-G1-DERIVE written.
+S46 NEXT: (1) sonnet/haiku second key of derive_g1.py vs ControlAllocationPseudoInverse.cpp (check `_normalize_rpy`, geninv vs
+   pinv, yaw sign), then set derived G1 in every bench INDI params file. (2) pre-test checklist in GATES/runner: pitch
    RMS < 0.02 rad/s, motor pin < 1 %, achieved > 90 % as exit status of limit_cycle check. (3) S47: ACT_TC from rotor step,
    attitude P loop into margins_models.py. (4) S48: first valid roll M3a margin row at 800 Hz, two seeds.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
@@ -55,6 +58,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | session | id | model | task | outcome |
 |---|---|---|---|---|
 | 45 | T93 | sonnet | route check 45 | done, 7 calls, ~$0.15 |
+| 45 | T96 | haiku | derive_g1.py + self-test | done, 7 calls, ~$0.1, ALL PASS, UNKEYED |
 | 45 | T95 | haiku | second key A-23 numbers | done, 7 calls, ~$0.06, AGREE (RMS 0.0068/0.0056/0.0017, pin 0 %) |
 | 45 | T94 | haiku | A-23 hover G1_Y 215 + checks | done, 6 calls, ~$0.1, clean hover |
 
