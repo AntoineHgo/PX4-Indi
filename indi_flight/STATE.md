@@ -20,7 +20,8 @@
    S21 NEXT: (1) A-15 cause (sonnet, read-only ~12 calls): gz_bridge dynamic_pose/info subscription vs IMU path, transport
    queue/pacing at speed 4, propose fix (truth from the same step callback as IMU?); one speed-1 flight to compare.
    T42 DONE (`design/a15_cause_s20.md`): cause likely LOGGER overwrite (message_gaps 24553 = sum of gaps), not gz;
-   S21 (1) becomes: discriminating flight `--log-poll vehicle_local_position_groundtruth` + a15_gaps.py, then fix F2.
+   Logger cause CONFIRMED by flight (`results/a15_s20/logpoll_truth/`). S21 (1): fix so truth AND controller topics log
+   every sample (sonnet: F2 queue 8 on truth advertise in gz_bridge, check logger drains queues; A-10 esc_status too?), re-run g1.1.
    (2) A-14 test: 3 runs logging from boot (SDLOG_MODE 1), EKF z vs truth pre-arm (haiku). (3) S19 items (2)-(5) below.
 000000000. S19 (launch 20261115-234854, cap $1.08): T38 DONE (`results/a12_fix_s18/pretest_truth_topics/README.md`):
    attitude/rate/position truth 800 Hz confirmed; g1.1 FAIL only esc_status (A-10) + local_position 88.9 Hz; A-14 opened.
