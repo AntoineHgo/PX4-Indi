@@ -136,3 +136,4 @@
 | 12 | T20 | opus | outer-loop review r3, narrow | done, 8 calls, ~$1.0 |
 | 12 | T21a | haiku | 3 hovers try 1 | stopped at run 1 (arm late), 3 calls, ~$0.03 |
 | 12 | T21 | haiku | 3 hovers try 2 | done, 11 calls, ~$0.05, 6.5 min wall |
+- 2026-11-16 S31: A-14 bridge fix flown (B31): step gone, 0.1 m closing bound missed 9/15 (max 0.144 m), parked at 0.15 m; A-20 bridge race opened.
