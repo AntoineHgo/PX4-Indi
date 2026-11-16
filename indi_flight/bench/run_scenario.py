@@ -86,6 +86,7 @@ T_HOLD_S = T_OFFBOARD_S - PRESTREAM_S  # hold_pos/hold_yaw captured here (fixed 
 # T53 (--sched-anchor): rows after the anchor, times in us RELATIVE to the observed offboard transition (nav_state 14)
 SCHED_ANCHOR_ROWS = ["3000000 sp_hold", "6000000 sp_hold"]
 # D-SCHED (--sched): the hold setpoint is captured in flight by the schedule row `sp_hold` (T53), not hard-coded.
+SCHED_SETTLE_S = 3.0  # T55: scenario rows start this long after the offboard anchor (the runner's offboard_settle, metrics.OFFBOARD_SETTLE_S)
 SCHED_FILE = "sim_schedule.txt"  # in the PX4 working dir (the run's rootfs); rcS starts sim_scenario_player when present
 LATE_TOL_S = 0.1  # an arm later than T_ARM_S + this is flagged as arm_late_s in run.json
 # O-12 watchdog (D-watchdog), active from takeoff completion to the landing command
@@ -242,8 +243,17 @@ class Sim:
             rows = [f"{int(T_ARM_S * 1e6)} arm",
                     f"{int((T_OFFBOARD_S - PRESTREAM_S) * 1e6)} sp_hold",  # T53: x y z heading captured in flight
                     f"{int(T_OFFBOARD_S * 1e6)} mode_offboard"]
-            if self.a.sched_anchor:  # T53: later rows are offsets from the observed offboard transition
-                rows += [f"{int(T_OFFBOARD_S * 1e6)} anchor nav_state=14"] + SCHED_ANCHOR_ROWS
+            sc = SCENARIOS[self.a.scenario]
+            if sc["mode"] == "position":
+                if self.a.sched_anchor:  # T53: later rows are offsets from the observed offboard transition
+                    rows += [f"{int(T_OFFBOARD_S * 1e6)} anchor nav_state=14"] + SCHED_ANCHOR_ROWS
+            else:  # T55: attitude / trajectory rows, offsets from the offboard transition (anchor) or from T_OFFBOARD_S
+                if self.a.sched_anchor:
+                    rows += [f"{int(T_OFFBOARD_S * 1e6)} anchor nav_state=14"]
+                    base = 0
+                else:
+                    base = int(T_OFFBOARD_S * 1e6)
+                rows += [f"{base + off} {text}" for off, text in sched_scenario_rows(sc)]
             text = "# t_sim_us kind fields (written by run_scenario.py --sched)\n" + "\n".join(rows) + "\n"
             open(os.path.join(self.rootfs, SCHED_FILE), "w").write(text)
             open(os.path.join(self.out, "sched.txt"), "w").write(text)
@@ -484,6 +494,48 @@ def traj_pva(traj, t, h=1e-3):
     return p0, vel, acc
 
 
+def sched_scenario_rows(sc):
+    """T55: (offset_us from the offboard transition, row text) of an attitude or trajectory scenario for sim_scenario_player.
+    Same segments, same values and the same functions as the MAVLink path: attitude rows hold roll / pitch / yaw offset
+    (rad) with thrust `auto` (thr_cmd inside the player); trajectory rows are traj_pva() sampled every SETPOINT_PERIOD
+    (dx dy dz vx vy vz ax ay az, offsets from the sp_hold position, yaw = sp_hold heading); `sp_back` (the hold
+    position, like the runner's pos_sp) ends the scenario."""
+    mode, axis = sc["mode"], sc["axis"]
+    rows, t = [], SCHED_SETTLE_S
+    for name, dur, val in sc["segments"]:
+        if mode == "attitude":
+            r = val if axis in ("roll", "rollpitch") else 0.0
+            p = val if axis in ("pitch", "rollpitch") else 0.0
+            y = val if axis == "yaw" else 0.0
+            rows.append((int(round(t * 1e6)), f"att {math.radians(r):.9g} {math.radians(p):.9g} {math.radians(y):.9g} auto"))
+        elif mode == "trajectory" and name == "traj":
+            for k in range(int(math.ceil(dur / SETPOINT_PERIOD - 1e-9))):  # sim.run(): sp() while t - t_seg0 < dur
+                p, v, acc = traj_pva(sc["traj"], k * SETPOINT_PERIOD)
+                rows.append((int(round((t + k * SETPOINT_PERIOD) * 1e6)),
+                             "pva " + " ".join(f"{x:.9g}" for x in (*p, *v, *acc))))
+        elif mode not in ("attitude", "trajectory"):
+            raise SystemExit(f"--sched: scenario mode {mode} is not supported")
+        t += dur
+        if mode == "trajectory" and name == "traj":
+            rows.append((int(round(t * 1e6)), "sp_back"))
+    if mode == "attitude":
+        rows.append((int(round(t * 1e6)), "sp_back"))
+    return rows
+
+
+def sched_anchor_s(sim):
+    """T55: instant (sim s) of the offboard anchor the player logged: anchor_us of the last sim_schedule_applied sample.
+    The scenario rows are offsets from it, so the segment times in run.json (read by metrics.py) must be based on it, not on
+    the runner's own observation of the mode change (HEARTBEAT, up to 1 s late)."""
+    out = sim.cli("px4-listener", "sim_schedule_applied", "-n", "1")
+    for line in out.splitlines():
+        if "anchor_us:" in line:
+            v = int(line.split(":")[1])
+            if v > 0:
+                return v * 1e-6
+    raise RunError("sim_schedule_applied has no anchor_us (anchor row not applied)")
+
+
 def hover_thrust(sim):
     out = sim.cli("px4-listener", "hover_thrust_estimate", "-n", "1")
     for line in out.splitlines():
@@ -548,10 +600,10 @@ def main():
     ap.add_argument("--log-from-start", action=argparse.BooleanOptionalAction, default=True,
                     help="logger starts with -f so the log covers the time before arm (--no-log-from-start: from arm)")
     ap.add_argument("--sched-anchor", action="store_true",
-                    help="T53: with --sched, append an anchor on offboard (nav_state 14) and two sp_hold rows 3 s and 6 s after it")
+                    help="T53: with --sched, append an anchor on offboard (nav_state 14); the rows after it are offsets from it: two sp_hold rows 3 s and 6 s after it (hover) or the scenario rows starting 3 s after it (T55)")
     ap.add_argument("--sched", action="store_true",
                     help="D-SCHED: arm, offboard switch and the setpoint stream are played by PX4 (sim_scenario_player, "
-                         "schedule file in sim time) instead of being sent over MAVLink; position scenarios only")
+                         "schedule file in sim time) instead of being sent over MAVLink; position, attitude and trajectory scenarios (T55)")
     ap.add_argument("--paused-start", action="store_true",
                     help="A-17: start gz paused (no -r) and unpause it after --unpause-after appears in px4.log, so "
                          "Commander starts at a fixed sim time (loop phase independent of wall-clock races)")
@@ -566,8 +618,10 @@ def main():
     os.makedirs(a.out, exist_ok=True)
 
     sc = SCENARIOS[a.scenario]
-    if a.sched and sc["mode"] != "position":
-        raise SystemExit("--sched supports position scenarios only (arm, offboard and a held position setpoint)")
+    if a.sched and (sc["mode"] not in ("position", "attitude", "trajectory")
+                    or any(k in sc for k in ("disturbance", "motor_fault", "erpm_loss", "thrust_sag"))):
+        raise SystemExit("--sched supports position, attitude and trajectory scenarios without runner-side hooks "
+                         "(disturbance, motor_fault, erpm_loss, thrust_sag need the runner's segment times)")
     meta = {"scenario": a.scenario, "controller": a.controller, "seed": a.seed, "speed": a.speed, "sim": a.sim,
             "instance": a.instance, "params_file": a.params, "params_applied": {}, "git": git_info(),
             "noise_seed": {"gz_sim_seed": a.seed, "px4_baro_srand": 1234}, "events": [], "phase_log": [],
@@ -705,10 +759,18 @@ def main():
         meta["t_offboard_us"] = int(sim.t * 1e6)
         meta["offboard_custom_mode"] = [sim.main_mode, sim.sub_mode]
         sim.run(3.0, sp=pos_sp, what="offboard_settle")
+        sched_t0 = None  # T55: scenario start of the player (anchor + SCHED_SETTLE_S); None = the runner's own sim.t
+        if a.sched and a.sched_anchor and sc["mode"] != "position":
+            sched_t0 = sched_anchor_s(sim) + SCHED_SETTLE_S
+            meta["sched_t0_us"] = int(sched_t0 * 1e6)
+        seg_elapsed = 0.0
+
+        def seg_now():
+            return sched_t0 + seg_elapsed if sched_t0 is not None else sim.t
 
         # ---- scenario ----
         axis, mode = sc["axis"], sc["mode"]
-        meta["t_window_start_us"] = int(sim.t * 1e6)
+        meta["t_window_start_us"] = int(seg_now() * 1e6)
         if sc.get("disturbance"):
             # onset = start of the segment named by `dist_segment` (default "dist", PX4 time); the injector (started
             # earlier, idle) reads it
@@ -761,7 +823,7 @@ def main():
                                             "applied": new_all[fmotors[0]], "omega_ratio": k_om})
                 if len(fmotors) > 1:
                     meta["motor_fault"]["applied_all"] = {str(m): v for m, v in new_all.items()}
-            ev = {"name": name, "t_us": int(sim.t * 1e6), "dur_s": dur, "mode": mode, "axis": axis,
+            ev = {"name": name, "t_us": int(seg_now() * 1e6), "dur_s": dur, "mode": mode, "axis": axis,
                   "value": val, "prev": prev, "step": name != "settle" and mode not in ("position", "trajectory")}
             meta["events"].append(ev)
             r = val if axis in ("roll", "rollpitch") else 0.0
@@ -769,7 +831,7 @@ def main():
             y = val if axis == "yaw" else 0.0
             if mode == "trajectory" and name == "traj":
                 traj = sc["traj"]
-                t_seg0 = sim.t
+                t_seg0 = seg_now()
                 meta["trajectory"] = {**traj, "t0_us": int(t_seg0 * 1e6), "dur_s": dur}
 
                 def sp(t_seg0=t_seg0, traj=traj):
@@ -784,11 +846,14 @@ def main():
                       sim.send_att(rr, pp, yy, thr_cmd(tilt)))
             else:
                 sp = (lambda r=math.radians(r), p=math.radians(p), y=math.radians(y): sim.send_rate(r, p, y, thr_cmd(1.0)))
+            if a.sched:  # T55: the player publishes the setpoints (att / pva rows of sched.txt), the runner only waits
+                sp = None
             if sag:
                 sp = (lambda sp0=sp: (sag_tick(), sp0()))
             sim.run(dur, sp=sp, what=f"scenario:{name}")
             prev = val
-        meta["t_window_end_us"] = int(sim.t * 1e6)
+            seg_elapsed += dur
+        meta["t_window_end_us"] = int(seg_now() * 1e6)
         if sag:
             sim.set_param("SIM_GZ_THR_SC", 1.0)
         if loss and loss["end"] is None:
