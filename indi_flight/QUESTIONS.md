@@ -77,3 +77,5 @@ Not blocked. G1.6 is not marked passed before you answer.
 
 **Meanwhile.** S33 analyses the speed-1 re-fly, A-19's mechanism (one haiku task), and prepares the stage-2
 injection design without using its results for a verdict. Not blocked.
+
+**Update S35 (2026-11-16).** A-20 closed (15/15). A-19 parked with a 1.6 deg bound, and yaw verdicts are stated on the estimate. Route check 35 (`design/route_check_35.md`) recommends option A. Meanwhile, from S36 I write G1 FINAL with the stated limits and start stage 2, with every stage-2 result marked "provisional under Q4-A". If you answer B, those results are re-run after G1 passes in full.
