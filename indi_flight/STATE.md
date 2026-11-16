@@ -37,14 +37,17 @@ S46 (launch 20261116-215112, cap $3): `bench/pretest_gate.py` + self-test (break
    airborne +15 s, rate RMS < 0.02 rad/s, motor pin < 1 %, torque achieved > 90 %, exit 0/1/2. On logs: PID and S45 INDI
    pass, S44 chatter and S41 limit cycle fail (`results/stage2_s46/pretest_gate_check/`). T97 sonnet second key of G1
    derivation running -> `results/stage2_s46/g1_second_key.md` (also: which inertia, 1.396e-3 or 1.022e-3, is the plant's).
-S47 NEXT: (1) if T97 AGREE, write `bench/params/quad5in_indi.params` (derived G1) and use it in every INDI run; record G1
-   provenance in run metadata. (2) runner calls pretest_gate.py after every pre-test flight. (3) ACT_TC from rotor step,
-   attitude P loop into margins_models.py. (4) first valid roll M3a margin row at 800 Hz, two seeds.
+S46 also: T97 second key AGREE on roll/pitch with TOTAL inertia; bench G1 1757/1640/205 in `bench/params/quad5in_indi_g1.params`.
+S47 (launch 20261116-221436, cap $3): T98 sonnet first valid roll M3a margins with derived G1 at 800 Hz (model-only s1, s1 x2 amp,
+   s2; measured v2 s1), pretest_gate on each -> `results/stage2_s47/roll_m3a/README.md`.
+NEXT after S47: (a) runner appends quad5in_indi_g1.params to every INDI run + records G1 provenance in run.json, calls
+   pretest_gate.py after pre-test flights. (b) ACT_TC from rotor step, attitude P loop into margins_models.py, model cross-check.
+   (c) pitch, yaw, measured seed 2, 400 Hz rows.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T97 | G1 second key | sonnet | results/stage2_s46/g1_second_key.md | re-brief if file incomplete |
+| T98 | roll M3a margins, derived G1 | sonnet | results/stage2_s47/roll_m3a/README.md | re-brief from README (skip flights already done) |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
