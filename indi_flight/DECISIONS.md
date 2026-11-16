@@ -159,3 +159,5 @@ Open, to be written before code (MISSION "Decisions that are yours"):
 - Coupling: the value must equal the world elevation; a different world needs its own value (stated in the SDF).
 - Overturn: the closing test (`bench/a14_close.sh`, 15 same-seed hovers speed 4) shows raw pressure not ~95600 Pa,
   a baro fault, EKF z error >= 0.1 m in 15-35 s or hold spread >= 0.05 m; then take alternative (1).
+- Outcome S28 pretest (`results/a14_close_s28/pretest_check.md`): raw pressure unchanged (101324 Pa), bias -488 ->
+  baro fault: the edit did not reach the simulated sensor. Not yet overturned: check model load path first.

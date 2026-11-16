@@ -33,8 +33,10 @@
    position, step. DEFECTS (not fixed): rate/attitude tracking use the EKF estimate, not truth (lesson 3);
    effort is an unfiltered first difference, not a fixed bandwidth; no spectral detector exists yet.
    S29 NEXT: (0) fix those two metric defects (sonnet, then haiku second keys over >= 5 logs, G1.3 sample set).
-   (1) read `results/a14_close_s28/status.txt` + check.md; PASS -> commit model change (git shows
-   model.sdf modified), close A-14, delete `sim/staged/`; FAIL -> D-A14 alternative (1). (2) B26 speed 1 analysis
+   (1) B28 PRETEST_FAIL (`results/a14_close_s28/pretest_check.md`, batch stopped by design, model restored):
+   raw baro still 101324 Pa, bias0 -488, baro_fault -> reference_altitude had NO effect. First check (haiku, cheap):
+   is quad5in loaded from `indi_flight/sim/models` at run time or from a copy (image/build dir), and does gz-sensors
+   read <air_pressure><reference_altitude>? Then retry, or D-A14 alternative (1) EKF2_BARO_CTRL 0. (2) B26 speed 1 analysis
    (as speed 4: `second_key_player.py`, `G16_ROOT=... g16_spread.py`), haiku second key; G1.6 set must be re-flown
    with the fixed baro anyway (A-14 touched hover r2/traj r1). (3) route check 27 items 2-5 (G1.3/G1.4 keys,
    minimum G1.5, freeze G1 by S30, stage 2).
@@ -47,8 +49,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| B26 | G1.6 set --sched --sched-anchor, 3 scen x 5, speed 4 (done, analysed S27) then 1 (running) | host bash (detached) | `results/g16_sched_set_s26/speed{4,1}/status.txt` | `setsid nohup indi_flight/bench/g16_sched_set.sh` (delete partial speed dir first) |
-| B28 | A-14 closing: waits B26, installs model, pretest + 15 hovers s4 | host bash (detached) | `results/a14_close_s28/status.txt`, `check.md` | `setsid nohup indi_flight/bench/a14_close.sh` (delete `results/a14_close_s28/` first; restore staged model first if not installed) |
+| B26 | G1.6 set --sched --sched-anchor, 3 scen x 5, speed 4 (done, analysed S27) then 1 (DONE S28, not analysed) | host bash (detached) | `results/g16_sched_set_s26/speed{4,1}/status.txt` | `setsid nohup indi_flight/bench/g16_sched_set.sh` (delete partial speed dir first) |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -118,7 +119,7 @@
 | 26 | T56 | haiku | second key T55 | done, 11 calls, ~$0.2, AGREE 4/4 |
 | 27 | T57 | sonnet | route check 27 | done, 10 calls, ~$0.25 |
 | 27 | T58 | sonnet | A-14 mechanism from logs | done, 5 calls, ~$0.3, numbers re-read by me |
-| 28 | B28 | host bash | A-14 closing test (16 hovers) | launched detached, $0 |
+| 28 | B28 | host bash | A-14 closing test (16 hovers) | pretest FAIL (no effect on baro), stopped, $0 |
 | 28 | T59 | sonnet | G1.3/G1.4 matrix + missing self-tests (route check 27 item 2) | done, 16 calls, ~$0.45; tests re-run by me (ALL PASS, metrics.py diff empty) |
 
 ## Lessons proposed
