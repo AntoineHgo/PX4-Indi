@@ -126,8 +126,12 @@ def rate_and_attitude(ulog, t0, t1):
     q_d /= np.linalg.norm(q_d, axis=1, keepdims=True)
     k = np.searchsorted(ts_a, tt, side='right') - 1
     k = np.clip(k, 0, len(ts_a) - 1)
-    dot = np.abs(np.sum(q_d[k] * q_t, axis=1)).clip(0.0, 1.0)
-    ang = np.degrees(2.0 * np.arccos(dot))
+    # error quaternion q_d^-1 * q_t; atan2 form is exact for unnormalised float32 inputs
+    a, b = q_d[k], q_t
+    w = np.sum(a * b, axis=1)
+    v = (a[:, :1] * b[:, 1:] - b[:, :1] * a[:, 1:]
+         - np.cross(a[:, 1:], b[:, 1:]))
+    ang = np.degrees(2.0 * np.arctan2(np.linalg.norm(v, axis=1), np.abs(w)))
     att_rms = float(np.sqrt(np.mean(ang ** 2)))
     return rates, att_rms, int(len(tt))
 
