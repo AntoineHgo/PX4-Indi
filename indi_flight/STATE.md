@@ -42,7 +42,17 @@ S40 (launch 20261116-090818, cap $2.7): (1) DONE unit tests in build/px4_sitl_o1
    only -0.0 -> +0.0 at AX 0 (accepted, no effect); S41 analysis must assert fault == 0 and landed == 0 over the window,
    params set before arming. Still to do: generator check on timestamp_sample from a new flight;
    (3) route check 40 (sonnet). M3b store points partial in the T81 notes (library `_thrust_prev` unread).
-S41 flights: pre-test AMP 0.005, DLY 5, model-only AND measured (`CA_R_W_MAX` + `--sim v2`), then matrix.
+S40 pre-test DONE (`results/stage2_s40/pretest_inj/README.md`): both paths READY with scenario hover_long, DLY 20,
+   NP 3, TP 10, AMP 0.005 (window 52-82 s at 5 m); u=c+d, generator on timestamp_sample, fault/landed all pass.
+   Preliminary roll 800 Hz: measured PM 61/GM 12.2 dB; model-only PM 25/GM 4.3 dB vs linear model 42.7 -> A-21 OPEN.
+S41 NEXT (in order): (1) A-21 closing test (1) linearity: model-only roll AMP 0.0025 and 0.01, seeds 1-2 (4 flights,
+   host bash, ~3 min each: `indi_project/docker/run.sh -n X -t 600 -- python3 indi_flight/bench/run_scenario.py
+   --scenario hover_long --controller indi_m3a --model quad5in --seed N --speed 4 --params <inj_model_long.params
+   with AMP> --out ...`, then `checks.py RUN AMP 20 3`, `bench/m3a_csv.py`, `bench/m3a_margins_pretest.py`);
+   (2) haiku second key of m3a_csv.py + m3a_margins_pretest.py (independent re-implementation, same window);
+   (3) if A-21 holds: sonnet task, per-bin |L|/arg L model-vs-measured with the coded actuator model (closing test 2),
+   the likely cause being tau_m 0.02 vs plant 0.033 + unmodelled sim lag (lesson 8) -> stage-3 ACT_TC identification
+   moves ahead of the G2 matrix (route check R2). Also: model-only climb near the runner's 46 s limit (try1 abort).
 S40 route check 40 (`design/route_check_40.md`): R1 G2 written in GATES.md (DONE S40) then rate-loop flights
    (S41-42); R2 stage-3 slice incl. ACT_TC identification + G2 outer-break note (S43-45); R3 G3/G4 harness tasks in
    parallel; stage 5 from ~S46. Projection ~25 more sessions: tell owner in the Q4 entry.
@@ -50,7 +60,6 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T83 | S41 pre-test: 2 hovers AMP 0.005 model-only + measured, checks | haiku | `results/stage2_s40/pretest_inj/README.md` | relaunch same brief |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -76,6 +85,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 38 | T78 | sonnet | margins_models.py + self-test 4 | done, 15 calls, ~$1.0, ALL PASS re-run by me |
 | 38 | T79 | haiku | second key continuous models | done, 4 calls, ~$0.1, AGREE |
 | 38 | T80 | haiku | GM jump check | done, 5 calls, ~$0.06, explained (phase plateau) |
+| 40 | T83 | haiku | M3a pre-test flights + checks | done, 12 calls, ~$0.3, (b) blocked by runner, fixed by me |
 | 40 | T82 | sonnet | route check 40 | done, 5 calls, ~$0.15 |
 | 39 | T81 | sonnet | M3a plumbing + build + 1 hover | done, 27 calls, ~$0.93, test not linked, fixed by me |
 

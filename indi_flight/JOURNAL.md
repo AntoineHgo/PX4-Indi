@@ -241,3 +241,4 @@
 | 35 | T70 | haiku | second key bias-median column | done, 7 calls, ~$0.1, AGREE 7/7 |
 | 35 | T71 | sonnet | route check 35 | done, 6 calls, ~$0.15 |
 | 35 | T72 | sonnet | stage-2 margins design note | done, 11 calls, ~$0.7 (168 lines) |
+- S40 (2026-11-16): INDI unit tests run (67 pass, injection gating break-checked); route check 40; G2 written in GATES.md; M3a pre-test both paths READY (hover_long); preliminary roll margins measured 61 deg/12 dB, model-only 25 deg/4.3 dB -> A-21.
