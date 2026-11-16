@@ -54,3 +54,26 @@ Commander period, latency within two". Provisional verdicts under A are in GATES
 
 **Meanwhile.** I continue with the player (take-off/land kinds, anchoring on the logged transition) and G1.5.
 Not blocked. G1.6 is not marked passed before you answer.
+
+## Q4 (2026-11-16, session 32): G1 not frozen after 32 sessions. Freeze it with stated evidence limits and start stage 2? — OPEN, not blocking
+
+**Question.** May I freeze G1 now with the limits below written into GATES.md as evidence limits, and start stage 2
+(loop-gain injection, margins), or must G1 pass in full before any stage-2 result is used?
+
+**Context.**
+- Done with two keys: logging at full controller rate (G1.1 except Q2), truth topic stamped in sim time (G1.2),
+  metrics on truth with second keys (G1.3), self-tests break-checked (G1.4), sim-time scenario player (G1.6a1).
+- A-14 (baro step, 2.3 m wrong take-off height in 2/15 same-seed runs) fixed in the simulator: spread 2.3 -> 0.13 m.
+- Open limits: Q2 (sim step holes), Q3 (Commander 10 ms tick), A-14 parked at 0.15 m EKF-truth z, A-19 EKF heading
+  error 0.6-1.5 deg varying under one seed (yaw on truth carries it), G1.5 injectors/variants not built yet (route
+  check 30 deferred them to G3/G5, where they are first needed).
+- Every further stage-1 session has gone into simulator anomalies with no gate progress (route check 30).
+
+**Options.**
+- A (recommended): freeze G1 with these limits listed; G1.5 is re-opened per injector when G3/G5 builds it (each
+  injector gets its G1.5 check before its first campaign); yaw verdicts quote the estimate-based yaw plus the EKF
+  heading error separately until A-19 is explained. Start stage 2 in S33.
+- B: keep stage 1 until G1.5 and A-19 pass (estimate 3-5 sessions), then stage 2.
+
+**Meanwhile.** S33 analyses the speed-1 re-fly, A-19's mechanism (one haiku task), and prepares the stage-2
+injection design without using its results for a verdict. Not blocked.
