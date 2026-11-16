@@ -43,10 +43,12 @@
 #include <uORB/Publication.hpp>
 #include <uORB/Subscription.hpp>
 #include <uORB/SubscriptionCallback.hpp>
+#include <uORB/topics/hover_thrust_estimate.h>
 #include <uORB/topics/offboard_control_mode.h>
 #include <uORB/topics/sensor_gyro.h>
 #include <uORB/topics/sim_schedule_applied.h>
 #include <uORB/topics/trajectory_setpoint.h>
+#include <uORB/topics/vehicle_attitude_setpoint.h>
 #include <uORB/topics/vehicle_command.h>
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vehicle_status.h>
@@ -62,6 +64,14 @@ using namespace time_literals;
  *   t_sim_us mode_offboard
  *   t_sim_us sp x y z yaw          NED position [m] and yaw [rad]; nan allowed per field
  *   t_sim_us sp_hold [dx dy dz]    setpoint = vehicle_local_position x,y,z + offsets (default 0) and heading, taken at apply time
+ *   t_sim_us sp_back               setpoint = the position and heading captured by the last sp_hold row
+ *   t_sim_us att roll pitch yaw thrust   attitude setpoint stream (offboard_control_mode attitude, vehicle_attitude_setpoint
+ *                                  as MavlinkReceiver::handle_message_set_attitude_target with type_mask 0b111); roll, pitch
+ *                                  [rad], yaw [rad] is an OFFSET to the heading of the last sp_hold, thrust 0..1 or `auto`
+ *                                  = hover thrust at that sp_hold / tilt + altitude PD (as run_scenario.py thr_cmd)
+ *   t_sim_us pva dx dy dz vx vy vz ax ay az   position (offset [m] from the last sp_hold position), velocity, acceleration
+ *                                  setpoint with the heading of the last sp_hold; at every publish the player propagates
+ *                                  p + v dt + a dt^2 / 2 and v + a dt from the row time (dt capped at 0.2 s)
  *   t_sim_us takeoff [alt]         VEHICLE_CMD_NAV_TAKEOFF, all params NAN except param7 = alt (default NAN)
  *   t_sim_us land                  VEHICLE_CMD_NAV_LAND
  *   t_sim_us anchor nav_state=N    activated at t_sim_us (or at its offset after a previous anchor), then suspends the
@@ -91,10 +101,16 @@ private:
 		uint64_t t_us{0};
 		uint8_t kind{0};
 		bool rel{false}; // time is an offset from the last anchor
-		float f[4] {NAN, NAN, NAN, NAN};
+		float f[9] {NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN};
 	};
 
 	static constexpr uint64_t SETPOINT_PERIOD_US = 20_ms; // 50 Hz offboard stream in simulation time
+	static constexpr float PVA_DT_MAX_S = 0.2f; // propagation of a pva row stops here (a stale row is held, not extrapolated)
+	// altitude PD of the `auto` thrust, same numbers as ALT_KP / ALT_KD in indi_flight/bench/run_scenario.py
+	static constexpr float ALT_KP = 0.04f;
+	static constexpr float ALT_KD = 0.10f;
+
+	enum class Stream : uint8_t { POSITION, ATTITUDE, PVA };
 
 	void Run() override;
 	bool load(const char *path);
@@ -103,14 +119,19 @@ private:
 			     float param4 = 0.f, float param5 = 0.f, float param6 = 0.f, float param7 = 0.f);
 	bool anchor_reached();
 	void publish_setpoint(hrt_abstime now);
+	void publish_position(hrt_abstime now);
+	void publish_attitude(hrt_abstime now);
+	void publish_pva(hrt_abstime now);
 
 	uORB::SubscriptionCallbackWorkItem _gyro_sub{this, ORB_ID(sensor_gyro)};
 	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
 	uORB::Subscription _local_pos_sub{ORB_ID(vehicle_local_position)};
+	uORB::Subscription _hover_thrust_sub{ORB_ID(hover_thrust_estimate)};
 
 	uORB::Publication<vehicle_command_s> _cmd_pub{ORB_ID(vehicle_command)};
 	uORB::Publication<offboard_control_mode_s> _offboard_control_mode_pub{ORB_ID(offboard_control_mode)};
 	uORB::Publication<trajectory_setpoint_s> _trajectory_setpoint_pub{ORB_ID(trajectory_setpoint)};
+	uORB::Publication<vehicle_attitude_setpoint_s> _att_sp_pub{ORB_ID(vehicle_attitude_setpoint)};
 	uORB::Publication<sim_schedule_applied_s> _applied_pub{ORB_ID(sim_schedule_applied)};
 
 	std::vector<Row> _rows;
@@ -122,7 +143,17 @@ private:
 	hrt_abstime _prev_anchor_us{0}; // anchor the pending anchor row itself is relative to
 	hrt_abstime _anchor_start_us{0}; // when the pending anchor row was activated
 
+	static bool read_floats(char **save, int n, float *out);
+
 	bool _sp_held{false};
+	Stream _stream{Stream::POSITION};
 	float _sp[4] {NAN, NAN, NAN, NAN}; // x y z yaw
 	hrt_abstime _next_sp_us{0};
+
+	bool _hold_valid{false}; // set by sp_hold: position and heading captured, hover thrust read
+	float _hold[4] {NAN, NAN, NAN, NAN}; // x y z heading
+	float _hold_thrust{0.5f};
+	float _att[4] {NAN, NAN, NAN, NAN}; // roll pitch yaw (absolute) thrust (NAN = auto)
+	float _pva[9] {}; // position (absolute NED), velocity, acceleration
+	hrt_abstime _pva_t_us{0}; // time the pva row is valid for
 };

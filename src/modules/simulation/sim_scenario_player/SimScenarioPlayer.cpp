@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <matrix/math.hpp>
 #include <px4_platform_common/getopt.h>
 #include <uORB/topics/sensor_gyro.h>
 
@@ -46,7 +47,7 @@ ModuleBase::Descriptor SimScenarioPlayer::desc{task_spawn, custom_command, print
 SimScenarioPlayer::SimScenarioPlayer(const char *path) :
 	WorkItem(MODULE_NAME, px4::wq_configurations::hp_default)
 {
-	_rows.reserve(256);
+	_rows.reserve(2048); // a 50 Hz trajectory of 40 s is 2000 rows
 
 	if (!load(path)) {
 		_rows.clear();
@@ -56,6 +57,21 @@ SimScenarioPlayer::SimScenarioPlayer(const char *path) :
 SimScenarioPlayer::~SimScenarioPlayer()
 {
 	_gyro_sub.unregisterCallback();
+}
+
+bool SimScenarioPlayer::read_floats(char **save, int n, float *out)
+{
+	for (int i = 0; i < n; i++) {
+		char *tok = strtok_r(nullptr, " \t\r\n", save);
+
+		if (!tok) {
+			return false;
+		}
+
+		out[i] = strtof(tok, nullptr);
+	}
+
+	return true;
 }
 
 bool SimScenarioPlayer::load(const char *path)
@@ -154,6 +170,37 @@ bool SimScenarioPlayer::load(const char *path)
 				}
 			}
 
+		} else if (strcmp(tok, "sp_back") == 0) {
+			row.kind = sim_schedule_applied_s::KIND_SP_BACK;
+
+		} else if (strcmp(tok, "att") == 0) {
+			row.kind = sim_schedule_applied_s::KIND_ATT;
+
+			if (!read_floats(&save, 3, row.f)) {
+				PX4_ERR("%s:%d att needs roll pitch yaw thrust|auto", path, lineno);
+				ok = false;
+				break;
+			}
+
+			tok = strtok_r(nullptr, " \t\r\n", &save);
+
+			if (!tok) {
+				PX4_ERR("%s:%d att needs roll pitch yaw thrust|auto", path, lineno);
+				ok = false;
+				break;
+			}
+
+			row.f[3] = strcmp(tok, "auto") == 0 ? NAN : strtof(tok, nullptr);
+
+		} else if (strcmp(tok, "pva") == 0) {
+			row.kind = sim_schedule_applied_s::KIND_PVA;
+
+			if (!read_floats(&save, 9, row.f)) {
+				PX4_ERR("%s:%d pva needs dx dy dz vx vy vz ax ay az", path, lineno);
+				ok = false;
+				break;
+			}
+
 		} else if (strcmp(tok, "takeoff") == 0) {
 			row.kind = sim_schedule_applied_s::KIND_TAKEOFF;
 			tok = strtok_r(nullptr, " \t\r\n", &save);
@@ -235,6 +282,96 @@ void SimScenarioPlayer::publish_command(uint32_t command, float param1, float pa
 
 void SimScenarioPlayer::publish_setpoint(hrt_abstime now)
 {
+	switch (_stream) {
+	case Stream::POSITION:
+		publish_position(now);
+		break;
+
+	case Stream::ATTITUDE:
+		publish_attitude(now);
+		break;
+
+	case Stream::PVA:
+		publish_pva(now);
+		break;
+	}
+}
+
+void SimScenarioPlayer::publish_attitude(hrt_abstime now)
+{
+	// as MavlinkReceiver::handle_message_set_attitude_target, type_mask 0b111 (attitude and thrust, rates ignored)
+	offboard_control_mode_s ocm{};
+	ocm.attitude = true;
+	ocm.timestamp = now;
+	_offboard_control_mode_pub.publish(ocm);
+
+	vehicle_status_s status{};
+	_vehicle_status_sub.copy(&status);
+
+	if (status.nav_state != vehicle_status_s::NAVIGATION_STATE_OFFBOARD) { // the receiver publishes it only in OFFBOARD
+		return;
+	}
+
+	float thrust = _att[3];
+
+	if (!PX4_ISFINITE(thrust)) { // auto: hover thrust / tilt + altitude PD, as run_scenario.py thr_cmd
+		const float tilt = fmaxf(0.3f, cosf(_att[0]) * cosf(_att[1]));
+		thrust = _hold_thrust / tilt;
+		vehicle_local_position_s lpos{};
+		_local_pos_sub.copy(&lpos);
+
+		if (lpos.z_valid && lpos.v_z_valid) {
+			thrust += ALT_KP * (lpos.z - _hold[2]) + ALT_KD * lpos.vz;
+		}
+
+		thrust = math::constrain(thrust, 0.1f, 0.95f);
+	}
+
+	vehicle_attitude_setpoint_s att_sp{};
+	matrix::Quatf(matrix::Eulerf(_att[0], _att[1], _att[2])).copyTo(att_sp.q_d);
+	att_sp.yaw_sp_move_rate = NAN;
+	att_sp.thrust_body[2] = -thrust; // MAV_TYPE_QUADROTOR in MavlinkReceiver::fill_thrust
+	att_sp.timestamp = hrt_absolute_time();
+	_att_sp_pub.publish(att_sp);
+}
+
+void SimScenarioPlayer::publish_pva(hrt_abstime now)
+{
+	// as MavlinkReceiver::handle_message_set_position_target_local_ned with type_mask 0b100000000000 (only yaw rate
+	// ignored); the row is propagated to the publish time so that a stale row does not hold a position while the velocity runs on
+	const float dt = math::constrain((now > _pva_t_us ? (float)(now - _pva_t_us) : 0.f) * 1e-6f, 0.f, PVA_DT_MAX_S);
+
+	trajectory_setpoint_s setpoint{};
+
+	for (int i = 0; i < 3; i++) {
+		setpoint.position[i] = _pva[i] + _pva[3 + i] * dt + 0.5f * _pva[6 + i] * dt * dt;
+		setpoint.velocity[i] = _pva[3 + i] + _pva[6 + i] * dt;
+		setpoint.acceleration[i] = _pva[6 + i];
+	}
+
+	setpoint.yaw = _hold[3];
+	setpoint.yawspeed = NAN;
+
+	offboard_control_mode_s ocm{};
+	ocm.position = true;
+	ocm.velocity = true;
+	ocm.acceleration = true;
+	ocm.attitude = PX4_ISFINITE(setpoint.yaw);
+	ocm.body_rate = false;
+	ocm.timestamp = now;
+	_offboard_control_mode_pub.publish(ocm);
+
+	vehicle_status_s status{};
+	_vehicle_status_sub.copy(&status);
+
+	if (status.accepts_offboard_setpoints) {
+		setpoint.timestamp = hrt_absolute_time();
+		_trajectory_setpoint_pub.publish(setpoint);
+	}
+}
+
+void SimScenarioPlayer::publish_position(hrt_abstime now)
+{
 	// as MavlinkReceiver::handle_message_set_position_target_local_ned (position + yaw, rest ignored)
 	trajectory_setpoint_s setpoint{};
 	setpoint.position[0] = _sp[0];
@@ -293,6 +430,7 @@ void SimScenarioPlayer::apply(const Row &row, uint32_t index, hrt_abstime now, h
 
 	case sim_schedule_applied_s::KIND_SP:
 		memcpy(_sp, row.f, sizeof(_sp));
+		_stream = Stream::POSITION;
 		_sp_held = true;
 		_next_sp_us = now; // publish at once, then every SETPOINT_PERIOD_US
 		memcpy(applied.sp, _sp, sizeof(_sp));
@@ -307,9 +445,17 @@ void SimScenarioPlayer::apply(const Row &row, uint32_t index, hrt_abstime now, h
 				_sp[1] = lpos.y + row.f[1];
 				_sp[2] = lpos.z + row.f[2];
 				_sp[3] = lpos.heading;
+				_stream = Stream::POSITION;
 				_sp_held = true;
 				_next_sp_us = now;
 				memcpy(applied.sp, _sp, sizeof(_sp));
+
+				// the hold of the attitude and pva rows: position, heading and the hover thrust (the runner reads it at the same instant)
+				hover_thrust_estimate_s hte{};
+				_hover_thrust_sub.copy(&hte);
+				memcpy(_hold, _sp, sizeof(_hold));
+				_hold_thrust = (hte.hover_thrust > 0.1f && hte.hover_thrust < 0.9f) ? hte.hover_thrust : 0.5f;
+				_hold_valid = true;
 
 			} else {
 				PX4_ERR("sp_hold row %u: local position invalid, setpoint unchanged", (unsigned)index);
@@ -317,6 +463,59 @@ void SimScenarioPlayer::apply(const Row &row, uint32_t index, hrt_abstime now, h
 
 			break;
 		}
+
+	case sim_schedule_applied_s::KIND_SP_BACK:
+		if (_hold_valid) {
+			memcpy(_sp, _hold, sizeof(_sp));
+			_stream = Stream::POSITION;
+			_sp_held = true;
+			_next_sp_us = now;
+			memcpy(applied.sp, _sp, sizeof(_sp));
+
+		} else {
+			PX4_ERR("sp_back row %u: no sp_hold before, setpoint unchanged", (unsigned)index);
+		}
+
+		break;
+
+	case sim_schedule_applied_s::KIND_ATT:
+		if (_hold_valid) {
+			_att[0] = row.f[0];
+			_att[1] = row.f[1];
+			_att[2] = _hold[3] + row.f[2];
+			_att[3] = row.f[3];
+			_stream = Stream::ATTITUDE;
+			_sp_held = true;
+			_next_sp_us = now;
+			memcpy(applied.sp, _att, sizeof(_att));
+
+		} else {
+			PX4_ERR("att row %u: no sp_hold before, setpoint unchanged", (unsigned)index);
+		}
+
+		break;
+
+	case sim_schedule_applied_s::KIND_PVA:
+		if (_hold_valid) {
+			for (int i = 0; i < 3; i++) {
+				_pva[i] = _hold[i] + row.f[i];
+			}
+
+			memcpy(&_pva[3], &row.f[3], 6 * sizeof(float));
+			_pva_t_us = t_sched;
+			_stream = Stream::PVA;
+			_sp_held = true;
+			_next_sp_us = now;
+			applied.sp[0] = _pva[0];
+			applied.sp[1] = _pva[1];
+			applied.sp[2] = _pva[2];
+			applied.sp[3] = _hold[3];
+
+		} else {
+			PX4_ERR("pva row %u: no sp_hold before, setpoint unchanged", (unsigned)index);
+		}
+
+		break;
 
 	case sim_schedule_applied_s::KIND_TAKEOFF:
 		// as the runner's MAV_CMD_NAV_TAKEOFF: pitch, yaw, lat, lon NAN (take off here), param7 = altitude
@@ -459,9 +658,9 @@ int SimScenarioPlayer::print_usage(const char *reason)
 ### Description
 Simulation only. Plays a scenario schedule file in simulation time on uORB: arm/disarm and mode commands
 (vehicle_command, as MavlinkReceiver publishes them) and offboard setpoints (offboard_control_mode and
-trajectory_setpoint at 50 Hz). Each applied row is published on sim_schedule_applied.
+trajectory_setpoint or vehicle_attitude_setpoint at 50 Hz). Each applied row is published on sim_schedule_applied.
 
-Rows: `t_sim_us arm|disarm|mode_offboard`, `t_sim_us sp x y z yaw`.
+Rows: see the class comment in SimScenarioPlayer.hpp (arm, disarm, mode_offboard, sp, sp_hold, sp_back, att, pva, takeoff, land, anchor).
 )DESCR_STR");
 
 	PRINT_MODULE_USAGE_NAME("sim_scenario_player", "system");
