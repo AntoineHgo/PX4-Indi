@@ -43,3 +43,13 @@ the window anchored on the logged mode change (<30 % relative on non-floor metri
 changed. Remedy candidates (stage 1, before G3): lockstep gz, or switch modes inside PX4 at a scheduled sim time.
 Effort metric: raw derivative RMS is sample-rate dependent (A-11, closed s17), so G4 effort is defined at a fixed
 bandwidth on a uniform grid.
+
+G1 status (2026-11-16, s33). Thresholds unchanged; nothing marked passed (Q2, Q3, Q4 open).
+- G1.1, G1.6(a): provisional under Q2-A/Q3-A as above. G1.2, G1.3, G1.4: met with two keys (second-key attitude
+  angle fixed to the atan2 form, s33).
+- G1.5: not tested; deferred per injector to G3/G5 if the owner accepts Q4-A.
+- G1.6 re-fly with the baro fixes (`results/g16_set_s32/speed{4,1}/README.md`, 2 x 15 runs): spreads equal at speed
+  1 and 4 (step delay <= 1.7 %, settle <= 1 IMU period, traj position <= 1.1 %, effort <= 2.5 %). (b) recorded,
+  thresholds pending G3/G5. (c) remaining differences with known source and bound: Commander tick (Q3), EKF heading
+  error A-19 (mechanism candidate s33: EKF2 declination vs sim field and mag-bias state; hover attitude spread
+  0.86-0.93 deg), EKF-truth height A-14/A-20 (<= 0.174 m, 2/30 runs with 0.72 m initial baro bias). (d) in force.

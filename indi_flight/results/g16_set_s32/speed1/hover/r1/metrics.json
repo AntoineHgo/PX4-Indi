@@ -1,0 +1,149 @@
+{
+ "scenario": "hover",
+ "controller": "pid_default",
+ "seed": 1,
+ "speed": 1.0,
+ "warnings": [],
+ "window": {
+  "start_s": 55.015,
+  "end_s": 85.015,
+  "duration_s": 30.0,
+  "offboard_span_s": [
+   52.015,
+   102.225
+  ],
+  "start_source": "ulog_nav_state+3.0",
+  "runjson_start_s": 55.515,
+  "ulog_anchor_s": 52.015
+ },
+ "stamps": {
+  "vehicle_angular_velocity": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_rates_setpoint": {
+   "stamp": "timestamp",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "actuator_motors": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "sim_ground_truth": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_attitude": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_attitude_setpoint": {
+   "stamp": "timestamp",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  }
+ },
+ "rate_tracking": {
+  "roll_rms_rad_s": 0.0009199229637177964,
+  "pitch_rms_rad_s": 0.0007601870865838823,
+  "yaw_rms_rad_s": 0.00016550800483309934,
+  "source": "sim_ground_truth"
+ },
+ "rate_tracking_estimate": {
+  "roll_rms_rad_s": 0.0010889450472976138,
+  "pitch_rms_rad_s": 0.0009120887849325869,
+  "yaw_rms_rad_s": 0.0003336422517554809,
+  "source": "vehicle_angular_velocity"
+ },
+ "attitude_tracking": {
+  "rotation_angle_rms_deg": 0.2506187368011778,
+  "roll_rms_deg": 0.045978379976298056,
+  "pitch_rms_deg": 0.040792079907300084,
+  "yaw_rms_deg": 0.24247512530732523,
+  "source": "sim_ground_truth"
+ },
+ "attitude_tracking_estimate": {
+  "rotation_angle_rms_deg": 0.05633472208086385,
+  "roll_rms_deg": 0.041386891749755864,
+  "pitch_rms_deg": 0.03609947006784471,
+  "yaw_rms_deg": 0.012546823270140499,
+  "source": "vehicle_attitude"
+ },
+ "rate_estimator_error": {
+  "roll_rms_rad_s": 0.00033504438414347045,
+  "pitch_rms_rad_s": 0.00032924106843047925,
+  "yaw_rms_rad_s": 0.0003005242167655056,
+  "roll_mean_rad_s": 4.3873776684975705e-06,
+  "pitch_mean_rad_s": 4.688004047361531e-05,
+  "yaw_mean_rad_s": 1.3886424591194432e-05,
+  "n": 24001,
+  "definition": "truth - vehicle_angular_velocity, FRD [rad/s]"
+ },
+ "attitude_estimator_error": {
+  "rotation_angle_rms_deg": 0.24493181088582552,
+  "n": 8000,
+  "roll_rms_deg": 0.01676709306055383,
+  "roll_mean_deg": -0.01270353692978012,
+  "pitch_rms_deg": 0.014010798824029856,
+  "pitch_mean_deg": 0.007559841880727389,
+  "yaw_rms_deg": 0.24395748566123432,
+  "yaw_mean_deg": -0.2311816976487081,
+  "definition": "truth - vehicle_attitude, euler diff [deg], rotation angle [deg]"
+ },
+ "steps": [],
+ "position": {
+  "ref_ned": [
+   0.04496080428361893,
+   0.013345899060368538,
+   -4.972442626953125
+  ],
+  "rms_3d_m": 0.028227275289629327,
+  "rms_horizontal_m": 0.02448963212810026,
+  "rms_vertical_m": 0.014036986439439899,
+  "max_dev_3d_m": 0.061306748539209366,
+  "max_dev_horizontal_m": 0.05670538172125816,
+  "max_dev_vertical_m": 0.027191162109375
+ },
+ "truth_source": "sim_ground_truth",
+ "effort": {
+  "n_motors": 4,
+  "motor_rate_rms_per_s": 0.003535954013622848,
+  "motor_rate_rms_per_s_raw": 0.007637291127843274,
+  "motor_rate_rms_per_s_per_motor": [
+   0.003536387548491241,
+   0.003539521519543192,
+   0.003549801981687456,
+   0.003518105004769503
+  ],
+  "motor_rate_bandwidth": {
+   "status": "ok",
+   "grid_hz": 400.0,
+   "lowpass_hz": 50.0,
+   "rms_per_s": 0.003535954013622848,
+   "per_motor_rms_per_s": [
+    0.003536387548491241,
+    0.003539521519543192,
+    0.003549801981687456,
+    0.003518105004769503
+   ],
+   "logged_rate_hz": 800.0,
+   "gap_time_frac": 0.0,
+   "n_grid": 12000
+  },
+  "motor_spread_mean_abs": 2.4610442778794095e-05,
+  "motor_mean": 0.13666220009326935,
+  "saturation_frac_motors": 0.0,
+  "saturation_frac_high": 0.0,
+  "saturation_frac_low": 0.0
+ },
+ "allocator": {
+  "n_samples": 6000,
+  "frac_any_actuator_saturation": 0.0,
+  "frac_torque_not_achieved": 0.0
+ }
+}

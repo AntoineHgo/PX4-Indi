@@ -17,6 +17,11 @@ S33 (launch 20261116-065633, cap $1.98): B32 speed 1 still running (hover r2 at 
    DONE: arccos fixed 8ef678d1b4; T68 A-19 mechanism candidate (ANOMALIES A-19 NEXT): EKF2_MAG_DECL 3.41 vs gz field
    2.62 deg (lead: gz magnetometer uses an older copy of the declination table for lat 47.4 lon 8.5; unverified) + EKF
    mag-bias state, r=-0.998. A-19 param pretest waits for B32 to end (no concurrent runs during a determinism batch).
+   B32 speed 1 DONE (15/15), analysed (`results/g16_set_s32/speed1/README.md`): spreads = speed 4. A-20 NOT closed
+   (bias0 0.72 m in 2/30, CAL_OFF at start). G1 status s33 in GATES.md.
+   S34 NEXT: (1) A-19 param pretest (ANOMALIES A-19 NEXT; confirm gz declination table first); (2) A-20 CAL_OFF haiku
+   (ANOMALIES); (3) if Q4 answered A: start stage 2 (loop-gain injection design, sonnet, O-11 zero diff constraint);
+   if no answer, prepare the stage-2 injection design note anyway (not used for verdicts). Route check 35 due S35.
 S32 (launch 20261116-064202, cap $2.70): A-20 fix 4297ba9869 (atomic once-set _alt_ref, built, format clean). B32 G1.6
    re-fly detached (`bench/g16_set_s32.sh` -> `results/g16_set_s32/`, pretest gate then 2x15 runs, then A-20 check).
    T66 haiku second key A-20 diff -> `results/g16_set_s32/second_key_a20.md`; T67 haiku A-19 + attitude 15 % gap ->
@@ -46,7 +51,6 @@ S31 (launch 20261116-042839, cap $1.08): A-14 bridge fix: pretest PASS, B31 15/1
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| B32 | G1.6 re-fly, fixed baro, s4 (done, analysed) + s1 (running) | host bash (detached) | `results/g16_set_s32/status.txt` | delete partial dir, `setsid nohup indi_flight/bench/g16_set_s32.sh` |
 | B26 | G1.6 set --sched --sched-anchor, 3 scen x 5, speed 4 (done, analysed S27) then 1 (DONE S28, not analysed) | host bash (detached) | `results/g16_sched_set_s26/speed{4,1}/status.txt` | `setsid nohup indi_flight/bench/g16_sched_set.sh` (delete partial speed dir first) |
 
 ## Open problems
