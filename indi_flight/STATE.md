@@ -114,6 +114,7 @@
 | 27 | T57 | sonnet | route check 27 | done, 10 calls, ~$0.25 |
 | 27 | T58 | sonnet | A-14 mechanism from logs | done, 5 calls, ~$0.3, numbers re-read by me |
 | 28 | B28 | host bash | A-14 closing test (16 hovers) | launched detached, $0 |
+| 28 | T59 | sonnet | G1.3/G1.4 matrix + missing self-tests (route check 27 item 2) | running -> `design/g13_g14_matrix_s28.md`, edits `bench/tests/test_metrics.py` (uncommitted until checked) |
 
 ## Lessons proposed
 - A shared sim model is live for every running batch: stage a model change and install it after the batch ends (S28 nearly mixed two baro models into B26).
