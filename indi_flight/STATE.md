@@ -16,6 +16,16 @@ S32 (launch 20261116-064202, cap $2.70): A-20 fix 4297ba9869 (atomic once-set _a
    re-fly detached (`bench/g16_set_s32.sh` -> `results/g16_set_s32/`, pretest gate then 2x15 runs, then A-20 check).
    T66 haiku second key A-20 diff -> `results/g16_set_s32/second_key_a20.md`; T67 haiku A-19 + attitude 15 % gap ->
    `results/a19_s32/README.md`.
+   S32 OUTCOMES: A-20 fix keyed AGREE-WITH-ISSUES (residuals unreachable on quad5in, ANOMALIES). Metric defect found
+   by T67 and fixed (b3: quat_angle atan2, self-test break-checked): attitude 15 % gap closed. B32 speed 4 DONE and
+   analysed (`results/g16_set_s32/speed4/README.md`): A-14 effect gone (ref z spread 2.3 -> 0.13 m); A-19 closed then
+   REOPENED (EKF yaw error up to 1.54 deg, varies under one seed). B32 speed 1 still running detached.
+   S33 NEXT: (1) when `results/g16_set_s32/status.txt` shows ALL_DONE: recompute metrics for speed1 with current
+   metrics.py (loop as in speed4 README), g16_spread, a20_check.md (bias0 < 0.5, baro_fault 0 in all 30 -> close A-20);
+   (2) A-19 mechanism (haiku, NEXT line in ANOMALIES); also fix `bench/second_key_s29.py:130` arccos; (3) write G1
+   status: G1.6 verdict with Q2/Q3 provisional wording, anomalies as evidence limits; G1.5 deferred (route check 30)
+   -> ask the owner whether G1 can freeze with G1.5 deferred to G3/G5 and Q2/Q3 open (escalation due: G1 not frozen
+   by end of S32); then stage 2.
 S31 (launch 20261116-042839, cap $1.08): A-14 bridge fix: pretest PASS, B31 15/15 flew; mechanism gone (bias0 <0.5 m,
    baro_fault 0/15, hold 4.94-5.05 m) but closing test FAILS 9/15 on 0.1 m (max 0.144 m): A-14 PARKED with bound
    0.15 m (ANOMALIES). T65 second key AGREE-WITH-ISSUES: thread race on `_alt_ref` -> new A-20; test constant fixed.
@@ -71,7 +81,7 @@ S31 (launch 20261116-042839, cap $1.08): A-14 bridge fix: pretest PASS, B31 15/1
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| B32 | G1.6 re-fly, fixed baro, s4 + s1 | host bash (detached) | `results/g16_set_s32/status.txt` | delete partial dir, `setsid nohup indi_flight/bench/g16_set_s32.sh` |
+| B32 | G1.6 re-fly, fixed baro, s4 (done, analysed) + s1 (running) | host bash (detached) | `results/g16_set_s32/status.txt` | delete partial dir, `setsid nohup indi_flight/bench/g16_set_s32.sh` |
 | B26 | G1.6 set --sched --sched-anchor, 3 scen x 5, speed 4 (done, analysed S27) then 1 (DONE S28, not analysed) | host bash (detached) | `results/g16_sched_set_s26/speed{4,1}/status.txt` | `setsid nohup indi_flight/bench/g16_sched_set.sh` (delete partial speed dir first) |
 
 ## Open problems
@@ -127,8 +137,13 @@ S31 (launch 20261116-042839, cap $1.08): A-14 bridge fix: pretest PASS, B31 15/1
 | 30 | T64 | sonnet | route check 30 | done, 7 calls, ~$0.2 |
 | 31 | B31 | host bash | A-14 bridge pretest + 15 hovers | 16/16 flew, ~11 min, $0; 9/15 FAIL 0.1 m bound |
 | 31 | T65 | haiku | second key bridge diff | done, 5 calls, ~$0.1, AGREE-WITH-ISSUES (race) |
+| 32 | T66 | haiku | second key A-20 diff | done, 4 calls, ~$0.1, AGREE-WITH-ISSUES |
+| 32 | T67 | haiku | A-19 + attitude gap | done, 8 calls, ~$0.2, found the arccos metric defect |
+| 32 | B32 | host bash | G1.6 re-fly 2x15 + pretest | s4 15/15 flew, $0; s1 running |
 
 ## Lessons proposed
+- An anomaly bound taken from the range of 10 runs was exceeded by the next 5 (A-19, S32): bound by mechanism.
+- A metric changed during a running batch: re-compute the whole set with one version before comparing (S32).
 - A shared sim model is live for every running batch: stage a model change and install it after the batch ends (S28 nearly mixed two baro models into B26).
 - A parked anomaly bound from a correlation (A-14: 0/9 vs 3/6 runs, p=0.044, "logger -f") was wrong; park on a mechanism, not on a pair test (S27).
 - A sonnet implement+build+2-flight task costs ~$1.0 (21 calls): at a $3 cap it is the session's one big task (S26).
