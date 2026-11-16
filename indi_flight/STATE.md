@@ -47,8 +47,10 @@ S40 pre-test DONE (`results/stage2_s40/pretest_inj/README.md`): both paths READY
    Preliminary roll 800 Hz: measured PM 61/GM 12.2 dB; model-only PM 25/GM 4.3 dB vs linear model 42.7 -> A-21 OPEN.
 S40 also: A-21 linearity AMP 0.01 vs 0.005 PASS (PM 26.3 vs 25.3 deg, GM 5.0 vs 4.3 dB): gap to model is real.
 S41 (launch 20261116-092054, cap $1.98): (1) DONE seed 2 model-only AMP 0.005 (`results/stage2_s41/`): checks pass,
-   PM 24.0 deg / GM 6.0 dB / DM 14 ms -> A-21 closing test 1 PASS (PM 25.3/26.3/24.0). T84 haiku second key, T85 sonnet
-   closing test 2: IN FLIGHT (see Tasks). Old plan: (1) A-21 closing test (1) rest: model-only AMP 0.005 seed 2 (1 flight,
+   PM 24.0 deg / GM 6.0 dB / DM 14 ms -> A-21 closing test 1 PASS (PM 25.3/26.3/24.0). (2) DONE T84 haiku second key
+   (`results/stage2_s41/second_key_m3a.md`): AGREE when periods 2-3 are used as the primary does (all bins <=20 Hz
+   within 0.5 dB/3 deg, PM within 0.25 deg); full window incl. period 1 DISAGREES (transient). m3a_csv/m3a_margins
+   second-keyed. T85 sonnet closing test 2: IN FLIGHT (see Tasks). Old plan: (1) A-21 closing test (1) rest: model-only AMP 0.005 seed 2 (1 flight,
    host bash, ~3 min each: `indi_project/docker/run.sh -n X -t 600 -- python3 indi_flight/bench/run_scenario.py
    --scenario hover_long --controller indi_m3a --model quad5in --seed N --speed 4 --params <inj_model_long.params
    with AMP> --out ...`, then `checks.py RUN AMP 20 3`, `bench/m3a_csv.py`, `bench/m3a_margins_pretest.py`);
@@ -63,7 +65,6 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T84 | second key m3a_csv + margins_pretest | haiku | results/stage2_s41/second_key_m3a.md | relaunch brief from STATE |
 | T85 | A-21 closing test 2, model vs measured per bin | sonnet | results/stage2_s41/a21_model_vs_measured.md | relaunch |
 
 ## Open problems
@@ -92,6 +93,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 38 | T80 | haiku | GM jump check | done, 5 calls, ~$0.06, explained (phase plateau) |
 | 40 | T83 | haiku | M3a pre-test flights + checks | done, 12 calls, ~$0.3, (b) blocked by runner, fixed by me |
 | 40 | T82 | sonnet | route check 40 | done, 5 calls, ~$0.15 |
+| 41 | T84 | haiku | second key m3a FRF (2 rounds) | done, 13 calls, ~$0.3, AGREE on periods 2-3 |
 | 39 | T81 | sonnet | M3a plumbing + build + 1 hover | done, 27 calls, ~$0.93, test not linked, fixed by me |
 
 ## Lessons proposed
