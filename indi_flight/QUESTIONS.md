@@ -81,3 +81,8 @@ injection design without using its results for a verdict. Not blocked.
 **Update S35 (2026-11-16).** A-20 closed (15/15). A-19 parked with a 1.6 deg bound, and yaw verdicts are stated on the estimate. Route check 35 (`design/route_check_35.md`) recommends option A. Meanwhile, from S36 I write G1 FINAL with the stated limits and start stage 2, with every stage-2 result marked "provisional under Q4-A". If you answer B, those results are re-run after G1 passes in full.
 
 **Update S36 (2026-11-16).** G1 FINAL written in GATES.md (frozen, 5 evidence limits listed, not marked passed). Stage 2 has started; its results are marked "provisional under Q4-A".
+
+**Update S40 (2026-11-16).** Route check 40 (`design/route_check_40.md`): no gate passed yet; G2 tests now written in
+GATES.md, first G2 rate-loop flights S41-S42. Projection at the current pace (~$3/session, one agent task each): G2
+rate loops ~S45, stage 5 (outer loop) ~S46-S56, validation ~S62, packaging ~S66, i.e. about 25 more sessions. Your
+answers to Q2-Q4 remove the "provisional" mark from every stage-2 result; a larger per-session cap would shorten this.
