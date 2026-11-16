@@ -31,12 +31,13 @@ S38 (launch 20261116-082041, cap $3) DONE: T78 sonnet `bench/margins_models.py` 
    FINDING (model, unflown): roll INDI model-only at code defaults PM 42.7/41.6/40.6 deg at 800/400/267 Hz < 45, limited
    by tau_m 0.02 vs plant tau_r 0.033 (lesson 8: ACT_TC must be identified, stage 3/4); measured path Tb 0 PM 54, blend
    Tb 0.1 PM 48. Self-test 4a is coding consistency only (same equations both sides); firmware match comes from flights.
-S39 NEXT: injection plumbing (M3a in mc_indi_rate_control bench params, log c/d/u at cycle rate; read M3b store point),
-   sonnet, one big task. S40 route check 40, S41 flights (pre-test first).
+S39 (launch 20261116-084309, cap $3): D-G2-INJ written. T81 sonnet IN FLIGHT: M3a plumbing + build + 1 pre-test hover
+   (`design/t81_m3a_inject_s39.md`). Then haiku second key of the diff, I read the diff and run the unit tests. S40 route check 40, S41 flights (pre-test first).
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T81 | M3a injection plumbing, build, 1 hover | sonnet | design/t81_m3a_inject_s39.md | re-brief from that file's last section |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);

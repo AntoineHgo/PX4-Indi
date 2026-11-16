@@ -200,3 +200,20 @@ Open, to be written before code (MISSION "Decisions that are yours"):
   (breaks the zero-diff rule).
 - Overturn if: the M3a injection changes the controller's behaviour with d = 0 (bit-identical check on one flight),
   or M3a and the linear model of section 4.1 disagree by more than the G2 tolerance with no explained cause.
+
+## D-G2-INJ (S39): M3a excitation is generated inside `mc_indi_rate_control`, bench parameters, off by default
+- Choice: parameters `MC_INDI_INJ_AX` (0 off, 1 roll, 2 pitch, 3 yaw), `MC_INDI_INJ_AMP` (normalised torque per
+  sine component), `MC_INDI_INJ_TP` (period s), `MC_INDI_INJ_FMIN/FMAX`, `MC_INDI_INJ_NP` (number of periods).
+  The module generates a Schroeder-phase multisine on the 1/Tp grid with the bin selection of
+  `bench/margins_est.py:log_bins` (10 per decade), clock = the module's cycle timestamp (sim time in SITL), origin =
+  first cycle with the axis set, airborne and armed; d = 0 outside [0, NP*Tp] and whenever landed (r2: c does not
+  depend on u while landed). u = c + d goes to both the publish and the stored previous setpoint (D-G2-BREAK).
+  c, d and u are logged in `indi_rate_status` (new fields, one sample per cycle); `indi_rate_status` and
+  `actuator_torque_measured` are logged at interval 0. With AX = 0 the code path adds exact zero (d is not computed).
+- Alternatives: injection from gz_bridge into the torque topic (would have to sit between module and allocator, a
+  second publisher of `vehicle_torque_setpoint`, racy, and does not reach the stored setpoint); the stock
+  `mc_autotune_attitude_control` signal (injects on the rate setpoint, i.e. M-type outer break, not M3a, and its
+  signal is not periodic on a fixed grid); a Kconfig compile guard (adds a build variant; deferred to G7, where the
+  firmware-only PR branch either keeps it as a documented system-identification feature or removes it).
+- Overturn if: AX = 0 changes any logged output against the previous build on the unit tests, or the G7 review
+  finds a bench feature unacceptable upstream (then a Kconfig option, default n, enabled in SITL only).
