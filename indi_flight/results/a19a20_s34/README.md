@@ -18,3 +18,8 @@ Read hover_r2, step_roll_r1 (`status.txt`, `a14_check.md`, `python3 a19_mech.py`
 15-run set with SENS_BAR_AUTOCAL 0 alone + two keys, then close A-20. A-19: next candidate EKF2_MAG_TYPE heading-only
 (no earth/bias states) or EKF2_DECL_TYPE with cs_mag_dec fusion; else park A-19 by mechanism (EKF earth-field and
 bias estimation in 3-axis mode) and report yaw on the estimate with the heading error separately (Q4 option A).
+
+## All 3 runs (read at end of S34)
+- A-20: hover_r1/r2 PASS (CAL_OFF 0/0, bias0 0.15/0.18 m, max z err 0.068/0.093 m, hold -4.938/-5.014 m).
+- A-19: err window +0.52 / +0.78 / +0.36 deg (hover r1, r2, step_roll r1); EKF decl 3.60-3.69 deg; magB_x -5.3..-6.7 mG.
+  Consistent: candidate refuted on all 3 runs; offset now positive and still run-varying.

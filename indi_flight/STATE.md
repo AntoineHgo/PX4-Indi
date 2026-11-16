@@ -22,7 +22,8 @@ S34 (launch 20261116-072614, cap $1.35, no agent): Q4 still unanswered. Combined
    S34 ended with the batch still flying (started 07:27, ~4 min); results unread. S35 FIRST: check status.txt, run
    the two checks above, check params_applied in each run's meta (SENS_BAR_AUTOCAL, EKF2_*), write README.md there.
    No stage-2 note this session (budget). hover_r1 read: A-20 PASS, A-19 NOT fixed (EKF decl 3.67, err +0.52 deg,
-   magB_x -5.8 mG): `results/a19a20_s34/README.md` has the S35 plan.
+   magB_x -5.8 mG). ALL 3 runs read at end of S34: A-20 PASS 2/2 hovers, A-19 refuted 3/3 (+0.36..+0.78 deg).
+   `results/a19a20_s34/README.md` has the S35 plan (skip re-reading the runs).
 S33 (launch 20261116-065633, cap $1.98): B32 speed 1 still running (hover r2 at 06:56). T68 haiku A-19 mechanism ->
    `results/a19_s33/README.md`; arccos fix in second_key_s29.py (own); G1 status draft in GATES.md (own).
    DONE: arccos fixed 8ef678d1b4; T68 A-19 mechanism candidate (ANOMALIES A-19 NEXT): EKF2_MAG_DECL 3.41 vs gz field
@@ -122,8 +123,8 @@ S31 (launch 20261116-042839, cap $1.08): A-14 bridge fix: pretest PASS, B31 15/1
 | 32 | B32 | host bash | G1.6 re-fly 2x15 + pretest | s4 15/15 flew, $0; s1 running |
 
 ## Lessons proposed
-- Background shell waits (sleep loop, bash or python) returned at once with no output in S34: do not plan a
-  session around waiting for a batch; launch it detached and analyse next session.
+- S34: a background-wait notification can arrive before the command really ends; check the condition itself
+  (status file) before concluding the wait failed.
 - An anomaly bound taken from the range of 10 runs was exceeded by the next 5 (A-19, S32): bound by mechanism.
 - A metric changed during a running batch: re-compute the whole set with one version before comparing (S32).
 - A shared sim model is live for every running batch: stage a model change and install it after the batch ends (S28 nearly mixed two baro models into B26).
