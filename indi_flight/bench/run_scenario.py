@@ -656,7 +656,8 @@ def main():
                 meta.setdefault("boot_params", {})["MC_INDIP_EN"] = 1
         variant = dict(sc.get("model_variant") or {})
         if a.sim != "v1":  # read once when gz_bridge starts
-            variant["rpm"] = True
+            if a.model == "x500":  # quad5in/model.sdf already carries the per-step JointStatePublisher
+                variant["rpm"] = True
             sim.env["PX4_PARAM_SIM_GZ_ESC_FB"] = "2" if a.sim == "v2" else "1"
             sim.env["PX4_PARAM_SIM_GZ_ERPM_DRP"] = str(a.erpm_drop)
             meta["erpm_drop"] = a.erpm_drop

@@ -63,6 +63,7 @@ def _rate_pulses(n=3):
 
 SCENARIOS = {
     "hover": dict(mode="position", axis=None, segments=[("hold", 30.0, 0.0)]),
+    "hover_long": dict(mode="position", axis=None, segments=[("hold", 60.0, 0.0)]),  # G2 margin windows (S40)
     "step_roll": dict(mode="attitude", axis="roll", segments=_attitude_steps("roll", STEP_DEG, 3.0)),
     # T9: plant mismatch, Ixx and Iyy x1.3 in the sim (controllers unchanged), T2 attitude step pattern.
     # model_variant: scale factors, see bench/model_variant.py (reused by held-out H5).
