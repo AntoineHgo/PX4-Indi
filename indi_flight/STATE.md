@@ -43,11 +43,13 @@ S40 (launch 20261116-090818, cap $2.7): (1) DONE unit tests in build/px4_sitl_o1
    params set before arming. Still to do: generator check on timestamp_sample from a new flight;
    (3) route check 40 (sonnet). M3b store points partial in the T81 notes (library `_thrust_prev` unread).
 S41 flights: pre-test AMP 0.005, DLY 5, model-only AND measured (`CA_R_W_MAX` + `--sim v2`), then matrix.
+S40 route check 40 (`design/route_check_40.md`): R1 G2 written in GATES.md (DONE S40) then rate-loop flights
+   (S41-42); R2 stage-3 slice incl. ACT_TC identification + G2 outer-break note (S43-45); R3 G3/G4 harness tasks in
+   parallel; stage 5 from ~S46. Projection ~25 more sessions: tell owner in the Q4 entry.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T82 | route check 40 | sonnet | `design/route_check_40.md` | relaunch brief in JOURNAL S40 |
 | T83 | S41 pre-test: 2 hovers AMP 0.005 model-only + measured, checks | haiku | `results/stage2_s40/pretest_inj/README.md` | relaunch same brief |
 
 ## Open problems
@@ -74,6 +76,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 38 | T78 | sonnet | margins_models.py + self-test 4 | done, 15 calls, ~$1.0, ALL PASS re-run by me |
 | 38 | T79 | haiku | second key continuous models | done, 4 calls, ~$0.1, AGREE |
 | 38 | T80 | haiku | GM jump check | done, 5 calls, ~$0.06, explained (phase plateau) |
+| 40 | T82 | sonnet | route check 40 | done, 5 calls, ~$0.15 |
 | 39 | T81 | sonnet | M3a plumbing + build + 1 hover | done, 27 calls, ~$0.93, test not linked, fixed by me |
 
 ## Lessons proposed

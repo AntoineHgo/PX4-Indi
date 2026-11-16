@@ -78,3 +78,35 @@ Evidence limits every later verdict carries:
 4. EKF heading error (A-19): |truth - EKF yaw| <= 1.6 deg, constant within a hover. Yaw verdicts are stated on the
    estimate, with the heading error reported beside them; no yaw threshold below 1.6 deg on truth.
 5. Bench parameter sets carry SENS_BAR_AUTOCAL 0 (A-20) and the logger poll `-p actuator_motors` (S16).
+
+## G2 Stability margins, measured (written S40 2026-11-16, before the first G2 test; provisional under Q4-A)
+Thresholds are the owner's starting values (MISSION.md), unchanged. Results flown in stage 2 are preliminary; the
+gate is decided on the frozen final pair in stage 6 with the same tests.
+- **Loops and break points.** Rate roll, pitch, yaw: INDI at M3a (torque setpoint, D-G2-BREAK, D-G2-INJ), PID at M1
+  (gyro) with M2 as cross-check. Attitude, velocity, position and the INDI acceleration loops: break points are
+  specified in a design note with the same template (every feedback path the break cuts named, lesson S36) and
+  second-keyed before their first flight; the thresholds below apply to them unchanged.
+- **Configurations.** Reference airframe quad5in, controller rates 800 and 400 Hz (pass) and 267 Hz (reported; the
+  nearest integer divisor of the 800 Hz IMU to the mission's 250 Hz, D-SIM-STEP). INDI in both actuator-state paths:
+  model-only (no telemetry) and measured rotor speed (`--sim v2`), since F-1 requires the loop to hold without
+  telemetry (O-5 fallback).
+- **Excitation.** Schroeder multisine, 10 bins/decade, 1-60 Hz (FMAX <= 0.4 x controller rate), NP >= 3 periods with
+  the first discarded, in hover. Amplitude: the smallest one whose coherence passes, chosen in a pre-test where two
+  amplitudes (x1, x2) give |L| within 1 dB and arg L within 5 deg over the decade around crossover (linearity).
+- **Estimator.** `bench/margins_est.py` (`frf_periodic`), self-tests 1-3 pass; frequency points kept only where
+  coherence >= 0.8, and >= 0.9 within one decade of each crossover. A run whose crossover region lacks coherent
+  points is invalid (re-fly), not a failure.
+- **Validity of each run.** Over the injection window: `indi_rate_status` fault == 0 and landed == 0, u = c + d
+  (max error <= 1e-6), logged rate = controller rate with no gap > 3 periods except sim holes (Q2) and the result
+  unchanged when windows with a hole are left out; injected d equals the generator on `timestamp_sample`.
+- **Pass (per loop, per configuration).** Gain margin >= 6 dB, phase margin >= 45 deg, delay margin >= 2 control
+  periods + telemetry latency (model-only: + 0). Each margin is the worst of 2 runs (different seeds; the spread is
+  reported as the estimator's repeatability, not as generalisation, lesson 5). GM is reported together with the
+  minimum of 1/|L| over frequencies where arg L is within 10 deg of -180 deg; the pass uses the smaller of the two
+  (phase plateau, T80).
+- **Cross-check with the linear model** (`bench/margins_models.py`, same loop, same parameters): measured and model
+  PM within 10 deg and GM within 3 dB, or the difference explained in `ANOMALIES.md` before the result is used. A
+  margin that passes only because it disagrees with the model is not a pass.
+- **Second key.** Margins recomputed from the same CSV windows by `bench/second_key_margins_s37.py`-style independent
+  code (lesson 1); disagreement > 1 dB / 3 deg blocks the result.
+- **One command per item:** to be named here when the G2 runner script exists (stage 2), before the gate run.
