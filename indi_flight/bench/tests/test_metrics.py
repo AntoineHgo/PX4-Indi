@@ -386,11 +386,25 @@ def test_effort_bandwidth():
           f"150 Hz attenuation {[round(vals[(h, '150Hz_atten')], 1) for h in (400, 800, 1000)]}x; refusals reported")
 
 
+def test_quat_angle_small_and_scaled():
+    """0.03 deg rotation between two quaternions whose norms differ from 1 by +-3e-7 (float32 logging): the angle must
+    be 0.03 deg (2 arccos(|dot|) clips to 0 here); sign flip and a 90 deg case unchanged."""
+    th = math.radians(0.03)
+    qa = np.array([[1 + 3e-7, 0, 0, 0]], float)
+    qb = np.array([[math.cos(th / 2), 0, math.sin(th / 2), 0]], float) * (1 + 6e-7)
+    a = M.quat_angle(qa, qb)[0]
+    assert abs(math.degrees(a) - 0.03) < 1e-4, math.degrees(a)
+    assert abs(M.quat_angle(qa, -qb)[0] - a) < 1e-12
+    q90 = np.array([[math.cos(math.pi / 4), 0, 0, math.sin(math.pi / 4)]])
+    assert abs(math.degrees(M.quat_angle(np.array([[1.0, 0, 0, 0]]), q90)[0]) - 90) < 1e-9
+    print(f"ok quat angle: {math.degrees(a):.5f} deg (0.03)")
+
+
 def main():
     for f in (test_window_anchor_from_ulog, test_trajectory_functions, test_exact_and_lag, test_zoh_defect_and_fix, test_compute_end_to_end,
               test_sample_stamp_over_publish_stamp,
               test_step_metrics_analytic, test_rate_tracking_analytic, test_attitude_tracking_analytic,
-              test_truth_rate_attitude_tracking, test_effort_bandwidth):
+              test_truth_rate_attitude_tracking, test_effort_bandwidth, test_quat_angle_small_and_scaled):
         f()
     print("ALL PASS")
     return 0

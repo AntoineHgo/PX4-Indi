@@ -129,6 +129,15 @@ def rate_track(ta, w_meas, rsp, w0, w1):
     return {ax + "_rms_rad_s": rms(zoh(rsp["timestamp"], rsp[ax], ta[m]) - w_meas[m, i]) for i, ax in enumerate(AXES)}
 
 
+def quat_angle(qa, qb):
+    """Rotation angle [rad] between rows of qa and qb (N,4, w-x-y-z), sign- and scale-invariant: 2 atan2(|v|, |w|) of
+    conj(qa) qb. 2 arccos(|qa.qb|) is not used: the float32 norm error of logged quaternions (~1e-7) clips it to 0 below
+    ~0.05 deg (A-19, S32)."""
+    w = np.sum(qa * qb, axis=1)
+    v = (qa[:, :1] * qb[:, 1:] - qb[:, :1] * qa[:, 1:]) - np.cross(qa[:, 1:], qb[:, 1:])
+    return 2 * np.arctan2(np.linalg.norm(v, axis=1), np.abs(w))
+
+
 def att_track(ta, q, asp, w0, w1):
     """Attitude error of q (N,4, FRD->NED) at ta [us] against the ZOH quaternion setpoint q_d over [w0, w1]:
     rotation angle rms and per-axis (yaw wrapped) euler rms [deg]."""
@@ -136,7 +145,7 @@ def att_track(ta, q, asp, w0, w1):
     qs = np.column_stack([zoh(asp["timestamp"], asp[f"q_d[{i}]"], ta[m]) for i in range(4)])
     ok = np.isfinite(qs).all(axis=1)
     qm = q[m][ok]
-    ang = 2 * np.arccos(np.clip(np.abs(np.sum(qm * qs[ok], axis=1)), 0, 1))
+    ang = quat_angle(qm, qs[ok])
     eu, esp = dict(zip(AXES, quat_to_euler(qm))), dict(zip(AXES, quat_to_euler(qs[ok])))
     at = {"rotation_angle_rms_deg": math.degrees(rms(ang)) if ang.size else None}
     for ax in AXES:
@@ -163,7 +172,7 @@ def estimator_error(t_est, w_est, q_est, gt, w0, w1):
     if q_est is not None:
         qt = interp_quat(tg, qcols(gt, "q"), t_est[m])
         qe = q_est[m]
-        ang = 2 * np.arccos(np.clip(np.abs(np.sum(qt * qe, axis=1)), 0, 1))
+        ang = quat_angle(qt, qe)
         eu_t, eu_e = quat_to_euler(qt), quat_to_euler(qe)
         at = {"rotation_angle_rms_deg": math.degrees(rms(ang)), "n": int(m.sum())}
         for i, ax in enumerate(AXES):
