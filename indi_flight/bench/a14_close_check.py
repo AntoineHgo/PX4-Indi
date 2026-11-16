@@ -2,7 +2,7 @@
 """A-14 closing check (S28): baro consistency and EKF height error before and after arm.
 
 Per ULog: first raw sensor_baro pressure, CAL_BARO0_OFF at logger start and its last change,
-estimator_baro_bias at first sample and at arm, whether cs_baro_fault ever set and cs_baro_hgt at arm,
+estimator_baro_bias at first sample, at arm and its median over [arm - 5 s, arm] (A-20 measure), whether cs_baro_fault ever set and cs_baro_hgt at arm,
 max |z_ekf - z_true| over [t0, t1] (log time = sim time, s), and the median true z over [h0, h1].
 
 Pass (design/a14_cause_s27.md, closing test as amended in DECISIONS D-A14): raw pressure ~95600 Pa
@@ -44,10 +44,13 @@ def check(path, t0, t1, h0, h1):
     if t_arm is not None:
         i = min(np.searchsorted(bias['timestamp'], t_arm), len(bias['timestamp']) - 1)
         r['bias_arm'] = float(bias['bias'][i])
+        # A-20 (S33 T69): bias0 is a first-sample transient; use the median over the settled pre-arm window
+        mb = (bias['timestamp'] >= t_arm - 5e6) & (bias['timestamp'] <= t_arm)
+        r['bias_med'] = float(np.median(bias['bias'][mb])) if np.any(mb) else float('nan')
         j = min(np.searchsorted(flags['timestamp'], t_arm), len(flags['timestamp']) - 1)
         r['baro_hgt_arm'] = int(flags['cs_baro_hgt'][j])
     else:
-        r['bias_arm'], r['baro_hgt_arm'] = float('nan'), -1
+        r['bias_arm'], r['bias_med'], r['baro_hgt_arm'] = float('nan'), float('nan'), -1
     zt = np.interp(lp['timestamp'], gt['timestamp'], gt['z'])
     m = (lp['timestamp'] >= t0 * 1e6) & (lp['timestamp'] <= t1 * 1e6)
     r['max_err'] = float(np.max(np.abs(lp['z'][m] - zt[m]))) if np.any(m) else float('nan')
@@ -68,15 +71,15 @@ def main():
     h0, h1 = map(float, a.hold_window.split(','))
     rows = [(p, check(p, t0, t1, h0, h1)) for p in a.logs]
     zmed = float(np.nanmedian([r['z_hold'] for _, r in rows]))
-    lines = ['| log | p0 Pa | CAL_OFF start/last | bias0 | bias@arm | baro_hgt@arm | baro_fault | '
-             f'max err {t0:g}-{t1:g} s | z_hold (med {zmed:.3f}) | t_arm | pass |', '|' + '---|' * 11]
+    lines = ['| log | p0 Pa | CAL_OFF start/last | bias0 | bias@arm | bias med arm-5..arm | baro_hgt@arm | baro_fault | '
+             f'max err {t0:g}-{t1:g} s | z_hold (med {zmed:.3f}) | t_arm | pass |', '|' + '---|' * 12]
     ok_all = True
     for p, r in rows:
         ok = (abs(r['p0'] - 95600) < 200 and not r['baro_fault'] and r['max_err'] < 0.1
               and abs(r['z_hold'] - zmed) < 0.05)
         ok_all &= ok
         lines.append(f"| {p} | {r['p0']:.0f} | {r['off0']:.1f}/{r['off_last']:.1f} | {r['bias0']:.2f} | "
-                     f"{r['bias_arm']:.2f} | {r['baro_hgt_arm']} | {int(r['baro_fault'])} | {r['max_err']:.3f} | "
+                     f"{r['bias_arm']:.2f} | {r['bias_med']:.2f} | {r['baro_hgt_arm']} | {int(r['baro_fault'])} | {r['max_err']:.3f} | "
                      f"{r['z_hold']:.3f} | {r['t_arm']:.2f} | {'PASS' if ok else 'FAIL'} |")
     lines.append(f"\n{sum(1 for _ in rows)} runs, overall {'PASS' if ok_all else 'FAIL'}")
     open(a.out, 'w').write('\n'.join(lines) + '\n')
