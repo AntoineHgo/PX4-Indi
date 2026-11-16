@@ -43,6 +43,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T55 | player: attitude + trajectory setpoints in sim time, runner --sched for step/traj, pretest, row-1 sp_hold re-check | sonnet | `design/t55_player_setpoints_s26.md` | read the file, relaunch from its last step |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
