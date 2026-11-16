@@ -1,7 +1,7 @@
 # STATE (max 150 lines)
 
 ## Status
-- Stage: 2 (analysis tools, margins) from S36, provisional under Q4-A; stage 1 frozen S36 (G1 FINAL). Started S1 (2026-11-15). Stage 0 done. Session 3: ref airframe model done.
+- Stage: 3 (inner loop) opened S49; stage 2 (analysis tools, margins) from S36, provisional under Q4-A; stage 1 frozen S36 (G1 FINAL). Started S1 (2026-11-15). Stage 0 done. Session 3: ref airframe model done.
 - Sessions 4-13: history in JOURNAL.md (moved S15). S14: G1.6 runs at speed 1 and 4, review r5 BLOCKING (A18).
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. G1 FROZEN with evidence limits (GATES.md G1 FINAL), not passed until Q2-Q4 answered.
 - Blocker: none. Q2, Q3 open (G1.1 gap rule, G1.6a wording), Q4 open (freeze G1 with limits, S32), not blocking. Q1 closed: A confirmed by owner; flatness A18 reviewed (r5 BLOCKING), answered in
@@ -47,17 +47,19 @@ S48 (launch 20261116-223404, cap $3): low roll PM EXPLAINED (`results/stage2_s48
    Flight checks (model-only, s1): ACT_TC 0.033 P8 -> PM 25.9/GM 10.7 (model 28.6/14.2); P3 -> 42.9/13.4 (model
    43.8/15.7). A-21 CLOSED. T101 second key: PM/f_c/DM AGREE, GM DISAGREE (flights side with the first key; model GM
    2-3.5 dB optimistic, unmodelled delay).
-NEXT (S49): (1) stage-2 summary table (PID ref, INDI current, model vs measured) in `results/stage2_s48/README.md`
-   style, then stage 3 opens with D-RATE-LEAD design note + opus review (one interface: note vs src/lib/indi_rate_control),
-   ACT_TC identification from a rotor step, and the unmodelled ~3-5 ms delay added to margins_models (GM gap).
-   (2) Route check due S50. (3) runner appends quad5in_indi_g1.params + provenance in run.json; pretest_gate end-time
+S49 (launch 20261116-224459, cap $2.28): T102 stage-2 summary table (`results/stage2_s49/summary_table.md`): only valid
+   measured margins are INDI roll torque break at 800 Hz (best PM 42.9 at P3); no measured PID, no 400/250 Hz, no other
+   break point. T103 D-RATE-LEAD note draft (`design/rate_lead_note.md`): new param MC_INDI_LEAD scale 0..1 (default 1,
+   0 = current law), insertion at indi_rate_control.cpp step 8 (l.378-382), c_i = lead K_i ACT_TC, 0 when landed; noise
+   x1.4-2.3 on the a_f term (G4); filter H is in the model (checked). Stage 3 OPEN.
+NEXT (S50): (1) opus review r1 of `design/rate_lead_note.md` vs src/lib/indi_rate_control (one interface, <=12 calls,
+   ~$0.6, needs $1.2 left); then ACT_TC identification from a rotor step; add the ~3-5 ms delay to margins_models (GM gap).
+   (2) Route check due S50 (sonnet, ~$0.15). (3) runner appends quad5in_indi_g1.params + provenance in run.json; pretest_gate end-time
    option (window overlaps injection). (4) A-24 PSD re-check with G2.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T102 | stage-2 summary table (PID ref, INDI, model vs measured) | haiku | `results/stage2_s49/summary_table.md` | re-launch same brief if file incomplete |
-| T103 | D-RATE-LEAD design note draft (law, code mapping, tests, yaw, blend, noise) | sonnet | `design/rate_lead_note.md` | re-launch, continue from file |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -74,6 +76,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 49 | T102 | haiku | stage-2 summary table | done, 7 calls, ~$0.2, PID GM values negative (not used) |
+| 49 | T103 | sonnet | D-RATE-LEAD note draft | done, 6 calls, ~$0.3, UNREVIEWED |
 | 48 | T101 | sonnet | second key lead/att-loop margins | done, 3 calls, ~$0.1, PM AGREE, GM DISAGREE (flights side with key 1) |
 | 47 | T98 | sonnet | roll M3a + yaw follow-up F5-F9 | done, 15 calls, ~$0.6, found yaw limit cycle; wrong guess on cause (code change) |
 | 47 | T100 | haiku | G2_Y second key | done, 5 calls, ~$0.1, AGREE 27.0 |
