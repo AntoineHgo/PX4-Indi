@@ -143,3 +143,4 @@
 - At a ~$1 cap the launch context alone costs ~$0.3: do one host-bash flight + check, no agent (S19).
 - Analysis scripts take an output path argument; never a fixed path into a committed result (S19).
 - Anchor every analysis window on an event in the log, never on the runner's view of it: the 1 Hz HEARTBEAT view moved the window start by up to 0.95 s (S15).
+- Give a second key the primary script's exact window (start, end, anchor); a different window produced a false 2.1 % DISAGREE (S23 T48).
