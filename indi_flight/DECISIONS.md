@@ -237,3 +237,15 @@ Open, to be written before code (MISSION "Decisions that are yours"):
   values now 1757 / 1640 / 205 (`bench/params/quad5in_indi_g1.params`, `results/stage2_s46/`). Yaw counts the rotors' own
   spin Izz because gz prescribes rotor joint speed relative to the body (222 without it, 7 % apart, within the G3 G1 range);
   a yaw step identification in stage 4 settles it.
+
+## D-G2Y-DERIVE (S47): yaw spin-up term G2_Y derived from rotor inertia, not left at 0
+- Choice: MC_INDI_G2_Y = G1_Y * J_r / (2 k_m w_h), with J_r the rotor spin inertia that reacts on the body, k_m the
+  yaw torque constant (momentConstant x motorConstant) and w_h the hover rotor speed. quad5in: J_r 5e-6 (gz slowdown 10),
+  k_m 1.9e-8, w_h 999 -> tau 0.132 s, G2_Y 27 (bench params). This is decision 5 of the mission, taken early because
+  G2_Y 0 left a bistable 41 Hz yaw limit cycle (A-25) once G1_Y had its true value.
+- Alternatives: G2 0 with a lower yaw bandwidth (rejected: the plant has the spin-up term whatever the bandwidth, and
+  the loop gain at 41 Hz is ~34x the model's); G2 from measured rotor acceleration only (stage 3 option, same number at
+  hover); G2 scheduled with measured w (G2 ~ 1/w; stage 3 decides).
+- The firmware parameter description ("about G1_Y x loop period, 0.02") is wrong for this airframe; fix in stage 3.
+- Overturn if: a yaw step or injection identification gives G2 more than 30 % away with an explained cause, or the
+  second key (`results/stage2_s47/g2_second_key.md`) disagrees.

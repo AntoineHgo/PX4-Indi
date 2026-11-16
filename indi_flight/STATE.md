@@ -38,16 +38,21 @@ S46 (launch 20261116-215112, cap $3): `bench/pretest_gate.py` + self-test (break
    pass, S44 chatter and S41 limit cycle fail (`results/stage2_s46/pretest_gate_check/`). T97 sonnet second key of G1
    derivation running -> `results/stage2_s46/g1_second_key.md` (also: which inertia, 1.396e-3 or 1.022e-3, is the plant's).
 S46 also: T97 second key AGREE on roll/pitch with TOTAL inertia; bench G1 1757/1640/205 in `bench/params/quad5in_indi_g1.params`.
-S47 (launch 20261116-221436, cap $3): T98 sonnet first valid roll M3a margins with derived G1 at 800 Hz (model-only s1, s1 x2 amp,
-   s2; measured v2 s1), pretest_gate on each -> `results/stage2_s47/roll_m3a/README.md`.
-NEXT after S47: (a) runner appends quad5in_indi_g1.params to every INDI run + records G1 provenance in run.json, calls
-   pretest_gate.py after pre-test flights. (b) ACT_TC from rotor step, attitude P loop into margins_models.py, model cross-check.
-   (c) pitch, yaw, measured seed 2, 400 Hz rows.
+S47 (launch 20261116-221436, cap $3): first roll M3a flight with derived G1 invalid: 41 Hz yaw LIMIT CYCLE (pin 37-52 %)
+   on model-only and measured paths, S45 clean hover not reproducible (same binary/model/params: bistable). Cause: G2_Y 0
+   while the rotor spin-up torque dominates yaw above 1.2 Hz. Derived G2_Y 27 (D-G2Y-DERIVE): 4/4 hovers (2 seeds x 2
+   paths) pin 0, rate std <= 0.018, pretest_gate PASS. A-25 opened+closed. `results/stage2_s47/roll_m3a/README.md`.
+   M3a margins at AMP 0.005 measured on a saturating plant: VOID. With G1 5x higher, AMP must drop ~5x (0.001).
+NEXT (S48): (0) read `results/stage2_s47/g2_second_key.md` (T100 haiku, running at S47 end); if DISAGREE re-open D-G2Y.
+   (1) roll M3a at 800 Hz with G1+G2 file: AMP 0.001 and 0.002 (linearity), seeds 1-2, model-only and v2; pretest_gate
+   on the window BEFORE injection (gate window currently overlaps it: add an end-time option). (2) runner appends
+   quad5in_indi_g1.params to every INDI run + G1/G2 provenance in run.json. (3) A-24 PSD re-check with G2. (4) ACT_TC from
+   rotor step, attitude P loop + G2 into margins_models.py. Note: two run.sh flights launched in parallel lost one (no output).
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T98 | roll M3a margins, derived G1 | sonnet | results/stage2_s47/roll_m3a/README.md | re-brief from README (skip flights already done) |
+| T100 | G2_Y second key | haiku | results/stage2_s47/g2_second_key.md | re-brief if file incomplete |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -64,6 +69,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 47 | T98 | sonnet | roll M3a + yaw follow-up F5-F9 | done, 15 calls, ~$0.6, found yaw limit cycle; wrong guess on cause (code change) |
+| 47 | T100 | haiku | G2_Y second key | running |
 | 45 | T93 | sonnet | route check 45 | done, 7 calls, ~$0.15 |
 | 45 | T96 | haiku | derive_g1.py + self-test | done, 7 calls, ~$0.1, ALL PASS, UNKEYED |
 | 45 | T95 | haiku | second key A-23 numbers | done, 7 calls, ~$0.06, AGREE (RMS 0.0068/0.0056/0.0017, pin 0 %) |
@@ -91,6 +98,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 39 | T81 | sonnet | M3a plumbing + build + 1 hover | done, 27 calls, ~$0.93, test not linked, fixed by me |
 
 ## Lessons proposed
+- S47: a single clean flight does not prove stability: S45 hovered clean, the same config limit-cycled on replay (bistable
+  lightly damped mode). Accept a configuration change on >= 2 seeds, and derive every term of the law (G2 too) before flying.
 - S45: a default effectiveness never derived for the airframe (G1_Y 30 vs plant 215) cost 5 sessions of margins; derive every
   physical parameter from the model/airframe before the first closed-loop measurement, and log it in run metadata.
 - S44: five sessions of margin work ran on a vehicle in a 17 Hz limit cycle; the pre-test checked u=c+d, fault and
