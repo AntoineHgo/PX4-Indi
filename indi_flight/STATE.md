@@ -19,6 +19,9 @@ S34 (launch 20261116-072614, cap $1.35, no agent): Q4 still unanswered. Combined
    `python3 results/a19a20_s34/a19_mech.py` (copy, writes next to itself) and read `a14_check.md`.
    Closing criteria (ANOMALIES): A-19 |err| align+1 s < 0.2 deg, hover window < 0.3 deg, magB_x < 0.5 mG;
    A-20 CAL_BARO0_OFF 0 and median pre-arm bias < 0.5 m. If pass: 15-run set + two keys (S35); route check 35 due.
+   S34 ended with the batch still flying (started 07:27, ~4 min); results unread. S35 FIRST: check status.txt, run
+   the two checks above, check params_applied in each run's meta (SENS_BAR_AUTOCAL, EKF2_*), write README.md there.
+   No stage-2 note this session (budget).
 S33 (launch 20261116-065633, cap $1.98): B32 speed 1 still running (hover r2 at 06:56). T68 haiku A-19 mechanism ->
    `results/a19_s33/README.md`; arccos fix in second_key_s29.py (own); G1 status draft in GATES.md (own).
    DONE: arccos fixed 8ef678d1b4; T68 A-19 mechanism candidate (ANOMALIES A-19 NEXT): EKF2_MAG_DECL 3.41 vs gz field
@@ -118,6 +121,8 @@ S31 (launch 20261116-042839, cap $1.08): A-14 bridge fix: pretest PASS, B31 15/1
 | 32 | B32 | host bash | G1.6 re-fly 2x15 + pretest | s4 15/15 flew, $0; s1 running |
 
 ## Lessons proposed
+- Background shell waits (sleep loop, bash or python) returned at once with no output in S34: do not plan a
+  session around waiting for a batch; launch it detached and analyse next session.
 - An anomaly bound taken from the range of 10 runs was exceeded by the next 5 (A-19, S32): bound by mechanism.
 - A metric changed during a running batch: re-compute the whole set with one version before comparing (S32).
 - A shared sim model is live for every running batch: stage a model change and install it after the batch ends (S28 nearly mixed two baro models into B26).
