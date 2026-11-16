@@ -15,9 +15,14 @@
 
 ## Next actions (in order)
 0000000000000. S23 (launch 20261116-024209, cap $3): T46 (sonnet) truth/timestamp_sample in metrics; DONE: A-10/A-13 PARKED with bounds; D-SCHED decided (sim-time scenario player, sim-only module). T46 DONE (a6820c2e60, `design/t46_truth_metrics_s23.md`): metrics on sim_ground_truth + timestamp_sample, hover re-score <1 %. Open from T46: (i) g1.1 still FAILS on max gap (5.0-6.3 ms vs 3.75 ms) for gyro, ang vel, motors, torque sp, esc, truth: the source (sensor_gyro) has the holes (A-13 parked), so the gap rule tests the sim, not the logger -> either fix the sim step holes or ask the owner to amend g1.1 to a bound (gate change after first test = owner question); decide in S24 after looking at the 6.3 ms gaps; (ii) rate/attitude tracking still scored vs estimator, G1.2 wants truth: add truth-based rate/attitude tracking (sonnet, with player work or after). T48 second key AGREE (`results/second_key_t46_s23/README.md`). S24 NEXT: sonnet implements the player (arm, mode, offboard setpoints first) + runner writer + 1 pretest; S25 second key + re-fly 5-run G1.6 set.
-00000000000000. S24 (launch 20261116-025001, cap $3): T49 (sonnet) D-SCHED player in flight (see Tasks). After it: I read the
-   diff + pre-test, second key (haiku/sonnet, S25) of applied-time and mode-instant numbers, re-fly the 5-run G1.6 set with
-   `--sched`. Still open from S23: g1.1 max-gap rule vs sim-side gyro holes (A-13) -> decide fix vs owner question.
+00000000000000. S24 (launch 20261116-025001, cap $3): T49 DONE (b2dab14759 module, 1fdd07bd2f runner, 9b0e66d0e5 results,
+   `design/t49_player_s24.md`): player arms/switches/streams in sim time; 2 hovers: applied-sched 0 us, arm and offboard
+   instants identical (spread 0 us vs 7.5-11 ms before). T50 second key AGREE (`results/player_s24/second_key/`).
+   Commander adds a fixed 6.25 ms (arm) / 16.25 ms (offboard) after the applied row: deterministic, its 10 ms loop;
+   G1.6(a) is the across-run spread, so not a defect. Q2 (G1.1 gap rule) asked, not blocking.
+   S25 NEXT: (1) read `results/g16_sched_s24/` (5 hovers, instants.json each); (2) sonnet: takeoff/land kinds in the
+   player + capture hold position (yaw hard-coded 1.585 today), then re-fly the full 5-run G1.6 set (hover, step, traj)
+   with --sched at speeds 1 and 4 (host bash) and a G1.6(a) verdict; (3) G1.5 injectors via player kinds.
 1-4. Stage-1 items still pending from the old list (rest done, history in JOURNAL): errata re-score of archived set-O/T5;
    window rule must accept nav_state 23; sag as sim-time ramp in gz bridge (two keys); run_scenario sim-time fixes
    (`sim_review.md`:14,19) now folded into the player; outer-loop A-requirements folded at stage 5.
@@ -27,7 +32,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T49 | D-SCHED player: sim-only module (arm, mode, offboard setpoints) + runner `--sched` writer + 1 pretest hover | sonnet | `design/t49_player_s24.md`, `results/player_s24/` | re-brief from the note's last section if cut |
+| G16S | 5 hovers `--sched` + instants (host bash) | - | `results/g16_sched_s24/status.txt` | `bench/g16_sched_hover.sh` |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -87,7 +92,12 @@
 | 23 | T48 | haiku | second key T46 | done, 12 calls, ~$0.1, AGREE on same window (<0.03 %) |
 | 23 | T47 | haiku | D-SCHED interface map | done, 12 calls, ~$0.1, `design/sched_interfaces_s23.md` (4 UNVERIFIED items) |
 
+| 24 | T49 | sonnet | sim-time scenario player + pretest | done, 29 calls, ~$0.75 |
+| 24 | T50 | haiku | second key player instants | done, 8 calls, ~$0.06, AGREE |
+
 ## Lessons proposed
+- A pre-test check worded "within N periods of the command" measured Commander's fixed latency; state the
+  determinism check as across-run spread, and latency separately (S24).
 - Give each anomaly at most 2 sessions, then park it with a written bound and reopen trigger (route check 22).
 - Haiku handles a well-specified log check (10 calls) for ~$0.06: use it for every bounded log/metric check.
 - At a $1.6 cap: one sonnet agent of ~15 calls (~$0.5) plus state and commit; no fable work.

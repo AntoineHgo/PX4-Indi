@@ -123,3 +123,5 @@ Open, to be written before code (MISSION "Decisions that are yours"):
 - Cost estimate: one sonnet implementation session (module + runner writer + 1 pre-test), one second-key session.
 - Overturn: the player cannot be built in two sessions, or with it the mode-instant spread is still > 2 IMU periods
   (then the residual comes from gz/PX4 timing, and lockstep is next).
+- Outcome S24: built in one session (b2dab14759); 2 hovers gave 0 us spread on arm and offboard instants (second key
+  agrees). hrt is the gz clock in SITL (lockstep scheduler). Commander adds a fixed 6.25/16.25 ms after the applied row.
