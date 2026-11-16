@@ -96,6 +96,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 44 | T91 | haiku | second key limit cycle, 3 logs | done, 7 calls, ~$0.1, CONFIRMED |
 
 ## Lessons proposed
+- S49: calibrate the unmodelled delay of a loop model on one existing flight before using the model to accept or
+  reject a candidate; the lead's verdict at 400 Hz flips between 2.5 and 5 ms of delay.
 - S48: before reading a low margin as a plant or gain problem, put every loop the break closes around into the model
   and test it by predicting a parameter change in flight (two flights, ~$0.1 of CPU, settled what 7 sessions had not).
 - S47: a single clean flight does not prove stability: S45 hovered clean, the same config limit-cycled on replay (bistable

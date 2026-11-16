@@ -263,3 +263,6 @@ Open, to be written before code (MISSION "Decisions that are yours"):
   noise cost on motor command (G4), interaction with the measured-rotor-speed path and the blend, yaw axis with G2_Y.
 - Overturn if: the flight check disagrees with the model by > 10 deg PM, or the lead's motor-command noise exceeds the G4
   limit at the K that meets G2.
+- S49: design note drafted (`design/rate_lead_note.md`, new param MC_INDI_LEAD 0..1). Delay-calibrated model sweep
+  (`results/stage2_s49/lead_delay_README.md`, unkeyed): K20 400 Hz PM 57/GM 10.5 dB; K40 fails. Default K_R stays 20.
+  Also overturn if: the measured loop delay at 400 Hz is >= 5 ms (K20 GM 7.8 dB in the model).
