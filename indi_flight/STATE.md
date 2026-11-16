@@ -109,6 +109,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 39 | T81 | sonnet | M3a plumbing + build + 1 hover | done, 27 calls, ~$0.93, test not linked, fixed by me |
 
 ## Lessons proposed
+- Regressing a filtered signal (angular_accel_filtered) on a command: pass the command through the same filter first; T86 missed it and read the LPF2p group delay as a 20 ms plant delay (S42).
 - S41: a loop-gain model must contain every loop the break closes around, outer loops included; the M3a model
   lacked the attitude P loop and a 17 deg PM gap was spent on as an anomaly (A-21).
 - S39: a sonnet implement+build+fly task asked to add a unit test spent its last calls on a link error; tell it the
