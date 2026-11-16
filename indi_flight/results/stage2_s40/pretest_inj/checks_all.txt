@@ -1,0 +1,67 @@
+== indi_flight/results/stage2_s39/pretest_m3a/hover  exit_status=ok  AMP=0.02 DLY=5.0
+time base: timestamp  WARNING: timestamp_sample absent, using timestamp
+[2] indi_rate_status n=63805 median_rate=800.00 Hz mean_rate=799.82 Hz span=79.772 s dt==0:1146 gaps>1.5ms:1160
+[2] actuator_torque_measured: ABSENT
+[3] injection axes (0=roll,1=pitch,2=yaw) nonzero: [0]; nonzero samples 15998; window idx 7770..23767, t0=32.0187 s, end=52.0162 s, span=19.9975 s
+[3] fault in window: 0 of 15998; fault whole run: 0
+[3] measured_torque_in_use in window: 0; whole run: 0
+[3] landed (held) in window: 0 of 15998; land-detector samples in window: 20; landed whole run (held): 11221 of 63805
+[4] u=c+d max abs err per axis: 2.98e-08 0 0 | injected axis 0: 2.98e-08
+[1] attitude in window: n=5333 max|roll|=14.50 deg max|pitch|=1.95 deg; whole run max|roll|=14.50 max|pitch|=1.95
+[6] armed at 30.014 s
+[6] first armed & not-landed (land detector) at 32.017 s; injection start t0 at 32.019 s; t0 - not-landed = 0.001 s (MC_INDI_INJ_DLY=5.0 s); t0 - armed = 2.005 s
+[6] height (-z) at t0 = -0.01 m, at window end = 5.00 m
+[5] generator: K=18 components, f 1.00..50.10 Hz, self-check formula vs margins_est.multisine max diff 0.00e+00
+[5] t0: samples in [0,20.0) s = 15999, max|logged d - expected| = 2.876e-02, samples with |d|>1e-6 in that range = 15994
+[5] t0 - 1.25 ms: samples in [0,20.0) s = 15998, max|logged d - expected| = 2.555e-02, samples with |d|>1e-6 in that range = 15994
+[5] max|d| outside [t0, t0+20.0 s): 0.000e+00
+[5] samples with |d|>1e-6 in whole run (logged): 15994
+
+== indi_flight/results/stage2_s40/pretest_inj/model  exit_status=ok  AMP=0.005 DLY=5.0
+time base: timestamp_sample
+[2] indi_rate_status n=66091 median_rate=800.00 Hz mean_rate=799.52 Hz span=82.662 s dt==0:0 gaps>1.5ms:28
+[2] actuator_torque_measured: ABSENT
+[3] injection axes (0=roll,1=pitch,2=yaw) nonzero: [0]; nonzero samples 15984; window idx 12669..28652, t0=37.0063 s, end=57.0050 s, span=19.9987 s
+[3] fault in window: 0 of 15984; fault whole run: 0
+[3] measured_torque_in_use in window: 0; whole run: 0
+[3] landed (held) in window: 0 of 15984; land-detector samples in window: 20; landed whole run (held): 12612 of 66091
+[4] u=c+d max abs err per axis: 7.45e-09 0 0 | injected axis 0: 7.45e-09
+[1] attitude in window: n=5330 max|roll|=3.91 deg max|pitch|=3.20 deg; whole run max|roll|=3.91 max|pitch|=3.46
+[6] armed at 30.014 s
+[6] first armed & not-landed (land detector) at 32.006 s; injection start t0 at 37.006 s; t0 - not-landed = 5.000 s (MC_INDI_INJ_DLY=5.0 s); t0 - armed = 6.992 s
+[6] height (-z) at t0 = 0.96 m, at window end = 5.01 m
+[5] generator: K=18 components, f 1.00..50.10 Hz, self-check formula vs margins_est.multisine max diff 0.00e+00
+[5] t0: samples in [0,20.0) s = 15984, max|logged d - expected| = 2.950e-09, samples with |d|>1e-6 in that range = 15980
+[5] t0 - 1.25 ms: samples in [0,20.0) s = 15984, max|logged d - expected| = 7.191e-03, samples with |d|>1e-6 in that range = 15979
+[5] max|d| outside [t0, t0+20.0 s): 0.000e+00
+[5] samples with |d|>1e-6 in whole run (logged): 15980
+
+Traceback (most recent call last):
+  File "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/results/stage2_s40/pretest_inj/checks.py", line 19, in <module>
+    u = ULog(os.path.join(run, "flight.ulg"))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/pyulog/core.py", line 140, in __init__
+    self._load_file(log_file, message_name_filter_list, parse_header_only)
+  File "/usr/local/lib/python3.12/dist-packages/pyulog/core.py", line 859, in _load_file
+    self._file_handle = open(log_file, "rb") #pylint: disable=consider-using-with
+                        ^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'indi_flight/results/stage2_s40/pretest_inj/measured/flight.ulg'
+== indi_flight/results/stage2_s40/pretest_inj/model: exit=ok step=0.00125 rate_hz=800
+  params {'IMU_GYRO_RATEMAX': 800, 'IMU_GYRO_CUTOFF': 40.0, 'IMU_DGYRO_CUTOFF': 20.0}
+  sensor_gyro: n=66098 median=800.0 Hz mean=799.6 Hz dt p1/p99=1.250/1.250 ms
+  vehicle_angular_velocity: n=66087 median=800.0 Hz mean=799.5 Hz dt p1/p99=1.250/1.250 ms
+  actuator_motors: n=66091 median=800.0 Hz mean=799.5 Hz dt p1/p99=1.250/1.250 ms
+  esc_status: n=64782 median=800.0 Hz mean=783.7 Hz dt p1/p99=0.000/2.500 ms
+  vehicle_torque_setpoint: n=66087 median=800.0 Hz mean=799.5 Hz dt p1/p99=1.250/1.250 ms
+  vehicle_imu_status gyro_rate_hz=800.0 raw=800.0
+  logger dropouts: 0, 0 ms
+Traceback (most recent call last):
+  File "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/check_rates.py", line 15, in <module>
+    u = ULog(os.path.join(run, "flight.ulg"))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/pyulog/core.py", line 140, in __init__
+    self._load_file(log_file, message_name_filter_list, parse_header_only)
+  File "/usr/local/lib/python3.12/dist-packages/pyulog/core.py", line 859, in _load_file
+    self._file_handle = open(log_file, "rb") #pylint: disable=consider-using-with
+                        ^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'indi_flight/results/stage2_s40/pretest_inj/measured/flight.ulg'
