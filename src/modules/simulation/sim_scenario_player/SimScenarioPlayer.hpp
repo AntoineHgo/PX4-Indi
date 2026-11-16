@@ -48,6 +48,7 @@
 #include <uORB/topics/sim_schedule_applied.h>
 #include <uORB/topics/trajectory_setpoint.h>
 #include <uORB/topics/vehicle_command.h>
+#include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vehicle_status.h>
 
 using namespace time_literals;
@@ -60,7 +61,14 @@ using namespace time_literals;
  *   t_sim_us disarm
  *   t_sim_us mode_offboard
  *   t_sim_us sp x y z yaw          NED position [m] and yaw [rad]; nan allowed per field
- * Rows must be sorted by time. Further kinds (manual_control, param steps, injector triggers) are added as new
+ *   t_sim_us sp_hold [dx dy dz]    setpoint = vehicle_local_position x,y,z + offsets (default 0) and heading, taken at apply time
+ *   t_sim_us takeoff [alt]         VEHICLE_CMD_NAV_TAKEOFF, all params NAN except param7 = alt (default NAN)
+ *   t_sim_us land                  VEHICLE_CMD_NAV_LAND
+ *   t_sim_us anchor nav_state=N    activated at t_sim_us (or at its offset after a previous anchor), then suspends the
+ *                                  schedule until vehicle_status.nav_state == N and armed. The instant of that
+ *                                  vehicle_status message becomes the anchor: every row after it holds its time as an
+ *                                  offset from the anchor. Several anchors allowed, each re-bases the rows after it.
+ * Rows must be sorted by time (the order restarts at 0 after each anchor row). Further kinds (manual_control, param steps, injector triggers) are added as new
  * keywords with their own field lists; an unknown kind makes the start fail.
  */
 class SimScenarioPlayer : public ModuleBase, public px4::WorkItem
@@ -82,6 +90,7 @@ private:
 	struct Row {
 		uint64_t t_us{0};
 		uint8_t kind{0};
+		bool rel{false}; // time is an offset from the last anchor
 		float f[4] {NAN, NAN, NAN, NAN};
 	};
 
@@ -89,12 +98,15 @@ private:
 
 	void Run() override;
 	bool load(const char *path);
-	void apply(const Row &row, uint32_t index, hrt_abstime now);
-	void publish_command(uint32_t command, float param1, float param2, hrt_abstime now);
+	void apply(const Row &row, uint32_t index, hrt_abstime now, hrt_abstime t_sched);
+	void publish_command(uint32_t command, float param1, float param2, hrt_abstime now, float param3 = 0.f,
+			     float param4 = 0.f, float param5 = 0.f, float param6 = 0.f, float param7 = 0.f);
+	bool anchor_reached();
 	void publish_setpoint(hrt_abstime now);
 
 	uORB::SubscriptionCallbackWorkItem _gyro_sub{this, ORB_ID(sensor_gyro)};
 	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
+	uORB::Subscription _local_pos_sub{ORB_ID(vehicle_local_position)};
 
 	uORB::Publication<vehicle_command_s> _cmd_pub{ORB_ID(vehicle_command)};
 	uORB::Publication<offboard_control_mode_s> _offboard_control_mode_pub{ORB_ID(offboard_control_mode)};
@@ -103,6 +115,12 @@ private:
 
 	std::vector<Row> _rows;
 	uint32_t _next_row{0};
+
+	bool _anchor_wait{false};
+	uint8_t _anchor_nav_state{0};
+	hrt_abstime _anchor_us{0}; // observed instant of the last anchor, 0 before any
+	hrt_abstime _prev_anchor_us{0}; // anchor the pending anchor row itself is relative to
+	hrt_abstime _anchor_start_us{0}; // when the pending anchor row was activated
 
 	bool _sp_held{false};
 	float _sp[4] {NAN, NAN, NAN, NAN}; // x y z yaw

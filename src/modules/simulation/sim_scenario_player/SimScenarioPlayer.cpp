@@ -71,6 +71,7 @@ bool SimScenarioPlayer::load(const char *path)
 	int lineno = 0;
 	bool ok = true;
 	uint64_t t_prev = 0;
+	bool after_anchor = false;
 
 	while (ok && fgets(line, sizeof(line), fp)) {
 		lineno++;
@@ -90,6 +91,7 @@ bool SimScenarioPlayer::load(const char *path)
 		Row row;
 		char *end = nullptr;
 		row.t_us = strtoull(tok, &end, 10);
+		row.rel = after_anchor;
 
 		if (*end != '\0') {
 			PX4_ERR("%s:%d bad time '%s'", path, lineno, tok);
@@ -136,6 +138,47 @@ bool SimScenarioPlayer::load(const char *path)
 				row.f[i] = strtof(tok, nullptr);
 			}
 
+		} else if (strcmp(tok, "sp_hold") == 0) {
+			row.kind = sim_schedule_applied_s::KIND_SP_HOLD;
+
+			for (int i = 0; i < 3; i++) { // optional offsets dx dy dz, default 0
+				tok = strtok_r(nullptr, " \t\r\n", &save);
+				row.f[i] = tok ? strtof(tok, nullptr) : 0.f;
+
+				if (!tok) {
+					for (int j = i + 1; j < 3; j++) {
+						row.f[j] = 0.f;
+					}
+
+					break;
+				}
+			}
+
+		} else if (strcmp(tok, "takeoff") == 0) {
+			row.kind = sim_schedule_applied_s::KIND_TAKEOFF;
+			tok = strtok_r(nullptr, " \t\r\n", &save);
+			row.f[0] = tok ? strtof(tok, nullptr) : NAN; // param7 (altitude as the command defines it)
+
+		} else if (strcmp(tok, "land") == 0) {
+			row.kind = sim_schedule_applied_s::KIND_LAND;
+
+		} else if (strcmp(tok, "anchor") == 0) {
+			row.kind = sim_schedule_applied_s::KIND_ANCHOR;
+			tok = strtok_r(nullptr, " \t\r\n", &save);
+
+			if (!tok || strncmp(tok, "nav_state=", 10) != 0) {
+				PX4_ERR("%s:%d anchor needs nav_state=<N>", path, lineno);
+				ok = false;
+				break;
+			}
+
+			row.f[0] = strtof(tok + 10, nullptr);
+			after_anchor = true;
+			t_prev = row.t_us; // checked above; the order restarts at 0 for the rows after the anchor
+			_rows.push_back(row);
+			t_prev = 0;
+			continue;
+
 		} else {
 			PX4_ERR("%s:%d unknown kind '%s'", path, lineno, tok);
 			ok = false;
@@ -164,7 +207,8 @@ bool SimScenarioPlayer::init()
 	return _gyro_sub.registerCallback();
 }
 
-void SimScenarioPlayer::publish_command(uint32_t command, float param1, float param2, hrt_abstime now)
+void SimScenarioPlayer::publish_command(uint32_t command, float param1, float param2, hrt_abstime now, float param3,
+					float param4, float param5, float param6, float param7)
 {
 	// as MavlinkReceiver::handle_message_command_long for a COMMAND_LONG of the Python runner (sysid 255, comp 0)
 	vehicle_status_s status{};
@@ -174,6 +218,11 @@ void SimScenarioPlayer::publish_command(uint32_t command, float param1, float pa
 	vcmd.timestamp = now;
 	vcmd.param1 = param1;
 	vcmd.param2 = param2;
+	vcmd.param3 = param3;
+	vcmd.param4 = param4;
+	vcmd.param5 = param5;
+	vcmd.param6 = param6;
+	vcmd.param7 = param7;
 	vcmd.command = command;
 	vcmd.target_system = status.system_id ? status.system_id : 1;
 	vcmd.target_component = 1;
@@ -223,8 +272,11 @@ void SimScenarioPlayer::publish_setpoint(hrt_abstime now)
 	}
 }
 
-void SimScenarioPlayer::apply(const Row &row, uint32_t index, hrt_abstime now)
+void SimScenarioPlayer::apply(const Row &row, uint32_t index, hrt_abstime now, hrt_abstime t_sched)
 {
+	sim_schedule_applied_s applied{};
+	applied.sp[0] = applied.sp[1] = applied.sp[2] = applied.sp[3] = NAN;
+
 	switch (row.kind) {
 	case sim_schedule_applied_s::KIND_ARM:
 		publish_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.f, 0.f, now);
@@ -243,12 +295,46 @@ void SimScenarioPlayer::apply(const Row &row, uint32_t index, hrt_abstime now)
 		memcpy(_sp, row.f, sizeof(_sp));
 		_sp_held = true;
 		_next_sp_us = now; // publish at once, then every SETPOINT_PERIOD_US
+		memcpy(applied.sp, _sp, sizeof(_sp));
+		break;
+
+	case sim_schedule_applied_s::KIND_SP_HOLD: {
+			vehicle_local_position_s lpos{};
+			_local_pos_sub.copy(&lpos);
+
+			if (lpos.xy_valid && lpos.z_valid && PX4_ISFINITE(lpos.heading)) {
+				_sp[0] = lpos.x + row.f[0];
+				_sp[1] = lpos.y + row.f[1];
+				_sp[2] = lpos.z + row.f[2];
+				_sp[3] = lpos.heading;
+				_sp_held = true;
+				_next_sp_us = now;
+				memcpy(applied.sp, _sp, sizeof(_sp));
+
+			} else {
+				PX4_ERR("sp_hold row %u: local position invalid, setpoint unchanged", (unsigned)index);
+			}
+
+			break;
+		}
+
+	case sim_schedule_applied_s::KIND_TAKEOFF:
+		// as the runner's MAV_CMD_NAV_TAKEOFF: pitch, yaw, lat, lon NAN (take off here), param7 = altitude
+		publish_command(vehicle_command_s::VEHICLE_CMD_NAV_TAKEOFF, NAN, 0.f, now, 0.f, NAN, NAN, NAN, row.f[0]);
+		break;
+
+	case sim_schedule_applied_s::KIND_LAND:
+		// as the runner's MAV_CMD_NAV_LAND: abort alt 0, land mode 0, yaw/lat/lon NAN, altitude 0
+		publish_command(vehicle_command_s::VEHICLE_CMD_NAV_LAND, 0.f, 0.f, now, 0.f, NAN, NAN, NAN, 0.f);
+		break;
+
+	case sim_schedule_applied_s::KIND_ANCHOR: // published by Run() when the anchor is reached
 		break;
 	}
 
-	sim_schedule_applied_s applied{};
 	applied.timestamp = hrt_absolute_time();
-	applied.t_sched_us = row.t_us;
+	applied.t_sched_us = t_sched;
+	applied.anchor_us = _anchor_us;
 	applied.row_index = index;
 	applied.kind = row.kind;
 	_applied_pub.publish(applied);
@@ -264,8 +350,40 @@ void SimScenarioPlayer::Run()
 
 	const hrt_abstime now = hrt_absolute_time();
 
-	while (_next_row < _rows.size() && _rows[_next_row].t_us <= now) {
-		apply(_rows[_next_row], _next_row, now);
+	while (_next_row < _rows.size()) {
+		const Row &row = _rows[_next_row];
+
+		if (_anchor_wait) {
+			vehicle_status_s status{};
+			_vehicle_status_sub.copy(&status);
+
+			if (status.nav_state != _anchor_nav_state || status.arming_state != vehicle_status_s::ARMING_STATE_ARMED) {
+				break;
+			}
+
+			// the anchor is the instant of the vehicle_status message that carries the state (never before activation)
+			_anchor_us = status.timestamp > _anchor_start_us ? status.timestamp : _anchor_start_us;
+			_anchor_wait = false;
+			apply(row, _next_row, now, row.t_us + (row.rel ? _prev_anchor_us : 0));
+			_next_row++;
+			continue;
+		}
+
+		const hrt_abstime t_sched = row.t_us + (row.rel ? _anchor_us : 0);
+
+		if (t_sched > now) {
+			break;
+		}
+
+		if (row.kind == sim_schedule_applied_s::KIND_ANCHOR) { // activate: suspend until the state is observed
+			_anchor_wait = true;
+			_anchor_nav_state = (uint8_t)row.f[0];
+			_anchor_start_us = now;
+			_prev_anchor_us = _anchor_us;
+			continue;
+		}
+
+		apply(row, _next_row, now, t_sched);
 		_next_row++;
 	}
 
