@@ -22,6 +22,7 @@ TOPICS = [
     "vehicle_attitude_groundtruth",
     "vehicle_angular_velocity_groundtruth",
     "vehicle_local_position_groundtruth",
+    "sim_ground_truth",  # S21: sim-only truth, queue 16
 ]
 GAP_THRESHOLD_US = 1900.0  # > 1.9 ms: at least one missing 1.25 ms sample
 PERIOD_US = 1250.0  # nominal 800 Hz period
