@@ -45,6 +45,9 @@ S47 (launch 20261116-221436, cap $3): first roll M3a flight with derived G1 inva
    M3a margins at AMP 0.005 measured on a saturating plant: VOID. With G1 5x higher, AMP must drop ~5x (0.001).
    T100 second key G2_Y AGREE 27.0. First valid roll M3a (model-only s1, AMP 0.001, no pin, 18/18 bins): PM 22 deg
    @3.5 Hz, GM 4.1 dB, DM 18 ms -- below G2; phase -169 deg at 1 Hz = attitude loop over a slow rate loop (suspect).
+   Hypothesis (S47, by hand): matched INDI gives L ~ K_R (1 + P_att/s)/s x A(s) x F(s); MC_INDI_K_R 20 rad/s, airframe
+   MC_ROLL_P 8 -> at w_c 22 rad/s: -90 -20 (atan 8/22) -36 (motor 33 ms) = -146 deg + filters/delay ~ measured -158.
+   I.e. K_R/P_att = 2.5 and K_R ~ 0.7 x motor bandwidth (30 rad/s): margins limited by the gain defaults, not G1.
 NEXT (S48): (0) explain the low PM with margins_models.py + attitude P loop + G2 (and read MC_INDI rate gains vs
    MC_ROLL_P: is the INDI rate bandwidth default too low for the attitude gain?); if the model agrees, this is
    decision 4 (defaults as bandwidths), open it in stage 3, do not tune here. (1) roll M3a at 800 Hz with G1+G2 file: AMP 0.001 and 0.002 (linearity), seeds 1-2, model-only and v2; pretest_gate
