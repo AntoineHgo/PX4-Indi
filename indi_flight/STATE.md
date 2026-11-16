@@ -18,9 +18,14 @@ S36 DONE: G1 FINAL; T73 r1 BLOCKING answered (note section 7, D-G2-BREAK).
 S36 T74 r2 CLOSED (`design/stage2_note_review_r2.md`): M3a cuts every in-flight path; S38 must log c (pre-injection),
    d and u at cycle rate.
 S37 (launch 20261116-080552, cap $3): (1) DONE note body patched, section 7 item 7 answers r2 residuals (fault path
-   unreachable by finite d; M3b store point to be read in S38 plumbing). (2) T75 sonnet: `bench/margins_est.py` +
-   `bench/tests/test_margins_selftest.py` self-tests 1-3 (output files those two). Next: T75 second key (haiku/sonnet,
-   independent GM/PM/DM solve), `margins_models.py` + self-test 4, S38 injection plumbing, S39 flights, S40 route check.
+   unreachable by finite d; M3b store point to be read in S38 plumbing). (2) DONE T75 sonnet: `bench/margins_est.py` +
+   `bench/tests/test_margins_selftest.py` self-tests 1-3 ALL PASS (re-run by me), 7 break checks recorded (commit
+   a2884f4cc9). T76 haiku second key: independent analytic GM/PM/DM, AGREE 5/5 (`results/stage2_s37/second_key_margins.md`,
+   `python3 bench/second_key_margins_s37.py <out.md>`); its case B is unstable with 1 crossing, multi-crossing covered by
+   self-test 1b only. Estimator not yet run on bench logs (CSV t,d,x,y; sign y = -L x from spec).
+S38 NEXT: (1) `margins_models.py` (4.1 analytic + discrete time-domain, 4.2 PID with gains read from 4040 params) +
+   self-test 4 (sonnet, the session's one big task, <=12 calls); (2) second key of the model (haiku). S39 injection
+   plumbing (M3a in mc_indi_rate_control bench params, log c/d/u at cycle rate; read M3b store point), S40 route check 40, S41 flights.
 S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_s35/README.md`); A-19 heading-only
    candidate refuted, A-19 PARKED by mechanism (bound 1.6 deg, yaw verdicts on estimate); A-14 hold bound re-set by
    mechanism to +-0.15 m (r14 0.068 m exceeded the old +-0.06 sample bound). T70 second key AGREE 7/7. T71 route
@@ -30,7 +35,6 @@ S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T75 | margins estimator + self-tests 1-3 | sonnet | bench/margins_est.py, bench/tests/test_margins_selftest.py | re-run `python3 indi_flight/bench/tests/test_margins_selftest.py` |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -94,8 +98,12 @@ S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_
 | 36 | T74 | sonnet | r2 check of section 7 | done, 7 calls, ~$0.35, CLOSED |
 | 36 | T73 | opus | review r1 stage-2 note | done, 11 calls, ~$0.8, BLOCKING, answered |
 | 35 | T72 | sonnet | stage-2 margins design note | done, 11 calls, ~$0.7 (168 lines) |
+| 37 | T75 | sonnet | margins estimator + self-tests 1-3 | done, 9 calls, ~$0.9, ALL PASS re-run by me |
+| 37 | T76 | haiku | second key margins (analytic) | done, 3 calls, ~$0.06, AGREE 5/5 |
 
 ## Lessons proposed
+- S37: a sonnet task writing ~600 lines of numerical code + tests costs ~$0.9 in 9 calls (long writes); the session
+  takes one such task plus a haiku second key.
 - S36: a design note on a loop with several feedback paths must name every path a break point cuts; the gyro break
   looked complete for PID and was not for INDI (review r1).
 - S35: a sonnet design note of ~11 calls over several source files costs ~$0.7; brief it at <=10 calls at a $3 cap.
