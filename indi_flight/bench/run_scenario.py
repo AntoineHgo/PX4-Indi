@@ -509,8 +509,9 @@ def main():
                          "110 ms makes the EKF lead the truth by 110 ms (D-s8-gnss-delay); unset keeps the stock value")
     ap.add_argument("--watchdog", choices=("on", "off"), default="on",
                     help="O-12 run watchdog; 'off' is for diagnosis only, never in a batch")
-    ap.add_argument("--log-from-start", action="store_true",
-                    help="logger starts with -f so the log covers the time before arm (default: from arm)")
+    # default since S22: A-14 (take-off EKF height offset) seen 3/6 without -f, 0/9 with it (results/a14_s21)
+    ap.add_argument("--log-from-start", action=argparse.BooleanOptionalAction, default=True,
+                    help="logger starts with -f so the log covers the time before arm (--no-log-from-start: from arm)")
     ap.add_argument("--log-poll", default="actuator_motors", help="topic the logger wakes on (logger -p)")
     a = ap.parse_args()
     if a.imu_rate is None:
