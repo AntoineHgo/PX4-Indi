@@ -8,7 +8,9 @@ Checks, for the A-12 fix hover_s4 flight (default paths):
   - EKF vehicle_local_position vs interpolated groundtruth position while armed;
   - time-base comparison against sensor_gyro.
 
-Writes a markdown report and prints it.
+Writes a markdown report and prints it. The default report is truth_check.md next to the
+input ULog; it never defaults to a committed file (an earlier fixed default overwrote
+results/a12_fix_s18/second_key.md).
 
 Usage:
     python3 check_truth_s18.py [path/to/flight.ulg] [path/to/output.md]
@@ -22,7 +24,6 @@ from pyulog import ULog
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)  # indi_flight/
 DEFAULT_ULG = os.path.join(ROOT, "results", "a12_fix_s18", "hover_s4", "flight.ulg")
-DEFAULT_OUT = os.path.join(ROOT, "results", "a12_fix_s18", "second_key.md")
 
 ARMED = 2           # vehicle_status.arming_state, ARMING_STATE_ARMED
 GAP_US = 5000       # gap threshold, microseconds
@@ -171,7 +172,7 @@ def analyse_topic(name, data, n_inst, mid, t_arm, armed_at, alt_t, alt_z, add, f
 
 def main():
     ulg_path = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_ULG
-    out_path = sys.argv[2] if len(sys.argv) > 2 else DEFAULT_OUT
+    out_path = sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.path.dirname(os.path.abspath(ulg_path)), "truth_check.md")
     found = load_topics(ulg_path)
 
     md = []

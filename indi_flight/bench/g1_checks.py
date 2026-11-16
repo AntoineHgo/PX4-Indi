@@ -17,15 +17,21 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 # topic -> declared rate [Hz]; "controller" = run.json rate_hz. Fixed rates from design/logging_profile.md
-# (vehicle_local_position 125 Hz = 8 ms, ground truth 50 Hz = 20 ms; metrics.py reads both: trajectory.estimate / .truth).
+# (metrics.py reads vehicle_local_position and the position truth: trajectory.estimate / .truth).
+# Truth is published at every physics step (1.25 ms = 800 Hz, T38 pre-test S19), so it is required at the controller rate:
+# rate and attitude tracking are scored against truth at controller rate (the 400/267 Hz runs are still met by 800 Hz truth).
 DECLARED = {
     "sensor_gyro": "controller",
     "vehicle_angular_velocity": "controller",
     "actuator_motors": "controller",
     "vehicle_torque_setpoint": "controller",
     "esc_status": "controller",
-    "vehicle_local_position": 125.0,
-    "vehicle_local_position_groundtruth": 50.0,
+    # EKF2 output 800/9 = 88.9 Hz: IMU_INTEG_RATE 250 -> vehicle_imu integrates round(4 ms / 1.25 ms) = 3 samples = 3.75 ms;
+    # EKF2_PREDICT_US 10000 -> down-sampler needs round(10 ms / 3.75 ms) = 3 IMU messages = 11.25 ms (88.0 = floor with margin)
+    "vehicle_local_position": 88.0,
+    "vehicle_local_position_groundtruth": "controller",
+    "vehicle_attitude_groundtruth": "controller",
+    "vehicle_angular_velocity_groundtruth": "controller",
 }
 GAP_PERIODS = 3.0
 STARTUP_S = 1.0
