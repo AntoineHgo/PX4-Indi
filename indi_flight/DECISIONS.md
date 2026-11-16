@@ -174,3 +174,9 @@ Open, to be written before code (MISSION "Decisions that are yours"):
   (~5 Hz): hides command chatter that heats ESCs; (3) true rotor-speed ripple only: kept for G4 as a separate limit.
 - Overturn: G4 sources (stage 1 noise profiles) show command content above 50 Hz that matters on a vehicle, or the
   250 Hz controller rate must be scored with the same metric (then 250 Hz grid, 50 Hz cut still below Nyquist).
+- S29 (T60, `design/a14_refalt_s29.md`): SDF choice OVERTURNED. gz-sensors 8 `AirPressureSensor::Load` never reads
+  `reference_altitude` (set only by `SetReferenceAltitude()`, which gz-sim 8 `Sensors.cc` never calls); pressure is
+  ISA at `0 + pose.z`, world elevation unused. New choice: in the sim-only `gz_bridge` (already modified on this
+  branch, not an O-11 zero-diff module), re-express the gz pressure at the world origin altitude (ISA altitude of
+  the gz value + world elevation from the spherical coordinates -> ISA pressure), two keys (simulator hook). Fallback
+  unchanged: alternative (1) `EKF2_BARO_CTRL 0`. Closing test unchanged (`bench/a14_close.sh` minus the SDF swap).

@@ -14,14 +14,6 @@
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
-00000000000000000. S27 (launch 20261116-034335, cap $3): route check 27 DONE (`design/route_check_27.md`: off path, 0 G1 items
-   passed, act: provisional verdicts, then G1.3/G1.4 keys, minimum G1.5, freeze G1, start stage 2 by S30). B26 speed 4
-   analysed (`results/g16_sched_set_s26/speed4/README.md`): triggers exact, response spread 6-9 ms (A-17), step_roll
-   spreads 3-10x tighter than pre-player; A-14 REOPENED (EKF height -2.3 m on the ground between 20 and 29 s in 2/15
-   `-f` runs -> hover at 7.2 m true). Provisional G1.1/G1.6 verdicts in GATES.md (G1.6(c) not met: A-14). Q3 addendum.
-   T58 DONE (`design/a14_cause_s27.md`): A-14 = EKF baro fusion accepting a 13-15 m baro/GNSS height mismatch in some
-   runs (rejected in others); root of the mismatch unknown (sim baro pressure 101320 vs air data 95600 Pa).
-   S28 NEXT (done in S28, see next entry).
 000000000000000000. S28 (launch 20261116-040120, cap $3): A-14 ROOT CAUSE found from source + logs (D-A14): gz baro has
    no reference_altitude (sea level) vs world 488 m; SENS_BAR_AUTOCAL steps baro ~488 m on the ground after EKF2
    started; baro bias still converging at arm. Fix staged (`sim/staged/quad5in_base_model_a14.sdf`), installed by
@@ -41,9 +33,14 @@
    (as speed 4: `second_key_player.py`, `G16_ROOT=... g16_spread.py`), haiku second key; G1.6 set must be re-flown
    with the fixed baro anyway (A-14 touched hover r2/traj r1). (3) route check 27 items 2-5 (G1.3/G1.4 keys,
    minimum G1.5, freeze G1 by S30, stage 2).
-0000000000000000000. S29 (launch 20261116-041436, cap $2.34): T60 (haiku, A-14 reference_altitude check -> `design/a14_refalt_s29.md`),
-   T61 (sonnet, metric defects 1+2 of `design/g13_g14_matrix_s28.md` -> `design/metric_fix_s29.md`, effort at 50 Hz
-   fixed bandwidth, D-EFFORT-BW). Both in flight; if cut, relaunch from their output files.
+0000000000000000000. S29 (launch 20261116-041436, cap $2.34): T60 DONE (`design/a14_refalt_s29.md`): gz-sensors 8 never
+   reads reference_altitude -> SDF fix impossible; D-A14 now = gz_bridge re-expresses pressure at world elevation
+   (sim-only, two keys), fallback EKF2_BARO_CTRL 0. T61 DONE (`design/metric_fix_s29.md`, D-EFFORT-BW): rate/attitude
+   tracking on sim_ground_truth (estimate kept as *_estimate), effort at 400 Hz grid/50 Hz LP; tests ALL PASS (re-run
+   by me), 7 breaks checked. New A-19 (constant truth-EKF yaw offset ~0.4-0.65 deg).
+   S30 NEXT: (a) gz_bridge baro fix (sonnet) + haiku second key, then a14_close pretest; (b) haiku second keys of the
+   new truth/effort metrics over >= 5 logs (G1.3 set) and A-19 closing test; (c) step_metrics still on the estimate;
+   (d) route check 30 due (sonnet), freeze G1, start stage 2.
 1-4. Stage-1 items still pending from the old list (rest done, history in JOURNAL): errata re-score of archived set-O/T5;
    window rule must accept nav_state 23; sag as sim-time ramp in gz bridge (two keys); run_scenario sim-time fixes
    (`sim_review.md`:14,19) now folded into the player; outer-loop A-requirements folded at stage 5.
@@ -125,6 +122,8 @@
 | 27 | T58 | sonnet | A-14 mechanism from logs | done, 5 calls, ~$0.3, numbers re-read by me |
 | 28 | B28 | host bash | A-14 closing test (16 hovers) | pretest FAIL (no effect on baro), stopped, $0 |
 | 28 | T59 | sonnet | G1.3/G1.4 matrix + missing self-tests (route check 27 item 2) | done, 16 calls, ~$0.45; tests re-run by me (ALL PASS, metrics.py diff empty) |
+| 29 | T60 | haiku | A-14 reference_altitude check | done, 11 calls, ~$0.25, SDF fix impossible |
+| 29 | T61 | sonnet | metric defects 1+2 | done, 16 calls, ~$0.6, tests re-run by me |
 
 ## Lessons proposed
 - A shared sim model is live for every running batch: stage a model change and install it after the batch ends (S28 nearly mixed two baro models into B26).

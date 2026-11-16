@@ -109,3 +109,5 @@
   player kinds (--sched refuses disturbance/motor_fault/erpm_loss/thrust_sag hooks today); (4) land row instead of MAVLink.
   Unverified from T55: pva propagation never exercised (rows hit own tick); step_pitch/yaw, circle not flown; 4/861 rows
   1-2 ticks late in the first lemniscate run (A-13 holes likely, not checked).
+- 2026-11-16 S27: route check 27 (off path, act on G1 keys); B26 speed 4 analysed; A-14 reopened, mechanism T58 (baro fusion of a 13-15 m mismatch).
+- 2026-11-16 S29: A-14 SDF fix shown impossible (gz-sensors ignores reference_altitude), bridge fix chosen; metric defects fixed (truth tracking, D-EFFORT-BW); A-19 opened.
