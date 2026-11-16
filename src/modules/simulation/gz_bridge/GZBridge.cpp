@@ -41,6 +41,7 @@
 #include <px4_platform_common/getopt.h>
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <string>
 
@@ -566,6 +567,12 @@ void GZBridge::magnetometerCallback(const gz::msgs::Magnetometer &msg, uint8_t i
 	_px4_mag[instance_index].update(timestamp, field_frd.X(), field_frd.Y(), field_frd.Z());
 }
 
+// ISA constants as used by gz-sensors AirPressureSensor (troposphere, geopotential height)
+static constexpr double ISA_P0 = 101325.0;      // Pa, sea level
+static constexpr double ISA_T0 = 288.15;        // K, sea level
+static constexpr double ISA_LAPSE = 0.0065;     // K/m
+static constexpr double ISA_EXPONENT = 9.80665 * 0.0289644 / (8.31432 * 0.0065); // ~5.2559
+
 void GZBridge::airPressureCallback(const gz::msgs::FluidPressure &msg, uint8_t instance_index)
 {
 	// Bounds check and safety guard
@@ -575,8 +582,21 @@ void GZBridge::airPressureCallback(const gz::msgs::FluidPressure &msg, uint8_t i
 		return;
 	}
 
+	double pressure = msg.pressure();
+
+	// A-14: gz-sensors never applies <reference_altitude>, so the sensor reports sea-level pressure at the local
+	// z although the world sits at _alt_ref (MSL). Re-express the pressure at that elevation, otherwise
+	// SENS_BARO_AUTOCAL steps the baro by ~488 m after EKF2 started. Noise is carried through the mapping.
+	if (_pos_ref.isInitialized()) {
+		const double h_local = (ISA_T0 / ISA_LAPSE) * (1.0 - std::pow(pressure / ISA_P0, 1.0 / ISA_EXPONENT));
+		pressure = ISA_P0 * std::pow(1.0 - ISA_LAPSE * (h_local + _alt_ref) / ISA_T0, ISA_EXPONENT);
+
+	} else if (_sim_gz_en_gps.get() > 0) {
+		return; // reference altitude not latched yet (first navsat fix), do not publish a sea-level baro that would step later
+	}
+
 	_px4_baro[instance_index].set_temperature(_temperature); // this will be static if no airspeed sensor is on the model.
-	_px4_baro[instance_index].update(hrt_absolute_time(), msg.pressure());
+	_px4_baro[instance_index].update(hrt_absolute_time(), static_cast<float>(pressure));
 }
 
 void GZBridge::airspeedCallback(const gz::msgs::AirSpeed &msg)
@@ -889,8 +909,8 @@ void GZBridge::navSatCallback(const gz::msgs::NavSat &msg, uint8_t instance_inde
 
 	// initialize gnss position
 	if (!_pos_ref.isInitialized()) {
+		_alt_ref = msg.altitude(); // set before the init flag, airPressureCallback (A-14) reads it
 		_pos_ref.initReference(msg.latitude_deg(), msg.longitude_deg(), timestamp);
-		_alt_ref = msg.altitude();
 		return;
 	}
 
