@@ -14,26 +14,6 @@
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
-000000000000000. S25 (launch 20261116-030636, cap $3): T52 DONE (7a8ad4786a runner, e7e7dc95b0 results): gz paused start
-   does not fix A-17 (spread 8.75/6.25 ms); cause = Commander skips/relative sleep + free-running gz. D-A17 overturned,
-   A-17 PARKED with bound, Q3 asked (restate G1.6a, or lockstep gz), not blocking. T53 DONE (sp_hold, anchor nav_state=N, takeoff/land
-   kinds; `design/t53_player_kinds_s25.md`; pretest: anchor = logged nav_state change, rows after it 0 us error).
-   T54 second key (haiku, `results/second_key_t53_s25/`): anchor and post-anchor rows AGREE (0 us); row-1 sp_hold
-   1.5 cm off, likely Hold-mode publisher on trajectory_setpoint: re-check with sim_schedule_applied.sp (S26).
-   S26 NEXT: (1) that re-check, runner rows for takeoff/land kinds and one flight; untested: anchor never reached (no timeout), sp_hold with invalid position.
-   (2) re-fly 5-run G1.6 set (hover, step, traj) --sched at speeds 1 and 4 for G1.6(b); (4) G1.5 injectors via player.
-0000000000000000. S26 (launch 20261116-032411, cap $3): T55 DONE (dbf8425ef0 player att/pva/sp_back rows, 71d13d8a02 runner
-   --sched for attitude + trajectory scenarios, run.json times now based on logged anchor_us; `design/t55_player_setpoints_s26.md`).
-   Pretest step_roll + traj_lemniscate: all rows on time (0 us; anchor wait 15-19 ms), setpoints = analytic ref (0.000 m).
-   T56 second key AGREE 4/4 (`results/second_key_t55_s26/`). Row-1 1.5 cm: Hold mode publishes trajectory_setpoint until
-   offboard is accepted (FlightModeManager.cpp:364); not a player defect. Note: pre-T55 runner segment times were up to
-   0.7 s late vs the player -> any pre-T55 --sched metric is suspect (only hover was --sched, hold metric, small effect).
-   B26 launched detached: G1.6 set (hover, step_roll, traj_lemniscate x5) --sched --sched-anchor, speed 4 then 1.
-   S27 NEXT: (1) route check 27 (sonnet, due: last S22); (2) B26: check status.txt, mode instants (second_key_player.py)
-   and same-seed spread per metric (g16_spread.py) -> G1.6(b)/(c) table, two keys on the spread; (3) G1.5 injectors via
-   player kinds (--sched refuses disturbance/motor_fault/erpm_loss/thrust_sag hooks today); (4) land row instead of MAVLink.
-   Unverified from T55: pva propagation never exercised (rows hit own tick); step_pitch/yaw, circle not flown; 4/861 rows
-   1-2 ticks late in the first lemniscate run (A-13 holes likely, not checked).
 00000000000000000. S27 (launch 20261116-034335, cap $3): route check 27 DONE (`design/route_check_27.md`: off path, 0 G1 items
    passed, act: provisional verdicts, then G1.3/G1.4 keys, minimum G1.5, freeze G1, start stage 2 by S30). B26 speed 4
    analysed (`results/g16_sched_set_s26/speed4/README.md`): triggers exact, response spread 6-9 ms (A-17), step_roll
@@ -41,9 +21,18 @@
    `-f` runs -> hover at 7.2 m true). Provisional G1.1/G1.6 verdicts in GATES.md (G1.6(c) not met: A-14). Q3 addendum.
    T58 DONE (`design/a14_cause_s27.md`): A-14 = EKF baro fusion accepting a 13-15 m baro/GNSS height mismatch in some
    runs (rejected in others); root of the mismatch unknown (sim baro pressure 101320 vs air data 95600 Pa).
-   S28 NEXT: (1) A-14 root cause in the sim baro, decide fix in DECISIONS (sim-consistent baro preferred), closing test 15 hovers; (2) B26 speed 1: same analysis as speed 4
-   (`second_key_player.py` per log, `G16_ROOT=... g16_spread.py`, `prearm_zbias.py`), haiku second key on the spread;
-   (3) route check 27 items 2-5 (G1.3/G1.4 keys on gate-bearing metrics, minimum G1.5, freeze G1 S30, stage 2).
+   S28 NEXT (done in S28, see next entry).
+000000000000000000. S28 (launch 20261116-040120, cap $3): A-14 ROOT CAUSE found from source + logs (D-A14): gz baro has
+   no reference_altitude (sea level) vs world 488 m; SENS_BAR_AUTOCAL steps baro ~488 m on the ground after EKF2
+   started; baro bias still converging at arm. Fix staged (`sim/staged/quad5in_base_model_a14.sdf`), installed by
+   `bench/a14_close.sh` AFTER B26 speed 1 (detached, then pretest + 15 hovers speed 4 -> `results/a14_close_s28/`).
+   Check script `bench/a14_close_check.py` (self-test: reproduces old speed4 r2 2.28 m). B26 speed1 traj r1 started
+   before the revert but logged 101332 Pa (old model): B26 speed 1 is clean.
+   S29 NEXT: (1) read `results/a14_close_s28/status.txt` + check.md; PASS -> commit model change (git shows
+   model.sdf modified), close A-14, delete `sim/staged/`; FAIL -> D-A14 alternative (1). (2) B26 speed 1 analysis
+   (as speed 4: `second_key_player.py`, `G16_ROOT=... g16_spread.py`), haiku second key; G1.6 set must be re-flown
+   with the fixed baro anyway (A-14 touched hover r2/traj r1). (3) route check 27 items 2-5 (G1.3/G1.4 keys,
+   minimum G1.5, freeze G1 by S30, stage 2).
 1-4. Stage-1 items still pending from the old list (rest done, history in JOURNAL): errata re-score of archived set-O/T5;
    window rule must accept nav_state 23; sag as sim-time ramp in gz bridge (two keys); run_scenario sim-time fixes
    (`sim_review.md`:14,19) now folded into the player; outer-loop A-requirements folded at stage 5.
@@ -54,6 +43,7 @@
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | B26 | G1.6 set --sched --sched-anchor, 3 scen x 5, speed 4 (done, analysed S27) then 1 (running) | host bash (detached) | `results/g16_sched_set_s26/speed{4,1}/status.txt` | `setsid nohup indi_flight/bench/g16_sched_set.sh` (delete partial speed dir first) |
+| B28 | A-14 closing: waits B26, installs model, pretest + 15 hovers s4 | host bash (detached) | `results/a14_close_s28/status.txt`, `check.md` | `setsid nohup indi_flight/bench/a14_close.sh` (delete `results/a14_close_s28/` first; restore staged model first if not installed) |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -123,8 +113,10 @@
 | 26 | T56 | haiku | second key T55 | done, 11 calls, ~$0.2, AGREE 4/4 |
 | 27 | T57 | sonnet | route check 27 | done, 10 calls, ~$0.25 |
 | 27 | T58 | sonnet | A-14 mechanism from logs | done, 5 calls, ~$0.3, numbers re-read by me |
+| 28 | B28 | host bash | A-14 closing test (16 hovers) | launched detached, $0 |
 
 ## Lessons proposed
+- A shared sim model is live for every running batch: stage a model change and install it after the batch ends (S28 nearly mixed two baro models into B26).
 - A parked anomaly bound from a correlation (A-14: 0/9 vs 3/6 runs, p=0.044, "logger -f") was wrong; park on a mechanism, not on a pair test (S27).
 - A sonnet implement+build+2-flight task costs ~$1.0 (21 calls): at a $3 cap it is the session's one big task (S26).
 - Read the sleep/wake rule of a loop before building a timing fix around it: S25 spent a session on a start-up

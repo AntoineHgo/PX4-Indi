@@ -144,3 +144,18 @@ Open, to be written before code (MISSION "Decisions that are yours"):
   Overturned. Cause from source: `Commander.cpp` skips its 10 ms `px4_usleep` while a vehicle_command is pending and
   sleeps relative to the end of variable work; gz runs free (not lockstepped), so that wall time becomes a random
   sim-time shift in 1.25 ms steps. Only lockstep gz removes it. A-17 parked (2-session rule), owner Q3.
+
+## D-A14 Sim baro consistent with the world altitude (S28, 2026-11-16)
+- Problem: A-14. The gz `air_pressure` sensor of `quad5in_base` uses reference altitude 0, so it reads sea-level
+  pressure while `default.sdf` puts the origin at 488 m. PX4's on-ground baro/GNSS autocal (`SENS_BAR_AUTOCAL`,
+  `VehicleAirData.cpp:273`) steps the baro by ~488 m after EKF2 started fusing it; the EKF2 baro-bias estimate is
+  still converging at arm, and the gate accepts the residual in some same-seed runs (EKF z 2.3 m off, hold 7.2 m).
+- Choice: `<reference_altitude>488</reference_altitude>` in the model's air_pressure sensor (sim only, no firmware
+  diff). The raw baro then agrees with GNSS from boot, autocal changes almost nothing, the bias starts near its value.
+- Alternatives: (1) `EKF2_BARO_CTRL 0` on the bench: removes the baro from every test, so baro-related failsafes and
+  estimator resets of G5 would not be exercised; kept as fallback. (2) Player arms only when |z_est - z_truth|
+  < 0.1 m: bounds the symptom, keeps the 488 m transient in every run. (3) `SENS_BAR_AUTOCAL 0`: the baro keeps a
+  488 m offset to GNSS, a configuration no real vehicle has.
+- Coupling: the value must equal the world elevation; a different world needs its own value (stated in the SDF).
+- Overturn: the closing test (`bench/a14_close.sh`, 15 same-seed hovers speed 4) shows raw pressure not ~95600 Pa,
+  a baro fault, EKF z error >= 0.1 m in 15-35 s or hold spread >= 0.05 m; then take alternative (1).

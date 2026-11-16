@@ -87,3 +87,25 @@
      G1.6(a) as 'trigger within 1 period + Commander phase bound 10 ms'; (2) sonnet: takeoff/land kinds in the
      player + capture hold position (yaw hard-coded 1.585 today), then re-fly the full 5-run G1.6 set (hover, step, traj)
      with --sched at speeds 1 and 4 (host bash) and a G1.6(a) verdict; (3) G1.5 injectors via player kinds.
+
+- S25-S26 next-action entries moved from STATE in S28 (T52-T56: paused gz rejected for A-17, player kinds and setpoint rows, B26 launched):
+  000000000000000. S25 (launch 20261116-030636, cap $3): T52 DONE (7a8ad4786a runner, e7e7dc95b0 results): gz paused start
+  does not fix A-17 (spread 8.75/6.25 ms); cause = Commander skips/relative sleep + free-running gz. D-A17 overturned,
+  A-17 PARKED with bound, Q3 asked (restate G1.6a, or lockstep gz), not blocking. T53 DONE (sp_hold, anchor nav_state=N, takeoff/land
+  kinds; `design/t53_player_kinds_s25.md`; pretest: anchor = logged nav_state change, rows after it 0 us error).
+  T54 second key (haiku, `results/second_key_t53_s25/`): anchor and post-anchor rows AGREE (0 us); row-1 sp_hold
+  1.5 cm off, likely Hold-mode publisher on trajectory_setpoint: re-check with sim_schedule_applied.sp (S26).
+  S26 NEXT: (1) that re-check, runner rows for takeoff/land kinds and one flight; untested: anchor never reached (no timeout), sp_hold with invalid position.
+  (2) re-fly 5-run G1.6 set (hover, step, traj) --sched at speeds 1 and 4 for G1.6(b); (4) G1.5 injectors via player.
+  0000000000000000. S26 (launch 20261116-032411, cap $3): T55 DONE (dbf8425ef0 player att/pva/sp_back rows, 71d13d8a02 runner
+  --sched for attitude + trajectory scenarios, run.json times now based on logged anchor_us; `design/t55_player_setpoints_s26.md`).
+  Pretest step_roll + traj_lemniscate: all rows on time (0 us; anchor wait 15-19 ms), setpoints = analytic ref (0.000 m).
+  T56 second key AGREE 4/4 (`results/second_key_t55_s26/`). Row-1 1.5 cm: Hold mode publishes trajectory_setpoint until
+  offboard is accepted (FlightModeManager.cpp:364); not a player defect. Note: pre-T55 runner segment times were up to
+  0.7 s late vs the player -> any pre-T55 --sched metric is suspect (only hover was --sched, hold metric, small effect).
+  B26 launched detached: G1.6 set (hover, step_roll, traj_lemniscate x5) --sched --sched-anchor, speed 4 then 1.
+  S27 NEXT: (1) route check 27 (sonnet, due: last S22); (2) B26: check status.txt, mode instants (second_key_player.py)
+  and same-seed spread per metric (g16_spread.py) -> G1.6(b)/(c) table, two keys on the spread; (3) G1.5 injectors via
+  player kinds (--sched refuses disturbance/motor_fault/erpm_loss/thrust_sag hooks today); (4) land row instead of MAVLink.
+  Unverified from T55: pva propagation never exercised (rows hit own tick); step_pitch/yaw, circle not flown; 4/861 rows
+  1-2 ticks late in the first lemniscate run (A-13 holes likely, not checked).
