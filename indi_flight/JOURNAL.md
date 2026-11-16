@@ -183,3 +183,4 @@
 - S34 (2026-11-16): A-19/A-20 bench-param pre-test (3 runs): A-20 PASS with SENS_BAR_AUTOCAL 0, A-19 declination candidate refuted (+0.36..+0.78 deg).
 - S35 (2026-11-16): A-20 closed (15/15 with SENS_BAR_AUTOCAL 0); A-19 parked by mechanism (1.6 deg, yaw on estimate); route check 35 accepted (stage 2 starts S36); stage-2 margins design note; D-RATE267.
 - S36 2026-11-16: G1 FINAL frozen with evidence limits (provisional under Q4-A); stage 2 started; B26 row retired (superseded by B32).
+- S36 2026-11-16: stage-2 note review r1 BLOCKING (gyro break misses INDI paths) -> D-G2-BREAK (M3a); r2 CLOSED.

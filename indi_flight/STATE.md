@@ -8,14 +8,17 @@
   `design/flatness_r2.md` (S15): optional increment after base A. Outer-loop study finished; stage 5 = base A.
 - S36: G1 FINAL written in GATES.md (frozen with 5 evidence limits, provisional under Q4-A, not marked passed);
   stage 2 started provisionally; opus review T73 r1 BLOCKING (gyro break misses INDI's model and rotor-speed
-  paths) answered by D-G2-BREAK (M3a torque-setpoint break) and note section 7.
+  paths) answered by D-G2-BREAK (M3a torque-setpoint break) and note section 7; r2 CLOSED.
 - Session 16 (launch 20261115-231016, cap $3): D-SIM-STEP implemented (T31, commit 72598e3159) and pre-tested
   (`results/pretest_simstep_s16/README.md`): 1.25 ms step, IMU 800 Hz, RATEMAX 800/400 applied, PID flies, speed 4
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
 S36 DONE: G1 FINAL; T73 r1 BLOCKING answered (note section 7, D-G2-BREAK).
-S37 NEXT: (1) r2 check T74 launched S36 (sonnet, <=6 calls, `design/stage2_note_review_r2.md`; if the file has no VERDICT line, re-launch); act on it; (2) estimator + synthetic self-tests (sonnet), S38 injection plumbing, S39 flights, S40 route check 40.
+S36 T74 r2 CLOSED (`design/stage2_note_review_r2.md`): M3a cuts every in-flight path; S38 must log c (pre-injection),
+   d and u at cycle rate.
+S37 NEXT: (1) patch stale text of the note body (l.56, 115, 118, 120) and answer r1 MINOR items 7-9 + M3b in
+   section 7 (myself, short); `_t_cmd_last`/faultOutput read before S38; (2) estimator + synthetic self-tests (sonnet), S38 injection plumbing, S39 flights, S40 route check 40.
 S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_s35/README.md`); A-19 heading-only
    candidate refuted, A-19 PARKED by mechanism (bound 1.6 deg, yaw verdicts on estimate); A-14 hold bound re-set by
    mechanism to +-0.15 m (r14 0.068 m exceeded the old +-0.06 sample bound). T70 second key AGREE 7/7. T71 route
@@ -85,6 +88,7 @@ S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_
 | 35 | B35 | host bash | A-20 15 hovers + A-19 2 hovers | 17/17 flew, $0 |
 | 35 | T70 | haiku | second key bias-median column | done, 7 calls, ~$0.1, AGREE 7/7 |
 | 35 | T71 | sonnet | route check 35 | done, 6 calls, ~$0.15 |
+| 36 | T74 | sonnet | r2 check of section 7 | done, 7 calls, ~$0.35, CLOSED |
 | 36 | T73 | opus | review r1 stage-2 note | done, 11 calls, ~$0.8, BLOCKING, answered |
 | 35 | T72 | sonnet | stage-2 margins design note | done, 11 calls, ~$0.7 (168 lines) |
 
