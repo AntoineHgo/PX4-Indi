@@ -21,8 +21,9 @@
    Commander adds a fixed 6.25 ms (arm) / 16.25 ms (offboard) after the applied row: deterministic, its 10 ms loop;
    G1.6(a) is the across-run spread, so not a defect. Q2 (G1.1 gap rule) asked, not blocking.
    5 hovers `--sched` (`results/g16_sched_s24/README.md`): arm/offboard spread 5.0/6.25 ms, still > 2.5 ms -> A-17
-   (Commander 10 ms loop phase). S25 NEXT: (1) A-17 closing test (haiku, ~10 calls, logs exist); if confirmed, sonnet
-   aligns mode rows to the Commander cycle or fixes its SITL start phase, then (2) sonnet: takeoff/land kinds in the
+   (Commander 10 ms loop phase). A-17 CONFIRMED 4/5 (`results/a17_s24/`). S25 NEXT: (1) decide A-17 fix without touching
+   Commander (O-11): why its phase varies at SITL start (read-only sonnet ~10 calls), else ask owner to restate
+   G1.6(a) as 'trigger within 1 period + Commander phase bound 10 ms'; (2) sonnet: takeoff/land kinds in the
    player + capture hold position (yaw hard-coded 1.585 today), then re-fly the full 5-run G1.6 set (hover, step, traj)
    with --sched at speeds 1 and 4 (host bash) and a G1.6(a) verdict; (3) G1.5 injectors via player kinds.
 1-4. Stage-1 items still pending from the old list (rest done, history in JOURNAL): errata re-score of archived set-O/T5;
@@ -94,6 +95,7 @@
 | 23 | T47 | haiku | D-SCHED interface map | done, 12 calls, ~$0.1, `design/sched_interfaces_s23.md` (4 UNVERIFIED items) |
 
 | 24 | T49 | sonnet | sim-time scenario player + pretest | done, 29 calls, ~$0.75 |
+| 24 | T51 | haiku | A-17 Commander phase | done, 5 calls, ~$0.06, confirmed 4/5 |
 | 24 | T50 | haiku | second key player instants | done, 8 calls, ~$0.06, AGREE |
 
 ## Lessons proposed
