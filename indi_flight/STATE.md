@@ -33,12 +33,7 @@ S38 (launch 20261116-082041, cap $3) DONE: T78 sonnet `bench/margins_models.py` 
    Tb 0.1 PM 48. Self-test 4a is coding consistency only (same equations both sides); firmware match comes from flights.
 S39 NEXT: injection plumbing (M3a in mc_indi_rate_control bench params, log c/d/u at cycle rate; read M3b store point),
    sonnet, one big task. S40 route check 40, S41 flights (pre-test first).
-S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_s35/README.md`); A-19 heading-only
-   candidate refuted, A-19 PARKED by mechanism (bound 1.6 deg, yaw verdicts on estimate); A-14 hold bound re-set by
-   mechanism to +-0.15 m (r14 0.068 m exceeded the old +-0.06 sample bound). T70 second key AGREE 7/7. T71 route
-   check 35 (`design/route_check_35.md`) accepted. T72 stage-2 design note `design/stage2_margins_s35.md` (gyro
-   injection in gz_bridge as primary break for PID and INDI, multisine, L=-S_yd/S_xd, blend-mode model for A-1;
-   267 Hz -> D-RATE267; UNVERIFIED list in the note). Bench param sets from now on carry SENS_BAR_AUTOCAL 0.
+Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
