@@ -15,7 +15,7 @@
 
 ## Next actions (in order)
 S36 DONE: G1 FINAL; T73 r1 BLOCKING answered (note section 7, D-G2-BREAK).
-S37 NEXT: (1) r2 check of note section 7 (sonnet, <=6 calls, `design/stage2_note_review_r2.md`); (2) estimator + synthetic self-tests (sonnet), S38 injection plumbing, S39 flights, S40 route check 40.
+S37 NEXT: (1) r2 check T74 launched S36 (sonnet, <=6 calls, `design/stage2_note_review_r2.md`; if the file has no VERDICT line, re-launch); act on it; (2) estimator + synthetic self-tests (sonnet), S38 injection plumbing, S39 flights, S40 route check 40.
 S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_s35/README.md`); A-19 heading-only
    candidate refuted, A-19 PARKED by mechanism (bound 1.6 deg, yaw verdicts on estimate); A-14 hold bound re-set by
    mechanism to +-0.15 m (r14 0.068 m exceeded the old +-0.06 sample bound). T70 second key AGREE 7/7. T71 route
