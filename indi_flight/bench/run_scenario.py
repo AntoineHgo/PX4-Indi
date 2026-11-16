@@ -83,11 +83,9 @@ T_OFFBOARD_S = T_ARM_S + 22.0  # 52 s
 HOVER_MIN_S = 5.0  # hover between end of climb and hold capture (as before)
 PRESTREAM_S = 1.0  # position-setpoint stream before the offboard switch (as before)
 T_HOLD_S = T_OFFBOARD_S - PRESTREAM_S  # hold_pos/hold_yaw captured here (fixed sim time)
-# D-SCHED (--sched): hold setpoint of the schedule file, written before PX4 starts so it cannot be captured from the
-# flight. Position from the hover after take-off (hold_pos_ned of results/a14_s21: x,y within 0.04 m of 0, z -4.9..-5.1);
-# yaw is the quad's heading at take-off (hold_yaw_rad 1.581..1.590 there: gz spawns it facing East, NED yaw pi/2 + 0.014).
-SCHED_HOLD_POS = (0.0, 0.0, -5.0)
-SCHED_HOLD_YAW = 1.585
+# T53 (--sched-anchor): rows after the anchor, times in us RELATIVE to the observed offboard transition (nav_state 14)
+SCHED_ANCHOR_ROWS = ["3000000 sp_hold", "6000000 sp_hold"]
+# D-SCHED (--sched): the hold setpoint is captured in flight by the schedule row `sp_hold` (T53), not hard-coded.
 SCHED_FILE = "sim_schedule.txt"  # in the PX4 working dir (the run's rootfs); rcS starts sim_scenario_player when present
 LATE_TOL_S = 0.1  # an arm later than T_ARM_S + this is flagged as arm_late_s in run.json
 # O-12 watchdog (D-watchdog), active from takeoff completion to the landing command
@@ -242,9 +240,10 @@ class Sim:
         os.makedirs(topics_dir, exist_ok=True)
         if self.a.sched:  # D-SCHED: arm, offboard switch and setpoint stream played inside PX4 in simulation time
             rows = [f"{int(T_ARM_S * 1e6)} arm",
-                    "%d sp %.6g %.6g %.6g %.6g" % (int((T_OFFBOARD_S - PRESTREAM_S) * 1e6), *SCHED_HOLD_POS,
-                                                   SCHED_HOLD_YAW),
+                    f"{int((T_OFFBOARD_S - PRESTREAM_S) * 1e6)} sp_hold",  # T53: x y z heading captured in flight
                     f"{int(T_OFFBOARD_S * 1e6)} mode_offboard"]
+            if self.a.sched_anchor:  # T53: later rows are offsets from the observed offboard transition
+                rows += [f"{int(T_OFFBOARD_S * 1e6)} anchor nav_state=14"] + SCHED_ANCHOR_ROWS
             text = "# t_sim_us kind fields (written by run_scenario.py --sched)\n" + "\n".join(rows) + "\n"
             open(os.path.join(self.rootfs, SCHED_FILE), "w").write(text)
             open(os.path.join(self.out, "sched.txt"), "w").write(text)
@@ -548,6 +547,8 @@ def main():
     # default since S22: A-14 (take-off EKF height offset) seen 3/6 without -f, 0/9 with it (results/a14_s21)
     ap.add_argument("--log-from-start", action=argparse.BooleanOptionalAction, default=True,
                     help="logger starts with -f so the log covers the time before arm (--no-log-from-start: from arm)")
+    ap.add_argument("--sched-anchor", action="store_true",
+                    help="T53: with --sched, append an anchor on offboard (nav_state 14) and two sp_hold rows 3 s and 6 s after it")
     ap.add_argument("--sched", action="store_true",
                     help="D-SCHED: arm, offboard switch and the setpoint stream are played by PX4 (sim_scenario_player, "
                          "schedule file in sim time) instead of being sent over MAVLink; position scenarios only")
