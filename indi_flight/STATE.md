@@ -45,7 +45,8 @@ S40 (launch 20261116-090818, cap $2.7): (1) DONE unit tests in build/px4_sitl_o1
 S40 pre-test DONE (`results/stage2_s40/pretest_inj/README.md`): both paths READY with scenario hover_long, DLY 20,
    NP 3, TP 10, AMP 0.005 (window 52-82 s at 5 m); u=c+d, generator on timestamp_sample, fault/landed all pass.
    Preliminary roll 800 Hz: measured PM 61/GM 12.2 dB; model-only PM 25/GM 4.3 dB vs linear model 42.7 -> A-21 OPEN.
-S41 NEXT (in order): (1) A-21 closing test (1) linearity: model-only roll AMP 0.0025 and 0.01, seeds 1-2 (4 flights,
+S40 also: A-21 linearity AMP 0.01 vs 0.005 PASS (PM 26.3 vs 25.3 deg, GM 5.0 vs 4.3 dB): gap to model is real.
+S41 NEXT (in order): (1) A-21 closing test (1) rest: model-only AMP 0.005 seed 2 (1 flight,
    host bash, ~3 min each: `indi_project/docker/run.sh -n X -t 600 -- python3 indi_flight/bench/run_scenario.py
    --scenario hover_long --controller indi_m3a --model quad5in --seed N --speed 4 --params <inj_model_long.params
    with AMP> --out ...`, then `checks.py RUN AMP 20 3`, `bench/m3a_csv.py`, `bench/m3a_margins_pretest.py`);

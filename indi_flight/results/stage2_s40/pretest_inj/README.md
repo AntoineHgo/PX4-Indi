@@ -67,3 +67,7 @@ Verdicts: (a) NOT READY (start during climb; raise DLY to about 15). (b) NOT REA
 - Preliminary roll margins, 800 Hz, one run each: measured PM 61.4 deg / GM 12.2 dB / DM 35 ms
   (`margins_measured_long.txt`); model-only PM 25.3 deg / GM 4.3 dB / DM 16 ms (`margins_model_long.txt`), far below
   the linear model: A-21.
+- Linearity (A-21 closing test 1, amplitude half): model-only AMP 0.01, seed 1 (`margins_model_long_a010.txt`,
+  checks pass, max roll 7.2 deg): PM 26.3 deg at 4.56 Hz, GM 5.0 dB, DM 16 ms, vs AMP 0.005: 25.3 deg at 4.47 Hz,
+  4.3 dB. Bins 4.0 and 5.0 Hz agree within 0.3 dB and 3 deg (G2 linearity rule: 1 dB / 5 deg). The gap to the
+  linear model is not an amplitude effect. Seed repeat still to fly.
