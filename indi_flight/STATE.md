@@ -56,8 +56,8 @@ S44 (launch 20261116-212207, cap $3) DONE: T90 sonnet A-22 trace (`results/stage
    A-23 opened. Plant G1_roll derived 1756 (CT/KM cancel; needs Ixx and hover thrust, not in CA_*) vs default 320.
 S44 also: A-23 test flown (`results/stage2_s44/a23_test/`): PID clean; INDI derived G1 cuts rate RMS 32x but motors
    still pinned at 0 on 46 % (motor-command chatter, 2nd mechanism). See A-23 note.
-S45 NEXT (step back, lesson 24): (0) route check 45 (sonnet, due; give it A-23). (1) A-23: motor-command PSD + u_cmd vs
-   u_meas on a23_test/indi_g1derived (haiku), then model-only hover with derived G1 (path split). (2) pre-test
+S45 NEXT (step back, lesson 24): (0) route check 45 (sonnet, due; give it A-23). (1) A-23: chatter is 46 Hz with yaw torque_sp at
+   the rails (`a23_test/motor_chatter.md`): derive G1_Y (rotor drag/spin-up, decision 5) and fly; check esc 15 ms 'lead'. (2) pre-test
    checklist gets pitch-rate RMS < 0.02 rad/s and motor pin < 1 %. (3) only then redo M3a margins with derived G1. Old S44 plan kept below for record:
 OLD S44 PLAN: (1) A-22 rest, one sonnet task <=15 calls: why allocator gives 0.23/motor (source says 0.354 or 0.707) and
    why a 0.221 hover maps to w ~990 (sqrt map gives 1269): check actuator_outputs instances/topic multiplicity,
