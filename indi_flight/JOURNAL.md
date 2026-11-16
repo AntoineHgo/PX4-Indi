@@ -179,3 +179,5 @@
      to 7 digits, run inline: add a --zoh option and re-run); attitude AGREE on step/traj, hover r1/r2 only via the 0.1 deg
      floor (~17 % rel) and the primary total is ~15 % below sqrt-sum of its per-axis values: OPEN, check with A-19 in S30.
 - S32 (2026-11-16): A-20 atomic ref fix 4297ba9869 keyed; quat_angle metric fix; A-19 closed then reopened; B32 speed 4 analysed (A-14 effect gone).
+- S33 (2026-11-16): arccos fixed in second key; T68 A-19 mechanism candidate (declination/mag bias); B32 speed 1 done, spreads = speed 4; A-20 not closed (bias0 0.72 m 2/30); G1 status draft in GATES.md.
+- S34 (2026-11-16): A-19/A-20 bench-param pre-test (3 runs): A-20 PASS with SENS_BAR_AUTOCAL 0, A-19 declination candidate refuted (+0.36..+0.78 deg).

@@ -12,6 +12,14 @@
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
+S35 (launch 20261116-074242, cap $3): Q4 still unanswered. S34 pre-test read: A-20 PASS 2/2, A-19 candidate refuted 3/3.
+   IN FLIGHT (detached, started ~07:50, ~17 runs x ~50 s): `bench/a20a19_s35.sh` -> `results/a20a19_s35/` :
+   (a) A-20 closing set, 15 hovers, `bench/a20_close_s35.params` (SENS_BAR_AUTOCAL 0 alone) -> `a20/a14_check.md`;
+   (b) A-19 pre-test, 2 hovers, `bench/a19_magtype_s35.params` (EKF2_MAG_TYPE 1 heading-only, decl 2.62) -> `a19/`.
+   Resume: wait for ALL_DONE in status.txt; A-20 closes if CAL_OFF 0/0, baro_fault 0, bias med arm-5..arm < 0.5 m
+   in 15/15 (new column in `bench/a14_close_check.py`, S35, second key T70); A-19: `python3 results/a19a20_s34/a19_mech.py`
+   style check on a19/hover_r*; if not < 0.3 deg -> PARK A-19 by mechanism (EKF 3-axis earth-field/bias states).
+   Agents: T70 haiku second key of the bias-median column; T71 sonnet route check 35 -> `design/route_check_35.md`.
 S34 (launch 20261116-072614, cap $1.35, no agent): Q4 still unanswered. Combined A-19/A-20 pre-test detached:
    `bench/a19a20_pretest_s34.sh` (params `bench/a19a20_pretest_s34.params`: SENS_BAR_AUTOCAL 0, EKF2_DECL_TYPE 0,
    EKF2_MAG_DECL 2.62 (sensor-field value from T68 logs; gz source not read), EKF2_MAG_B_NOISE 0) -> 
@@ -24,42 +32,6 @@ S34 (launch 20261116-072614, cap $1.35, no agent): Q4 still unanswered. Combined
    No stage-2 note this session (budget). hover_r1 read: A-20 PASS, A-19 NOT fixed (EKF decl 3.67, err +0.52 deg,
    magB_x -5.8 mG). ALL 3 runs read at end of S34: A-20 PASS 2/2 hovers, A-19 refuted 3/3 (+0.36..+0.78 deg).
    `results/a19a20_s34/README.md` has the S35 plan (skip re-reading the runs).
-S33 (launch 20261116-065633, cap $1.98): B32 speed 1 still running (hover r2 at 06:56). T68 haiku A-19 mechanism ->
-   `results/a19_s33/README.md`; arccos fix in second_key_s29.py (own); G1 status draft in GATES.md (own).
-   DONE: arccos fixed 8ef678d1b4; T68 A-19 mechanism candidate (ANOMALIES A-19 NEXT): EKF2_MAG_DECL 3.41 vs gz field
-   2.62 deg (lead: gz magnetometer uses an older copy of the declination table for lat 47.4 lon 8.5; unverified) + EKF
-   mag-bias state, r=-0.998. A-19 param pretest waits for B32 to end (no concurrent runs during a determinism batch).
-   B32 speed 1 DONE (15/15), analysed (`results/g16_set_s32/speed1/README.md`): spreads = speed 4. A-20 NOT closed
-   (bias0 0.72 m in 2/30, CAL_OFF at start). G1 status s33 in GATES.md.
-   S34 NEXT: (1) A-19 param pretest (ANOMALIES A-19 NEXT; confirm gz declination table first); (2) A-20: bench SENS_BAR_AUTOCAL=0 + bias metric fix (ANOMALIES A-20 NEXT, T69 done)
-   (3) if Q4 answered A: start stage 2 (loop-gain injection design, sonnet, O-11 zero diff constraint);
-   if no answer, prepare the stage-2 injection design note anyway (not used for verdicts). Route check 35 due S35.
-S32 (launch 20261116-064202, cap $2.70): A-20 fix 4297ba9869 (atomic once-set _alt_ref, built, format clean). B32 G1.6
-   re-fly detached (`bench/g16_set_s32.sh` -> `results/g16_set_s32/`, pretest gate then 2x15 runs, then A-20 check).
-   T66 haiku second key A-20 diff -> `results/g16_set_s32/second_key_a20.md`; T67 haiku A-19 + attitude 15 % gap ->
-   `results/a19_s32/README.md`.
-   S32 OUTCOMES: A-20 fix keyed AGREE-WITH-ISSUES (residuals unreachable on quad5in, ANOMALIES). Metric defect found
-   by T67 and fixed (b3: quat_angle atan2, self-test break-checked): attitude 15 % gap closed. B32 speed 4 DONE and
-   analysed (`results/g16_set_s32/speed4/README.md`): A-14 effect gone (ref z spread 2.3 -> 0.13 m); A-19 closed then
-   REOPENED (EKF yaw error up to 1.54 deg, varies under one seed). B32 speed 1 still running detached.
-   S33 NEXT: (1) when `results/g16_set_s32/status.txt` shows ALL_DONE: recompute metrics for speed1 with current
-   metrics.py (loop as in speed4 README), g16_spread, a20_check.md (bias0 < 0.5, baro_fault 0 in all 30 -> close A-20);
-   (2) A-19 mechanism (haiku, NEXT line in ANOMALIES); also fix `bench/second_key_s29.py:130` arccos; (3) write G1
-   status: G1.6 verdict with Q2/Q3 provisional wording, anomalies as evidence limits; G1.5 deferred (route check 30)
-   -> ask the owner whether G1 can freeze with G1.5 deferred to G3/G5 and Q2/Q3 open (escalation due: G1 not frozen
-   by end of S32); then stage 2.
-S31 (launch 20261116-042839, cap $1.08): A-14 bridge fix: pretest PASS, B31 15/15 flew; mechanism gone (bias0 <0.5 m,
-   baro_fault 0/15, hold 4.94-5.05 m) but closing test FAILS 9/15 on 0.1 m (max 0.144 m): A-14 PARKED with bound
-   0.15 m (ANOMALIES). T65 second key AGREE-WITH-ISSUES: thread race on `_alt_ref` -> new A-20; test constant fixed.
-   S32 NEXT: (a) A-20 fix (sonnet, small: atomic/once-set ref in gz_bridge) + haiku key, folded into the G1.6 re-fly;
-   (b) S31 plan (ii) attitude 15 % gap + A-19 (haiku); (iii) re-fly G1.6 set with the fixed baro, write G1 FINAL
-   with anomalies as evidence limits, start stage 2. Escalate to owner if G1 not frozen by end of S32.
-1-4. Stage-1 items still pending from the old list (rest done, history in JOURNAL): errata re-score of archived set-O/T5;
-   window rule must accept nav_state 23; sag as sim-time ramp in gz bridge (two keys); run_scenario sim-time fixes
-   (`sim_review.md`:14,19) now folded into the player; outer-loop A-requirements folded at stage 5.
-5. Simulator items of stage 1 (delayed GNSS, rotor inertia check, battery model, injectors, seeded drops, vibration,
-   variants, noise profiles, determinism). Source web re-check of J_rotor (ASSUMED) still pending.
-
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
