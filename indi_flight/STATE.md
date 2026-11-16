@@ -56,6 +56,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T102 | stage-2 summary table (PID ref, INDI, model vs measured) | haiku | `results/stage2_s49/summary_table.md` | re-launch same brief if file incomplete |
+| T103 | D-RATE-LEAD design note draft (law, code mapping, tests, yaw, blend, noise) | sonnet | `design/rate_lead_note.md` | re-launch, continue from file |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
