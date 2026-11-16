@@ -43,8 +43,11 @@ S47 (launch 20261116-221436, cap $3): first roll M3a flight with derived G1 inva
    while the rotor spin-up torque dominates yaw above 1.2 Hz. Derived G2_Y 27 (D-G2Y-DERIVE): 4/4 hovers (2 seeds x 2
    paths) pin 0, rate std <= 0.018, pretest_gate PASS. A-25 opened+closed. `results/stage2_s47/roll_m3a/README.md`.
    M3a margins at AMP 0.005 measured on a saturating plant: VOID. With G1 5x higher, AMP must drop ~5x (0.001).
-NEXT (S48): (0) read `results/stage2_s47/g2_second_key.md` (T100 haiku, running at S47 end); if DISAGREE re-open D-G2Y.
-   (1) roll M3a at 800 Hz with G1+G2 file: AMP 0.001 and 0.002 (linearity), seeds 1-2, model-only and v2; pretest_gate
+   T100 second key G2_Y AGREE 27.0. First valid roll M3a (model-only s1, AMP 0.001, no pin, 18/18 bins): PM 22 deg
+   @3.5 Hz, GM 4.1 dB, DM 18 ms -- below G2; phase -169 deg at 1 Hz = attitude loop over a slow rate loop (suspect).
+NEXT (S48): (0) explain the low PM with margins_models.py + attitude P loop + G2 (and read MC_INDI rate gains vs
+   MC_ROLL_P: is the INDI rate bandwidth default too low for the attitude gain?); if the model agrees, this is
+   decision 4 (defaults as bandwidths), open it in stage 3, do not tune here. (1) roll M3a at 800 Hz with G1+G2 file: AMP 0.001 and 0.002 (linearity), seeds 1-2, model-only and v2; pretest_gate
    on the window BEFORE injection (gate window currently overlaps it: add an end-time option). (2) runner appends
    quad5in_indi_g1.params to every INDI run + G1/G2 provenance in run.json. (3) A-24 PSD re-check with G2. (4) ACT_TC from
    rotor step, attitude P loop + G2 into margins_models.py. Note: two run.sh flights launched in parallel lost one (no output).
@@ -52,7 +55,6 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T100 | G2_Y second key | haiku | results/stage2_s47/g2_second_key.md | re-brief if file incomplete |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -70,7 +72,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | session | id | model | task | outcome |
 |---|---|---|---|---|
 | 47 | T98 | sonnet | roll M3a + yaw follow-up F5-F9 | done, 15 calls, ~$0.6, found yaw limit cycle; wrong guess on cause (code change) |
-| 47 | T100 | haiku | G2_Y second key | running |
+| 47 | T100 | haiku | G2_Y second key | done, 5 calls, ~$0.1, AGREE 27.0 |
 | 45 | T93 | sonnet | route check 45 | done, 7 calls, ~$0.15 |
 | 45 | T96 | haiku | derive_g1.py + self-test | done, 7 calls, ~$0.1, ALL PASS, UNKEYED |
 | 45 | T95 | haiku | second key A-23 numbers | done, 7 calls, ~$0.06, AGREE (RMS 0.0068/0.0056/0.0017, pin 0 %) |
