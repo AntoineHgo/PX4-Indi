@@ -36,7 +36,9 @@ S39 (launch 20261116-084309, cap $3) DONE: D-G2-INJ; T81 sonnet M3a plumbing (co
    exact (max err 0), indi_rate_status 800 Hz, no fault, generator = margins_est multisine on 15849/15998 samples (rest
    = timestamp-join artefact). Added by me: indi_rate_status.timestamp_sample, MC_INDI_INJ_DLY (default 5 s).
 S40 NEXT (in order): (1) build `px4_sitl_test`, run Indi* unit tests incl. new IndiInjectionTest (NOT RUN yet);
-   (2) haiku second key of the injection diff vs D-G2-BREAK/D-G2-INJ and of the generator on timestamp_sample;
+   (2) DONE in S39: haiku second key code vs D-G2-BREAK/D-G2-INJ AGREE-WITH-ISSUES (`results/stage2_s39/second_key_inject.md`):
+   only -0.0 -> +0.0 at AX 0 (accepted, no effect); S41 analysis must assert fault == 0 and landed == 0 over the window,
+   params set before arming. Still to do: generator check on timestamp_sample from a new flight;
    (3) route check 40 (sonnet). M3b store points partial in the T81 notes (library `_thrust_prev` unread).
 S41 flights: pre-test AMP 0.005, DLY 5, model-only AND measured (`CA_R_W_MAX` + `--sim v2`), then matrix.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
