@@ -19,8 +19,8 @@ S33 (launch 20261116-065633, cap $1.98): B32 speed 1 still running (hover r2 at 
    mag-bias state, r=-0.998. A-19 param pretest waits for B32 to end (no concurrent runs during a determinism batch).
    B32 speed 1 DONE (15/15), analysed (`results/g16_set_s32/speed1/README.md`): spreads = speed 4. A-20 NOT closed
    (bias0 0.72 m in 2/30, CAL_OFF at start). G1 status s33 in GATES.md.
-   S34 NEXT: (1) A-19 param pretest (ANOMALIES A-19 NEXT; confirm gz declination table first); (2) A-20 CAL_OFF haiku
-   (ANOMALIES); (3) if Q4 answered A: start stage 2 (loop-gain injection design, sonnet, O-11 zero diff constraint);
+   S34 NEXT: (1) A-19 param pretest (ANOMALIES A-19 NEXT; confirm gz declination table first); (2) A-20: bench SENS_BAR_AUTOCAL=0 + bias metric fix (ANOMALIES A-20 NEXT, T69 done)
+   (3) if Q4 answered A: start stage 2 (loop-gain injection design, sonnet, O-11 zero diff constraint);
    if no answer, prepare the stage-2 injection design note anyway (not used for verdicts). Route check 35 due S35.
 S32 (launch 20261116-064202, cap $2.70): A-20 fix 4297ba9869 (atomic once-set _alt_ref, built, format clean). B32 G1.6
    re-fly detached (`bench/g16_set_s32.sh` -> `results/g16_set_s32/`, pretest gate then 2x15 runs, then A-20 check).
