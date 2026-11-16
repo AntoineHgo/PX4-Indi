@@ -39,7 +39,9 @@
    analysed (`results/g16_sched_set_s26/speed4/README.md`): triggers exact, response spread 6-9 ms (A-17), step_roll
    spreads 3-10x tighter than pre-player; A-14 REOPENED (EKF height -2.3 m on the ground between 20 and 29 s in 2/15
    `-f` runs -> hover at 7.2 m true). Provisional G1.1/G1.6 verdicts in GATES.md (G1.6(c) not met: A-14). Q3 addendum.
-   S28 NEXT: (1) A-14 cause (T58 if not done: `design/a14_cause_s27.md`); (2) B26 speed 1: same analysis as speed 4
+   T58 DONE (`design/a14_cause_s27.md`): A-14 = EKF baro fusion accepting a 13-15 m baro/GNSS height mismatch in some
+   runs (rejected in others); root of the mismatch unknown (sim baro pressure 101320 vs air data 95600 Pa).
+   S28 NEXT: (1) A-14 root cause in the sim baro, decide fix in DECISIONS (sim-consistent baro preferred), closing test 15 hovers; (2) B26 speed 1: same analysis as speed 4
    (`second_key_player.py` per log, `G16_ROOT=... g16_spread.py`, `prearm_zbias.py`), haiku second key on the spread;
    (3) route check 27 items 2-5 (G1.3/G1.4 keys on gate-bearing metrics, minimum G1.5, freeze G1 S30, stage 2).
 1-4. Stage-1 items still pending from the old list (rest done, history in JOURNAL): errata re-score of archived set-O/T5;
@@ -51,7 +53,7 @@
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| B26 | G1.6 set --sched --sched-anchor, 3 scen x 5, speed 4 then 1 | host bash (detached) | `results/g16_sched_set_s26/speed{4,1}/status.txt` | `setsid nohup indi_flight/bench/g16_sched_set.sh` (delete partial speed dir first) |
+| B26 | G1.6 set --sched --sched-anchor, 3 scen x 5, speed 4 (done, analysed S27) then 1 (running) | host bash (detached) | `results/g16_sched_set_s26/speed{4,1}/status.txt` | `setsid nohup indi_flight/bench/g16_sched_set.sh` (delete partial speed dir first) |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
