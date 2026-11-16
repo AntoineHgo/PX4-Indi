@@ -52,9 +52,13 @@ S49 (launch 20261116-224459, cap $2.28): T102 stage-2 summary table (`results/st
    break point. T103 D-RATE-LEAD note draft (`design/rate_lead_note.md`): new param MC_INDI_LEAD scale 0..1 (default 1,
    0 = current law), insertion at indi_rate_control.cpp step 8 (l.378-382), c_i = lead K_i ACT_TC, 0 when landed; noise
    x1.4-2.3 on the a_f term (G4); filter H is in the model (checked). Stage 3 OPEN.
-NEXT (S50): (1) opus review r1 of `design/rate_lead_note.md` vs src/lib/indi_rate_control (one interface, <=12 calls,
-   ~$0.6, needs $1.2 left); then ACT_TC identification from a rotor step; add the ~3-5 ms delay to margins_models (GM gap).
-   (2) Route check due S50 (sonnet, ~$0.15). (3) runner appends quad5in_indi_g1.params + provenance in run.json; pretest_gate end-time
+NEXT (S50): route check 49 done early (`design/route_check_49.md`), adopted: (1) host-only falsification of the lead
+   first: add 3-5 ms delay, ACT_TC 0.033 to `bench/margins_models.py` lead rows at 400/800 Hz; stop D-RATE-LEAD if
+   PM < 50 or GM < 8 dB at 400 Hz (model is 2.3-3.5 dB GM optimistic). (2) If it holds: opus review r1 of the note
+   vs src/lib/indi_rate_control (one interface, ~$0.6, needs $1.2 left), then code MC_INDI_LEAD + unit test (break-checked),
+   one roll M3a flight on 2 seeds. Not adopted: 'review the diff instead of the note' (design-first rule kept; the
+   review of the code against the note follows the code). Q2-Q4 already asked, no new question.
+   (3) runner appends quad5in_indi_g1.params + provenance in run.json; pretest_gate end-time
    option (window overlaps injection). (4) A-24 PSD re-check with G2.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
