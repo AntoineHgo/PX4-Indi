@@ -121,8 +121,11 @@
 | 25 | T54 | haiku | second key T53 | done, 3 calls, ~$0.05, AGREE (row-1 check artefact open) |
 | 26 | T55 | sonnet | player att/pva rows + runner + 2 pretests | done, 21 calls, ~$1.0 (2x estimate, 11 min) |
 | 26 | T56 | haiku | second key T55 | done, 11 calls, ~$0.2, AGREE 4/4 |
+| 27 | T57 | sonnet | route check 27 | done, 10 calls, ~$0.25 |
+| 27 | T58 | sonnet | A-14 mechanism from logs | done, 5 calls, ~$0.3, numbers re-read by me |
 
 ## Lessons proposed
+- A parked anomaly bound from a correlation (A-14: 0/9 vs 3/6 runs, p=0.044, "logger -f") was wrong; park on a mechanism, not on a pair test (S27).
 - A sonnet implement+build+2-flight task costs ~$1.0 (21 calls): at a $3 cap it is the session's one big task (S26).
 - Read the sleep/wake rule of a loop before building a timing fix around it: S25 spent a session on a start-up
   race while Commander's skip-sleep-on-command line (visible in 20 lines of source) already ruled it out.
