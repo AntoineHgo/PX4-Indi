@@ -187,3 +187,4 @@
 - S37 (2026-11-16): stage-2 note stale text patched; margins estimator + self-tests 1-3 (T75), second key AGREE 5/5 (T76).
 - S38 (2026-11-16): linear rate-loop models + self-test 4 (T78, ALL PASS, break-checked), second key AGREE (T79); model predicts INDI model-only defaults PM 42.7 deg < 45 (tau_m 0.02 vs plant 0.033).
 - S35 (2026-11-16): A-20 closed 15/15; A-19 parked by mechanism (1.6 deg); A-14 hold bound +-0.15 m; route check 35 accepted; stage-2 note written (T72).
+- S39 (2026-11-16): M3a bench injection in mc_indi_rate_control (D-G2-INJ), build OK, pre-test hover u = c + d exact; unit test not run.

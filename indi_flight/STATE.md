@@ -31,13 +31,18 @@ S38 (launch 20261116-082041, cap $3) DONE: T78 sonnet `bench/margins_models.py` 
    FINDING (model, unflown): roll INDI model-only at code defaults PM 42.7/41.6/40.6 deg at 800/400/267 Hz < 45, limited
    by tau_m 0.02 vs plant tau_r 0.033 (lesson 8: ACT_TC must be identified, stage 3/4); measured path Tb 0 PM 54, blend
    Tb 0.1 PM 48. Self-test 4a is coding consistency only (same equations both sides); firmware match comes from flights.
-S39 (launch 20261116-084309, cap $3): D-G2-INJ written. T81 sonnet IN FLIGHT: M3a plumbing + build + 1 pre-test hover
-   (`design/t81_m3a_inject_s39.md`). Then haiku second key of the diff, I read the diff and run the unit tests. S40 route check 40, S41 flights (pre-test first).
+S39 (launch 20261116-084309, cap $3) DONE: D-G2-INJ; T81 sonnet M3a plumbing (commit feat(mc_indi_rate_control)),
+   SITL build OK, 1 pre-test hover flew (`design/t81_m3a_inject_s39.md`, `results/stage2_s39/pretest_m3a/`): u = c + d
+   exact (max err 0), indi_rate_status 800 Hz, no fault, generator = margins_est multisine on 15849/15998 samples (rest
+   = timestamp-join artefact). Added by me: indi_rate_status.timestamp_sample, MC_INDI_INJ_DLY (default 5 s).
+S40 NEXT (in order): (1) build `px4_sitl_test`, run Indi* unit tests incl. new IndiInjectionTest (NOT RUN yet);
+   (2) haiku second key of the injection diff vs D-G2-BREAK/D-G2-INJ and of the generator on timestamp_sample;
+   (3) route check 40 (sonnet). M3b store points partial in the T81 notes (library `_thrust_prev` unread).
+S41 flights: pre-test AMP 0.005, DLY 5, model-only AND measured (`CA_R_W_MAX` + `--sim v2`), then matrix.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T81 | M3a injection plumbing, build, 1 hover | sonnet | design/t81_m3a_inject_s39.md | re-brief from that file's last section |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -114,8 +119,11 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 38 | T78 | sonnet | margins_models.py + self-test 4 | done, 15 calls, ~$1.0, ALL PASS re-run by me |
 | 38 | T79 | haiku | second key continuous models | done, 4 calls, ~$0.1, AGREE |
 | 38 | T80 | haiku | GM jump check | done, 5 calls, ~$0.06, explained (phase plateau) |
+| 39 | T81 | sonnet | M3a plumbing + build + 1 hover | done, 27 calls, ~$0.93, test not linked, fixed by me |
 
 ## Lessons proposed
+- S39: a sonnet implement+build+fly task asked to add a unit test spent its last calls on a link error; tell it the
+  gtest kind (unit = pure code) and the test build dir, or leave the test run to a separate step.
 - S37: a sonnet task writing ~600 lines of numerical code + tests costs ~$0.9 in 9 calls (long writes); the session
   takes one such task plus a haiku second key.
 - S36: a design note on a loop with several feedback paths must name every path a break point cuts; the gyro break
