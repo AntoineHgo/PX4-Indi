@@ -6,37 +6,23 @@
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. GATES.md: G1 draft written; G1.6 first tested S14 ((a) not met, see next actions).
 - Blocker: none. Q2, Q3 open (G1.1 gap rule, G1.6a wording), Q4 open (freeze G1 with limits, S32), not blocking. Q1 closed: A confirmed by owner; flatness A18 reviewed (r5 BLOCKING), answered in
   `design/flatness_r2.md` (S15): optional increment after base A. Outer-loop study finished; stage 5 = base A.
-- Session 18 (launch 20261115-233746, cap $1.62): A-12 CLOSED (T36 fix dbb1a62e29, T37 second key).
+- S35: A-20 closed, A-19 parked, route check 35 accepted, stage-2 design note written; next S36 G1 FINAL + note review.
 - Session 16 (launch 20261115-231016, cap $3): D-SIM-STEP implemented (T31, commit 72598e3159) and pre-tested
   (`results/pretest_simstep_s16/README.md`): 1.25 ms step, IMU 800 Hz, RATEMAX 800/400 applied, PID flies, speed 4
   ~38 s wall/run. Logger fixed: `-p actuator_motors -b 200` logs all controller-rate topics at 800 Hz, 0 dropouts. A-10.
 
 ## Next actions (in order)
-S35 (launch 20261116-074242, cap $3): Q4 still unanswered. S34 pre-test read: A-20 PASS 2/2, A-19 candidate refuted 3/3.
-   IN FLIGHT (detached, started ~07:50, ~17 runs x ~50 s): `bench/a20a19_s35.sh` -> `results/a20a19_s35/` :
-   (a) A-20 closing set, 15 hovers, `bench/a20_close_s35.params` (SENS_BAR_AUTOCAL 0 alone) -> `a20/a14_check.md`;
-   (b) A-19 pre-test, 2 hovers, `bench/a19_magtype_s35.params` (EKF2_MAG_TYPE 1 heading-only, decl 2.62) -> `a19/`.
-   Resume: wait for ALL_DONE in status.txt; A-20 closes if CAL_OFF 0/0, baro_fault 0, bias med arm-5..arm < 0.5 m
-   in 15/15 (new column in `bench/a14_close_check.py`, S35, second key T70); A-19: `python3 results/a19a20_s34/a19_mech.py`
-   style check on a19/hover_r*; if not < 0.3 deg -> PARK A-19 by mechanism (EKF 3-axis earth-field/bias states).
-   Agents: T70 haiku second key of the bias-median column: AGREE 7/7 (`results/a20a19_s35/second_key_t70.md`).
-   T71 route check 35 (`design/route_check_35.md`): stage 1 off the shortest path since S31; park A-19 by mechanism
-   now; start stage 2 at S36 in parallel, results marked provisional under Q4-A; escalate Q4 if G1 FINAL not written
-   by end of S36. ACCEPTED. T72 sonnet stage-2 design note `design/stage2_margins_s35.md` (gyro injection in
-   gz_bridge as primary break for PID and INDI, multisine, L=-S_yd/S_xd, blend-mode model for A-1; 267 Hz -> D-RATE267;
-   UNVERIFIED items listed in the note). Needs an opus review (one interface: note vs source) before S37 code.
-S34 (launch 20261116-072614, cap $1.35, no agent): Q4 still unanswered. Combined A-19/A-20 pre-test detached:
-   `bench/a19a20_pretest_s34.sh` (params `bench/a19a20_pretest_s34.params`: SENS_BAR_AUTOCAL 0, EKF2_DECL_TYPE 0,
-   EKF2_MAG_DECL 2.62 (sensor-field value from T68 logs; gz source not read), EKF2_MAG_B_NOISE 0) -> 
-   `results/a19a20_s34/` (2 hover + 1 step_roll, speed 4); resume: wait for ALL_DONE in status.txt, then
-   `python3 results/a19a20_s34/a19_mech.py` (copy, writes next to itself) and read `a14_check.md`.
-   Closing criteria (ANOMALIES): A-19 |err| align+1 s < 0.2 deg, hover window < 0.3 deg, magB_x < 0.5 mG;
-   A-20 CAL_BARO0_OFF 0 and median pre-arm bias < 0.5 m. If pass: 15-run set + two keys (S35); route check 35 due.
-   S34 ended with the batch still flying (started 07:27, ~4 min); results unread. S35 FIRST: check status.txt, run
-   the two checks above, check params_applied in each run's meta (SENS_BAR_AUTOCAL, EKF2_*), write README.md there.
-   No stage-2 note this session (budget). hover_r1 read: A-20 PASS, A-19 NOT fixed (EKF decl 3.67, err +0.52 deg,
-   magB_x -5.8 mG). ALL 3 runs read at end of S34: A-20 PASS 2/2 hovers, A-19 refuted 3/3 (+0.36..+0.78 deg).
-   `results/a19a20_s34/README.md` has the S35 plan (skip re-reading the runs).
+S36 NEXT (route check 35 plan, ACCEPTED): (1) write G1 FINAL in GATES.md: G1 frozen with evidence limits (Q2, Q3,
+   A-14 0.15 m, A-19 1.6 deg on estimate, G1.5 injectors deferred to G3/G5); stage-2 results marked provisional
+   under Q4-A; if G1 FINAL not written by end of S36, escalate Q4 with the cost of option B. (2) opus review of
+   `design/stage2_margins_s35.md` (one interface: note vs source; check its UNVERIFIED list and the blend formula).
+   (3) then S37 estimator + synthetic self-tests (sonnet), S38 injection plumbing, S39 flights, S40 route check 40.
+S35 (launch 20261116-074242, cap $3), DONE: A-20 CLOSED (15/15, `results/a20a19_s35/README.md`); A-19 heading-only
+   candidate refuted, A-19 PARKED by mechanism (bound 1.6 deg, yaw verdicts on estimate); A-14 hold bound re-set by
+   mechanism to +-0.15 m (r14 0.068 m exceeded the old +-0.06 sample bound). T70 second key AGREE 7/7. T71 route
+   check 35 (`design/route_check_35.md`) accepted. T72 stage-2 design note `design/stage2_margins_s35.md` (gyro
+   injection in gz_bridge as primary break for PID and INDI, multisine, L=-S_yd/S_xd, blend-mode model for A-1;
+   267 Hz -> D-RATE267; UNVERIFIED list in the note). Bench param sets from now on carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
@@ -97,9 +83,14 @@ S34 (launch 20261116-072614, cap $1.35, no agent): Q4 still unanswered. Combined
 | 31 | T65 | haiku | second key bridge diff | done, 5 calls, ~$0.1, AGREE-WITH-ISSUES (race) |
 | 32 | T66 | haiku | second key A-20 diff | done, 4 calls, ~$0.1, AGREE-WITH-ISSUES |
 | 32 | T67 | haiku | A-19 + attitude gap | done, 8 calls, ~$0.2, found the arccos metric defect |
-| 32 | B32 | host bash | G1.6 re-fly 2x15 + pretest | s4 15/15 flew, $0; s1 running |
+| 32 | B32 | host bash | G1.6 re-fly 2x15 + pretest | done, 30/30 flew, $0 |
+| 35 | B35 | host bash | A-20 15 hovers + A-19 2 hovers | 17/17 flew, $0 |
+| 35 | T70 | haiku | second key bias-median column | done, 7 calls, ~$0.1, AGREE 7/7 |
+| 35 | T71 | sonnet | route check 35 | done, 6 calls, ~$0.15 |
+| 35 | T72 | sonnet | stage-2 margins design note | done, 11 calls, ~$0.7 (168 lines) |
 
 ## Lessons proposed
+- S35: a sonnet design note of ~11 calls over several source files costs ~$0.7; brief it at <=10 calls at a $3 cap.
 - S34: a background-wait notification can arrive before the command really ends; check the condition itself
   (status file) before concluding the wait failed.
 - An anomaly bound taken from the range of 10 runs was exceeded by the next 5 (A-19, S32): bound by mechanism.
