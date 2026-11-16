@@ -207,7 +207,9 @@ class Sim:
 
     def start_gz(self):
         world = os.path.join(self.env["PX4_GZ_WORLDS"], "default.sdf")  # fixed 1.25 ms world, same for every run
-        self.gz = self.spawn(["gz", "sim", "--verbose=1", "-r", "-s", "--seed", str(self.a.seed), world], "gz.log")
+        run_flag = [] if self.a.paused_start else ["-r"]  # --paused-start: gz waits paused until unpause_gz()
+        self.gz = self.spawn(["gz", "sim", "--verbose=1", *run_flag, "-s", "--seed", str(self.a.seed), world],
+                             "gz.log")
         t0 = time.time()
         while time.time() - t0 < 120:
             r = subprocess.run(["gz", "topic", "-l"], capture_output=True, text=True, env=self.env, timeout=20)
@@ -217,6 +219,22 @@ class Sim:
                 raise RunError("gz sim exited early")
             time.sleep(1)
         raise RunError("timeout waiting for gz world")
+
+    def gz_clock(self):
+        r = subprocess.run(["gz", "topic", "-e", "-t", "/world/default/clock", "-n", "1"], capture_output=True,
+                           text=True, env=self.env, timeout=20)
+        return " ".join((r.stdout + r.stderr).split())
+
+    def unpause_gz(self):
+        clock_before = self.gz_clock()  # evidence that sim time was frozen until the unpause
+        r = subprocess.run(["gz", "service", "-s", "/world/default/control", "--reqtype", "gz.msgs.WorldControl",
+                            "--reptype", "gz.msgs.Boolean", "--timeout", "5000", "--req", "pause: false"],
+                           capture_output=True, text=True, env=self.env, timeout=30)
+        open(os.path.join(self.out, "unpause.txt"), "w").write(
+            f"wall={time.time() - self.wall0:.3f} rc={r.returncode}\nclock_before: {clock_before}\n"
+            f"{r.stdout}{r.stderr}clock_after: {self.gz_clock()}\n")
+        if r.returncode != 0 or "true" not in r.stdout:
+            raise RunError(f"gz unpause failed: {r.stdout} {r.stderr}")
 
     def start_px4(self):
         os.makedirs(self.rootfs, exist_ok=True)
@@ -234,6 +252,9 @@ class Sim:
             f.writelines(f"{t} 0 0\n" for t in LOG_TOPICS)  # instance 0 only: multi-instance adds exhaust the 255 slots
         self.px4 = self.spawn([f"{BUILD}/bin/px4", "-i", str(self.a.instance), "-d", "-w", self.rootfs,
                                f"{BUILD}/etc"], "px4.log")
+        if self.a.paused_start:  # A-17 s25: gz was started paused; unpause once the wait pattern is in px4.log
+            self.wait_log(self.a.unpause_after, 180)
+            self.unpause_gz()
         self.wait_log("Startup script returned successfully", 180)
         try:  # evidence of the model gz actually loaded (inertia, link poses); informational only
             r = subprocess.run(["gz", "model", "-m", "x500_0"], capture_output=True, text=True, env=self.env,
@@ -530,6 +551,11 @@ def main():
     ap.add_argument("--sched", action="store_true",
                     help="D-SCHED: arm, offboard switch and the setpoint stream are played by PX4 (sim_scenario_player, "
                          "schedule file in sim time) instead of being sent over MAVLink; position scenarios only")
+    ap.add_argument("--paused-start", action="store_true",
+                    help="A-17: start gz paused (no -r) and unpause it after --unpause-after appears in px4.log, so "
+                         "Commander starts at a fixed sim time (loop phase independent of wall-clock races)")
+    ap.add_argument("--unpause-after", default="Startup script returned successfully",
+                    help="px4.log pattern after which --paused-start unpauses gz")
     ap.add_argument("--log-poll", default="actuator_motors", help="topic the logger wakes on (logger -p)")
     a = ap.parse_args()
     if a.imu_rate is None:
