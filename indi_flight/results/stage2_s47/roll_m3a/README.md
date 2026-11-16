@@ -101,3 +101,14 @@ Note: the first parallel launch of model_g2 produced no output (two containers a
 re-flown alone.
 UNVERIFIED: G2 derivation second key pending (`results/stage2_s47/g2_second_key.md`); G2 varies as 1/w (operating
 point); the 45 Hz tone (A-24) not re-checked by PSD with G2 27.
+
+# S47 orchestrator: first valid roll M3a run with G1 + G2 (model-only, seed 1, AMP 0.001, 800 Hz)
+Params `inj_model_g1g2_a001.params` (= inj_model_g1 with AMP 0.001 + MC_INDI_G2_Y 27); out `model_g2_a001/`;
+post-processing `post.sh model_g2_a001 0.001` + `pre_rms.py`. checks.py rc 0 (generator match 1.4e-3 at t0 - 1.25 ms
+only); motor pin 0 throughout; roll-rate std 0.007 before injection, 0.21-0.28 during; pitch/yaw undisturbed.
+pretest_gate rc 1 ONLY because its window (47-77 s) overlaps the injection (52 s on): needs an end-time option.
+Margins (`model_g2_a001_margins.txt`, 18/18 bins): PM 22.3 deg @ 3.48 Hz, GM 4.1 dB @ 5.64 Hz, DM 17.9 ms, Ms 10.7 dB.
+|L| 13.2 dB at 1 Hz with arg -169 deg, crossover 3.5 Hz at -158 deg: the shape of an attitude loop dominating a
+slow rate loop (double integrator below the rate bandwidth). Below the G2 thresholds (45 deg / 6 dB). Not yet a gate
+result: linearity (AMP 0.002), seed 2, measured path and the linear-model cross-check (with the attitude loop) are missing.
+Second key of G2_Y: AGREE, 27.0 (`results/stage2_s47/g2_second_key.md`).
