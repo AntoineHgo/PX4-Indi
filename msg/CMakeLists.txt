@@ -218,6 +218,7 @@ set(msg_files
 	SensorTemp.msg
 	SensorUwb.msg
 	SensorAirflow.msg
+	SimGroundTruth.msg
 	SurfaceVehicleAttitudeSetpoint.msg
 	SurfaceVehicleAttitudeStatus.msg
 	SurfaceVehicleCourseSetpoint.msg

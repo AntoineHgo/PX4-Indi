@@ -752,6 +752,27 @@ void GZBridge::poseInfoCallback(const gz::msgs::Pose_V &msg)
 
 			local_position_groundtruth.timestamp = timestamp;
 			_lpos_ground_truth_pub.publish(local_position_groundtruth);
+
+			// sim-only ground truth with a deep queue (one sample per sim step), same values as above
+			sim_ground_truth_s sim_ground_truth{};
+			sim_ground_truth.timestamp_sample = timestamp;
+			sim_ground_truth.timestamp = timestamp;
+
+			for (int i = 0; i < 4; i++) {
+				sim_ground_truth.q[i] = vehicle_attitude_groundtruth.q[i];
+			}
+
+			for (int i = 0; i < 3; i++) {
+				sim_ground_truth.angular_velocity[i] = vehicle_angular_velocity_groundtruth.xyz[i];
+			}
+
+			sim_ground_truth.x = local_position_groundtruth.x;
+			sim_ground_truth.y = local_position_groundtruth.y;
+			sim_ground_truth.z = local_position_groundtruth.z;
+			sim_ground_truth.vx = local_position_groundtruth.vx;
+			sim_ground_truth.vy = local_position_groundtruth.vy;
+			sim_ground_truth.vz = local_position_groundtruth.vz;
+			_sim_ground_truth_pub.publish(sim_ground_truth);
 			return;
 		}
 	}
