@@ -232,3 +232,8 @@ Open, to be written before code (MISSION "Decisions that are yours"):
   second key AGREE.
 - Overturn if: a small-signal regression on a clean (unsaturated) hover differs from the derived value by > 15 %
   on any axis, or the stage-4 identification gives a different value with an explained cause.
+- Update S46 (two keys): inertia is the TOTAL about the CoG (base_link + 4 rotor links with parallel-axis terms):
+  Ixx/Iyy/Izz 1.400e-3/1.500e-3/2.700e-3; S45 had scaled Iyy by the base_link ratio (1.533e-3, G1_P 2.3 % low). Bench
+  values now 1757 / 1640 / 205 (`bench/params/quad5in_indi_g1.params`, `results/stage2_s46/`). Yaw counts the rotors' own
+  spin Izz because gz prescribes rotor joint speed relative to the body (222 without it, 7 % apart, within the G3 G1 range);
+  a yaw step identification in stage 4 settles it.
