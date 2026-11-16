@@ -23,6 +23,14 @@ import numpy as np
 
 AXES = ("roll", "pitch", "yaw")
 
+# Effort bandwidth (decision D-EFFORT-BW): actuator_motors is resampled onto a uniform EFFORT_GRID_HZ sim-time grid,
+# low-passed zero-phase at EFFORT_LP_HZ (2nd-order Butterworth, forward-backward), then the RMS of d(control)/dt is taken.
+EFFORT_GRID_HZ = 400.0
+EFFORT_LP_HZ = 50.0
+EFFORT_MAX_GAP_S = 0.010  # a logged gap longer than this counts as missing data
+EFFORT_MAX_GAP_FRAC = 0.001  # refuse when the total time in such gaps exceeds this fraction of the window
+EFFORT_PAD_S = 0.25  # data used before/after the window so the filter edge transient stays outside it
+
 
 def topic(ulog, name, multi_id=0):
     for d in ulog.data_list:
@@ -103,6 +111,143 @@ def wrap(a):
 
 def qcols(d, prefix):
     return np.column_stack([d[f"{prefix}[{i}]"] for i in range(4)])
+
+
+def interp_quat(t_src, q_src, t_dst):
+    """Quaternion (N,4) at t_dst by sign-aligned linear interpolation + renormalisation (t_dst inside t_src span)."""
+    i = np.clip(np.searchsorted(t_src, t_dst, side="right") - 1, 0, len(t_src) - 2)
+    q0, q1 = q_src[i], q_src[i + 1]
+    q1 = np.where((np.sum(q0 * q1, axis=1) < 0)[:, None], -q1, q1)
+    w = np.clip((np.asarray(t_dst, float) - t_src[i]) / np.maximum(t_src[i + 1] - t_src[i], 1), 0, 1)[:, None]
+    q = (1 - w) * q0 + w * q1
+    return q / np.linalg.norm(q, axis=1, keepdims=True)
+
+
+def rate_track(ta, w_meas, rsp, w0, w1):
+    """RMS of (ZOH rate setpoint - measured body rate) per axis over [w0, w1]. w_meas is (N,3) at ta [us]."""
+    m = (ta >= w0) & (ta <= w1)
+    return {ax + "_rms_rad_s": rms(zoh(rsp["timestamp"], rsp[ax], ta[m]) - w_meas[m, i]) for i, ax in enumerate(AXES)}
+
+
+def att_track(ta, q, asp, w0, w1):
+    """Attitude error of q (N,4, FRD->NED) at ta [us] against the ZOH quaternion setpoint q_d over [w0, w1]:
+    rotation angle rms and per-axis (yaw wrapped) euler rms [deg]."""
+    m = (ta >= w0) & (ta <= w1)
+    qs = np.column_stack([zoh(asp["timestamp"], asp[f"q_d[{i}]"], ta[m]) for i in range(4)])
+    ok = np.isfinite(qs).all(axis=1)
+    qm = q[m][ok]
+    ang = 2 * np.arccos(np.clip(np.abs(np.sum(qm * qs[ok], axis=1)), 0, 1))
+    eu, esp = dict(zip(AXES, quat_to_euler(qm))), dict(zip(AXES, quat_to_euler(qs[ok])))
+    at = {"rotation_angle_rms_deg": math.degrees(rms(ang)) if ang.size else None}
+    for ax in AXES:
+        e = eu[ax] - esp[ax]
+        if ax == "yaw":
+            e = wrap(e)
+        at[ax + "_rms_deg"] = math.degrees(rms(e)) if e.size else None
+    return at
+
+
+def estimator_error(t_est, w_est, q_est, gt, w0, w1):
+    """Estimator error = truth - estimate, evaluated at the estimate sample times inside [w0, w1] (truth interpolated:
+    linear for rates, sign-aligned nlerp for the quaternion). Truth must cover the window."""
+    m = (t_est >= w0) & (t_est <= w1) & (t_est >= gt["timestamp"][0]) & (t_est <= gt["timestamp"][-1])
+    out = {"rate": None, "attitude": None}
+    if m.sum() < 2:
+        return out
+    tg = gt["timestamp"].astype(float)
+    if w_est is not None:
+        wt = np.column_stack([np.interp(t_est[m], tg, gt[f"angular_velocity[{i}]"]) for i in range(3)])
+        e = wt - w_est[m]
+        out["rate"] = {**{ax + "_rms_rad_s": rms(e[:, i]) for i, ax in enumerate(AXES)},
+                       **{ax + "_mean_rad_s": float(np.nanmean(e[:, i])) for i, ax in enumerate(AXES)}, "n": int(m.sum())}
+    if q_est is not None:
+        qt = interp_quat(tg, qcols(gt, "q"), t_est[m])
+        qe = q_est[m]
+        ang = 2 * np.arccos(np.clip(np.abs(np.sum(qt * qe, axis=1)), 0, 1))
+        eu_t, eu_e = quat_to_euler(qt), quat_to_euler(qe)
+        at = {"rotation_angle_rms_deg": math.degrees(rms(ang)), "n": int(m.sum())}
+        for i, ax in enumerate(AXES):
+            d = eu_t[i] - eu_e[i]
+            d = wrap(d) if ax == "yaw" else d
+            at[ax + "_rms_deg"], at[ax + "_mean_deg"] = math.degrees(rms(d)), math.degrees(float(np.mean(d)))
+        out["attitude"] = at
+    return out
+
+
+def butter2_lowpass_zero_phase(y, fs, fc, padlen=100):
+    """Zero-phase (forward-backward) 2nd-order Butterworth low-pass along axis 0 of y (N,) or (N,M), uniform rate fs [Hz].
+    Bilinear-transform design, steady-state initial conditions, odd-extension padding (what scipy.signal.filtfilt does);
+    hand-written so that scipy is not a dependency. Net magnitude response 1/(1+(f/fc)^4), no phase."""
+    y = np.asarray(y, float)
+    one = y.ndim == 1
+    y = y[:, None] if one else y
+    k = math.tan(math.pi * fc / fs)
+    nrm = 1.0 / (1.0 + math.sqrt(2.0) * k + k * k)
+    b = np.array([k * k, 2 * k * k, k * k]) * nrm
+    a1, a2 = 2.0 * (k * k - 1.0) * nrm, (1.0 - math.sqrt(2.0) * k + k * k) * nrm
+    zi = np.linalg.solve(np.eye(2) - np.array([[-a1, -a2], [1.0, 0.0]]).T, np.array([b[1] - a1 * b[0], b[2] - a2 * b[0]]))
+
+    def run(x):
+        z0, z1 = zi[0] * x[0], zi[1] * x[0]
+        o = np.empty_like(x)
+        for n in range(x.shape[0]):
+            xn = x[n]
+            yn = b[0] * xn + z0
+            z0 = b[1] * xn - a1 * yn + z1
+            z1 = b[2] * xn - a2 * yn
+            o[n] = yn
+        return o
+    n = y.shape[0]
+    pl = min(padlen, n - 1)
+    ext = np.concatenate([2 * y[:1] - y[pl:0:-1], y, 2 * y[-1:] - y[-2:-pl - 2:-1]]) if pl > 0 else y
+    f = run(ext)[::-1]
+    f = run(f)[::-1]
+    f = f[pl:pl + n] if pl > 0 else f
+    return f[:, 0] if one else f
+
+
+def motor_rate_bandlimited(t_us, u, w0, w1):
+    """RMS of d(control)/dt at a fixed bandwidth (D-EFFORT-BW): linear resample of u (N,M) at t_us onto a uniform
+    EFFORT_GRID_HZ grid (using EFFORT_PAD_S of data on both sides of [w0, w1] when the log has it), zero-phase
+    EFFORT_LP_HZ low-pass, first difference / dt over the grid points inside [w0, w1].
+    Returns dict: status "ok" or the refusal reason, rms_per_s (mean of the per-motor values), per_motor_rms_per_s."""
+    res = {"status": None, "grid_hz": EFFORT_GRID_HZ, "lowpass_hz": EFFORT_LP_HZ, "rms_per_s": None, "per_motor_rms_per_s": None}
+    t = np.asarray(t_us, float) * 1e-6
+    keep = np.concatenate([[True], np.diff(t) > 0])  # strictly increasing stamps only (zero-dt publish-stamp pairs dropped)
+    t, u = t[keep], np.asarray(u, float)[keep]
+    inw = (t >= w0 * 1e-6) & (t <= w1 * 1e-6)
+    if inw.sum() < 8:
+        res["status"] = "refused: fewer than 8 actuator_motors samples in the window"
+        return res
+    tw = t[inw]
+    span = w1 * 1e-6 - w0 * 1e-6
+    dtw = np.diff(tw)
+    rate = (len(tw) - 1) / (tw[-1] - tw[0])
+    res["logged_rate_hz"] = float(rate)
+    if rate < EFFORT_GRID_HZ * 0.99:
+        res["status"] = f"refused: logged rate {rate:.0f} Hz < {EFFORT_GRID_HZ:.0f} Hz"
+        return res
+    gaps = dtw[dtw > EFFORT_MAX_GAP_S]
+    # gaps include the uncovered edges of the window (log starts/ends inside it)
+    missing = float(gaps.sum()) + max(tw[0] - w0 * 1e-6, 0.0) + max(w1 * 1e-6 - tw[-1], 0.0)
+    res["gap_time_frac"] = missing / span if span > 0 else None
+    if span <= 0 or missing / span > EFFORT_MAX_GAP_FRAC:
+        res["status"] = f"refused: gaps > {EFFORT_MAX_GAP_S * 1e3:.0f} ms cover {100 * missing / max(span, 1e-12):.3f} % of the window (> {100 * EFFORT_MAX_GAP_FRAC:.1f} %)"
+        return res
+    lo, hi = max(w0 * 1e-6 - EFFORT_PAD_S, t[0]), min(w1 * 1e-6 + EFFORT_PAD_S, t[-1])
+    dt = 1.0 / EFFORT_GRID_HZ
+    tg = lo + dt * np.arange(int(math.floor((hi - lo) / dt)) + 1)
+    ug = np.column_stack([np.interp(tg, t, u[:, j]) for j in range(u.shape[1])])
+    yf = butter2_lowpass_zero_phase(ug, EFFORT_GRID_HZ, EFFORT_LP_HZ)
+    du = np.diff(yf, axis=0) / dt
+    tm = 0.5 * (tg[1:] + tg[:-1])
+    sel = (tm >= w0 * 1e-6) & (tm <= w1 * 1e-6)
+    if sel.sum() < 4:
+        res["status"] = "refused: fewer than 4 grid intervals in the window"
+        return res
+    per = [float(np.sqrt(np.mean(du[sel, j] ** 2))) for j in range(du.shape[1])]
+    res.update(status="ok", per_motor_rms_per_s=per, rms_per_s=float(np.mean(per)), n_grid=int(sel.sum()))
+    return res
 
 
 OFFBOARD_NAV_STATES = (14, 23)  # 14 offboard, 23 external mode slot used by the INDI position mode
@@ -380,45 +525,56 @@ def compute(ulog, run):
                      "ulog_anchor_s": anchor * 1e-6 if anchor is not None else None}
     inwin = lambda t: (t >= w0) & (t <= w1)  # noqa: E731
 
-    # ---- rate tracking ----
+    # ---- rate / attitude tracking ----
+    # PRIMARY keys (rate_tracking, attitude_tracking) are measured against simulator ground truth (sim_ground_truth, sample
+    # stamp = sim time: body rates FRD [rad/s], q FRD->NED); None when the topic is absent (NO fallback to the estimate).
+    # The estimate-based numbers (vehicle_angular_velocity, vehicle_attitude) are kept under *_estimate, and
+    # rate_estimator_error / attitude_estimator_error = truth - estimate diagnostics.
     out["stamps"] = {}  # per controller-rate topic: stamp used (timestamp_sample | timestamp), sorted?, zero-dt pairs left
     ctl = lambda n: ctrl_topic(ulog, n, out["stamps"])  # noqa: E731
     av, rsp = ctl("vehicle_angular_velocity"), ctl("vehicle_rates_setpoint")
     am = ctl("actuator_motors")
-    if av is not None and rsp is not None:
-        ta = av["timestamp"]
-        m = inwin(ta)
-        rt = {}
-        for i, ax in enumerate(AXES):
-            sp = zoh(rsp["timestamp"], rsp[ax], ta[m])
-            rt[ax + "_rms_rad_s"] = rms(sp - av[f"xyz[{i}]"][m])
-        out["rate_tracking"] = rt
+    gtr = ctl("sim_ground_truth")
+    if gtr is not None and not all(k in gtr for k in ("q[0]", "angular_velocity[0]")):
+        out["warnings"].append("sim_ground_truth has no q / angular_velocity fields: truth tracking not computed")
+        gtr = None
+    truth_missing = gtr is None
+    if truth_missing:
+        out["warnings"].append("sim_ground_truth not in log: truth-based rate/attitude tracking is None (no fallback to the estimate)")
+    if rsp is not None:
+        nulls = {ax + "_rms_rad_s": None for ax in AXES}
+        out["rate_tracking"] = ({**nulls, "source": None} if truth_missing else
+                                {**rate_track(gtr["timestamp"], np.column_stack([gtr[f"angular_velocity[{i}]"] for i in range(3)]),
+                                              rsp, w0, w1), "source": "sim_ground_truth"})
+        if av is not None:
+            out["rate_tracking_estimate"] = {**rate_track(av["timestamp"], np.column_stack([av[f"xyz[{i}]"] for i in range(3)]),
+                                                          rsp, w0, w1), "source": "vehicle_angular_velocity"}
 
-    # ---- attitude tracking ----
     att, asp = ctl("vehicle_attitude"), ctl("vehicle_attitude_setpoint")
     # INDI POS publishes rates, not vehicle_attitude_setpoint: its q_d is logged in indi_pos_status
     ips = ctl("indi_pos_status")
     if ips is not None and "q_d[0]" in ips:
         asp = ips
     euler = None
+    q_att = None
     if att is not None:
-        ta = att["timestamp"]
-        q = qcols(att, "q")
-        euler = dict(zip(AXES, quat_to_euler(q)))
-        if asp is not None:
-            m = inwin(ta)
-            qs = np.column_stack([zoh(asp["timestamp"], asp[f"q_d[{i}]"], ta[m]) for i in range(4)])
-            ok = np.isfinite(qs).all(axis=1)
-            dot = np.abs(np.sum(q[m][ok] * qs[ok], axis=1))
-            ang = 2 * np.arccos(np.clip(dot, 0, 1))
-            esp = dict(zip(AXES, quat_to_euler(qs[ok])))
-            at = {"rotation_angle_rms_deg": math.degrees(rms(ang)) if ang.size else None}
-            for ax in AXES:
-                e = euler[ax][m][ok] - esp[ax]
-                if ax == "yaw":
-                    e = wrap(e)
-                at[ax + "_rms_deg"] = math.degrees(rms(e)) if e.size else None
-            out["attitude_tracking"] = at
+        q_att = qcols(att, "q")
+        euler = dict(zip(AXES, quat_to_euler(q_att)))
+    if asp is not None:
+        nulls = {k: None for k in ("rotation_angle_rms_deg", "roll_rms_deg", "pitch_rms_deg", "yaw_rms_deg")}
+        out["attitude_tracking"] = ({**nulls, "source": None} if truth_missing else
+                                    {**att_track(gtr["timestamp"], qcols(gtr, "q"), asp, w0, w1), "source": "sim_ground_truth"})
+        if att is not None:
+            out["attitude_tracking_estimate"] = {**att_track(att["timestamp"], q_att, asp, w0, w1), "source": "vehicle_attitude"}
+    if not truth_missing:
+        if av is not None:
+            r = estimator_error(av["timestamp"], np.column_stack([av[f"xyz[{i}]"] for i in range(3)]), None, gtr, w0, w1)["rate"]
+            if r is not None:
+                out["rate_estimator_error"] = {**r, "definition": "truth - vehicle_angular_velocity, FRD [rad/s]"}
+        if att is not None:
+            r = estimator_error(att["timestamp"], None, q_att, gtr, w0, w1)["attitude"]
+            if r is not None:
+                out["attitude_estimator_error"] = {**r, "definition": "truth - vehicle_attitude, euler diff [deg], rotation angle [deg]"}
 
     # ---- steps ----
     steps = []
@@ -538,7 +694,11 @@ def compute(ulog, run):
         dt = np.diff(tm)
         good = dt > 0
         du = np.diff(um, axis=0)[good] / dt[good, None]
-        eff = {"n_motors": len(cols), "motor_rate_rms_per_s": rms(du),
+        bl = motor_rate_bandlimited(t, u, w0, w1)
+        # motor_rate_rms_per_s: D-EFFORT-BW (400 Hz grid, 50 Hz zero-phase low-pass), None when refused (reason in
+        # motor_rate_bandwidth.status). motor_rate_rms_per_s_raw: OLD raw first difference at the logged rate, errata only.
+        eff = {"n_motors": len(cols), "motor_rate_rms_per_s": bl["rms_per_s"], "motor_rate_rms_per_s_raw": rms(du),
+               "motor_rate_rms_per_s_per_motor": bl["per_motor_rms_per_s"], "motor_rate_bandwidth": bl,
                "motor_spread_mean_abs": float(np.mean(np.abs(um - um.mean(axis=1, keepdims=True)))),
                "motor_mean": float(um.mean())}
         z = zoh(lp["timestamp"], lp["z"], t[m]) if lp is not None else np.full(len(tm), -5.0)
@@ -548,6 +708,8 @@ def compute(ulog, run):
         eff["saturation_frac_high"] = float((um >= 0.99).any(axis=1)[air].mean()) if air.any() else None
         eff["saturation_frac_low"] = float((um <= 0.01).any(axis=1)[air].mean()) if air.any() else None
         nmot = len(cols)
+        if bl["status"] != "ok":
+            out["warnings"].append("effort: motor_rate_rms_per_s " + bl["status"])
         out["effort"] = eff
     ca = topic(ulog, "control_allocator_status")
     if ca is not None:
