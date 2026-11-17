@@ -47,17 +47,23 @@ S50 also: T104 sonnet second key of the lead sweep (`results/stage2_s50/lead_swe
 S51 (launch 20261117-021217, cap $3): T105 opus review r1 of the lead note vs code: NOT BLOCKING (`design/rate_lead_review_r1.md`,
    dispositions there, D-RATE-LEAD addendum). Majors: lead is feedback-only (setpoint path keeps actuator lag); GM falls
    12-18 dB in model, ACT_TC overestimated +40 % is the dangerous side (K40: ~5 dB); yaw lead leaves the G2 path lag.
-NEXT (S52): (2) code MC_INDI_LEAD (sonnet, ~$1.0, needs $2 left: launch first): per-axis vector, c capped at 2, 0 when
-   landed, yaml param default 1 (provisional), unit test on a closed-loop plant that feeds the command back as
-   torque_allocated_prev and fails with the lead broken (break-check), sweep ACT_TC -40/0/+40 % in the test; fix the
-   note's "not a gap" sentence. I read the diff and run the tests; then haiku second key of the diff vs note. Then one
-   roll M3a flight on 2 seeds (rebuild first). Review F6 (take-off jump not limited by max_inc, maybe_landed toggling)
-   joins the landed-handling item. (3) runner appends quad5in_indi_g1.params + provenance in run.json; pretest_gate
-   end-time option. (4) DONE S51: A-24 CLOSED (tone gone with G2_Y 27, ~100x, `results/stage2_s51/a24_psd_g2.md`).
+S52 (launch 20261117-022149, cap $3): MC_INDI_LEAD implemented (T107 sonnet, 6e82b66300; reset fix after T108 haiku
+   second key AGREE on law, `results/stage3_s52/lead_second_key.md`); 13 unit tests, break-checked (sign flip -> 7 fail);
+   closed-loop test PM 34 -> 66, ACT_TC x0.6 PM 45/GM 9.5, x1.4 PM 83/GM 13 (under-estimated tau_c is the weak side, not
+   over as review F2 guessed). Flight roll M3a tc33 P8 lead 1, 2 seeds: PM 59.1/59.1, GM 13.9/14.3, DM 57 ms
+   (S48 lead 0: 25.9/10.7/25) -> `results/stage3_s52/m3a_lead/README.md`. Runner now appends quad5in_indi_g1.params
+   (7c8b8d1661). pretest_gate "end-time option" not needed: use --delay 4 --length 15 to end before the injection.
+NEXT (S53): (1) read tc20 flights (ACT_TC 0.02 default, lead 1, s1/s2: `results/stage3_s52/m3a_lead/lead1tc20_s*`,
+   post as for lead1; add the rows to README) and decide default MC_INDI_LEAD/ACT_TC (D-RATE-LEAD addendum).
+   (2) stage-3 items left (review sec. 4/5.2b): landed handling (trim torque zeroed, F6 take-off jump, maybe_landed
+   toggling), start-up exclusion of the two rate modules, setpoint timeout, frozen-telemetry detection, autotune start,
+   defaults; yaw margins with lead (F3); pitch break; 400/250 Hz. Write one stage-3 design note for them first.
+   (3) hole reporter per run (G1 evidence limit 1). Route check due S54.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| F52b | roll M3a lead1 ACT_TC 0.02 s1,s2 | host bash | `results/stage3_s52/m3a_lead/lead1tc20_s*` (done_tc20.txt) | `bash results/stage3_s52/m3a_lead/fly_tc20.sh` |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -74,6 +80,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 52 | T107 | sonnet | code MC_INDI_LEAD + tests | done, 14 calls, ~$0.75, all pass, break-checked |
+| 52 | T108 | haiku | second key lead diff vs note | done, 6 calls, ~$0.08, AGREE, 1 logging finding fixed |
 | 51 | T106 | haiku | A-24 PSD re-check with G2_Y 27 | done, 5 calls, ~$0.1, tone gone ~100x |
 | 51 | T105 | opus | review r1 lead note vs code | done, 9 calls, ~$1.1 (2x estimate), NOT BLOCKING, 3 MAJOR |
 | 50 | T104 | sonnet | second key lead delay sweep | done, 5 calls, ~$0.25, AGREE at K20, GM 1-3 dB optimistic |
