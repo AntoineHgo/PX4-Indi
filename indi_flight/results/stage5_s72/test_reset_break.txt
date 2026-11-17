@@ -1,0 +1,115 @@
+# Strip BUILD_DIR_SUFFIX (e.g. _replay, _failsafe_web) from CONFIG so the
+# board lookup in cmake/px4_config.cmake sees the bare <vendor>_<model>_<label>
+# even when the build dir is suffixed for variant builds.
+[1/16] Building CXX object src/lib/indi_accel_control/CMakeFiles/IndiAccelControl.dir/indi_accel_control.cpp.o
+[2/16] Linking CXX static library src/lib/indi_accel_control/libIndiAccelControl.a
+[3/16] Generating px4 event json file from source
+[4/16] Generating uORB compatible IDL headers
+[5/16] Generating combined event json file
+[6/16] Generating component_general.json and checksums.h
+[7/16] Building CXX object src/modules/logger/CMakeFiles/modules__logger.dir/logger.cpp.o
+[8/16] Building CXX object src/modules/mavlink/CMakeFiles/modules__mavlink.dir/mavlink_messages.cpp.o
+[9/16] Linking CXX static library src/modules/logger/libmodules__logger.a
+[10/16] ROMFS: copying extras
+[11/16] Linking CXX static library src/modules/mavlink/libmodules__mavlink.a
+[12/16] Linking CXX executable mavlink_fuzz_tests
+[13/16] Linking CXX executable bin/px4
+[14/16] Building CXX object src/lib/indi_accel_control/CMakeFiles/unit-IndiAccelControl.dir/IndiAccelControlTest.cpp.o
+[15/16] Linking CXX executable unit-IndiAccelControl
+[15/16] Running tests
+   Site: fc16aaa458a5
+   Build name: Linux-c++
+Test project /home/ahugo/Documents/Drotek/Codes/PX4-Indi/build/px4_sitl_test
+    Start 28: unit-IndiAccelControl
+1/1 Test #28: unit-IndiAccelControl ............***Failed    0.00 sec
+[0;32m[==========] [mRunning 30 tests from 2 test suites.
+[0;32m[----------] [mGlobal test environment set-up.
+[0;32m[----------] [m21 tests from IndiAccelControlTest
+[0;32m[ RUN      ] [mIndiAccelControlTest.HoverEquilibrium
+[0;32m[       OK ] [mIndiAccelControlTest.HoverEquilibrium (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.AccelOnlyEntryStartsAtARef
+[0;32m[       OK ] [mIndiAccelControlTest.AccelOnlyEntryStartsAtARef (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.PureIndiIncrement
+[0;32m[       OK ] [mIndiAccelControlTest.PureIndiIncrement (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.ModelErrorIsRemovedByMeasuredAcceleration
+[0;32m[       OK ] [mIndiAccelControlTest.ModelErrorIsRemovedByMeasuredAcceleration (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.TiltLimitKeepsVerticalComponent
+[0;32m[       OK ] [mIndiAccelControlTest.TiltLimitKeepsVerticalComponent (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.ThrustSaturationKeepsVertical
+[0;32m[       OK ] [mIndiAccelControlTest.ThrustSaturationKeepsVertical (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.ThrustPointsUpAndMinimumThrust
+[0;32m[       OK ] [mIndiAccelControlTest.ThrustPointsUpAndMinimumThrust (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.NonFiniteInputReturnsFalseAndLeavesOutputUntouched
+[0;32m[       OK ] [mIndiAccelControlTest.NonFiniteInputReturnsFalseAndLeavesOutputUntouched (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.NaNYawKeepsCurrentYaw
+[0;32m[       OK ] [mIndiAccelControlTest.NaNYawKeepsCurrentYaw (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.ResetGivesZeroIncrementOnFirstCycle
+[0;32m[       OK ] [mIndiAccelControlTest.ResetGivesZeroIncrementOnFirstCycle (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.FilterMatching
+[0;32m[       OK ] [mIndiAccelControlTest.FilterMatching (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.MeasurementDelayClamp
+[0;32m[       OK ] [mIndiAccelControlTest.MeasurementDelayClamp (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.InvalidMeanUUsesPreviousThrustCommand
+[0;32m[       OK ] [mIndiAccelControlTest.InvalidMeanUUsesPreviousThrustCommand (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.ReferenceHandlingAndVelocityLimits
+[0;32m[       OK ] [mIndiAccelControlTest.ReferenceHandlingAndVelocityLimits (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.BodyzToAttitudeMatchesExpected
+[0;32m[       OK ] [mIndiAccelControlTest.BodyzToAttitudeMatchesExpected (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.JerkFeedforwardSign
+[0;32m[       OK ] [mIndiAccelControlTest.JerkFeedforwardSign (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.JerkFeedforwardDisabledAndLowThrust
+[0;32m[       OK ] [mIndiAccelControlTest.JerkFeedforwardDisabledAndLowThrust (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.JerkFeedforwardCoordinatedTurn
+[0;32m[       OK ] [mIndiAccelControlTest.JerkFeedforwardCoordinatedTurn (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.JerkBackwardDifferenceAndHold
+[0;32m[       OK ] [mIndiAccelControlTest.JerkBackwardDifferenceAndHold (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.JerkDifferenceFiltered
+[0;32m[       OK ] [mIndiAccelControlTest.JerkDifferenceFiltered (0 ms)
+[0;32m[ RUN      ] [mIndiAccelControlTest.OmegaFfIndependentOfYawRate
+[0;32m[       OK ] [mIndiAccelControlTest.OmegaFfIndependentOfYawRate (0 ms)
+[0;32m[----------] [m21 tests from IndiAccelControlTest (0 ms total)
+
+[0;32m[----------] [m9 tests from IndiAccelBlendTest
+[0;32m[ RUN      ] [mIndiAccelBlendTest.ConvergesToThrustGap
+[0;32m[       OK ] [mIndiAccelBlendTest.ConvergesToThrustGap (0 ms)
+[0;32m[ RUN      ] [mIndiAccelBlendTest.NegativeControlDisabledKeepsGap
+[0;32m[       OK ] [mIndiAccelBlendTest.NegativeControlDisabledKeepsGap (0 ms)
+[0;32m[ RUN      ] [mIndiAccelBlendTest.FrozenOnLandedHold
+[0;32m[       OK ] [mIndiAccelBlendTest.FrozenOnLandedHold (0 ms)
+[0;32m[ RUN      ] [mIndiAccelBlendTest.FrozenOnTelemetryLossAndRecovery
+[0;32m[       OK ] [mIndiAccelBlendTest.FrozenOnTelemetryLossAndRecovery (0 ms)
+[0;32m[ RUN      ] [mIndiAccelBlendTest.ModuleResetDoesNotTouchBlend
+[0;32m[       OK ] [mIndiAccelBlendTest.ModuleResetDoesNotTouchBlend (0 ms)
+[0;32m[ RUN      ] [mIndiAccelBlendTest.FrozenWhileCollectiveClamped
+[0;32m[       OK ] [mIndiAccelBlendTest.FrozenWhileCollectiveClamped (0 ms)
+[0;32m[ RUN      ] [mIndiAccelBlendTest.FrozenAtBypassA3A8
+[0;32m[       OK ] [mIndiAccelBlendTest.FrozenAtBypassA3A8 (0 ms)
+[0;32m[ RUN      ] [mIndiAccelBlendTest.NoDriftAfterResetWithoutHold
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_accel_control/IndiAccelControlTest.cpp:818: Failure
+Expected: (fabsf(_ctrl.blend() - b0)) < (2e-4f), actual: 0.000616036355 vs 0.0002
+
+[0;31m[  FAILED  ] [mIndiAccelBlendTest.NoDriftAfterResetWithoutHold (0 ms)
+[0;32m[ RUN      ] [mIndiAccelBlendTest.FrozenAtE7EdgeSingleCycle
+[0;32m[       OK ] [mIndiAccelBlendTest.FrozenAtE7EdgeSingleCycle (0 ms)
+[0;32m[----------] [m9 tests from IndiAccelBlendTest (0 ms total)
+
+[0;32m[----------] [mGlobal test environment tear-down
+[0;32m[==========] [m30 tests from 2 test suites ran. (0 ms total)
+[0;32m[  PASSED  ] [m29 tests.
+[0;31m[  FAILED  ] [m1 test, listed below:
+[0;31m[  FAILED  ] [mIndiAccelBlendTest.NoDriftAfterResetWithoutHold
+
+ 1 FAILED TEST
+
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) =   0.01 sec
+
+The following tests FAILED:
+	 28 - unit-IndiAccelControl (Failed)
+Errors while running CTest
+FAILED: test/CMakeFiles/test_results /home/ahugo/Documents/Drotek/Codes/PX4-Indi/build/px4_sitl_test/test/CMakeFiles/test_results 
+cd /home/ahugo/Documents/Drotek/Codes/PX4-Indi/build/px4_sitl_test && GTEST_COLOR=1 /usr/bin/ctest --output-on-failure -T Test -R IndiAccelControl --exclude-regex antlr4_tests_NOT_BUILT
+ninja: build stopped: subcommand failed.
+make: *** [Makefile:467: tests] Error 1

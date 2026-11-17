@@ -57,3 +57,5 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S70 | T157 | haiku | blind second key on gap z-error | 11 calls, ~39k tok | done, agrees <= 0.006 m |
 | S71 | T158 | opus | D-GAP review r1 | 15 calls, ~62k tok, ~$0.7 | done, BLOCKING (edge semantics), design/dgap_review_r1.md |
 | S71 | T159 | sonnet | D-GAP r2 closure check | 3 calls, ~29k tok, ~$0.13 | done, OPEN on wording -> fixed, design/dgap_review_r2.md |
+| S72 | T160 | sonnet | D-GAP impl + 8 tests + 2 flights | 36 calls, ~90k tok, ~$0.8 | done; orchestrator fixed reset() model-path init (+1 test, break-checked) |
+| S72 | T161 | haiku | second key dz + residual split | 8 calls, ~41k tok, ~$0.1 | done, results/stage5_s72/second_key.md |
