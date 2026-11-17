@@ -37,3 +37,17 @@ Files: `bench/scenarios.py` (add), new `bench/s5_gap_check.py` (metric), new `re
 - MPC_Z_P / MPC_Z_VEL_P_ACC actual defaults in this build and whether the INDI chain still uses them for z (it replaces the velocity P-law at a_ref).
 - Velocity/accel mode: PVA trajectory acceptable as "one velocity/acceleration-commanding mode", or must it be a stick mode (new runner feature)? Owner call.
 - Determinism (G1.6, A-32 open) may limit run-to-run comparisons: use same seed and compare INDI vs stock within the spread seen by `bench/g16_spread.py`.
+
+## Fact check (haiku, S69)
+
+1. MPC_Z_P default = 1.0 (`src/modules/mc_pos_control/multicopter_position_control_gain_params.yaml:10`, defined :5). MPC_Z_VEL_P_ACC default = 4.0 (same yaml :30, defined :25). Both bound in `src/modules/mc_pos_control/MulticopterPositionControl.hpp:147,151`.
+2. SIM_GZ_THR_SC exists: defined `src/modules/simulation/gz_bridge/module.yaml:135`, read `src/modules/simulation/gz_bridge/GZMixingInterfaceESC.hpp:82-83` (rotor scale = sqrt(clamp(thrust_scale, 0, 1))). Set from bench in `indi_flight/bench/run_scenario.py:836` (sag) and `:888` (reset to 1.0). Test payload in `indi_flight/bench/tests/test_applied_timing.py:49`. The `thrust_scale` in `indi_flight/bench/scenarios.py` and `metrics.py:397` is the motor_fault scenario field, not the sim param.
+3. quad5in `<maxRotVelocity>2700</maxRotVelocity>` at `indi_flight/sim/models/quad5in/model.sdf:14,31,48,65` (4 rotors). No `*5in*` folder under `Tools/simulation/gz/models/`. CA_R_W_MAX / MC_INDI_W_MAX value in `indi_flight/bench` params files: NOT FOUND (names only at `run_scenario.py:62,680-681`; the 2700 figure appears only in `indi_flight/STATE.md:14` and design docs).
+4. MPC_USE_HTE / HTE_* in `indi_flight/bench/*.py`: NOT FOUND (no hits in `indi_flight/bench` at all).
+
+## Orchestrator note (S69)
+- 0.37 m prediction = (1-0.85) g / (1.0 x 4.0), valid only with the hover-thrust estimator off: PX4 default MPC_USE_HTE 1
+  absorbs a steady thrust gap. Fly the stock mc_pos_control reference with HTE on (default) and record HTE off as the
+  predicted-error check of the scenario (O-13), so the scenario is shown to create the gap.
+- SIM_GZ_THR_SC is applied as sqrt(scale) to rotor speed (GZMixingInterfaceESC.hpp:82): thrust scales by s, rotor
+  speed by sqrt(s). Check on the log that the INDI measured-thrust path sees the reduced rotor speed.

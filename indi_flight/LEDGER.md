@@ -52,4 +52,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | 68 | T150 | haiku | re-score G1.6 runs with both metrics | done, 8 calls, real regression -> A-32 |
 | 69 | T152 | sonnet | route check 69 | done, 5 calls |
 | 69 | T154 | sonnet | slice-2 build plan (read-only) | done, 10 calls |
-| 69 | T155 | haiku | slice-2 plan fact check | in flight |
+| 69 | T155 | haiku | slice-2 plan fact check | done, 5 calls |

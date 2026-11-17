@@ -22,7 +22,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    S69 (launch 20261118-000439, cap $3): route check 69 filed (stop anomaly chasing). A-32 PARKED: host load, not a
    regression (seq 1.5 ms = S32, 5-parallel 11 ms); G1.6 = sequential runs (GATES note s69). A-30 PARKED (INDI seq
    rise <= 4.3 ms). N2 closed; Q5 addendum 6 (move to JOURNAL at S70 unless owner objects). Slice-2 plan written.
-   NEXT S70 (per route check 69): stage-5 slice 2 from `design/slice2_plan_s69.md` (brief section + haiku fact check
+   NEXT S70 (per route check 69): stage-5 slice 2 from `design/slice2_plan_s69.md` (brief, haiku fact check and HTE note
    at its end): one sonnet implementation agent (2 position-mode thrust-gap scenarios via motor_fault motors list,
    params with MC_INDI_W_MAX, truth-altitude metric + self-test, 3-flight pre-test), haiku second key on the metric;
    flights SEQUENTIAL when a same-seed or step claim is made. Then T123 deviations A3/A5/reset (McIndiPosControl.cpp
@@ -33,7 +33,6 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | T151 | A-32 load test: exact G1.6 cmd, 5 sequential + 5 parallel (S68 G-v1 bimodal 175/186 ms, 175 only in parallel runs; S32 mean 186) | bash bg | `results/a32_load_s69/` | `bash results/a32_load_s69/fly.sh` |
-| T155 | slice-2 plan fact check (append-only) | haiku | end of `design/slice2_plan_s69.md` | re-brief if section missing |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
