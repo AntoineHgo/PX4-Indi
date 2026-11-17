@@ -170,3 +170,8 @@ SCENARIOS["vp_loss2_08"] = {**SCENARIOS["motor_loss_0"], "motor_fault": dict(seg
 SCENARIOS["vp_gain03_att"] = {**_ATT, "motor_fault": dict(segment="up", motors=[0, 3], thrust_scale=0.85)}
 SCENARIOS["vp_sag75_att"] = {**_ATT, "thrust_sag": dict(scale=0.75)}
 SCENARIOS["vp_tau2_loss2_att"] = {**_ATT, **_V_PLANT["tau2"], "motor_fault": dict(segment="up", motor=2, thrust_scale=0.8)}
+
+# Stage-5 slice 2 (S70): position-mode thrust gap. Offboard position hold, motors lose thrust at segment "up" and stay lost.
+_S5_GAP = dict(mode="position", axis=None, segments=[("settle", 15.0, 0.0), ("up", 5.0, 0.0), ("hold", 40.0, 0.0)])
+SCENARIOS["s5_gap085"] = {**_S5_GAP, "motor_fault": dict(segment="up", motors=[0, 1, 2, 3], thrust_scale=0.85)}
+SCENARIOS["s5_loss08"] = {**_S5_GAP, "motor_fault": dict(segment="up", motor=2, thrust_scale=0.8)}
