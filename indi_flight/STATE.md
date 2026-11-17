@@ -43,9 +43,11 @@ S53 (launch 20261117-023518, cap $3): ACT_TC sweep with lead 1 (`results/stage3_
    T109 sonnet drafted `design/stage3_items_note.md` (6 items, UNREVIEWED; 9 UNVERIFIED points listed in it).
 S53 also: route check 53 (`design/route_check_53.md`), acted on: defaults applied (7522625b0f, ACT_TC 0.05; LEAD already
    1); opus review of the items note DEFERRED (items 1-3 parked as a post-G2 safety package, reviewed before they are
-   coded); pitch M3a at ACT_TC 0.05 flown (B2, see results/stage3_s53/pitch_m3a/).
-NEXT (S54): (1) finish one G2 inner table at 800 Hz: yaw M3a with lead (INJ_AX 3, csv axis 2; check AMP vs G2_Y
-   first with a pre-test) and the measured-rotor path (--sim v2) for roll; then 400 Hz roll/pitch/yaw (GATES.md G2
+   coded). Pitch M3a ACT_TC 0.05: PM 86.9/86.8, GM 11.9/12.0 (2 seeds, = roll). Yaw M3a pre-test (AMP 0.008):
+   no crossover in 1-50 Hz (|L| -0.7 dB at 1 Hz), Ms 8.2 dB at 1 Hz -> A-27 opened. SITL rebuilt at 7522625b0f
+   (later commits docs/results only; --gate still needs a rebuild at HEAD).
+NEXT (S54): (1) finish one G2 inner table at 800 Hz: A-27 yaw (bins 0.1-20 Hz, check the M3a margin script's
+   bin options; yaw loop model with K_Y, G2_Y, MC_YAW_P; re-fly `results/stage3_s53/yaw_m3a/`) and the measured-rotor path (--sim v2) for roll; then 400 Hz roll/pitch/yaw (GATES.md G2
    "Configurations"). (2) write the attitude/velocity/position break notes on the host and second-key them (route
    check 49 item never done). (3) stage-3 items note: opus review before coding items 1-5; own doubts: item 3 thrust
    decay diverges from stock (stock holds), item 2 runtime foreign-publisher detection fragile. (4) hole reporter per
@@ -54,7 +56,6 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S53-B2 | pitch M3a ACT_TC 0.05 lead 1, 2 seeds, then SITL rebuild at 7522625b0f | - | `results/stage3_s53/pitch_m3a/` (done.txt ALLDONE) | `bash results/stage3_s53/pitch_m3a/run_all.sh` |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -71,6 +72,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 53 | T110 | sonnet | route check 53 | done, 6 calls, ~$0.2, acted on (defaults, G2 table first) |
 | 53 | T109 | sonnet | stage-3 items design note | done, 5 calls, ~$0.2, 168 lines, UNREVIEWED |
 | 52 | T107 | sonnet | code MC_INDI_LEAD + tests | done, 14 calls, ~$0.75, all pass, break-checked |
 | 52 | T108 | haiku | second key lead diff vs note | done, 6 calls, ~$0.08, AGREE, 1 logging finding fixed |
