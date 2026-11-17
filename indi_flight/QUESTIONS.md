@@ -55,3 +55,7 @@ Addendum 3 (S68, `results/g2_clean_s68/README.md`): clean-HEAD re-fly of the S64
 192.5 ms, so a clean build also reaches the S64 range (dirty tree not needed as cause). 800 Hz same-seed, 5 runs: rise
 199-214 ms, settle 329-368, OS 0.7-1.7 %; S64 800 Hz values at the edge of that range. Spread is about 20 ms / 40 ms / 1 pt
 at both rates, under half the margin to the limits. Next: sim-time arm in the runner, then re-measure. Still not blocking.
+Addendum 4 (S68, `results/g16_sched_indi_s68/README.md`): same-seed with the G1.6 flags (--sched --sched-anchor), 5 runs per rate:
+400 Hz rise/settle/OS spread 6.2 ms / 11.3 ms / 0.7 pt, 800 Hz 14.5 / 16.3 / 0.7; step instant pinned within 9 ms. Wall-clock
+arming is not the main cause. Next lead: an INDI-only input outside lockstep (eRPM telemetry path), tested by PID vs INDI and
+INDI without telemetry under the same flags. Spread still under half the limit margin; not blocking.
