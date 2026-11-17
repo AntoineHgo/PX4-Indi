@@ -39,9 +39,11 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    gap when landed/off/telemetry invalid, indi_rate_control.cpp:336-345, against A16). D-GAP amended in DECISIONS.md
    (freeze rules, anti-windup, coll_model path, new overturn on HF mode, tb window 0.3-2.5 s, tests). Time-offset
    hypothesis + closing test in results/stage5_s70/README.md.
-   NEXT S72: (1) sonnet r2 check: amended D-GAP vs dgap_review_r1.md items 1-5 (~$0.2) unless done S71 (see LEDGER);
-   (2) sonnet: implement D-GAP per amendment + unit tests (negative control tb=0, freeze edges); fly gap085_indi_htoff
-   and loss08_indi sequential, target |dz| < 0.06 m; (3) the rate-loop snap-vs-freeze question goes into the
+   T159 sonnet r2 (design/dgap_review_r2.md) OPEN on wording (recovery, overturn 'no tb passes', test tolerances);
+   fixed in DECISIONS.md -> D-GAP ACCEPTED for implementation.
+   NEXT S72: (1) launch sonnet with `design/dgap_impl_brief_s71.md` (code + 8 unit tests with break checks +
+   gap085_indi_htoff/loss08_indi sequential, |dz| < 0.06 m) -> results/stage5_s72/README.md; haiku second key on dz;
+   I read the firmware diff and run the tests; (3) the rate-loop snap-vs-freeze question goes into the
    combined opus review of the stage-3 safety diff + stage-5 slices; (4) PVA mode slice (ZSINE_O6).
 ## Tasks in flight
 | id | task | agent | output | resume |

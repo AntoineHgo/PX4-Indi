@@ -413,7 +413,7 @@ pre-identification behaviour of decision 3 must cover it).
 - Overturn if: flight on >= 2 seeds disagrees with the model prediction by > 5 points of overshoot, or r_dot_f raises
   motor-command RMS in hover beyond the G4 limit, or a mode switch shows a setpoint impulse that the reset does not catch.
 
-## D-GAP (S70, PROPOSED; S71 opus r1 BLOCKING `design/dgap_review_r1.md`, amended below, r2 check pending): decision 2 for the outer loop
+## D-GAP (S70, PROPOSED; S71 opus r1 BLOCKING `design/dgap_review_r1.md`, amended below; sonnet r2 `design/dgap_review_r2.md` OPEN on wording, fixed S71 -> ACCEPTED for implementation): decision 2 for the outer loop
 - Evidence: `results/stage5_s70/README.md` (T156, 1 flight each, seed 1). Position hold, 4 motors x0.85 thrust:
   INDI outer loop standing z error 0.31 m (HTE on) / 0.37 m (HTE frozen); prediction (1-s)g/(Z_P Z_VEL_P_ACC) 0.368;
   stock mc_pos_control 0.01 m (HTE on), 0.06 m (HTE frozen, vel integrator on), 0.37 m (both off). Single motor 0.8:
@@ -437,17 +437,24 @@ pre-identification behaviour of decision 3 must cover it).
      Edges: b is FROZEN (held, not reset) on ground (landed / maybe_landed), at A3/A8 bypass and e7 edges (A16);
      the module's reset() does not touch b; while mean_u is invalid (telemetry loss or frozen) b is frozen and
      coll_f = coll_model; while the collective is clamped (module limit or allocator collective-saturation flag) b
-     is frozen (anti-windup). b starts at 0 at boot only. The rate-loop snap is NOT copied; whether the rate loop
+     is frozen (anti-windup; if the allocator exposes no collective-saturation flag, the module's own clamp and
+     the measured mean_u at its limit are used). b starts at 0 at boot only. Recovery: when the freezing condition
+     clears, b resumes integrating from its held value (no snap, no reset), and coll_f switches back to
+     coll_meas + b on the first valid mean_u sample. The rate-loop snap is NOT copied; whether the rate loop
      itself should freeze is filed for the stage-3 safety review (ANOMALIES/STATE).
   2. coll_model = previous clamped collective command (no actuator model), passed through a second delay/LPF path
      parallel to the measured one in `indi_accel_control` so both sides are time-aligned.
   3. Overturn: (d) is reverted to (a) if the measured acceleration-loop response at tb and at tb/3 shows a lightly
-     damped HF mode (resonance peak > 3 dB or step overshoot > 25 %), or the G2 velocity-break PM is < 45 deg, for
-     every tb in the window ~0.3 s (HF mode) to ~2.5 s (gap removed within 10 s). tb is the default 1.0 s unless
+     damped HF mode (resonance peak > 3 dB or step overshoot > 25 %), or the G2 velocity-break PM is < 45 deg, i.e.
+     if NO tb in the window passes both tests. Window: ~0.3 s (HF mode) to ~2.5 s (gap removed within 10 s). tb is the default 1.0 s unless
      the margin measurement moves it.
   4. MPC_XY/Z_VEL_I_ACC stay 0 under INDI (no double integrator); (d) runs in acceleration-only setpoint groups
      (A10/A15) too, since it acts on the collective, not on the velocity error.
-  5. Lesson-20 tests: unit test on a plant with thrust scale 0.85 whose steady collective error goes to 0 with
-     tb = 1 s and stays at (1-k) with tb = 0 / blend disabled (negative control), plus a freeze test (landed edge,
-     telemetry-loss edge keep b). Flight check: gap085_indi_htoff and loss08_indi standing |dz| < 0.06 m (the stock
-     result with its integrator), and a land/re-take-off sequence with b held across the ground phase.
+  5. Lesson-20 tests: unit test on a plant with thrust scale 0.85: steady collective error after 10 tb is
+     < 0.01 (u units) with tb = 1 s, and >= 0.9 (1-k) with tb = 0 / blend disabled (negative control). Freeze
+     tests, each asserting b unchanged (|db| < 1e-6) across the edge and resuming without a step afterwards: landed
+     edge, telemetry-loss edge and its recovery, module reset() call, collective clamp, A3/A8 bypass, e7. Each test
+     is checked by breaking the rule once (snap or reset b) and seeing it fail. Flight check: gap085_indi_htoff and
+     loss08_indi standing |dz| < 0.06 m (the stock result with its integrator); land/re-take-off with the gap
+     present: |b| after re-take-off within 10 % of its pre-landing value and max |dz| in the first 5 s after
+     take-off < 0.15 m.
