@@ -653,3 +653,7 @@ S64 (launch 20261117-190447, cap $3): route check 64 (T129, `design/route_check_
 - S68: A-9 CLOSED archive-only: second key AGREE, guard gtest OmegaFfIndependentOfYawRate break-checked (35b313d2a5).
 - S68: G2-STEP batches since S62 flown without --sched (G1.6 flags): T147 re-measures the same-seed spread with them.
 - S68: A-30 traced to a determinism regression since S32 (A-32): G1.6 cmd same-seed rise spread 0.8 -> 11.5 ms, not INDI-specific, not sim v2.
+- S69: route check 69 (`design/route_check_69.md`): 0/8 gates; stop anomaly chasing, slice 2 in S70, 2nd mode + combined review S71.
+- S69: A-32 PARKED: no regression; same-seed spread comes from parallel host load (seq 1.5 ms = S32, 5-parallel 11 ms). G1.6 protocol note (sequential) in GATES.md.
+- S69: A-30 PARKED: INDI 400 Hz sequential same-seed spread rise <= 4.3 ms / settle 7.5 ms / OS 0.53 pt.
+- S69: N2 closed (A done S66, B = A-9 closed S68, C = Q5 + A-30/A-32 resolved S69). Slice-2 plan `design/slice2_plan_s69.md`.
