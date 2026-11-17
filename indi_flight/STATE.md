@@ -49,6 +49,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| B62 | 12 INDI step flights seeds 1-3 after da64bc26b3 | host bash | `results/stage3_s62/done.txt` (ALLDONE) | `bash indi_flight/results/stage3_s62/fly_steps.sh` from repo root |
+| T126 | haiku second key of da64bc26b3 vs D-S3-ATT-STEP | haiku | `design/t126_second_key_att_step_s62.md` | re-launch with same brief |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -65,6 +67,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 62 | T125 | sonnet | code D-S3-ATT-STEP + tests + builds | done, 15 calls, ~$0.5, model test OS 0.51 % (11.1 % without), break-checked, committed da64bc26b3 |
 | 61 | T124 | haiku | second key attitude-step model | done, 6 calls, ~$0.07, AGREE (settle differs at band edge) |
 | 60 | T123 | haiku | second key slice INDI stage vs A2-A14 | done, 8 calls, ~$0.06, AGREE with 3 deviations |
 | 60 | T122 | sonnet | stage-5 hover slice code+build+1 hover | done, 28 calls, ~$0.8, flew; claimed module identity unverified, closed by S60 instrument |
