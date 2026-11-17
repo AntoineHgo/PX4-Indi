@@ -13,25 +13,7 @@
 ## Next actions (in order)
 S44-S46 detail moved to JOURNAL.md (S51). Derived G1 1757/1640/205 in `bench/params/quad5in_indi_g1.params`; `bench/pretest_gate.py` in use. S47-S48 detail moved to JOURNAL.md (S53): yaw limit cycle fixed by derived G2_Y 27; low roll PM explained by K_R/P_att + motor lag.
 S49-S53 detail moved to JOURNAL.md (S56): lead MC_INDI_LEAD 1, ACT_TC 0.05 defaults; roll/pitch M3a PM 59-87.
-S54 (launch 20261117-024822, cap $3): A-27 EXPLAINED. Yaw M3a re-flown 0.1-20 Hz (`results/stage3_s54/yaw_m3a_lf/`):
-   L -> -1 at DC. Cause: step 8 yaw denominator G1 + G2/dt (~105 G1 at 800 Hz, dead-beat spin-up) -> law extrapolates t_f,
-   M3a reads -H A_m, yaw gain set by G2 and dt, not K_Y. Model `bench/yaw_break_model_s54.py` matches flight to 1 Hz, keyed by T111 (AGREE after a key-2 fix);
-   proposed fix D-YAW-INV option (c) (increment low-passed by G2/G1, dt-independent): yaw loop = K A/s, Ms 1.6-8.1 dB
-   under G2 x0.5-2, tau x1-2. m3a_margins_pretest.py takes fmin fmax Tp args; checks.py hard-codes the S40 multisine.
-S55 (launch 20261117-025824, cap $1.48): yaw model extended (`results/stage3_s55/yaw_model/README.md`, UNKEYED, ae715f427d):
-   option (c) dt-independent; tau_m >= plant tau and G2 x0.5..2 -> M3a Ms <= 5.9 dB, GM >= 8.2; weak side tau_m < plant
-   and law G2 > plant (GM 0.6). T112 opus review r1 note vs code: NOT BLOCKING (`design/yaw_inv_review_r1.md`, opus ~$0.7
-   in 7 calls). Majors: store applied yaw increment after step 9 clamp (replaces _t_f_prev), zero it when landed and in
-   resetStates, rewrite G2_Y param/header text; lead acts fully on yaw (x105) -> yaw depends on ACT_TC/LEAD as roll.
-S56 (launch 20261117-061159, cap $2.83): D-YAW-INV IMPLEMENTED (T113 sonnet 23e9d30cc0; T114 haiku second key AGREE-WITH-ISSUES:
-   first landed cycle read the flight increment -> 296766019a, new test break-checked). 58/58 unit tests. A-27 CLOSED: yaw M3a
-   2 seeds f_c 1.24 Hz, PM 88, DM 197 ms, Ms 1.6 dB (model 1.4 Hz/1.3 dB), `results/stage3_s56/yaw_m3a/README.md`. Yaw GM
-   unread (band ends 20 Hz at arg -170): extend bins to ~40 Hz for the G2 table. No bench script reads torque_increment.
-   SITL binary at 23e9d30cc0: rebuild before any further flight or --gate batch.
-   Yaw GM read DONE (`results/stage3_s57_pre/yaw_m3a_hf/README.md`): GM 18.5/18.3 dB at 22 Hz, 2 seeds. Yaw 800 Hz:
-   PM 88, DM 197 ms, GM 18.4, Ms 1.6 dB. SITL binary at 296766019a firmware.
-   Roll M3a 400 Hz DONE (`results/stage3_s57_pre/roll_m3a_400/README.md`): PM 84.4, GM 10.5, DM 58 ms, Ms 3.9, f_c 4 Hz,
-   2 seeds, logged at 400 Hz. pretest_gate over a whole M3a flight FAILs by design: always pass --delay 4 --length 15.
+S54-S56 detail moved to JOURNAL.md (S58): D-YAW-INV coded, yaw M3a 800 Hz PM 88 / GM 18.4 / Ms 1.6; roll 400 Hz PM 84.
 S57 (launch 20261117-071301, cap $3): roll M3a 800/3 Hz re-flown with TP 7.5 (`results/stage3_s57/roll_m3a_267b/README.md`):
    PM 83.2/83.6, GM 10.2/10.0, DM 57 ms, Ms 4.0/4.1, 2 seeds; S56 seed 1 had taken the LS (non-uniform t) path, not a rounding
    hole; LS and FFT paths agree on flight data. Route check 57 (`design/route_check_57.md`) ACTED ON: rate-loop table stops
