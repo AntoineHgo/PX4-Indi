@@ -28,7 +28,7 @@ path_allowed() {
 	# the stage-1 workspace is an archive: readable, never written
 	"$REPO"/indi_project | "$REPO"/indi_project/*) return 1 ;;
 	"$REPO"/indi_flight/guard.sh | "$REPO"/indi_flight/claude_settings.json) return 1 ;;
-	"$REPO"/indi_flight/run_orchestrator.sh | "$REPO"/indi_flight/MISSION.md) return 1 ;;
+	"$REPO"/indi_flight/run_orchestrator.sh | "$REPO"/indi_flight/MISSION.md | "$REPO"/indi_flight/MISSION_ARCHIVE.md) return 1 ;;
 	"$REPO"/indi_flight/LESSONS.md | "$REPO"/indi_flight/BYPASS_5H | "$REPO"/indi_flight/BYPASS_7D) return 1 ;;
 	"$REPO"/* | /tmp/* | "$HOME"/.claude/projects/*) return 0 ;;
 	*) return 1 ;;
@@ -44,8 +44,9 @@ Edit | Write | NotebookEdit)
 	path_allowed "$p" || deny "'$p' is outside the repository or is a protected file"
 	;;
 
-Bash)
-	cmd=$(jq -r '.tool_input.command // empty' <<<"$input")
+Bash | Monitor)
+	# Monitor runs a shell command too (`command`, or an `until` condition)
+	cmd=$(jq -r '.tool_input.command // .tool_input.until // empty' <<<"$input")
 
 	# privilege, system and shell-environment changes
 	has '(^|[^[:alnum:]_./-])(sudo|doas|pkexec)([[:space:]]|$)' && deny "no privilege escalation"
@@ -55,7 +56,7 @@ Bash)
 	has '(\.ssh|\.gnupg|\.gitconfig|\.bashrc|\.zshrc|\.zshenv|\.profile|\.claude/settings|\.claude\.json|\.config/gh)' && deny "no access to credentials or shell/tool configuration"
 	# supervisor files and git hooks may be read, never modified
 	while IFS= read -r seg; do
-		grep -Eq '(guard\.sh|claude_settings\.json|run_orchestrator\.sh|MISSION\.md|LESSONS\.md|BYPASS_5H|BYPASS_7D|\.git/hooks)' <<<"$seg" || continue
+		grep -Eq '(guard\.sh|claude_settings\.json|run_orchestrator\.sh|MISSION\.md|MISSION_ARCHIVE\.md|LESSONS\.md|BYPASS_5H|BYPASS_7D|\.git/hooks)' <<<"$seg" || continue
 		grep -Eq '(>|(^|[^[:alnum:]_.-])(tee|mv|cp|rm|ln|touch|chmod|chown|truncate|install|dd|patch)([[:space:]]|$)|(sed|perl)[[:space:]]+[^;|&]*-[[:alnum:]]*i|git[[:space:]]+(checkout|restore|rm|mv|apply|stash)|open\(|write)' <<<"$seg" &&
 			deny "supervisor files and git hooks may be read but not modified"
 	done < <(tr ';|&\n' '\n\n\n\n' <<<"$cmd")
