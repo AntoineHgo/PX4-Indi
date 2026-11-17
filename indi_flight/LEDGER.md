@@ -37,3 +37,6 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | 66 | T135 | sonnet | N2-A anomaly triage pre-S36 | done, 11 calls, verdicts applied (A-7 parked not closed) |
 | 66 | T136 | sonnet | investigate payload/com_shift/torque sign | done, 15 calls, wrench 2x found (A-31) |
 | 66 | T137 | sonnet | A-31 gz ApplyLinkWrench source read | done, 11 calls, no 2x mechanism in source |
+| 67 | T138 | sonnet | A-31 fix + solo re-fly payload_add, com_shift | done, 10 calls, 1x confirmed |
+| 67 | T139 | haiku | second key T138 from raw logs | done, 9 calls, AGREE |
+| 67 | T140 | haiku | re-fly torque_steps, gust_x, gust_diag after fix | done, 8 calls, main axes halved |
