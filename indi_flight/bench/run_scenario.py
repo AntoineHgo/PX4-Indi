@@ -282,7 +282,7 @@ class Sim:
             self.unpause_gz()
         self.wait_log("Startup script returned successfully", 180)
         try:  # evidence of the model gz actually loaded (inertia, link poses); informational only
-            r = subprocess.run(["gz", "model", "-m", "x500_0"], capture_output=True, text=True, env=self.env,
+            r = subprocess.run(["gz", "model", "-m", f"{self.a.model}_0"], capture_output=True, text=True, env=self.env,
                                timeout=30)
             open(os.path.join(self.out, "gz_model_info.txt"), "w").write(r.stdout + r.stderr)
         except Exception as e:  # noqa: BLE001
