@@ -172,7 +172,7 @@ void IndiRateControl::resetStates()
 	// restart the yaw filters from the next input, not from zero, which would scale the yaw path by the
 	// filter's feed-through gain on every cycle that resets the states (landed, fault recovery)
 	_yaw_filter_reset_pending = true;
-	_t_f_prev.zero();
+	_yaw_inc_prev = 0.f;
 	_blend.zero();
 }
 
@@ -373,7 +373,9 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	// filtered landed output, which the maximum increment bounds like any in-flight increment
 	const Vector3f t_fb = landed ? Vector3f() : t_f;
 
-	// 8. incremental inversion, only yaw has the spin-up term (g2 / dt = 0 for roll and pitch)
+	// 8. incremental inversion, only yaw has the spin-up term (g2 / dt = 0 for roll and pitch). Yaw uses the backward
+	// Euler form of (G1 + G2 s) Delta = nu - (1 + c) a_f, a low pass of time constant G2 / G1 on the increment, with
+	// Delta_k-1 the increment applied in the previous cycle (decision D-YAW-INV option c)
 	Vector3f dt_cmd;
 
 	// rate prediction lead: c_i = lead_scale K_i tau_c cancels the actuator lag in the feedback path, bounded
@@ -386,11 +388,10 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 
 	for (int i = 0; i < 3; i++) {
 		const float g2_over_dt = (i == 2) ? (_g2_yaw / dt) : 0.f;
-		const float numerator = nu(i) - (1.f + lead_gain(i)) * a_f(i) + g2_over_dt * (t_f(i) - _t_f_prev(i));
+		const float prev_inc = (i == 2) ? _yaw_inc_prev : 0.f;
+		const float numerator = nu(i) - (1.f + lead_gain(i)) * a_f(i) + g2_over_dt * prev_inc;
 		dt_cmd(i) = numerator / (_g1(i) + g2_over_dt);
 	}
-
-	_t_f_prev = t_f;
 
 	if (!dt_cmd.isAllFinite()) {
 		// e.g. overflow from an absurdly large input, which may have reached the filter states
@@ -404,6 +405,10 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 		dt_cmd(i) = math::constrain(dt_cmd(i), -_max_increment, _max_increment);
 		t_cmd(i) = math::constrain(t_fb(i) + dt_cmd(i), -1.f, 1.f);
 	}
+
+	// the yaw increment state is the one that reached the output (back calculation), never a raw or non finite value,
+	// and zero on ground so that flight starts without a double count of the landed output
+	_yaw_inc_prev = landed ? 0.f : (t_cmd(2) - t_fb(2));
 
 	_fault = false;
 	_fault_cycles = 0;

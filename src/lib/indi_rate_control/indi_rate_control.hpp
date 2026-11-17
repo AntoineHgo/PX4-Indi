@@ -51,8 +51,11 @@
  * yaw rate error used in nu (nu_yaw = K_Y * lpf(rate_sp - rate)), setpoint included, as the PID
  * yaw torque output filter (MC_YAW_TQ_CUTOFF) does for the whole PID yaw command.
  *
- * Yaw adds the rotor spin-up term G2 (Smeur 2016, torque space form):
- *   (G1 + G2/dt) dt_cmd = nu - (1 + c) angular_accel + (G2/dt) (t_f - t_f_prev)
+ * Yaw adds the rotor spin-up term G2, as a first order low pass on the increment (backward Euler of
+ * (G1 + G2 s) Delta = nu - (1 + c) angular_accel), Delta_prev = increment applied in the previous cycle:
+ *   (G1 + G2/dt) dt_cmd = nu - (1 + c) angular_accel + (G2/dt) Delta_prev
+ * DC gain 1/G1, time constant G2/G1, independent of dt. G2 is the rotor inertia reaction per unit torque rate,
+ * so G2/G1 is not the motor time constant.
  *
  * Measured torque path (optional, decision D-omega2): setMeasuredTorque() supplies tau_meas = B u from the ESC
  * rotor speeds. It runs through its own delay and its own copy of H in parallel to the model, and replaces
@@ -324,7 +327,7 @@ private:
 	math::LowPassFilter2p<float> _yaw_lpf_accel; ///< yaw low pass on the angular acceleration
 	math::LowPassFilter2p<float> _yaw_lpf_torque; ///< same design on the filtered torque
 	math::LowPassFilter2p<float> _yaw_error_lpf; ///< same design on the yaw rate error in nu
-	matrix::Vector3f _t_f_prev; ///< filtered torque of the previous cycle (yaw spin-up term)
+	float _yaw_inc_prev{0.f}; ///< yaw increment applied in the previous cycle, 0 on ground (yaw spin-up term)
 	matrix::Vector3f _t_cmd_last; ///< last valid output, held on rejected cycles
 	int _fault_cycles{0}; ///< consecutive rejected cycles
 

@@ -59,11 +59,11 @@ parameters:
     MC_INDI_G2_Y:
       description:
         short: INDI yaw rotor spin-up term
-        long: Yaw angular acceleration in rad/s^2 per unit of normalised torque rate (rad/s^2 per 1/s). Set to 0 to disable. Sensible values are of the order of MC_INDI_G1_Y times the loop period (about 0.02); values much larger than that let the spin-up term dominate the yaw increment and remove yaw rate feedback.
+        long: Yaw rotor spin-up term, the yaw angular acceleration from the rotor inertia reaction per unit of normalised torque rate (rad/s^2 per 1/s). G2 / MC_INDI_G1_Y is a time in seconds that is not the motor time constant (reference 5-inch quadcopter 27 / 205 = 0.13 s). It sets a first order low pass of time constant G2 / G1 on the yaw torque increment, with unchanged steady state gain. Set to 0 to disable. Under-estimating G2 is benign, over-estimating it is the weak side of the margin.
       type: float
       default: 0.0
       min: 0.0
-      max: 1
+      max: 1000
       decimal: 2
       increment: 0.1
     MC_INDI_K_R:

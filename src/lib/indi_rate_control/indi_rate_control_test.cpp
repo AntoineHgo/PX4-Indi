@@ -1631,3 +1631,132 @@ TEST(IndiRateControlLeadTest, LeadImprovesPhaseMargin)
 	EXPECT_GE(on.pm_deg - off.pm_deg, 20.f);
 	EXPECT_GE(on.gm_db, 10.f);
 }
+
+namespace
+{
+
+IndiRateControl makeYawSpinUpController(float g2, float g1 = 205.f)
+{
+	IndiRateControl ctrl = makeController();
+	ctrl.setG1(Vector3f(kG1True, kG1True, g1));
+	ctrl.setG2Yaw(g2);
+	return ctrl;
+}
+
+/// yaw increment after n cycles of a constant nu = 20 * 0.1, no measured acceleration, zero allocated torque
+float yawIncrementAfter(float dt, int n)
+{
+	IndiRateControl ctrl = makeYawSpinUpController(27.f);
+	Vector3f out;
+
+	for (int i = 0; i < n; i++) {
+		out = ctrl.update(Vector3f(), Vector3f(0.f, 0.f, 0.1f), Vector3f(), Vector3f(), dt, false);
+	}
+
+	return out(2);
+}
+
+/// yaw plant: first order rotor lag, acceleration = G1 m + G2 dm/dt, sampled at 800 Hz. Returns the rate trajectory
+/// error metrics for a 1 rad/s step: max |rate - 1| over the last second, peak rate and max |command|.
+void runYawLoop(float g2_plant, float &tail_err, float &peak, float &max_cmd)
+{
+	constexpr float dt = 0.00125f;
+	constexpr float tau = 0.033f;
+	constexpr float g1 = 205.f;
+	IndiRateControl ctrl = makeYawSpinUpController(27.f);
+	ctrl.setActuatorTimeConstant(tau);
+	float m = 0.f;
+	float rate = 0.f;
+	float accel = 0.f;
+	float u = 0.f;
+	tail_err = 0.f;
+	peak = 0.f;
+	max_cmd = 0.f;
+
+	for (int i = 0; i < 4000; i++) { // 5 s
+		u = ctrl.update(Vector3f(0.f, 0.f, rate), Vector3f(0.f, 0.f, 1.f), Vector3f(0.f, 0.f, accel),
+				Vector3f(0.f, 0.f, u), dt, false)(2);
+		const float m_old = m;
+		m += (1.f - expf(-dt / tau)) * (u - m);
+		accel = g1 * m + g2_plant * (m - m_old) / dt;
+		rate += accel * dt;
+		peak = fmaxf(peak, rate);
+		max_cmd = fmaxf(max_cmd, fabsf(u));
+
+		if (i >= 3200) {
+			tail_err = fmaxf(tail_err, fabsf(rate - 1.f));
+		}
+	}
+}
+
+} // namespace
+
+TEST(IndiRateControlYawInvTest, DcGainAndTimeConstantIndependentOfDt)
+{
+	const float dc = 2.f / 205.f; // nu / G1
+	const float tc = 27.f / 205.f;
+
+	for (const float dt : {0.0025f, 0.00125f}) {
+		const int n_tau = static_cast<int>(tc / dt + 0.5f);
+		EXPECT_NEAR(yawIncrementAfter(dt, n_tau), dc * (1.f - expf(-1.f)), 0.05f * dc) << dt;
+		EXPECT_NEAR(yawIncrementAfter(dt, 10 * n_tau), dc, 0.01f * dc) << dt;
+	}
+}
+
+TEST(IndiRateControlYawInvTest, LandedStateIsZeroAndTakeoffHasNoDoubleCount)
+{
+	IndiRateControl ctrl = makeYawSpinUpController(27.f);
+	const float expected = (2.f - 3.f) / (205.f + 27.f / kDt);
+
+	for (int i = 0; i < 20; i++) {
+		const Vector3f out = ctrl.update(Vector3f(), Vector3f(0.f, 0.f, 0.1f), Vector3f(0.f, 0.f, 3.f), Vector3f(), kDt, true);
+		EXPECT_NEAR(out(2), expected, 1e-7f) << i;
+	}
+
+	const Vector3f air = ctrl.update(Vector3f(), Vector3f(0.f, 0.f, 0.1f), Vector3f(0.f, 0.f, 3.f), Vector3f(), kDt, false);
+	EXPECT_NEAR(air(2), expected, 1e-7f);
+}
+
+TEST(IndiRateControlYawInvTest, FaultHoldThenRecoveryHasNoStep)
+{
+	const float nan = std::numeric_limits<float>::quiet_NaN();
+	IndiRateControl ctrl = makeYawSpinUpController(27.f);
+	IndiRateControl fresh = makeYawSpinUpController(27.f);
+	ctrl.setMaxIncrement(0.3f);
+	fresh.setMaxIncrement(0.3f);
+	const Vector3f sp(0.f, 0.f, 2.f); // nu = 40
+	Vector3f prev;
+
+	for (int i = 0; i < 400; i++) {
+		prev = ctrl.update(Vector3f(), sp, Vector3f(), prev, kDt, false);
+	}
+
+	for (int i = 0; i < 200; i++) { // long enough for the hold to expire and reset everything
+		prev = ctrl.update(Vector3f(), sp, Vector3f(nan, 0.f, 0.f), prev, kDt, false);
+		EXPECT_TRUE(prev.isAllFinite());
+	}
+
+	Vector3f a;
+	Vector3f b;
+
+	for (int i = 0; i < 50; i++) {
+		const Vector3f last_a = a;
+		a = ctrl.update(Vector3f(), sp, Vector3f(), a, kDt, false);
+		b = fresh.update(Vector3f(), sp, Vector3f(), b, kDt, false);
+		EXPECT_LE(fabsf(a(2) - last_a(2)), 0.3f + 1e-6f) << i;
+		EXPECT_NEAR(a(2), b(2), 1e-6f) << i;
+	}
+}
+
+TEST(IndiRateControlYawInvTest, ClosedLoopYawStepSettlesWithoutOscillation)
+{
+	for (const float scale : {1.f, 0.5f, 2.f}) {
+		float tail_err;
+		float peak;
+		float max_cmd;
+		runYawLoop(27.f * scale, tail_err, peak, max_cmd);
+		EXPECT_LT(tail_err, 0.02f) << scale;
+		EXPECT_LT(peak, 1.5f) << scale;
+		EXPECT_LE(max_cmd, 1.f) << scale;
+	}
+}
