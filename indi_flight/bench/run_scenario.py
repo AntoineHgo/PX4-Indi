@@ -43,6 +43,20 @@ BUILD = os.environ.get("PX4_INDI_BUILD", os.path.join(REPO, "build/px4_sitl_defa
 
 
 
+HERE_PARAMS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "params")
+
+
+def read_params(path):
+    """'NAME VALUE' lines, '#' comments, as a dict of strings (order kept)."""
+    out = {}
+    for line in open(path):
+        line = line.split("#")[0].strip()
+        if line:
+            k, v = line.split(None, 1)
+            out[k] = v.strip()
+    return out
+
+
 def o11_build():
     """True for builds with the separate mc_indi_rate_control module (O-11): INDI is selected by MC_INDI_EN at boot,
     not by MC_RATE_CTL_TYPE, and the rotor speed scale is MC_INDI_W_MAX instead of CA_R_W_MAX."""
@@ -633,19 +647,21 @@ def main():
             "physics_step_s": world_step_s(), "world": os.path.join(WORLDS_DIR, "default.sdf"),
             "imu_rate": a.imu_rate, "rate_hz": a.rate_hz,
             "imu_filter_hz": {"IMU_GYRO_CUTOFF": IMU_GYRO_CUTOFF_HZ, "IMU_DGYRO_CUTOFF": IMU_DGYRO_CUTOFF_HZ}}
-    prov_files = [os.path.join(WORLDS_DIR, "default.sdf"), a.params]
+    af_params = os.path.join(HERE_PARAMS, f"{a.model}_indi_g1.params")  # derived airframe INDI parameters (S46/S47)
+    af_params = af_params if os.path.exists(af_params) else None
+    prov_files = [os.path.join(WORLDS_DIR, "default.sdf"), a.params, af_params]
     prov_files += sorted(glob.glob(os.path.join(MODELS_DIR, a.model, "*")))
     meta["provenance"] = provenance.collect(REPO, BUILD, prov_files)
     meta["gate_bearing"] = a.gate
     if a.gate and provenance.refusal(meta["provenance"]):
         raise SystemExit("G1.7 refuses this gate-bearing run: " + provenance.refusal(meta["provenance"]))
-    overlay = {}
-    if a.params:
-        for line in open(a.params):
-            line = line.split("#")[0].strip()
-            if line:
-                k, v = line.split(None, 1)
-                overlay[k] = v.strip()
+    overlay = read_params(a.params) if a.params else {}
+    if af_params and overlay.get("MC_RATE_CTL_TYPE", "0").strip() == "1":
+        # every INDI run of an airframe with a derived file flies its G1/G2 under the run's own file, which wins on clash
+        base = read_params(af_params)
+        meta["airframe_params_file"] = af_params
+        meta["airframe_params_used"] = {k: v for k, v in base.items() if k not in overlay}
+        overlay = {**base, **overlay}
     clash = {"IMU_GYRO_RATEMAX", "IMU_GYRO_CUTOFF", "IMU_DGYRO_CUTOFF"} & set(overlay)
     if clash:  # the rate and its filters are set by --rate-hz only, so a params file cannot change them unseen
         raise SystemExit(f"params file sets {sorted(clash)}: use --rate-hz (filter cutoffs are fixed)")
