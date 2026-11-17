@@ -51,3 +51,7 @@ the noise realisation at the step is not fixed by the seed, a candidate cause of
 all 11 runs (rise -14 ms, 3.5x the spread): unexplained, next test compares its log with one new run. Unless you
 object, I will use the measured INDI spread for rule (d) at 400 Hz and fix the arm instant in sim time in the runner.
 Addendum 2: S64 seed-1 log vs a new run: all 1191 parameters identical; the S64 binary came from a dirty tree (f183dad), the new runs from a clean one. Leading candidate; I will check the S64 800 Hz table the same way.
+Addendum 3 (S68, `results/g2_clean_s68/README.md`): clean-HEAD re-fly of the S64 400 Hz table, 9/9 pass; seed-1 roll rise
+192.5 ms, so a clean build also reaches the S64 range (dirty tree not needed as cause). 800 Hz same-seed, 5 runs: rise
+199-214 ms, settle 329-368, OS 0.7-1.7 %; S64 800 Hz values at the edge of that range. Spread is about 20 ms / 40 ms / 1 pt
+at both rates, under half the margin to the limits. Next: sim-time arm in the runner, then re-measure. Still not blocking.
