@@ -1,0 +1,218 @@
+{
+ "scenario": "step_roll",
+ "controller": "indi",
+ "seed": 1,
+ "speed": 4.0,
+ "warnings": [],
+ "window": {
+  "start_s": 55.015,
+  "end_s": 69.015,
+  "duration_s": 14.0,
+  "offboard_span_s": [
+   52.015,
+   86.405
+  ],
+  "start_source": "ulog_nav_state+3.0",
+  "runjson_start_s": 55.015,
+  "ulog_anchor_s": 52.015
+ },
+ "stamps": {
+  "vehicle_angular_velocity": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_rates_setpoint": {
+   "stamp": "timestamp",
+   "sorted": false,
+   "zero_dt_pairs": 4
+  },
+  "actuator_motors": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "sim_ground_truth": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_attitude": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_attitude_setpoint": {
+   "stamp": "timestamp",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  }
+ },
+ "rate_tracking": {
+  "roll_rms_rad_s": 0.12687753438380497,
+  "pitch_rms_rad_s": 0.007191466539474102,
+  "yaw_rms_rad_s": 0.0016621277254592049,
+  "source": "sim_ground_truth"
+ },
+ "rate_tracking_estimate": {
+  "roll_rms_rad_s": 0.14199240254735765,
+  "pitch_rms_rad_s": 0.007343681061008316,
+  "yaw_rms_rad_s": 0.0015169204674209166,
+  "source": "vehicle_angular_velocity"
+ },
+ "attitude_tracking": {
+  "rotation_angle_rms_deg": 2.773594581806528,
+  "roll_rms_deg": 2.701041983671753,
+  "pitch_rms_deg": 0.05058901688524063,
+  "yaw_rms_deg": 0.6279703779766617,
+  "source": "sim_ground_truth"
+ },
+ "attitude_tracking_estimate": {
+  "rotation_angle_rms_deg": 2.703868679974576,
+  "roll_rms_deg": 2.7021844357940057,
+  "pitch_rms_deg": 0.04195399514266284,
+  "yaw_rms_deg": 0.08573110280091116,
+  "source": "vehicle_attitude"
+ },
+ "rate_estimator_error": {
+  "roll_rms_rad_s": 0.017092242595605475,
+  "pitch_rms_rad_s": 0.0012048837997260388,
+  "yaw_rms_rad_s": 0.0009618600950889565,
+  "roll_mean_rad_s": 1.0862575189884006e-05,
+  "pitch_mean_rad_s": -0.0003528770336468064,
+  "yaw_mean_rad_s": 0.00011603709303423628,
+  "n": 5592,
+  "definition": "truth - vehicle_angular_velocity, FRD [rad/s]"
+ },
+ "attitude_estimator_error": {
+  "rotation_angle_rms_deg": 0.6399520034529724,
+  "n": 3719,
+  "roll_rms_deg": 0.2097624257283187,
+  "roll_mean_deg": 0.00861312679559897,
+  "pitch_rms_deg": 0.017418916646038375,
+  "pitch_mean_deg": 0.0033841802857647587,
+  "yaw_rms_deg": 0.6043672348406065,
+  "yaw_mean_deg": -0.35176639562407874,
+  "definition": "truth - vehicle_attitude, euler diff [deg], rotation angle [deg]"
+ },
+ "steps": [
+  {
+   "name": "up",
+   "t0_s": 57.015,
+   "dur_s": 3.0,
+   "from": 0.0,
+   "to": 15.0,
+   "amplitude": 14.99744762852788,
+   "delay_10pct_s": 0.0668217899997262,
+   "rise_10_90_s": 0.19973544352565825,
+   "overshoot_pct": 1.3673067092895508,
+   "settle_5pct_s": 0.3049999999999997,
+   "final_error_pct": -0.05565285682678223
+  },
+  {
+   "name": "zero1",
+   "t0_s": 60.015,
+   "dur_s": 3.0,
+   "from": 15.0,
+   "to": 0.0,
+   "amplitude": -15.011728286743164,
+   "delay_10pct_s": 0.06417352353033723,
+   "rise_10_90_s": 0.20411496730871043,
+   "overshoot_pct": 1.1294007301330566,
+   "settle_5pct_s": 0.3062499999999986,
+   "final_error_pct": -0.3150343894958496
+  },
+  {
+   "name": "down",
+   "t0_s": 63.015,
+   "dur_s": 3.0,
+   "from": 0.0,
+   "to": -15.0,
+   "amplitude": -15.04931391775608,
+   "delay_10pct_s": 0.06663196160512808,
+   "rise_10_90_s": 0.2055623611727609,
+   "overshoot_pct": 0.9154438972473145,
+   "settle_5pct_s": 0.31374999999999886,
+   "final_error_pct": 0.06012916564941406
+  },
+  {
+   "name": "zero2",
+   "t0_s": 66.015,
+   "dur_s": 3.0,
+   "from": -15.0,
+   "to": 0.0,
+   "amplitude": 14.997570037841797,
+   "delay_10pct_s": 0.06513180597470018,
+   "rise_10_90_s": 0.2031092437396801,
+   "overshoot_pct": 0.9682178497314453,
+   "settle_5pct_s": 0.3062499999999915,
+   "final_error_pct": -0.04889965057373047
+  }
+ ],
+ "step_summary": {
+  "delay_10pct_s_mean": 0.06568977027747293,
+  "delay_10pct_s_max": 0.0668217899997262,
+  "delay_10pct_s_n": 4,
+  "rise_10_90_s_mean": 0.20313050393670243,
+  "rise_10_90_s_max": 0.2055623611727609,
+  "rise_10_90_s_n": 4,
+  "overshoot_pct_mean": 1.0950922966003418,
+  "overshoot_pct_max": 1.3673067092895508,
+  "overshoot_pct_n": 4,
+  "settle_5pct_s_mean": 0.30781249999999716,
+  "settle_5pct_s_max": 0.31374999999999886,
+  "settle_5pct_s_n": 4,
+  "n_steps": 4,
+  "n_not_settled": 0
+ },
+ "position": {
+  "ref_ned": [
+   -0.04064837843179703,
+   0.04608216881752014,
+   -4.939910888671875
+  ],
+  "rms_3d_m": 8.307323770748512,
+  "rms_horizontal_m": 8.306878148769634,
+  "rms_vertical_m": 0.08604479511851881,
+  "max_dev_3d_m": 14.187443733215332,
+  "max_dev_horizontal_m": 14.18727970123291,
+  "max_dev_vertical_m": 0.1319580078125
+ },
+ "truth_source": "sim_ground_truth",
+ "effort": {
+  "n_motors": 4,
+  "motor_rate_rms_per_s": 0.1300293821426753,
+  "motor_rate_rms_per_s_raw": 0.44674162341818385,
+  "motor_rate_rms_per_s_per_motor": [
+   0.12966407689557954,
+   0.13026686823364922,
+   0.1303789717203495,
+   0.12980761172112282
+  ],
+  "motor_rate_bandwidth": {
+   "status": "ok",
+   "grid_hz": 400.0,
+   "lowpass_hz": 50.0,
+   "rms_per_s": 0.1300293821426753,
+   "per_motor_rms_per_s": [
+    0.12966407689557954,
+    0.13026686823364922,
+    0.1303789717203495,
+    0.12980761172112282
+   ],
+   "logged_rate_hz": 399.3570280407215,
+   "gap_time_frac": 0.00017857142857126616,
+   "n_grid": 5600
+  },
+  "motor_spread_mean_abs": 0.0005072178901173174,
+  "motor_mean": 0.13692620396614075,
+  "saturation_frac_motors": 0.0,
+  "saturation_frac_high": 0.0,
+  "saturation_frac_low": 0.0
+ },
+ "allocator": {
+  "n_samples": 2658,
+  "frac_any_actuator_saturation": 0.0,
+  "frac_torque_not_achieved": 0.0
+ }
+}
