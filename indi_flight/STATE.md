@@ -48,15 +48,14 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
    S68 (launch 20261117-234230, cap $3): T145 clean-HEAD re-fly (`results/g2_clean_s68`): 400 Hz table 9/9, seed1 roll
    rise 192.5 (dirty tree not needed as cause); 800 Hz same-seed spread 14.5/39 ms/1 pt, < 1/2 limit margin; A-30
    bounded, Q5 addendum 3. T146: A-9 CLOSED (2nd key AGREE, guard gtest break-checked, 35b313d2a5).
-   T147-T149: same-seed spread persists with --sched (INDI 400 Hz rise 6 ms), with PID (12 ms), INDI v2true/eRPM-lost
-   (8-9 ms), and with the EXACT G1.6 command on sim v1 (rise 11.5 / settle 36 ms): not INDI, not v2. G1.6 FINAL may not
-   hold at HEAD (metric mismatch or regression since S32): T150 re-scores both run sets with both metrics.
-   NEXT S69: route check 69 first; act on T150 (if regression: bisect S32 commit..HEAD on the G1.6 cmd, CPU only;
-   if metric: restate G1.6 spread with the step metric in GATES.md as a defect fix, logged); then (c) slice 2, (d) hooks.
+   T147-T150: same-seed spread persists with --sched, PID, v2true, eRPM-lost, and on the EXACT G1.6 cmd (sim v1):
+   rise 11.5 ms at HEAD vs 0.8 ms at S32 under both metrics -> A-32 OPEN, G1.6 FINAL regressed (Q5 addendum 5);
+   on v2 the spread sits mostly in the first step.
+   NEXT S69: route check 69 first; A-32: per-step spread on G-v1, then bisect 71c194ff26..HEAD on the G1.6 cmd
+   (`bench/g16_sched_set.sh` step_roll speed 4, 5 runs/point, build per point, haiku, CPU); then (c) slice 2, (d) hooks.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T150 | re-score S32 G1.6 runs and S68 G-v1/G-v2 with both metrics (G1.6 spread script, g2_step_metrics) | haiku | `results/a30_v1v2_s68/g16_metric.md` | re-brief, no flights |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);

@@ -59,3 +59,6 @@ Addendum 4 (S68, `results/g16_sched_indi_s68/README.md`): same-seed with the G1.
 400 Hz rise/settle/OS spread 6.2 ms / 11.3 ms / 0.7 pt, 800 Hz 14.5 / 16.3 / 0.7; step instant pinned within 9 ms. Wall-clock
 arming is not the main cause. Next lead: an INDI-only input outside lockstep (eRPM telemetry path), tested by PID vs INDI and
 INDI without telemetry under the same flags. Spread still under half the limit margin; not blocking.
+Addendum 5 (S68): the spread is not INDI-specific and is a regression: the exact G1.6 command (PID, sim v1) re-flown at HEAD
+spreads 11.5 ms in rise vs 0.8 ms at S32, under both metrics (A-32, `results/a30_v1v2_s68/g16_metric.md`). G1.6 FINAL does not
+hold at HEAD until bisected and fixed. Plan: bisect S32..HEAD (CPU), fix, re-fly G1.6. Not blocking stage-3/5 work; G1 stays open.

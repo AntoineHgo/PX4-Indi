@@ -652,3 +652,4 @@ S64 (launch 20261117-190447, cap $3): route check 64 (T129, `design/route_check_
 - S68 (2026-11-17): clean-HEAD re-fly of G2-STEP (`results/g2_clean_s68`): 400 Hz 9/9, 800 Hz same-seed spread 14.5/39 ms/1 pt; dirty-tree lead not needed; A-30 bounded.
 - S68: A-9 CLOSED archive-only: second key AGREE, guard gtest OmegaFfIndependentOfYawRate break-checked (35b313d2a5).
 - S68: G2-STEP batches since S62 flown without --sched (G1.6 flags): T147 re-measures the same-seed spread with them.
+- S68: A-30 traced to a determinism regression since S32 (A-32): G1.6 cmd same-seed rise spread 0.8 -> 11.5 ms, not INDI-specific, not sim v2.
