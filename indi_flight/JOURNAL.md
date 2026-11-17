@@ -627,3 +627,21 @@ raw logs stay untracked. `git status` should show no untracked file you created.
      pass on estimate + truth overshoot, est error reported apart). T127 key updated: S62 est OS 0.25-0.97 %, r/p settle
      339-371 ms, yaw 899-914 ms, truth OS <= 0.85 %. A-29 parked (0.14 deg in-band dip, seed3 roll). T128 primary script.
      T128 primary `bench/g2_step_metrics.py` (+7 tests) AGREES with the key 9/9 (`design/t128_g2_step_metrics_s63.md`).
+
+## S44-S64 history stubs moved from STATE.md (2026-11-17, owner token-economy restructure)
+
+S44-S46 detail moved to JOURNAL.md (S51). Derived G1 1757/1640/205 in `bench/params/quad5in_indi_g1.params`; `bench/pretest_gate.py` in use. S47-S48 detail moved to JOURNAL.md (S53): yaw limit cycle fixed by derived G2_Y 27; low roll PM explained by K_R/P_att + motor lag.
+S49-S53 detail moved to JOURNAL.md (S56): lead MC_INDI_LEAD 1, ACT_TC 0.05 defaults; roll/pitch M3a PM 59-87.
+S54-S56 detail moved to JOURNAL.md (S58): D-YAW-INV coded, yaw M3a 800 Hz PM 88 / GM 18.4 / Ms 1.6; roll 400 Hz PM 84.
+S57 detail moved to JOURNAL.md (S60): roll M3a anchors 800/400/267 + measured-rotor anchor PM 77.5; G2 table deferred.
+S58-S59 + route check 59 detail moved to JOURNAL.md (S61): stage-3 items 1-4 coded, second-keyed, flown (hover gate PASS);
+   opus review of the stage-3 safety diff deferred to one combined review with the stage-5 slice, before any freeze.
+S60 detail moved to JOURNAL.md (S62): stage-5 hover slice coded (T122), flew, gate PASS; T123 deviations in `design/t123_second_key_s60.md`.
+S61 detail moved to JOURNAL.md (S63): step overshoot mechanism, G2-STEP thresholds, D-S3-ATT-STEP designed + keyed.
+S62-S63 detail moved to JOURNAL.md (S64): D-S3-ATT-STEP coded+flown (OS 0.2-1.0 %), A-28 closed, G2-STEP measurement
+   definition, primary `bench/g2_step_metrics.py` + key `bench/t127_step_metrics_key.py` AGREE.
+S64 (launch 20261117-190447, cap $3): route check 64 (T129, `design/route_check_64.md`): drift = no G3-G8 test text,
+   inner-loop work not time-boxed; acted. G2-STEP FIRST FORMAL TEST 9/9 PASS at 800 Hz, HEAD 360c9ae453 clean, key AGREES
+   (`results/g2_step_s64/README.md`, GATES.md). r_dot_f pre-look (`results/stage3_s64/README.md`): no hover effect
+   (motor HF RMS 2.7e-4 lead on/off); acro needs a stick-noise model (G4 build item). G3-G8 draft T130
+   (`design/gates_g3_g8_draft_s64.md`) reviewed, amendments in GATES.md (T/W 7.3: saturation corners sized on hover).

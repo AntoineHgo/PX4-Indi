@@ -1,4 +1,4 @@
-# STATE (max 150 lines)
+# STATE (budget 8000 bytes: read at every launch, resume essentials only)
 
 ## Status
 - Stage: 3 (inner loop) opened S49; stage 2 (analysis tools, margins) from S36, provisional under Q4-A; stage 1 frozen S36 (G1 FINAL). Started S1 (2026-11-15). Stage 0 done. Session 3: ref airframe model done.
@@ -9,21 +9,7 @@
   stage 2 started provisionally; opus review T73 r1 BLOCKING (gyro break misses INDI's model and rotor-speed
   paths) answered by D-G2-BREAK (M3a torque-setpoint break) and note section 7; r2 CLOSED.
 ## Next actions (in order)
-S44-S46 detail moved to JOURNAL.md (S51). Derived G1 1757/1640/205 in `bench/params/quad5in_indi_g1.params`; `bench/pretest_gate.py` in use. S47-S48 detail moved to JOURNAL.md (S53): yaw limit cycle fixed by derived G2_Y 27; low roll PM explained by K_R/P_att + motor lag.
-S49-S53 detail moved to JOURNAL.md (S56): lead MC_INDI_LEAD 1, ACT_TC 0.05 defaults; roll/pitch M3a PM 59-87.
-S54-S56 detail moved to JOURNAL.md (S58): D-YAW-INV coded, yaw M3a 800 Hz PM 88 / GM 18.4 / Ms 1.6; roll 400 Hz PM 84.
-S57 detail moved to JOURNAL.md (S60): roll M3a anchors 800/400/267 + measured-rotor anchor PM 77.5; G2 table deferred.
-S58-S59 + route check 59 detail moved to JOURNAL.md (S61): stage-3 items 1-4 coded, second-keyed, flown (hover gate PASS);
-   opus review of the stage-3 safety diff deferred to one combined review with the stage-5 slice, before any freeze.
-S60 detail moved to JOURNAL.md (S62): stage-5 hover slice coded (T122), flew, gate PASS; T123 deviations in `design/t123_second_key_s60.md`.
-S61 detail moved to JOURNAL.md (S63): step overshoot mechanism, G2-STEP thresholds, D-S3-ATT-STEP designed + keyed.
-S62-S63 detail moved to JOURNAL.md (S64): D-S3-ATT-STEP coded+flown (OS 0.2-1.0 %), A-28 closed, G2-STEP measurement
-   definition, primary `bench/g2_step_metrics.py` + key `bench/t127_step_metrics_key.py` AGREE.
-S64 (launch 20261117-190447, cap $3): route check 64 (T129, `design/route_check_64.md`): drift = no G3-G8 test text,
-   inner-loop work not time-boxed; acted. G2-STEP FIRST FORMAL TEST 9/9 PASS at 800 Hz, HEAD 360c9ae453 clean, key AGREES
-   (`results/g2_step_s64/README.md`, GATES.md). r_dot_f pre-look (`results/stage3_s64/README.md`): no hover effect
-   (motor HF RMS 2.7e-4 lead on/off); acro needs a stick-noise model (G4 build item). G3-G8 draft T130
-   (`design/gates_g3_g8_draft_s64.md`) reviewed, amendments in GATES.md (T/W 7.3: saturation corners sized on hover).
+S44-S64 history: JOURNAL.md. Agent ledger: LEDGER.md. Lessons proposed: LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief).
 NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change from now on):
    (1) stage-5 slice 2: thrust-gap hover in position mode (NEW scenario, N1 C3; MC_INDI_W_MAX 2700) + one
    velocity/acceleration mode (altitude or position stick) + T123 deviations A3/A5/reset; haiku second key.
@@ -56,102 +42,3 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
   together with the minimum |L|^-1 where phase is within 10 deg of -180 (decide in GATES.md before the first G2 test).
 - Unmodelled in margins_models.py (T78 UNVERIFIED list): AlphaFilter coefficient formula, LPF2p coefficients from
   memory, gz/ESC latency 0, measured path = eta x motor state, yaw, attitude loop; 267 Hz analytic only.
-
-## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
-| session | id | model | task | outcome |
-|---|---|---|---|---|
-| 65 | T132 | sonnet | N1 C2 disturbance sizing + self-test | done, 9 calls, ~$0.3, test OK, UNKEYED, guard blocked 1 call (cause unknown) |
-| 65 | T131 | haiku | G3 hooks existence check | done, 5 calls, ~$0.06 |
-| 64 | T130 | sonnet | draft G3-G8 tests | done, 4 calls, ~$0.35, 154 lines, one wrong T/W (53, real 7.3) caught in review |
-| 64 | T129 | sonnet | route check 64 | done, 4 calls, ~$0.15, acted on |
-| 63 | T128 | sonnet | primary G2-STEP metric script + 7 self-tests | done, 8 calls, ~$0.4, break-checked, AGREE with T127 key 9/9 |
-| 62 | T127 | haiku | second key step metrics (independent script) | done, 8 calls, ~$0.08, AGREE 27/27; truth offsets -> A-28 |
-| 62 | T126 | haiku | second key da64bc26b3 vs D-S3-ATT-STEP | done, 3 calls, ~$0.06, AGREE-WITH-ISSUES, yaw toggle fixed |
-| 62 | T125 | sonnet | code D-S3-ATT-STEP + tests + builds | done, 15 calls, ~$0.5, model test OS 0.51 % (11.1 % without), break-checked, committed da64bc26b3 |
-| 61 | T124 | haiku | second key attitude-step model | done, 6 calls, ~$0.07, AGREE (settle differs at band edge) |
-| 60 | T123 | haiku | second key slice INDI stage vs A2-A14 | done, 8 calls, ~$0.06, AGREE with 3 deviations |
-| 60 | T122 | sonnet | stage-5 hover slice code+build+1 hover | done, 28 calls, ~$0.8, flew; claimed module identity unverified, closed by S60 instrument |
-| 59 | T121 | sonnet | route check 59 | done, 4 calls, ~$0.15, acted on |
-| 59 | T120 | haiku | second key items 2+3 diff | done, 5 calls, ~$0.06, AGREE-WITH-ISSUES (5 minor) |
-| 59 | T119 | sonnet | code items 2+3 + tests | done, 7 calls, ~$0.33, 6/6 pass, break-checked |
-| 58 | T118 | haiku | second key items 1+4 diff | done, 6 calls, ~$0.06, AGREE-WITH-ISSUES (issue unreachable) |
-| 58 | T117 | sonnet | code items 1+4 + tests | done, 27 calls, ~$0.7, all pass, break-checked, module not compiled by it |
-| 57 | T116 | sonnet | G2 outer break note | done, 8 calls, ~$0.7, 59 lines, UNKEYED |
-| 57 | T115 | sonnet | route check 57 | done, 6 calls, ~$0.18, acted on |
-| 56 | T114 | haiku | second key D-YAW-INV diff | done, 5 calls, ~$0.05, AGREE-WITH-ISSUES, landed-cycle bug found and fixed |
-| 56 | T113 | sonnet | code D-YAW-INV + tests | done, 13 calls, ~$0.45, all pass, break-checked, missed first landed cycle |
-| 54 | T111 | sonnet | second key yaw break model | done, 6 calls, ~$0.25, coded-law denominator mis-transcribed; AGREE after 1-line fix, option (c) AGREE |
-| 53 | T110 | sonnet | route check 53 | done, 6 calls, ~$0.2, acted on (defaults, G2 table first) |
-| 53 | T109 | sonnet | stage-3 items design note | done, 5 calls, ~$0.2, 168 lines, UNREVIEWED |
-| 52 | T107 | sonnet | code MC_INDI_LEAD + tests | done, 14 calls, ~$0.75, all pass, break-checked |
-| 52 | T108 | haiku | second key lead diff vs note | done, 6 calls, ~$0.08, AGREE, 1 logging finding fixed |
-| 51 | T106 | haiku | A-24 PSD re-check with G2_Y 27 | done, 5 calls, ~$0.1, tone gone ~100x |
-| 51 | T105 | opus | review r1 lead note vs code | done, 9 calls, ~$1.1 (2x estimate), NOT BLOCKING, 3 MAJOR |
-
-## Lessons proposed
-- S64: a gate-text draft quoted hover command 0.137 as implying T/W 53; on this airframe T/W is 7.3, so the owner's
-  "available thrust 0.7" saturates nothing. Size every saturation/sag test on hover thrust of the flown model, not on full scale.
-- S63: re-run the metric with the fix before writing what an artefact was: the seed3 roll 'exit' was attributed to
-  the return step in a committed README and the fixed-window re-run disproved it the same session.
-- S62: a model calibrated on one flight (S61) predicted the fix to 1 point of overshoot on 3 seeds; the setpoint-path
-  change cost one sonnet task (~$0.5) and 12 flights. Fit the closed loop on flight data before choosing a law change.
-- S61: a 'lead' that is feedback-only lowers the closed-loop bandwidth seen by the outer loop; margins at the inner break
-  looked good (PM 59-87) while the attitude step overshot 13 %. Check the outer loop's step response with every inner-loop
-  law change, not only the inner break margins.
-- S60: a 'published = stock mapping' residual check is blind when the two chains agree at steady state (hover, no gap);
-  prove which law flew with an in-module instrument (state bits in the log), and test the law where it differs (thrust gap).
-- S58: the px4_sitl_test build does not compile the module (only libs and tests); a coding agent's green tests say nothing
-  about the module wiring: always add `make px4_sitl_default` to the brief.
-- S57: a non-integer fs*Tp did not trip the FFT check on a jittered log because the FRF code switched to its least-squares
-  path; know which path a script took before calling a pass a hole. Pick multisine periods that are whole samples at every rate.
-- S54: a module-level loop variable shadowed a deleted local in a model script and silently changed its output; re-run
-  every model script against its committed output after any edit (diff), as done here.
-- S53: four M3a flights on two parallel docker streams took ~5 min wall and ~$0.05 of context: run small sweeps
-  from host bash in the background while one agent drafts, instead of delegating the flights.
-- S52: review F2 named the over-estimated ACT_TC as the dangerous side of the lead; test and flight show the opposite
-  (x0.6: PM 42, x1.4: PM 83). Compute both sides of a parameter error before planning defaults around one.
-- S51: an opus review of a ~180-line note plus ~400 lines of law code cost ~$1.1 in 9 calls (2x the S35 estimate); budget opus reviews at ~$1.1 and launch them first in a session.
-- S50: break-checks by sed on a .py must run with PYTHONDONTWRITEBYTECODE=1 (or clear __pycache__): a same-size
-  mutation in the same second left a stale .pyc that made the restored file fail.
-- S49: calibrate the unmodelled delay of a loop model on one existing flight before using the model to accept or
-  reject a candidate; the lead's verdict at 400 Hz flips between 2.5 and 5 ms of delay.
-- S48: before reading a low margin as a plant or gain problem, put every loop the break closes around into the model
-  and test it by predicting a parameter change in flight (two flights, ~$0.1 of CPU, settled what 7 sessions had not).
-- S47: a single clean flight does not prove stability: S45 hovered clean, the same config limit-cycled on replay (bistable
-  lightly damped mode). Accept a configuration change on >= 2 seeds, and derive every term of the law (G2 too) before flying.
-- S43: a static 'analytic' gain from source reading was 2.6x off in two links; measure each link of a chain on the log before trusting a derived plant gain (and a sonnet chain trace with log analysis costs ~$0.9 in 17 calls).
-- Regressing a filtered signal (angular_accel_filtered) on a command: pass the command through the same filter first; T86 missed it and read the LPF2p group delay as a 20 ms plant delay (S42).
-- S41: a loop-gain model must contain every loop the break closes around, outer loops included; the M3a model
-  lacked the attitude P loop and a 17 deg PM gap was spent on as an anomaly (A-21).
-- S39: a sonnet implement+build+fly task asked to add a unit test spent its last calls on a link error; tell it the
-  gtest kind (unit = pure code) and the test build dir, or leave the test run to a separate step.
-- S37: a sonnet task writing ~600 lines of numerical code + tests costs ~$0.9 in 9 calls (long writes); the session
-  takes one such task plus a haiku second key.
-- S36: a design note on a loop with several feedback paths must name every path a break point cuts; the gyro break
-  looked complete for PID and was not for INDI (review r1).
-- S35: a sonnet design note of ~11 calls over several source files costs ~$0.7; brief it at <=10 calls at a $3 cap.
-- S34: a background-wait notification can arrive before the command really ends; check the condition itself
-  (status file) before concluding the wait failed.
-- An anomaly bound taken from the range of 10 runs was exceeded by the next 5 (A-19, S32): bound by mechanism.
-- A metric changed during a running batch: re-compute the whole set with one version before comparing (S32).
-- A shared sim model is live for every running batch: stage a model change and install it after the batch ends (S28 nearly mixed two baro models into B26).
-- A parked anomaly bound from a correlation (A-14: 0/9 vs 3/6 runs, p=0.044, "logger -f") was wrong; park on a mechanism, not on a pair test (S27).
-- A sonnet implement+build+2-flight task costs ~$1.0 (21 calls): at a $3 cap it is the session's one big task (S26).
-- Read the sleep/wake rule of a loop before building a timing fix around it: S25 spent a session on a start-up
-  race while Commander's skip-sleep-on-command line (visible in 20 lines of source) already ruled it out.
-- A pre-test check worded "within N periods of the command" measured Commander's fixed latency; state the
-  determinism check as across-run spread, and latency separately (S24).
-- Give each anomaly at most 2 sessions, then park it with a written bound and reopen trigger (route check 22).
-- Haiku handles a well-specified log check (10 calls) for ~$0.06: use it for every bounded log/metric check.
-- At a $1.6 cap: one sonnet agent of ~15 calls (~$0.5) plus state and commit; no fable work.
-- At a $3 cap launch one agent per session (session 2: two sonnet agents ~$1.4 in 30 min, both cut).
-- A fable review of ~1 KLOC of design + source costs ~$2.5: give it a whole session.
-- Opus with a narrow brief (one interface, <=12 calls, early skeleton write) reviews ~200 lines of design + source
-  for ~$0.6: use opus, not fable, for design review rounds.
-- Web-research agents cost about 3x a code-read agent of the same call count; brief them at 20 calls.
-- PX4 logger default timer (3.5 ms) silently decimates topics above 285 Hz; poll on the last topic of the control
-  cycle (`-p actuator_motors`) and check logged rates (`bench/check_rates.py`) before any high-rate analysis (S16).
-- At a ~$1 cap the launch context alone costs ~$0.3: do one host-bash flight + check, no agent (S19).
-- Analysis scripts take an output path argument; never a fixed path into a committed result (S19).
-- Anchor every analysis window on an event in the log, never on the runner's view of it: the 1 Hz HEARTBEAT view moved the window start by up to 0.95 s (S15).
-- Give a second key the primary script's exact window (start, end, anchor); a different window produced a false 2.1 % DISAGREE (S23 T48).
