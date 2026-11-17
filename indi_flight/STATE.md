@@ -46,6 +46,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T122 | stage-5 hover slice (D-S5-SLICE): code, build, 1 hover | sonnet | design/t122_hover_slice_s60.md | read output; if partial, relaunch from its 'Done/Left' list |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);

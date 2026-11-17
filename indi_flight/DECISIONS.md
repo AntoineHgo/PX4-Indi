@@ -378,3 +378,16 @@ pre-identification behaviour of decision 3 must cover it).
 - Overturn if: G5 shows a stale-setpoint case where held thrust causes loss of control before a commander failsafe.
 - S59 note: an offboard body-rate stream at exactly 2 Hz sits at the 0.5 s limit and can trip for 1-2 cycles (rates
   zeroed briefly, recovers on the next message); G5 offboard test flies >= 10 Hz. Coded S59 (T119), see `design/t119_s3_items_s59.md`.
+
+## D-S5-SLICE (S60): stage-5 hover slice scope, parameter name, archive pointer
+- Decision: first stage-5 code is a hover slice of architecture A: A1 (in-place rewrite, start by parameter), A2, A3
+  (tracking/bypass outside FLIGHT, RAMPUP under bypass = A8), A5, A6, A7, A9 (shell copy of MulticopterPositionControl,
+  stock PositionControl/Takeoff libraries), A13/A14 (LIB entry at a_ref). Deferred to the next slices: A4 XY-margin
+  port (slice uses tilt limit + collective clamp), A10/A15 acceleration-only groups, decision-2 remedy (A11: chosen
+  after the thrust-gap flight on this slice).
+- Last commit of the archived external-mode module before the rewrite: 41326ec474 (A1 record).
+- Parameter: `MC_INDIP_EN` renamed `MC_INDI_POS_EN` (A12 N6, archive meaning differs).
+- Alternatives: full A in one step (too large for a $3 session, lesson 21); keep the archived module and test the
+  thrust gap on it first (buys evidence on a loop that A replaces, route check 59).
+- Overturn: slice hover fails the pre-test gate for a structural reason (not a parameter), or take-off shows the A8
+  overturn signs (A12 N5) -> design A8' before continuing.
