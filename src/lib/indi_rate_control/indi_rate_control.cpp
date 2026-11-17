@@ -129,6 +129,9 @@ void IndiRateControl::designYawFilters(float sample_freq)
 
 	// settled at the next unfiltered values, in update()
 	_yaw_filter_reset_pending = _yaw_filter_active;
+
+	// the yaw setpoint entering the derivative switches between raw and filtered: restart the derivative
+	_sp_lead_reset = true;
 	_design_yaw_cutoff_hz = _yaw_cutoff_hz;
 }
 

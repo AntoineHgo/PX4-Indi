@@ -2061,3 +2061,26 @@ TEST(IndiRateControlSetpointLeadTest, LeadZeroIsPreviousLawOnRandomInput)
 		}
 	}
 }
+
+TEST(IndiRateControlSetpointLeadTest, YawFilterToggleGivesNoDerivativeImpulse)
+{
+	// the yaw derivative switches between the filtered and the raw setpoint when the yaw filter is toggled: the
+	// first cycle after the toggle must restart the derivative instead of differencing filtered against raw
+	IndiRateControl ctrl = makeController();
+	ctrl.setLeadScale(1.f);
+	ctrl.setYawCutoff(5.f);
+	const Vector3f zero{};
+	const Vector3f sp(0.f, 0.f, 2.f);
+
+	for (int i = 0; i < 20; i++) {
+		ctrl.update(zero, (i < 10) ? zero : sp, zero, zero, kDt, false); // filtered yaw setpoint lags the step
+	}
+
+	ctrl.setYawCutoff(0.f);
+	ctrl.update(zero, sp, zero, zero, kDt, false);
+	EXPECT_EQ(ctrl.getRateSpDot()(2), 0.f);
+
+	ctrl.setYawCutoff(5.f);
+	ctrl.update(zero, sp, zero, zero, kDt, false);
+	EXPECT_EQ(ctrl.getRateSpDot()(2), 0.f);
+}
