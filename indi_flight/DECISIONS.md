@@ -337,3 +337,42 @@ pre-identification behaviour of decision 3 must cover it).
 - Reason: route check 57 (`design/route_check_57.md`); every gate is validated on the frozen pair.
 - Overturn if: a later inner-loop change moves an anchor by more than 10 deg PM or 3 dB GM, or any anchor drops below
   G2 thresholds -> re-measure the full table before continuing.
+
+## D-G2-OUTER-DEFER (S58): outer-loop break measurements wait for stage-5 code
+- Decision: `design/g2_outer_breaks_note.md` stays UNKEYED as a plan; its second key, the A-26 model script and any
+  attitude/velocity/position M3b flight are done against the stage-5 outer loop, not the archived `indi_accel_control`.
+  Stage-3 safety items (route check 57 rec 2) and the stage-5 hover slice (rec 3) go first.
+- Alternatives: key and model now (6-9 sessions on a loop that stage 5 replaces; the M3b injection point
+  indi_accel_control.cpp:273 moves with it); drop the note (loses the PID reference-break plan).
+- Reason: route check 57 b/c (gate evidence bought before the law is frozen is re-bought); outer breaks depend on the
+  stage-5 loop structure (S41 lesson: model contains every loop the break closes around).
+- Open point for the key: the reference breaks L = T/(1-T) are ill-conditioned where |T| ~ 1 (below the crossover);
+  prefer an additive-input break (velocity/acceleration feed-forward) wherever one exists.
+- Overturn if: stage 5 keeps `indi_accel_control` unchanged at the injection point (then key the note at once).
+
+## D-S3-LANDED (S58): landed vs maybe_landed in the INDI rate law (stage-3 item 1)
+- Decision: split the flag. `maybe_landed` alone = like the stock PID freezing its integrator: the law runs in full
+  (t_fb, lead, yaw state kept), only slow adaptive states (blend integrator) freeze; NO output slew limit in flight.
+  `landed` = hard: today's zeroing of t_fb, lead and yaw state; on both edges of `landed` the feedback torque t_fb is
+  ramped (not stepped) with slew MC_INDI_LND_SLEW (normalised torque/s, default 5.0, i.e. full scale in 0.2 s).
+- Alternatives: note option (slew-limit the published torque while maybe_landed): removes authority during a hard
+  descent when the flag toggles falsely in flight; zero everything on either flag (today): trim-sized kick per edge;
+  ignore landed: increment winds up against ground contact.
+- Overturn if: a G5 false-maybe_landed or touchdown test shows a rate transient beyond its limit, or a ground wind-up.
+
+## D-S3-FROZEN (S58): frozen rotor-speed detection (stage-3 item 4)
+- Decision: per motor, frozen iff the reported rpm is bit-identical for MC_INDI_ERPM_FRZ (default 0.5 s) while armed
+  AND the motor's commanded u varied by more than 0.02 (max-min over the same window). Frozen motor = offline for the
+  measured path (existing invalid -> modelled fallback with hysteresis); mask logged.
+- Alternatives: rpm must change every sample (false trips under eRPM quantisation); all four identical (misses one
+  frozen motor); DShot error counter (does not see frozen values); note's thrust-setpoint-std condition (indirect).
+- Reason: a spinning rotor whose command moves 2 % of range changes speed by far more than one eRPM step; disarmed or
+  constant command can never trip.
+- Overturn if: a false trip in any G3/G4 run (vibration x1..5, harsh noise) or a frozen-value injection not caught.
+
+## D-S3-SPTO (S58): rate-setpoint timeout (stage-3 item 3, coded later)
+- Decision: on vehicle_rates_setpoint older than MC_INDI_SP_TO (default 0.5 s, PX4 offboard minimum 2 Hz), use zero
+  rate setpoint, HOLD thrust, flag + rate-limited warning; no thrust decay (descent policy belongs to commander/outer loop).
+- Alternatives: note's 0.2 s + thrust decay at 0.5/s (trips a legal 3 Hz offboard rate stream; a controller-level
+  descent policy at unknown attitude); hold everything (stock behaviour).
+- Overturn if: G5 shows a stale-setpoint case where held thrust causes loss of control before a commander failsafe.
