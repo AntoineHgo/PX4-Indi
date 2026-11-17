@@ -37,6 +37,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T131 | G3 'NOT FOUND' hooks vs stage-1 sim work (item 3) | haiku | design/g3_hooks_check_s65.md | re-launch brief from STATE item (3) |
+| T132 | N1 C2: disturbance.py sized from flown model (item 2) | sonnet | design/t132_disturbance_c2_s65.md | re-launch brief from STATE item (2) |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
