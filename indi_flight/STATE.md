@@ -41,16 +41,20 @@ S53 (launch 20261117-023518, cap $3): ACT_TC sweep with lead 1 (`results/stage3_
    GM 5.1, x1.5 86/11.3, x2 75/10.0 (2 seeds, f_c 7 Hz): tolerance one-sided [x1, x2]. D-RATE-LEAD addendum 2: defaults
    LEAD 1, ACT_TC 0.05 (apply with item 6 of the stage-3 note), stage-4 ident reports an upper bound of tau_c.
    T109 sonnet drafted `design/stage3_items_note.md` (6 items, UNREVIEWED; 9 UNVERIFIED points listed in it).
-NEXT (S54): (1) opus review r1 of `design/stage3_items_note.md` vs source (launch FIRST, ~$1.1, one interface: note vs
-   module/law code + rc.mc_apps). Own doubts to pass: item 3 thrust decay on a stale setpoint diverges from stock
-   (stock holds) and could drop a vehicle on a scheduling stall; item 2 runtime detection of a foreign torque publisher
-   is fragile (rc.mc_apps if/else may suffice). (2) route check 54 (sonnet, short). (3) then implement the note
-   (sonnet) incl. defaults (ACT_TC 0.05, LEAD 1), two keys, rebuild. Later: yaw margins with lead (F3), pitch break,
-   400/250 Hz, hole reporter per run (G1 evidence limit 1).
+S53 also: route check 53 (`design/route_check_53.md`), acted on: defaults applied (7522625b0f, ACT_TC 0.05; LEAD already
+   1); opus review of the items note DEFERRED (items 1-3 parked as a post-G2 safety package, reviewed before they are
+   coded); pitch M3a at ACT_TC 0.05 flown (B2, see results/stage3_s53/pitch_m3a/).
+NEXT (S54): (1) finish one G2 inner table at 800 Hz: yaw M3a with lead (INJ_AX 3, csv axis 2; check AMP vs G2_Y
+   first with a pre-test) and the measured-rotor path (--sim v2) for roll; then 400 Hz roll/pitch/yaw (GATES.md G2
+   "Configurations"). (2) write the attitude/velocity/position break notes on the host and second-key them (route
+   check 49 item never done). (3) stage-3 items note: opus review before coding items 1-5; own doubts: item 3 thrust
+   decay diverges from stock (stock holds), item 2 runtime foreign-publisher detection fragile. (4) hole reporter per
+   run only when the frozen --gate batch is scheduled. Next route check S58.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S53-B2 | pitch M3a ACT_TC 0.05 lead 1, 2 seeds, then SITL rebuild at 7522625b0f | - | `results/stage3_s53/pitch_m3a/` (done.txt ALLDONE) | `bash results/stage3_s53/pitch_m3a/run_all.sh` |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
