@@ -153,10 +153,12 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 	_indi.setLimits(_param_mpc_xy_vel_max.get(), _param_mpc_z_vel_max_up.get(), _param_mpc_z_vel_max_dn.get(),
 			tilt_limit_rad, _param_mpc_thr_min.get(), _param_mpc_thr_max.get());
 
-	const bool fresh_att = _q_time != 0 && now >= _q_time && (now - _q_time) <= kMaxAge;
-	const bool fresh_acc = _acc_time != 0 && now >= _acc_time && (now - _acc_time) <= kMaxAge;
-	const bool fresh_thr = _thr_time != 0 && now >= _thr_time && (now - _thr_time) <= kMaxAge;
-	const bool fresh_esc = _mean_u_valid && now >= _esc_time && (now - _esc_time) <= kEscMaxAge;
+	// a sample newer than this cycle's 'now' (published after it was taken) has age 0, not stale
+	auto age = [now](hrt_abstime t) { return (now > t) ? (now - t) : hrt_abstime{0}; };
+	const bool fresh_att = _q_time != 0 && age(_q_time) <= kMaxAge;
+	const bool fresh_acc = _acc_time != 0 && age(_acc_time) <= kMaxAge;
+	const bool fresh_thr = _thr_time != 0 && age(_thr_time) <= kMaxAge;
+	const bool fresh_esc = _mean_u_valid && age(_esc_time) <= kEscMaxAge;
 	const Vector3f a_ref(local_pos_sp.acceleration[0], local_pos_sp.acceleration[1], local_pos_sp.acceleration[2]);
 
 	const float yaw_sp = matrix::Eulerf(matrix::Quatf(att_sp.q_d)).psi();
