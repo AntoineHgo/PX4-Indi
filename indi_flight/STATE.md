@@ -12,24 +12,7 @@
 - S44: stage-2 INDI margins VOID (A-23 limit cycle, see Next actions).
 ## Next actions (in order)
 S36-S42 detail moved to JOURNAL.md (S45).
-S44 (launch 20261116-212207, cap $3) DONE: T90 sonnet A-22 trace (`results/stage2_s44/a22_links.md`) + T91 haiku
-   second key (`results/stage2_s44/limit_cycle_second_key.md`): every INDI M3a flight S39-S41 is in a 17 Hz pitch LIMIT
-   CYCLE with motors pinned at 0 on 38 % of samples -> stage-2 INDI margins S40-S43 VOID; A-22 closed as artefact,
-   A-23 opened. Plant G1_roll derived 1756 (CT/KM cancel; needs Ixx and hover thrust, not in CA_*) vs default 320.
-S44 also: A-23 test flown (`results/stage2_s44/a23_test/`): PID clean; INDI derived G1 cuts rate RMS 32x but motors
-   still pinned at 0 on 46 % (motor-command chatter, 2nd mechanism). See A-23 note.
-S45 (launch 20261116-214129, cap $3) DONE: A-23 CLOSED. Cause: G1 defaults 5-8x low (yaw 7x: derived G1_Y 205-222,
-   `results/stage2_s45/g1y_derivation.md`). Hover with G1 R/P/Y 1756/1599/215 (`results/stage2_s45/a23_yaw/`): motor pin 0 %,
-   rate RMS 0.0068/0.0056/0.0017, achieved 1.0. A-24 opened (45.7 Hz motor tone, std 0.00085). Route check 45
-   (`design/route_check_45.md`): stage 2 margins wait for derived defaults; old margin numbers void, method kept.
-S45 also: T96 `bench/derive_g1.py` + `bench/tests/test_derive_g1.py` written (ALL PASS, re-run by me), UNKEYED: quad5in G1
-   R/P/Y 1759/1602/221 (`results/stage2_s45/derive_g1.md`). Roll and pitch share PX4's normalisation scale, so torque per unit
-   command is equal and G1_P = G1_R Ixx/Iyy for any arm layout (my reading: B pinv(B) = I). D-G1-DERIVE written.
-S46 (launch 20261116-215112, cap $3): `bench/pretest_gate.py` + self-test (break-checked) committed: hover window from first
-   airborne +15 s, rate RMS < 0.02 rad/s, motor pin < 1 %, torque achieved > 90 %, exit 0/1/2. On logs: PID and S45 INDI
-   pass, S44 chatter and S41 limit cycle fail (`results/stage2_s46/pretest_gate_check/`). T97 sonnet second key of G1
-   derivation running -> `results/stage2_s46/g1_second_key.md` (also: which inertia, 1.396e-3 or 1.022e-3, is the plant's).
-S46 also: T97 second key AGREE on roll/pitch with TOTAL inertia; bench G1 1757/1640/205 in `bench/params/quad5in_indi_g1.params`.
+S44-S46 detail moved to JOURNAL.md (S51). Derived G1 1757/1640/205 in `bench/params/quad5in_indi_g1.params`; `bench/pretest_gate.py` in use.
 S47 (launch 20261116-221436, cap $3): first roll M3a flight with derived G1 invalid: 41 Hz yaw LIMIT CYCLE (pin 37-52 %)
    on model-only and measured paths, S45 clean hover not reproducible (same binary/model/params: bistable). Cause: G2_Y 0
    while the rotor spin-up torque dominates yaw above 1.2 Hz. Derived G2_Y 27 (D-G2Y-DERIVE): 4/4 hovers (2 seeds x 2
@@ -61,14 +44,16 @@ S50 (launch 20261117-011145, cap $2.02): owner answers applied (GATES.md G1 FINA
    reporter per run (sim vs controller holes, extend `bench/a15_gaps.py`?) for evidence limit 1; G1 passes once G1.7 in use.
 S50 also: T104 sonnet second key of the lead sweep (`results/stage2_s50/lead_sweep_second_key.md`): AGREE on the
    decision at K_R 20 (PM within 1.4 deg); GM key 2 0.6-2.7 dB higher, K30-40 PM 5-7 deg higher (filter choice). Item (1) next is DONE.
-NEXT (S51): route check 49 done early (`design/route_check_49.md`), adopted: (1) DONE S49 (see above); next a haiku second key of the sweep
-   (own delay model), then: add 3-5 ms delay, ACT_TC 0.033 to `bench/margins_models.py` lead rows at 400/800 Hz; stop D-RATE-LEAD if
-   PM < 50 or GM < 8 dB at 400 Hz (model is 2.3-3.5 dB GM optimistic). (2) If it holds: opus review r1 of the note
-   vs src/lib/indi_rate_control (one interface, ~$0.6, needs $1.2 left), then code MC_INDI_LEAD + unit test (break-checked),
-   one roll M3a flight on 2 seeds. Not adopted: 'review the diff instead of the note' (design-first rule kept; the
-   review of the code against the note follows the code). Q2-Q4 already asked, no new question.
-   (3) runner appends quad5in_indi_g1.params + provenance in run.json; pretest_gate end-time
-   option (window overlaps injection). (4) A-24 PSD re-check with G2.
+S51 (launch 20261117-021217, cap $3): T105 opus review r1 of the lead note vs code: NOT BLOCKING (`design/rate_lead_review_r1.md`,
+   dispositions there, D-RATE-LEAD addendum). Majors: lead is feedback-only (setpoint path keeps actuator lag); GM falls
+   12-18 dB in model, ACT_TC overestimated +40 % is the dangerous side (K40: ~5 dB); yaw lead leaves the G2 path lag.
+NEXT (S52): (2) code MC_INDI_LEAD (sonnet, ~$1.0, needs $2 left: launch first): per-axis vector, c capped at 2, 0 when
+   landed, yaml param default 1 (provisional), unit test on a closed-loop plant that feeds the command back as
+   torque_allocated_prev and fails with the lead broken (break-check), sweep ACT_TC -40/0/+40 % in the test; fix the
+   note's "not a gap" sentence. I read the diff and run the tests; then haiku second key of the diff vs note. Then one
+   roll M3a flight on 2 seeds (rebuild first). Review F6 (take-off jump not limited by max_inc, maybe_landed toggling)
+   joins the landed-handling item. (3) runner appends quad5in_indi_g1.params + provenance in run.json; pretest_gate
+   end-time option. (4) A-24 PSD re-check with G2.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
@@ -89,6 +74,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 51 | T105 | opus | review r1 lead note vs code | done, 9 calls, ~$1.1 (2x estimate), NOT BLOCKING, 3 MAJOR |
 | 50 | T104 | sonnet | second key lead delay sweep | done, 5 calls, ~$0.25, AGREE at K20, GM 1-3 dB optimistic |
 | 49 | T102 | haiku | stage-2 summary table | done, 7 calls, ~$0.2, PID GM values negative (not used) |
 | 49 | T103 | sonnet | D-RATE-LEAD note draft | done, 6 calls, ~$0.3, UNREVIEWED |
@@ -100,6 +86,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 45 | T94 | haiku | A-23 hover G1_Y 215 + checks | done, 6 calls, ~$0.1, clean hover |
 
 ## Lessons proposed
+- S51: an opus review of a ~180-line note plus ~400 lines of law code cost ~$1.1 in 9 calls (2x the S35 estimate); budget opus reviews at ~$1.1 and launch them first in a session.
 - S50: break-checks by sed on a .py must run with PYTHONDONTWRITEBYTECODE=1 (or clear __pycache__): a same-size
   mutation in the same second left a stale .pyc that made the restored file fail.
 - S49: calibrate the unmodelled delay of a loop model on one existing flight before using the model to accept or

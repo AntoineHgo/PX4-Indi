@@ -276,3 +276,8 @@ binary commit and HEAD (fewer rebuilds, but weaker than the owner's wording); ha
 the header holds the commit hash without a dirty flag, so a binary built from a dirty tree at HEAD passes; the binary
 hash in run.json lets a reader detect it afterwards. Overturn if: a gate run is found with a binary hash that differs
 from the one rebuilt from its commit. Gate analysis scripts must ignore runs with `gate_bearing` false.
+
+### D-RATE-LEAD addendum (S51, review r1 NOT BLOCKING)
+Opus review `design/rate_lead_review_r1.md`: law verified against code for roll/pitch. Overturn evidence added: GM < 6 dB
+at K_R 20 with ACT_TC overestimated by 40 % (model predicts ~5 dB at K40) -> default MC_INDI_LEAD < 1 or a lower bound
+on identified tau_c. Lead is feedback-only (setpoint path keeps the actuator lag); feedforward is a separate later option.

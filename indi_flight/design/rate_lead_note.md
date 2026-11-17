@@ -1,6 +1,6 @@
 # Stage-3 design note: rate-prediction lead in the INDI rate law (D-RATE-LEAD)
 
-Status: DRAFT for independent review against the code, not implemented. Sources: `indi_flight/DECISIONS.md` D-RATE-LEAD,
+Status: REVIEWED r1 (S51, NOT BLOCKING, dispositions in `design/rate_lead_review_r1.md`), not implemented. Sources: `indi_flight/DECISIONS.md` D-RATE-LEAD,
 `indi_flight/results/stage2_s48/README.md`, `src/lib/indi_rate_control/indi_rate_control.{hpp,cpp}`,
 `src/modules/mc_indi_rate_control/`. Line numbers refer to the tree at commit 0d61daaed4. Every statement not checked
 against code or a result file is marked UNVERIFIED.
