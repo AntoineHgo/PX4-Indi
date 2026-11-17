@@ -74,3 +74,11 @@ sim time, start at the trigger onset, step size matches the table, and returns t
   not dominated by saturation.
 - Common: confirm the wrench actually moves quad5in_0 (not x500_0) - first look at the sign of the response (N1 A: earlier
   runs applied nothing), and that CdA = 0.012 gives a visible, not negligible, effect.
+
+## Erratum (S66, second key T133 `design/t133_key_t132_s66.md`: sizing AGREE, no code defect)
+- gust_x at the 3 m/s plateau is 0.066 N on quad5in (not 0.10 N); peak at profile time 12.5 s (not 13 s).
+- gust_diag peak force direction is 96.8 deg (not 120 deg).
+- com_shift torque is in the x slot (old-column "Ty" is a typo).
+- Profiles do not return to 0 at profile end: gust/wind hold their last value and payload/com_shift hold to the end of
+  the flight; the runner clears the wrench as a step (pre-existing behaviour, by design of the profiles).
+- Runner passes `--model {model}_0` (verified `bench/run_scenario.py:714`).
