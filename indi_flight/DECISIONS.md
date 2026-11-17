@@ -281,3 +281,17 @@ from the one rebuilt from its commit. Gate analysis scripts must ignore runs wit
 Opus review `design/rate_lead_review_r1.md`: law verified against code for roll/pitch. Overturn evidence added: GM < 6 dB
 at K_R 20 with ACT_TC overestimated by 40 % (model predicts ~5 dB at K40) -> default MC_INDI_LEAD < 1 or a lower bound
 on identified tau_c. Lead is feedback-only (setpoint path keeps the actuator lag); feedforward is a separate later option.
+
+### D-RATE-LEAD addendum 2 (S53): defaults MC_INDI_LEAD 1, MC_INDI_ACT_TC 0.05; identification errs high
+Evidence: `results/stage3_s53/act_tc_sweep/README.md` (roll M3a, 800 Hz, plant tau 0.033): ACT_TC x0.5 PM 36/GM 5.1,
+x0.6 PM 42/GM 7.9 (fail G2); x1 PM 59/GM 14; x1.5 PM 86/GM 11; x2 PM 75/GM 10 (2 seeds). Tolerance is one-sided.
+Choice: (a) MC_INDI_LEAD default 1 (lead 0 gives PM 26 at the stock MC_ROLL_P 8). (b) MC_INDI_ACT_TC default 0.05:
+covers any plant tau in [0.025, 0.05] within the measured safe band [x1, x2]; on the reference airframe it is x1.5.
+(c) Stage-4 identification reports an upper bound of tau_c (estimate + its uncertainty, never the point estimate
+alone), and the user procedure says: if unsure, round ACT_TC up. Applied to firmware with the stage-3 defaults item
+(`design/stage3_items_note.md` item 6), not before.
+Alternatives: keep 0.02 (fails G2 on the reference airframe); default = plant 0.033 (no margin for an under-estimate,
+and plants slower than the reference fail); lead < 1 (lowers PM at matched tau, does not fix the under-estimate side).
+Overturn if: pitch/yaw or 400 Hz margins at ACT_TC x1.5 fall below G2; a plant with tau < 0.025 s (default > x2)
+shows GM < 6 dB; G6 outlook airframes with slow motors (tau > 0.05) are flown before identification (then the
+pre-identification behaviour of decision 3 must cover it).
