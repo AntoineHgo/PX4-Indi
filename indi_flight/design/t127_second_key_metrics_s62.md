@@ -53,3 +53,31 @@ AGREE for the estimator metrics under the primary convention (t_on = start + 2.0
 reproduces all 27 INDI values within tolerance. Truth metrics are not in the tolerance check; they
 show the expected small offsets, plus a settle artifact on seed3 roll and an unsettled yaw truth
 on seed2 yaw.
+
+## A-28 closing test
+
+Window [t_on + 1.5 s, t_on + 3.0 s), t_on = start + 2.0 s. Truth interpolated onto estimator
+timestamps for est-truth. Truth settle is against truth's own window mean, band 2 % of amp,
+window [t_on, t_on + 3.0 s), time from t_on.
+
+| flight | est-truth mean [deg] | truth-amp [deg] | est-amp [deg] | truth settle vs own final [ms] |
+|---|---|---|---|---|
+| seed1 roll | +0.236 | -0.242 | -0.007 | 613.2 |
+| seed1 pitch | +0.211 | -0.224 | -0.013 | 366.2 |
+| seed1 yaw | +0.602 | -0.575 | +0.027 | 920.8 |
+| seed2 roll | +0.221 | -0.215 | +0.007 | 584.0 |
+| seed2 pitch | +0.223 | -0.230 | -0.008 | 346.5 |
+| seed2 yaw | +0.971 | -0.961 | +0.010 | 901.5 |
+| seed3 roll | +0.206 | -0.223 | -0.016 | 595.0 |
+| seed3 pitch | +0.238 | -0.250 | -0.011 | 656.5 |
+| seed3 yaw | +0.785 | -0.713 | +0.070 | 916.2 |
+
+Verdict: yes for seed2 yaw (truth mean sits 0.96 deg below amp, outside the 0.90 deg band, and the
+est-truth offset is +0.97 deg, so the truth can never enter the band and the nan follows).
+Partly for seed3 roll: the truth mean sits 0.22 deg below amp, leaving 0.08 deg of margin to the
+0.30 deg band; the offset alone does not explain the 2.96 s exit, which is an excursion near the
+band edge.
+
+Caveat: against its own final value the truth settle is longer for roll and pitch (346 to 656 ms
+vs 358 to 392 ms against amp, seed3 roll excluded), because the own-final band is shifted by the 0.2 deg offset. The
+own-final settle is not a substitute for the amp-referenced metric.

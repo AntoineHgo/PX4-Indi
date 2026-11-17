@@ -28,8 +28,9 @@ S62 (launch 20261117-183951, cap $3): D-S3-ATT-STEP CODED da64bc26b3 (T125; mode
    rest minor, `design/t126_second_key_att_step_s62.md`). Flown 12 INDI flights seeds 1-3 (`results/stage3_s62/README.md`):
    OS 0.2-1.0 %, roll/pitch settle 358-394 ms, yaw 920-936 ms, all within G2-STEP; torque rejection kept (roll 11.8 vs 12.9).
    T127 metric key AGREE (27/27 values, `design/t127_second_key_metrics_s62.md`), but truth != estimate on 2 flights: A-28.
-NEXT (S63): (1) close A-28 (haiku, ~$0.1: estimator-minus-truth offset on the 9 flights) and fix G2-STEP's measurement
-   definition in GATES.md (truth, t_on on setpoint) before its first test; (2) r_dot_f noise in acro/hover effort check (G4 pre-look, one hover + one
+NEXT (S63): (1) A-28 partly done (T127 note, section A-28): est-truth offset 0.2 deg r/p, 0.6-1 deg yaw; truth settle vs own
+   final 346-656 ms (some > 450). Find which flights and why (seed3 roll excursion at 2.96 s), then write G2-STEP's
+   measurement definition in GATES.md (truth, t_on on setpoint, estimator offset reported apart) before its first test; (2) r_dot_f noise in acro/hover effort check (G4 pre-look, one hover + one
    acro-stick flight, log rate_sp_dot); (3) attitude-break margin with the new setpoint path (G2).
    THEN resume the S60 plan: thrust-gap flights on the stage-5 slice (MC_INDI_W_MAX = 2700 for measured thrust; needs a
    NEW hover scenario with thrust gap, motor_fault/thrust_sag scenarios are attitude-mode, N1 C3), A3/A5 + reset deviations
