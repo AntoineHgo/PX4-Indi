@@ -7,7 +7,13 @@ is edited. A one-step wrench (topic /world/<w>/wrench; the persistent topic ACCU
 message, so the profile does not depend on the speed factor. The profile starts at an onset that the runner writes to
 a trigger file (JSON {"onset_px4_s": float}); onset is expressed in PX4/ULog time and converted with CLOCK_OFFSET_S.
 
-  disturbance.py --profile gust_x|payload_add|gust_diag|com_shift --out DIR [--world default] [--model x500_0] [--stop-after S]
+  disturbance.py --profile gust_x|payload_add|gust_diag|com_shift|torque_steps --out DIR [--world default] [--model x500_0]
+                 [--airframe x500|quad5in] [--sdf PATH] [--stop-after S]
+
+Sizing (N1 C2): every profile is sized from the FLOWN airframe (mass = sum of link masses of its base SDF, base_link
+inertia, frame drag CdA), not from x500 constants. --airframe defaults from --model (x500_0 -> x500, quad5in_0 -> quad5in);
+--sdf overrides the SDF file. x500 numbers are unchanged from before (default --model x500_0). See
+indi_flight/design/t132_disturbance_c2_s65.md.
 
 Writes DIR/disturbance.csv (sim_time_s, px4_time_s, fx, fy, fz, tx, ty, tz; world frame, applied at the CoM) and
 DIR/disturbance.log. Ends on SIGTERM (clears the wrench) or when the profile ended + --stop-after.
@@ -22,9 +28,17 @@ import time
 
 # ---------------- constants (assumptions, see plan/disturbance_spec.md) ----------------
 RHO = 1.225                 # kg/m^3
-CD_A = 0.06                 # m^2, drag coefficient * frontal area of the x500 frame (assumption)
-C_DRAG = 0.5 * RHO * CD_A   # F = C_DRAG * v * |v|
-COP_Z = 0.05                # m, centre of pressure above the CoM (body z up)
+# Per-airframe drag/geometry. cda = drag coefficient * frontal area (m^2), cop_z = centre of pressure above the CoM (m).
+# x500: assumption of the original spec (unchanged). quad5in: UNVERIFIED assumption, the x500 values scaled by the frame
+# size ratio (5-inch ~0.22 m motor diagonal vs x500 ~0.51 m): CdA ~ L^2 -> 0.06*0.43^2 = 0.011 -> 0.012 m^2 (consistent
+# with the 0.01-0.02 m^2 usually quoted for a 5-inch freestyle quad with battery), cop_z ~ L -> 0.02 m. No measured source.
+AIRFRAMES = {
+    "x500": {"sdf": ("..", "..", "Tools", "simulation", "gz", "models", "x500_base", "model.sdf"), "cda": 0.06, "cop_z": 0.05,
+             # fallback if the SDF is not readable (container mount): values of the SDF at T132 time
+             "fallback": (2.0 + 4 * 0.016076923076923075, (0.02166666666666667, 0.02166666666666667, 0.04000000000000001))},
+    "quad5in": {"sdf": ("..", "sim", "models", "quad5in_base", "model.sdf"), "cda": 0.012, "cop_z": 0.02,
+                "fallback": (0.566 + 4 * 0.011, (1.022e-3, 1.122e-3, 1.944e-3))},
+}
 WIND_RAMP_TO = 3.0          # m/s
 WIND_RAMP_T = 2.0           # s
 WIND_HOLD1_T = 10.0         # s
@@ -32,7 +46,7 @@ GUST_AMP = 6.0              # m/s, added on top of the base wind (peak total 9 m
 GUST_T = 1.0                # s, 1-cosine
 WIND_HOLD2_T = 15.0         # s
 GUST_DURATION = WIND_RAMP_T + WIND_HOLD1_T + GUST_T + WIND_HOLD2_T  # 28 s
-X500_MASS_KG = 2.0 + 4 * 0.016076923076923075  # base_link + 4 rotor links (x500_base/model.sdf)
+X500_MASS_KG = 2.0 + 4 * 0.016076923076923075  # base_link + 4 rotor links (x500_base/model.sdf); reference only
 GRAVITY = 9.8               # gz world gravity (default.sdf)
 PAYLOAD_FRAC = 0.25
 PAYLOAD_DURATION = 30.0     # s, held until the end of the scenario window
@@ -45,6 +59,49 @@ DIAG_DURATION = WIND_RAMP_T + WIND_HOLD1_T + DIAG_GUST_T + WIND_HOLD2_T  # 27.6 
 # in the world frame (level-hover approximation: the vehicle holds its spawn yaw and stays near level).
 SHIFT_FRAC = 0.15
 SHIFT_Y = 0.05              # m
+
+
+class Airframe:
+    """Mass (sum of link masses), base_link inertia diagonal, CdA and CoP height of the flown vehicle."""
+
+    def __init__(self, name, mass, inertia, cda, cop_z, source):
+        self.name, self.mass, self.inertia, self.cda, self.cop_z, self.source = name, mass, inertia, cda, cop_z, source
+        self.c_drag = 0.5 * RHO * cda   # F = c_drag * v * |v|
+
+
+def parse_sdf(path):
+    """(total mass of all links, base_link (ixx, iyy, izz)) from a model SDF."""
+    import xml.etree.ElementTree as ET
+    root = ET.parse(path).getroot()
+    mass, inertia = 0.0, None
+    for link in root.iter("link"):
+        m = link.find("inertial/mass")
+        if m is not None:
+            mass += float(m.text)
+        i = link.find("inertial/inertia")
+        if link.get("name") == "base_link" and i is not None:
+            inertia = tuple(float(i.find(k).text) for k in ("ixx", "iyy", "izz"))
+    return mass, inertia
+
+
+def load_airframe(name, sdf=None):
+    spec = AIRFRAMES[name]
+    path = sdf or os.path.join(os.path.dirname(os.path.abspath(__file__)), *spec["sdf"])
+    try:
+        mass, inertia = parse_sdf(path)
+        src = path
+        if inertia is None or mass <= 0:
+            raise ValueError("no base_link inertial in SDF")
+    except (OSError, ValueError, TypeError, AttributeError, SyntaxError):  # ParseError is a SyntaxError
+        mass, inertia = spec["fallback"]
+        src = "fallback constants (SDF not readable: %s)" % path
+    return Airframe(name, mass, inertia, spec["cda"], spec["cop_z"], src)
+
+
+def airframe_from_model(model):
+    return "quad5in" if model.startswith("quad5in") else "x500"
+
+
 # gz sim time minus PX4 (ULog / MAVLink time_boot_ms) time. Measured, see bench/RUNNER_NOTES.md.
 CLOCK_OFFSET_S = 0.0
 
@@ -64,17 +121,17 @@ def wind_speed(t):
     return WIND_RAMP_TO  # hold (profile end handled by the caller)
 
 
-def gust_x(t):
+def gust_x(t, af):
     """Wrench (fx, fy, fz, tx, ty, tz) at the CoM, world frame, for profile time t."""
     v = wind_speed(t)
-    f = (C_DRAG * v * abs(v), 0.0, 0.0)
-    r = (0.0, 0.0, COP_Z)
+    f = (af.c_drag * v * abs(v), 0.0, 0.0)
+    r = (0.0, 0.0, af.cop_z)
     tq = (r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0])
     return (*f, *tq)
 
 
-def payload_add(t):
-    fz = -PAYLOAD_FRAC * X500_MASS_KG * GRAVITY if t >= 0 else 0.0
+def payload_add(t, af):
+    fz = -PAYLOAD_FRAC * af.mass * GRAVITY if t >= 0 else 0.0
     return (0.0, 0.0, fz, 0.0, 0.0, 0.0)
 
 
@@ -89,30 +146,33 @@ def wind_diag(t):
     return base * math.cos(b) + gust * math.cos(g), base * math.sin(b) + gust * math.sin(g)
 
 
-def gust_diag(t):
+def gust_diag(t, af):
     vx, vy = wind_diag(t)
     v = math.hypot(vx, vy)
-    f = (C_DRAG * vx * v, C_DRAG * vy * v, 0.0)
-    r = (0.0, 0.0, COP_Z)
+    f = (af.c_drag * vx * v, af.c_drag * vy * v, 0.0)
+    r = (0.0, 0.0, af.cop_z)
     tq = (r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0])
     return (*f, *tq)
 
 
-def com_shift(t):
-    fz = -SHIFT_FRAC * X500_MASS_KG * GRAVITY if t >= 0 else 0.0
+def com_shift(t, af):
+    fz = -SHIFT_FRAC * af.mass * GRAVITY if t >= 0 else 0.0
     return (0.0, 0.0, fz, SHIFT_Y * fz, 0.0, 0.0)  # torque = (0, SHIFT_Y, 0) x (0, 0, fz)
 
 
-# torque_steps: pure body-torque steps at near-level hover (world ~ body axes at spawn yaw), sized for quad5in
-# (~4-5 % of the INDI G1 authority: roll 1757*1.4e-3 = 2.5 N m, yaw 205*2.7e-3 = 0.55 N m per unit command).
+# torque_steps: pure body-torque steps at near-level hover (world ~ body axes at spawn yaw). TQ_STEPS are the quad5in
+# values (~4-5 % of the INDI G1 authority: roll 1757*1.4e-3 = 2.5 N m, yaw 205*2.7e-3 = 0.55 N m per unit command), i.e. the
+# reference. For another airframe the torque scales with base_link inertia (same angular-acceleration step):
+# tq = TQ_STEPS * I_axis / TQ_REF_INERTIA (quad5in -> factor 1, numbers unchanged).
+TQ_REF_INERTIA = (1.022e-3, 1.122e-3, 1.944e-3)
 TQ_STEPS = [(0.0, 2.0, (0.10, 0.0, 0.0)), (4.0, 6.0, (0.0, 0.10, 0.0)), (8.0, 10.0, (0.0, 0.0, 0.03))]
 TQ_DURATION = 12.0
 
 
-def torque_steps(t):
+def torque_steps(t, af):
     for t0, t1, tq in TQ_STEPS:
         if t0 <= t < t1:
-            return (0.0, 0.0, 0.0, *tq)
+            return (0.0, 0.0, 0.0, *(q * i / r for q, i, r in zip(tq, af.inertia, TQ_REF_INERTIA)))
     return (0.0,) * 6
 
 
@@ -126,6 +186,8 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--world", default="default")
     ap.add_argument("--model", default="x500_0")
+    ap.add_argument("--airframe", choices=sorted(AIRFRAMES), default=None, help="default: derived from --model")
+    ap.add_argument("--sdf", default=None, help="base model SDF to size the profiles from (default: the airframe SDF)")
     ap.add_argument("--link", default="base_link")
     ap.add_argument("--stop-after", type=float, default=30.0, help="exit this many sim s after the profile ended")
     ap.add_argument("--wall-timeout", type=float, default=900.0)
@@ -148,6 +210,7 @@ def main():
 
     node = Node()
     fn, dur = PROFILES[a.profile]
+    af = load_airframe(a.airframe or airframe_from_model(a.model), a.sdf)
     w = f"/world/{a.world}"
 
     # ---- load the system at runtime ----
@@ -213,7 +276,7 @@ def main():
             pub_clear.publish(entity())
             say(f"profile ended at sim {t:.3f}, wrench cleared")
         else:
-            wr = fn(tp)
+            wr = fn(tp, af)
             apply(wr)
         state["n"] += 1
         csv.write(f"{t:.4f},{t - CLOCK_OFFSET_S:.4f}," + ",".join(f"{x:.5f}" for x in wr) + "\n")
@@ -221,6 +284,7 @@ def main():
     if not node.subscribe(Clock, f"{w}/clock", on_clock):
         say("subscribe to clock failed")
         return 3
+    say(f"airframe {af.name}: mass {af.mass:.4f} kg, inertia {af.inertia}, CdA {af.cda}, cop_z {af.cop_z}, source {af.source}")
     say(f"profile {a.profile}, duration {dur} s; waiting for trigger {trigger}")
     signal.signal(signal.SIGTERM, lambda *_: state.update(stop=True))
     signal.signal(signal.SIGINT, lambda *_: state.update(stop=True))
