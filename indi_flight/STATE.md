@@ -32,13 +32,14 @@ S56 (launch 20261117-061159, cap $2.83): D-YAW-INV IMPLEMENTED (T113 sonnet 23e9
    PM 88, DM 197 ms, GM 18.4, Ms 1.6 dB. SITL binary at 296766019a firmware.
    Roll M3a 400 Hz DONE (`results/stage3_s57_pre/roll_m3a_400/README.md`): PM 84.4, GM 10.5, DM 58 ms, Ms 3.9, f_c 4 Hz,
    2 seeds, logged at 400 Hz. pretest_gate over a whole M3a flight FAILs by design: always pass --delay 4 --length 15.
-NEXT (S57): (2) roll M3a measured-rotor path (--sim v2; check S47 measured_g2 for the flags) and 250 Hz (rate-hz 267). (3) attitude/velocity/
+NEXT (S57): (2) roll M3a measured-rotor path (--sim v2; check S47 measured_g2 for the flags) and 250 Hz: S56 267 Hz set
+   INVALID (TP 10 not integer samples at 800/3 Hz, `results/stage3_s57_pre/roll_m3a_267/README.md`): re-fly with
+   MC_INDI_INJ_TP 15 and fs 266.6667; check why seed 1 passed frf_periodic's integer check (tolerance?). (3) attitude/velocity/
    position break notes. (4) stage-3 items note review (opus, own session). (5) hole reporter. Route check S58 (due).
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| B56q | roll M3a 267 Hz, 2 seeds | bash | `results/stage3_s57_pre/roll_m3a_267/` (done.txt) | if done.txt: read *_margins.txt, *_gate_preinj.md, *_rates.txt and write README as roll_m3a_400; else `bash indi_flight/results/stage3_s57_pre/roll_m3a_267/run_all.sh` |
 
 
 ## Open problems
