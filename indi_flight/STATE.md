@@ -54,14 +54,20 @@ S55 (launch 20261117-025824, cap $1.48): yaw model extended (`results/stage3_s55
    and law G2 > plant (GM 0.6). T112 opus review r1 note vs code: NOT BLOCKING (`design/yaw_inv_review_r1.md`, opus ~$0.7
    in 7 calls). Majors: store applied yaw increment after step 9 clamp (replaces _t_f_prev), zero it when landed and in
    resetStates, rewrite G2_Y param/header text; lead acts fully on yaw (x105) -> yaw depends on ACT_TC/LEAD as roll.
-NEXT (S56): (1) D-YAW-INV code per review r1 majors (sonnet, brief at ~15 calls, tell it gtest kind) + unit test with
-   the parametrised plant + yaw M3a 2 seeds (G2_Y 27 from quad5in_indi_g1.params); haiku second key of the diff. Optional:
-   key the S55 grid (add tau_m x1.25 between). (2)-(5) unchanged from S54: roll M3a measured-rotor path (--sim v2) and
-   400 Hz (fs arg); attitude/velocity/position break notes; stage-3 items note review; hole reporter. Next route check S58.
+S56 (launch 20261117-061159, cap $2.83): D-YAW-INV option (c) coded by T113 sonnet (13 calls, ~$0.45): state _yaw_inc_prev =
+   applied increment after clamps/finite check, 0 landed and on reset; 57/57 unit tests, break-checked (Delta term, landed,
+   reset); G2_Y text rewritten (G2/G1 is not the motor tau), G2_Y max 1 -> 1000; commit 23e9d30cc0. Yaw M3a B56 + T114 in flight.
+NEXT (S57): (1) read B56 margins (expect yaw crossover ~1.4 Hz, Ms <= 6 dB) and T114 verdict; close A-27 and mark D-YAW-INV
+   IMPLEMENTED if both fine; check log scripts that read torque_increment(2) as a per-cycle step. (2)-(5) unchanged from S54:
+   roll M3a measured-rotor path (--sim v2) and 400 Hz; attitude/velocity/position break notes; stage-3 items note review;
+   hole reporter. Next route check S58.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T113 | D-YAW-INV code + 4 unit tests | sonnet | `results/stage3_s56/yaw_inv_impl.md` | DONE, committed 23e9d30cc0 |
+| T114 | second key of 23e9d30cc0 vs review r1 | haiku | `results/stage3_s56/yaw_inv_second_key.md` | rerun the brief if file missing |
+| B56 | yaw M3a 2 seeds, option (c) | bash | `results/stage3_s56/yaw_m3a/` (done.txt) | `bash indi_flight/results/stage3_s56/yaw_m3a/run_all.sh` |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
