@@ -23,6 +23,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from scenarios import SCENARIOS  # noqa: E402
 from model_variant import build_variant  # noqa: E402
+import provenance  # noqa: E402
 
 REPO = os.environ.get("PX4_INDI_REPO", os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 # ported to indi_flight/bench: inputs (scenarios, model_variant, disturbance, params) live next to this file, outputs
@@ -611,6 +612,8 @@ def main():
     ap.add_argument("--unpause-after", default="Startup script returned successfully",
                     help="px4.log pattern after which --paused-start unpauses gz")
     ap.add_argument("--log-poll", default="actuator_motors", help="topic the logger wakes on (logger -p)")
+    ap.add_argument("--gate", action="store_true",
+                    help="gate-bearing run (G1.7): refuse on a dirty tree or a binary not built from HEAD")
     a = ap.parse_args()
     if a.imu_rate is None:
         a.imu_rate = MODEL_IMU_RATE.get(a.model, 800)
@@ -630,6 +633,12 @@ def main():
             "physics_step_s": world_step_s(), "world": os.path.join(WORLDS_DIR, "default.sdf"),
             "imu_rate": a.imu_rate, "rate_hz": a.rate_hz,
             "imu_filter_hz": {"IMU_GYRO_CUTOFF": IMU_GYRO_CUTOFF_HZ, "IMU_DGYRO_CUTOFF": IMU_DGYRO_CUTOFF_HZ}}
+    prov_files = [os.path.join(WORLDS_DIR, "default.sdf"), a.params]
+    prov_files += sorted(glob.glob(os.path.join(MODELS_DIR, a.model, "*")))
+    meta["provenance"] = provenance.collect(REPO, BUILD, prov_files)
+    meta["gate_bearing"] = a.gate
+    if a.gate and provenance.refusal(meta["provenance"]):
+        raise SystemExit("G1.7 refuses this gate-bearing run: " + provenance.refusal(meta["provenance"]))
     overlay = {}
     if a.params:
         for line in open(a.params):
