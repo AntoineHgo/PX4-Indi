@@ -48,6 +48,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T143 | Q5-A part 1: INDI step_roll 400 Hz seed 1, 5x speed 4 + 3x speed 1, arm-instant log | haiku | `results/g16_indi_s67/README.md` | `results/g16_indi_s67/fly.sh` |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
