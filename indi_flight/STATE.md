@@ -32,13 +32,18 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    against stage-1 sim work before building. (4) G2-STEP 400 Hz reported run DONE S64 (9/9 within limits, A-30 seed spread parked).
    (5) attitude-break margin with the new setpoint path (G2) when the G2 table is resumed.
    Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
+   S65 (launch 20261117-192006, cap $1.5): item (3) DONE T131 (`design/g3_hooks_check_s65.md`): loop delay ABSENT;
+   vibration PARTIAL (rotor sinusoid only, no wideband IMU scale); GNSS latency PARTIAL (param SENS_GNSS0_DELAY only,
+   no sample delay; draft says EKF2_GPS_DELAY: fix GATES text); eRPM latency EXISTS; drop RNG seed FIXED (hpp:131),
+   must become per-run. Item (2) CODED T132 (`design/t132_disturbance_c2_s65.md`, self-test OK, re-run S65): profiles
+   sized from SDF (quad5in 0.610 kg, payload 25 % W, gust 10 % W); quad5in CdA 0.012 / CoP 0.02 UNVERIFIED; UNKEYED.
+   NEXT S66: haiku second key of T132 + one G1.5 pre-test flight per profile; then item (1) slice 2; build hooks
+   (loop delay, GNSS sample delay, per-run drop seed, IMU noise scale) as one simulator task with second key.
    Results rule (N1 D): commit metrics/run.json/README of every run in the session that produced it. Next route check: S69.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T131 | G3 'NOT FOUND' hooks vs stage-1 sim work (item 3) | haiku | design/g3_hooks_check_s65.md | re-launch brief from STATE item (3) |
-| T132 | N1 C2: disturbance.py sized from flown model (item 2) | sonnet | design/t132_disturbance_c2_s65.md | re-launch brief from STATE item (2) |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -55,6 +60,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 65 | T132 | sonnet | N1 C2 disturbance sizing + self-test | done, 9 calls, ~$0.3, test OK, UNKEYED, guard blocked 1 call (cause unknown) |
+| 65 | T131 | haiku | G3 hooks existence check | done, 5 calls, ~$0.06 |
 | 64 | T130 | sonnet | draft G3-G8 tests | done, 4 calls, ~$0.35, 154 lines, one wrong T/W (53, real 7.3) caught in review |
 | 64 | T129 | sonnet | route check 64 | done, 4 calls, ~$0.15, acted on |
 | 63 | T128 | sonnet | primary G2-STEP metric script + 7 self-tests | done, 8 calls, ~$0.4, break-checked, AGREE with T127 key 9/9 |
