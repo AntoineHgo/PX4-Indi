@@ -53,8 +53,8 @@ S52 (launch 20261117-022149, cap $3): MC_INDI_LEAD implemented (T107 sonnet, 6e8
    over as review F2 guessed). Flight roll M3a tc33 P8 lead 1, 2 seeds: PM 59.1/59.1, GM 13.9/14.3, DM 57 ms
    (S48 lead 0: 25.9/10.7/25) -> `results/stage3_s52/m3a_lead/README.md`. Runner now appends quad5in_indi_g1.params
    (7c8b8d1661). pretest_gate "end-time option" not needed: use --delay 4 --length 15 to end before the injection.
-NEXT (S53): (1) read tc20 flights (ACT_TC 0.02 default, lead 1, s1/s2: `results/stage3_s52/m3a_lead/lead1tc20_s*`,
-   post as for lead1; add the rows to README) and decide default MC_INDI_LEAD/ACT_TC (D-RATE-LEAD addendum).
+NEXT (S53): (1) DONE S52: tc20 flights PM 42.0 / GM 7.9 on 2 seeds (< PM 45; README). Decide ACT_TC default (err high:
+   x1.4 safe, x0.6 not) and MC_INDI_LEAD default in a D-RATE-LEAD addendum; stage-4 identification must bound tau_c from below.
    (2) stage-3 items left (review sec. 4/5.2b): landed handling (trim torque zeroed, F6 take-off jump, maybe_landed
    toggling), start-up exclusion of the two rate modules, setpoint timeout, frozen-telemetry detection, autotune start,
    defaults; yaw margins with lead (F3); pitch break; 400/250 Hz. Write one stage-3 design note for them first.
@@ -63,7 +63,6 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| F52b | roll M3a lead1 ACT_TC 0.02 s1,s2 | host bash | `results/stage3_s52/m3a_lead/lead1tc20_s*` (done_tc20.txt) | `bash results/stage3_s52/m3a_lead/fly_tc20.sh` |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -95,6 +94,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 45 | T94 | haiku | A-23 hover G1_Y 215 + checks | done, 6 calls, ~$0.1, clean hover |
 
 ## Lessons proposed
+- S52: review F2 named the over-estimated ACT_TC as the dangerous side of the lead; test and flight show the opposite
+  (x0.6: PM 42, x1.4: PM 83). Compute both sides of a parameter error before planning defaults around one.
 - S51: an opus review of a ~180-line note plus ~400 lines of law code cost ~$1.1 in 9 calls (2x the S35 estimate); budget opus reviews at ~$1.1 and launch them first in a session.
 - S50: break-checks by sed on a .py must run with PYTHONDONTWRITEBYTECODE=1 (or clear __pycache__): a same-size
   mutation in the same second left a stale .pyc that made the restored file fail.
