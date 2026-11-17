@@ -27,7 +27,9 @@ S57 (launch 20261117-071301, cap $3): roll M3a 800/3 Hz re-flown with TP 7.5 (`r
 S58 (launch 20261117-073027, cap $3): D-G2-OUTER-DEFER (outer break note keyed against stage-5 code, not now);
    D-S3-LANDED, D-S3-FROZEN, D-S3-SPTO written. Items 1 (landed split + t_fb ramp) and 4 (frozen rpm) CODED 65356c4250:
    tests 4/4 targets pass, break-checked (`design/t117_s3_items_s58.md`), SITL build rc 0, format clean; haiku second key
-   AGREE (`design/t118_second_key_s58.md`, its one issue unreachable). Not flown yet. SITL binary at 65356c4250.
+   AGREE (`design/t118_second_key_s58.md`, its one issue unreachable). Not flown yet. REBUILD SITL before flying (binary
+   built mid-edit). Flight command template: `design/t81_m3a_inject_s39.md` (run_scenario.py --scenario hover --controller
+   indi_m3a --model quad5in --params ...); S57 READMEs do not record the command: record it in every new README.
 NEXT (S59): (a) items 2 (start-up exclusion, note sec 2) and 3 (D-S3-SPTO) as code, sonnet ~$1; (b) opus review of the
    whole stage-3 safety DIFF (65356c4250 + S59) vs DECISIONS, budget $1.1, launch first in S60 if S59 is short;
    (c) one hover + one landing flight to check the ramp and no frozen false trip (pretest_gate, spectra). Then stage 5
