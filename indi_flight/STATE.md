@@ -13,16 +13,7 @@
 S44-S46 detail moved to JOURNAL.md (S51). Derived G1 1757/1640/205 in `bench/params/quad5in_indi_g1.params`; `bench/pretest_gate.py` in use. S47-S48 detail moved to JOURNAL.md (S53): yaw limit cycle fixed by derived G2_Y 27; low roll PM explained by K_R/P_att + motor lag.
 S49-S53 detail moved to JOURNAL.md (S56): lead MC_INDI_LEAD 1, ACT_TC 0.05 defaults; roll/pitch M3a PM 59-87.
 S54-S56 detail moved to JOURNAL.md (S58): D-YAW-INV coded, yaw M3a 800 Hz PM 88 / GM 18.4 / Ms 1.6; roll 400 Hz PM 84.
-S57 (launch 20261117-071301, cap $3): roll M3a 800/3 Hz re-flown with TP 7.5 (`results/stage3_s57/roll_m3a_267b/README.md`):
-   PM 83.2/83.6, GM 10.2/10.0, DM 57 ms, Ms 4.0/4.1, 2 seeds; S56 seed 1 had taken the LS (non-uniform t) path, not a rounding
-   hole; LS and FFT paths agree on flight data. Route check 57 (`design/route_check_57.md`) ACTED ON: rate-loop table stops
-   here (roll 800/400/267, yaw 800); remaining rates and the measured-rotor table move to stage 6, except ONE measured-rotor
-   anchor (roll 800 Hz, sim v2, CA_R_W_MAX 2700, B-S57b) because the flight configuration had no anchor under the current law.
-   Measured-rotor anchor DONE (`results/stage3_s57/roll_m3a_meas800/README.md`): roll 800 Hz PM 77.5/77.0, GM 16.6/16.3,
-   DM 70/72 ms, Ms 2.1, f_c 3.0 Hz, measured torque in use 100 % of window; linear-model cross-check of this path: stage 6.
-   T116 DONE: `design/g2_outer_breaks_note.md` (59 lines, UNKEYED). PID breaks under O-11 via additive trajectory_setpoint
-   velocity/acceleration feed-forward (PositionControl.cpp:133/:153), position/attitude as reference breaks (L = T/(1-T));
-   INDI M3b: d into t_c after indi_accel_control.cpp:273 (_thrust_prev inherits d); A-26 model form; Tp 9.000 s; 6-9 sessions.
+S57 detail moved to JOURNAL.md (S60): roll M3a anchors 800/400/267 + measured-rotor anchor PM 77.5; G2 table deferred.
 S58 (launch 20261117-073027, cap $3): D-G2-OUTER-DEFER (outer break note keyed against stage-5 code, not now);
    D-S3-LANDED, D-S3-FROZEN, D-S3-SPTO written. Items 1 (landed split + t_fb ramp) and 4 (frozen rpm) CODED 65356c4250:
    tests 4/4 targets pass, break-checked (`design/t117_s3_items_s58.md`), SITL build rc 0, format clean; haiku second key
@@ -38,15 +29,24 @@ S59 (launch 20261117-074704, cap $3): items 2 (start-up refusal + foreign torque
 Route check 59 (`design/route_check_59.md`, sonnet) ACTED ON: opus review of the stage-3 safety diff DEFERRED to one
    combined review with the stage-5 hover-slice diff, before any freeze (lesson 19 kept: nothing frozen until then);
    G3-G8 test text is the gap: write G5 tests (incl. item 2/3 trigger scenarios) before the first G5 flight.
-NEXT (S60): (a) stage-5 hover slice (base A, D-outer-arch) + thrust-gap flight (hover at thrust scale 0.85 and one
-   motor at 0.8; review predicts ~0.37 m standing error for the archived law), sonnet implement, ~$1.5 + second key;
-   (b) G5 test list into GATES.md (~$0.2); (c) combined review (opus, one interface: stage-3 safety diff + slice diff vs
-   DECISIONS) when the slice is in. Next route check: S64.
+S60 (launch 20261117-075815, cap $3): stage-5 HOVER SLICE CODED (T122 sonnet, `design/t122_hover_slice_s60.md`;
+   D-S5-SLICE): mc_indi_pos_control rewritten in place (shell copy of MPC + stock PositionControl/Takeoff/GotoControl libs,
+   INDI stage entered at a_ref, bypass/tracking outside FLIGHT), MC_INDI_POS_EN, rc.mc_apps start || mc_pos_control.
+   Unit tests pass (new a_ref-entry test break-checked), format clean, SITL rc 0. NOT second-keyed yet.
+   Diagnostic hover (`results/stage5_s60/hover_diag/README.md`): module ran, stage ACTIVE 34.0-98.0 s, take-off/land OK,
+   gate PASS on first hover. BUT telemetry path never valid (hover.params lacks MC_INDI_W_MAX -> modelled state only), and
+   attitude freshness flickers when sample is newer than `now` (fix: clamp age at 0). Residual check cannot separate INDI
+   from stock in a gap-free hover (ht/g = 0.014 scale).
+NEXT (S61): (a) fix the freshness check (McIndiPosControl.cpp runIndiStage, `now >= _q_time` etc.), build; (b) thrust-gap
+   flights on the slice WITH measured thrust (MC_INDI_W_MAX = model's omega_max, check bench/params for the value used in
+   S57 measured anchor, CA_R_W_MAX 2700): hover at thrust scale 0.85 and one motor at 0.8 (find the injector flags in
+   run_scenario.py), plus the same with MC_INDI_POS_EN 0 as reference; measure standing altitude error -> decision 2 (A11);
+   (c) haiku/sonnet second key of the slice diff vs A1-A9/A13/A14 (git diff 41326ec474..HEAD -- src/); (d) G5 test list
+   into GATES.md (~$0.2); (e) combined review (opus) when slice + gap remedy are in. Next route check: S64.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T122 | stage-5 hover slice (D-S5-SLICE): code, build, 1 hover | sonnet | design/t122_hover_slice_s60.md | read output; if partial, relaunch from its 'Done/Left' list |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -63,6 +63,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 60 | T122 | sonnet | stage-5 hover slice code+build+1 hover | done, 28 calls, ~$0.8, flew; claimed module identity unverified, closed by S60 instrument |
 | 59 | T121 | sonnet | route check 59 | done, 4 calls, ~$0.15, acted on |
 | 59 | T120 | haiku | second key items 2+3 diff | done, 5 calls, ~$0.06, AGREE-WITH-ISSUES (5 minor) |
 | 59 | T119 | sonnet | code items 2+3 + tests | done, 7 calls, ~$0.33, 6/6 pass, break-checked |
@@ -90,6 +91,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 45 | T94 | haiku | A-23 hover G1_Y 215 + checks | done, 6 calls, ~$0.1, clean hover |
 
 ## Lessons proposed
+- S60: a 'published = stock mapping' residual check is blind when the two chains agree at steady state (hover, no gap);
+  prove which law flew with an in-module instrument (state bits in the log), and test the law where it differs (thrust gap).
 - S58: the px4_sitl_test build does not compile the module (only libs and tests); a coding agent's green tests say nothing
   about the module wiring: always add `make px4_sitl_default` to the brief.
 - S57: a non-integer fs*Tp did not trip the FFT check on a jittered log because the FRF code switched to its least-squares
