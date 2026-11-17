@@ -37,6 +37,9 @@ S60 (launch 20261117-075815, cap $3): stage-5 HOVER SLICE CODED (T122 sonnet, `d
    gate PASS on first hover. BUT telemetry path never valid (hover.params lacks MC_INDI_W_MAX -> modelled state only), and
    attitude freshness flickers when sample is newer than `now` (fix: clamp age at 0). Residual check cannot separate INDI
    from stock in a gap-free hover (ht/g = 0.014 scale).
+   Second key T123 (`design/t123_second_key_s60.md`): AGREE, 3 deviations to act on in S61: (1) setFilter re-config while
+   active does not reset filter states (call _indi.reset on re-config); (2) A3 stale fallback uses this cycle's stock thrust,
+   fix code or amend A3 text; (3) ESC staleness 100 ms not in spec, record in A5.
    Freshness fix DONE + flown (`results/stage5_s60/hover_fix/README.md`: no flicker, gate PASS).
 NEXT (S61): (b) thrust-gap
    flights on the slice WITH measured thrust (MC_INDI_W_MAX = model's omega_max, check bench/params for the value used in
@@ -64,6 +67,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 60 | T123 | haiku | second key slice INDI stage vs A2-A14 | done, 8 calls, ~$0.06, AGREE with 3 deviations |
 | 60 | T122 | sonnet | stage-5 hover slice code+build+1 hover | done, 28 calls, ~$0.8, flew; claimed module identity unverified, closed by S60 instrument |
 | 59 | T121 | sonnet | route check 59 | done, 4 calls, ~$0.15, acted on |
 | 59 | T120 | haiku | second key items 2+3 diff | done, 5 calls, ~$0.06, AGREE-WITH-ISSUES (5 minor) |
