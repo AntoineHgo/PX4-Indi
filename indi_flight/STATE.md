@@ -30,8 +30,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    T136 (`results/g15_dist_s66/investigation.md`): wrench acts 2x on the vehicle (force and torque) and com_shift
    loses it once at +26 s -> A-31 OPEN, blocks every disturbance result. torque_steps pitch/yaw sign explained
    (world ENU = body FLU at spawn yaw; PX4 FRD flips y, z): document in disturbance.py, not a defect.
-   NEXT S67: (a) A-31 first: sonnet reads gz ApplyLinkWrench one-step code in the container, then speed 1 vs 4
-   constant-wrench hover and the persistent-topic variant; fix + second key + re-run g15_dist_s66/fly.sh; N2-B (A-9 unit test on new module) and N2-C (A-30 identical 400 Hz re-fly,
+   T137 read gz-sim 8.15.0 ApplyLinkWrench (`design/a31_wrench_source_s66.md`): one-step msgs summed per step, no
+   mechanism for 2x found. NEXT S67: (a) A-31 first: the 4 tests at the end of that note (payload_add alone first); fix + second key + re-run g15_dist_s66/fly.sh; N2-B (A-9 unit test on new module) and N2-C (A-30 identical 400 Hz re-fly,
    share with A-4 speed 1/4 test); then item (1) slice 2; build hooks (loop delay, GNSS sample delay, per-run drop
    seed, IMU noise scale) as one simulator task with second key.
    Results rule (N1 D): commit metrics/run.json/README of every run in the session that produced it. Next route check: S69.
