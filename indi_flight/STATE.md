@@ -56,8 +56,11 @@ S49 also: lead falsification sweep (`results/stage2_s49/lead_delay_README.md`, U
    ~2.5 ms on tc33_p8; lead K20 at 400 Hz PM 57.0/GM 10.5, K30 52.8/8.1, K40 fails -> stop rule not triggered, K_R 20.
 S50 (launch 20261117-011145, cap $2.02): owner answers applied (GATES.md G1 FINAL block, evidence limit 1 = two hole
    kinds, >0.1 % -> re-fly). G1.7 implemented: `bench/provenance.py` + `run_scenario.py --gate` + self-test (ALL PASS,
-   break-checked), D-G1.7. Current SITL binary is from 32500e0276, not HEAD: rebuild before any --gate run. TODO: a hole
+   break-checked), D-G1.7. Current SITL binary is from 32500e0276, not HEAD: rebuild after the LAST commit before a --gate batch
+   (any commit, even docs, moves HEAD and makes the binary stale; build = `indi_project/docker/run.sh -n build -t 3600 'make px4_sitl_default'`). TODO: a hole
    reporter per run (sim vs controller holes, extend `bench/a15_gaps.py`?) for evidence limit 1; G1 passes once G1.7 in use.
+S50 also: T104 sonnet second key of the lead sweep (`results/stage2_s50/lead_sweep_second_key.md`): AGREE on the
+   decision at K_R 20 (PM within 1.4 deg); GM key 2 0.6-2.7 dB higher, K30-40 PM 5-7 deg higher (filter choice). Item (1) next is DONE.
 NEXT (S51): route check 49 done early (`design/route_check_49.md`), adopted: (1) DONE S49 (see above); next a haiku second key of the sweep
    (own delay model), then: add 3-5 ms delay, ACT_TC 0.033 to `bench/margins_models.py` lead rows at 400/800 Hz; stop D-RATE-LEAD if
    PM < 50 or GM < 8 dB at 400 Hz (model is 2.3-3.5 dB GM optimistic). (2) If it holds: opus review r1 of the note
@@ -86,18 +89,15 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 50 | T104 | sonnet | second key lead delay sweep | done, 5 calls, ~$0.25, AGREE at K20, GM 1-3 dB optimistic |
 | 49 | T102 | haiku | stage-2 summary table | done, 7 calls, ~$0.2, PID GM values negative (not used) |
 | 49 | T103 | sonnet | D-RATE-LEAD note draft | done, 6 calls, ~$0.3, UNREVIEWED |
 | 48 | T101 | sonnet | second key lead/att-loop margins | done, 3 calls, ~$0.1, PM AGREE, GM DISAGREE (flights side with key 1) |
 | 47 | T98 | sonnet | roll M3a + yaw follow-up F5-F9 | done, 15 calls, ~$0.6, found yaw limit cycle; wrong guess on cause (code change) |
 | 47 | T100 | haiku | G2_Y second key | done, 5 calls, ~$0.1, AGREE 27.0 |
-| 45 | T93 | sonnet | route check 45 | done, 7 calls, ~$0.15 |
 | 45 | T96 | haiku | derive_g1.py + self-test | done, 7 calls, ~$0.1, ALL PASS, UNKEYED |
 | 45 | T95 | haiku | second key A-23 numbers | done, 7 calls, ~$0.06, AGREE (RMS 0.0068/0.0056/0.0017, pin 0 %) |
 | 45 | T94 | haiku | A-23 hover G1_Y 215 + checks | done, 6 calls, ~$0.1, clean hover |
-| 44 | T90 | sonnet | A-22 links a,b trace | done, 15 calls, ~$1.0, found limit cycle |
-| 44 | T92 | haiku | A-23 PID + INDI-derived-G1 hovers | done, 11 calls, ~$0.1, PID clean, INDI chatter |
-| 44 | T91 | haiku | second key limit cycle, 3 logs | done, 7 calls, ~$0.1, CONFIRMED |
 
 ## Lessons proposed
 - S50: break-checks by sed on a .py must run with PYTHONDONTWRITEBYTECODE=1 (or clear __pycache__): a same-size

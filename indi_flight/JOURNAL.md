@@ -427,3 +427,9 @@ from the recorded commit (binary hash recorded in run.json), and sim model and p
 refuses otherwise. Reason: the S45 clean hover used as the stage-2 reference ran on a dirty tree, the SITL binary was
 rebuilt later, and S47 cannot reproduce it (hover thrust estimate 0.137 vs 0.194). Stage-2 numbers so far are void
 anyway, so nothing needs re-running under this answer.
+
+- S50: stage-2 ledger rows moved from STATE:
+  | 45 | T93 | sonnet | route check 45 | done, 7 calls, ~$0.15 |
+  | 44 | T90 | sonnet | A-22 links a,b trace | done, 15 calls, ~$1.0, found limit cycle |
+  | 44 | T92 | haiku | A-23 PID + INDI-derived-G1 hovers | done, 11 calls, ~$0.1, PID clean, INDI chatter |
+  | 44 | T91 | haiku | second key limit cycle, 3 logs | done, 7 calls, ~$0.1, CONFIRMED |
