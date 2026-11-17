@@ -24,10 +24,11 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    at u + b, fixed by me after reading the diff). gap085_indi_htoff dz 0.025 m PASS, loss08_indi 0.056 m marginal;
    second key agrees (`results/stage5_s72/second_key.md`). A-33 OPEN: loss08 holds a_c-a_f = 0.158 m/s2 (control
    error 0.040 m), blend should be integral at DC. Closing flight loss08_indi_htoff: HTE ruled out.
-   NEXT S73: (1) A-33 EXPLAINED (a33_split.md): with 1 motor at 0.8 the attitude sp is tilted 10.4 deg while the
-   vehicle stays level -> standing INNER-loop attitude error; outer xy winds up, vertical leak g(1-cos). Closing tests
-   (a)-(c) in ANOMALIES.md A-33: this is a lesson-9 gap in the rate loop (eRPM blind to a thrust-coefficient loss?).
-   (2) runner: land/re-take-off scenario with
+   S73: A-33 CLOSED (results/stage5_s73/README.md): rate blend MC_INDI_ACT_BLD default 0 = no integral action;
+   blend 0.3/1.0 removes the 10.4 deg standing error. D-RATE-BLD PROPOSED (default 1.0 s, 3 preconditions).
+   NEXT S74: route check 74 (sonnet) FIRST. (1) D-RATE-BLD preconditions: rate-loop M3a margins at tb 1.0/0.3 (and
+   0.1 to explain the stage-1 crash), rate-blend snap-vs-freeze fix + break-tested weak-motor unit test, then the
+   firmware default change; all later flights set MC_INDI_ACT_BLD 1.0 meanwhile. (2) runner: land/re-take-off scenario with
    the gap kept (spec in stage5_s72 README) -> landed-hold flight. (3) D-GAP margin items (amendment 3: resonance,
    overshoot, velocity-break PM at tb and tb/3). (4) combined opus review: stage-3 safety diff + stage-5 slices +
    rate-loop snap-vs-freeze. (5) PVA mode slice (ZSINE_O6). Runner has NO RC/manual path (G5 stick modes, slice 3).
@@ -37,7 +38,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T160 | S72 D-GAP impl + unit tests + 2 flights | sonnet | results/stage5_s72/README.md | DONE, committed 3481bdcf9e/41d44d461a |
 | T161 | S72 second key | haiku | results/stage5_s72/second_key.md | DONE |
 | F72 | loss08_indi_htoff flight | bg shell | results/stage5_s72/loss08_indi_htoff/ | DONE |
-| F73 | A-33 closing: loss08 with rate blend MC_INDI_ACT_BLD 0.3 / 1.0 (default 0 = off, never set in S72 flights: lesson-9 gap in the rate loop) | bg shell, instances 0/1 | results/stage5_s73/loss08_bld{0.3,1.0}/ | run_scenario.py --scenario s5_loss08 --sim v2 --speed 4 --params results/stage5_s73/gap_bld*.params |
+| F73 | A-33 closing: loss08 with rate blend MC_INDI_ACT_BLD 0.3 / 1.0 (default 0 = off, never set in S72 flights: lesson-9 gap in the rate loop) | bg shell, instances 0/1 | results/stage5_s73/loss08_bld{0.3,1.0}/ | DONE, A-33 closed |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);

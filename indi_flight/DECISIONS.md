@@ -458,3 +458,19 @@ pre-identification behaviour of decision 3 must cover it).
      loss08_indi standing |dz| < 0.06 m (the stock result with its integrator); land/re-take-off with the gap
      present: |b| after re-take-off within 10 % of its pre-landing value and max |dz| in the first 5 s after
      take-off < 0.15 m.
+
+## D-RATE-BLD (S73, PROPOSED): decision 2 for the rate loop = the existing complementary blend, ON by default
+- Evidence: A-33 (`results/stage5_s73/README.md`). With MC_INDI_ACT_BLD = 0 (firmware default) one motor at 0.8
+  holds a 10.4 deg standing attitude error (rate error ~1 rad/s) because measured actuator state removes the
+  integral action (lesson 9). Blend 0.3 s and 1.0 s both remove it (sp-vs-actual 0.05 / 0.06 deg).
+- Alternatives: (i) blend ON (one mechanism with D-GAP, `setActuatorBlendTimeConstant`); (ii) slow per-motor
+  correction of the command-to-omega^2 map (learns the weak motor directly, also absorbs sag, but a new estimator
+  with its own margins and landed/telemetry-loss edges); (iii) an explicit rate integrator on nu (duplicates the
+  attitude-loop job, windup under saturation). Choice (i): already coded, tested, and shared with D-GAP.
+- Value: proposed default 1.0 s (same tb as D-GAP; smaller post-event transient than 0.3 s, 0.046 vs 0.107 m, one
+  seed). Before the firmware default changes: (1) rate-loop M3a margins at tb 1.0 and 0.3 (lesson 10: stage-1 0.1 s
+  crash unexplained; margins must show why 0.1 fails or that it does not); (2) the snap-vs-freeze edge of the rate
+  blend (D-GAP r1: `indi_rate_control.cpp` snaps its state to the instantaneous gap when landed / off / telemetry
+  invalid) settled and break-tested; (3) a unit test with a weak-motor closed-loop plant that fails with tb = 0.
+- Overturn: margins at tb 1.0 below the G2 thresholds, or a G3 pre-test where the blend's DC model path diverges
+  (G1 error x2, telemetry loss) -> option (ii).
