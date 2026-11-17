@@ -649,3 +649,6 @@ S64 (launch 20261117-190447, cap $3): route check 64 (T129, `design/route_check_
 - S67 (2026-11-17): A-31 closed: server.config already loaded ApplyLinkWrench, injector added a 2nd (fix fc8905cf90, second key AGREE, 5 profiles re-flown 1x); errata.md E-1 created.
 - S67: A-30 re-fly: identical 400 Hz INDI runs differ, S64 seed1 not reproduced -> Q5 (non-blocking). A-9: no path in new module (read), archive-only candidate.
 - S67: INDI 400 Hz same-seed spread (11 runs): rise 4 / settle 15 ms / OS 0.7 pts, same at speed 1 and 4; S64 seed1 not reproduced (A-30 open, Q5 addendum).
+- S68 (2026-11-17): clean-HEAD re-fly of G2-STEP (`results/g2_clean_s68`): 400 Hz 9/9, 800 Hz same-seed spread 14.5/39 ms/1 pt; dirty-tree lead not needed; A-30 bounded.
+- S68: A-9 CLOSED archive-only: second key AGREE, guard gtest OmegaFfIndependentOfYawRate break-checked (35b313d2a5).
+- S68: G2-STEP batches since S62 flown without --sched (G1.6 flags): T147 re-measures the same-seed spread with them.

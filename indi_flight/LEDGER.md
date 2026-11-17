@@ -44,3 +44,6 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | 67 | T142 | sonnet | A-9 on new module (read) | done, 8 calls, NO PATH, test design only |
 | 67 | T143 | haiku | INDI same-seed batch 400 Hz 8 runs | done, 10 calls, spread measured, S64 seed1 outlier |
 | 67 | T144 | haiku | S64 outlier log diff | done, 8 calls, params same, S64 dirty build |
+| 68 | T145 | haiku | clean-HEAD re-fly G2-STEP 400 + 800 Hz same-seed | done, 22 calls, 14/14 pass |
+| 68 | T146 | sonnet | A-9 second key + guard gtest | done, 11 calls, AGREE, test added |
+| 68 | T147 | haiku | same-seed spread with --sched | in flight |

@@ -48,9 +48,14 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
    NEXT S68: (a) Q5/A-30: clean-build re-fly S64 800 Hz seed 1 (+ same-seed batch at 800 Hz) vs
    `results/g2_step_s64`; if it differs, re-fly the S64 G2-STEP tables; arm in sim time in the runner (2nd key); (b) A-9 second key + guard test; (c) slice 2 (item 1); (d) sim hooks task (loop delay,
    GNSS sample delay, per-run drop seed, IMU noise scale) with second key.
+   S68 (launch 20261117-234230, cap $3): T145 clean-HEAD re-fly (`results/g2_clean_s68`): 400 Hz table 9/9, seed1 roll
+   rise 192.5 (dirty tree not needed as cause); 800 Hz same-seed spread 14.5/39 ms/1 pt, < 1/2 limit margin; A-30
+   bounded, Q5 addendum 3. T146: A-9 CLOSED (2nd key AGREE, guard gtest break-checked, 35b313d2a5).
+   NEXT S69: route check 69 first; T147 second key + re-measure same-seed spread with sim-time arm; then (c) slice 2, (d) hooks.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T147 | G2-STEP flights used NO --sched (sim-time player exists, D-SCHED): same-seed step_roll seed 1 x5 at 400 and 800 Hz WITH G1.6 flags | haiku | `results/g16_sched_indi_s68/README.md` | `bash results/g16_sched_indi_s68/fly.sh` |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
