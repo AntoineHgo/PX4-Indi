@@ -120,6 +120,8 @@ private:
 	float _hte{NAN};
 	bool _hte_valid{false};
 	bool _indi_active{false};
+	int _stage_reason{-1};		///< last reported stage condition bitmask (instrument)
+	int _stage_reports{0};		///< number of stage reports printed (capped)
 	float _filter_hz{0.f};
 	float _filter_cut{-1.f};
 	param_t _w_max_handle{PARAM_INVALID};

@@ -162,6 +162,18 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 	const float yaw_sp = matrix::Eulerf(matrix::Quatf(att_sp.q_d)).psi();
 	const bool can_run = want_active && fresh_att && fresh_acc && a_ref.isAllFinite() && rate > 5.f;
 
+	// instrument: report each change of the stage conditions (bit set = condition met), capped
+	const bool lib_ok_prev = _indi_active;
+	const int reason = (want_active ? 1 : 0) | (fresh_att ? 2 : 0) | (fresh_acc ? 4 : 0) | (a_ref.isAllFinite() ? 8 : 0)
+			   | (rate > 5.f ? 16 : 0) | (fresh_esc ? 32 : 0) | (lib_ok_prev ? 64 : 0);
+
+	if (reason != _stage_reason && _stage_reports < 20) {
+		PX4_INFO("INDI stage cond 0x%02x (want att acc aref rate esc active) rate %.0f", reason, (double)rate);
+		_stage_reports++;
+	}
+
+	_stage_reason = reason;
+
 	if (can_run) {
 		IndiAccelControl::Input in;
 		in.accel_only = true;
