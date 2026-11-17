@@ -327,3 +327,13 @@ pre-identification behaviour of decision 3 must cover it).
   Overturn: a yaw M3a with Ms > 6 dB inside the stage-4 tau/G2 bounds, or a yaw limit cycle with G2_Y > 0.
 - Overturn if: the model with G2 x0.5..x2 shows a limit cycle or GM < 6 dB, or the flight disagrees with the model by
   more than the G2 tolerance.
+
+## D-G2-DEFER (S57): rate-loop margin table stops at anchors until the stage-6 freeze
+- Decision: the stage-3 G2 rate-loop evidence is roll M3a at 800/400/267 Hz (model-only path), yaw 800 Hz, and one
+  measured-rotor anchor (roll 800 Hz). Remaining rows (pitch, measured path at 400/267 Hz, linear-model cross-check of the
+  measured path) are flown in stage 6 on the frozen pair, where G2 is passed.
+- Alternatives: finish the full table now (re-bought at each law change: four law revisions S44-S56 voided earlier rows);
+  no anchor at all (risk: a law change breaking margins unseen).
+- Reason: route check 57 (`design/route_check_57.md`); every gate is validated on the frozen pair.
+- Overturn if: a later inner-loop change moves an anchor by more than 10 deg PM or 3 dB GM, or any anchor drops below
+  G2 thresholds -> re-measure the full table before continuing.
