@@ -11,7 +11,6 @@
   paths) answered by D-G2-BREAK (M3a torque-setpoint break) and note section 7; r2 CLOSED.
 - S44: stage-2 INDI margins VOID (A-23 limit cycle, see Next actions).
 ## Next actions (in order)
-S36-S42 detail moved to JOURNAL.md (S45).
 S44-S46 detail moved to JOURNAL.md (S51). Derived G1 1757/1640/205 in `bench/params/quad5in_indi_g1.params`; `bench/pretest_gate.py` in use.
 S47-S48 detail moved to JOURNAL.md (S53): yaw limit cycle fixed by derived G2_Y 27; low roll PM explained by K_R/P_att + motor lag.
 S49 (launch 20261116-224459, cap $2.28): T102 stage-2 summary table (`results/stage2_s49/summary_table.md`): only valid
@@ -46,12 +45,17 @@ S53 also: route check 53 (`design/route_check_53.md`), acted on: defaults applie
    coded). Pitch M3a ACT_TC 0.05: PM 86.9/86.8, GM 11.9/12.0 (2 seeds, = roll). Yaw M3a pre-test (AMP 0.008):
    no crossover in 1-50 Hz (|L| -0.7 dB at 1 Hz), Ms 8.2 dB at 1 Hz -> A-27 opened. SITL rebuilt at 7522625b0f
    (later commits docs/results only; --gate still needs a rebuild at HEAD).
-NEXT (S54): (1) finish one G2 inner table at 800 Hz: A-27 yaw (bins 0.1-20 Hz, check the M3a margin script's
-   bin options; yaw loop model with K_Y, G2_Y, MC_YAW_P; re-fly `results/stage3_s53/yaw_m3a/`) and the measured-rotor path (--sim v2) for roll; then 400 Hz roll/pitch/yaw (GATES.md G2
-   "Configurations"). (2) write the attitude/velocity/position break notes on the host and second-key them (route
-   check 49 item never done). (3) stage-3 items note: opus review before coding items 1-5; own doubts: item 3 thrust
-   decay diverges from stock (stock holds), item 2 runtime foreign-publisher detection fragile. (4) hole reporter per
-   run only when the frozen --gate batch is scheduled. Next route check S58.
+S54 (launch 20261117-024822, cap $3): A-27 EXPLAINED. Yaw M3a re-flown 0.1-20 Hz (`results/stage3_s54/yaw_m3a_lf/`):
+   L -> -1 at DC. Cause: step 8 yaw denominator G1 + G2/dt (~105 G1 at 800 Hz, dead-beat spin-up) -> law extrapolates t_f,
+   M3a reads -H A_m, yaw gain set by G2 and dt, not K_Y. Model `bench/yaw_break_model_s54.py` (UNKEYED) matches flight;
+   proposed fix D-YAW-INV option (c) (increment low-passed by G2/G1, dt-independent): yaw loop = K A/s, Ms 1.6-8.1 dB
+   under G2 x0.5-2, tau x1-2. m3a_margins_pretest.py takes fmin fmax Tp args; checks.py hard-codes the S40 multisine.
+NEXT (S55): (1) D-YAW-INV: key the model (sonnet re-implements from the code + note, proper Nyquist PM/GM, ACT_TC
+   mismatch, 400 Hz), then opus review note vs code, then code + unit test + yaw M3a 2 seeds. (2) roll M3a on the
+   measured-rotor path (--sim v2; find which params select the measured path: MC_INDI_ACT_BLD / ERPM_TO, check S40
+   params) and 400 Hz roll/pitch (margin script fs is fixed at 800: add an fs arg). (3) attitude/velocity/position break
+   notes + second key. (4) stage-3 items note review before coding items 1-5. (5) hole reporter when the --gate batch
+   is scheduled. Next route check S58.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
@@ -89,6 +93,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 45 | T94 | haiku | A-23 hover G1_Y 215 + checks | done, 6 calls, ~$0.1, clean hover |
 
 ## Lessons proposed
+- S54: a module-level loop variable shadowed a deleted local in a model script and silently changed its output; re-run
+  every model script against its committed output after any edit (diff), as done here.
 - S53: four M3a flights on two parallel docker streams took ~5 min wall and ~$0.05 of context: run small sweeps
   from host bash in the background while one agent drafts, instead of delegating the flights.
 - S52: review F2 named the over-estimated ACT_TC as the dangerous side of the lead; test and flight show the opposite

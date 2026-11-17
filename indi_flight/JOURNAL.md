@@ -453,3 +453,4 @@ S53 move: S47 (launch 20261116-221436, cap $3): first roll M3a flight with deriv
   Flight checks (model-only, s1): ACT_TC 0.033 P8 -> PM 25.9/GM 10.7 (model 28.6/14.2); P3 -> 42.9/13.4 (model
   43.8/15.7). A-21 CLOSED. T101 second key: PM/f_c/DM AGREE, GM DISAGREE (flights side with the first key; model GM
   2-3.5 dB optimistic, unmodelled delay).
+- S54 (2026-11-17): A-27 explained (yaw M3a L -> -1 at DC: static G1+G2/dt yaw denominator, dead-beat spin-up); D-YAW-INV option (c) proposed, model UNKEYED.

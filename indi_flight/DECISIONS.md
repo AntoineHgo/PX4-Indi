@@ -295,3 +295,25 @@ and plants slower than the reference fail); lead < 1 (lowers PM at matched tau, 
 Overturn if: pitch/yaw or 400 Hz margins at ACT_TC x1.5 fall below G2; a plant with tau < 0.025 s (default > x2)
 shows GM < 6 dB; G6 outlook airframes with slow motors (tau > 0.05) are flown before identification (then the
 pre-identification behaviour of decision 3 must cover it).
+
+## D-YAW-INV (S54, PROPOSED, not implemented): yaw inversion consistent with the actuator lag
+- Finding (A-27, `results/stage3_s54/yaw_m3a_lf/README.md`): step 8 divides the yaw increment by the static G1 + G2/dt
+  (21600 + 205 at 800 Hz) and adds (G2/dt)(t_f - t_f,prev). This is dead-beat spin-up: it assumes the rotor reaches
+  the command within one sample. With tau 33 ms the nu and a_f terms are ~1/105 of the G1 law, t_cmd ~ a one-step
+  extrapolation of t_f, and M3a reads L ~ -H A_m (-1 at DC). Flight and model agree within ~3 dB / 20 deg to 20 Hz.
+  The G2_Y value (D-G2Y-DERIVE) is not in question, the form of the inversion is; the gain depends on dt.
+- Option (c), proposed: increment = (nu - (1+c) a_f) / (G1 + G2 (1 - z^-1)/dt), i.e. a first-order low pass with
+  time constant G2/G1 on (nu - a_f)/G1 (backward Euler: Delta_k = (nu - (1+c) a_f + (G2/dt) Delta_k-1)/(G1 + G2/dt)),
+  no t_f difference term. The plant spin-up (G1 + G2 s) is inverted dynamically, not at the sample rate. Model
+  (`bench/yaw_break_model_s54.py`, UNKEYED): with matched G2 the yaw M3a loop becomes K A/s, crossover 1.4 Hz, Ms 1.3 dB,
+  as for roll; independent of dt.
+- Alternatives: (a) keep the coded law and measure yaw at a plant-only break (does not fix the dt-dependent yaw gain);
+  (b) subtract G2 dt_f/dt from a_f and invert on G1 only (closed loop alpha/nu = (1 + tau2 s) A: high-frequency gain
+  x34 at 41 Hz, the A-25 limit cycle); (d) G2 0 (A-25).
+- Model mismatch (plant G2 x0.5/x2, plant tau x1/x2, `results/stage3_s54/yaw_model/model_out.txt`): option (c) Ms
+  1.6-8.1 dB at M3a, worst G2 x0.5 with tau x2; coded law Ms 22-28 dB at M3a. The script's PM read-out is crude
+  (phase wrapping, gives negative PM for the coded law that flies): compare Ms only until keyed.
+- Open before code: a keyed model (proper Nyquist PM/GM, ACT_TC mismatch, 400 Hz), second key of the model,
+  opus review of note vs code, then unit test with the parametrised plant and yaw M3a 2 seeds.
+- Overturn if: the model with G2 x0.5..x2 shows a limit cycle or GM < 6 dB, or the flight disagrees with the model by
+  more than the G2 tolerance.
