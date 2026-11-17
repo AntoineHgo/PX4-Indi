@@ -43,6 +43,11 @@ BYPASS_FILE=indi_flight/BYPASS_5H
 BYPASS_7D_FILE=indi_flight/BYPASS_7D
 WINDOW_USD_DEFAULT=9                       # $ per full 5-hour window, measured on session 1; recalibrated each run
 LIMIT_WAIT="${LIMIT_WAIT:-1800}"           # fallback wait after a failed or very short run
+# Token economy: every API turn re-reads the whole context. The session gets only the tools the
+# orchestrator uses (the full default set and its descriptions took the start-up context to ~45k
+# tokens), and STATE.md, read at every launch, has a size budget the session prompt enforces.
+TOOLS="${TOOLS:-Bash,Read,Edit,Write,Task,Monitor,TaskStop,SendMessage,Skill,ToolSearch,WebSearch,WebFetch}"
+STATE_MAX_BYTES="${STATE_MAX_BYTES:-8000}" # bytes; the session prompt asks for a trim above it
 MAX_RUNS="${MAX_RUNS:-300}"
 mkdir -p "$LOG_DIR"
 
@@ -206,6 +211,13 @@ while [ ! -f indi_flight/DONE ] && [ ! -f indi_flight/STOP ]; do
 - Launch $ts, model $MODEL. Spend cap for this session: about \$$budget, subagents included.
   When it is reached the session is cut off and running subagents are stopped, so save state and
   commit before starting anything long, and size the work you launch to fit."
+	state_bytes=$(wc -c 2>/dev/null <indi_flight/STATE.md || echo 0)
+	if [ "$state_bytes" -gt "$STATE_MAX_BYTES" ]; then
+		prompt="$prompt
+- indi_flight/STATE.md is $state_bytes bytes, over its $STATE_MAX_BYTES-byte budget. Before other work, move finished
+  history to JOURNAL.md and lessons or ledger rows to LESSONS_PROPOSED.md or LEDGER.md, then commit."
+		log "run $runs: STATE.md is $state_bytes bytes (budget $STATE_MAX_BYTES), the orchestrator is told to trim it"
+	fi
 
 	claude -p "$prompt" \
 		--name "indi-orchestrator $ts" \
@@ -213,6 +225,9 @@ while [ ! -f indi_flight/DONE ] && [ ! -f indi_flight/STOP ]; do
 		--effort "$EFFORT" \
 		--max-budget-usd "$budget" \
 		--settings indi_flight/claude_settings.json \
+		--tools "$TOOLS" \
+		--strict-mcp-config \
+		--exclude-dynamic-system-prompt-sections \
 		--dangerously-skip-permissions \
 		--output-format stream-json --verbose \
 		> "$LOG_DIR/run-$ts.jsonl" 2> "$LOG_DIR/run-$ts.err" 9>&-
@@ -222,7 +237,10 @@ while [ ! -f indi_flight/DONE ] && [ ! -f indi_flight/STOP ]; do
 	subtype=$(jq -r '.subtype // "?"' <<<"$result" 2>/dev/null)
 	cost=$(jq -r '.total_cost_usd // "?"' <<<"$result" 2>/dev/null)
 	session=$(jq -r '.session_id // "?"' <<<"$result" 2>/dev/null)
-	log "run $runs: exit $rc after ${elapsed}s, result $subtype, cost \$${cost:-?}, session $session"
+	# context of the orchestrator's first and largest turn, to follow the token economy run by run
+	ctx=$(jq -r 'select(.type=="assistant" and .parent_tool_use_id==null) | .message | "\(.id) \(.usage.input_tokens + .usage.cache_creation_input_tokens + .usage.cache_read_input_tokens)"' "$LOG_DIR/run-$ts.jsonl" 2>/dev/null |
+		awk '!seen[$1]++ {n++; if (n == 1) f = $2; if ($2 > m) m = $2} END {if (n) printf "%dk start, %dk max, %d turns", f/1000, m/1000, n}')
+	log "run $runs: exit $rc after ${elapsed}s, result $subtype, cost \$${cost:-?}, session $session, context ${ctx:-?}"
 	calibrate_window "$LOG_DIR/run-$ts.jsonl" "${cost:-?}"
 
 	# the usage gate at the top of the loop decides whether the next launch has room;

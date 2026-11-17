@@ -2,7 +2,7 @@
 
 Read this at every launch, after `STATE.md`. Each lesson is a rule with the stage-1 event that produced it. The
 evidence is in `indi_project/review/external_review_s59.md` and its notes folder. The owner maintains this file; the
-orchestrator proposes additions in `STATE.md` under "lessons proposed".
+orchestrator proposes additions in `LESSONS_PROPOSED.md`.
 
 ## Evidence
 
@@ -50,7 +50,8 @@ orchestrator proposes additions in `STATE.md` under "lessons proposed".
 
 15. **The orchestrator decides; subagents do the work.** Stage 1: 72 % of the spend was the orchestrator's own
     context, with about one subagent per session.
-16. **State stays small.** `STATE.md` under 150 lines. History goes to `JOURNAL.md`, which is never read at launch.
+16. **State stays small.** `STATE.md` under 8000 bytes (the supervisor checks it). History goes to `JOURNAL.md`,
+    the agent ledger to `LEDGER.md`, proposed lessons to `LESSONS_PROPOSED.md`; none of them is read at launch.
     Stage 1 re-read a 131 KB state file 61 times.
 17. **Two keys for anything that decides a verdict or flies:** metric code, identification code, simulator hooks and
     control-law changes are reviewed or re-implemented by an agent that has not seen the first one's reasoning,

@@ -2,12 +2,12 @@
 
 Workspace of the unattended orchestrator. Stage 1 is archived in `indi_project/` (read-only).
 
-- `MISSION.md`: the orchestrator's prompt (owner file).
+- `MISSION.md`: the orchestrator's prompt (owner file); `MISSION_ARCHIVE.md`: its finished parts, not read.
 - `LESSONS.md`: rules learned in stage 1, read at every launch (owner file).
 - `run_orchestrator.sh`, `guard.sh`, `claude_settings.json`: supervisor, command guard, session
   settings. Same behaviour as in stage 1, with paths under `indi_flight/`, branch `feat/indi-flight`,
   and the archive protected from writes.
-- `STATE.md`, `JOURNAL.md`, `DECISIONS.md`, `GATES.md`, `ANOMALIES.md`, `QUESTIONS.md`: written by the orchestrator
+- `STATE.md`, `JOURNAL.md`, `DECISIONS.md`, `GATES.md`, `ANOMALIES.md` (+ `ANOMALIES_CLOSED.md`), `LEDGER.md`, `LESSONS_PROPOSED.md`, `QUESTIONS.md`: written by the orchestrator
   (you write your answers in `QUESTIONS.md`).
 
 ## Start (owner, once)

@@ -5,19 +5,18 @@ you work, and the owner answers only the few questions you put in writing (see "
 stopped by usage limits and relaunched with this same prompt and an empty context, so
 everything you need must be on disk.
 
-**On every launch read, in this order: `indi_flight/STATE.md`, `indi_flight/LESSONS.md`, then
-`indi_flight/QUESTIONS.md` if it exists** (the owner's answers are there). If `STATE.md` does not exist, you are at
-the very start: do "Stage 0" below.
+**On every launch read `indi_flight/STATE.md`, `indi_flight/LESSONS.md` and `indi_flight/QUESTIONS.md` if it
+exists** (the owner's answers are there), with the Read tool, as three calls in one turn, once per session (see "Token economy").
+Finished parts of this prompt are in `MISSION_ARCHIVE.md`; you do not need to read it.
 
 ## What exists
 
 A first project (59 sessions) built and benchmarked INDI controllers in this repository. Its workspace,
 `indi_project/`, is now a **read-only archive**: read it, copy from it, never write to it (the guard blocks it). It
 ended with working code and a report whose question was "does INDI outperform PID in simulation". An external
-review then found that the evidence, the criteria and several design points do not support a flight. Read that
-review once, at Stage 0: `indi_project/review/external_review_s59.md` (section 0 holds the owner's decisions) and
-the notes in `indi_project/review/external_review_s59_notes/`. After Stage 0 you work from `STATE.md` and
-`LESSONS.md` and open the review only for a specific item.
+review then found that the evidence, the criteria and several design points do not support a flight:
+`indi_project/review/external_review_s59.md` (section 0 holds the owner's decisions) and the notes in
+`indi_project/review/external_review_s59_notes/`. Open them only for a specific item.
 
 Firmware already on this branch (keep, fix, extend; do not rewrite without a recorded reason):
 - `src/lib/indi_rate_control/`: rate-loop INDI law in normalised torque space, measured torque from rotor speed
@@ -94,23 +93,10 @@ weakening the test is a failure of the project.
 
 ## The outer-loop architecture: spend time here
 
-Replacing `mc_pos_control` is the decision that most of the remaining work depends on, and a wrong start is
-expensive. Treat it as a design project of its own, before stage 5 code and in parallel with stages 1-3:
+Replacing `mc_pos_control` is the decision that most of the remaining work depends on. The study, candidates,
+review rounds and owner confirmation are done (steps 1-5 in `MISSION_ARCHIVE.md`; requirements in
+`design/outer_loop_requirements.md`, chosen architecture base A). What remains:
 
-1. **Study.** Map what `mc_pos_control` does today, from the source: its inputs (`trajectory_setpoint`,
-   `vehicle_constraints`, land detector, hover-thrust estimate, control mode flags), its outputs
-   (`vehicle_attitude_setpoint`, thrust, status topics) and who consumes them, take-off ramp and landing logic,
-   failsafe behaviour, EKF reset handling, manual altitude and position modes, and what `mc_att_control` adds.
-   Output: `design/outer_loop_requirements.md`, a checklist every candidate must satisfy.
-2. **Candidates.** At least two architectures written to the same template (interfaces, what is reused from the
-   stock libraries, what is duplicated, how each mode and transition is served, where the INDI law sits, what
-   happens without telemetry, cost in code and flash, upstream acceptability under O-11).
-3. **Independent review.** A `fable` (or `opus`) agent that has not seen your reasoning reviews the candidates
-   against the requirements file and the source, and is asked to find the mode or transition each one breaks.
-4. **Iterate** steps 2-3 until a review round finds no blocking issue: at least two rounds. Record each round in
-   `design/outer_loop_review_rN.md`.
-5. **Ask the owner** to confirm the chosen architecture before implementation (a major decision, see below), with
-   a one-page summary of the candidates and the review outcome.
 6. **Prototype the riskiest part first** (usually take-off, landing and mode switches), and re-open the choice if
    the prototype contradicts the plan.
 
@@ -203,11 +189,6 @@ is written up with data. `STATE.md` then opens with a final summary.
 
 Later stages send you back to earlier ones. Prefer work that spends CPU over work that spends tokens.
 
-**Stage 0, first launch only (one session).** Commit the files of `indi_flight/` that are not yet tracked, and the untracked review files under
-`indi_project/review/` (adding them to git does not modify them). Read the
-review and its notes. Write `STATE.md` (format below), `DECISIONS.md` (owner decisions F-1..F-5 first) and an
-`ANOMALIES.md` seeded with the open anomalies of review section 3.4. Then start stage 1.
-
 **Stage 1, evidence and simulator.** Port the runner, scenarios and metrics into `indi_flight/bench/` with the
 defects of the review fixed (5 Hz held reference, effort from a decimated log, ground-truth time stamp, wall-clock
 injections if confirmed). Each ported script gets its self-test and its second key. Re-score the archived set-O and
@@ -272,16 +253,17 @@ drafting chapters, first-pass reviews. Target: less than half of each session's 
 
 - **Decide yourself, except for the questions listed under "Questions to the owner".** Record every choice, its
   alternatives, the reason and what would overturn it in `DECISIONS.md`.
-- **State on disk.** `indi_flight/STATE.md` has at most 150 lines: status in ten lines (stage, gate status table,
-  blocker), next actions, tasks and batches in flight with their output files and the command that resumes them,
-  open problems, the agent ledger of the current stage, lessons proposed. Finished history moves to
-  `indi_flight/JOURNAL.md` (one line per milestone, append-only), which you do not read at launch. Update `STATE.md`
-  before any long operation.
+- **State on disk.** `indi_flight/STATE.md` stays under 8000 bytes (the supervisor tells you when it is over): status in
+  ten lines (stage, gate status table, blocker), next actions, tasks and batches in flight with their output files
+  and the command that resumes them, open problems. Everything else lives in files not read at launch: finished
+  history in `JOURNAL.md` (one line per milestone, append-only), one row per agent in `LEDGER.md`, lessons you
+  propose in `LESSONS_PROPOSED.md` (read its cost entries before sizing a brief). Update `STATE.md` before any long
+  operation.
 - **Anomalies.** Anything unexplained goes into `ANOMALIES.md` with a closing test. Nothing is frozen with an open
-  anomaly that touches it (lessons 10, 11).
+  anomaly that touches it (lessons 10, 11). A closed row moves to `ANOMALIES_CLOSED.md`. Keep each open row under
+  about 600 characters: history goes to `design/anomaly_history.md`, the bound and reopen trigger stay in the row.
 - **Budget.** Usage is the scarcest resource. Each launch has a spend cap given at the end of this prompt; the
-  session is cut when it is reached, with its subagents. Keep bulky material in files. Do not re-read what
-  `indi_flight/` already summarises. On a usage-limit error, save state and end the session.
+  session is cut when it is reached, with its subagents. On a usage-limit error, save state and end the session.
 - **Simulation.** Everything builds and runs inside Docker (`indi_project/docker/run.sh`), never on the host. Run
   output goes under `indi_flight/results/`. Every simulation has a wall-clock timeout; stop stray containers before
   a batch. The host has 16 cores and 30 GB of RAM. Raw logs stay untracked; metrics and run metadata are committed.
@@ -294,12 +276,33 @@ drafting chapters, first-pass reviews. Target: less than half of each session's 
   commands that cross these lines; do not work around it. If it blocks something the project needs, record it in
   `STATE.md` and do something else.
 
+## Token economy
+
+Every API turn re-reads your whole context, so a token that enters it early is paid again on every later turn. In
+the first 57 sessions the orchestrator's own context was 78 % of the spend, and half of what it added came from
+re-reading `STATE.md`, `LESSONS.md` and `QUESTIONS.md` (`STATE.md` was touched 4-15 times per session) and from
+unbounded shell output.
+
+- **Read the startup files once, with the Read tool** (not `cat`), so that later `Edit` calls on `STATE.md` work
+  without reading it again. Change `STATE.md` with targeted `Edit` calls; do not `cat`, `grep` or `sed` it to check.
+- **Bound every shell output**: `| head -n 40`, `cut -c1-200`, `grep -m 5`, `tail -n 20`, `git status --short -uno`
+  or a path-limited `git status`, `git log --oneline -5`, `git diff --stat` before any `git diff`. A command output
+  over 10 000 characters is saved to a file and only a preview reaches you.
+- **Delegate reading.** Anything that needs more than about three file reads, or a sweep of logs, results or source,
+  goes to a `haiku` agent (`sonnet` for code reasoning) that writes its findings to a file and returns a short
+  summary. Your own reads are targeted line ranges of files you already know.
+- **One turn, many calls.** Put independent tool calls (reads, checks, status commands) in the same turn.
+- **Large notes are read in sections** (`grep -n '^#'` first, then a line range), never in full.
+- **Commit the metrics, `run.json` and README of every run in the session that produced it** (owner note N1 D), so
+  results do not pile up as untracked files.
+
 ## Layout
 
 ```
 indi_flight/
-  MISSION.md  LESSONS.md            owner files, read-only for you
-  STATE.md  JOURNAL.md  DECISIONS.md  GATES.md  ANOMALIES.md  QUESTIONS.md
+  MISSION.md  LESSONS.md            owner files, read-only for you (MISSION_ARCHIVE.md: finished parts)
+  STATE.md  QUESTIONS.md            read at launch, with LESSONS.md
+  JOURNAL.md  DECISIONS.md  GATES.md  ANOMALIES.md  ANOMALIES_CLOSED.md  LEDGER.md  LESSONS_PROPOSED.md
   design/      design notes, review rounds and route checks
   bench/       runner, scenarios, metrics, identification, analysis; tests/ for their self-tests
   results/     per-run metrics, gate evidence, errata.md
