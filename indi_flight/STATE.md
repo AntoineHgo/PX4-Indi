@@ -23,13 +23,20 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    no sample delay; draft says EKF2_GPS_DELAY: fix GATES text); eRPM latency EXISTS; drop RNG seed FIXED (hpp:131),
    must become per-run. Item (2) CODED T132 (`design/t132_disturbance_c2_s65.md`, self-test OK, re-run S65): profiles
    sized from SDF (quad5in 0.610 kg, payload 25 % W, gust 10 % W); quad5in CdA 0.012 / CoP 0.02 UNVERIFIED; UNKEYED.
-   NEXT S66: haiku second key of T132 + one G1.5 pre-test flight per profile; then item (1) slice 2; build hooks
-   (loop delay, GNSS sample delay, per-run drop seed, IMU noise scale) as one simulator task with second key.
+   S66 (launch 20261117-231245, cap $3): T133 second key of T132 AGREE (note errata appended). N2-A triage DONE
+   (`design/n2a_triage_s66.md`; A-2/A-15 closed, A-5 archive-only, A-1/A-3/A-7 parked, A-4/A-6 open). T134 G1.5
+   pre-test 5 profiles (`results/g15_dist_s66/`): airframe line and wrench peaks OK; open: payload_add thrust +50 %
+   vs 25 % force, com_shift roll excursion +79 deg at onset+26 s, torque_steps pitch/yaw sign (FLU vs FRD?).
+   T136 investigates -> `results/g15_dist_s66/investigation.md`. Profiles not usable until closed.
+   NEXT S67: close T136 findings (G1.5); N2-B (A-9 unit test on new module) and N2-C (A-30 identical 400 Hz re-fly,
+   share with A-4 speed 1/4 test); then item (1) slice 2; build hooks (loop delay, GNSS sample delay, per-run drop
+   seed, IMU noise scale) as one simulator task with second key.
    Results rule (N1 D): commit metrics/run.json/README of every run in the session that produced it. Next route check: S69.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T136 | payload +50 % / com_shift roll / torque sign | sonnet | results/g15_dist_s66/investigation.md | re-brief from STATE S66 line |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);

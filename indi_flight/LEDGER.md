@@ -32,3 +32,6 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | 52 | T108 | haiku | second key lead diff vs note | done, 6 calls, ~$0.08, AGREE, 1 logging finding fixed |
 | 51 | T106 | haiku | A-24 PSD re-check with G2_Y 27 | done, 5 calls, ~$0.1, tone gone ~100x |
 | 51 | T105 | opus | review r1 lead note vs code | done, 9 calls, ~$1.1 (2x estimate), NOT BLOCKING, 3 MAJOR |
+| 66 | T133 | haiku | second key T132 disturbance sizing | done, 12 calls, AGREE, note errata |
+| 66 | T134 | haiku | G1.5 pre-test 5 profiles quad5in | done, 16 calls, 5/5 flew, 3 response findings |
+| 66 | T135 | sonnet | N2-A anomaly triage pre-S36 | done, 11 calls, verdicts applied (A-7 parked not closed) |
