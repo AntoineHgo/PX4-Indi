@@ -181,6 +181,7 @@ void IndiRateControl::reset()
 	resetStates();
 	_nu.zero();
 	_a_f.zero();
+	_lead_gain.zero();
 	_t_f.zero();
 	_t_f_model.zero();
 	_t_f_meas.zero();
