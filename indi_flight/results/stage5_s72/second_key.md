@@ -1,22 +1,22 @@
 # T161 second key: s72 thrust-gap flights (ULog, independent)
 
-| Metric | gap085_indi_htoff | loss08_indi |
-|---|---|---|
-| dz_truth (m, GT - SP, NED) | +0.0201 | -0.0527 |
-| dz_est (m, est - SP, NED) | -0.0001 | -0.0402 |
-| est_err (m, est - GT) | -0.0202 | +0.0126 |
-| mean a_f[2] (m/s^2) | +0.0005 | -0.0031 |
-| mean a_c[2] (m/s^2) | +0.0001 | +0.1580 |
-| final blend | 0.0240 | 0.0084 |
+| Metric | gap085_indi_htoff | loss08_indi | loss08_indi_htoff |
+|---|---|---|---|
+| dz_truth (m, GT - SP, NED) | +0.0201 | -0.0527 | -0.0638 |
+| dz_est (m, est - SP, NED) | -0.0001 | -0.0402 | -0.0409 |
+| est_err (m, est - GT) | -0.0202 | +0.0126 | +0.0229 |
+| mean a_f[2] (m/s^2) | +0.0005 | -0.0031 | -0.0027 |
+| mean a_c[2] (m/s^2) | +0.0001 | +0.1580 | +0.1674 |
+| final blend | 0.0240 | 0.0084 | 0.0084 |
 
 Logged rate in window (Hz):
 
-| Topic | gap085_indi_htoff | loss08_indi |
-|---|---|---|
-| vehicle_local_position_groundtruth | 708.2 | 705.5 |
-| vehicle_local_position | 88.9 | 88.9 |
-| vehicle_local_position_setpoint | 88.9 | 88.9 |
-| indi_pos_status | 88.9 | 88.9 |
+| Topic | gap085_indi_htoff | loss08_indi | loss08_indi_htoff |
+|---|---|---|---|
+| vehicle_local_position_groundtruth | 708.2 | 705.5 | 705.8 |
+| vehicle_local_position | 88.9 | 88.9 | 88.9 |
+| vehicle_local_position_setpoint | 88.9 | 88.9 | 88.9 |
+| indi_pos_status | 88.9 | 88.9 | 88.9 |
 
 ## Method
 

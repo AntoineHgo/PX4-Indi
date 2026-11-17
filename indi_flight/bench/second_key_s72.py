@@ -18,6 +18,7 @@ RES = os.path.join(ROOT, 'indi_flight', 'results', 'stage5_s72')
 FLIGHTS = {
     'gap085_indi_htoff': os.path.join(RES, 'gap085_indi_htoff', 'run'),
     'loss08_indi': os.path.join(RES, 'loss08_indi', 'run'),
+    'loss08_indi_htoff': os.path.join(RES, 'loss08_indi_htoff', 'run'),
 }
 WINDOW_US = 10_000_000          # last 10 s before landing start
 GRID_DT_US = 10_000             # 100 Hz common evaluation grid

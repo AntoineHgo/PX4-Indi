@@ -57,3 +57,5 @@ pre-landing and max |dz| < 0.15 m in the 5 s after take-off.
   gap085 dz_truth 0.020 (primary 0.025), all estimator error (dz_est 0.000); loss08 dz_truth -0.053 (primary -0.056),
   of which control error -0.040 with a_c-a_f = 0.158 m/s2 held -> anomaly A-33. run.json clock ~0.72 s off the
   ULog (armed 30.01 vs t_arm 30.74), consistent with the S70 time-offset hypothesis.
+- A-33 closing flight `loss08_indi_htoff` (gap_htoff.params, firmware 3481bdcf9e incl. reset fix): dz_truth/dz_est/
+  a_c-a_f in `second_key.md`: dz_est -0.041 m, a_c[2] 0.167 m/s2, b 0.0084, same as HTE on -> HTE is not the cause.

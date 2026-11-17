@@ -23,10 +23,10 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    S72 (launch 20261118-003830, cap $3): D-GAP implemented and committed (3481bdcf9e, 41d44d461a; reset() model path
    at u + b, fixed by me after reading the diff). gap085_indi_htoff dz 0.025 m PASS, loss08_indi 0.056 m marginal;
    second key agrees (`results/stage5_s72/second_key.md`). A-33 OPEN: loss08 holds a_c-a_f = 0.158 m/s2 (control
-   error 0.040 m), blend should be integral at DC. Closing flight loss08_indi_htoff ran at session end (see tasks).
-   NEXT S73: (1) score `results/stage5_s72/loss08_indi_htoff` with `bench/second_key_s72.py` (dz_est, a_c-a_f): ~0 ->
-   HTE double compensation, re-open how HTE feeds the INDI stage (McIndiPosControl.cpp:587, setThrustModel :152);
-   else look for a leak in the u_model path (rate-loop collective, k_cmd). (2) runner: land/re-take-off scenario with
+   error 0.040 m), blend should be integral at DC. Closing flight loss08_indi_htoff: HTE ruled out.
+   NEXT S73: (1) A-33: HTE ruled out (loss08_indi_htoff same error). Closing tests in ANOMALIES.md A-33 (3-axis
+   a_c-a_f + attitude error, frozen/clamp fraction, longer hold); sonnet/haiku on existing logs first, then fix.
+   (2) runner: land/re-take-off scenario with
    the gap kept (spec in stage5_s72 README) -> landed-hold flight. (3) D-GAP margin items (amendment 3: resonance,
    overshoot, velocity-break PM at tb and tb/3). (4) combined opus review: stage-3 safety diff + stage-5 slices +
    rate-loop snap-vs-freeze. (5) PVA mode slice (ZSINE_O6). Runner has NO RC/manual path (G5 stick modes, slice 3).
@@ -35,7 +35,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 |---|---|---|---|---|
 | T160 | S72 D-GAP impl + unit tests + 2 flights | sonnet | results/stage5_s72/README.md | DONE, committed 3481bdcf9e/41d44d461a |
 | T161 | S72 second key | haiku | results/stage5_s72/second_key.md | DONE |
-| F72 | loss08_indi_htoff flight (A-33 closing test) | bg shell | results/stage5_s72/loss08_indi_htoff/ | if no run/flight.ulg: rerun cmd = stage5_s70 README line 17 with --scenario s5_loss08 --controller indi_s72 --params indi_flight/results/stage5_s70/gap_htoff.params |
+| F72 | loss08_indi_htoff flight | bg shell | results/stage5_s72/loss08_indi_htoff/ | DONE |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
