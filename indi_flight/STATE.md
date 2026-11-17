@@ -29,10 +29,11 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    :147/:161/:205). Runner has NO RC/manual_control path: needed for G5 stick modes (slice 3). S71: 2nd mode slice
    + combined opus review of stage-3 safety diff + stage-5 slices. Then hooks (loop delay, GNSS sample delay, per-run
    drop seed, IMU noise scale). Next route check: S74.
+   S70 (launch 20261118-001644, cap $3): Q5 closed to JOURNAL. T152 launched (slice 2 part 1, no firmware change).
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T151 | A-32 load test: exact G1.6 cmd, 5 sequential + 5 parallel (S68 G-v1 bimodal 175/186 ms, 175 only in parallel runs; S32 mean 186) | bash bg | `results/a32_load_s69/` | `bash results/a32_load_s69/fly.sh` |
+| T152 | S70 slice 2 part 1: scenarios s5_gap085/s5_loss08, gap.params (W_MAX 2700, v2), `bench/s5_gap_check.py` + self-test, 4 sequential pre-test flights (hover regress, gap INDI, gap stock HTE on, gap stock HTE off) | sonnet | `results/stage5_s70/README.md` | re-brief from `design/slice2_plan_s69.md` items 1-5 |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
