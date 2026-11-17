@@ -38,6 +38,15 @@ px4_add_library(IndiInjection
 target_compile_options(IndiInjection PRIVATE ${MAX_CUSTOM_OPT_LEVEL})
 target_include_directories(IndiInjection PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+px4_add_library(IndiSafety
+	RateSetpointWatchdog.cpp
+	RateSetpointWatchdog.hpp
+	TorqueStampTracker.cpp
+	TorqueStampTracker.hpp
+)
+target_compile_options(IndiSafety PRIVATE ${MAX_CUSTOM_OPT_LEVEL})
+target_include_directories(IndiSafety PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
 px4_add_library(IndiMeasuredTorque
 	IndiMeasuredTorque.cpp
 	IndiMeasuredTorque.hpp
@@ -60,6 +69,7 @@ px4_add_module(
 		IndiRateControl
 		IndiInjection
 		IndiMeasuredTorque
+		IndiSafety
 		VehicleActuatorEffectiveness
 		mathlib
 		px4_work_queue
@@ -67,3 +77,5 @@ px4_add_module(
 
 px4_add_unit_gtest(SRC IndiInjectionTest.cpp LINKLIBS IndiInjection)
 px4_add_functional_gtest(SRC IndiMeasuredTorqueTest.cpp LINKLIBS IndiMeasuredTorque VehicleActuatorEffectiveness)
+px4_add_unit_gtest(SRC IndiRateSetpointWatchdogTest.cpp LINKLIBS IndiSafety)
+px4_add_unit_gtest(SRC IndiTorqueStampTrackerTest.cpp LINKLIBS IndiSafety)

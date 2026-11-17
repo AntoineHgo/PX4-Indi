@@ -66,6 +66,18 @@ McIndiRateControl::~McIndiRateControl()
 bool
 McIndiRateControl::init()
 {
+	// another rate controller already publishes the torque setpoint: refuse to start a second one
+	vehicle_torque_setpoint_s existing{};
+
+	if (_vehicle_torque_setpoint_sub.advertised() && _vehicle_torque_setpoint_sub.copy(&existing)
+	    && (hrt_elapsed_time(&existing.timestamp) < 500_ms)) {
+		PX4_ERR("vehicle_torque_setpoint already published by another controller, not starting");
+		return false;
+	}
+
+	// skip history, only messages after start are compared with the own ones
+	_vehicle_torque_setpoint_sub.update(&existing);
+
 	if (!_vehicle_angular_velocity_sub.registerCallback()) {
 		PX4_ERR("callback registration failed");
 		return false;
@@ -93,6 +105,7 @@ McIndiRateControl::parameters_updated()
 	_indi.setMaxIncrement(_param_mc_indi_dt_max.get());
 	_indi.setLandedSlew(_param_mc_indi_lnd_slew.get());
 	_indi.setYawCutoff(_param_mc_indi_yaw_cut.get());
+	_rate_sp_watchdog.setTimeout(_param_mc_indi_sp_to.get());
 
 	// bench-only loop-break excitation, rebuilt only when one of its values changed
 	_injection.setParameters(_param_mc_indi_inj_ax.get(), _param_mc_indi_inj_amp.get(), _param_mc_indi_inj_tp.get(),
@@ -241,6 +254,8 @@ McIndiRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f &ang
 	_indi.getTorqueIncrement().copyTo(indi_rate_status.torque_increment);
 	indi_rate_status.fault = _indi.getFault();
 	indi_rate_status.measured_torque_in_use = _indi.measurementInUse();
+	indi_rate_status.rate_sp_stale = _rate_sp_stale;
+	indi_rate_status.foreign_torque_pub = _torque_stamps.foreignDetected();
 	indi_rate_status.timestamp = hrt_absolute_time();
 	_indi_rate_status_pub.publish(indi_rate_status);
 
@@ -296,6 +311,16 @@ McIndiRateControl::Run()
 
 		_vehicle_status_sub.update(&_vehicle_status);
 
+		// second publisher of the torque setpoint: the latest message must be one of the own
+		vehicle_torque_setpoint_s torque_rx;
+
+		if (_vehicle_torque_setpoint_sub.update(&torque_rx) && _torque_stamps.checkReceived(torque_rx.timestamp)) {
+			if (hrt_elapsed_time(&_last_foreign_warn) > 2_s) {
+				PX4_ERR("vehicle_torque_setpoint published by another controller");
+				_last_foreign_warn = hrt_absolute_time();
+			}
+		}
+
 		// use rates setpoint topic
 		vehicle_rates_setpoint_s vehicle_rates_setpoint{};
 
@@ -329,6 +354,22 @@ McIndiRateControl::Run()
 			_rates_setpoint(1) = PX4_ISFINITE(vehicle_rates_setpoint.pitch) ? vehicle_rates_setpoint.pitch : rates(1);
 			_rates_setpoint(2) = PX4_ISFINITE(vehicle_rates_setpoint.yaw)   ? vehicle_rates_setpoint.yaw   : rates(2);
 			_thrust_setpoint = Vector3f(vehicle_rates_setpoint.thrust_body);
+			_last_rates_sp_time = vehicle_rates_setpoint.timestamp;
+		}
+
+		// rate setpoint timeout (MC_INDI_SP_TO): zero rates, thrust held
+		const bool acro_branch = _vehicle_control_mode.flag_control_manual_enabled
+					 && !_vehicle_control_mode.flag_control_attitude_enabled;
+		const RateSetpointWatchdog::Result wd = _rate_sp_watchdog.update(_last_rates_sp_time, hrt_absolute_time(),
+							_vehicle_control_mode.flag_armed, !acro_branch && _vehicle_control_mode.flag_control_rates_enabled);
+		_rate_sp_stale = wd.stale;
+
+		if (wd.zero_rates) {
+			_rates_setpoint.zero();
+		}
+
+		if (wd.warn) {
+			PX4_WARN("rate setpoint timeout, rates zeroed, thrust held");
 		}
 
 		// run the rate controller
@@ -371,6 +412,7 @@ McIndiRateControl::Run()
 
 			_prev_torque_setpoint = Vector3f(vehicle_torque_setpoint.xyz);
 			_prev_torque_setpoint_time = vehicle_torque_setpoint.timestamp;
+			_torque_stamps.recordOwn(vehicle_torque_setpoint.timestamp);
 
 			updateActuatorControlsStatus(vehicle_torque_setpoint, dt);
 

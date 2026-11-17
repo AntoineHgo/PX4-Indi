@@ -64,6 +64,8 @@
 
 #include "IndiInjection.hpp"
 #include "IndiMeasuredTorque.hpp"
+#include "RateSetpointWatchdog.hpp"
+#include "TorqueStampTracker.hpp"
 
 using namespace time_literals;
 
@@ -133,6 +135,7 @@ private:
 	uORB::Subscription _vehicle_land_detected_sub{ORB_ID(vehicle_land_detected)};
 	uORB::Subscription _vehicle_rates_setpoint_sub{ORB_ID(vehicle_rates_setpoint)};
 	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
+	uORB::Subscription _vehicle_torque_setpoint_sub{ORB_ID(vehicle_torque_setpoint)};
 
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
@@ -147,6 +150,13 @@ private:
 
 	vehicle_control_mode_s	_vehicle_control_mode{};
 	vehicle_status_s	_vehicle_status{};
+
+	RateSetpointWatchdog _rate_sp_watchdog;
+	hrt_abstime _last_rates_sp_time{0}; ///< timestamp of the last received vehicle_rates_setpoint
+	bool _rate_sp_stale{false};
+
+	TorqueStampTracker _torque_stamps; ///< own vehicle_torque_setpoint timestamps, to detect a second publisher
+	hrt_abstime _last_foreign_warn{0};
 
 	bool _landed{true};
 	bool _maybe_landed{true};
@@ -201,6 +211,7 @@ private:
 		(ParamFloat<px4::params::MC_INDI_DT_MAX>) _param_mc_indi_dt_max,
 		(ParamFloat<px4::params::MC_INDI_LND_SLEW>) _param_mc_indi_lnd_slew,
 		(ParamFloat<px4::params::MC_INDI_ERPM_FRZ>) _param_mc_indi_erpm_frz,
+		(ParamFloat<px4::params::MC_INDI_SP_TO>) _param_mc_indi_sp_to,
 		(ParamFloat<px4::params::MC_INDI_YAW_CUT>) _param_mc_indi_yaw_cut,
 		(ParamInt<px4::params::MC_INDI_INJ_AX>) _param_mc_indi_inj_ax,
 		(ParamFloat<px4::params::MC_INDI_INJ_AMP>) _param_mc_indi_inj_amp,

@@ -16,3 +16,7 @@ bool measured_torque_in_use		# the measured actuator torque (ESC rpm) replaced t
 float32[3] torque_sp_pre_inject		# c: INDI controller output (normalised torque)
 float32[3] inject			# d: injected excitation (normalised torque)
 float32[3] torque_sp			# u = c + d, before the non-finite guard of the published vehicle_torque_setpoint
+
+bool rate_sp_stale			# no vehicle_rates_setpoint within MC_INDI_SP_TO while armed: rate setpoint zeroed, thrust held
+
+bool foreign_torque_pub			# a vehicle_torque_setpoint not published by this module was received (second rate controller)

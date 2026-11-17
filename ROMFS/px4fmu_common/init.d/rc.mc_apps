@@ -16,6 +16,7 @@ control_allocator start
 #
 if param compare -s MC_INDI_EN 1
 then
+	# INDI refuses to start if another rate controller already publishes vehicle_torque_setpoint
 	mc_indi_rate_control start
 
 else
