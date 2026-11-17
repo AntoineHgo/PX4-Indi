@@ -128,8 +128,9 @@ gate is decided on the frozen final pair in stage 6 with the same tests.
 ## G2-STEP Inner-loop attitude step criterion (written S61 2026-11-17, owner note N1 B.2, before its first test)
 - Test: step_roll, step_pitch (15 deg), step_yaw (45 deg) on quad5in, sim v2 (eRPM), 800 Hz (400 Hz reported), speed 4,
   firmware INDI defaults + derived physical parameters only, >= 3 seeds, provenance G1.7 (clean tree, binary at HEAD).
-  Command template: `results/stage3_s61/fly_steps.sh`; metrics: `results/indi_vs_pid/plot_compare.py` (overshoot of the
-  attitude estimate over the setpoint, 2 % settle from the step, rise 10-90 %), second-keyed before the first test (G1).
+  Command template: `results/stage3_s61/fly_steps.sh`; metrics (S63, replaces `results/indi_vs_pid/plot_compare.py`,
+  whose fixed 2.0-5.0 s window predates the definition below): `python3 bench/g2_step_metrics.py OUT.json FLIGHT_DIR...`,
+  second key `bench/t127_step_metrics_key.py` (est_g2/gt_g2 rows); AGREE 9/9 on S62 (`design/t128_g2_step_metrics_s63.md`).
 - Pass, EVERY seed: roll and pitch overshoot <= 5 %, 2 % settle <= 450 ms; yaw overshoot <= 5 %, 2 % settle <= 1350 ms.
 - Derivation (absolute thresholds, F-5: PID only informs the values; DECISIONS D-S3-ATT-STEP): PID reference S61 seeds
   1-3 roll/pitch overshoot 0 %, settle max 412 ms -> 412 x 1.1 = 453, rounded down to 450; yaw overshoot <= 0.3 %, settle

@@ -82,6 +82,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 51 | T105 | opus | review r1 lead note vs code | done, 9 calls, ~$1.1 (2x estimate), NOT BLOCKING, 3 MAJOR |
 
 ## Lessons proposed
+- S63: re-run the metric with the fix before writing what an artefact was: the seed3 roll 'exit' was attributed to
+  the return step in a committed README and the fixed-window re-run disproved it the same session.
 - S62: a model calibrated on one flight (S61) predicted the fix to 1 point of overshoot on 3 seeds; the setpoint-path
   change cost one sonnet task (~$0.5) and 12 flights. Fit the closed loop on flight data before choosing a law change.
 - S61: a 'lead' that is feedback-only lowers the closed-loop bandwidth seen by the outer loop; margins at the inner break
