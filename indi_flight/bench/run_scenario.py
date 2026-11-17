@@ -676,9 +676,9 @@ def main():
                 meta["boot_params"] = {"MC_INDI_EN": 1}
             if "CA_R_W_MAX" in overlay:
                 overlay["MC_INDI_W_MAX"] = overlay.pop("CA_R_W_MAX")
-            if overlay.pop("MC_INDIP_EN", "0").strip() == "1":  # stage 8: outer-loop INDI module, started at boot
-                sim.env["PX4_PARAM_MC_INDIP_EN"] = "1"
-                meta.setdefault("boot_params", {})["MC_INDIP_EN"] = 1
+            if overlay.pop("MC_INDI_POS_EN", "0").strip() == "1":  # stage 8: outer-loop INDI module, started at boot
+                sim.env["PX4_PARAM_MC_INDI_POS_EN"] = "1"
+                meta.setdefault("boot_params", {})["MC_INDI_POS_EN"] = 1
         variant = dict(sc.get("model_variant") or {})
         if a.sim != "v1":  # read once when gz_bridge starts
             if a.model == "x500":  # quad5in/model.sdf already carries the per-step JointStatePublisher
@@ -778,7 +778,7 @@ def main():
         if sim.t - T_OFFBOARD_S > LATE_TOL_S:
             meta["offboard_late_s"] = round(sim.t - T_OFFBOARD_S, 3)
         # stage 8: INDI POS replaces offboard and is reported as AUTO (4) / EXTERNALn (sub mode >= 11)
-        indip = meta.get("boot_params", {}).get("MC_INDIP_EN") == 1
+        indip = meta.get("boot_params", {}).get("MC_INDI_POS_EN") == 1
         if not a.sched:  # with --sched the mode_offboard row of the schedule file switches the mode
             sim.cmd(176, 1, 6)
         sim.run(None, sp=pos_sp, until=lambda: sim.main_mode == 6 or (indip and sim.main_mode == 4 and (sim.sub_mode or 0) >= 11),
