@@ -1,6 +1,6 @@
 # Stage-3 design note: rate-prediction lead in the INDI rate law (D-RATE-LEAD)
 
-Status: REVIEWED r1 (S51, NOT BLOCKING, dispositions in `design/rate_lead_review_r1.md`), not implemented. Sources: `indi_flight/DECISIONS.md` D-RATE-LEAD,
+Status: implemented S52 (reviewed r1 in S51, dispositions in `design/rate_lead_review_r1.md`; see `results/stage3_s52/lead_impl.md`). Sources: `indi_flight/DECISIONS.md` D-RATE-LEAD,
 `indi_flight/results/stage2_s48/README.md`, `src/lib/indi_rate_control/indi_rate_control.{hpp,cpp}`,
 `src/modules/mc_indi_rate_control/`. Line numbers refer to the tree at commit 0d61daaed4. Every statement not checked
 against code or a result file is marked UNVERIFIED.
@@ -58,7 +58,7 @@ The lead enlarges the a_f term, so for a given a_f the increment grows by (1 + c
 (a) Measured-rotor-speed path and blend. The lead term depends only on a_f and K, never on t_f, `t_f_model`, `t_f_meas`
 or `_blend`. Blend (l.320-340) removes a steady gap between command and output through t_f; at steady state a_f = 0 so the
 lead is zero and the DC action of the blend is unchanged. During a constant angular acceleration (rate ramp) the lead
-contributes a steady K tau_c a_f/G1 torque, which is the intended prediction offset, not a gap. Matched in both sources
+contributes a steady K tau_c a_f/G1 torque, which is feedback-only: the setpoint path keeps the actuator lag (closed loop K/((tau s + 1)(s + K))), the lead only reshapes the loop gain L. Matched in both sources
 (t_f_meas = a_f/G1 when the model is right): t_cmd = (K e - K tau_c a_f)/G1 in either, so the loop shape is the same.
 Mismatch case: with G1 or tau error, the disturbance estimate (a_f - G1 t_f)/G1 is unchanged, but the lead adds K tau_c
 a_f/G1, which depends on the real a_f only. Whether the lead lowers GM when the measured path is in use (the real motor
