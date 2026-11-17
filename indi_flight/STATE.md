@@ -11,8 +11,7 @@
   paths) answered by D-G2-BREAK (M3a torque-setpoint break) and note section 7; r2 CLOSED.
 - S44: stage-2 INDI margins VOID (A-23 limit cycle, see Next actions).
 ## Next actions (in order)
-S44-S46 detail moved to JOURNAL.md (S51). Derived G1 1757/1640/205 in `bench/params/quad5in_indi_g1.params`; `bench/pretest_gate.py` in use.
-S47-S48 detail moved to JOURNAL.md (S53): yaw limit cycle fixed by derived G2_Y 27; low roll PM explained by K_R/P_att + motor lag.
+S44-S46 detail moved to JOURNAL.md (S51). Derived G1 1757/1640/205 in `bench/params/quad5in_indi_g1.params`; `bench/pretest_gate.py` in use. S47-S48 detail moved to JOURNAL.md (S53): yaw limit cycle fixed by derived G2_Y 27; low roll PM explained by K_R/P_att + motor lag.
 S49 (launch 20261116-224459, cap $2.28): T102 stage-2 summary table (`results/stage2_s49/summary_table.md`): only valid
    measured margins are INDI roll torque break at 800 Hz (best PM 42.9 at P3); no measured PID, no 400/250 Hz, no other
    break point. T103 D-RATE-LEAD note draft (`design/rate_lead_note.md`): new param MC_INDI_LEAD scale 0..1 (default 1,
@@ -47,11 +46,11 @@ S53 also: route check 53 (`design/route_check_53.md`), acted on: defaults applie
    (later commits docs/results only; --gate still needs a rebuild at HEAD).
 S54 (launch 20261117-024822, cap $3): A-27 EXPLAINED. Yaw M3a re-flown 0.1-20 Hz (`results/stage3_s54/yaw_m3a_lf/`):
    L -> -1 at DC. Cause: step 8 yaw denominator G1 + G2/dt (~105 G1 at 800 Hz, dead-beat spin-up) -> law extrapolates t_f,
-   M3a reads -H A_m, yaw gain set by G2 and dt, not K_Y. Model `bench/yaw_break_model_s54.py` (UNKEYED) matches flight;
+   M3a reads -H A_m, yaw gain set by G2 and dt, not K_Y. Model `bench/yaw_break_model_s54.py` matches flight to 1 Hz, keyed by T111 (AGREE after a key-2 fix);
    proposed fix D-YAW-INV option (c) (increment low-passed by G2/G1, dt-independent): yaw loop = K A/s, Ms 1.6-8.1 dB
    under G2 x0.5-2, tau x1-2. m3a_margins_pretest.py takes fmin fmax Tp args; checks.py hard-codes the S40 multisine.
-NEXT (S55): (1) D-YAW-INV: key the model (sonnet re-implements from the code + note, proper Nyquist PM/GM, ACT_TC
-   mismatch, 400 Hz), then opus review note vs code, then code + unit test + yaw M3a 2 seeds. (2) roll M3a on the
+NEXT (S55): (1) D-YAW-INV: model keyed (`results/stage3_s54/yaw_model/second_key.md`); add ACT_TC mismatch and 400 Hz,
+   then opus review note vs code, then code + unit test + yaw M3a 2 seeds. (2) roll M3a on the
    measured-rotor path (--sim v2; find which params select the measured path: MC_INDI_ACT_BLD / ERPM_TO, check S40
    params) and 400 Hz roll/pitch (margin script fs is fixed at 800: add an fs arg). (3) attitude/velocity/position break
    notes + second key. (4) stage-3 items note review before coding items 1-5. (5) hole reporter when the --gate batch
@@ -76,6 +75,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 54 | T111 | sonnet | second key yaw break model | done, 6 calls, ~$0.25, coded-law denominator mis-transcribed; AGREE after 1-line fix, option (c) AGREE |
 | 53 | T110 | sonnet | route check 53 | done, 6 calls, ~$0.2, acted on (defaults, G2 table first) |
 | 53 | T109 | sonnet | stage-3 items design note | done, 5 calls, ~$0.2, 168 lines, UNREVIEWED |
 | 52 | T107 | sonnet | code MC_INDI_LEAD + tests | done, 14 calls, ~$0.75, all pass, break-checked |

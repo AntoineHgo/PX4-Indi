@@ -313,7 +313,8 @@ pre-identification behaviour of decision 3 must cover it).
 - Model mismatch (plant G2 x0.5/x2, plant tau x1/x2, `results/stage3_s54/yaw_model/model_out.txt`): option (c) Ms
   1.6-8.1 dB at M3a, worst G2 x0.5 with tau x2; coded law Ms 22-28 dB at M3a. The script's PM read-out is crude
   (phase wrapping, gives negative PM for the coded law that flies): compare Ms only until keyed.
-- Open before code: a keyed model (proper Nyquist PM/GM, ACT_TC mismatch, 400 Hz), second key of the model,
+- Keyed S54 (T111, `results/stage3_s54/yaw_model/second_key.md`): AGREE within 0.1 dB after a key-2 denominator fix.
+- Open before code: ACT_TC mismatch and 400 Hz in the model,
   opus review of note vs code, then unit test with the parametrised plant and yaw M3a 2 seeds.
 - Overturn if: the model with G2 x0.5..x2 shows a limit cycle or GM < 6 dB, or the flight disagrees with the model by
   more than the G2 tolerance.
