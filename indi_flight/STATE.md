@@ -53,7 +53,7 @@ NEXT (S52): (2) code MC_INDI_LEAD (sonnet, ~$1.0, needs $2 left: launch first): 
    note's "not a gap" sentence. I read the diff and run the tests; then haiku second key of the diff vs note. Then one
    roll M3a flight on 2 seeds (rebuild first). Review F6 (take-off jump not limited by max_inc, maybe_landed toggling)
    joins the landed-handling item. (3) runner appends quad5in_indi_g1.params + provenance in run.json; pretest_gate
-   end-time option. (4) A-24 PSD re-check with G2.
+   end-time option. (4) DONE S51: A-24 CLOSED (tone gone with G2_Y 27, ~100x, `results/stage2_s51/a24_psd_g2.md`).
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
@@ -74,6 +74,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 51 | T106 | haiku | A-24 PSD re-check with G2_Y 27 | done, 5 calls, ~$0.1, tone gone ~100x |
 | 51 | T105 | opus | review r1 lead note vs code | done, 9 calls, ~$1.1 (2x estimate), NOT BLOCKING, 3 MAJOR |
 | 50 | T104 | sonnet | second key lead delay sweep | done, 5 calls, ~$0.25, AGREE at K20, GM 1-3 dB optimistic |
 | 49 | T102 | haiku | stage-2 summary table | done, 7 calls, ~$0.2, PID GM values negative (not used) |
