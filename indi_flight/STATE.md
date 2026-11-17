@@ -17,26 +17,22 @@ S58-S59 + route check 59 detail moved to JOURNAL.md (S61): stage-3 items 1-4 cod
    opus review of the stage-3 safety diff deferred to one combined review with the stage-5 slice, before any freeze.
 S60 detail moved to JOURNAL.md (S62): stage-5 hover slice coded (T122), flew, gate PASS; T123 deviations in `design/t123_second_key_s60.md`.
 S61 detail moved to JOURNAL.md (S63): step overshoot mechanism, G2-STEP thresholds, D-S3-ATT-STEP designed + keyed.
-S62 (launch 20261117-183951, cap $3): D-S3-ATT-STEP CODED da64bc26b3 (T125; model test OS 0.51 % vs 11.1 % without,
-   break-checked), second key T126 AGREE-WITH-ISSUES (yaw-filter toggle spike -> fixed b8866cd4b1 + test, break-checked;
-   rest minor, `design/t126_second_key_att_step_s62.md`). Flown 12 INDI flights seeds 1-3 (`results/stage3_s62/README.md`):
-   OS 0.2-1.0 %, roll/pitch settle 358-394 ms, yaw 920-936 ms, all within G2-STEP; torque rejection kept (roll 11.8 vs 12.9).
-   T127 metric key AGREE (27/27 values, `design/t127_second_key_metrics_s62.md`), but truth != estimate on 2 flights: A-28.
-S63 (launch 20261117-185813, cap $3): A-28 CLOSED (`results/stage3_s63/README.md`): r/p est-truth grows 0 -> +0.22 deg
-   0.6-1.5 s after the step (stock EKF tilt while accelerating sideways), same under PID; yaw standing bias 0.5-1 deg.
-   G2-STEP measurement definition written in GATES.md (t_on on setpoint crossing, window ends 50 ms before return step,
-   pass on estimate + truth overshoot, est error reported apart). T127 key updated: S62 est OS 0.25-0.97 %, r/p settle
-   339-371 ms, yaw 899-914 ms, truth OS <= 0.85 %. A-29 parked (0.14 deg in-band dip, seed3 roll). T128 primary script.
-   T128 primary `bench/g2_step_metrics.py` (+7 tests) AGREES with the key 9/9 (`design/t128_g2_step_metrics_s63.md`).
-NEXT (S64): route check 64 first. (1) r_dot_f noise in
-   acro/hover effort check (G4 pre-look, one hover + one acro-stick flight, log rate_sp_dot); (2) attitude-break margin
-   with the new setpoint path (G2). First formal G2-STEP test (metric `bench/g2_step_metrics.py`, update the command template line in GATES.md) needs clean tree + binary at HEAD (G1.7).
-   THEN resume the S60 plan: thrust-gap flights on the stage-5 slice (MC_INDI_W_MAX = 2700 for measured thrust; needs a
-   NEW hover scenario with thrust gap, motor_fault/thrust_sag scenarios are attitude-mode, N1 C3), A3/A5 + reset deviations
-   of T123, slice second key, G5 test list, combined opus review. Bench defect open (N1 C2): disturbance.py payload_add,
-   com_shift (X500_MASS_KG) and gust_x/gust_diag (x500 CD_A) mis-sized on quad5in: take mass/drag from the flown model,
-   G1.5 check per profile before its first campaign. Results rule (N1 D): commit metrics/run.json/README of every run in
-   the session that produced it; leave the S10-S32 untracked results alone. Next route check: S64.
+S62-S63 detail moved to JOURNAL.md (S64): D-S3-ATT-STEP coded+flown (OS 0.2-1.0 %), A-28 closed, G2-STEP measurement
+   definition, primary `bench/g2_step_metrics.py` + key `bench/t127_step_metrics_key.py` AGREE.
+S64 (launch 20261117-190447, cap $3): route check 64 (T129, `design/route_check_64.md`): drift = no G3-G8 test text,
+   inner-loop work not time-boxed; acted. G2-STEP FIRST FORMAL TEST 9/9 PASS at 800 Hz, HEAD 360c9ae453 clean, key AGREES
+   (`results/g2_step_s64/README.md`, GATES.md). r_dot_f pre-look (`results/stage3_s64/README.md`): no hover effect
+   (motor HF RMS 2.7e-4 lead on/off); acro needs a stick-noise model (G4 build item). G3-G8 draft T130
+   (`design/gates_g3_g8_draft_s64.md`) reviewed, amendments in GATES.md (T/W 7.3: saturation corners sized on hover).
+NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change from now on):
+   (1) stage-5 slice 2: thrust-gap hover in position mode (NEW scenario, N1 C3; MC_INDI_W_MAX 2700) + one
+   velocity/acceleration mode (altitude or position stick) + T123 deviations A3/A5/reset; haiku second key.
+   (2) Bench defect N1 C2 (disturbance.py payload_add/com_shift/gust sized for x500): take mass/drag from the flown
+   model, G1.5 check per profile. (3) Check the 'NOT FOUND' hooks of the draft (loop delay, GNSS latency, vibration)
+   against stage-1 sim work before building. (4) G2-STEP 400 Hz reported run (3 flights, host bash, cheap).
+   (5) attitude-break margin with the new setpoint path (G2) when the G2 table is resumed.
+   Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
+   Results rule (N1 D): commit metrics/run.json/README of every run in the session that produced it. Next route check: S69.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
@@ -57,6 +53,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 64 | T130 | sonnet | draft G3-G8 tests | done, 4 calls, ~$0.35, 154 lines, one wrong T/W (53, real 7.3) caught in review |
+| 64 | T129 | sonnet | route check 64 | done, 4 calls, ~$0.15, acted on |
 | 63 | T128 | sonnet | primary G2-STEP metric script + 7 self-tests | done, 8 calls, ~$0.4, break-checked, AGREE with T127 key 9/9 |
 | 62 | T127 | haiku | second key step metrics (independent script) | done, 8 calls, ~$0.08, AGREE 27/27; truth offsets -> A-28 |
 | 62 | T126 | haiku | second key da64bc26b3 vs D-S3-ATT-STEP | done, 3 calls, ~$0.06, AGREE-WITH-ISSUES, yaw toggle fixed |
@@ -82,6 +80,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 51 | T105 | opus | review r1 lead note vs code | done, 9 calls, ~$1.1 (2x estimate), NOT BLOCKING, 3 MAJOR |
 
 ## Lessons proposed
+- S64: a gate-text draft quoted hover command 0.137 as implying T/W 53; on this airframe T/W is 7.3, so the owner's
+  "available thrust 0.7" saturates nothing. Size every saturation/sag test on hover thrust of the flown model, not on full scale.
 - S63: re-run the metric with the fix before writing what an artefact was: the seed3 roll 'exit' was attributed to
   the return step in a committed README and the fixed-window re-run disproved it the same session.
 - S62: a model calibrated on one flight (S61) predicted the fix to 1 point of overshoot on 3 seeds; the setpoint-path

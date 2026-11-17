@@ -151,3 +151,21 @@ gate is decided on the frozen final pair in stage 6 with the same tests.
     grows from ~0 to +0.21-0.24 deg in 0.6-1.5 s after a 15 deg step (EKF tilt while accelerating sideways in
     attitude mode); yaw +0.6-1.0 deg standing bias. It is the same under PID, so it is the stock estimator's, not the
     controller's; the report states it next to the step results.
+- **First test (S64 2026-11-17, HEAD 360c9ae453, clean tree): 9/9 PASS at 800 Hz**, seeds 1-3; second key AGREES on
+  every pass metric (`results/g2_step_s64/README.md`). Roll/pitch OS 0.64-1.29 %, settle 341-366 ms; yaw OS 0.18-0.37 %,
+  settle 913-923 ms; truth OS <= 1.29 %. Torque-step rejection not regressed. Pending: the 400 Hz reported run.
+
+## G3-G8 test text (S64 2026-11-17, before any first test; NOT final)
+Draft: `design/gates_g3_g8_draft_s64.md` (T130, sonnet, every number PROPOSED). Each gate's section here is finalised,
+with its numbers, before that gate's first pre-test; until then the draft is the stage-5 acceptance target. Orchestrator
+review S64, amendments that override the draft:
+- Draft item 7 resolved: command is thrust fraction (THR_MDL_FAC 1 inverts thrust ~ w^2), hover thrust fraction 0.137 = (999/2700)^2, so thrust/weight = 7.3, not 53. Consequence: "available thrust
+  0.7" (G3) and "sag 0.6" (G5.10) leave 5x hover thrust and do not saturate anything on this airframe. G3 keeps the
+  owner's 1.0-0.7 range (owner value) and ADDS a saturation corner sized on hover: available thrust down to 2.0 x hover
+  (scale 0.27); G5.10 is sized the same way (scale ~0.2, T/W ~1.5) plus an aggressive manoeuvre that saturates at full scale.
+- G3 G1-error factor = controller G1 (control effectiveness) vs plant, x[0.5, 2] per axis, not a rotor-inertia map.
+- G4 metric reported on two cut-offs (4 Hz and 20 Hz) until the noise-profile sources fix the band; the S64 pre-look
+  (`results/stage3_s64/README.md`) gives the quiet-sim floor: motor command HF RMS 2.7e-4, rpm HF RMS ~8 rpm (0.1 % of hover).
+- G4 acro case needs an RC stick quantisation/sample-rate model (r_dot_f path, S64 pre-look) before r_dot_f in acro is closed.
+- Hooks marked NOT FOUND (loop delay, GNSS latency, vibration scale) are to be checked against stage-1 simulator work
+  (STATE/JOURNAL, `sim_review.md`) before being built: the draft read only `scenarios.py`.
