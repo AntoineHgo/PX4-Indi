@@ -4,8 +4,9 @@ import margins_est as me
 t, d, x, y = me.read_csv(sys.argv[1])
 # optional: fmin fmax Tp (defaults = S40 set 1 60 10), as MC_INDI_INJ_FMIN/FMAX/TP of the flight (S54)
 fmin, fmax, tp = (float(v) for v in sys.argv[2:5]) if len(sys.argv) >= 5 else (1.0, 60.0, 10.0)
+fs = float(sys.argv[5]) if len(sys.argv) >= 6 else 800.0  # controller (log) rate in Hz, S56
 bins = me.log_bins(fmin, fmax, tp, per_decade=10)
-res = me.frf_periodic(d, x, y, 800.0, tp, bins, 1, t=t)
+res = me.frf_periodic(d, x, y, fs, tp, bins, 1, t=t)
 mg = me.margins_from_frf(res)
 print("n_bins", len(res["f"]), "accepted", int(res["accepted"].sum()))
 print("f", np.round(res["f"], 2).tolist())

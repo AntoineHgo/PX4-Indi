@@ -36,6 +36,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| B56r | roll M3a 400 Hz, 2 seeds (NEXT item 2, 400 Hz half) | bash | `results/stage3_s57_pre/roll_m3a_400/` (done.txt) | `bash indi_flight/results/stage3_s57_pre/roll_m3a_400/run_all.sh`; m3a_margins_pretest.py now takes fs as 5th arg |
 
 
 ## Open problems
