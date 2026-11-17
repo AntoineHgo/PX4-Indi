@@ -652,3 +652,179 @@ TEST_F(IndiAccelControlTest, OmegaFfIndependentOfYawRate)
 		EXPECT_NEAR(out1(1), out0(1), 1e-6f) << "tilt " << tilt_deg;
 	}
 }
+
+// ---- D-GAP collective blend ----
+
+namespace
+{
+
+/// Plant with thrust scale k: the measured mean u is k times the previous collective command
+class IndiAccelBlendTest : public IndiAccelControlTest
+{
+protected:
+	static constexpr float kScale = 0.85f;
+
+	void startBlend(float tb)
+	{
+		_ctrl.setBlendTimeConstant(tb);
+		_u_cmd = kG / kGt;
+		_ctrl.reset(Vector3f(0.f, 0.f, -kG), kScale * _u_cmd);
+	}
+
+	/// one cycle at hover (a_ref = 0), plant feedback from the previous collective
+	bool step(bool valid = true)
+	{
+		IndiAccelControl::Input in = hoverInput();
+		const float u_meas = kScale * _u_cmd;
+		in.f_b = Vector3f(0.f, 0.f, -kGt * u_meas);
+		in.mean_u = u_meas;
+		in.mean_u_valid = valid;
+		IndiAccelControl::Output out;
+		const bool ok = _ctrl.update(in, out);
+
+		if (ok) {
+			_u_cmd = out.thrust;
+			_out = out;
+		}
+
+		return ok;
+	}
+
+	void run(int n, bool valid = true)
+	{
+		for (int i = 0; i < n; i++) {
+			ASSERT_TRUE(step(valid));
+		}
+	}
+
+	/// b part-way to its final value (not converged, not zero)
+	void warmUp()
+	{
+		startBlend(1.f);
+		run(50);
+		ASSERT_GT(_ctrl.blend(), 0.01f);
+	}
+
+	/// the first free-running cycle after a freeze must not jump b to the instantaneous gap
+	void expectNoStepAfter(float b0)
+	{
+		ASSERT_TRUE(step());
+		EXPECT_LT(fabsf(_ctrl.blend() - b0), 0.003f);
+	}
+
+	float _u_cmd{kG / kGt};
+	IndiAccelControl::Output _out{};
+};
+
+} // namespace
+
+TEST_F(IndiAccelBlendTest, ConvergesToThrustGap)
+{
+	startBlend(1.f);
+	run(1000); // 10 tb
+	const float ideal = kG / (kGt * kScale);
+	EXPECT_LT(fabsf(_u_cmd - ideal), 0.01f);
+	EXPECT_LE(fabsf(_ctrl.blend()), IndiAccelControl::kMaxBlend);
+}
+
+TEST_F(IndiAccelBlendTest, NegativeControlDisabledKeepsGap)
+{
+	startBlend(0.f);
+	run(1000);
+	const float ideal = kG / (kGt * kScale);
+	EXPECT_GE(ideal - _u_cmd, 0.9f * (1.f - kScale) * kG / kGt);
+	EXPECT_EQ(_ctrl.blend(), 0.f);
+}
+
+TEST_F(IndiAccelBlendTest, FrozenOnLandedHold)
+{
+	warmUp();
+	const float b0 = _ctrl.blend();
+	_ctrl.setBlendHold(true);
+	run(50);
+	EXPECT_LT(fabsf(_ctrl.blend() - b0), 1e-6f);
+	EXPECT_TRUE(_out.blend_frozen);
+	_ctrl.setBlendHold(false);
+	expectNoStepAfter(b0);
+}
+
+TEST_F(IndiAccelBlendTest, FrozenOnTelemetryLossAndRecovery)
+{
+	warmUp();
+	const float b0 = _ctrl.blend();
+	run(50, false);
+	EXPECT_LT(fabsf(_ctrl.blend() - b0), 1e-6f);
+	EXPECT_TRUE(_out.blend_frozen);
+	expectNoStepAfter(b0);
+}
+
+TEST_F(IndiAccelBlendTest, ModuleResetDoesNotTouchBlend)
+{
+	warmUp();
+	const float b0 = _ctrl.blend();
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kScale * _u_cmd);
+	EXPECT_LT(fabsf(_ctrl.blend() - b0), 1e-6f);
+	expectNoStepAfter(b0);
+}
+
+TEST_F(IndiAccelBlendTest, FrozenWhileCollectiveClamped)
+{
+	warmUp();
+	// upper limit just below the collective the loop asks for
+	_ctrl.setLimits(10.f, 3.f, 1.5f, 0.7f, 0.1f, _u_cmd - 0.005f);
+	run(2);
+	const float b0 = _ctrl.blend();
+	run(50);
+	EXPECT_LT(fabsf(_ctrl.blend() - b0), 1e-6f);
+	EXPECT_TRUE(_out.blend_frozen);
+	_ctrl.setLimits(10.f, 3.f, 1.5f, 0.7f, 0.1f, 1.f);
+	run(2); // the clamp flag of the previous cycle clears
+	expectNoStepAfter(_ctrl.blend());
+	EXPECT_GE(_ctrl.blend(), b0 - 1e-6f);
+}
+
+TEST_F(IndiAccelBlendTest, FrozenAtBypassA3A8)
+{
+	// bypass: the module sets the hold flag and calls reset() with the stock thrust, update() is not called
+	warmUp();
+	const float b0 = _ctrl.blend();
+	_ctrl.setBlendHold(true);
+
+	for (int i = 0; i < 50; i++) {
+		_ctrl.reset(Vector3f(0.f, 0.f, -kG), 0.6f);
+	}
+
+	EXPECT_LT(fabsf(_ctrl.blend() - b0), 1e-6f);
+	_u_cmd = 0.6f / kScale;
+	_ctrl.setBlendHold(false);
+	expectNoStepAfter(b0);
+}
+
+TEST_F(IndiAccelBlendTest, NoDriftAfterResetWithoutHold)
+{
+	// reset() at the gap (measured u = scale x command), then active cycles without the hold flag: the model path
+	// restarts at u + b, so b sees no innovation across the edge (converged first: 20 tb)
+	startBlend(1.f);
+	run(2000);
+	const float b0 = _ctrl.blend();
+	ASSERT_GT(fabsf(b0), 0.01f);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kScale * _u_cmd);
+	_ctrl.setBlendHold(false);
+
+	for (int i = 0; i < 40; i++) {
+		ASSERT_TRUE(step());
+	}
+
+	EXPECT_LT(fabsf(_ctrl.blend() - b0), 2e-4f);
+}
+
+TEST_F(IndiAccelBlendTest, FrozenAtE7EdgeSingleCycle)
+{
+	warmUp();
+	_ctrl.setBlendHold(true);
+	const float b0 = _ctrl.blend();
+	ASSERT_TRUE(step());
+	EXPECT_LT(fabsf(_ctrl.blend() - b0), 1e-6f);
+	_ctrl.setBlendHold(false);
+	expectNoStepAfter(b0);
+}
