@@ -7,6 +7,7 @@ float32[3] angular_accel_filtered	# measured filtered angular acceleration used 
 float32[3] torque_filtered		# modelled actuator torque after the synchronisation filter (normalised)
 float32[3] torque_increment		# commanded torque increment (normalised)
 float32[3] lead_gain			# c_i applied this cycle (0 when landed)
+float32[3] rate_sp_dot			# filtered, clamped rate setpoint derivative used by the setpoint lead (rad/s^2, 0 when landed)
 
 bool fault				# inputs or parameters were rejected in this cycle, the torque output is zero
 

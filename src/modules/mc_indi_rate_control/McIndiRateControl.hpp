@@ -154,6 +154,7 @@ private:
 	RateSetpointWatchdog _rate_sp_watchdog;
 	hrt_abstime _last_rates_sp_time{0}; ///< timestamp of the last received vehicle_rates_setpoint
 	bool _rate_sp_stale{false};
+	uint8_t _sp_source_prev{0xff}; ///< rate setpoint source flags of the previous cycle, see resetSetpointLead()
 
 	TorqueStampTracker _torque_stamps; ///< own vehicle_torque_setpoint timestamps, to detect a second publisher
 	hrt_abstime _last_foreign_warn{0};

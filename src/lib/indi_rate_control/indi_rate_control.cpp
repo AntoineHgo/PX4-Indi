@@ -124,6 +124,7 @@ void IndiRateControl::designYawFilters(float sample_freq)
 		_yaw_lpf_accel.set_cutoff_frequency(sample_freq, _yaw_cutoff_hz);
 		_yaw_lpf_torque.set_cutoff_frequency(sample_freq, _yaw_cutoff_hz);
 		_yaw_error_lpf.set_cutoff_frequency(sample_freq, _yaw_cutoff_hz);
+		_yaw_sp_lpf.set_cutoff_frequency(sample_freq, _yaw_cutoff_hz);
 	}
 
 	// settled at the next unfiltered values, in update()
@@ -169,6 +170,7 @@ void IndiRateControl::resetStates()
 	_yaw_lpf_accel.reset(0.f);
 	_yaw_lpf_torque.reset(0.f);
 	_yaw_error_lpf.reset(0.f);
+	_yaw_sp_lpf.reset(0.f);
 	// restart the yaw filters from the next input, not from zero, which would scale the yaw path by the
 	// filter's feed-through gain on every cycle that resets the states (landed, fault recovery)
 	_yaw_filter_reset_pending = true;
@@ -189,11 +191,17 @@ void IndiRateControl::reset()
 	_t_f_meas.zero();
 	_dt_cmd.zero();
 	_t_cmd_last.zero();
+	_rate_sp_dot.zero();
+	_rate_sp_prev.zero();
+	_sp_lead_reset = true;
 }
 
 Vector3f IndiRateControl::faultOutput(const bool states_corrupted)
 {
 	_fault = true;
+	// no derivative across a rejected cycle
+	_sp_lead_reset = true;
+	_rate_sp_dot.zero();
 
 	if (states_corrupted) {
 		resetStates();
@@ -362,6 +370,7 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 			_yaw_lpf_accel.reset(a_f(2));
 			_yaw_lpf_torque.reset(t_f(2));
 			_yaw_error_lpf.reset(rate_error(2));
+			_yaw_sp_lpf.reset(rate_sp(2));
 			_yaw_filter_reset_pending = false;
 		}
 
@@ -369,6 +378,31 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 		t_f(2) = _yaw_lpf_torque.apply(t_f(2));
 		rate_error(2) = _yaw_error_lpf.apply(rate_error(2)); // inputs were validated as finite above
 	}
+
+	// 6c. rate setpoint derivative for the lead on the setpoint path: first order low pass of (sp - sp_prev)/dt, then
+	// the magnitude clamp. Yaw differentiates the setpoint as it enters the filtered yaw error. Zero on the first
+	// cycle, after resetSetpointLead() and on ground (sp_prev follows the setpoint, so take-off starts at 0)
+	Vector3f rate_sp_eff = rate_sp;
+
+	if (_yaw_filter_active) {
+		rate_sp_eff(2) = _yaw_sp_lpf.apply(rate_sp(2));
+	}
+
+	if (landed || _sp_lead_reset) {
+		_rate_sp_dot.zero();
+		_sp_lead_reset = false;
+
+	} else {
+		const float sp_alpha = dt / (kSetpointLeadTc + dt);
+
+		for (int i = 0; i < 3; i++) {
+			const float raw = (rate_sp_eff(i) - _rate_sp_prev(i)) / dt;
+			const float filtered = _rate_sp_dot(i) + sp_alpha * (raw - _rate_sp_dot(i));
+			_rate_sp_dot(i) = math::constrain(filtered, -kMaxRateSpDot, kMaxRateSpDot);
+		}
+	}
+
+	_rate_sp_prev = rate_sp_eff;
 
 	// 7. desired angular acceleration
 	const Vector3f nu = _gain_k.emult(rate_error);
@@ -418,7 +452,7 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	for (int i = 0; i < 3; i++) {
 		const float g2_over_dt = (i == 2) ? (_g2_yaw / dt) : 0.f;
 		const float prev_inc = (i == 2 && !landed) ? _yaw_inc_prev : 0.f;
-		const float numerator = nu(i) - (1.f + lead_gain(i)) * a_f(i) + g2_over_dt * prev_inc;
+		const float numerator = nu(i) - (1.f + lead_gain(i)) * a_f(i) + lead_gain(i) * _rate_sp_dot(i) + g2_over_dt * prev_inc;
 		dt_cmd(i) = numerator / (_g1(i) + g2_over_dt);
 	}
 

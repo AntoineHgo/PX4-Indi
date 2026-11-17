@@ -1878,3 +1878,186 @@ TEST(IndiRateControlLandedTest, TouchdownRamp)
 	EXPECT_GT(reach_time, 0.f);
 	EXPECT_LT(reach_time, 0.5f);
 }
+
+// ---- rate setpoint lead (decision D-S3-ATT-STEP) ----
+
+namespace
+{
+
+constexpr float kSpDt = 1.f / 800.f;
+constexpr int kSpDelay = 8; // 10 ms pure delay of the measured rate and acceleration
+
+/// roll plant for the attitude step: first order actuator, delayed measurements, attitude integrated
+class AttitudePlant
+{
+public:
+	AttitudePlant()
+	{
+		_lpf.set_cutoff_frequency(1.f / kSpDt, 40.f);
+		_alpha.setCutoffFreq(1.f / kSpDt, 20.f);
+	}
+
+	void step(float torque_command)
+	{
+		_torque += (1.f - expf(-kSpDt / 0.033f)) * (torque_command - _torque);
+		const float accel = kG1True * _torque;
+		_accel_f = _alpha.update(_lpf.apply(accel));
+		_rate += accel * kSpDt;
+		_att += _rate * kSpDt;
+		_rate_buf[_head] = _rate;
+		_accel_buf[_head] = _accel_f;
+		_head = (_head + 1) % (kSpDelay + 1);
+	}
+
+	float rateMeasured() const { return _rate_buf[_head]; } // oldest entry: kSpDelay samples old
+	float accelMeasured() const { return _accel_buf[_head]; }
+	float att() const { return _att; }
+
+private:
+	math::LowPassFilter2p<float> _lpf;
+	AlphaFilter<float> _alpha;
+	float _torque{0.f};
+	float _accel_f{0.f};
+	float _rate{0.f};
+	float _att{0.f};
+	float _rate_buf[kSpDelay + 1] {};
+	float _accel_buf[kSpDelay + 1] {};
+	int _head{0};
+};
+
+/// overshoot (fraction of the step) of a 0.35 rad attitude step, P 8 around the INDI rate loop
+float attitudeStepOvershoot(float lead_scale)
+{
+	IndiRateControl ctrl = makeController();
+	ctrl.setGainK(Vector3f(20.f, 20.f, 20.f));
+	ctrl.setActuatorTimeConstant(0.05f);
+	ctrl.setLeadScale(lead_scale);
+	ctrl.setFilterCutoffs(40.f, 20.f);
+	AttitudePlant plant;
+	const float step_rad = 0.35f;
+	float torque = 0.f;
+	float peak = 0.f;
+
+	for (int i = 0; i < 40 + 2400; i++) {
+		const float att_sp = (i < 40) ? 0.f : step_rad;
+		const float rate_sp = 8.f * (att_sp - plant.att());
+		const float rate_meas = plant.rateMeasured();
+		torque = ctrl.update(Vector3f(rate_meas, 0.f, 0.f), Vector3f(rate_sp, 0.f, 0.f),
+				     Vector3f(plant.accelMeasured(), 0.f, 0.f), Vector3f(torque, 0.f, 0.f), kSpDt, false)(0);
+		plant.step(torque);
+		peak = fmaxf(peak, plant.att());
+	}
+
+	return peak / step_rad - 1.f;
+}
+
+IndiRateControl makeSpController()
+{
+	IndiRateControl ctrl = makeController();
+	ctrl.setLeadScale(1.f);
+	return ctrl;
+}
+
+} // namespace
+
+TEST(IndiRateControlSetpointLeadTest, AttitudeStepOvershootBounded)
+{
+	const float overshoot = attitudeStepOvershoot(1.f);
+	printf("attitude step overshoot with setpoint lead: %.2f %%\n", (double)(100.f * overshoot));
+	EXPECT_LE(overshoot, 0.05f);
+}
+
+TEST(IndiRateControlSetpointLeadTest, NoImpulseFromSetpointStepOrReset)
+{
+	const Vector3f zero;
+	IndiRateControl ctrl = makeSpController();
+
+	// first cycle after construction sees a large setpoint: no derivative
+	ctrl.update(zero, Vector3f(5.f, 0.f, 0.f), zero, zero, kDt, false);
+	EXPECT_EQ(ctrl.getRateSpDot(), zero);
+
+	for (int i = 0; i < 40; i++) {
+		ctrl.update(zero, Vector3f(5.f, 0.f, 0.f), zero, zero, kDt, false);
+	}
+
+	// 5 rad/s step in flight: finite, within the bound, and non zero
+	ctrl.update(zero, Vector3f(10.f, 0.f, 0.f), zero, zero, kDt, false);
+	EXPECT_GT(ctrl.getRateSpDot()(0), 0.f);
+	EXPECT_LE(fabsf(ctrl.getRateSpDot()(0)), IndiRateControl::kMaxRateSpDot);
+
+	// a huge step saturates the impulse guard exactly
+	ctrl.update(zero, Vector3f(-500.f, 0.f, 0.f), zero, zero, kDt, false);
+	EXPECT_EQ(ctrl.getRateSpDot()(0), -IndiRateControl::kMaxRateSpDot);
+
+	// resetSetpointLead(): first cycle after is 0 whatever the jump
+	ctrl.resetSetpointLead();
+	ctrl.update(zero, Vector3f(20.f, 0.f, 0.f), zero, zero, kDt, false);
+	EXPECT_EQ(ctrl.getRateSpDot(), zero);
+	ctrl.update(zero, Vector3f(21.f, 0.f, 0.f), zero, zero, kDt, false); // and it runs again
+	EXPECT_GT(ctrl.getRateSpDot()(0), 0.f);
+
+	// reset()
+	ctrl.reset();
+	ctrl.update(zero, Vector3f(-30.f, 0.f, 0.f), zero, zero, kDt, false);
+	EXPECT_EQ(ctrl.getRateSpDot(), zero);
+
+	// rejected cycle: zero now, no impulse at the recovery
+	ctrl.update(zero, Vector3f(-30.f, 0.f, 0.f), zero, zero, kDt, false);
+	ctrl.update(zero, Vector3f(-25.f, 0.f, 0.f), zero, zero, kDt, false);
+	EXPECT_NE(ctrl.getRateSpDot()(0), 0.f);
+	ctrl.update(zero, Vector3f(NAN, 0.f, 0.f), zero, zero, kDt, false);
+	EXPECT_EQ(ctrl.getRateSpDot(), zero);
+	ctrl.update(zero, Vector3f(-5.f, 0.f, 0.f), zero, zero, kDt, false);
+	EXPECT_EQ(ctrl.getRateSpDot(), zero);
+}
+
+TEST(IndiRateControlSetpointLeadTest, LandedHoldsZeroAndTakeoffStartsAtZero)
+{
+	const Vector3f zero;
+	IndiRateControl ctrl = makeSpController();
+
+	for (int i = 0; i < 10; i++) {
+		ctrl.update(zero, Vector3f(), zero, zero, kDt, true);
+	}
+
+	// the setpoint moves while landed: derivative stays 0 and the previous value follows
+	for (int i = 0; i < 5; i++) {
+		ctrl.update(zero, Vector3f(5.f, 0.f, 0.f), zero, zero, kDt, true);
+		EXPECT_EQ(ctrl.getRateSpDot(), zero) << i;
+	}
+
+	// first cycle in flight with the same setpoint: 0, no step from the landed edge
+	ctrl.update(zero, Vector3f(5.f, 0.f, 0.f), zero, zero, kDt, false);
+	EXPECT_EQ(ctrl.getRateSpDot(), zero);
+	EXPECT_NEAR(ctrl.getLeadGain()(0), 0.4f, 1e-6f);
+}
+
+TEST(IndiRateControlSetpointLeadTest, LeadZeroIsPreviousLawOnRandomInput)
+{
+	// lead 0 never reads the derivative: the output equals the law with the derivative forced to 0 every cycle
+	IndiRateControl a = makeController();
+	IndiRateControl b = makeController();
+	a.setLeadScale(0.f);
+	b.setLeadScale(0.f);
+	Lcg rng;
+
+	for (int i = 0; i < 1000; i++) {
+		const Vector3f rate(rng.next(), rng.next(), rng.next());
+		const Vector3f sp(3.f * rng.next(), 3.f * rng.next(), 3.f * rng.next());
+		const Vector3f accel(10.f * rng.next(), 10.f * rng.next(), 10.f * rng.next());
+		const Vector3f alloc(0.1f * rng.next(), 0.1f * rng.next(), 0.1f * rng.next());
+		const Vector3f ua = a.update(rate, sp, accel, alloc, kDt, false);
+		b.resetSetpointLead();
+		const Vector3f ub = b.update(rate, sp, accel, alloc, kDt, false);
+
+		for (int k = 0; k < 3; k++) {
+			ASSERT_NEAR(ua(k), ub(k), 1e-6f) << i;
+		}
+
+		ASSERT_EQ(b.getRateSpDot(), Vector3f());
+
+		if (i > 0) {
+			ASSERT_NE(a.getRateSpDot(), Vector3f());
+		}
+	}
+}

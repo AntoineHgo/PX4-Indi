@@ -43,8 +43,14 @@
  *   t_f    = H(delay(t_act))                       same filter chain as the gyro derivative
  *   c      = lead_scale K tau_c                    rate prediction lead, tau_c = actuator time constant,
  *                                                  c <= 2, 0 on ground
- *   dt_cmd = G1^-1 (nu - (1 + c) angular_accel)    roll, pitch
+ *   r_dot  = low passed, clamped derivative of rate_sp (kSetpointLeadTc, kMaxRateSpDot), 0 on ground
+ *   dt_cmd = G1^-1 (nu - (1 + c) angular_accel + c r_dot)   roll, pitch
  *   t_cmd  = t_f + dt_cmd                          bounded to [-1, 1]
+ *
+ * The same prediction on the setpoint path (decision D-S3-ATT-STEP) gives nu_eff = K (1 + tau_c s)(rate_sp - rate), so a
+ * rate setpoint that moves (attitude loop output) is not followed with the actuator lag; no extra parameter,
+ * MC_INDI_LEAD = 0 turns both terms off. r_dot is 0 at the first cycle, after reset() and resetSetpointLead(), on
+ * ground and on rejected cycles, so that no derivative impulse enters the law.
  *
  * An optional extra low-pass on the yaw axis is applied to both angular_accel and t_f, so the
  * pair stays synchronised while the yaw noise is reduced. The same cut-off also filters the
@@ -127,6 +133,15 @@ public:
 	 * 0 = off (law without lead), 1 = full. Non finite or negative values give 0, values above 1 give 1.
 	 */
 	void setLeadScale(float scale) { _lead_scale = math::isFinite(scale) ? math::constrain(scale, 0.f, 1.f) : 0.f; }
+
+	/**
+	 * Restart the rate setpoint derivative at the next update(): r_dot is 0 in that cycle. Call when the source of the
+	 * rate setpoint changes (mode switch, setpoint timeout or recovery), where the setpoint may jump.
+	 */
+	void resetSetpointLead() { _sp_lead_reset = true; }
+
+	/** Filtered and clamped derivative of the rate setpoint used in the last cycle (rad/s^2), for logging. */
+	const matrix::Vector3f &getRateSpDot() const { return _rate_sp_dot; }
 
 	/** Lead gain c applied per axis in the last cycle (0 when landed), for logging. */
 	const matrix::Vector3f &getLeadGain() const { return _lead_gain; }
@@ -260,6 +275,13 @@ public:
 	const matrix::Vector3f &getFilteredModelTorque() const { return _t_f_model; }
 	const matrix::Vector3f &getFilteredMeasuredTorque() const { return _t_f_meas; }
 
+	/// Time constant of the first order low pass on the rate setpoint derivative, s
+	static constexpr float kSetpointLeadTc = 0.01f;
+
+	/// Magnitude bound of the filtered rate setpoint derivative per axis, rad/s^2: an impulse guard against setpoint
+	/// jumps that slip through the resets, not a shaping filter (a 5 rad/s step over one 1 kHz cycle would be 5000)
+	static constexpr float kMaxRateSpDot = 1000.f;
+
 	static constexpr float kMinG1 = 1e-3f;      ///< smallest valid control effectiveness
 	static constexpr float kMinDt = 0.000125f;  ///< shortest valid cycle time (8 kHz)
 	static constexpr float kMaxDt = 0.02f;      ///< longest valid cycle time (50 Hz)
@@ -345,6 +367,9 @@ private:
 	math::LowPassFilter2p<float> _yaw_lpf_accel; ///< yaw low pass on the angular acceleration
 	math::LowPassFilter2p<float> _yaw_lpf_torque; ///< same design on the filtered torque
 	math::LowPassFilter2p<float> _yaw_error_lpf; ///< same design on the yaw rate error in nu
+	math::LowPassFilter2p<float> _yaw_sp_lpf; ///< same design on the yaw rate setpoint, differentiated for r_dot
+	matrix::Vector3f _rate_sp_prev; ///< rate setpoint (yaw: as it enters the yaw rate error) of the previous cycle
+	bool _sp_lead_reset{true}; ///< r_dot restarts at 0 in the next update()
 	float _yaw_inc_prev{0.f}; ///< yaw increment applied in the previous cycle, 0 on ground (yaw spin-up term)
 	matrix::Vector3f _t_cmd_last; ///< last valid output, held on rejected cycles
 	int _fault_cycles{0}; ///< consecutive rejected cycles
@@ -356,5 +381,6 @@ private:
 	matrix::Vector3f _t_f_model;
 	matrix::Vector3f _t_f_meas;
 	matrix::Vector3f _dt_cmd;
+	matrix::Vector3f _rate_sp_dot;
 	bool _fault{false};
 };

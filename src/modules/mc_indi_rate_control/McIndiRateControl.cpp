@@ -249,6 +249,7 @@ McIndiRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f &ang
 	torque_setpoint.copyTo(indi_rate_status.torque_sp);
 	_indi.getNu().copyTo(indi_rate_status.nu);
 	_indi.getLeadGain().copyTo(indi_rate_status.lead_gain);
+	_indi.getRateSpDot().copyTo(indi_rate_status.rate_sp_dot);
 	_indi.getFilteredAngularAccel().copyTo(indi_rate_status.angular_accel_filtered);
 	_indi.getFilteredTorque().copyTo(indi_rate_status.torque_filtered);
 	_indi.getTorqueIncrement().copyTo(indi_rate_status.torque_increment);
@@ -363,6 +364,18 @@ McIndiRateControl::Run()
 		const RateSetpointWatchdog::Result wd = _rate_sp_watchdog.update(_last_rates_sp_time, hrt_absolute_time(),
 							_vehicle_control_mode.flag_armed, !acro_branch && _vehicle_control_mode.flag_control_rates_enabled);
 		_rate_sp_stale = wd.stale;
+
+		// the rate setpoint source changed (control mode flags, setpoint timeout or recovery): restart its derivative
+		const uint8_t sp_source = (uint8_t)(_vehicle_control_mode.flag_control_attitude_enabled << 0)
+					  | (_vehicle_control_mode.flag_control_rates_enabled << 1)
+					  | (_vehicle_control_mode.flag_control_manual_enabled << 2)
+					  | (_vehicle_control_mode.flag_control_offboard_enabled << 3)
+					  | (wd.stale << 4);
+
+		if (sp_source != _sp_source_prev) {
+			_indi.resetSetpointLead();
+			_sp_source_prev = sp_source;
+		}
 
 		if (wd.zero_rates) {
 			_rates_setpoint.zero();
