@@ -205,6 +205,17 @@ public:
 	}
 
 	/**
+	 * Set the slew of the feedback torque on both edges of landed, in normalised torque per second.
+	 * Non finite or <= 0 values are ignored.
+	 */
+	void setLandedSlew(float slew)
+	{
+		if (math::isFinite(slew) && (slew > 0.f)) {
+			_landed_slew = slew;
+		}
+	}
+
+	/**
 	 * Run one control loop cycle calculation
 	 * @param rate current vehicle angular rate (rad/s)
 	 * @param rate_sp desired vehicle angular rate (rad/s)
@@ -213,13 +224,16 @@ public:
 	 * @param torque_allocated_prev normalised torque the allocator actually produced from the previous command
 	 * @param dt time since the previous call in s, valid range [kMinDt, kMaxDt]
 	 * @param landed true if ground contact is assumed (the feedback torque is held out of the law, the actuator
-	 *        model and its filters keep running)
+	 *        model and its filters keep running); the feedback torque is ramped with the landed slew on both
+	 *        edges of this flag instead of stepping
+	 * @param maybe_landed true if ground contact is possible: the law runs in full, only the slow blend
+	 *        integrator is frozen (no output slew limit, like the stock PID freezing only its integrator)
 	 * @return [-1,1] normalised torque vector to apply to the vehicle. On invalid inputs the last valid output is
 	 *         held for kFaultHoldCycles consecutive cycles, then the states are reset and the output is zero
 	 */
 	matrix::Vector3f update(const matrix::Vector3f &rate, const matrix::Vector3f &rate_sp,
 				const matrix::Vector3f &angular_accel, const matrix::Vector3f &torque_allocated_prev,
-				float dt, bool landed);
+				float dt, bool landed, bool maybe_landed = false);
 
 	/**
 	 * Set all dynamic states (actuator model, delay buffer, filters, previous filtered torque,
@@ -287,6 +301,10 @@ private:
 	float _dgyro_cutoff_hz{30.f};
 	int _delay_samples_target{0};
 	float _max_increment{1.f};
+	float _landed_slew{5.f}; ///< feedback torque slew on the edges of landed (1/s)
+	matrix::Vector3f _t_fb_prev{}; ///< feedback torque applied in the previous cycle
+	bool _landed_prev{false}; ///< landed flag of the previous cycle (no edge at the first call in flight)
+	bool _landed_ramp{false}; ///< a landed edge is being ramped
 	float _yaw_cutoff_hz{0.f}; ///< 0 = yaw low pass disabled
 	int _meas_delay_samples_target{0};
 	float _blend_tc{0.f}; ///< 0 = blend disabled

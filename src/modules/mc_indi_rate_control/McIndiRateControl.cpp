@@ -91,6 +91,7 @@ McIndiRateControl::parameters_updated()
 	_indi.setDelaySamples(_param_mc_indi_delay.get());
 	_indi.setMeasurementDelaySamples(_param_mc_indi_erpm_dly.get());
 	_indi.setMaxIncrement(_param_mc_indi_dt_max.get());
+	_indi.setLandedSlew(_param_mc_indi_lnd_slew.get());
 	_indi.setYawCutoff(_param_mc_indi_yaw_cut.get());
 
 	// bench-only loop-break excitation, rebuilt only when one of its values changed
@@ -143,6 +144,20 @@ McIndiRateControl::updateMeasuredTorque()
 		return;
 	}
 
+	_measured_torque_model.setArmed(_vehicle_control_mode.flag_armed);
+	_measured_torque_model.setFrozenWindow(_param_mc_indi_erpm_frz.get());
+
+	// per motor command for the frozen rpm detection
+	actuator_motors_s motors;
+
+	if (_actuator_motors_sub.update(&motors)) {
+		const hrt_abstime t_motors = hrt_absolute_time();
+
+		for (int motor = 0; motor < IndiMeasuredTorque::MAX_MOTORS; motor++) {
+			_measured_torque_model.setMotorCommand(motor, motors.control[motor], t_motors);
+		}
+	}
+
 	esc_status_s esc_status;
 
 	if (_esc_status_sub.update(&esc_status)) {
@@ -175,12 +190,13 @@ McIndiRateControl::updateMeasuredTorque()
 	msg.torque[2] = result.torque[2];
 	msg.valid = result.valid;
 	msg.motor_valid_mask = result.motor_valid_mask;
+	msg.motor_frozen_mask = result.motor_frozen_mask;
 	_actuator_torque_measured_pub.publish(msg);
 	_torque_measured = msg;
 }
 
 Vector3f
-McIndiRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f &angular_accel, float dt, bool landed,
+McIndiRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f &angular_accel, float dt, bool landed, bool maybe_landed,
 				      hrt_abstime timestamp_sample, bool armed)
 {
 	// torque the allocator produced from the previous setpoint, only if its feedback belongs to that setpoint
@@ -200,7 +216,7 @@ McIndiRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f &ang
 
 	// c: controller output
 	const Vector3f torque_setpoint_pre_inject = _indi.update(rates, _rates_setpoint, angular_accel, torque_allocated_prev, dt,
-			landed);
+			landed, maybe_landed);
 
 	// d: bench loop-break excitation on one axis, not computed (u == c) when MC_INDI_INJ_AX is 0
 	Vector3f inject{};
@@ -333,7 +349,7 @@ McIndiRateControl::Run()
 			}
 
 			// INDI has its own actuator model: no yaw low-pass filter and no battery scaling
-			const Vector3f torque_setpoint = runIndiRateControl(rates, angular_accel, dt, _maybe_landed || _landed,
+			const Vector3f torque_setpoint = runIndiRateControl(rates, angular_accel, dt, _landed, _maybe_landed,
 							 angular_velocity.timestamp_sample, _vehicle_control_mode.flag_armed);
 
 			// publish thrust and torque setpoints

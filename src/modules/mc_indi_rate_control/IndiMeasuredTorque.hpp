@@ -72,12 +72,14 @@ class IndiMeasuredTorque
 public:
 	static constexpr int MAX_MOTORS = 12; ///< same as the number of motor outputs (actuator_motors)
 	static constexpr uint64_t SAMPLE_MAX_AGE_US = 20000; ///< an older ESC sample makes the measured torque invalid
+	static constexpr float FROZEN_CMD_VARIATION = 0.02f; ///< (max - min) of the command that proves a motor must change speed
 	static constexpr float MAX_OMEGA_RATIO = 1.5f; ///< above this multiple of omega_max a rotor speed is implausible
 
 	struct Result {
 		float torque[3] {};          ///< roll, pitch, yaw, normalised like the torque setpoint
 		uint64_t timestamp_sample{0}; ///< time of the oldest ESC sample used
 		uint8_t motor_valid_mask{0}; ///< motors (0..7) whose sample was used
+		uint8_t motor_frozen_mask{0}; ///< motors (0..7) whose rpm is frozen (treated as offline)
 		bool valid{false};           ///< all rotors fresh and the torque finite
 	};
 
@@ -112,6 +114,18 @@ public:
 	 */
 	void setMotorSample(int motor, float rpm, uint32_t error_count, uint64_t timestamp);
 
+	/** Time in s that a bit-identical rpm has to persist (with a varying command) to count as frozen */
+	void setFrozenWindow(float seconds) { _frozen_window_us = (uint64_t)((seconds > 0.f ? seconds : 0.f) * 1e6f); }
+
+	/** Disarmed: no motor can be frozen, the detection restarts at the next armed sample */
+	void setArmed(bool armed);
+
+	/**
+	 * Commanded normalised thrust of a motor (actuator_motors), the frozen detection needs the command to have
+	 * varied by more than FROZEN_CMD_VARIATION within the window. A non finite command is ignored.
+	 */
+	void setMotorCommand(int motor, float command, uint64_t timestamp);
+
 	/**
 	 * Torque produced by the latest samples. Rotors without a fresh sample are evaluated at the trim
 	 * (zero control) and make the result invalid.
@@ -135,10 +149,21 @@ private:
 		bool online{false};
 		bool has_value{false};      ///< a sample was received since the motor was last seen offline
 		bool u_valid{false};        ///< the last sample was finite, non negative and plausible
+		float last_rpm{0.f};        ///< rpm of the last sample, compared bit-identical
+		uint64_t window_start{0};   ///< start of the current frozen detection window (rpm unchanged since)
+		float cmd_min{0.f};         ///< command extremes in the window
+		float cmd_max{0.f};
+		bool cmd_in_window{false};
+		bool frozen{false};         ///< latched until the rpm changes or the vehicle disarms
 	};
 
 	IndiControlAllocation _allocation;
 	Sample _samples[MAX_MOTORS] {};
+	void evaluateWindow(Sample &sample, uint64_t now);
+	void restartWindow(Sample &sample, uint64_t now);
+
+	uint64_t _frozen_window_us{500000};
+	bool _armed{false};
 	float _omega_max{0.f};
 	int _num_rotors{0};
 };

@@ -171,6 +171,29 @@ parameters:
       max: 1
       decimal: 2
       increment: 0.05
+    MC_INDI_LND_SLEW:
+      description:
+        short: INDI landed feedback torque slew
+        long: Slew rate of the feedback torque on both edges of the landed flag (take-off and touch-down),
+          normalised torque per second. The torque is ramped instead of stepped. maybe_landed alone does not slew.
+      type: float
+      default: 5.0
+      min: 0.5
+      max: 100
+      decimal: 1
+      increment: 0.5
+    MC_INDI_ERPM_FRZ:
+      description:
+        short: INDI frozen rotor speed detection time
+        long: A motor whose reported rpm is bit-identical for this time while armed and whose command varied by
+          more than 0.02 in the same window is treated as offline for the measured torque path (modelled fallback).
+      type: float
+      unit: s
+      default: 0.5
+      min: 0.1
+      max: 5
+      decimal: 2
+      increment: 0.1
     MC_INDI_YAW_CUT:
       description:
         short: INDI yaw feedback low-pass cutoff

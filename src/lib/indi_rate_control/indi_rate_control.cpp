@@ -174,6 +174,8 @@ void IndiRateControl::resetStates()
 	_yaw_filter_reset_pending = true;
 	_yaw_inc_prev = 0.f;
 	_blend.zero();
+	_t_fb_prev.zero();
+	_landed_ramp = false;
 }
 
 void IndiRateControl::reset()
@@ -208,7 +210,7 @@ Vector3f IndiRateControl::faultOutput(const bool states_corrupted)
 }
 
 Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, const Vector3f &angular_accel,
-				 const Vector3f &torque_allocated_prev, const float dt, const bool landed)
+				 const Vector3f &torque_allocated_prev, const float dt, const bool landed, const bool maybe_landed)
 {
 	// the measurement validity is valid for this call only, whatever happens below; a non finite torque is invalid
 	const bool meas_valid = _meas_valid_pending && _tau_meas.isAllFinite();
@@ -321,8 +323,11 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	const Vector3f t_gap = t_f_model - t_f_meas;
 
 	if (_meas_in_use && (_blend_tc > 0.f) && !landed) {
-		const float blend_alpha = dt / (_blend_tc + dt);
-		_blend += blend_alpha * (t_gap - _blend);
+		// maybe_landed freezes the slow integrator only (D-S3-LANDED), the rest of the law keeps running
+		if (!maybe_landed) {
+			const float blend_alpha = dt / (_blend_tc + dt);
+			_blend += blend_alpha * (t_gap - _blend);
+		}
 
 	} else {
 		_blend = t_gap;
@@ -371,7 +376,31 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	// 7b. on ground the measured acceleration carries no information about the torque: hold the feedback torque
 	// out of the law so that no increment can accumulate. At takeoff the law steps by the modelled torque, the
 	// filtered landed output, which the maximum increment bounds like any in-flight increment
-	const Vector3f t_fb = landed ? Vector3f() : t_f;
+	const Vector3f t_fb_target = landed ? Vector3f() : t_f;
+	Vector3f t_fb = t_fb_target;
+
+	// on both edges of landed the feedback torque is ramped with the landed slew instead of stepping (decision
+	// D-S3-LANDED); in flight, also while only maybe_landed is set, there is no slew limit
+	if (landed != _landed_prev) {
+		_landed_ramp = true;
+	}
+
+	_landed_prev = landed;
+
+	if (_landed_ramp) {
+		const float max_step = _landed_slew * dt;
+		bool at_target = true;
+
+		for (int i = 0; i < 3; i++) {
+			const float delta = t_fb_target(i) - _t_fb_prev(i);
+			t_fb(i) = _t_fb_prev(i) + math::constrain(delta, -max_step, max_step);
+			at_target = at_target && (fabsf(delta) <= max_step); // reached the target in this step
+		}
+
+		_landed_ramp = !at_target;
+	}
+
+	_t_fb_prev = t_fb;
 
 	// 8. incremental inversion, only yaw has the spin-up term (g2 / dt = 0 for roll and pitch). Yaw uses the backward
 	// Euler form of (G1 + G2 s) Delta = nu - (1 + c) a_f, a low pass of time constant G2 / G1 on the increment, with

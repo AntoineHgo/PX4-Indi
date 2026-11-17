@@ -210,3 +210,121 @@ TEST_F(IndiMeasuredTorqueTest, DisabledWithoutRotorSpeedMax)
 
 	EXPECT_FALSE(_model.compute(2000).valid);
 }
+
+// frozen rotor speed detection (decision D-S3-FROZEN)
+class IndiFrozenRpmTest : public IndiMeasuredTorqueTest
+{
+public:
+	static constexpr uint64_t kStep = 2500; // us
+
+	void SetUp() override
+	{
+		IndiMeasuredTorqueTest::SetUp();
+		_model.setFrozenWindow(0.5f);
+		_model.setArmed(true);
+	}
+
+	// one cycle: all motors get a command and an rpm sample. Motor 1 uses frozen_rpm if it is not NAN, the others
+	// follow the (varying or constant) command with the given rpm noise
+	IndiMeasuredTorque::Result cycle(bool vary_command, float frozen_rpm, float rpm_noise)
+	{
+		_t += kStep;
+		_k++;
+		const float command = 0.5f + (vary_command ? 0.05f * sinf(0.05f * _k) : 0.f);
+
+		for (int motor = 0; motor < kNumRotors; motor++) {
+			const float noise = rpm_noise * (((_k * 7 + motor * 3) % 5) - 2) / 2.f; // deterministic, +-rpm_noise
+			float rpm = rpmFromThrust(command) + noise;
+
+			if (motor == 1 && PX4_ISFINITE(frozen_rpm)) {
+				rpm = frozen_rpm;
+			}
+
+			_model.setMotorCommand(motor, command, _t);
+			_model.setMotorSample(motor, rpm, 0, _t);
+		}
+
+		return _model.compute(_t);
+	}
+
+	uint64_t _t{1000000};
+	int _k{0};
+};
+
+TEST_F(IndiFrozenRpmTest, FrozenRpmFallsBack)
+{
+	IndiMeasuredTorque::Result result{};
+
+	for (int i = 0; i < 100; i++) { // 0.25 s: still valid
+		result = cycle(true, 5000.f, 0.f);
+	}
+
+	EXPECT_TRUE(result.valid);
+
+	for (int i = 0; i < 140; i++) { // 0.6 s in total
+		result = cycle(true, 5000.f, 0.f);
+	}
+
+	// the other motors have a (deterministic) noise free rpm that follows the command, so only motor 1 is frozen
+	EXPECT_FALSE(result.valid);
+	EXPECT_EQ(result.motor_frozen_mask, 0x02);
+	EXPECT_EQ(result.motor_valid_mask, 0x0D);
+}
+
+TEST_F(IndiFrozenRpmTest, ConstantRpmConstantCommandStaysValid)
+{
+	for (int i = 0; i < 4000; i++) { // 10 s, every rpm bit-identical, command constant
+		const IndiMeasuredTorque::Result result = cycle(false, NAN, 0.f);
+		ASSERT_TRUE(result.valid) << i;
+		ASSERT_EQ(result.motor_frozen_mask, 0) << i;
+	}
+
+	// disarmed: a frozen pattern with a varying command never trips either
+	_model.setArmed(false);
+
+	for (int i = 0; i < 400; i++) {
+		EXPECT_EQ(cycle(true, 5000.f, 0.f).motor_frozen_mask, 0) << i;
+	}
+}
+
+TEST_F(IndiFrozenRpmTest, NoisyRpmVaryingCommandValid)
+{
+	for (int i = 0; i < 4000; i++) {
+		const IndiMeasuredTorque::Result result = cycle(true, NAN, 3.f);
+		ASSERT_TRUE(result.valid) << i;
+		ASSERT_EQ(result.motor_frozen_mask, 0) << i;
+	}
+}
+
+TEST_F(IndiFrozenRpmTest, FrozenRecovers)
+{
+	IndiMeasuredTorque::Result result{};
+
+	for (int i = 0; i < 300; i++) {
+		result = cycle(true, 5000.f, 0.f);
+	}
+
+	ASSERT_FALSE(result.valid);
+	ASSERT_EQ(result.motor_frozen_mask, 0x02);
+
+	result = cycle(true, NAN, 0.f); // the rpm changes again: valid within this one sample
+	EXPECT_TRUE(result.valid);
+	EXPECT_EQ(result.motor_frozen_mask, 0);
+}
+
+TEST_F(IndiFrozenRpmTest, ArmingEdgeStartsANewWindow)
+{
+	// disarmed for 1 s with a constant rpm on motor 1, then armed: the window starts at the arming edge, so a
+	// varying command in the first 0.1 s after arming must not trip on the rpm that was constant before arming
+	_model.setArmed(false);
+
+	for (int i = 0; i < 400; i++) {
+		cycle(true, 5000.f, 0.f);
+	}
+
+	_model.setArmed(true);
+
+	for (int i = 0; i < 40; i++) {
+		ASSERT_EQ(cycle(true, 5000.f, 0.f).motor_frozen_mask, 0) << i;
+	}
+}

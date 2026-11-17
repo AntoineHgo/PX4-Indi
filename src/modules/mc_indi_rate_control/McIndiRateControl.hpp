@@ -116,7 +116,8 @@ private:
 	 * @return normalised torque setpoint u = c + d (d is zero unless the bench injection MC_INDI_INJ_AX is set)
 	 */
 	matrix::Vector3f runIndiRateControl(const matrix::Vector3f &rates, const matrix::Vector3f &angular_accel, float dt,
-					    bool landed, hrt_abstime timestamp_sample, bool armed);
+					    bool landed, bool maybe_landed, hrt_abstime timestamp_sample,
+					    bool armed);
 
 	IndiRateControl _indi; ///< INDI rate law
 	IndiInjection _injection; ///< bench loop-break excitation (MC_INDI_INJ_*), off by default
@@ -126,6 +127,7 @@ private:
 
 	uORB::Subscription _control_allocator_status_sub{ORB_ID(control_allocator_status)};
 	uORB::Subscription _esc_status_sub{ORB_ID(esc_status)};
+	uORB::Subscription _actuator_motors_sub{ORB_ID(actuator_motors)};
 	uORB::Subscription _manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)};
 	uORB::Subscription _vehicle_control_mode_sub{ORB_ID(vehicle_control_mode)};
 	uORB::Subscription _vehicle_land_detected_sub{ORB_ID(vehicle_land_detected)};
@@ -197,6 +199,8 @@ private:
 		(ParamInt<px4::params::MC_INDI_ERPM_DLY>) _param_mc_indi_erpm_dly,
 		(ParamFloat<px4::params::MC_INDI_ERPM_TO>) _param_mc_indi_erpm_to,
 		(ParamFloat<px4::params::MC_INDI_DT_MAX>) _param_mc_indi_dt_max,
+		(ParamFloat<px4::params::MC_INDI_LND_SLEW>) _param_mc_indi_lnd_slew,
+		(ParamFloat<px4::params::MC_INDI_ERPM_FRZ>) _param_mc_indi_erpm_frz,
 		(ParamFloat<px4::params::MC_INDI_YAW_CUT>) _param_mc_indi_yaw_cut,
 		(ParamInt<px4::params::MC_INDI_INJ_AX>) _param_mc_indi_inj_ax,
 		(ParamFloat<px4::params::MC_INDI_INJ_AMP>) _param_mc_indi_inj_amp,

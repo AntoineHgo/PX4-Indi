@@ -703,7 +703,8 @@ TEST(IndiRateControlTest, LandedYawOutputUnaffectedByYawCutoff)
 	// takeoff: the first airborne cycle adds the modelled torque, settled at the landed output, to the same
 	// increment, the yaw filters continue from the landed values
 	const Vector3f airborne = ctrl.update(Vector3f(), Vector3f(0.f, 0.f, 0.5f), Vector3f(), torque, kDt, false);
-	EXPECT_NEAR(airborne(2), 0.2f, 0.01f);
+	// the feedback torque is ramped (D-S3-LANDED): one slew step of the modelled torque
+	EXPECT_NEAR(airborne(2), 0.1f + 5.f * kDt, 0.01f);
 }
 
 TEST(IndiRateControlTest, LandedKeepsActuatorModelRunning)
@@ -720,8 +721,8 @@ TEST(IndiRateControlTest, LandedKeepsActuatorModelRunning)
 
 	// takeoff: the model already follows the applied torque, the step is one bounded increment
 	const Vector3f airborne = ctrl.update(Vector3f(), Vector3f(0.5f, 0.f, 0.f), Vector3f(), torque, kDt, false);
-	EXPECT_NEAR(ctrl.getFilteredTorque()(0), 0.05f, 1e-3f);
-	EXPECT_NEAR(airborne(0), 0.1f, 1e-3f);
+	EXPECT_NEAR(ctrl.getFilteredTorque()(0), 5.f * kDt, 1e-3f); // ramped from zero, one slew step
+	EXPECT_NEAR(airborne(0), 0.05f + 5.f * kDt, 1e-3f);
 	EXPECT_LE(airborne(0) - torque(0), 0.05f + 1e-3f);
 }
 
@@ -1062,7 +1063,8 @@ TEST(IndiRateControlMeasurementTest, LandedUsesMeasurementLikeModel)
 	EXPECT_NEAR(ctrl.getFilteredMeasuredTorque()(0), 0.3f, 1e-3f);
 	ctrl.setMeasuredTorque(Vector3f(0.3f, 0.f, 0.f), true);
 	torque = ctrl.update(Vector3f(), Vector3f(0.5f, 0.f, 0.f), Vector3f(), Vector3f(), kDt, false);
-	EXPECT_NEAR(torque(0), 0.4f, 1e-3f);
+	// the feedback torque is ramped from zero with the landed slew (5 /s default) instead of stepping by 0.3
+	EXPECT_NEAR(torque(0), 0.1f + 5.f * kDt, 1e-3f);
 }
 
 TEST(IndiRateControlMeasurementTest, ResetClearsMeasurementPath)
@@ -1249,11 +1251,13 @@ TEST(IndiRateControlBlendTest, LandedBlendTracksWithoutAccumulating)
 
 	ASSERT_TRUE(ctrl.measurementInUse());
 
-	// the first airborne value is the modelled torque, no blend memory of its own
+	// the first airborne feedback torque is one slew step of the ramp (D-S3-LANDED), the blend has no memory of
+	// its own: it has moved by one cycle only from the tracked gap
+	const float gap = ctrl.getFilteredModelTorque()(0) - ctrl.getFilteredMeasuredTorque()(0);
 	ctrl.setMeasuredTorque(Vector3f(0.35f, 0.f, 0.f), true);
 	ctrl.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, false);
-	EXPECT_NEAR(ctrl.getFilteredTorque()(0), ctrl.getFilteredModelTorque()(0), 1e-4f);
-	EXPECT_NEAR(ctrl.getFilteredTorque()(0), 0.5f, 1e-3f);
+	EXPECT_NEAR(ctrl.getFilteredTorque()(0), 5.f * kDt, 1e-4f);
+	EXPECT_NEAR(ctrl.getActuatorBlend()(0), gap, 1e-3f);
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -1727,8 +1731,12 @@ TEST(IndiRateControlYawInvTest, FirstLandedCycleIgnoresTheFlightIncrement)
 		prev = ctrl.update(Vector3f(), Vector3f(0.f, 0.f, 0.1f), Vector3f(0.f, 0.f, 3.f), prev, kDt, false);
 	}
 
+	const float t_fb_flight = ctrl.getFilteredTorque()(2);
 	const Vector3f landed = ctrl.update(Vector3f(), Vector3f(0.f, 0.f, 0.1f), Vector3f(0.f, 0.f, 3.f), prev, kDt, true);
-	EXPECT_NEAR(landed(2), expected, 1e-6f);
+	// the yaw increment of the flight is ignored; the feedback torque ramps to zero by one slew step (D-S3-LANDED)
+	const float ramp_step = 5.f * kDt;
+	const float t_fb = t_fb_flight + math::constrain(-t_fb_flight, -ramp_step, ramp_step);
+	EXPECT_NEAR(landed(2), expected + t_fb, 1e-6f);
 }
 
 TEST(IndiRateControlYawInvTest, FaultHoldThenRecoveryHasNoStep)
@@ -1773,4 +1781,100 @@ TEST(IndiRateControlYawInvTest, ClosedLoopYawStepSettlesWithoutOscillation)
 		EXPECT_LT(peak, 1.5f) << scale;
 		EXPECT_LE(max_cmd, 1.f) << scale;
 	}
+}
+
+namespace
+{
+// steady in-flight state with a trim torque of 0.1 on roll, model and measurement path both running
+Vector3f stepSteady(IndiRateControl &ctrl, bool landed, bool maybe_landed)
+{
+	ctrl.setMeasuredTorque(Vector3f(0.1f, 0.f, 0.f), true);
+	return ctrl.update(Vector3f(), Vector3f(0.5f, 0.f, 0.f), Vector3f(), Vector3f(0.1f, 0.f, 0.f), kDt, landed,
+			   maybe_landed);
+}
+}
+
+// asserts: output with a 50 cycle maybe_landed pulse equals the run without it within 1e-6 on every cycle (the
+// blend gap is converged, so the frozen blend integrator does not change the value); no output slew limit is applied
+TEST(IndiRateControlLandedTest, MaybeLandedPulseNoStep)
+{
+	IndiRateControl a = makeController();
+	IndiRateControl b = makeController();
+
+	for (int i = 0; i < 1500; i++) {
+		stepSteady(a, false, false);
+		stepSteady(b, false, false);
+	}
+
+	ASSERT_TRUE(a.measurementInUse());
+	ASSERT_GT(stepSteady(b, false, false)(0), 0.15f); // nonzero trim in the output
+
+	for (int i = 0; i < 200; i++) {
+		const bool pulse = (i >= 50) && (i < 100);
+		const Vector3f ua = stepSteady(a, false, false);
+		const Vector3f ub = stepSteady(b, false, pulse);
+		EXPECT_NEAR(ua(0), ub(0), 1e-6f) << i;
+	}
+}
+
+TEST(IndiRateControlLandedTest, TakeoffRamp)
+{
+	IndiRateControl ctrl = makeController();
+	Vector3f prev;
+
+	for (int i = 0; i < 400; i++) { // landed 1 s
+		prev = stepSteady(ctrl, true, true);
+	}
+
+	const float max_step = 5.f * kDt;
+	float t_fb_prev = ctrl.getFilteredTorque()(0);
+	EXPECT_EQ(t_fb_prev, 0.f);
+	float reach_time = -1.f;
+
+	for (int i = 0; i < 400; i++) {
+		const Vector3f u = stepSteady(ctrl, false, false);
+		const float t_fb = ctrl.getFilteredTorque()(0);
+		EXPECT_LE(fabsf(t_fb - t_fb_prev), max_step + 1e-6f) << i;
+		EXPECT_LE(fabsf(u(0) - prev(0)), max_step + 1e-6f) << i;
+		t_fb_prev = t_fb;
+		prev = u;
+
+		if (reach_time < 0.f && fabsf(t_fb - 0.1f) < 1e-4f) {
+			reach_time = (i + 1) * kDt;
+		}
+	}
+
+	EXPECT_GT(reach_time, 0.f);
+	EXPECT_LT(reach_time, 0.5f);
+}
+
+TEST(IndiRateControlLandedTest, TouchdownRamp)
+{
+	IndiRateControl ctrl = makeController();
+	Vector3f prev;
+
+	for (int i = 0; i < 1500; i++) {
+		prev = stepSteady(ctrl, false, false);
+	}
+
+	const float max_step = 5.f * kDt;
+	float t_fb_prev = ctrl.getFilteredTorque()(0);
+	EXPECT_NEAR(t_fb_prev, 0.1f, 1e-3f);
+	float reach_time = -1.f;
+
+	for (int i = 0; i < 400; i++) {
+		const Vector3f u = stepSteady(ctrl, true, true);
+		const float t_fb = ctrl.getFilteredTorque()(0);
+		EXPECT_LE(fabsf(t_fb - t_fb_prev), max_step + 1e-6f) << i;
+		EXPECT_LE(fabsf(u(0) - prev(0)), max_step + 1e-6f) << i;
+		t_fb_prev = t_fb;
+		prev = u;
+
+		if (reach_time < 0.f && t_fb <= 0.f) {
+			reach_time = (i + 1) * kDt;
+		}
+	}
+
+	EXPECT_GT(reach_time, 0.f);
+	EXPECT_LT(reach_time, 0.5f);
 }

@@ -35,6 +35,7 @@
  * @file IndiMeasuredTorque.cpp
  */
 
+#include <string.h>
 #include "IndiMeasuredTorque.hpp"
 
 #include <math.h>
@@ -85,6 +86,11 @@ IndiMeasuredTorque::setEffectiveness(const ActuatorEffectiveness::EffectivenessM
 	_allocation.allocate();
 }
 
+static bool sameBits(float a, float b)
+{
+	return memcmp(&a, &b, sizeof(float)) == 0;
+}
+
 void
 IndiMeasuredTorque::setMotorOffline(int motor)
 {
@@ -94,6 +100,66 @@ IndiMeasuredTorque::setMotorOffline(int motor)
 
 	_samples[motor].online = false;
 	_samples[motor].has_value = false;
+	_samples[motor].frozen = false;
+}
+
+void
+IndiMeasuredTorque::restartWindow(Sample &sample, const uint64_t now)
+{
+	sample.window_start = now;
+	sample.cmd_in_window = false;
+	sample.frozen = false;
+}
+
+void
+IndiMeasuredTorque::setArmed(const bool armed)
+{
+	if (armed != _armed) {
+		_armed = armed;
+
+		for (int i = 0; i < MAX_MOTORS; i++) {
+			restartWindow(_samples[i], 0);
+		}
+	}
+}
+
+void
+IndiMeasuredTorque::evaluateWindow(Sample &sample, const uint64_t now)
+{
+	// the rpm has been bit-identical since window_start, by construction (an rpm change restarts the window)
+	if (!_armed || sample.frozen || !sample.has_value || (now < sample.window_start)
+	    || ((now - sample.window_start) < _frozen_window_us)) {
+		return;
+	}
+
+	if (sample.cmd_in_window && ((sample.cmd_max - sample.cmd_min) > FROZEN_CMD_VARIATION)) {
+		sample.frozen = true;
+
+	} else {
+		restartWindow(sample, now); // constant command: a constant rpm is legitimate, look at the next window
+	}
+}
+
+void
+IndiMeasuredTorque::setMotorCommand(int motor, float command, uint64_t timestamp)
+{
+	if (motor < 0 || motor >= MAX_MOTORS || !PX4_ISFINITE(command)) {
+		return;
+	}
+
+	Sample &sample = _samples[motor];
+
+	if (!sample.cmd_in_window) {
+		sample.cmd_min = command;
+		sample.cmd_max = command;
+		sample.cmd_in_window = true;
+
+	} else {
+		sample.cmd_min = math::min(sample.cmd_min, command);
+		sample.cmd_max = math::max(sample.cmd_max, command);
+	}
+
+	evaluateWindow(sample, timestamp);
 }
 
 void
@@ -120,7 +186,15 @@ IndiMeasuredTorque::setMotorSample(int motor, float rpm, uint32_t error_count, u
 	sample.u_valid = PX4_ISFINITE(ratio) && (omega >= 0.f) && (ratio <= MAX_OMEGA_RATIO);
 	sample.u = sample.u_valid ? math::constrain(ratio * ratio, 0.f, 1.f) : 0.f;
 	sample.timestamp_good = timestamp;
+
+	// any change of the reported rpm (bit-identical compare) restarts the detection and clears a frozen latch
+	if (!sample.has_value || !sameBits(rpm, sample.last_rpm)) {
+		restartWindow(sample, timestamp);
+	}
+
+	sample.last_rpm = rpm;
 	sample.has_value = true;
+	evaluateWindow(sample, timestamp);
 }
 
 IndiMeasuredTorque::Result
@@ -138,7 +212,13 @@ IndiMeasuredTorque::compute(uint64_t now) const
 
 	for (int motor = 0; motor < _num_rotors; motor++) {
 		const Sample &sample = _samples[motor];
-		const bool fresh = sample.online && sample.has_value && sample.u_valid
+		const bool frozen = sample.frozen && _armed;
+
+		if (frozen && (motor < 8)) {
+			result.motor_frozen_mask |= (uint8_t)(1u << motor);
+		}
+
+		const bool fresh = !frozen && sample.online && sample.has_value && sample.u_valid
 				   && (sample.timestamp_good <= now) && ((now - sample.timestamp_good) < SAMPLE_MAX_AGE_US);
 
 		if (fresh) {
