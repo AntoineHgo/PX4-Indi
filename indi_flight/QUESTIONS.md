@@ -9,7 +9,7 @@ N1 closed S61 (moved to JOURNAL.md; open items C2, C3 carried in STATE.md).
 Act on this at the next route check or the next session that has room, after the work in STATE.md; do not interrupt a
 task in flight. Then mark it closed and move it to JOURNAL.md.
 
-**A. Triage the old anomalies, one line each.** `ANOMALIES.md` still carries open entries from stage 1 (A-1 to A-7,
+**A. [DONE S66: `design/n2a_triage_s66.md`, applied to ANOMALIES; A-7 parked until C, not closed] Triage the old anomalies, one line each.** `ANOMALIES.md` still carries open entries from stage 1 (A-1 to A-7,
 A-9, A-17, and the other pre-S36 rows without a CLOSED or PARKED mark). A long open list weakens the rule "nothing is
 frozen with an open anomaly that touches it": it becomes noise. For every anomaly older than S36, decide and write one
 of: CLOSED (with the evidence that answers it, including later work that answered it without anyone saying so), PARKED

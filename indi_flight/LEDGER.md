@@ -35,3 +35,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | 66 | T133 | haiku | second key T132 disturbance sizing | done, 12 calls, AGREE, note errata |
 | 66 | T134 | haiku | G1.5 pre-test 5 profiles quad5in | done, 16 calls, 5/5 flew, 3 response findings |
 | 66 | T135 | sonnet | N2-A anomaly triage pre-S36 | done, 11 calls, verdicts applied (A-7 parked not closed) |
+| 66 | T136 | sonnet | investigate payload/com_shift/torque sign | done, 15 calls, wrench 2x found (A-31) |

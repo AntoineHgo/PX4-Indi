@@ -645,3 +645,4 @@ S64 (launch 20261117-190447, cap $3): route check 64 (T129, `design/route_check_
    (`results/g2_step_s64/README.md`, GATES.md). r_dot_f pre-look (`results/stage3_s64/README.md`): no hover effect
    (motor HF RMS 2.7e-4 lead on/off); acro needs a stick-noise model (G4 build item). G3-G8 draft T130
    (`design/gates_g3_g8_draft_s64.md`) reviewed, amendments in GATES.md (T/W 7.3: saturation corners sized on hover).
+- S66 (2026-11-17): T132 second key AGREE; N2-A triage applied; G1.5 pre-test of 5 disturbance profiles on quad5in found the wrench acting 2x (A-31 open, blocks disturbance results).
