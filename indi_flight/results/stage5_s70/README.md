@@ -51,7 +51,7 @@ Prediction (1-0.85)*g/(1.0*4.0) = 0.368 m (MPC_Z_P 1.0, MPC_Z_VEL_P_ACC 4.0 read
   above is the old, wrong value; the measured 0.19 m is unaffected.
 - `MPC_USE_HTE` does not exist in this build (S69 plan note wrong); HTE frozen via HTE_HT_ERR_INIT/HTE_HT_NOISE.
 - Decision: D-GAP (DECISIONS.md), proposed, review pending.
-- Second key (T153, haiku, blind, `second_key.md`): last-10 s dz 0.304 / -0.008 / 0.371 / 0.188 m vs this table
+- Second key (T157, haiku, blind, `second_key.md`): last-10 s dz 0.304 / -0.008 / 0.371 / 0.188 m vs this table
   0.306 / -0.010 / 0.372 / 0.189 (gap085_indi, stock, stock_htoff_noi, loss08_indi): agree within 0.006 m. It found
   run.json event times offset from ulog time by -0.79..-0.96 s (anchored on arm and offboard edges); the [ev+10, ev+20]
   window differs by up to 0.006 m, consistent with s5_gap_check not applying that offset. Harmless for 10 s windows;

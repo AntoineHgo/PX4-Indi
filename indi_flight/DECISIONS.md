@@ -414,7 +414,7 @@ pre-identification behaviour of decision 3 must cover it).
   motor-command RMS in hover beyond the G4 limit, or a mode switch shows a setpoint impulse that the reset does not catch.
 
 ## D-GAP (S70, PROPOSED, opus review pending before code): decision 2 for the outer loop
-- Evidence: `results/stage5_s70/README.md` (T152, 1 flight each, seed 1). Position hold, 4 motors x0.85 thrust:
+- Evidence: `results/stage5_s70/README.md` (T156, 1 flight each, seed 1). Position hold, 4 motors x0.85 thrust:
   INDI outer loop standing z error 0.31 m (HTE on) / 0.37 m (HTE frozen); prediction (1-s)g/(Z_P Z_VEL_P_ACC) 0.368;
   stock mc_pos_control 0.01 m (HTE on), 0.06 m (HTE frozen, vel integrator on), 0.37 m (both off). Single motor 0.8:
   INDI 0.19 m. A11 mechanism confirmed: measured collective (mean_u from eRPM) cancels the implicit integral.

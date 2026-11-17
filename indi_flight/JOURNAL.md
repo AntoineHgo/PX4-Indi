@@ -692,4 +692,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
    rise 11.5 ms at HEAD vs 0.8 ms at S32 under both metrics -> A-32 OPEN, G1.6 FINAL regressed (Q5 addendum 5);
    on v2 the spread sits mostly in the first step.
 - S70: Q5 closed (A-30/A-32 parked: same-seed spread from parallel host load; G1.6 runs sequential, GATES note s69). Moved from QUESTIONS.md.
-- S70: T152 thrust-gap pre-test (7 flights): INDI outer loop z 0.31/0.37 m at 4x0.85 (A11 confirmed), stock 0.01 m; second key T153 agrees <= 0.006 m. D-GAP proposed (blend on collective); review brief written.
+- S70: T156 thrust-gap pre-test (7 flights): INDI outer loop z 0.31/0.37 m at 4x0.85 (A11 confirmed), stock 0.01 m; second key T157 agrees <= 0.006 m. D-GAP proposed (blend on collective); review brief written.
