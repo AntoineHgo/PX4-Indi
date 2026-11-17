@@ -598,3 +598,17 @@ raw logs stay untracked. `git status` should show no untracked file you created.
 - S61: lessons moved out of STATE (still valid): S45 derive every physical parameter from the model/airframe before the
   first closed-loop measurement and log it in run metadata; S44 every pre-test runs a spectral oscillation check on body
   rates and motor saturation fractions.
+- S62 (2026-11-17): D-S3-ATT-STEP setpoint lead coded (da64bc26b3, b8866cd4b1), keyed (T126), flown seeds 1-3: INDI step OS 13 % -> <=1 %, settle 655-870 -> 358-394 ms.
+- S60 detail (moved S62):
+  S60 (launch 20261117-075815, cap $3): stage-5 HOVER SLICE CODED (T122 sonnet, `design/t122_hover_slice_s60.md`;
+     D-S5-SLICE): mc_indi_pos_control rewritten in place (shell copy of MPC + stock PositionControl/Takeoff/GotoControl libs,
+     INDI stage entered at a_ref, bypass/tracking outside FLIGHT), MC_INDI_POS_EN, rc.mc_apps start || mc_pos_control.
+     Unit tests pass (new a_ref-entry test break-checked), format clean, SITL rc 0. NOT second-keyed yet.
+     Diagnostic hover (`results/stage5_s60/hover_diag/README.md`): module ran, stage ACTIVE 34.0-98.0 s, take-off/land OK,
+     gate PASS on first hover. BUT telemetry path never valid (hover.params lacks MC_INDI_W_MAX -> modelled state only), and
+     attitude freshness flickers when sample is newer than `now` (fix: clamp age at 0). Residual check cannot separate INDI
+     from stock in a gap-free hover (ht/g = 0.014 scale).
+     Second key T123 (`design/t123_second_key_s60.md`): AGREE, 3 deviations to act on in S61: (1) setFilter re-config while
+     active does not reset filter states (call _indi.reset on re-config); (2) A3 stale fallback uses this cycle's stock thrust,
+     fix code or amend A3 text; (3) ESC staleness 100 ms not in spec, record in A5.
+     Freshness fix DONE + flown (`results/stage5_s60/hover_fix/README.md`: no flicker, gate PASS).

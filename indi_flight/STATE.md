@@ -15,18 +15,7 @@ S54-S56 detail moved to JOURNAL.md (S58): D-YAW-INV coded, yaw M3a 800 Hz PM 88 
 S57 detail moved to JOURNAL.md (S60): roll M3a anchors 800/400/267 + measured-rotor anchor PM 77.5; G2 table deferred.
 S58-S59 + route check 59 detail moved to JOURNAL.md (S61): stage-3 items 1-4 coded, second-keyed, flown (hover gate PASS);
    opus review of the stage-3 safety diff deferred to one combined review with the stage-5 slice, before any freeze.
-S60 (launch 20261117-075815, cap $3): stage-5 HOVER SLICE CODED (T122 sonnet, `design/t122_hover_slice_s60.md`;
-   D-S5-SLICE): mc_indi_pos_control rewritten in place (shell copy of MPC + stock PositionControl/Takeoff/GotoControl libs,
-   INDI stage entered at a_ref, bypass/tracking outside FLIGHT), MC_INDI_POS_EN, rc.mc_apps start || mc_pos_control.
-   Unit tests pass (new a_ref-entry test break-checked), format clean, SITL rc 0. NOT second-keyed yet.
-   Diagnostic hover (`results/stage5_s60/hover_diag/README.md`): module ran, stage ACTIVE 34.0-98.0 s, take-off/land OK,
-   gate PASS on first hover. BUT telemetry path never valid (hover.params lacks MC_INDI_W_MAX -> modelled state only), and
-   attitude freshness flickers when sample is newer than `now` (fix: clamp age at 0). Residual check cannot separate INDI
-   from stock in a gap-free hover (ht/g = 0.014 scale).
-   Second key T123 (`design/t123_second_key_s60.md`): AGREE, 3 deviations to act on in S61: (1) setFilter re-config while
-   active does not reset filter states (call _indi.reset on re-config); (2) A3 stale fallback uses this cycle's stock thrust,
-   fix code or amend A3 text; (3) ESC staleness 100 ms not in spec, record in A5.
-   Freshness fix DONE + flown (`results/stage5_s60/hover_fix/README.md`: no flicker, gate PASS).
+S60 detail moved to JOURNAL.md (S62): stage-5 hover slice coded (T122), flew, gate PASS; T123 deviations listed below.
 S61 (launch 20261117-182940, cap $3): owner note N1 acted on and closed (JOURNAL). C1 fixed (d7c637cb20, gz model info
    uses the flown model). B.1: INDI step overshoot CONFIRMED on seeds 2-3 (12.8-14.2 %, settle 655-870 ms; PID 0 %, 380-412)
    `results/stage3_s61/README.md`. Mechanism: D-RATE-LEAD feedback-only -> closed rate loop dominant pole 12.6 rad/s (flight
@@ -34,11 +23,13 @@ S61 (launch 20261117-182940, cap $3): owner note N1 acted on and closed (JOURNAL
    written in GATES.md (roll/pitch OS <= 5 %, settle <= 450 ms; yaw OS <= 5 %, settle <= 1350 ms). B.3: D-S3-ATT-STEP =
    setpoint lead nu += c r_dot_f (c = lead_scale K tau_c), model 0.6 % / 388 ms; feedback loop (rate G2) unchanged.
    Model second key T124 AGREE (overshoot, poles; settle differs at the 2 % band edge, both pass), README item 5.
-NEXT (S62): (2) CODE D-S3-ATT-STEP (sonnet, ~$0.7): r_dot_f filter (~10 ms) + clamp + reset on landed/timeout/first cycle/mode
-   change, all three axes (yaw with G2_Y term), unit test on the closed-loop plant that fails without it (break-check),
-   `make px4_sitl_default` in the brief (lesson S58); haiku second key of the diff; (3) commit, rebuild, fly
-   `results/stage3_s61/fly_steps.sh`-style INDI steps + torque_steps on 3 seeds -> G2-STEP pre-test, check torque-step
-   rejection kept; (4) second key of plot_compare.py metrics before G2-STEP's first test (G1).
+S62 (launch 20261117-183951, cap $3): D-S3-ATT-STEP CODED da64bc26b3 (T125; model test OS 0.51 % vs 11.1 % without,
+   break-checked), second key T126 AGREE-WITH-ISSUES (yaw-filter toggle spike -> fixed b8866cd4b1 + test, break-checked;
+   rest minor, `design/t126_second_key_att_step_s62.md`). Flown 12 INDI flights seeds 1-3 (`results/stage3_s62/README.md`):
+   OS 0.2-1.0 %, roll/pitch settle 358-394 ms, yaw 920-936 ms, all within G2-STEP; torque rejection kept (roll 11.8 vs 12.9).
+NEXT (S63): (1) read `design/t127_second_key_metrics_s62.md` (haiku key of plot_compare.py step metrics, launched S62);
+   if AGREE, G2-STEP first test can use it; (2) r_dot_f noise in acro/hover effort check (G4 pre-look, one hover + one
+   acro-stick flight, log rate_sp_dot); (3) attitude-break margin with the new setpoint path (G2).
    THEN resume the S60 plan: thrust-gap flights on the stage-5 slice (MC_INDI_W_MAX = 2700 for measured thrust; needs a
    NEW hover scenario with thrust gap, motor_fault/thrust_sag scenarios are attitude-mode, N1 C3), A3/A5 + reset deviations
    of T123, slice second key, G5 test list, combined opus review. Bench defect open (N1 C2): disturbance.py payload_add,
@@ -49,8 +40,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| B62 | 12 INDI step flights seeds 1-3 after da64bc26b3 | host bash | `results/stage3_s62/done.txt` (ALLDONE) | `bash indi_flight/results/stage3_s62/fly_steps.sh` from repo root |
-| T126 | haiku second key of da64bc26b3 vs D-S3-ATT-STEP | haiku | `design/t126_second_key_att_step_s62.md` | re-launch with same brief |
+| T127 | haiku second key of plot_compare.py step metrics (overshoot, settle, rise) on stage3_s62 | haiku | `design/t127_second_key_metrics_s62.md` | re-launch: independent script from raw ulog, compare to steps_seedN/metrics.md |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -67,6 +57,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 62 | T126 | haiku | second key da64bc26b3 vs D-S3-ATT-STEP | done, 3 calls, ~$0.06, AGREE-WITH-ISSUES, yaw toggle fixed |
 | 62 | T125 | sonnet | code D-S3-ATT-STEP + tests + builds | done, 15 calls, ~$0.5, model test OS 0.51 % (11.1 % without), break-checked, committed da64bc26b3 |
 | 61 | T124 | haiku | second key attitude-step model | done, 6 calls, ~$0.07, AGREE (settle differs at band edge) |
 | 60 | T123 | haiku | second key slice INDI stage vs A2-A14 | done, 8 calls, ~$0.06, AGREE with 3 deviations |
@@ -89,6 +80,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 51 | T105 | opus | review r1 lead note vs code | done, 9 calls, ~$1.1 (2x estimate), NOT BLOCKING, 3 MAJOR |
 
 ## Lessons proposed
+- S62: a model calibrated on one flight (S61) predicted the fix to 1 point of overshoot on 3 seeds; the setpoint-path
+  change cost one sonnet task (~$0.5) and 12 flights. Fit the closed loop on flight data before choosing a law change.
 - S61: a 'lead' that is feedback-only lowers the closed-loop bandwidth seen by the outer loop; margins at the inner break
   looked good (PM 59-87) while the attitude step overshot 13 %. Check the outer loop's step response with every inner-loop
   law change, not only the inner break margins.

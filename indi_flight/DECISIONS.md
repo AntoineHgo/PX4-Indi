@@ -408,5 +408,7 @@ pre-identification behaviour of decision 3 must cover it).
   disturbance response stays underdamped; (d) full r_dot feedforward: slower (model 705 ms) and more setpoint-noise gain.
 - Open before freeze: second key of the model and of the code; noise of r_dot_f in acro (stick) and in attitude modes
   (G4); attitude-break margin (G2) with the new setpoint path; yaw (G2_Y spin-up term, same form with K_Y).
+- S62: coded da64bc26b3 (+ b8866cd4b1). The term sits in the INDI numerator, not in nu: logged nu excludes it, the
+  derivative is logged as rate_sp_dot. Flight seeds 1-3: OS 0.2-1.0 %, settle 358-394 ms (model 0.6 % / 388): agrees.
 - Overturn if: flight on >= 2 seeds disagrees with the model prediction by > 5 points of overshoot, or r_dot_f raises
   motor-command RMS in hover beyond the G4 limit, or a mode switch shows a setpoint impulse that the reset does not catch.
