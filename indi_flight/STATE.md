@@ -42,13 +42,14 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
    (`results/a31_fix_s67/`), errata.md E-1 created. A-30 re-fly (`results/a30_refly_s67`): identical runs DIFFER
    -> Q5 open (non-blocking, rec. G1.6 protocol on INDI). A-9: no path in new module by reading
    (`design/a9_new_module_s67.md`); module publishes no jerk ff (omega_ff unused): trajectory lag, stage-5 item.
-   NEXT S68: (a) Q5 option A: G1.6 protocol INDI step_roll 400+800 Hz, speed 1+4 (~20 flights, haiku) and the
-   wall-clock arm cause; (b) A-9 second key + guard test; (c) slice 2 (item 1); (d) sim hooks task (loop delay,
+   T143 (`results/g16_indi_s67`): INDI 400 Hz same-seed spread rise 4 / settle 15 ms / OS 0.7 pts, equal at speed
+   1 and 4; arm instant varies 0.76 s (wall clock); S64 seed1 outside all 11 runs (Q5 addendum).
+   NEXT S68: (a) Q5: diff S64 seed1 log vs a new run (sonnet, ~10 calls); same batch at 800 Hz; arm in sim time
+   in the runner (with second key); (b) A-9 second key + guard test; (c) slice 2 (item 1); (d) sim hooks task (loop delay,
    GNSS sample delay, per-run drop seed, IMU noise scale) with second key.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T143 | Q5-A part 1: INDI step_roll 400 Hz seed 1, 5x speed 4 + 3x speed 1, arm-instant log | haiku | `results/g16_indi_s67/README.md` | `results/g16_indi_s67/fly.sh` |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);

@@ -42,3 +42,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | 67 | T140 | haiku | re-fly torque_steps, gust_x, gust_diag after fix | done, 8 calls, main axes halved |
 | 67 | T141 | haiku | A-30 re-fly 400 Hz A/B/C | done, 10 calls, DIFFERENT -> Q5 |
 | 67 | T142 | sonnet | A-9 on new module (read) | done, 8 calls, NO PATH, test design only |
+| 67 | T143 | haiku | INDI same-seed batch 400 Hz 8 runs | done, 10 calls, spread measured, S64 seed1 outlier |

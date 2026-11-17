@@ -44,3 +44,9 @@ wall-clock arm (the noise phase at the step then differs). Fix it in the runner 
 sim-time arming and bit-identical runs before any further G2 claim (runner work first). (C) Keep parking A-30 until
 the G2 table resumes.
 Meanwhile: I do (A) as CPU work when there is room; nothing frozen depends on it. Blocking: no.
+Addendum S67 (option A, part 1 done, `results/g16_indi_s67/README.md`): 8 more seed-1 runs (5 at speed 4, 3 at speed 1).
+Same-seed spread: speed 4 rise 4.0 ms / settle 15.0 ms / OS 0.70 pts; speed 1 3.2 / 12.5 / 0.37: no speed-factor
+effect visible (A-4, INDI). Arm instant varies 0.76 s in PX4 time between runs (wall-clock), step at arm + 27.01 s:
+the noise realisation at the step is not fixed by the seed, a candidate cause of the spread. S64 seed 1 is outside
+all 11 runs (rise -14 ms, 3.5x the spread): unexplained, next test compares its log with one new run. Unless you
+object, I will use the measured INDI spread for rule (d) at 400 Hz and fix the arm instant in sim time in the runner.

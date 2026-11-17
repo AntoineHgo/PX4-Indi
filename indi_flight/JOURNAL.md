@@ -648,3 +648,4 @@ S64 (launch 20261117-190447, cap $3): route check 64 (T129, `design/route_check_
 - S66 (2026-11-17): T132 second key AGREE; N2-A triage applied; G1.5 pre-test of 5 disturbance profiles on quad5in found the wrench acting 2x (A-31 open, blocks disturbance results).
 - S67 (2026-11-17): A-31 closed: server.config already loaded ApplyLinkWrench, injector added a 2nd (fix fc8905cf90, second key AGREE, 5 profiles re-flown 1x); errata.md E-1 created.
 - S67: A-30 re-fly: identical 400 Hz INDI runs differ, S64 seed1 not reproduced -> Q5 (non-blocking). A-9: no path in new module (read), archive-only candidate.
+- S67: INDI 400 Hz same-seed spread (11 runs): rise 4 / settle 15 ms / OS 0.7 pts, same at speed 1 and 4; S64 seed1 not reproduced (A-30 open, Q5 addendum).
