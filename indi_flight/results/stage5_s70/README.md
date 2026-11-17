@@ -56,3 +56,8 @@ Prediction (1-0.85)*g/(1.0*4.0) = 0.368 m (MPC_Z_P 1.0, MPC_Z_VEL_P_ACC 4.0 read
   run.json event times offset from ulog time by -0.79..-0.96 s (anchored on arm and offboard edges); the [ev+10, ev+20]
   window differs by up to 0.006 m, consistent with s5_gap_check not applying that offset. Harmless for 10 s windows;
   check before the checker scores a transient (S71).
+- S71 note on the offset: run.json event times come from MAVLink ATTITUDE time_boot_ms (run_scenario.py:372), which in
+  SITL lockstep is the same hrt base as ULog. Hypothesis (unverified): the -0.8..-0.96 s found by the second key is the
+  delay between the runner's command time and the logged arm/offboard state edge, not a time-base offset. Closing
+  test before any transient metric: inject a step with a sharp logged signature (e.g. SIM_GZ_EC write to 0) and compare
+  its run.json time with the first ULog sample of the effect.

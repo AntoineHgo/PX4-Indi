@@ -413,7 +413,7 @@ pre-identification behaviour of decision 3 must cover it).
 - Overturn if: flight on >= 2 seeds disagrees with the model prediction by > 5 points of overshoot, or r_dot_f raises
   motor-command RMS in hover beyond the G4 limit, or a mode switch shows a setpoint impulse that the reset does not catch.
 
-## D-GAP (S70, PROPOSED, opus review pending before code): decision 2 for the outer loop
+## D-GAP (S70, PROPOSED; S71 opus r1 BLOCKING `design/dgap_review_r1.md`, amended below, r2 check pending): decision 2 for the outer loop
 - Evidence: `results/stage5_s70/README.md` (T156, 1 flight each, seed 1). Position hold, 4 motors x0.85 thrust:
   INDI outer loop standing z error 0.31 m (HTE on) / 0.37 m (HTE frozen); prediction (1-s)g/(Z_P Z_VEL_P_ACC) 0.368;
   stock mc_pos_control 0.01 m (HTE on), 0.06 m (HTE frozen, vel integrator on), 0.37 m (both off). Single motor 0.8:
@@ -428,3 +428,26 @@ pre-identification behaviour of decision 3 must cover it).
   setpoint groups A10/A15, leaves a standing acceleration error).
 - Overturn: (d) gives < 45 deg phase margin on the INDI acceleration/velocity break at a tb that removes the gap within
   10 s, or the blend reproduces the stage-1 0.1 s blend failure in the collective channel.
+  S71 r1 replaced this criterion (item 3 below): the phase cost at crossover is bounded by asin((1-k)/(1+k)) (k = thrust
+  scale, ~4.7 deg at 0.85) whatever tb is, so the 45-deg test could not fire. Real risk: a lightly damped HF mode,
+  because the model path has no motor lag.
+- S71 amendment (answers r1 items 1-5; the r1 BLOCKING finding was that the rate-loop blend, `indi_rate_control.cpp`
+  :336-345, SNAPS its state to the instantaneous gap when landed / blend off / telemetry invalid, against A16):
+  1. Blend state b = LP_tb(coll_model - coll_meas), kept in u units, bounded (|b| <= 0.3), logged in indi_pos_status.
+     Edges: b is FROZEN (held, not reset) on ground (landed / maybe_landed), at A3/A8 bypass and e7 edges (A16);
+     the module's reset() does not touch b; while mean_u is invalid (telemetry loss or frozen) b is frozen and
+     coll_f = coll_model; while the collective is clamped (module limit or allocator collective-saturation flag) b
+     is frozen (anti-windup). b starts at 0 at boot only. The rate-loop snap is NOT copied; whether the rate loop
+     itself should freeze is filed for the stage-3 safety review (ANOMALIES/STATE).
+  2. coll_model = previous clamped collective command (no actuator model), passed through a second delay/LPF path
+     parallel to the measured one in `indi_accel_control` so both sides are time-aligned.
+  3. Overturn: (d) is reverted to (a) if the measured acceleration-loop response at tb and at tb/3 shows a lightly
+     damped HF mode (resonance peak > 3 dB or step overshoot > 25 %), or the G2 velocity-break PM is < 45 deg, for
+     every tb in the window ~0.3 s (HF mode) to ~2.5 s (gap removed within 10 s). tb is the default 1.0 s unless
+     the margin measurement moves it.
+  4. MPC_XY/Z_VEL_I_ACC stay 0 under INDI (no double integrator); (d) runs in acceleration-only setpoint groups
+     (A10/A15) too, since it acts on the collective, not on the velocity error.
+  5. Lesson-20 tests: unit test on a plant with thrust scale 0.85 whose steady collective error goes to 0 with
+     tb = 1 s and stays at (1-k) with tb = 0 / blend disabled (negative control), plus a freeze test (landed edge,
+     telemetry-loss edge keep b). Flight check: gap085_indi_htoff and loss08_indi standing |dz| < 0.06 m (the stock
+     result with its integrator), and a land/re-take-off sequence with b held across the ground phase.

@@ -35,6 +35,14 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    NEXT S71: (1) opus review of D-GAP, brief ready `design/dgap_review_brief_s70.md` (~$1.1, launch first); (2) sonnet: implement
    blend in McIndiPosControl/lib + unit test that fails without it + T123 item 1 (reset on setFilter); fly gap085 /
    loss08 INDI, sequential; (3) PVA mode slice (ZSINE_O6). (4) s5_gap_check: apply the run.json->ulog time offset (second key, README). Single-flight results: same-seed spread not measured.
+   S71 (launch 20261118-003022, cap $3): T158 opus D-GAP r1 = BLOCKING (edge semantics; rate-loop blend SNAPS b to the
+   gap when landed/off/telemetry invalid, indi_rate_control.cpp:336-345, against A16). D-GAP amended in DECISIONS.md
+   (freeze rules, anti-windup, coll_model path, new overturn on HF mode, tb window 0.3-2.5 s, tests). Time-offset
+   hypothesis + closing test in results/stage5_s70/README.md.
+   NEXT S72: (1) sonnet r2 check: amended D-GAP vs dgap_review_r1.md items 1-5 (~$0.2) unless done S71 (see LEDGER);
+   (2) sonnet: implement D-GAP per amendment + unit tests (negative control tb=0, freeze edges); fly gap085_indi_htoff
+   and loss08_indi sequential, target |dz| < 0.06 m; (3) the rate-loop snap-vs-freeze question goes into the
+   combined opus review of the stage-3 safety diff + stage-5 slices; (4) PVA mode slice (ZSINE_O6).
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|

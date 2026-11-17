@@ -55,3 +55,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | 69 | T155 | haiku | slice-2 plan fact check | done, 5 calls |
 | S70 | T156 | sonnet | slice-2 part 1: gap scenarios, checker+test, 7 flights | 29 calls, ~71k tok, ~$0.55 | done, results/stage5_s70 |
 | S70 | T157 | haiku | blind second key on gap z-error | 11 calls, ~39k tok | done, agrees <= 0.006 m |
+| S71 | T158 | opus | D-GAP review r1 | 15 calls, ~62k tok, ~$0.7 | done, BLOCKING (edge semantics), design/dgap_review_r1.md |
