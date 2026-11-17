@@ -37,7 +37,8 @@ S60 (launch 20261117-075815, cap $3): stage-5 HOVER SLICE CODED (T122 sonnet, `d
    gate PASS on first hover. BUT telemetry path never valid (hover.params lacks MC_INDI_W_MAX -> modelled state only), and
    attitude freshness flickers when sample is newer than `now` (fix: clamp age at 0). Residual check cannot separate INDI
    from stock in a gap-free hover (ht/g = 0.014 scale).
-NEXT (S61): (a) fix the freshness check (McIndiPosControl.cpp runIndiStage, `now >= _q_time` etc.), build; (b) thrust-gap
+   Freshness fix DONE + flown (`results/stage5_s60/hover_fix/README.md`: no flicker, gate PASS).
+NEXT (S61): (b) thrust-gap
    flights on the slice WITH measured thrust (MC_INDI_W_MAX = model's omega_max, check bench/params for the value used in
    S57 measured anchor, CA_R_W_MAX 2700): hover at thrust scale 0.85 and one motor at 0.8 (find the injector flags in
    run_scenario.py), plus the same with MC_INDI_POS_EN 0 as reference; measure standing altitude error -> decision 2 (A11);
