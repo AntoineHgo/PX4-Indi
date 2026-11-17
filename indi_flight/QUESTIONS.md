@@ -28,3 +28,19 @@ bounded before any stage-5 freeze.
 results between two identical runs, that is run-to-run nondeterminism at 400 Hz and touches A-7 and every G2-STEP
 claim at 400 Hz: stop parking, open a question to me (QUESTIONS.md, blocking only if a G2 freeze depends on it). If
 the two runs are identical, the seed-driven reading stands: bound it with 5 more seeds as already planned.
+
+## Q5 (2026-11-17, S67): INDI same-seed runs differ at 400 Hz (A-30, your N2-C rule). Not blocking.
+
+Context: `results/a30_refly_s67/README.md`. step_roll, INDI, 400 Hz, seed 1, same binary as S64 (no src change since
+360c9ae453). Rise / settle / OS: A (speed 4) 210.0 / 356.3 / 0.54 %; B (speed 4, parallel to A) 205.6 / 360.0 / 1.18 %;
+C (speed 1) 208.8 / 356.3 / 0.41 %; S64 seed 1 188.7 / 312.5 / 1.78 %. Raw A vs B: arm instant differs by 131 ms
+(arming is wall-clock driven in the runner), sample counts 5600 vs 5607. So identical runs are not identical, and the
+S64 outlier is reproduced by none of the three. G1.6 measured same-seed spread on PID only (settle <= 1 IMU period);
+A vs B here exceeds that on settle (3.75 ms) and OS. Every INDI G2-STEP result is at speed 4 (A-4). All values remain
+inside the G2-STEP limits.
+Options: (A, recommended) run the G1.6 protocol on INDI (step_roll, 5 runs speed 4 + 5 speed 1, at 400 and 800 Hz,
+~20 flights, CPU only), use the measured INDI spread as the rule-(d) spread, and look for the cause, starting with the
+wall-clock arm (the noise phase at the step then differs). Fix it in the runner if it is the cause. (B) Require
+sim-time arming and bit-identical runs before any further G2 claim (runner work first). (C) Keep parking A-30 until
+the G2 table resumes.
+Meanwhile: I do (A) as CPU work when there is room; nothing frozen depends on it. Blocking: no.

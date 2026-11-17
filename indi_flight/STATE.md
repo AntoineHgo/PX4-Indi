@@ -9,7 +9,7 @@
   stage 2 started provisionally; opus review T73 r1 BLOCKING (gyro break misses INDI's model and rotor-speed
   paths) answered by D-G2-BREAK (M3a torque-setpoint break) and note section 7; r2 CLOSED.
 ## Next actions (in order)
-S44-S64 history: JOURNAL.md. Agent ledger: LEDGER.md. Lessons proposed: LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief).
+S44-S67 history: JOURNAL.md. Agent ledger: LEDGER.md. Lessons proposed: LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief).
 NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change from now on):
    (1) stage-5 slice 2: thrust-gap hover in position mode (NEW scenario, N1 C3; MC_INDI_W_MAX 2700) + one
    velocity/acceleration mode (altitude or position stick) + T123 deviations A3/A5/reset; haiku second key.
@@ -36,6 +36,15 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    seed, IMU noise scale) as one simulator task with second key.
    Results rule (N1 D): commit metrics/run.json/README of every run in the session that produced it. Next route check: S69.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
+   S67 (launch 20261117-232529, cap $3): A-31 lead: `src/modules/simulation/gz_bridge/server.config:14` already
+   loads ApplyLinkWrench (default.sdf has no plugins, gz_env.sh sets GZ_SIM_SERVER_CONFIG_PATH); disturbance.py adds a
+   2nd instance at runtime -> 2x. DONE: fix fc8905cf90, second key AGREE, A-31 CLOSED, 5 profiles re-flown 1x
+   (`results/a31_fix_s67/`), errata.md E-1 created. A-30 re-fly (`results/a30_refly_s67`): identical runs DIFFER
+   -> Q5 open (non-blocking, rec. G1.6 protocol on INDI). A-9: no path in new module by reading
+   (`design/a9_new_module_s67.md`); module publishes no jerk ff (omega_ff unused): trajectory lag, stage-5 item.
+   NEXT S68: (a) Q5 option A: G1.6 protocol INDI step_roll 400+800 Hz, speed 1+4 (~20 flights, haiku) and the
+   wall-clock arm cause; (b) A-9 second key + guard test; (c) slice 2 (item 1); (d) sim hooks task (loop delay,
+   GNSS sample delay, per-run drop seed, IMU noise scale) with second key.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
