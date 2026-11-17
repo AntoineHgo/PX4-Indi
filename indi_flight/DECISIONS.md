@@ -391,3 +391,22 @@ pre-identification behaviour of decision 3 must cover it).
   thrust gap on it first (buys evidence on a loop that A replaces, route check 59).
 - Overturn: slice hover fails the pre-test gate for a structural reason (not a parameter), or take-off shows the A8
   overturn signs (A12 N5) -> design A8' before continuing.
+
+## D-S3-ATT-STEP (S61): attitude step overshoot under INDI -> rate-setpoint lead (owner note N1 B)
+- Finding (`results/stage3_s61/README.md`, 3 seeds): INDI roll/pitch overshoot 12.6-14.2 %, settle 655-870 ms (PID 0 %,
+  380-412 ms). Cause: D-RATE-LEAD is feedback-only (addendum S51 said so); closed rate loop tau s^2 + (1 + K tau_c) s + K,
+  dominant pole 12.6 rad/s = 79 ms (flight fit 80 ms, a_f = 0.48 nu); MC_ROLL_P 8 on it -> zeta ~0.6 + delay.
+- Choice: put the same prediction on the setpoint path: nu = K (r - w) + c r_dot_f, numerator nu - (1 + c) a_f as
+  coded, i.e. nu_eff = K (1 + tau_c s)(r - w) with c = lead_scale K tau_c as coded (same bound kMaxLeadGain), r_dot_f = derivative of the rate setpoint through a first-order
+  filter (tau ~ 10 ms) and a magnitude clamp, off when landed or when the setpoint path is reset (mode switch, timeout,
+  first cycle) to avoid an impulse. Closed rate loop -> K/(s + K) with tau_c = plant tau. Feedback loop unchanged, so the
+  G2 rate-break margins (M3a) are unchanged; only the setpoint path and the attitude loop change.
+  Model prediction (attitude step, P 8): overshoot 0.6 %, settle 388 ms; full r_dot feedforward (gain 1 + K tau_c) 0 %,
+  705 ms (slower, rejected). No new parameter: gain follows MC_INDI_LEAD, K, ACT_TC (generic, F-3).
+- Alternatives: (a) lower MC_ROLL_P under INDI: settle ~600 ms, fails G2-STEP, rejected; (b) raise K_R: rate margins fall
+  (S49 sweep, K40 fails); (c) reference model / prefilter on the attitude setpoint: removes setpoint overshoot only, the
+  disturbance response stays underdamped; (d) full r_dot feedforward: slower (model 705 ms) and more setpoint-noise gain.
+- Open before freeze: second key of the model and of the code; noise of r_dot_f in acro (stick) and in attitude modes
+  (G4); attitude-break margin (G2) with the new setpoint path; yaw (G2_Y spin-up term, same form with K_Y).
+- Overturn if: flight on >= 2 seeds disagrees with the model prediction by > 5 points of overshoot, or r_dot_f raises
+  motor-command RMS in hover beyond the G4 limit, or a mode switch shows a setpoint impulse that the reset does not catch.

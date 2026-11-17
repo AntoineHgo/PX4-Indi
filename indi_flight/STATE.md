@@ -8,27 +8,13 @@
 - S36: G1 FINAL written in GATES.md (frozen with 5 evidence limits, provisional under Q4-A, not marked passed);
   stage 2 started provisionally; opus review T73 r1 BLOCKING (gyro break misses INDI's model and rotor-speed
   paths) answered by D-G2-BREAK (M3a torque-setpoint break) and note section 7; r2 CLOSED.
-- S44: stage-2 INDI margins VOID (A-23 limit cycle, see Next actions).
 ## Next actions (in order)
 S44-S46 detail moved to JOURNAL.md (S51). Derived G1 1757/1640/205 in `bench/params/quad5in_indi_g1.params`; `bench/pretest_gate.py` in use. S47-S48 detail moved to JOURNAL.md (S53): yaw limit cycle fixed by derived G2_Y 27; low roll PM explained by K_R/P_att + motor lag.
 S49-S53 detail moved to JOURNAL.md (S56): lead MC_INDI_LEAD 1, ACT_TC 0.05 defaults; roll/pitch M3a PM 59-87.
 S54-S56 detail moved to JOURNAL.md (S58): D-YAW-INV coded, yaw M3a 800 Hz PM 88 / GM 18.4 / Ms 1.6; roll 400 Hz PM 84.
 S57 detail moved to JOURNAL.md (S60): roll M3a anchors 800/400/267 + measured-rotor anchor PM 77.5; G2 table deferred.
-S58 (launch 20261117-073027, cap $3): D-G2-OUTER-DEFER (outer break note keyed against stage-5 code, not now);
-   D-S3-LANDED, D-S3-FROZEN, D-S3-SPTO written. Items 1 (landed split + t_fb ramp) and 4 (frozen rpm) CODED 65356c4250:
-   tests 4/4 targets pass, break-checked (`design/t117_s3_items_s58.md`), SITL build rc 0, format clean; haiku second key
-   AGREE (`design/t118_second_key_s58.md`, its one issue unreachable). Not flown yet. REBUILD SITL before flying (binary
-   built mid-edit). Flight command template: `design/t81_m3a_inject_s39.md` (run_scenario.py --scenario hover --controller
-   indi_m3a --model quad5in --params ...); S57 READMEs do not record the command: record it in every new README.
-S59 (launch 20261117-074704, cap $3): items 2 (start-up refusal + foreign torque publisher flag) and 3 (D-S3-SPTO
-   timeout, rates zeroed, thrust held) CODED (T119 sonnet, `design/t119_s3_items_s59.md`): 6/6 test targets, break-checked,
-   format clean; haiku second key AGREE-WITH-ISSUES (`design/t120_second_key_s59.md`, 5 minor, none blocking: thrust hold
-   checked by reading only; stop/start within 0.5 s refused). Hover with take-off + landing, 2 seeds, items 1-4 live:
-   gate PASS, rate RMS <= 0.006 rad/s, no stale/foreign/frozen flag (`results/stage3_s59/hover_items23/README.md`).
-   G1.7 provenance needs a clean tree AND a binary rebuilt at HEAD: commit, rebuild, then fly.
-Route check 59 (`design/route_check_59.md`, sonnet) ACTED ON: opus review of the stage-3 safety diff DEFERRED to one
-   combined review with the stage-5 hover-slice diff, before any freeze (lesson 19 kept: nothing frozen until then);
-   G3-G8 test text is the gap: write G5 tests (incl. item 2/3 trigger scenarios) before the first G5 flight.
+S58-S59 + route check 59 detail moved to JOURNAL.md (S61): stage-3 items 1-4 coded, second-keyed, flown (hover gate PASS);
+   opus review of the stage-3 safety diff deferred to one combined review with the stage-5 slice, before any freeze.
 S60 (launch 20261117-075815, cap $3): stage-5 HOVER SLICE CODED (T122 sonnet, `design/t122_hover_slice_s60.md`;
    D-S5-SLICE): mc_indi_pos_control rewritten in place (shell copy of MPC + stock PositionControl/Takeoff/GotoControl libs,
    INDI stage entered at a_ref, bypass/tracking outside FLIGHT), MC_INDI_POS_EN, rc.mc_apps start || mc_pos_control.
@@ -41,12 +27,24 @@ S60 (launch 20261117-075815, cap $3): stage-5 HOVER SLICE CODED (T122 sonnet, `d
    active does not reset filter states (call _indi.reset on re-config); (2) A3 stale fallback uses this cycle's stock thrust,
    fix code or amend A3 text; (3) ESC staleness 100 ms not in spec, record in A5.
    Freshness fix DONE + flown (`results/stage5_s60/hover_fix/README.md`: no flicker, gate PASS).
-NEXT (S61): (b) thrust-gap
-   flights on the slice WITH measured thrust (MC_INDI_W_MAX = model's omega_max, check bench/params for the value used in
-   S57 measured anchor, CA_R_W_MAX 2700): hover at thrust scale 0.85 and one motor at 0.8 (find the injector flags in
-   run_scenario.py), plus the same with MC_INDI_POS_EN 0 as reference; measure standing altitude error -> decision 2 (A11);
-   (c) haiku/sonnet second key of the slice diff vs A1-A9/A13/A14 (git diff 41326ec474..HEAD -- src/); (d) G5 test list
-   into GATES.md (~$0.2); (e) combined review (opus) when slice + gap remedy are in. Next route check: S64.
+S61 (launch 20261117-182940, cap $3): owner note N1 acted on and closed (JOURNAL). C1 fixed (d7c637cb20, gz model info
+   uses the flown model). B.1: INDI step overshoot CONFIRMED on seeds 2-3 (12.8-14.2 %, settle 655-870 ms; PID 0 %, 380-412)
+   `results/stage3_s61/README.md`. Mechanism: D-RATE-LEAD feedback-only -> closed rate loop dominant pole 12.6 rad/s (flight
+   fit 80 ms + 22 ms, a_f = 0.48 nu); linear model `bench/att_step_model.py lead` reproduces flight (15.4 %). B.2: G2-STEP
+   written in GATES.md (roll/pitch OS <= 5 %, settle <= 450 ms; yaw OS <= 5 %, settle <= 1350 ms). B.3: D-S3-ATT-STEP =
+   setpoint lead nu += c r_dot_f (c = lead_scale K tau_c), model 0.6 % / 388 ms; feedback loop (rate G2) unchanged.
+NEXT (S62): (1) second key of `bench/att_step_model.py lead` (independent re-derivation, haiku/sonnet) if not done in S61;
+   (2) CODE D-S3-ATT-STEP (sonnet, ~$0.7): r_dot_f filter (~10 ms) + clamp + reset on landed/timeout/first cycle/mode
+   change, all three axes (yaw with G2_Y term), unit test on the closed-loop plant that fails without it (break-check),
+   `make px4_sitl_default` in the brief (lesson S58); haiku second key of the diff; (3) commit, rebuild, fly
+   `results/stage3_s61/fly_steps.sh`-style INDI steps + torque_steps on 3 seeds -> G2-STEP pre-test, check torque-step
+   rejection kept; (4) second key of plot_compare.py metrics before G2-STEP's first test (G1).
+   THEN resume the S60 plan: thrust-gap flights on the stage-5 slice (MC_INDI_W_MAX = 2700 for measured thrust; needs a
+   NEW hover scenario with thrust gap, motor_fault/thrust_sag scenarios are attitude-mode, N1 C3), A3/A5 + reset deviations
+   of T123, slice second key, G5 test list, combined opus review. Bench defect open (N1 C2): disturbance.py payload_add,
+   com_shift (X500_MASS_KG) and gust_x/gust_diag (x500 CD_A) mis-sized on quad5in: take mass/drag from the flown model,
+   G1.5 check per profile before its first campaign. Results rule (N1 D): commit metrics/run.json/README of every run in
+   the session that produced it; leave the S10-S32 untracked results alone. Next route check: S64.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
@@ -87,6 +85,9 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 51 | T105 | opus | review r1 lead note vs code | done, 9 calls, ~$1.1 (2x estimate), NOT BLOCKING, 3 MAJOR |
 
 ## Lessons proposed
+- S61: a 'lead' that is feedback-only lowers the closed-loop bandwidth seen by the outer loop; margins at the inner break
+  looked good (PM 59-87) while the attitude step overshot 13 %. Check the outer loop's step response with every inner-loop
+  law change, not only the inner break margins.
 - S60: a 'published = stock mapping' residual check is blind when the two chains agree at steady state (hover, no gap);
   prove which law flew with an in-module instrument (state bits in the log), and test the law where it differs (thrust gap).
 - S58: the px4_sitl_test build does not compile the module (only libs and tests); a coding agent's green tests say nothing
@@ -108,10 +109,6 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
   and test it by predicting a parameter change in flight (two flights, ~$0.1 of CPU, settled what 7 sessions had not).
 - S47: a single clean flight does not prove stability: S45 hovered clean, the same config limit-cycled on replay (bistable
   lightly damped mode). Accept a configuration change on >= 2 seeds, and derive every term of the law (G2 too) before flying.
-- S45: a default effectiveness never derived for the airframe (G1_Y 30 vs plant 215) cost 5 sessions of margins; derive every
-  physical parameter from the model/airframe before the first closed-loop measurement, and log it in run metadata.
-- S44: five sessions of margin work ran on a vehicle in a 17 Hz limit cycle; the pre-test checked u=c+d, fault and
-  landed but not body-rate spectra. Every pre-test runs a spectral oscillation check on body rates and motor saturation fractions.
 - S43: a static 'analytic' gain from source reading was 2.6x off in two links; measure each link of a chain on the log before trusting a derived plant gain (and a sonnet chain trace with log analysis costs ~$0.9 in 17 calls).
 - Regressing a filtered signal (angular_accel_filtered) on a command: pass the command through the same filter first; T86 missed it and read the LPF2p group delay as a 20 ms plant delay (S42).
 - S41: a loop-gain model must contain every loop the break closes around, outer loops included; the M3a model

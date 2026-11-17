@@ -124,3 +124,16 @@ gate is decided on the frozen final pair in stage 6 with the same tests.
 - **Second key.** Margins recomputed from the same CSV windows by `bench/second_key_margins_s37.py`-style independent
   code (lesson 1); disagreement > 1 dB / 3 deg blocks the result.
 - **One command per item:** to be named here when the G2 runner script exists (stage 2), before the gate run.
+
+## G2-STEP Inner-loop attitude step criterion (written S61 2026-11-17, owner note N1 B.2, before its first test)
+- Test: step_roll, step_pitch (15 deg), step_yaw (45 deg) on quad5in, sim v2 (eRPM), 800 Hz (400 Hz reported), speed 4,
+  firmware INDI defaults + derived physical parameters only, >= 3 seeds, provenance G1.7 (clean tree, binary at HEAD).
+  Command template: `results/stage3_s61/fly_steps.sh`; metrics: `results/indi_vs_pid/plot_compare.py` (overshoot of the
+  attitude estimate over the setpoint, 2 % settle from the step, rise 10-90 %), second-keyed before the first test (G1).
+- Pass, EVERY seed: roll and pitch overshoot <= 5 %, 2 % settle <= 450 ms; yaw overshoot <= 5 %, 2 % settle <= 1350 ms.
+- Derivation (absolute thresholds, F-5: PID only informs the values; DECISIONS D-S3-ATT-STEP): PID reference S61 seeds
+  1-3 roll/pitch overshoot 0 %, settle max 412 ms -> 412 x 1.1 = 453, rounded down to 450; yaw overshoot <= 0.3 %, settle
+  max 1240 ms -> 1364, rounded down to 1350. Overshoot 5 % = owner's starting point (a 15 deg step overshoots by
+  <= 0.75 deg). Tightening below 5 % not justified: the stock PID's 0 % is an overdamped tune, not a requirement.
+- Also checked, not pass conditions: torque-step peak deviation reported next to the S61 INDI values (no regression of
+  more than 10 % expected; a larger one is explained in the report).
