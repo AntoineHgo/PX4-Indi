@@ -708,7 +708,7 @@ def main():
         sim.start_px4()
         if sc.get("disturbance"):  # idle injector: loads the wrench system, waits for the onset trigger
             sim.spawn(["python3", os.path.join(os.path.dirname(os.path.abspath(__file__)), "disturbance.py"),
-                       "--profile", sc["disturbance"], "--out", a.out], "disturbance.stdout")
+                       "--profile", sc["disturbance"], "--out", a.out, "--model", f"{a.model}_0"], "disturbance.stdout")
         for k, v in {**BASE_PARAMS, **overlay}.items():
             sim.set_param(k, v)
             meta["params_applied"][k] = v

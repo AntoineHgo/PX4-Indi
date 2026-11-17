@@ -103,7 +103,20 @@ def com_shift(t):
     return (0.0, 0.0, fz, SHIFT_Y * fz, 0.0, 0.0)  # torque = (0, SHIFT_Y, 0) x (0, 0, fz)
 
 
-PROFILES = {"gust_x": (gust_x, GUST_DURATION), "payload_add": (payload_add, PAYLOAD_DURATION),
+# torque_steps: pure body-torque steps at near-level hover (world ~ body axes at spawn yaw), sized for quad5in
+# (~4-5 % of the INDI G1 authority: roll 1757*1.4e-3 = 2.5 N m, yaw 205*2.7e-3 = 0.55 N m per unit command).
+TQ_STEPS = [(0.0, 2.0, (0.10, 0.0, 0.0)), (4.0, 6.0, (0.0, 0.10, 0.0)), (8.0, 10.0, (0.0, 0.0, 0.03))]
+TQ_DURATION = 12.0
+
+
+def torque_steps(t):
+    for t0, t1, tq in TQ_STEPS:
+        if t0 <= t < t1:
+            return (0.0, 0.0, 0.0, *tq)
+    return (0.0,) * 6
+
+
+PROFILES = {"torque_steps": (torque_steps, TQ_DURATION), "gust_x": (gust_x, GUST_DURATION), "payload_add": (payload_add, PAYLOAD_DURATION),
             "gust_diag": (gust_diag, DIAG_DURATION), "com_shift": (com_shift, PAYLOAD_DURATION)}
 
 

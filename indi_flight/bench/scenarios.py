@@ -120,6 +120,9 @@ SCENARIOS = {
     # Disturbance scenarios (bench/disturbance.py). Position mode; the segment named "dist" starts the disturbance
     # profile (profile time 0 = start of that segment). The key `disturbance` selects the injector profile.
     # gust_x: profile 28 s = 2 ramp + 10 hold + 1 gust + 15 hold at 3 m/s. payload_add: step held 30 s.
+    # inner-loop disturbance rejection: roll, pitch, yaw torque steps of 2 s each (disturbance.py torque_steps, 12 s)
+    "torque_steps": dict(mode="position", axis=None, disturbance="torque_steps",
+                         segments=[("settle", 5.0, 0.0), ("dist", 15.0, 0.0)]),
     "gust_x": dict(mode="position", axis=None, disturbance="gust_x",
                    segments=[("settle", 10.0, 0.0), ("dist", 28.0, 0.0)]),
     "payload_add": dict(mode="position", axis=None, disturbance="payload_add",
