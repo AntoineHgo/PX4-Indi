@@ -37,15 +37,16 @@ S57 (launch 20261117-071301, cap $3): roll M3a 800/3 Hz re-flown with TP 7.5 (`r
    hole; LS and FFT paths agree on flight data. Route check 57 (`design/route_check_57.md`) ACTED ON: rate-loop table stops
    here (roll 800/400/267, yaw 800); remaining rates and the measured-rotor table move to stage 6, except ONE measured-rotor
    anchor (roll 800 Hz, sim v2, CA_R_W_MAX 2700, B-S57b) because the flight configuration had no anchor under the current law.
-NEXT (S58): (1) read B-S57b, write its README (anchor vs model-only 800 Hz PM 86/GM 11.3). (2) T116 break note
+   Measured-rotor anchor DONE (`results/stage3_s57/roll_m3a_meas800/README.md`): roll 800 Hz PM 77.5/77.0, GM 16.6/16.3,
+   DM 70/72 ms, Ms 2.1, f_c 3.0 Hz, measured torque in use 100 % of window; linear-model cross-check of this path: stage 6.
+NEXT (S58): (1) T116 break note
    `design/g2_outer_breaks_note.md`: check, haiku/sonnet second key against source (one interface), then A-26 model.
-   (3) S59 stage-3 safety items as code (route check 57 rec 2: landed trim, start-up exclusion, setpoint timeout, frozen
-   telemetry; thrust-decay item dropped), opus review of the DIFF. (4) S60 stage-5 hover slice + thrust-gap flight.
+   (2) S59 stage-3 safety items as code (route check 57 rec 2: landed trim, start-up exclusion, setpoint timeout, frozen
+   telemetry; thrust-decay item dropped), opus review of the DIFF. (3) S60 stage-5 hover slice + thrust-gap flight.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| B-S57b | roll M3a 800 Hz measured-rotor anchor, seeds 1-2 | host bash | `results/stage3_s57/roll_m3a_meas800/` (done.txt) | `results/stage3_s57/roll_m3a_meas800/run_all.sh` |
 | T116 | G2 attitude/velocity/position break note | sonnet | `design/g2_outer_breaks_note.md` | re-launch (brief in JOURNAL S57) |
 
 
