@@ -44,8 +44,9 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
    (`design/a9_new_module_s67.md`); module publishes no jerk ff (omega_ff unused): trajectory lag, stage-5 item.
    T143 (`results/g16_indi_s67`): INDI 400 Hz same-seed spread rise 4 / settle 15 ms / OS 0.7 pts, equal at speed
    1 and 4; arm instant varies 0.76 s (wall clock); S64 seed1 outside all 11 runs (Q5 addendum).
-   NEXT S68: (a) Q5: diff S64 seed1 log vs a new run (sonnet, ~10 calls); same batch at 800 Hz; arm in sim time
-   in the runner (with second key); (b) A-9 second key + guard test; (c) slice 2 (item 1); (d) sim hooks task (loop delay,
+   T144 log diff: params identical, S64 binary from a DIRTY tree (f183dad) = leading cause of the outlier.
+   NEXT S68: (a) Q5/A-30: clean-build re-fly S64 800 Hz seed 1 (+ same-seed batch at 800 Hz) vs
+   `results/g2_step_s64`; if it differs, re-fly the S64 G2-STEP tables; arm in sim time in the runner (2nd key); (b) A-9 second key + guard test; (c) slice 2 (item 1); (d) sim hooks task (loop delay,
    GNSS sample delay, per-run drop seed, IMU noise scale) with second key.
 ## Tasks in flight
 | id | task | agent | output | resume |

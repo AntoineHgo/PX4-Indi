@@ -50,3 +50,4 @@ effect visible (A-4, INDI). Arm instant varies 0.76 s in PX4 time between runs (
 the noise realisation at the step is not fixed by the seed, a candidate cause of the spread. S64 seed 1 is outside
 all 11 runs (rise -14 ms, 3.5x the spread): unexplained, next test compares its log with one new run. Unless you
 object, I will use the measured INDI spread for rule (d) at 400 Hz and fix the arm instant in sim time in the runner.
+Addendum 2: S64 seed-1 log vs a new run: all 1191 parameters identical; the S64 binary came from a dirty tree (f183dad), the new runs from a clean one. Leading candidate; I will check the S64 800 Hz table the same way.
