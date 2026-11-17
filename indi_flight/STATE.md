@@ -42,7 +42,9 @@ S57 (launch 20261117-071301, cap $3): roll M3a 800/3 Hz re-flown with TP 7.5 (`r
    T116 DONE: `design/g2_outer_breaks_note.md` (59 lines, UNKEYED). PID breaks under O-11 via additive trajectory_setpoint
    velocity/acceleration feed-forward (PositionControl.cpp:133/:153), position/attitude as reference breaks (L = T/(1-T));
    INDI M3b: d into t_c after indi_accel_control.cpp:273 (_thrust_prev inherits d); A-26 model form; Tp 9.000 s; 6-9 sessions.
-NEXT (S58): (1) second key of the break note against source (sonnet, one interface: note vs code, <=8 calls); question the
+S58 (launch 20261117-073027, cap $3): D-G2-OUTER-DEFER (outer break note keyed against stage-5 code, not now);
+   D-S3-LANDED, D-S3-FROZEN, D-S3-SPTO written; T117 codes items 1 and 4.
+OLD NEXT (S58, superseded by D-G2-OUTER-DEFER for item 1): (1) second key of the break note against source (sonnet, one interface: note vs code, <=8 calls); question the
    L = T/(1-T) reference breaks (ill-conditioned where |T| ~ 1) and the 6-9 session cost vs route check 57 (stage 5 first?);
    then A-26 model script with the two self-tests of note section 6.
    (2) S59 stage-3 safety items as code (route check 57 rec 2: landed trim, start-up exclusion, setpoint timeout, frozen
@@ -51,7 +53,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-
+| T117 | code D-S3-LANDED + D-S3-FROZEN + unit tests, break-checked | sonnet | `design/t117_s3_items_s58.md` | re-brief from that file |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
