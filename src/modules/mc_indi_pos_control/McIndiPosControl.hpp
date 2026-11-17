@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2026 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2013-2020 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,53 +31,58 @@
  *
  ****************************************************************************/
 
+/**
+ * Multicopter position controller.
+ */
+
 #pragma once
 
-#include <AttitudeControl.hpp>
+#include "PositionControl/PositionControl.hpp"
+#include "Takeoff/Takeoff.hpp"
+#include "GotoControl/GotoControl.hpp"
 #include <lib/indi_accel_control/indi_accel_control.hpp>
 #include <lib/indi_rate_control/indi_rate_control.hpp>
-#include <lib/matrix/matrix/math.hpp>
+#include <uORB/topics/esc_status.h>
+#include <uORB/topics/vehicle_acceleration.h>
+#include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/vehicle_thrust_setpoint.h>
+
+#include <drivers/drv_hrt.h>
+#include <lib/mathlib/math/filter/AlphaFilter.hpp>
+#include <lib/mathlib/math/filter/NotchFilter.hpp>
+#include <lib/mathlib/math/WelfordMean.hpp>
 #include <lib/perf/perf_counter.h>
+#include <lib/slew_rate/SlewRateYaw.hpp>
+#include <lib/systemlib/mavlink_log.h>
+#include <px4_platform_common/px4_config.h>
 #include <px4_platform_common/defines.h>
 #include <px4_platform_common/module.h>
 #include <px4_platform_common/module_params.h>
 #include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
+#include <px4_platform_common/posix.h>
+#include <px4_platform_common/tasks.h>
 #include <uORB/Publication.hpp>
 #include <uORB/Subscription.hpp>
 #include <uORB/SubscriptionCallback.hpp>
-#include <uORB/topics/arming_check_reply.h>
-#include <uORB/topics/arming_check_request.h>
-#include <uORB/topics/esc_status.h>
-#include <uORB/topics/estimator_selector_status.h>
-#include <uORB/topics/estimator_sensor_bias.h>
-#include <uORB/topics/indi_pos_status.h>
+#include <uORB/topics/hover_thrust_estimate.h>
 #include <uORB/topics/parameter_update.h>
-#include <uORB/topics/register_ext_component_reply.h>
-#include <uORB/topics/register_ext_component_request.h>
-#include <uORB/topics/sensor_combined.h>
-#include <uORB/topics/sensor_selection.h>
-#include <uORB/topics/setpoint_config.h>
 #include <uORB/topics/trajectory_setpoint.h>
-#include <uORB/topics/unregister_ext_component.h>
-#include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/vehicle_attitude_setpoint.h>
+#include <uORB/topics/vehicle_constraints.h>
+#include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/vehicle_land_detected.h>
 #include <uORB/topics/vehicle_local_position.h>
-#include <uORB/topics/vehicle_rates_setpoint.h>
-#include <uORB/topics/vehicle_status.h>
+#include <uORB/topics/vehicle_local_position_setpoint.h>
 
 using namespace time_literals;
 
-/**
- * Outer-loop (acceleration) INDI position controller, registered as an external flight mode.
- * Library: IndiAccelControl. Attitude loop: a module-owned AttitudeControl configured like mc_att_control.
- * Output: vehicle_rates_setpoint (TYPE_RATES), consumed by the rate controller (PID or INDI).
- */
-class McIndiPosControl : public ModuleBase, public ModuleParams, public px4::ScheduledWorkItem
+class McIndiPosControl : public ModuleBase, public ModuleParams,
+	public px4::ScheduledWorkItem
 {
 public:
 	static Descriptor desc;
 
-	McIndiPosControl();
+	McIndiPosControl(bool vtol = false);
 	~McIndiPosControl() override;
 
 	/** @see ModuleBase */
@@ -92,159 +97,206 @@ public:
 	bool init();
 
 private:
-	static constexpr uint64_t EXT_COMPONENT_REQUEST_ID = 4711;
-	static constexpr int kNumMotors = 4;
-	/// Inputs older than this are stale (hold rule)
-	static constexpr hrt_abstime kStaleTimeout = 100_ms;
-	/// Cycles the last rates setpoint is repeated before level rates are published
-	static constexpr int kMaxHoldCycles = 3;
-	/// The ESC sample is used for the mean thrust only while younger than this
-	static constexpr hrt_abstime kEscMaxAge = 50_ms;
-	/// Samples used to measure the mean cycle rate for the low pass filters
-	static constexpr int kRateSamples = 50;
-	static constexpr float kMinDt = 0.002f;
-	static constexpr float kMaxDt = 0.05f;
-	/// Period of the backup schedule that serves the arming check and the stale detection
-	static constexpr hrt_abstime kBackupPeriod = 20_ms;
+	friend class McIndiPosControlTestPeer;
 
 	void Run() override;
 
-	void parameters_updated();
-	void applyFilterConfig();
+	/** INDI stage after PositionControl::update (architecture A). Modifies att_sp / local_pos_sp when active. */
+	void runIndiStage(float dt, hrt_abstime now, bool want_active, float tilt_limit_rad, float ht,
+			  vehicle_local_position_setpoint_s &local_pos_sp, vehicle_attitude_setpoint_s &att_sp);
 
-	/** Registration reply and arming check request handling */
-	void updateExternalMode();
-	void registerMode();
-
-	/** Latest accelerometer, ESC based mean thrust. */
-	void updateSensors(hrt_abstime now);
-
-	/** One controller cycle. new_position is true if vehicle_local_position delivered a new sample. */
-	void runCycle(hrt_abstime now, bool new_position);
-
-	/** Rate / thrust setpoint publication */
-	void publishRates(const matrix::Vector3f &rates, float thrust);
-
-	/** Repeat the last setpoint (up to kMaxHoldCycles cycles), then a level attitude with the last thrust */
-	void hold(hrt_abstime now);
-
-
-	void measureRate(hrt_abstime t);
-
-	void publishStatus(const IndiAccelControl::Output &out, float mean_u, bool mean_u_valid);
-	void closeInputWindow();
-
-	// ----- subscriptions / publications
-	uORB::SubscriptionCallbackWorkItem _local_position_sub{this, ORB_ID(vehicle_local_position)};
-	uORB::Subscription _vehicle_attitude_sub{ORB_ID(vehicle_attitude)};
-	uORB::SubscriptionCallbackWorkItem _sensor_combined_sub{this, ORB_ID(sensor_combined)};	///< every sample, see updateSensors()
+	IndiAccelControl _indi;
+	uORB::Subscription _attitude_sub{ORB_ID(vehicle_attitude)};
+	uORB::Subscription _acceleration_sub{ORB_ID(vehicle_acceleration)};
 	uORB::Subscription _esc_status_sub{ORB_ID(esc_status)};
-	uORB::Subscription _estimator_selector_status_sub{ORB_ID(estimator_selector_status)};
-	uORB::Subscription _estimator_sensor_bias_sub{ORB_ID(estimator_sensor_bias)};
-	uORB::Subscription _sensor_selection_sub{ORB_ID(sensor_selection)};
-	uORB::Subscription _trajectory_setpoint_sub{ORB_ID(trajectory_setpoint)};
-	uORB::Subscription _land_detected_sub{ORB_ID(vehicle_land_detected)};
-	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
-	uORB::Subscription _register_reply_sub{ORB_ID(register_ext_component_reply)};
-	uORB::Subscription _arming_check_request_sub{ORB_ID(arming_check_request)};
-	uORB::Subscription _parameter_update_sub{ORB_ID(parameter_update)};
-
-	uORB::Publication<vehicle_rates_setpoint_s> _rates_setpoint_pub{ORB_ID(vehicle_rates_setpoint)};
-	uORB::Publication<indi_pos_status_s> _status_pub{ORB_ID(indi_pos_status)};
-	uORB::Publication<register_ext_component_request_s> _register_request_pub{ORB_ID(register_ext_component_request)};
-	uORB::Publication<unregister_ext_component_s> _unregister_pub{ORB_ID(unregister_ext_component)};
-	uORB::Publication<setpoint_config_s> _setpoint_config_pub{ORB_ID(setpoint_config)};
-	uORB::Publication<arming_check_reply_s> _arming_check_reply_pub{ORB_ID(arming_check_reply)};
-
-	// ----- latest inputs
-	vehicle_local_position_s _local_position{};
-	vehicle_attitude_s _attitude{};
-	sensor_combined_s _sensor_combined{};
-	trajectory_setpoint_s _trajectory_setpoint{};
-	bool _have_local_position{false};
-	bool _have_attitude{false};
-	bool _have_sensor{false};
-	bool _have_trajectory{false};
-	bool _landed{true};
-
-	// Specific force and mean u averaged over the samples since the previous control cycle. The law runs at the
-	// local position rate, below the rotor 1P frequency: the latest sample alone would alias the vibration.
-	matrix::Vector3f _dv_sum{};		///< m/s, sum of accelerometer_m_s2 * dt over the window
-	float _dv_dt_sum{0.f};		///< s
-	matrix::Vector3f _f_b{};		///< m/s^2, last window average, estimator accel bias removed
-	matrix::Vector3f _accel_bias{};		///< m/s^2, estimator in-run bias of the selected accelerometer, else zero
-	uint32_t _accel_device_id{0};		///< selected accelerometer (sensor_combined source)
-	float _u_window_sum{0.f};
-	int _u_window_count{0};
-	bool _u_window_valid{true};
-
-	// ESC based mean thrust
+	uORB::Subscription _thrust_setpoint_sub{ORB_ID(vehicle_thrust_setpoint)};
+	matrix::Quatf _q{};
+	matrix::Vector3f _f_b{};
 	float _mean_u{NAN};
 	bool _mean_u_valid{false};
-	hrt_abstime _esc_time{0};
-	param_t _param_w_max_handle{PARAM_INVALID};
-	float _rotor_w_max{0.f};	///< rad/s, 0 = unknown
+	hrt_abstime _q_time{0}, _acc_time{0}, _esc_time{0}, _thr_time{0};
+	float _coll_meas{NAN};		///< latest vehicle_thrust_setpoint collective
+	float _last_thrust{0.f};	///< last published collective
+	float _hte{NAN};
+	bool _hte_valid{false};
+	bool _indi_active{false};
+	float _filter_hz{0.f};
+	float _filter_cut{-1.f};
+	param_t _w_max_handle{PARAM_INVALID};
+	float _rotor_w_max{0.f};
 
-	// ----- external mode
-	enum class ModeState : uint8_t {
-		UNREGISTERED,
-		REGISTERED
+	TakeoffHandling _takeoff; /**< state machine and ramp to bring the vehicle off the ground without jumps */
+
+	orb_advert_t _mavlink_log_pub{nullptr};
+
+	uORB::PublicationData<takeoff_status_s>              _takeoff_status_pub{ORB_ID(takeoff_status)};
+	uORB::Publication<vehicle_attitude_setpoint_s>	     _vehicle_attitude_setpoint_pub{ORB_ID(vehicle_attitude_setpoint)};
+	uORB::Publication<vehicle_local_position_setpoint_s> _local_pos_sp_pub{ORB_ID(vehicle_local_position_setpoint)};	/**< vehicle local position setpoint publication */
+
+	uORB::SubscriptionCallbackWorkItem _local_pos_sub{this, ORB_ID(vehicle_local_position)};	/**< vehicle local position */
+
+	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
+
+	uORB::Subscription _hover_thrust_estimate_sub{ORB_ID(hover_thrust_estimate)};
+	uORB::Subscription _trajectory_setpoint_sub{ORB_ID(trajectory_setpoint)};
+	uORB::Subscription _vehicle_constraints_sub{ORB_ID(vehicle_constraints)};
+	uORB::Subscription _vehicle_control_mode_sub{ORB_ID(vehicle_control_mode)};
+	uORB::Subscription _vehicle_land_detected_sub{ORB_ID(vehicle_land_detected)};
+
+	hrt_abstime _time_stamp_last_loop{0};		/**< time stamp of last loop iteration */
+	hrt_abstime _time_position_control_enabled{0};
+
+	// Velocity limits decaying from a speed higher than maximum after a control mode change to the configured maximum
+	float _vel_limit_xy{NAN};
+	float _vel_limit_up{NAN};
+	float _vel_limit_down{NAN};
+	hrt_abstime _time_vel_limit_reset{0};
+
+	trajectory_setpoint_s _setpoint{PositionControl::empty_trajectory_setpoint};
+	trajectory_setpoint_s _last_valid_setpoint{PositionControl::empty_trajectory_setpoint};
+	vehicle_control_mode_s _vehicle_control_mode{};
+
+	vehicle_constraints_s _vehicle_constraints {
+		.timestamp = 0,
+		.speed_up = NAN,
+		.speed_down = NAN,
+		.want_takeoff = false,
 	};
 
-	ModeState _mode_state{ModeState::UNREGISTERED};
-	int8_t _arming_check_id{-1};
-	int8_t _mode_id{-1};
-	bool _active{false};
-	vehicle_status_s _vehicle_status{};
-
-	// ----- control
-	IndiAccelControl _indi{};
-	AttitudeControl _attitude_control{};
-	bool _filter_ready{false};
-	float _filter_rate_hz{0.f};
-	int _rate_count{0};
-	hrt_abstime _rate_t0{0};
-	hrt_abstime _last_cycle_time{0};
-	float _last_thrust{0.f};
-	matrix::Vector3f _rate_limit{};	///< rad/s, MC_*RATE_MAX
-	matrix::Vector3f _last_rates{};
-	int _hold_count{0};
-	bool _failure_reported{false};
-	bool _needs_reset{true};
-
-	perf_counter_t _loop_perf;
+	vehicle_land_detected_s _vehicle_land_detected {
+		.timestamp = 0,
+		.freefall = false,
+		.ground_contact = true,
+		.maybe_landed = true,
+		.landed = true,
+	};
 
 	DEFINE_PARAMETERS(
-		(ParamBool<px4::params::MC_INDIP_OFFB>) _param_offb,
-		(ParamFloat<px4::params::MC_INDIP_LPF_CUT>) _param_lpf_cut,
-		(ParamFloat<px4::params::MC_INDIP_G_T>) _param_g_t,
-		(ParamFloat<px4::params::MC_INDIP_K_CMD>) _param_k_cmd,
-		(ParamInt<px4::params::MC_INDIP_DLY>) _param_dly,
-		(ParamBool<px4::params::MC_INDIP_FF>) _param_ff,
-
-		// shared with the stock position controller
-		(ParamFloat<px4::params::MPC_XY_P>) _param_mpc_xy_p,
-		(ParamFloat<px4::params::MPC_Z_P>) _param_mpc_z_p,
+		// Position Control
+		(ParamFloat<px4::params::MPC_XY_P>)         _param_mpc_xy_p,
+		(ParamFloat<px4::params::MPC_Z_P>)          _param_mpc_z_p,
 		(ParamFloat<px4::params::MPC_XY_VEL_P_ACC>) _param_mpc_xy_vel_p_acc,
-		(ParamFloat<px4::params::MPC_Z_VEL_P_ACC>) _param_mpc_z_vel_p_acc,
-		(ParamFloat<px4::params::MPC_XY_VEL_MAX>) _param_mpc_xy_vel_max,
+		(ParamFloat<px4::params::MPC_XY_VEL_I_ACC>) _param_mpc_xy_vel_i_acc,
+		(ParamFloat<px4::params::MPC_XY_VEL_D_ACC>) _param_mpc_xy_vel_d_acc,
+		(ParamFloat<px4::params::MPC_Z_VEL_P_ACC>)  _param_mpc_z_vel_p_acc,
+		(ParamFloat<px4::params::MPC_Z_VEL_I_ACC>)  _param_mpc_z_vel_i_acc,
+		(ParamFloat<px4::params::MPC_Z_VEL_D_ACC>)  _param_mpc_z_vel_d_acc,
+		(ParamFloat<px4::params::MPC_XY_VEL_MAX>)   _param_mpc_xy_vel_max,
+		(ParamFloat<px4::params::MPC_Z_V_AUTO_UP>)  _param_mpc_z_v_auto_up,
 		(ParamFloat<px4::params::MPC_Z_VEL_MAX_UP>) _param_mpc_z_vel_max_up,
+		(ParamFloat<px4::params::MPC_Z_V_AUTO_DN>)  _param_mpc_z_v_auto_dn,
 		(ParamFloat<px4::params::MPC_Z_VEL_MAX_DN>) _param_mpc_z_vel_max_dn,
-		(ParamFloat<px4::params::MPC_TILTMAX_AIR>) _param_mpc_tiltmax_air,
-		(ParamFloat<px4::params::MPC_THR_MIN>) _param_mpc_thr_min,
-		(ParamFloat<px4::params::MPC_THR_MAX>) _param_mpc_thr_max,
-		(ParamFloat<px4::params::MPC_THR_HOVER>) _param_mpc_thr_hover,
+		(ParamFloat<px4::params::MPC_TILTMAX_AIR>)  _param_mpc_tiltmax_air,
+		(ParamFloat<px4::params::MPC_THR_HOVER>)    _param_mpc_thr_hover,
+		(ParamBool<px4::params::MPC_ACC_DECOUPLE>)  _param_mpc_acc_decouple,
 
-		// shared with the stock attitude controller
-		(ParamFloat<px4::params::MC_ROLL_P>) _param_mc_roll_p,
-		(ParamFloat<px4::params::MC_PITCH_P>) _param_mc_pitch_p,
-		(ParamFloat<px4::params::MC_YAW_P>) _param_mc_yaw_p,
-		(ParamFloat<px4::params::MC_YAW_WEIGHT>) _param_mc_yaw_weight,
-		(ParamFloat<px4::params::MC_ROLLRATE_MAX>) _param_mc_rollrate_max,
-		(ParamFloat<px4::params::MC_PITCHRATE_MAX>) _param_mc_pitchrate_max,
-		(ParamFloat<px4::params::MC_YAWRATE_MAX>) _param_mc_yawrate_max,
-		(ParamFloat<px4::params::MC_REF_W_N>) _param_mc_ref_w_n,
-		(ParamFloat<px4::params::MC_REF_FF>) _param_mc_ref_ff,
-		(ParamFloat<px4::params::MC_REF_FF_MAX>) _param_mc_ref_ff_max
-	)
+		(ParamFloat<px4::params::MPC_VEL_LP>)       _param_mpc_vel_lp,
+		(ParamFloat<px4::params::MPC_VEL_NF_FRQ>)   _param_mpc_vel_nf_frq,
+		(ParamFloat<px4::params::MPC_VEL_NF_BW>)    _param_mpc_vel_nf_bw,
+		(ParamFloat<px4::params::MPC_VELD_LP>)      _param_mpc_veld_lp,
+
+		// Takeoff / Land
+		(ParamFloat<px4::params::COM_SPOOLUP_TIME>) _param_com_spoolup_time, /**< time to let motors spool up after arming */
+		(ParamBool<px4::params::COM_THROW_EN>)      _param_com_throw_en, /**< throw launch enabled  */
+		(ParamFloat<px4::params::MPC_TKO_RAMP_T>)   _param_mpc_tko_ramp_t,   /**< time constant for smooth takeoff ramp */
+		(ParamFloat<px4::params::MPC_TKO_SPEED>)    _param_mpc_tko_speed,
+		(ParamFloat<px4::params::MPC_LAND_SPEED>)   _param_mpc_land_speed,
+
+		(ParamFloat<px4::params::MPC_VEL_MANUAL>)   _param_mpc_vel_manual,
+		(ParamFloat<px4::params::MPC_VEL_MAN_BACK>) _param_mpc_vel_man_back,
+		(ParamFloat<px4::params::MPC_VEL_MAN_SIDE>) _param_mpc_vel_man_side,
+		(ParamFloat<px4::params::MPC_XY_CRUISE>)    _param_mpc_xy_cruise,
+		(ParamFloat<px4::params::MPC_LAND_ALT2>)    _param_mpc_land_alt2,    /**< downwards speed limited below this altitude */
+		(ParamInt<px4::params::MPC_ALT_MODE>)       _param_mpc_alt_mode,
+		(ParamFloat<px4::params::MPC_TILTMAX_LND>)  _param_mpc_tiltmax_lnd,  /**< maximum tilt for landing and smooth takeoff */
+		(ParamFloat<px4::params::MPC_THR_MIN>)      _param_mpc_thr_min,
+		(ParamFloat<px4::params::MPC_THR_MAX>)      _param_mpc_thr_max,
+		(ParamFloat<px4::params::MPC_THR_XY_MARG>)  _param_mpc_thr_xy_marg,
+
+		(ParamFloat<px4::params::SYS_VEHICLE_RESP>) _param_sys_vehicle_resp,
+		(ParamFloat<px4::params::MPC_ACC_HOR>)      _param_mpc_acc_hor,
+		(ParamFloat<px4::params::MPC_ACC_DOWN_MAX>) _param_mpc_acc_down_max,
+		(ParamFloat<px4::params::MPC_ACC_UP_MAX>)   _param_mpc_acc_up_max,
+		(ParamFloat<px4::params::MPC_ACC_HOR_MAX>)  _param_mpc_acc_hor_max,
+		(ParamFloat<px4::params::MPC_JERK_AUTO>)    _param_mpc_jerk_auto,
+		(ParamFloat<px4::params::MPC_JERK_MAX>)     _param_mpc_jerk_max,
+		(ParamFloat<px4::params::MPC_MAN_Y_MAX>)    _param_mpc_man_y_max,
+		(ParamFloat<px4::params::MPC_MAN_Y_TAU>)    _param_mpc_man_y_tau,
+
+		(ParamFloat<px4::params::MPC_XY_VEL_ALL>)   _param_mpc_xy_vel_all,
+		(ParamFloat<px4::params::MPC_Z_VEL_ALL>)    _param_mpc_z_vel_all,
+
+		(ParamFloat<px4::params::MPC_XY_ERR_MAX>) _param_mpc_xy_err_max,
+		(ParamFloat<px4::params::MPC_YAWRAUTO_MAX>) _param_mpc_yawrauto_max,
+		(ParamFloat<px4::params::MPC_YAWRAUTO_ACC>) _param_mpc_yawrauto_acc,
+
+		(ParamFloat<px4::params::MC_INDI_POS_LPF>)  _param_indi_lpf,
+		(ParamInt<px4::params::MC_INDI_POS_DLY>)    _param_indi_dly
+	);
+
+	math::WelfordMean<float> _sample_interval_s{};
+
+	AlphaFilter<matrix::Vector2f> _vel_xy_lp_filter{};
+	AlphaFilter<float> _vel_z_lp_filter{};
+
+	math::NotchFilter<matrix::Vector2f> _vel_xy_notch_filter{};
+	math::NotchFilter<float> _vel_z_notch_filter{};
+
+	AlphaFilter<matrix::Vector2f> _vel_deriv_xy_lp_filter{};
+	AlphaFilter<float> _vel_deriv_z_lp_filter{};
+
+	GotoControl _goto_control; ///< class for handling smooth goto position setpoints
+	PositionControl _control; ///< class for core PID position control
+
+	hrt_abstime _last_warn{0}; /**< timer when the last warn message was sent out */
+
+	bool _hover_thrust_initialized{false};
+
+	/** Timeout in us for trajectory data to get considered invalid */
+	static constexpr uint64_t TRAJECTORY_STREAM_TIMEOUT_US = 500_ms;
+
+	/** During smooth-takeoff, below ALTITUDE_THRESHOLD the yaw-control is turned off and tilt is limited */
+	static constexpr float ALTITUDE_THRESHOLD = 0.3f;
+
+	static constexpr float MAX_SAFE_TILT_DEG = 89.f; // Numerical issues above this value due to tanf
+
+	SlewRate<float> _tilt_limit_slew_rate;
+
+	uint8_t _vxy_reset_counter{0};
+	uint8_t _vz_reset_counter{0};
+	uint8_t _xy_reset_counter{0};
+	uint8_t _z_reset_counter{0};
+	uint8_t _heading_reset_counter{0};
+
+	perf_counter_t _cycle_perf{perf_alloc(PC_ELAPSED, MODULE_NAME": cycle time")};
+
+	/**
+	 * Update our local parameter cache.
+	 * Parameter update can be forced when argument is true.
+	 * @param force forces parameter update.
+	 */
+	void parameters_update(bool force);
+
+	/**
+	 * Check for validity of positon/velocity states.
+	 */
+	PositionControlStates set_vehicle_states(const vehicle_local_position_s &local_pos, const float dt_s);
+
+	/**
+	 * Generate setpoint to bridge no executable setpoint being available.
+	 * Used to handle transitions where no proper setpoint was generated yet and when the received setpoint is invalid.
+	 * This should only happen briefly when transitioning and never during mode operation or by design.
+	 */
+	trajectory_setpoint_s generateFailsafeSetpoint(const hrt_abstime &now, const PositionControlStates &states, bool warn);
+
+	/**
+	 * @brief adjust existing (or older) setpoint with any EKF reset deltas and update the local counters
+	 *
+	 * @param[in] vehicle_local_position struct containing EKF reset deltas and counters
+	 * @param[in,out] setpoint trajectory setpoint struct to be adjusted
+	 * @param[in,out] fallback_setpoint stored last valid setpoint, adjusted here because this
+	 *                call latches the reset counters
+	 */
+	void adjustSetpointForEKFResets(const vehicle_local_position_s &vehicle_local_position,
+					trajectory_setpoint_s &setpoint, trajectory_setpoint_s &fallback_setpoint);
 };

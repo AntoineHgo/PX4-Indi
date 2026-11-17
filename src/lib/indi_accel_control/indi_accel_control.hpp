@@ -95,6 +95,7 @@ public:
 		float yaw_ref{NAN};        ///< NaN: keep the yaw of q
 		float yawspeed_ref{NAN};   ///< NaN: 0
 		float dt{0.f};             ///< time since the previous call (s), [kMinDt, kMaxDt]
+		bool accel_only{false};    ///< start at a_ref (A14): no p/v terms, a_c = a_ref, p and v are not required
 	};
 
 	struct Output {

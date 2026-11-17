@@ -43,9 +43,16 @@ px4_add_module(
 	MODULE_CONFIG
 		mc_indi_pos_control_params.yaml
 	DEPENDS
-		AttitudeControl
 		IndiAccelControl
 		IndiRateControl
+		controllib
+		geo
+		SlewRate
 		mathlib
 		px4_work_queue
 	)
+
+# The stock position control libraries are defined by src/modules/mc_pos_control, which is configured after this
+# directory: link them by name, resolved at generate time (MODULES_MC_POS_CONTROL is a Kconfig dependency).
+target_link_libraries(modules__mc_indi_pos_control PRIVATE GotoControl PositionControl Takeoff)
+target_include_directories(modules__mc_indi_pos_control PRIVATE ${PX4_SOURCE_DIR}/src/modules/mc_pos_control)

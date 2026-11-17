@@ -113,6 +113,37 @@ TEST_F(IndiAccelControlTest, HoverEquilibrium)
 	EXPECT_NEAR(out.omega_ff.norm(), 0.f, 1e-6f);
 }
 
+TEST_F(IndiAccelControlTest, AccelOnlyEntryStartsAtARef)
+{
+	const float G = 14.f;			// effectiveness, specific force per unit normalised thrust
+	const float T_meas = kG / G;		// hover collective
+	_ctrl.setThrustModel(G, 1.f);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), T_meas);
+	IndiAccelControl::Input in = hoverInput();
+	in.accel_only = true;
+	in.p = Vector3f(NAN, NAN, NAN);	// p and v are not required in this mode
+	in.v = Vector3f(NAN, NAN, NAN);
+	in.p_ref = Vector3f(5.f, 5.f, 5.f);	// and are ignored
+	in.mean_u = T_meas;
+	in.mean_u_valid = true;
+	in.a_ref = Vector3f(0.f, 0.f, 0.f);
+	IndiAccelControl::Output out;
+
+	// steady state, a_meas == a_ref: the thrust output is the measured thrust
+	for (int i = 0; i < 5; i++) {
+		ASSERT_TRUE(_ctrl.update(in, out));
+	}
+
+	EXPECT_NEAR(out.thrust, T_meas, 1e-5f);
+	EXPECT_NEAR(out.a_c.norm(), 0.f, 1e-6f);
+
+	// step of 1 m/s^2 upwards in a_ref with unchanged measurements: thrust moves by delta_a / G
+	in.a_ref = Vector3f(0.f, 0.f, -1.f);
+	ASSERT_TRUE(_ctrl.update(in, out));
+	EXPECT_NEAR(out.thrust, T_meas + 1.f / G, 1e-5f);
+	EXPECT_NEAR(out.a_c(2), -1.f, 1e-6f);
+}
+
 TEST_F(IndiAccelControlTest, PureIndiIncrement)
 {
 	_ctrl.setThrustModel(kGt, 1.1f);

@@ -197,7 +197,7 @@ Quatf IndiAccelControl::bodyzToAttitude(Vector3f body_z, const float yaw_sp)
 bool IndiAccelControl::update(const Input &in, Output &out)
 {
 	// 9. required inputs, checked before any state is touched
-	if (!allFinite(in.p) || !allFinite(in.v) || !allFinite(in.f_b) || !PX4_ISFINITE(in.q(0)) || !PX4_ISFINITE(in.q(1))
+	if ((!in.accel_only && (!allFinite(in.p) || !allFinite(in.v))) || !allFinite(in.f_b) || !PX4_ISFINITE(in.q(0)) || !PX4_ISFINITE(in.q(1))
 	    || !PX4_ISFINITE(in.q(2)) || !PX4_ISFINITE(in.q(3)) || !PX4_ISFINITE(in.dt)
 	    || (in.mean_u_valid && !PX4_ISFINITE(in.mean_u))) {
 		return false;
@@ -218,8 +218,8 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 	bool a_valid[3] {};
 
 	for (int i = 0; i < 3; i++) {
-		p_term(i) = PX4_ISFINITE(in.p_ref(i)) ? _k_pos(i) * (in.p_ref(i) - in.p(i)) : 0.f;
-		v_ff(i) = PX4_ISFINITE(in.v_ref(i)) ? in.v_ref(i) : 0.f;
+		p_term(i) = (!in.accel_only && PX4_ISFINITE(in.p_ref(i))) ? _k_pos(i) * (in.p_ref(i) - in.p(i)) : 0.f;
+		v_ff(i) = (!in.accel_only && PX4_ISFINITE(in.v_ref(i))) ? in.v_ref(i) : 0.f;
 		a_valid[i] = PX4_ISFINITE(in.a_ref(i));
 		a_ref(i) = a_valid[i] ? in.a_ref(i) : 0.f;
 	}
@@ -254,7 +254,7 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 	Vector3f a_c{};
 
 	for (int i = 0; i < 3; i++) {
-		a_c(i) = _k_vel(i) * (v_sp(i) - in.v(i)) + a_ref(i);
+		a_c(i) = in.accel_only ? a_ref(i) : (_k_vel(i) * (v_sp(i) - in.v(i)) + a_ref(i));
 	}
 
 	// 3. measured acceleration
