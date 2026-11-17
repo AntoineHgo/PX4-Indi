@@ -70,3 +70,4 @@ Moved out of STATE.md on 2026-11-17 (token economy, owner).
 - Analysis scripts take an output path argument; never a fixed path into a committed result (S19).
 - Anchor every analysis window on an event in the log, never on the runner's view of it: the 1 Hz HEARTBEAT view moved the window start by up to 0.95 s (S15).
 - Give a second key the primary script's exact window (start, end, anchor); a different window produced a false 2.1 % DISAGREE (S23 T48).
+- S72: a standing vertical error of the outer loop can come from the inner loop: check 3-axis a_c-a_f and attitude setpoint vs actual tilt before suspecting the vertical channel (A-33: 10.4 deg masked tilt gave g(1-cos) = 0.16 m/s2). An HTE flight was spent before this 6-call log check.
