@@ -53,3 +53,5 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | 69 | T152 | sonnet | route check 69 | done, 5 calls |
 | 69 | T154 | sonnet | slice-2 build plan (read-only) | done, 10 calls |
 | 69 | T155 | haiku | slice-2 plan fact check | done, 5 calls |
+| S70 | T152 | sonnet | slice-2 part 1: gap scenarios, checker+test, 7 flights | 29 calls, ~71k tok, ~$0.55 | done, results/stage5_s70 |
+| S70 | T153 | haiku | blind second key on gap z-error | 11 calls, ~39k tok | done, agrees <= 0.006 m |
