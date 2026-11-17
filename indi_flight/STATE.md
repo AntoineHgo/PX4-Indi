@@ -39,15 +39,18 @@ S57 (launch 20261117-071301, cap $3): roll M3a 800/3 Hz re-flown with TP 7.5 (`r
    anchor (roll 800 Hz, sim v2, CA_R_W_MAX 2700, B-S57b) because the flight configuration had no anchor under the current law.
    Measured-rotor anchor DONE (`results/stage3_s57/roll_m3a_meas800/README.md`): roll 800 Hz PM 77.5/77.0, GM 16.6/16.3,
    DM 70/72 ms, Ms 2.1, f_c 3.0 Hz, measured torque in use 100 % of window; linear-model cross-check of this path: stage 6.
-NEXT (S58): (1) T116 break note
-   `design/g2_outer_breaks_note.md`: check, haiku/sonnet second key against source (one interface), then A-26 model.
+   T116 DONE: `design/g2_outer_breaks_note.md` (59 lines, UNKEYED). PID breaks under O-11 via additive trajectory_setpoint
+   velocity/acceleration feed-forward (PositionControl.cpp:133/:153), position/attitude as reference breaks (L = T/(1-T));
+   INDI M3b: d into t_c after indi_accel_control.cpp:273 (_thrust_prev inherits d); A-26 model form; Tp 9.000 s; 6-9 sessions.
+NEXT (S58): (1) second key of the break note against source (sonnet, one interface: note vs code, <=8 calls); question the
+   L = T/(1-T) reference breaks (ill-conditioned where |T| ~ 1) and the 6-9 session cost vs route check 57 (stage 5 first?);
+   then A-26 model script with the two self-tests of note section 6.
    (2) S59 stage-3 safety items as code (route check 57 rec 2: landed trim, start-up exclusion, setpoint timeout, frozen
    telemetry; thrust-decay item dropped), opus review of the DIFF. (3) S60 stage-5 hover slice + thrust-gap flight.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T116 | G2 attitude/velocity/position break note | sonnet | `design/g2_outer_breaks_note.md` | re-launch (brief in JOURNAL S57) |
 
 
 ## Open problems
@@ -65,6 +68,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 57 | T116 | sonnet | G2 outer break note | done, 8 calls, ~$0.7, 59 lines, UNKEYED |
 | 57 | T115 | sonnet | route check 57 | done, 6 calls, ~$0.18, acted on |
 | 56 | T114 | haiku | second key D-YAW-INV diff | done, 5 calls, ~$0.05, AGREE-WITH-ISSUES, landed-cycle bug found and fixed |
 | 56 | T113 | sonnet | code D-YAW-INV + tests | done, 13 calls, ~$0.45, all pass, break-checked, missed first landed cycle |
@@ -86,6 +90,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 45 | T94 | haiku | A-23 hover G1_Y 215 + checks | done, 6 calls, ~$0.1, clean hover |
 
 ## Lessons proposed
+- S57: a non-integer fs*Tp did not trip the FFT check on a jittered log because the FRF code switched to its least-squares
+  path; know which path a script took before calling a pass a hole. Pick multisine periods that are whole samples at every rate.
 - S54: a module-level loop variable shadowed a deleted local in a model script and silently changed its output; re-run
   every model script against its committed output after any edit (diff), as done here.
 - S53: four M3a flights on two parallel docker streams took ~5 min wall and ~$0.05 of context: run small sweeps
