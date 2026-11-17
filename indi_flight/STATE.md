@@ -38,6 +38,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| B56q | roll M3a 267 Hz, 2 seeds | bash | `results/stage3_s57_pre/roll_m3a_267/` (done.txt) | if done.txt: read *_margins.txt, *_gate_preinj.md, *_rates.txt and write README as roll_m3a_400; else `bash indi_flight/results/stage3_s57_pre/roll_m3a_267/run_all.sh` |
 
 
 ## Open problems
