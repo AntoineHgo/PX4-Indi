@@ -33,8 +33,8 @@ S61 (launch 20261117-182940, cap $3): owner note N1 acted on and closed (JOURNAL
    fit 80 ms + 22 ms, a_f = 0.48 nu); linear model `bench/att_step_model.py lead` reproduces flight (15.4 %). B.2: G2-STEP
    written in GATES.md (roll/pitch OS <= 5 %, settle <= 450 ms; yaw OS <= 5 %, settle <= 1350 ms). B.3: D-S3-ATT-STEP =
    setpoint lead nu += c r_dot_f (c = lead_scale K tau_c), model 0.6 % / 388 ms; feedback loop (rate G2) unchanged.
-NEXT (S62): (1) second key of `bench/att_step_model.py lead` (independent re-derivation, haiku/sonnet) if not done in S61;
-   (2) CODE D-S3-ATT-STEP (sonnet, ~$0.7): r_dot_f filter (~10 ms) + clamp + reset on landed/timeout/first cycle/mode
+   Model second key T124 AGREE (overshoot, poles; settle differs at the 2 % band edge, both pass), README item 5.
+NEXT (S62): (2) CODE D-S3-ATT-STEP (sonnet, ~$0.7): r_dot_f filter (~10 ms) + clamp + reset on landed/timeout/first cycle/mode
    change, all three axes (yaw with G2_Y term), unit test on the closed-loop plant that fails without it (break-check),
    `make px4_sitl_default` in the brief (lesson S58); haiku second key of the diff; (3) commit, rebuild, fly
    `results/stage3_s61/fly_steps.sh`-style INDI steps + torque_steps on 3 seeds -> G2-STEP pre-test, check torque-step
@@ -65,6 +65,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 61 | T124 | haiku | second key attitude-step model | done, 6 calls, ~$0.07, AGREE (settle differs at band edge) |
 | 60 | T123 | haiku | second key slice INDI stage vs A2-A14 | done, 8 calls, ~$0.06, AGREE with 3 deviations |
 | 60 | T122 | sonnet | stage-5 hover slice code+build+1 hover | done, 28 calls, ~$0.8, flew; claimed module identity unverified, closed by S60 instrument |
 | 59 | T121 | sonnet | route check 59 | done, 4 calls, ~$0.15, acted on |

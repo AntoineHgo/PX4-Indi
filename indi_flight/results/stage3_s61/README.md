@@ -29,3 +29,8 @@ yaw 4.6-4.8 deg vs 14.4-14.5) also holds (`steps_seed2/metrics.md`, `steps_seed3
    (rate loop 76 + 22 ms, overshoot 15.4 %, settle 808 ms). Predictions: setpoint lead (nu += K tau_c r_dot_sp)
    overshoot 0.6 %, settle 388 ms; full r_dot feedforward (kff 1 + K tau_c) 0 %, 705 ms. Same at 20 ms delay.
    The model script is single-key (second key pending, lesson 17).
+5. Second key T124 (haiku, independent derivation, `design/t124_second_key_att_model_s61.md`, script
+   `bench/t124_att_step_key.py`): rate-loop poles -12.63 / -47.97 (tau 79 ms) AGREE; overshoot kff 0: 16.1 % (vs 15.4),
+   kff = K tau_c: 1.2 % (vs 0.6), kff 1 + K tau_c: 0 % AGREE. Settle 2 % kff = K tau_c: 294 ms vs 388 ms here, kff 2:
+   532 vs 705 (kff 0: 820 vs 808): the slow tail sits at the 2 % band edge, so settle is sensitive to integration
+   detail; both keys predict a pass of G2-STEP (<= 450 ms). The flight decides; difference not chased further.
