@@ -12,6 +12,10 @@ float32 mean_u			# mean normalised rotor thrust from the ESC rpm, NAN if not ava
 bool mean_u_valid		# the measured mean thrust was used in this cycle (else the model fallback)
 float32 thrust			# normalised thrust command, thrust_body = (0, 0, -thrust)
 
+float32 blend			# collective blend state b (u units), D-GAP
+bool blend_hold			# module hold flag (landed or maybe landed)
+bool blend_frozen		# b was held in this cycle (hold, invalid telemetry or clamped collective)
+
 uint8 JERK_SOURCE_FIELD = 0
 uint8 JERK_SOURCE_DIFFERENCE = 1
 uint8 jerk_source		# [@enum JERK_SOURCE] origin of the jerk reference

@@ -188,7 +188,27 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 		in.dt = dt;
 		IndiAccelControl::Output out;
 
+		// D-GAP: the collective blend is held on the ground (the clamp, invalid telemetry and bypass cases are held inside
+		// the library, which is not updated while bypassed and whose reset() keeps the blend)
+		const bool blend_hold = _vehicle_land_detected.landed || _vehicle_land_detected.maybe_landed;
+		_indi.setBlendHold(blend_hold);
+
 		if (_indi.update(in, out)) {
+			indi_pos_status_s status{};
+			status.timestamp = hrt_absolute_time();
+			out.a_c.copyTo(status.a_c);
+			out.a_f.copyTo(status.a_f);
+			out.t_f.copyTo(status.t_f);
+			out.t_c.copyTo(status.t_c);
+			out.omega_ff.copyTo(status.omega_ff);
+			status.mean_u = _mean_u;
+			status.mean_u_valid = fresh_esc;
+			status.thrust = out.thrust;
+			status.blend = out.blend;
+			status.blend_hold = blend_hold;
+			status.blend_frozen = out.blend_frozen;
+			_indi_pos_status_pub.publish(status);
+
 			const Vector3f thr_vec = out.t_c / G; // normalised thrust vector (NED), norm = collective
 			ControlMath::thrustToAttitude(thr_vec, yaw_sp, att_sp);
 			local_pos_sp.thrust[0] = thr_vec(0);
@@ -201,6 +221,7 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 	}
 
 	// bypass: stock attitude setpoint is published, the stage tracks the thrust actually commanded (A3)
+	_indi.setBlendHold(true); // D-GAP: reset() below keeps b and restarts the model path at u + b (no drift at the return)
 	const float coll_stock = -att_sp.thrust_body[2];
 	const float coll = fresh_thr ? _coll_meas : (PX4_ISFINITE(coll_stock) ? coll_stock : _last_thrust);
 	const float c = PX4_ISFINITE(coll) ? math::max(coll, 0.f) : 0.f;
@@ -333,6 +354,7 @@ void McIndiPosControl::parameters_update(bool force)
 			Vector3f(_param_mpc_xy_vel_d_acc.get(), _param_mpc_xy_vel_d_acc.get(), _param_mpc_z_vel_d_acc.get()));
 		_control.setHorizontalThrustMargin(_param_mpc_thr_xy_marg.get());
 		_indi.setMeasurementDelay(_param_indi_dly.get());
+		_indi.setBlendTimeConstant(_param_indi_tb.get());
 
 		float w_max = 0.f;
 		_rotor_w_max = (_w_max_handle != PARAM_INVALID && param_get(_w_max_handle, &w_max) == PX4_OK

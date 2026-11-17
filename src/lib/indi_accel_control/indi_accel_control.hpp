@@ -80,6 +80,8 @@ public:
 	static constexpr float kMaxDt = 0.5f;
 	/// Upper bound of the tilt limit (rad), keeps tan() finite
 	static constexpr float kMaxTiltLimit = 1.5f;
+	/// Bound of the collective blend state b (u units)
+	static constexpr float kMaxBlend = 0.3f;
 
 	struct Input {
 		matrix::Vector3f p{};      ///< position NED (m)
@@ -109,6 +111,8 @@ public:
 		matrix::Vector3f t_c{};               ///< commanded specific thrust vector after saturation
 		matrix::Vector3f j_used{};            ///< jerk reference used for the feedforward
 		bool jerk_from_difference{false};     ///< true if any axis of j_used came from the a_ref difference
+		float blend{0.f};                     ///< collective blend state b (u units)
+		bool blend_frozen{false};             ///< b was held this cycle (hold flag, invalid telemetry, clamp)
 	};
 
 	/**
@@ -140,6 +144,18 @@ public:
 	/// Delay of the mean u sample in cycles, clamped to [0, kMaxDelaySamples]. Applied at once.
 	void setMeasurementDelay(int samples) { _delay = math::constrain(samples, 0, kMaxDelaySamples); }
 	int measurementDelay() const { return _delay; }
+
+	/**
+	 * D-GAP collective blend: u_f = u_meas + b, b = LP_tb(u_model - u_meas), so the collective is measured at
+	 * high frequency and modelled (previous clamped command) at DC. tb <= 0 or non finite disables it and sets
+	 * b = 0. b is also zero at construction; reset() leaves it alone.
+	 */
+	void setBlendTimeConstant(float tb_s);
+	float blendTimeConstant() const { return _tb; }
+	float blend() const { return _b; }
+
+	/// Freeze b (landed, bypass, edges). Takes effect on the next update(); b is held, never reset.
+	void setBlendHold(bool hold) { _blend_hold = hold; }
 
 	void setFeedforward(bool jerk_ff) { _jerk_ff = jerk_ff; }
 
@@ -192,6 +208,13 @@ private:
 	math::LowPassFilter2p<float> _lpf_u{};
 	float _u_buf[kMaxDelaySamples + 1] {};
 	int _u_idx{0};
+	// model path of the collective blend: previous clamped command through the same delay and filter
+	math::LowPassFilter2p<float> _lpf_um{};
+	float _um_buf[kMaxDelaySamples + 1] {};
+	float _tb{0.f};
+	float _b{0.f};
+	bool _blend_hold{false};
+	bool _coll_clamped{false};	///< collective was clamped in the previous update
 	float _thrust_prev{0.f};
 
 	// jerk backward difference state

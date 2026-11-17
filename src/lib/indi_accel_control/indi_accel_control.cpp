@@ -77,6 +77,7 @@ void IndiAccelControl::setFilter(float sample_freq_hz, float cutoff_hz)
 {
 	_lpf_f.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
 	_lpf_u.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
+	_lpf_um.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
 	_lpf_j.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
 }
 
@@ -91,20 +92,37 @@ void IndiAccelControl::setThrustModel(float g_t, float k_cmd)
 	}
 }
 
+void IndiAccelControl::setBlendTimeConstant(float tb_s)
+{
+	if (PX4_ISFINITE(tb_s) && (tb_s > FLT_EPSILON)) {
+		_tb = tb_s;
+
+	} else {
+		_tb = 0.f;
+		_b = 0.f;
+	}
+}
+
 void IndiAccelControl::reset(const Vector3f &f_b, float mean_u)
 {
 	const Vector3f f = allFinite(f_b) ? f_b : Vector3f(0.f, 0.f, -kGravity);
 	const float u = PX4_ISFINITE(mean_u) ? mean_u : kGravity / _g_t;
 
+	// D-GAP: the model path starts at u + b (its steady relation to the measured path), so the blend sees no
+	// innovation across the reset and b does not drift at the edge (A16: held, never reset)
+	const float u_model = u + _b;
+
 	_lpf_f.reset(f);
 	_lpf_u.reset(u);
+	_lpf_um.reset(u_model);
 
 	for (int i = 0; i <= kMaxDelaySamples; i++) {
 		_u_buf[i] = u;
+		_um_buf[i] = u_model;
 	}
 
 	_u_idx = 0;
-	_thrust_prev = u / _k_cmd;
+	_thrust_prev = u_model / _k_cmd;
 
 	_time = 0.f;
 	_a_ref_prev.zero();
@@ -262,11 +280,26 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 	const Vector3f a_f = R * f_bf + Vector3f(0.f, 0.f, kGravity);
 
 	// 4. measured thrust
-	const float u_in = in.mean_u_valid ? in.mean_u : _thrust_prev * _k_cmd;
+	const float u_model = _thrust_prev * _k_cmd;
+	const float u_in = in.mean_u_valid ? in.mean_u : u_model;
 	_u_idx = (_u_idx + 1) % (kMaxDelaySamples + 1);
 	_u_buf[_u_idx] = u_in;
-	const float u_delayed = _u_buf[(_u_idx + kMaxDelaySamples + 1 - _delay) % (kMaxDelaySamples + 1)];
-	const float u_f = _lpf_u.apply(u_delayed);
+	_um_buf[_u_idx] = u_model;
+	const int i_d = (_u_idx + kMaxDelaySamples + 1 - _delay) % (kMaxDelaySamples + 1);
+	const float u_meas_f = _lpf_u.apply(_u_buf[i_d]);
+	const float u_model_f = _lpf_um.apply(_um_buf[i_d]);
+
+	// D-GAP blend: b = LP_tb(u_model - u_meas), held (never reset) on the ground, at bypass edges (hold flag),
+	// while the telemetry is invalid and while the collective is clamped (anti-windup)
+	const bool blend_frozen = _blend_hold || !in.mean_u_valid || _coll_clamped;
+
+	if ((_tb > 0.f) && !blend_frozen) {
+		_b += (in.dt / (_tb + in.dt)) * ((u_model_f - u_meas_f) - _b);
+		_b = math::constrain(_b, -kMaxBlend, kMaxBlend);
+	}
+
+	// invalid telemetry: u_f = u_model (the measured path was fed the model value as well)
+	const float u_f = (_tb > 0.f) ? (in.mean_u_valid ? (u_meas_f + _b) : u_model_f) : u_meas_f;
 	const Vector3f t_f = z_b * (-_g_t * u_f);
 
 	// 5. INDI increment
@@ -296,7 +329,10 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 
 	float c = t_c.norm();
 
+	bool clamped = false;
+
 	if (c > c_max) {
+		clamped = true;
 		// keep the vertical component, shrink the horizontal part first
 		const float z_abs = -t_c(2);
 
@@ -314,12 +350,14 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 		c = t_c.norm();
 
 	} else if (c < c_min) {
+		clamped = true;
 		// below the minimum thrust: scale the whole vector, direction (tilt) unchanged
 		t_c *= c_min / c;
 		c = t_c.norm();
 	}
 
 	const float thrust = math::constrain(c / (_g_t * _k_cmd), _thr_min, _thr_max);
+	const bool coll_clamped = clamped || (thrust <= _thr_min) || (thrust >= _thr_max);
 
 	// 7. attitude
 	const float yaw = PX4_ISFINITE(in.yaw_ref) ? in.yaw_ref : Eulerf(q).psi();
@@ -343,6 +381,7 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 	}
 
 	_thrust_prev = thrust;
+	_coll_clamped = coll_clamped;
 
 	out.q_d = q_d;
 	out.yawspeed_ff = PX4_ISFINITE(in.yawspeed_ref) ? in.yawspeed_ref : 0.f;
@@ -354,5 +393,7 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 	out.t_c = t_c;
 	out.j_used = j_used;
 	out.jerk_from_difference = from_diff;
+	out.blend = _b;
+	out.blend_frozen = blend_frozen;
 	return true;
 }

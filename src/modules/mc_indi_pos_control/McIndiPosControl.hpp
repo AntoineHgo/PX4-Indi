@@ -65,6 +65,7 @@
 #include <uORB/Subscription.hpp>
 #include <uORB/SubscriptionCallback.hpp>
 #include <uORB/topics/hover_thrust_estimate.h>
+#include <uORB/topics/indi_pos_status.h>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/trajectory_setpoint.h>
 #include <uORB/topics/vehicle_attitude_setpoint.h>
@@ -132,6 +133,7 @@ private:
 	orb_advert_t _mavlink_log_pub{nullptr};
 
 	uORB::PublicationData<takeoff_status_s>              _takeoff_status_pub{ORB_ID(takeoff_status)};
+	uORB::Publication<indi_pos_status_s>                 _indi_pos_status_pub{ORB_ID(indi_pos_status)};
 	uORB::Publication<vehicle_attitude_setpoint_s>	     _vehicle_attitude_setpoint_pub{ORB_ID(vehicle_attitude_setpoint)};
 	uORB::Publication<vehicle_local_position_setpoint_s> _local_pos_sp_pub{ORB_ID(vehicle_local_position_setpoint)};	/**< vehicle local position setpoint publication */
 
@@ -233,7 +235,8 @@ private:
 		(ParamFloat<px4::params::MPC_YAWRAUTO_ACC>) _param_mpc_yawrauto_acc,
 
 		(ParamFloat<px4::params::MC_INDI_POS_LPF>)  _param_indi_lpf,
-		(ParamInt<px4::params::MC_INDI_POS_DLY>)    _param_indi_dly
+		(ParamInt<px4::params::MC_INDI_POS_DLY>)    _param_indi_dly,
+		(ParamFloat<px4::params::MC_INDI_POS_TB>)   _param_indi_tb
 	);
 
 	math::WelfordMean<float> _sample_interval_s{};
