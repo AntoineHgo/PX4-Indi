@@ -489,3 +489,4 @@ S53 also: route check 53 (`design/route_check_53.md`), acted on: defaults applie
    no crossover in 1-50 Hz (|L| -0.7 dB at 1 Hz), Ms 8.2 dB at 1 Hz -> A-27 opened. SITL rebuilt at 7522625b0f
    (later commits docs/results only; --gate still needs a rebuild at HEAD).
 - S56 (2026-11-17): yaw M3a GM 18.4 dB at 22 Hz; roll M3a at 400 Hz PM 84 / GM 10.5 / DM 58 ms (2 seeds).
+- S57: roll M3a 800/3 Hz re-flown with TP 7.5 (PM 83.4, GM 10.1); route check 57 acted on: rate-loop table deferred to stage 6, measured-rotor anchor flown; T116 outer break note launched.
