@@ -125,6 +125,143 @@ def analyse(name, run_dir):
     return info
 
 
+SPLIT_OUT = os.path.join(RES, 'a33_split.md')
+
+
+def _unit(v):
+    n = np.linalg.norm(v, axis=-1, keepdims=True)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        return v / n
+
+
+def _ang_deg(a, b):
+    d = np.sum(a * b, axis=-1)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        c = d / (np.linalg.norm(a, axis=-1) * np.linalg.norm(b, axis=-1))
+    return np.degrees(np.arccos(np.clip(c, -1.0, 1.0)))
+
+
+def _body_z(q):
+    """Body z axis in NED for PX4 quaternions q (N,4) = (w,x,y,z), body-to-NED."""
+    w, x, y, z = q.T
+    return np.stack([2 * (x * z + w * y), 2 * (y * z - w * x), 1 - 2 * (x * x + y * y)], axis=-1)
+
+
+def _vec(d, prefix, n, m):
+    return np.stack([d[f'{prefix}[{i}]'][m].astype(float) for i in range(n)], axis=-1)
+
+
+def split_stats(name, r):
+    ulog = ULog(os.path.join(FLIGHTS[name], 'flight.ulg'))
+    t_lo, t_hi = r['t_lo_us'], r['t_hi_us']
+
+    def win(d):
+        t = d['timestamp']
+        return (t >= t_lo) & (t <= t_hi)
+
+    out = {}
+    st = topic(ulog, STATUS_TOPIC)
+    m = win(st)
+    a_c = _vec(st, 'a_c', 3, m)
+    a_f = _vec(st, 'a_f', 3, m)
+    t_c = _vec(st, 't_c', 3, m)
+    t_f = _vec(st, 't_f', 3, m)
+    out['da'] = np.nanmean(a_c - a_f, axis=0)
+    out['tc'] = np.nanmean(t_c, axis=0)
+    out['tf'] = np.nanmean(t_f, axis=0)
+    out['ang_tt'] = np.nanmean(_ang_deg(t_c, t_f))
+    out['frozen'] = np.mean(st['blend_frozen'][m].astype(bool))
+    out['blend'] = np.nanmean(st['blend'][m])
+    out['thrust'] = np.nanmean(st['thrust'][m])
+    out['n_status'] = int(m.sum())
+
+    grid = np.arange(t_lo, t_hi, GRID_DT_US, dtype=float)
+
+    def zgrid(d, key):
+        t = d['timestamp'].astype(float)
+        q = np.stack([d[f'{key}[{i}]'].astype(float) for i in range(4)], axis=-1)
+        ok = np.isfinite(q).all(axis=-1)
+        z = _body_z(q[ok])
+        t = t[ok]
+        zi = np.stack([np.interp(grid, t, z[:, i]) for i in range(3)], axis=-1)
+        return _unit(zi)
+
+    z_sp = zgrid(topic(ulog, 'vehicle_attitude_setpoint'), 'q_d')
+    z_at = zgrid(topic(ulog, 'vehicle_attitude'), 'q')
+    out['tilt_sp'] = np.degrees(np.arccos(np.clip(z_sp[:, 2], -1, 1))).mean()
+    out['tilt_at'] = np.degrees(np.arccos(np.clip(z_at[:, 2], -1, 1))).mean()
+    out['ang_zz'] = _ang_deg(z_sp, z_at).mean()
+
+    am = topic(ulog, 'actuator_motors')
+    mm = win(am)
+    out['ctrl'] = [float(np.nanmean(am[f'control[{i}]'][mm])) for i in range(4)]
+
+    es = topic(ulog, 'esc_status')
+    rpm = None
+    if es is not None:
+        me = win(es)
+        if me.sum() > 0:
+            rpm = {}
+            for i in range(12):
+                k = f'esc[{i}].esc_rpm'
+                if k in es:
+                    rpm[i] = float(np.nanmean(es[k][me]))
+    out['rpm'] = rpm
+    return out
+
+
+def split_report(res):
+    names = list(FLIGHTS)
+    stats = {n: split_stats(n, res[n]) for n in names}
+
+    def f3(v):
+        return ' / '.join(f'{x:+.3f}' for x in v)
+
+    def row(label, fn):
+        return f'| {label} | ' + ' | '.join(fn(stats[n]) for n in names) + ' |'
+
+    def rpm_txt(s):
+        if s['rpm'] is None:
+            return 'absent'
+        return ', '.join(f'm{i} {v:.0f}' for i, v in sorted(s['rpm'].items()))
+
+    lines = ['# T162 a33 split: s72 thrust-gap flights (ULog, same window as second key)', '',
+             '| Metric | ' + ' | '.join(names) + ' |',
+             '|---|' + '---|' * len(names),
+             row('window start / end (us)', lambda s: ''),  # placeholder replaced below
+             ]
+    lines[-1] = '| window (us) | ' + ' | '.join(
+        f"[{res[n]['t_lo_us']}, {res[n]['t_hi_us']}]" for n in names) + ' |'
+    lines += [
+        row('mean a_c - a_f x / y / z (m/s^2)', lambda s: f3(s['da'])),
+        row('mean t_c x / y / z', lambda s: f3(s['tc'])),
+        row('mean t_f x / y / z', lambda s: f3(s['tf'])),
+        row('mean angle t_c vs t_f (deg)', lambda s: f"{s['ang_tt']:.2f}"),
+        row('fraction blend_frozen true', lambda s: f"{s['frozen']:.3f}"),
+        row('mean blend', lambda s: f"{s['blend']:.4f}"),
+        row('mean thrust', lambda s: f"{s['thrust']:+.4f}"),
+        row('tilt setpoint q_d (deg)', lambda s: f"{s['tilt_sp']:.2f}"),
+        row('tilt actual q (deg)', lambda s: f"{s['tilt_at']:.2f}"),
+        row('mean angle body z: setpoint vs actual (deg)', lambda s: f"{s['ang_zz']:.2f}"),
+        row('mean actuator_motors control[0..3]', lambda s: ' / '.join(f'{c:.3f}' for c in s['ctrl'])),
+        row('mean esc_status rpm per motor', rpm_txt),
+        '',
+        '## Method', '',
+        '- Window: same as second_key (last 10 s before landing start, from analyse()). '
+        'All indi_pos_status, actuator_motors and esc_status samples inside it are used directly; '
+        'no interpolation for those.',
+        '- Vector angles (t_c vs t_f, body z setpoint vs actual) are per sample; the means are over the samples.',
+        '- Attitude: body z (third column of the body-to-NED rotation of q_d or q) is interpolated '
+        'linearly onto the 100 Hz window grid by timestamp, then normalised. Tilt = angle between body z and NED down.',
+        '- blend_frozen fraction is over indi_pos_status samples in the window; blend and thrust are sample means.',
+        '- esc rpm is the mean over esc_status samples in the window for each esc[i].esc_rpm present in the log.',
+        '']
+    with open(SPLIT_OUT, 'w') as f:
+        f.write('\n'.join(lines))
+    print('\n'.join(lines))
+    print('wrote', SPLIT_OUT)
+
+
 def main():
     res = {n: analyse(n, d) for n, d in FLIGHTS.items()}
     names = list(FLIGHTS)
@@ -171,6 +308,7 @@ def main():
         f.write('\n'.join(lines))
     print('\n'.join(lines))
     print('wrote', out)
+    split_report(res)
 
 
 if __name__ == '__main__':

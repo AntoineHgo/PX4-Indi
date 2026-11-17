@@ -24,8 +24,9 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    at u + b, fixed by me after reading the diff). gap085_indi_htoff dz 0.025 m PASS, loss08_indi 0.056 m marginal;
    second key agrees (`results/stage5_s72/second_key.md`). A-33 OPEN: loss08 holds a_c-a_f = 0.158 m/s2 (control
    error 0.040 m), blend should be integral at DC. Closing flight loss08_indi_htoff: HTE ruled out.
-   NEXT S73: (1) A-33: HTE ruled out (loss08_indi_htoff same error). Closing tests in ANOMALIES.md A-33 (3-axis
-   a_c-a_f + attitude error, frozen/clamp fraction, longer hold); sonnet/haiku on existing logs first, then fix.
+   NEXT S73: (1) A-33 EXPLAINED (a33_split.md): with 1 motor at 0.8 the attitude sp is tilted 10.4 deg while the
+   vehicle stays level -> standing INNER-loop attitude error; outer xy winds up, vertical leak g(1-cos). Closing tests
+   (a)-(c) in ANOMALIES.md A-33: this is a lesson-9 gap in the rate loop (eRPM blind to a thrust-coefficient loss?).
    (2) runner: land/re-take-off scenario with
    the gap kept (spec in stage5_s72 README) -> landed-hold flight. (3) D-GAP margin items (amendment 3: resonance,
    overshoot, velocity-break PM at tb and tb/3). (4) combined opus review: stage-3 safety diff + stage-5 slices +

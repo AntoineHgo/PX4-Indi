@@ -59,3 +59,5 @@ pre-landing and max |dz| < 0.15 m in the 5 s after take-off.
   ULog (armed 30.01 vs t_arm 30.74), consistent with the S70 time-offset hypothesis.
 - A-33 closing flight `loss08_indi_htoff` (gap_htoff.params, firmware 3481bdcf9e incl. reset fix): dz_truth/dz_est/
   a_c-a_f in `second_key.md`: dz_est -0.041 m, a_c[2] 0.167 m/s2, b 0.0084, same as HTE on -> HTE is not the cause.
+- A-33 split (`a33_split.md`, T162 haiku): loss08 attitude setpoint tilt 10.4 deg vs actual 0.14 deg, a_c-a_f xy -1.3 m/s2;
+  vertical a_c-a_f = g(1-cos 10.4 deg). The outer-loop blend works; the residual comes from a standing inner-loop attitude error.
