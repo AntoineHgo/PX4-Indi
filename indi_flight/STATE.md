@@ -30,13 +30,14 @@ S56 (launch 20261117-061159, cap $2.83): D-YAW-INV IMPLEMENTED (T113 sonnet 23e9
    SITL binary at 23e9d30cc0: rebuild before any further flight or --gate batch.
    Yaw GM read DONE (`results/stage3_s57_pre/yaw_m3a_hf/README.md`): GM 18.5/18.3 dB at 22 Hz, 2 seeds. Yaw 800 Hz:
    PM 88, DM 197 ms, GM 18.4, Ms 1.6 dB. SITL binary at 296766019a firmware.
-NEXT (S57): (2) roll M3a measured-rotor path (--sim v2) and 400 Hz (fs arg). (3) attitude/velocity/
+   Roll M3a 400 Hz DONE (`results/stage3_s57_pre/roll_m3a_400/README.md`): PM 84.4, GM 10.5, DM 58 ms, Ms 3.9, f_c 4 Hz,
+   2 seeds, logged at 400 Hz. pretest_gate over a whole M3a flight FAILs by design: always pass --delay 4 --length 15.
+NEXT (S57): (2) roll M3a measured-rotor path (--sim v2; check S47 measured_g2 for the flags) and 250 Hz (rate-hz 267). (3) attitude/velocity/
    position break notes. (4) stage-3 items note review (opus, own session). (5) hole reporter. Route check S58 (due).
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| B56r | roll M3a 400 Hz, 2 seeds (NEXT item 2, 400 Hz half) | bash | `results/stage3_s57_pre/roll_m3a_400/` (done.txt) | `bash indi_flight/results/stage3_s57_pre/roll_m3a_400/run_all.sh`; m3a_margins_pretest.py now takes fs as 5th arg |
 
 
 ## Open problems

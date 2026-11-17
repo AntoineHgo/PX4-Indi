@@ -488,3 +488,4 @@ S53 also: route check 53 (`design/route_check_53.md`), acted on: defaults applie
    coded). Pitch M3a ACT_TC 0.05: PM 86.9/86.8, GM 11.9/12.0 (2 seeds, = roll). Yaw M3a pre-test (AMP 0.008):
    no crossover in 1-50 Hz (|L| -0.7 dB at 1 Hz), Ms 8.2 dB at 1 Hz -> A-27 opened. SITL rebuilt at 7522625b0f
    (later commits docs/results only; --gate still needs a rebuild at HEAD).
+- S56 (2026-11-17): yaw M3a GM 18.4 dB at 22 Hz; roll M3a at 400 Hz PM 84 / GM 10.5 / DM 58 ms (2 seeds).
