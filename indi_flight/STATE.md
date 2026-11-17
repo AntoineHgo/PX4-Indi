@@ -45,17 +45,18 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
    T143 (`results/g16_indi_s67`): INDI 400 Hz same-seed spread rise 4 / settle 15 ms / OS 0.7 pts, equal at speed
    1 and 4; arm instant varies 0.76 s (wall clock); S64 seed1 outside all 11 runs (Q5 addendum).
    T144 log diff: params identical, S64 binary from a DIRTY tree (f183dad) = leading cause of the outlier.
-   NEXT S68: (a) Q5/A-30: clean-build re-fly S64 800 Hz seed 1 (+ same-seed batch at 800 Hz) vs
-   `results/g2_step_s64`; if it differs, re-fly the S64 G2-STEP tables; arm in sim time in the runner (2nd key); (b) A-9 second key + guard test; (c) slice 2 (item 1); (d) sim hooks task (loop delay,
-   GNSS sample delay, per-run drop seed, IMU noise scale) with second key.
    S68 (launch 20261117-234230, cap $3): T145 clean-HEAD re-fly (`results/g2_clean_s68`): 400 Hz table 9/9, seed1 roll
    rise 192.5 (dirty tree not needed as cause); 800 Hz same-seed spread 14.5/39 ms/1 pt, < 1/2 limit margin; A-30
    bounded, Q5 addendum 3. T146: A-9 CLOSED (2nd key AGREE, guard gtest break-checked, 35b313d2a5).
-   NEXT S69: route check 69 first; T147 second key + re-measure same-seed spread with sim-time arm; then (c) slice 2, (d) hooks.
+   T147-T149: same-seed spread persists with --sched (INDI 400 Hz rise 6 ms), with PID (12 ms), INDI v2true/eRPM-lost
+   (8-9 ms), and with the EXACT G1.6 command on sim v1 (rise 11.5 / settle 36 ms): not INDI, not v2. G1.6 FINAL may not
+   hold at HEAD (metric mismatch or regression since S32): T150 re-scores both run sets with both metrics.
+   NEXT S69: route check 69 first; act on T150 (if regression: bisect S32 commit..HEAD on the G1.6 cmd, CPU only;
+   if metric: restate G1.6 spread with the step metric in GATES.md as a defect fix, logged); then (c) slice 2, (d) hooks.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T149 | A-30: G1.6 cmd (pid_default, sim v1) vs + --sim v2, step_roll seed 1 x5 each (T148: PID v2 spread rise 12 / settle 46 ms, INDI v2true 9/16, INDI eRPM-lost 8/15: not INDI-specific) | haiku | `results/a30_v1v2_s68/README.md` | `bash results/a30_v1v2_s68/fly.sh` |
+| T150 | re-score S32 G1.6 runs and S68 G-v1/G-v2 with both metrics (G1.6 spread script, g2_step_metrics) | haiku | `results/a30_v1v2_s68/g16_metric.md` | re-brief, no flights |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
