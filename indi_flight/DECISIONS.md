@@ -322,7 +322,8 @@ pre-identification behaviour of decision 3 must cover it).
 - Open before code: (review done), then unit test with the parametrised plant and yaw M3a 2 seeds.
 - S56 IMPLEMENTED: 23e9d30cc0 (law, state = applied increment, 0 landed/reset, G2_Y text, 4 tests) + 296766019a (state
   gated by landed on the first landed cycle, haiku second key T114 finding, test break-checked). Yaw M3a 2 seeds
-  (`results/stage3_s56/yaw_m3a/README.md`): f_c 1.24 Hz, PM 88, DM 197 ms, Ms 1.6 dB (model 1.4 Hz / 1.3 dB).
+  (`results/stage3_s56/yaw_m3a/README.md`): f_c 1.24 Hz, PM 88, DM 197 ms, Ms 1.6 dB (model 1.4 Hz / 1.3 dB);
+  5-40 Hz re-fly GM 18.4 dB at 22 Hz (`results/stage3_s57_pre/yaw_m3a_hf/README.md`).
   Overturn: a yaw M3a with Ms > 6 dB inside the stage-4 tau/G2 bounds, or a yaw limit cycle with G2_Y > 0.
 - Overturn if: the model with G2 x0.5..x2 shows a limit cycle or GM < 6 dB, or the flight disagrees with the model by
   more than the G2 tolerance.

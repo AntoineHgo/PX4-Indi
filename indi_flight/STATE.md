@@ -28,14 +28,14 @@ S56 (launch 20261117-061159, cap $2.83): D-YAW-INV IMPLEMENTED (T113 sonnet 23e9
    2 seeds f_c 1.24 Hz, PM 88, DM 197 ms, Ms 1.6 dB (model 1.4 Hz/1.3 dB), `results/stage3_s56/yaw_m3a/README.md`. Yaw GM
    unread (band ends 20 Hz at arg -170): extend bins to ~40 Hz for the G2 table. No bench script reads torque_increment.
    SITL binary at 23e9d30cc0: rebuild before any further flight or --gate batch.
-NEXT (S57): (1) yaw M3a GM read: bins 5-40 Hz, 2 seeds (copy `results/stage3_s56/yaw_m3a/run_all.sh`, FMIN 5 FMAX 40,
-   TP shorter), rebuild first. (2) roll M3a measured-rotor path (--sim v2) and 400 Hz (fs arg). (3) attitude/velocity/
+   Yaw GM read DONE (`results/stage3_s57_pre/yaw_m3a_hf/README.md`): GM 18.5/18.3 dB at 22 Hz, 2 seeds. Yaw 800 Hz:
+   PM 88, DM 197 ms, GM 18.4, Ms 1.6 dB. SITL binary at 296766019a firmware.
+NEXT (S57): (2) roll M3a measured-rotor path (--sim v2) and 400 Hz (fs arg). (3) attitude/velocity/
    position break notes. (4) stage-3 items note review (opus, own session). (5) hole reporter. Route check S58 (due).
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| B56h | yaw M3a GM read 5-40 Hz, 2 seeds (NEXT item 1) | bash | `results/stage3_s57_pre/yaw_m3a_hf/` (done.txt, *_margins.txt) | `bash indi_flight/results/stage3_s57_pre/yaw_m3a_hf/run_all.sh` |
 
 
 ## Open problems
