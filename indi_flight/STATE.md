@@ -49,12 +49,15 @@ S54 (launch 20261117-024822, cap $3): A-27 EXPLAINED. Yaw M3a re-flown 0.1-20 Hz
    M3a reads -H A_m, yaw gain set by G2 and dt, not K_Y. Model `bench/yaw_break_model_s54.py` matches flight to 1 Hz, keyed by T111 (AGREE after a key-2 fix);
    proposed fix D-YAW-INV option (c) (increment low-passed by G2/G1, dt-independent): yaw loop = K A/s, Ms 1.6-8.1 dB
    under G2 x0.5-2, tau x1-2. m3a_margins_pretest.py takes fmin fmax Tp args; checks.py hard-codes the S40 multisine.
-NEXT (S55): (1) D-YAW-INV: model keyed (`results/stage3_s54/yaw_model/second_key.md`); add ACT_TC mismatch and 400 Hz,
-   then opus review note vs code, then code + unit test + yaw M3a 2 seeds. (2) roll M3a on the
-   measured-rotor path (--sim v2; find which params select the measured path: MC_INDI_ACT_BLD / ERPM_TO, check S40
-   params) and 400 Hz roll/pitch (margin script fs is fixed at 800: add an fs arg). (3) attitude/velocity/position break
-   notes + second key. (4) stage-3 items note review before coding items 1-5. (5) hole reporter when the --gate batch
-   is scheduled. Next route check S58.
+S55 (launch 20261117-025824, cap $1.48): yaw model extended (`results/stage3_s55/yaw_model/README.md`, UNKEYED, ae715f427d):
+   option (c) dt-independent; tau_m >= plant tau and G2 x0.5..2 -> M3a Ms <= 5.9 dB, GM >= 8.2; weak side tau_m < plant
+   and law G2 > plant (GM 0.6). T112 opus review r1 note vs code: NOT BLOCKING (`design/yaw_inv_review_r1.md`, opus ~$0.7
+   in 7 calls). Majors: store applied yaw increment after step 9 clamp (replaces _t_f_prev), zero it when landed and in
+   resetStates, rewrite G2_Y param/header text; lead acts fully on yaw (x105) -> yaw depends on ACT_TC/LEAD as roll.
+NEXT (S56): (1) D-YAW-INV code per review r1 majors (sonnet, brief at ~15 calls, tell it gtest kind) + unit test with
+   the parametrised plant + yaw M3a 2 seeds (G2_Y 27 from quad5in_indi_g1.params); haiku second key of the diff. Optional:
+   key the S55 grid (add tau_m x1.25 between). (2)-(5) unchanged from S54: roll M3a measured-rotor path (--sim v2) and
+   400 Hz (fs arg); attitude/velocity/position break notes; stage-3 items note review; hole reporter. Next route check S58.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |

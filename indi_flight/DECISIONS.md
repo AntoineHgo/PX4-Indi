@@ -317,6 +317,8 @@ pre-identification behaviour of decision 3 must cover it).
 - S55 ACT_TC mismatch and 250/400/800 Hz (`results/stage3_s55/yaw_model/README.md`, UNKEYED extension): option (c)
   dt-independent; inside tau_m >= plant tau and plant G2 x0.5..2, M3a Ms <= 5.9 dB, GM >= 8.2 dB. Outside (tau_m
   under plant and law G2 above plant) down to GM 0.6 dB: stage 4 reports an upper bound of tau_c and a lower bound of G2.
-- Open before code: opus review of note vs code, then unit test with the parametrised plant and yaw M3a 2 seeds.
+- S55 opus review r1 (`design/yaw_inv_review_r1.md`): NOT BLOCKING; code per its majors (applied-increment state, zero when
+  landed/reset, G2_Y text).
+- Open before code: (review done), then unit test with the parametrised plant and yaw M3a 2 seeds.
 - Overturn if: the model with G2 x0.5..x2 shows a limit cycle or GM < 6 dB, or the flight disagrees with the model by
   more than the G2 tolerance.
