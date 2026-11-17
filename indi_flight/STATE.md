@@ -30,22 +30,19 @@ S58 (launch 20261117-073027, cap $3): D-G2-OUTER-DEFER (outer break note keyed a
    AGREE (`design/t118_second_key_s58.md`, its one issue unreachable). Not flown yet. REBUILD SITL before flying (binary
    built mid-edit). Flight command template: `design/t81_m3a_inject_s39.md` (run_scenario.py --scenario hover --controller
    indi_m3a --model quad5in --params ...); S57 READMEs do not record the command: record it in every new README.
-NEXT (S59): (a) items 2 (start-up exclusion, note sec 2) and 3 (D-S3-SPTO) as code, sonnet ~$1; (b) opus review of the
-   whole stage-3 safety DIFF (65356c4250 + S59) vs DECISIONS, budget $1.1, launch first in S60 if S59 is short;
-   (c) one hover + one landing flight to check the ramp and no frozen false trip (pretest_gate, spectra). Then stage 5
-   hover slice + thrust-gap flight (route check 57 rec 3). Route check 61 due (every 5 sessions, last 57).
-OLD NEXT (S58, superseded by D-G2-OUTER-DEFER for item 1): (1) second key of the break note against source (sonnet, one interface: note vs code, <=8 calls); question the
-   L = T/(1-T) reference breaks (ill-conditioned where |T| ~ 1) and the 6-9 session cost vs route check 57 (stage 5 first?);
-   then A-26 model script with the two self-tests of note section 6.
-   (2) S59 stage-3 safety items as code (route check 57 rec 2: landed trim, start-up exclusion, setpoint timeout, frozen
-   telemetry; thrust-decay item dropped), opus review of the DIFF. (3) S60 stage-5 hover slice + thrust-gap flight.
+S59 (launch 20261117-074704, cap $3): items 2 (start-up refusal + foreign torque publisher flag) and 3 (D-S3-SPTO
+   timeout, rates zeroed, thrust held) CODED (T119 sonnet, `design/t119_s3_items_s59.md`): 6/6 test targets, break-checked,
+   format clean; haiku second key AGREE-WITH-ISSUES (`design/t120_second_key_s59.md`, 5 minor, none blocking: thrust hold
+   checked by reading only; stop/start within 0.5 s refused). Hover with take-off + landing, 2 seeds, items 1-4 live:
+   gate PASS, rate RMS <= 0.006 rad/s, no stale/foreign/frozen flag (`results/stage3_s59/hover_items23/README.md`).
+   G1.7 provenance needs a clean tree AND a binary rebuilt at HEAD: commit, rebuild, then fly.
+NEXT (S60): (a) opus review of the whole stage-3 safety DIFF (65356c4250 + eafb26b623^) vs DECISIONS D-S3-*, one
+   interface, <=12 calls, budget $1.1, launch FIRST; (b) route check 61 (sonnet, ~$0.2) if budget remains, else S61;
+   (c) then stage 5 hover slice + thrust-gap flight (route check 57 rec 3). Triggering paths of items 2/3 in SITL: G5.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T119 | S59 code items 2+3 + tests | sonnet | `design/t119_s3_items_s59.md` | DONE 7 calls ~$0.33, 6/6 test targets, break-checked |
-| T120 | second key items 2+3 diff | haiku | `design/t120_second_key_s59.md` | re-run brief if file missing |
-| B-S59 | SITL rebuild + 1 hover (meas800 minus INJ, v2, 800 Hz, --gate) | bash | `results/stage3_s59/hover_items23/` (done.txt, stdout.log rc) | command in stdout of session; rerun: build then run_scenario hover --sim v2 --rate-hz 800 --seed 1 --speed 4 --gate --params hover.params |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -62,6 +59,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 59 | T120 | haiku | second key items 2+3 diff | done, 5 calls, ~$0.06, AGREE-WITH-ISSUES (5 minor) |
+| 59 | T119 | sonnet | code items 2+3 + tests | done, 7 calls, ~$0.33, 6/6 pass, break-checked |
 | 58 | T118 | haiku | second key items 1+4 diff | done, 6 calls, ~$0.06, AGREE-WITH-ISSUES (issue unreachable) |
 | 58 | T117 | sonnet | code items 1+4 + tests | done, 27 calls, ~$0.7, all pass, break-checked, module not compiled by it |
 | 57 | T116 | sonnet | G2 outer break note | done, 8 calls, ~$0.7, 59 lines, UNKEYED |

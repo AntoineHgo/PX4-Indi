@@ -512,3 +512,4 @@ S56 (launch 20261117-061159, cap $2.83): D-YAW-INV IMPLEMENTED (T113 sonnet 23e9
    PM 88, DM 197 ms, GM 18.4, Ms 1.6 dB. SITL binary at 296766019a firmware.
    Roll M3a 400 Hz DONE (`results/stage3_s57_pre/roll_m3a_400/README.md`): PM 84.4, GM 10.5, DM 58 ms, Ms 3.9, f_c 4 Hz,
    2 seeds, logged at 400 Hz. pretest_gate over a whole M3a flight FAILs by design: always pass --delay 4 --length 15.
+- S59: stage-3 items 2+3 coded (eafb26b623^), hover x2 with items 1-4 PASS, no false flag.
