@@ -388,7 +388,7 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 
 	for (int i = 0; i < 3; i++) {
 		const float g2_over_dt = (i == 2) ? (_g2_yaw / dt) : 0.f;
-		const float prev_inc = (i == 2) ? _yaw_inc_prev : 0.f;
+		const float prev_inc = (i == 2 && !landed) ? _yaw_inc_prev : 0.f;
 		const float numerator = nu(i) - (1.f + lead_gain(i)) * a_f(i) + g2_over_dt * prev_inc;
 		dt_cmd(i) = numerator / (_g1(i) + g2_over_dt);
 	}

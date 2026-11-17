@@ -1717,6 +1717,20 @@ TEST(IndiRateControlYawInvTest, LandedStateIsZeroAndTakeoffHasNoDoubleCount)
 	EXPECT_NEAR(air(2), expected, 1e-7f);
 }
 
+TEST(IndiRateControlYawInvTest, FirstLandedCycleIgnoresTheFlightIncrement)
+{
+	IndiRateControl ctrl = makeYawSpinUpController(27.f);
+	const float expected = (2.f - 3.f) / (205.f + 27.f / kDt);
+	Vector3f prev;
+
+	for (int i = 0; i < 400; i++) { // in flight the increment converges to (2 - 3) / 205, far from expected
+		prev = ctrl.update(Vector3f(), Vector3f(0.f, 0.f, 0.1f), Vector3f(0.f, 0.f, 3.f), prev, kDt, false);
+	}
+
+	const Vector3f landed = ctrl.update(Vector3f(), Vector3f(0.f, 0.f, 0.1f), Vector3f(0.f, 0.f, 3.f), prev, kDt, true);
+	EXPECT_NEAR(landed(2), expected, 1e-6f);
+}
+
 TEST(IndiRateControlYawInvTest, FaultHoldThenRecoveryHasNoStep)
 {
 	const float nan = std::numeric_limits<float>::quiet_NaN();
