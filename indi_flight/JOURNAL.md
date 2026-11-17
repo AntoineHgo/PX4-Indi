@@ -455,3 +455,36 @@ S53 move: S47 (launch 20261116-221436, cap $3): first roll M3a flight with deriv
   2-3.5 dB optimistic, unmodelled delay).
 - S54 (2026-11-17): A-27 explained (yaw M3a L -> -1 at DC: static G1+G2/dt yaw denominator, dead-beat spin-up); D-YAW-INV option (c) proposed, model UNKEYED.
 - S56 (2026-11-17): D-YAW-INV option (c) coded (23e9d30cc0, 296766019a after second key), yaw M3a PM 88 / Ms 1.6 dB on 2 seeds, A-27 closed.
+## S49-S53 detail moved from STATE.md (S56)
+S49 (launch 20261116-224459, cap $2.28): T102 stage-2 summary table (`results/stage2_s49/summary_table.md`): only valid
+   measured margins are INDI roll torque break at 800 Hz (best PM 42.9 at P3); no measured PID, no 400/250 Hz, no other
+   break point. T103 D-RATE-LEAD note draft (`design/rate_lead_note.md`): new param MC_INDI_LEAD scale 0..1 (default 1,
+   0 = current law), insertion at indi_rate_control.cpp step 8 (l.378-382), c_i = lead K_i ACT_TC, 0 when landed; noise
+   x1.4-2.3 on the a_f term (G4); filter H is in the model (checked). Stage 3 OPEN.
+S49 also: lead falsification sweep (`results/stage2_s49/lead_delay_README.md`, UNKEYED): unmodelled delay calibrated
+   ~2.5 ms on tc33_p8; lead K20 at 400 Hz PM 57.0/GM 10.5, K30 52.8/8.1, K40 fails -> stop rule not triggered, K_R 20.
+S50 (launch 20261117-011145, cap $2.02): owner answers applied (GATES.md G1 FINAL block, evidence limit 1 = two hole
+   kinds, >0.1 % -> re-fly). G1.7 implemented: `bench/provenance.py` + `run_scenario.py --gate` + self-test (ALL PASS,
+   break-checked), D-G1.7. Current SITL binary is from 32500e0276, not HEAD: rebuild after the LAST commit before a --gate batch
+   (any commit, even docs, moves HEAD and makes the binary stale; build = `indi_project/docker/run.sh -n build -t 3600 'make px4_sitl_default'`). TODO: a hole
+   reporter per run (sim vs controller holes, extend `bench/a15_gaps.py`?) for evidence limit 1; G1 passes once G1.7 in use.
+S50 also: T104 sonnet second key of the lead sweep (`results/stage2_s50/lead_sweep_second_key.md`): AGREE on the
+   decision at K_R 20 (PM within 1.4 deg); GM key 2 0.6-2.7 dB higher, K30-40 PM 5-7 deg higher (filter choice). Item (1) next is DONE.
+S51 (launch 20261117-021217, cap $3): T105 opus review r1 of the lead note vs code: NOT BLOCKING (`design/rate_lead_review_r1.md`,
+   dispositions there, D-RATE-LEAD addendum). Majors: lead is feedback-only (setpoint path keeps actuator lag); GM falls
+   12-18 dB in model, ACT_TC overestimated +40 % is the dangerous side (K40: ~5 dB); yaw lead leaves the G2 path lag.
+S52 (launch 20261117-022149, cap $3): MC_INDI_LEAD implemented (T107 sonnet, 6e82b66300; reset fix after T108 haiku
+   second key AGREE on law, `results/stage3_s52/lead_second_key.md`); 13 unit tests, break-checked (sign flip -> 7 fail);
+   closed-loop test PM 34 -> 66, ACT_TC x0.6 PM 45/GM 9.5, x1.4 PM 83/GM 13 (under-estimated tau_c is the weak side, not
+   over as review F2 guessed). Flight roll M3a tc33 P8 lead 1, 2 seeds: PM 59.1/59.1, GM 13.9/14.3, DM 57 ms
+   (S48 lead 0: 25.9/10.7/25) -> `results/stage3_s52/m3a_lead/README.md`. Runner now appends quad5in_indi_g1.params
+   (7c8b8d1661). pretest_gate "end-time option" not needed: use --delay 4 --length 15 to end before the injection.
+S53 (launch 20261117-023518, cap $3): ACT_TC sweep with lead 1 (`results/stage3_s53/act_tc_sweep/README.md`): x0.5 PM 36/
+   GM 5.1, x1.5 86/11.3, x2 75/10.0 (2 seeds, f_c 7 Hz): tolerance one-sided [x1, x2]. D-RATE-LEAD addendum 2: defaults
+   LEAD 1, ACT_TC 0.05 (apply with item 6 of the stage-3 note), stage-4 ident reports an upper bound of tau_c.
+   T109 sonnet drafted `design/stage3_items_note.md` (6 items, UNREVIEWED; 9 UNVERIFIED points listed in it).
+S53 also: route check 53 (`design/route_check_53.md`), acted on: defaults applied (7522625b0f, ACT_TC 0.05; LEAD already
+   1); opus review of the items note DEFERRED (items 1-3 parked as a post-G2 safety package, reviewed before they are
+   coded). Pitch M3a ACT_TC 0.05: PM 86.9/86.8, GM 11.9/12.0 (2 seeds, = roll). Yaw M3a pre-test (AMP 0.008):
+   no crossover in 1-50 Hz (|L| -0.7 dB at 1 Hz), Ms 8.2 dB at 1 Hz -> A-27 opened. SITL rebuilt at 7522625b0f
+   (later commits docs/results only; --gate still needs a rebuild at HEAD).
