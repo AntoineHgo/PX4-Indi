@@ -2,8 +2,9 @@
 """Disturbance injector for the SITL benchmark (T6 gust_x, T7 payload_add, H2 gust_diag, H3 com_shift). Runs INSIDE the px4-indi-sim container,
 next to the runner, in the same network namespace as gz.
 
-The ApplyLinkWrench system is loaded at runtime (world service /world/<w>/entity/system/add), no world/model file
-is edited. A one-step wrench (topic /world/<w>/wrench; the persistent topic ACCUMULATES per message) is published on the x500 base_link as a function of gz SIM time, at every clock
+The ApplyLinkWrench system is normally already loaded by the gz server config (src/modules/simulation/gz_bridge/server.config, named by
+$GZ_SIM_SERVER_CONFIG_PATH / $PX4_GZ_SERVER_CONFIG); then the runtime add is SKIPPED (a second instance applied every wrench twice, A-31).
+Otherwise it is added at runtime (world service /world/<w>/entity/system/add; --add-system auto|yes|no). No world/model file is edited. A one-step wrench (topic /world/<w>/wrench; the persistent topic ACCUMULATES per message) is published on the x500 base_link as a function of gz SIM time, at every clock
 message, so the profile does not depend on the speed factor. The profile starts at an onset that the runner writes to
 a trigger file (JSON {"onset_px4_s": float}); onset is expressed in PX4/ULog time and converted with CLOCK_OFFSET_S.
 
@@ -190,6 +191,8 @@ def main():
     ap.add_argument("--sdf", default=None, help="base model SDF to size the profiles from (default: the airframe SDF)")
     ap.add_argument("--link", default="base_link")
     ap.add_argument("--stop-after", type=float, default=30.0, help="exit this many sim s after the profile ended")
+    ap.add_argument("--add-system", choices=("auto", "yes", "no"), default="auto",
+                    help="auto: add ApplyLinkWrench at runtime only if the gz server config lacks it (A-31)")
     ap.add_argument("--wall-timeout", type=float, default=900.0)
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
@@ -217,21 +220,36 @@ def main():
     # The python binding cannot build gz.msgs.Plugin ("No message class registered"), so the one-off service call
     # goes through the gz CLI. The ApplyLinkWrench topics are then driven from python.
     import subprocess
-    req = ('entity {id: 1} plugins {filename: "gz-sim-apply-link-wrench-system" '
-           'name: "gz::sim::systems::ApplyLinkWrench"}')
-    ok = False
-    for attempt in range(20):
-        r = subprocess.run(["gz", "service", "-s", f"{w}/entity/system/add", "--reqtype", "gz.msgs.EntityPlugin_V",
-                            "--reptype", "gz.msgs.Boolean", "--timeout", "3000", "--req", req],
-                           capture_output=True, text=True)
-        say(f"system add attempt {attempt}: rc={r.returncode} out={r.stdout.strip()!r}")
-        if "true" in r.stdout:
-            ok = True
-            break
-        time.sleep(1)
-    if not ok:
-        say("FAILED to add ApplyLinkWrench system")
-        return 2
+    loaded_by = None
+    for env in ("GZ_SIM_SERVER_CONFIG_PATH", "PX4_GZ_SERVER_CONFIG"):
+        cfg = os.environ.get(env)
+        if cfg and os.path.isfile(cfg):
+            try:
+                if "apply-link-wrench" in open(cfg).read():
+                    loaded_by = cfg
+                    break
+            except OSError:
+                pass
+    do_add = a.add_system == "yes" or (a.add_system == "auto" and loaded_by is None)
+    say(f"add-system={a.add_system}: config check -> {loaded_by!r}; runtime add {'YES' if do_add else 'NO'}")
+    if not do_add and loaded_by:
+        say(f"ApplyLinkWrench already loaded by {loaded_by}, not added")
+    if do_add:
+        req = ('entity {id: 1} plugins {filename: "gz-sim-apply-link-wrench-system" '
+               'name: "gz::sim::systems::ApplyLinkWrench"}')
+        ok = False
+        for attempt in range(20):
+            r = subprocess.run(["gz", "service", "-s", f"{w}/entity/system/add", "--reqtype", "gz.msgs.EntityPlugin_V",
+                                "--reptype", "gz.msgs.Boolean", "--timeout", "3000", "--req", req],
+                               capture_output=True, text=True)
+            say(f"system add attempt {attempt}: rc={r.returncode} out={r.stdout.strip()!r}")
+            if "true" in r.stdout:
+                ok = True
+                break
+            time.sleep(1)
+        if not ok:
+            say("FAILED to add ApplyLinkWrench system")
+            return 2
     time.sleep(1.0)
 
     pub = node.advertise(f"{w}/wrench", EntityWrench)  # one-step wrench, re-sent at every clock tick
