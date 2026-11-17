@@ -43,6 +43,9 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T119 | S59 code items 2+3 + tests | sonnet | `design/t119_s3_items_s59.md` | DONE 7 calls ~$0.33, 6/6 test targets, break-checked |
+| T120 | second key items 2+3 diff | haiku | `design/t120_second_key_s59.md` | re-run brief if file missing |
+| B-S59 | SITL rebuild + 1 hover (meas800 minus INJ, v2, 800 Hz, --gate) | bash | `results/stage3_s59/hover_items23/` (done.txt, stdout.log rc) | command in stdout of session; rerun: build then run_scenario hover --sim v2 --rate-hz 800 --seed 1 --speed 4 --gate --params hover.params |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);

@@ -376,3 +376,5 @@ pre-identification behaviour of decision 3 must cover it).
 - Alternatives: note's 0.2 s + thrust decay at 0.5/s (trips a legal 3 Hz offboard rate stream; a controller-level
   descent policy at unknown attitude); hold everything (stock behaviour).
 - Overturn if: G5 shows a stale-setpoint case where held thrust causes loss of control before a commander failsafe.
+- S59 note: an offboard body-rate stream at exactly 2 Hz sits at the 0.5 s limit and can trip for 1-2 cycles (rates
+  zeroed briefly, recovers on the next message); G5 offboard test flies >= 10 Hz. Coded S59 (T119), see `design/t119_s3_items_s59.md`.
