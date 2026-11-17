@@ -375,9 +375,17 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	// 8. incremental inversion, only yaw has the spin-up term (g2 / dt = 0 for roll and pitch)
 	Vector3f dt_cmd;
 
+	// rate prediction lead: c_i = lead_scale K_i tau_c cancels the actuator lag in the feedback path, bounded
+	// to kMaxLeadGain, off on ground so that the landed output is the law without lead
+	Vector3f lead_gain;
+
+	for (int i = 0; i < 3; i++) {
+		lead_gain(i) = landed ? 0.f : math::min(_lead_scale * _gain_k(i) * _actuator_tc, kMaxLeadGain);
+	}
+
 	for (int i = 0; i < 3; i++) {
 		const float g2_over_dt = (i == 2) ? (_g2_yaw / dt) : 0.f;
-		const float numerator = nu(i) - a_f(i) + g2_over_dt * (t_f(i) - _t_f_prev(i));
+		const float numerator = nu(i) - (1.f + lead_gain(i)) * a_f(i) + g2_over_dt * (t_f(i) - _t_f_prev(i));
 		dt_cmd(i) = numerator / (_g1(i) + g2_over_dt);
 	}
 
@@ -403,6 +411,7 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	// 10. logging values
 	_nu = nu;
 	_a_f = a_f;
+	_lead_gain = lead_gain;
 	_t_f = t_fb;
 	_t_f_model = t_f_model;
 	_t_f_meas = t_f_meas;

@@ -192,6 +192,7 @@ private:
 		(ParamFloat<px4::params::MC_INDI_K_Y>) _param_mc_indi_k_y,
 		(ParamFloat<px4::params::MC_INDI_ACT_TC>) _param_mc_indi_act_tc,
 		(ParamFloat<px4::params::MC_INDI_ACT_BLD>) _param_mc_indi_act_bld,
+		(ParamFloat<px4::params::MC_INDI_LEAD>) _param_mc_indi_lead,
 		(ParamInt<px4::params::MC_INDI_DELAY>) _param_mc_indi_delay,
 		(ParamInt<px4::params::MC_INDI_ERPM_DLY>) _param_mc_indi_erpm_dly,
 		(ParamFloat<px4::params::MC_INDI_ERPM_TO>) _param_mc_indi_erpm_to,

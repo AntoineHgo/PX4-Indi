@@ -110,6 +110,16 @@ parameters:
       unit: s
       decimal: 3
       increment: 0.001
+    MC_INDI_LEAD:
+      description:
+        short: INDI rate lead scale
+        long: Scales the rate prediction lead that cancels the actuator lag in the rate loop, by adding the factor of this scale times MC_INDI_K_R, MC_INDI_K_P or MC_INDI_K_Y times MC_INDI_ACT_TC (at most 2) to the angular acceleration feedback gain. Set to 0 to disable. Raises motor command noise.
+      type: float
+      default: 1
+      min: 0
+      max: 1
+      decimal: 2
+      increment: 0.05
     MC_INDI_DELAY:
       description:
         short: INDI actuator model delay

@@ -35,6 +35,8 @@
 #include <lib/indi_rate_control/indi_rate_control.hpp>
 
 #include <cmath>
+#include <complex>
+#include <vector>
 #include <limits>
 
 using namespace matrix;
@@ -89,6 +91,7 @@ IndiRateControl makeController()
 	ctrl.setFilterCutoffs(40.f, 20.f);
 	ctrl.setDelaySamples(0);
 	ctrl.setMaxIncrement(1.f);
+	ctrl.setLeadScale(0.f); // the rate lead has dedicated tests
 	return ctrl;
 }
 
@@ -1251,4 +1254,380 @@ TEST(IndiRateControlBlendTest, LandedBlendTracksWithoutAccumulating)
 	ctrl.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, false);
 	EXPECT_NEAR(ctrl.getFilteredTorque()(0), ctrl.getFilteredModelTorque()(0), 1e-4f);
 	EXPECT_NEAR(ctrl.getFilteredTorque()(0), 0.5f, 1e-3f);
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Rate prediction lead (D-RATE-LEAD): num_i = nu_i - (1 + c_i) a_f_i + ..., c_i = lead K_i tau_c, 0 on ground, <= 2
+// ---------------------------------------------------------------------------------------------------------------
+
+namespace
+{
+
+/// controller for the lead tests: K 20/40/10, G1 100, ACT_TC 0.02, no filters on a_f (the argument is used as is)
+IndiRateControl makeLeadController(float lead)
+{
+	IndiRateControl ctrl = makeController();
+	ctrl.setGainK(Vector3f(20.f, 40.f, 10.f));
+	ctrl.setLeadScale(lead);
+	return ctrl;
+}
+
+} // namespace
+
+TEST(IndiRateControlLeadTest, LeadZeroIsBitIdentical)
+{
+	// scale 0 is the law without lead, however it is set (0, NaN and negative all give 0), on a noisy sequence
+	IndiRateControl a = makeLeadController(0.f);
+	IndiRateControl b = makeLeadController(std::numeric_limits<float>::quiet_NaN());
+	IndiRateControl c = makeLeadController(-3.f);
+	IndiRateControl on = makeLeadController(1.f);
+	bool lead_differs = false;
+
+	for (int i = 0; i < 600; i++) {
+		const Vector3f ua = step(a, i);
+		ASSERT_EQ(ua, step(b, i)) << i;
+		ASSERT_EQ(ua, step(c, i)) << i;
+		lead_differs = lead_differs || (step(on, i) != ua);
+	}
+
+	EXPECT_TRUE(lead_differs);
+
+	// first cycle against the law written out: t = (K e - a_f)/G1 exactly as before the lead was added
+	IndiRateControl d = makeLeadController(0.f);
+	const Vector3f out = d.update(Vector3f(), Vector3f(1.f, 1.f, 1.f), Vector3f(5.f, 5.f, 5.f), Vector3f(), kDt, false);
+	EXPECT_EQ(out(0), (20.f * 1.f - 5.f) / kG1True);
+	EXPECT_EQ(out(1), (40.f * 1.f - 5.f) / kG1True);
+	EXPECT_EQ(out(2), (10.f * 1.f - 5.f) / kG1True);
+}
+
+TEST(IndiRateControlLeadTest, DefaultScaleIsOne)
+{
+	IndiRateControl ctrl; // never called setLeadScale
+	ctrl.setGainK(Vector3f(20.f, 20.f, 20.f));
+	ctrl.setG1(Vector3f(kG1True, kG1True, kG1True));
+	ctrl.setActuatorTimeConstant(0.02f);
+	ctrl.update(Vector3f(), Vector3f(), Vector3f(1.f, 0.f, 0.f), Vector3f(), kDt, false);
+	EXPECT_NEAR(ctrl.getLeadGain()(0), 0.4f, 1e-6f);
+}
+
+TEST(IndiRateControlLeadTest, LeadAddsKTauAccel)
+{
+	IndiRateControl ctrl = makeLeadController(1.f);
+	const Vector3f out = ctrl.update(Vector3f(), Vector3f(), Vector3f(5.f, 0.f, 0.f), Vector3f(), kDt, false);
+	EXPECT_NEAR(out(0), -(1.f + 20.f * 0.02f) * 5.f / kG1True, 1e-6f); // -0.07, not -0.03 (sign flip) or -0.05 (no tau)
+	EXPECT_NEAR(ctrl.getLeadGain()(0), 0.4f, 1e-6f);
+	EXPECT_EQ(ctrl.getNu()(0), 0.f); // nu stays K e
+}
+
+TEST(IndiRateControlLeadTest, LeadUsesActuatorTc)
+{
+	IndiRateControl ctrl = makeLeadController(1.f);
+	ctrl.setActuatorTimeConstant(0.05f);
+	const Vector3f out = ctrl.update(Vector3f(), Vector3f(), Vector3f(5.f, 0.f, 0.f), Vector3f(), kDt, false);
+	EXPECT_NEAR(out(0), -(1.f + 20.f * 0.05f) * 5.f / kG1True, 1e-6f);
+}
+
+TEST(IndiRateControlLeadTest, LeadPerAxisGain)
+{
+	IndiRateControl ctrl = makeLeadController(1.f);
+	Vector3f out = ctrl.update(Vector3f(), Vector3f(), Vector3f(5.f, 5.f, 5.f), Vector3f(), kDt, false);
+	EXPECT_NEAR(out(0), -(1.f + 20.f * 0.02f) * 5.f / kG1True, 1e-6f);
+	EXPECT_NEAR(out(1), -(1.f + 40.f * 0.02f) * 5.f / kG1True, 1e-6f);
+	EXPECT_NEAR(out(2), -(1.f + 10.f * 0.02f) * 5.f / kG1True, 1e-6f);
+
+	IndiRateControl pitch_only = makeLeadController(1.f);
+	out = pitch_only.update(Vector3f(), Vector3f(), Vector3f(0.f, 5.f, 0.f), Vector3f(), kDt, false);
+	EXPECT_EQ(out(0), 0.f);
+	EXPECT_EQ(out(2), 0.f);
+	EXPECT_NEAR(out(1), -(1.f + 40.f * 0.02f) * 5.f / kG1True, 1e-6f);
+}
+
+TEST(IndiRateControlLeadTest, LeadRateErrorUnchanged)
+{
+	IndiRateControl on = makeLeadController(1.f);
+	IndiRateControl off = makeLeadController(0.f);
+
+	for (int i = 0; i < 50; i++) {
+		const Vector3f a = on.update(Vector3f(), Vector3f(1.f, -1.f, 0.5f), Vector3f(), Vector3f(), kDt, false);
+		const Vector3f b = off.update(Vector3f(), Vector3f(1.f, -1.f, 0.5f), Vector3f(), Vector3f(), kDt, false);
+		ASSERT_EQ(a, b);
+		ASSERT_EQ(on.getNu(), off.getNu());
+	}
+}
+
+TEST(IndiRateControlLeadTest, LeadOffWhenLanded)
+{
+	IndiRateControl on = makeLeadController(1.f);
+	IndiRateControl off = makeLeadController(0.f);
+
+	for (int i = 0; i < 100; i++) {
+		const Excitation e = excitation(i);
+		const Vector3f a = on.update(e.rate, e.rate_sp, e.accel, e.alloc, kDt, true);
+		const Vector3f b = off.update(e.rate, e.rate_sp, e.accel, e.alloc, kDt, true);
+		ASSERT_EQ(a, b) << i;
+		ASSERT_EQ(on.getLeadGain(), Vector3f());
+	}
+}
+
+TEST(IndiRateControlLeadTest, LeadYawWithSpinUp)
+{
+	IndiRateControl ctrl = makeLeadController(1.f);
+	ctrl.setG2Yaw(2.f);
+	const Vector3f out = ctrl.update(Vector3f(), Vector3f(), Vector3f(0.f, 0.f, 5.f), Vector3f(), kDt, false);
+	const float c_y = 10.f * 0.02f;
+	// the lead sits in the numerator, inside the (G1 + G2/dt) denominator
+	EXPECT_NEAR(out(2), -(1.f + c_y) * 5.f / (kG1True + 2.f / kDt), 1e-6f);
+	EXPECT_NEAR(ctrl.getLeadGain()(2), c_y, 1e-6f);
+}
+
+TEST(IndiRateControlLeadTest, LeadScaleInvalidAndClamped)
+{
+	const float nan = std::numeric_limits<float>::quiet_NaN();
+	const float inf = std::numeric_limits<float>::infinity();
+	const float scales[] = {nan, -1.f, inf, -inf, 0.5f, 2.f};
+	const float expected[] = {0.f, 0.f, 0.f, 0.f, 0.5f, 1.f};
+
+	for (int k = 0; k < 6; k++) {
+		IndiRateControl ctrl = makeLeadController(scales[k]);
+		const Vector3f out = ctrl.update(Vector3f(), Vector3f(), Vector3f(5.f, 0.f, 0.f), Vector3f(), kDt, false);
+		EXPECT_FALSE(ctrl.getFault());
+		EXPECT_NEAR(ctrl.getLeadGain()(0), expected[k] * 0.4f, 1e-6f) << k;
+		EXPECT_NEAR(out(0), -(1.f + expected[k] * 0.4f) * 5.f / kG1True, 1e-6f) << k;
+	}
+}
+
+TEST(IndiRateControlLeadTest, LeadGainIsClampedToTwo)
+{
+	IndiRateControl ctrl = makeLeadController(1.f);
+	ctrl.setGainK(Vector3f(100.f, 100.f, 100.f));
+	ctrl.setActuatorTimeConstant(0.05f); // K tau_c = 5
+	const Vector3f out = ctrl.update(Vector3f(), Vector3f(), Vector3f(5.f, 0.f, 0.f), Vector3f(), kDt, false);
+	EXPECT_NEAR(ctrl.getLeadGain()(0), 2.f, 1e-6f);
+	EXPECT_NEAR(out(0), -3.f * 5.f / kG1True, 1e-6f); // not -6 * 5 / G1
+}
+
+TEST(IndiRateControlLeadTest, LeadKeepsFaultHold)
+{
+	const float nan = std::numeric_limits<float>::quiet_NaN();
+	IndiRateControl ctrl = makeLeadController(1.f);
+	Vector3f valid;
+
+	for (int i = 0; i < 20; i++) {
+		valid = ctrl.update(Vector3f(0.1f, 0.2f, 0.3f), Vector3f(1.f, 1.f, 1.f), Vector3f(1.f, 2.f, 3.f),
+				    Vector3f(0.1f, 0.1f, 0.1f), kDt, false);
+	}
+
+	EXPECT_FALSE(ctrl.getFault());
+	EXPECT_NE(valid, Vector3f());
+	const Vector3f held = ctrl.update(Vector3f(0.1f, 0.2f, 0.3f), Vector3f(1.f, 1.f, 1.f), Vector3f(0.f, nan, 0.f),
+					  Vector3f(0.1f, 0.1f, 0.1f), kDt, false);
+	EXPECT_TRUE(ctrl.getFault());
+	EXPECT_EQ(held, valid);
+}
+
+TEST(IndiRateControlLeadTest, MeasuredPathStaysBumplessWithLead)
+{
+	IndiRateControl ref = makeLeadController(1.f);
+	IndiRateControl ctrl = makeLeadController(1.f);
+	Vector3f meas;
+	const float alpha = 1.f - expf(-kDt / kActuatorTc);
+	bool in_use_seen = false;
+
+	for (int i = 0; i < 400; i++) {
+		const Excitation e = excitation(i);
+		meas += alpha * (e.alloc - meas);
+		ctrl.setMeasuredTorque(meas, true);
+		const Vector3f a = step(ref, i);
+		const Vector3f b = step(ctrl, i);
+		in_use_seen = in_use_seen || ctrl.measurementInUse();
+
+		for (int k = 0; k < 3; k++) {
+			ASSERT_NEAR(a(k), b(k), 1e-4f) << "cycle " << i << " axis " << k;
+		}
+	}
+
+	EXPECT_TRUE(in_use_seen);
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Closed loop: loop broken numerically by sinusoidal injection d at the command, u = c + d fed back (as the module
+// does), L = -c/u. Plant: first order actuator, one sample command delay, gyro derivative filtered like PX4.
+// ---------------------------------------------------------------------------------------------------------------
+
+namespace
+{
+
+constexpr float kLagDt = 0.00125f;
+constexpr float kLagTc = 0.033f;
+constexpr float kPAtt = 8.f;
+
+class RollPlantLag
+{
+public:
+	RollPlantLag()
+	{
+		_lpf.set_cutoff_frequency(1.f / kLagDt, 40.f);
+		_alpha.setCutoffFreq(1.f / kLagDt, 20.f);
+	}
+
+	void step(float command)
+	{
+		const float applied = _delayed; // one sample command delay
+		_delayed = command;
+		_torque += (1.f - expf(-kLagDt / kLagTc)) * (applied - _torque);
+		const float accel = kG1True * _torque;
+		_accel_f = _alpha.update(_lpf.apply(accel));
+		_rate += accel * kLagDt;
+		_att += _rate * kLagDt;
+	}
+
+	float rate() const { return _rate; }
+	float att() const { return _att; }
+	float accelFiltered() const { return _accel_f; }
+
+private:
+	math::LowPassFilter2p<float> _lpf;
+	AlphaFilter<float> _alpha;
+	float _delayed{0.f};
+	float _torque{0.f};
+	float _accel_f{0.f};
+	float _rate{0.f};
+	float _att{0.f};
+};
+
+struct LoopMargins {
+	float pm_deg{NAN};
+	float gm_db{NAN};
+	float crossover_hz{NAN};
+	std::vector<double> freq;
+	std::vector<std::complex<double>> L;
+};
+
+/// L(jw) at one frequency by sinusoidal injection, returns -c/u
+std::complex<double> measureL(float lead, float act_tc, float f_hz)
+{
+	IndiRateControl ctrl = makeController();
+	ctrl.setGainK(Vector3f(20.f, 20.f, 20.f));
+	ctrl.setActuatorTimeConstant(act_tc);
+	ctrl.setLeadScale(lead);
+	RollPlantLag plant;
+
+	const int periods_measure = 10;
+	const int n_measure = (int)lroundf(periods_measure / (f_hz * kLagDt));
+	const double w = 2. * M_PI * periods_measure / (n_measure * (double)kLagDt); // integer number of periods
+	const int n_transient = (int)fmaxf(4.f / kLagDt, 10.f / (f_hz * kLagDt)); // >= 4 s and 10 periods
+	const float amp = 0.01f;
+	float u_prev = 0.f;
+	std::complex<double> sum_c{0., 0.};
+	std::complex<double> sum_u{0., 0.};
+
+	for (int i = 0; i < n_transient + n_measure; i++) {
+		const double t = i * (double)kLagDt;
+		const float rate_sp = -kPAtt * plant.att();
+		const float c = ctrl.update(Vector3f(plant.rate(), 0.f, 0.f), Vector3f(rate_sp, 0.f, 0.f),
+					    Vector3f(plant.accelFiltered(), 0.f, 0.f), Vector3f(u_prev, 0.f, 0.f), kLagDt, false)(0);
+		const float u = c + amp * (float)sin(w * t);
+		plant.step(u);
+		u_prev = u;
+
+		if (i >= n_transient) {
+			const std::complex<double> e = std::polar(1., -w * t);
+			sum_c += (double)c * e;
+			sum_u += (double)u * e;
+		}
+	}
+
+	return -sum_c / sum_u;
+}
+
+LoopMargins loopMargins(float lead, float act_tc)
+{
+	LoopMargins m;
+	// 12 log spaced points 0.5-30 Hz, then points above for the gain margin
+	const double extra[] = {40.f, 50.f, 65.f, 80.f, 100.f, 130.f, 170.f};
+
+	for (int k = 0; k < 12; k++) {
+		m.freq.push_back(0.5 * pow(60., k / 11.));
+	}
+
+	for (double f : extra) {
+		m.freq.push_back(f);
+	}
+
+	for (size_t k = 0; k < m.freq.size(); k++) {
+		m.L.push_back(measureL(lead, act_tc, (float)m.freq[k]));
+	}
+
+	// phase unwrapped along frequency, the first point (L ~ K/s) is put in (-270, 90] deg
+	std::vector<double> ph(m.L.size()), mag_db(m.L.size());
+
+	for (size_t k = 0; k < m.L.size(); k++) {
+		double p = std::arg(m.L[k]);
+
+		if (k == 0) {
+			while (p > M_PI / 2.) { p -= 2. * M_PI; }
+
+		} else {
+			while (p - ph[k - 1] * M_PI / 180. > M_PI) { p -= 2. * M_PI; }
+
+			while (p - ph[k - 1] * M_PI / 180. < -M_PI) { p += 2. * M_PI; }
+		}
+
+		ph[k] = p * 180. / M_PI;
+		mag_db[k] = 20. * log10(std::abs(m.L[k]));
+	}
+
+	for (size_t k = 1; k < m.L.size(); k++) {
+		if (std::isnan(m.pm_deg) && mag_db[k - 1] >= 0. && mag_db[k] < 0.) {
+			const double a = mag_db[k - 1] / (mag_db[k - 1] - mag_db[k]);
+			const double lf = log(m.freq[k - 1]) + a * (log(m.freq[k]) - log(m.freq[k - 1]));
+			m.crossover_hz = (float)exp(lf);
+			m.pm_deg = (float)(180. + ph[k - 1] + a * (ph[k] - ph[k - 1]));
+		}
+
+		if (std::isnan(m.gm_db) && ph[k - 1] > -180. && ph[k] <= -180.) {
+			const double a = (-180. - ph[k - 1]) / (ph[k] - ph[k - 1]);
+			m.gm_db = (float)(-(mag_db[k - 1] + a * (mag_db[k] - mag_db[k - 1])));
+		}
+	}
+
+	return m;
+}
+
+void printMargins(const char *name, const LoopMargins &m)
+{
+	printf("MARGINS %s: PM %.1f deg, GM %.1f dB, crossover %.2f Hz\n", name, (double)m.pm_deg, (double)m.gm_db,
+	       (double)m.crossover_hz);
+
+	for (size_t k = 0; k < m.freq.size(); k++) {
+		printf("  f %7.2f Hz |L| %8.3f dB arg %8.1f deg\n", m.freq[k], 20. * log10(std::abs(m.L[k])),
+		       std::arg(m.L[k]) * 180. / M_PI);
+	}
+}
+
+} // namespace
+
+TEST(IndiRateControlLeadTest, LeadImprovesPhaseMargin)
+{
+	const LoopMargins off = loopMargins(0.f, kLagTc);
+	const LoopMargins on = loopMargins(1.f, kLagTc);
+	const LoopMargins low = loopMargins(1.f, kLagTc * 0.6f);
+	const LoopMargins high = loopMargins(1.f, kLagTc * 1.4f);
+	printMargins("lead0", off);
+	printMargins("lead1_matched", on);
+	printMargins("lead1_x0.6", low);
+	printMargins("lead1_x1.4", high);
+
+	for (const LoopMargins *m : {&off, &on, &low, &high}) {
+		for (const auto &l : m->L) {
+			ASSERT_TRUE(std::isfinite(std::abs(l)));
+		}
+
+		ASSERT_FALSE(std::isnan(m->pm_deg)); // a crossover exists
+		EXPECT_GT(m->pm_deg, 0.f); // no instability
+	}
+
+	EXPECT_GE(on.pm_deg, 50.f);
+	EXPECT_GE(on.pm_deg - off.pm_deg, 20.f);
+	EXPECT_GE(on.gm_db, 10.f);
 }

@@ -41,7 +41,9 @@
  *   nu     = K .* (rate_sp - rate)                 desired angular acceleration
  *   t_act  = first order lag of the allocated torque (actuator model)
  *   t_f    = H(delay(t_act))                       same filter chain as the gyro derivative
- *   dt_cmd = G1^-1 (nu - angular_accel)            roll, pitch
+ *   c      = lead_scale K tau_c                    rate prediction lead, tau_c = actuator time constant,
+ *                                                  c <= 2, 0 on ground
+ *   dt_cmd = G1^-1 (nu - (1 + c) angular_accel)    roll, pitch
  *   t_cmd  = t_f + dt_cmd                          bounded to [-1, 1]
  *
  * An optional extra low-pass on the yaw axis is applied to both angular_accel and t_f, so the
@@ -50,7 +52,7 @@
  * yaw torque output filter (MC_YAW_TQ_CUTOFF) does for the whole PID yaw command.
  *
  * Yaw adds the rotor spin-up term G2 (Smeur 2016, torque space form):
- *   (G1 + G2/dt) dt_cmd = nu - angular_accel + (G2/dt) (t_f - t_f_prev)
+ *   (G1 + G2/dt) dt_cmd = nu - (1 + c) angular_accel + (G2/dt) (t_f - t_f_prev)
  *
  * Measured torque path (optional, decision D-omega2): setMeasuredTorque() supplies tau_meas = B u from the ESC
  * rotor speeds. It runs through its own delay and its own copy of H in parallel to the model, and replaces
@@ -116,6 +118,15 @@ public:
 	 * blend: the measured torque alone is used when it is in use.
 	 */
 	void setActuatorBlendTimeConstant(float tb_s);
+
+	/**
+	 * Set the scale of the rate prediction lead c = scale K tau_c on the angular acceleration feedback.
+	 * 0 = off (law without lead), 1 = full. Non finite or negative values give 0, values above 1 give 1.
+	 */
+	void setLeadScale(float scale) { _lead_scale = math::isFinite(scale) ? math::constrain(scale, 0.f, 1.f) : 0.f; }
+
+	/** Lead gain c applied per axis in the last cycle (0 when landed), for logging. */
+	const matrix::Vector3f &getLeadGain() const { return _lead_gain; }
 
 	/**
 	 * Set the cutoffs of the synchronisation filter H, mirroring IMU_GYRO_CUTOFF (second order
@@ -248,6 +259,7 @@ public:
 	static constexpr float kMaxRpmRatio = 1.5f;
 
 private:
+	static constexpr float kMaxLeadGain = 2.f; ///< upper limit of the lead gain c = scale K tau_c
 	static constexpr float kMaxBlendTimeConstant = 10.f; ///< s, upper limit of the blend time constant
 	static constexpr float kMaxBlend = 2.f; ///< bound of the blend state per axis, both torques are within [-1, 1]
 	static constexpr int kDelayBufferSize = kMaxDelaySamples + 1;
@@ -275,6 +287,8 @@ private:
 	float _yaw_cutoff_hz{0.f}; ///< 0 = yaw low pass disabled
 	int _meas_delay_samples_target{0};
 	float _blend_tc{0.f}; ///< 0 = blend disabled
+	float _lead_scale{1.f}; ///< scale of the rate prediction lead, 0 = off
+	matrix::Vector3f _lead_gain{}; ///< c applied in the last cycle, logging
 
 	// Filter design bookkeeping
 	float _design_sample_freq{0.f}; ///< sample rate the filters are designed for, 0 = not designed

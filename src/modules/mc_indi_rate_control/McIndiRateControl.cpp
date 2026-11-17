@@ -87,6 +87,7 @@ McIndiRateControl::parameters_updated()
 	_indi.setG2Yaw(_param_mc_indi_g2_y.get());
 	_indi.setActuatorTimeConstant(_param_mc_indi_act_tc.get());
 	_indi.setActuatorBlendTimeConstant(_param_mc_indi_act_bld.get());
+	_indi.setLeadScale(_param_mc_indi_lead.get());
 	_indi.setDelaySamples(_param_mc_indi_delay.get());
 	_indi.setMeasurementDelaySamples(_param_mc_indi_erpm_dly.get());
 	_indi.setMaxIncrement(_param_mc_indi_dt_max.get());
@@ -218,6 +219,7 @@ McIndiRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f &ang
 	inject.copyTo(indi_rate_status.inject);
 	torque_setpoint.copyTo(indi_rate_status.torque_sp);
 	_indi.getNu().copyTo(indi_rate_status.nu);
+	_indi.getLeadGain().copyTo(indi_rate_status.lead_gain);
 	_indi.getFilteredAngularAccel().copyTo(indi_rate_status.angular_accel_filtered);
 	_indi.getFilteredTorque().copyTo(indi_rate_status.torque_filtered);
 	_indi.getTorqueIncrement().copyTo(indi_rate_status.torque_increment);
