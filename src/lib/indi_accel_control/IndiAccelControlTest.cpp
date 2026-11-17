@@ -626,3 +626,29 @@ TEST_F(IndiAccelControlTest, JerkDifferenceFiltered)
 	EXPECT_NEAR(out.j_used(0), 5.f, 0.01f);
 	EXPECT_TRUE(out.jerk_from_difference);
 }
+
+TEST_F(IndiAccelControlTest, OmegaFfIndependentOfYawRate)
+{
+	// A-9 guard: the attitude controller already feeds the yaw rate forward (AttitudeControl, _omega_command), so
+	// omega_ff must carry the jerk term only. Same tilted state and jerk, yaw rate 0 vs 1 rad/s: identical omega_ff.
+	for (const float tilt_deg : {0.f, 15.f, 30.f}) {
+		const float a_h = kG * tanf(math::radians(tilt_deg));
+		IndiAccelControl::Output outs[2];
+
+		for (int k = 0; k < 2; k++) {
+			_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt);
+			IndiAccelControl::Input in = hoverInput();
+			in.a_ref = Vector3f(a_h, 0.f, 0.f);
+			in.j_ref = Vector3f(0.4f, 0.7f, 0.f);
+			in.yawspeed_ref = static_cast<float>(k); // 0 and 1 rad/s
+			ASSERT_TRUE(_ctrl.update(in, outs[k]));
+		}
+
+		const Vector3f &out0 = outs[0].omega_ff;
+		const Vector3f &out1 = outs[1].omega_ff;
+
+		EXPECT_GT(out0.norm(), 0.01f) << "tilt " << tilt_deg; // the check is not vacuous
+		EXPECT_NEAR(out1(0), out0(0), 1e-6f) << "tilt " << tilt_deg;
+		EXPECT_NEAR(out1(1), out0(1), 1e-6f) << "tilt " << tilt_deg;
+	}
+}
