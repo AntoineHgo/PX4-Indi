@@ -54,20 +54,19 @@ S55 (launch 20261117-025824, cap $1.48): yaw model extended (`results/stage3_s55
    and law G2 > plant (GM 0.6). T112 opus review r1 note vs code: NOT BLOCKING (`design/yaw_inv_review_r1.md`, opus ~$0.7
    in 7 calls). Majors: store applied yaw increment after step 9 clamp (replaces _t_f_prev), zero it when landed and in
    resetStates, rewrite G2_Y param/header text; lead acts fully on yaw (x105) -> yaw depends on ACT_TC/LEAD as roll.
-S56 (launch 20261117-061159, cap $2.83): D-YAW-INV option (c) coded by T113 sonnet (13 calls, ~$0.45): state _yaw_inc_prev =
-   applied increment after clamps/finite check, 0 landed and on reset; 57/57 unit tests, break-checked (Delta term, landed,
-   reset); G2_Y text rewritten (G2/G1 is not the motor tau), G2_Y max 1 -> 1000; commit 23e9d30cc0. Yaw M3a B56 + T114 in flight.
-NEXT (S57): (1) read B56 margins (expect yaw crossover ~1.4 Hz, Ms <= 6 dB) and T114 verdict; close A-27 and mark D-YAW-INV
-   IMPLEMENTED if both fine; check log scripts that read torque_increment(2) as a per-cycle step. (2)-(5) unchanged from S54:
-   roll M3a measured-rotor path (--sim v2) and 400 Hz; attitude/velocity/position break notes; stage-3 items note review;
-   hole reporter. Next route check S58.
+S56 (launch 20261117-061159, cap $2.83): D-YAW-INV IMPLEMENTED (T113 sonnet 23e9d30cc0; T114 haiku second key AGREE-WITH-ISSUES:
+   first landed cycle read the flight increment -> 296766019a, new test break-checked). 58/58 unit tests. A-27 CLOSED: yaw M3a
+   2 seeds f_c 1.24 Hz, PM 88, DM 197 ms, Ms 1.6 dB (model 1.4 Hz/1.3 dB), `results/stage3_s56/yaw_m3a/README.md`. Yaw GM
+   unread (band ends 20 Hz at arg -170): extend bins to ~40 Hz for the G2 table. No bench script reads torque_increment.
+   SITL binary at 23e9d30cc0: rebuild before any further flight or --gate batch.
+NEXT (S57): (1) yaw M3a GM read: bins 5-40 Hz, 2 seeds (copy `results/stage3_s56/yaw_m3a/run_all.sh`, FMIN 5 FMAX 40,
+   TP shorter), rebuild first. (2) roll M3a measured-rotor path (--sim v2) and 400 Hz (fs arg). (3) attitude/velocity/
+   position break notes. (4) stage-3 items note review (opus, own session). (5) hole reporter. Route check S58 (due).
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T113 | D-YAW-INV code + 4 unit tests | sonnet | `results/stage3_s56/yaw_inv_impl.md` | DONE, committed 23e9d30cc0 |
-| T114 | second key of 23e9d30cc0 vs review r1 | haiku | `results/stage3_s56/yaw_inv_second_key.md` | rerun the brief if file missing |
-| B56 | yaw M3a 2 seeds, option (c) | bash | `results/stage3_s56/yaw_m3a/` (done.txt) | `bash indi_flight/results/stage3_s56/yaw_m3a/run_all.sh` |
+
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -84,6 +83,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 56 | T114 | haiku | second key D-YAW-INV diff | done, 5 calls, ~$0.05, AGREE-WITH-ISSUES, landed-cycle bug found and fixed |
+| 56 | T113 | sonnet | code D-YAW-INV + tests | done, 13 calls, ~$0.45, all pass, break-checked, missed first landed cycle |
 | 54 | T111 | sonnet | second key yaw break model | done, 6 calls, ~$0.25, coded-law denominator mis-transcribed; AGREE after 1-line fix, option (c) AGREE |
 | 53 | T110 | sonnet | route check 53 | done, 6 calls, ~$0.2, acted on (defaults, G2 table first) |
 | 53 | T109 | sonnet | stage-3 items design note | done, 5 calls, ~$0.2, 168 lines, UNREVIEWED |

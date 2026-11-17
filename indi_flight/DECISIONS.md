@@ -296,7 +296,7 @@ Overturn if: pitch/yaw or 400 Hz margins at ACT_TC x1.5 fall below G2; a plant w
 shows GM < 6 dB; G6 outlook airframes with slow motors (tau > 0.05) are flown before identification (then the
 pre-identification behaviour of decision 3 must cover it).
 
-## D-YAW-INV (S54, PROPOSED, not implemented): yaw inversion consistent with the actuator lag
+## D-YAW-INV (S54, IMPLEMENTED S56): yaw inversion consistent with the actuator lag
 - Finding (A-27, `results/stage3_s54/yaw_m3a_lf/README.md`): step 8 divides the yaw increment by the static G1 + G2/dt
   (21600 + 205 at 800 Hz) and adds (G2/dt)(t_f - t_f,prev). This is dead-beat spin-up: it assumes the rotor reaches
   the command within one sample. With tau 33 ms the nu and a_f terms are ~1/105 of the G1 law, t_cmd ~ a one-step
@@ -320,5 +320,9 @@ pre-identification behaviour of decision 3 must cover it).
 - S55 opus review r1 (`design/yaw_inv_review_r1.md`): NOT BLOCKING; code per its majors (applied-increment state, zero when
   landed/reset, G2_Y text).
 - Open before code: (review done), then unit test with the parametrised plant and yaw M3a 2 seeds.
+- S56 IMPLEMENTED: 23e9d30cc0 (law, state = applied increment, 0 landed/reset, G2_Y text, 4 tests) + 296766019a (state
+  gated by landed on the first landed cycle, haiku second key T114 finding, test break-checked). Yaw M3a 2 seeds
+  (`results/stage3_s56/yaw_m3a/README.md`): f_c 1.24 Hz, PM 88, DM 197 ms, Ms 1.6 dB (model 1.4 Hz / 1.3 dB).
+  Overturn: a yaw M3a with Ms > 6 dB inside the stage-4 tau/G2 bounds, or a yaw limit cycle with G2_Y > 0.
 - Overturn if: the model with G2 x0.5..x2 shows a limit cycle or GM < 6 dB, or the flight disagrees with the model by
   more than the G2 tolerance.

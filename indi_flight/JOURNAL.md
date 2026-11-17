@@ -454,3 +454,4 @@ S53 move: S47 (launch 20261116-221436, cap $3): first roll M3a flight with deriv
   43.8/15.7). A-21 CLOSED. T101 second key: PM/f_c/DM AGREE, GM DISAGREE (flights side with the first key; model GM
   2-3.5 dB optimistic, unmodelled delay).
 - S54 (2026-11-17): A-27 explained (yaw M3a L -> -1 at DC: static G1+G2/dt yaw denominator, dead-beat spin-up); D-YAW-INV option (c) proposed, model UNKEYED.
+- S56 (2026-11-17): D-YAW-INV option (c) coded (23e9d30cc0, 296766019a after second key), yaw M3a PM 88 / Ms 1.6 dB on 2 seeds, A-27 closed.
