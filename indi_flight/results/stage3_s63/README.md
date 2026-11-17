@@ -12,9 +12,13 @@ Findings
    sideways in attitude mode and the EKF tilt estimate drifts while it does.
 2. PID seed1 roll: same course, d +0.20 / +0.23 deg over 1.0-1.5 / 1.5-3 s. The drift is the estimator's, not INDI's.
 3. Yaw: standing bias, INDI seed2 d +0.73 deg before the step, +0.97 deg after; PID seed2 +1.0 / +0.8 deg.
-4. The T127 'seed3 roll exits the band at 2.96 s' is the return step: roll/pitch hold 3.0 s
-   (`bench/scenarios.py` step_roll), metric window 3.0 s from a t_on that lags the scheduled step by 13-23 ms. Seed3
-   roll/pitch and seed2 pitch show |est - sp| of 9-13 deg in the last bin for that reason.
+4. The 9-13 deg |est - sp| in the last bin of seed3 roll/pitch and seed2 pitch is the return step: roll/pitch hold
+   3.0 s (`bench/scenarios.py` step_roll), the 3.0 s metric window starts 13-23 ms late. CORRECTION (same session,
+   T127 key re-run with the G2-STEP window, which ends 50 ms before the return step): the T127 'seed3 roll truth exits
+   the band at 2.96 s' is NOT the return step; truth settle stays 2937 ms with the new window. Truth sits at the band
+   edge: est - truth -0.21 deg plus an in-band dip of the controlled estimate from 2.8 s (est - 15 deg down to -0.14 deg,
+   2.8-2.95 s), truth - 15 deg reaching -0.30 deg. Dip cause not identified: A-29 (parked, bound 0.15 deg).
+   Truth settle is reported, not a pass condition, under the S63 definition; est settle 349 ms.
 
 Consequence: G2-STEP measurement definition written in GATES.md (t_on on the setpoint crossing, window ends 50 ms
 before the return step, pass metrics on the estimate as written S61, truth overshoot also a pass condition,

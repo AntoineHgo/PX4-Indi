@@ -11,6 +11,9 @@ Variants per flight:
   est_fix   estimator, t_on = window start + 2.0 s
   gt_det    ground truth (vehicle_attitude_groundtruth), t_on as est_det
   gt_fix    ground truth, t_on = window start + 2.0 s
+  est_g2    estimator, GATES.md G2-STEP S63 definition: t_on = setpoint 50 % crossing from the median of
+            the 1 s before, window ends 50 ms before the return-step crossing (S63 update)
+  gt_g2     ground truth, same window; est-truth means printed in the header comment
 """
 import json
 import os
@@ -23,6 +26,9 @@ AMP = {"roll": 15.0, "pitch": 15.0, "yaw": 45.0}
 T_STEP_US = 2.0e6
 T_WIN_US = 3.0e6
 T_REF_US = 1.5e6
+
+
+G2_INFO = {}
 
 
 def topic(ulog, name):
@@ -55,8 +61,10 @@ def first(mask):
     return int(idx[0]) if idx.size else None
 
 
-def step_metrics(t_us, y, amp, t_on_us):
-    m = (t_us >= t_on_us) & (t_us < t_on_us + T_WIN_US)
+def step_metrics(t_us, y, amp, t_on_us, t_end_us=None):
+    if t_end_us is None:
+        t_end_us = t_on_us + T_WIN_US
+    m = (t_us >= t_on_us) & (t_us < t_end_us)
     tr = (t_us[m] - t_on_us) / 1000.0  # ms relative to t_on
     yy = y[m]
     i10 = first(yy >= 0.1 * amp)
@@ -113,8 +121,26 @@ def process(folder):
     on_offset_ms = (t_on_det - t_on_fix) / 1000.0
     sp_max = float(setp[(t_s >= t_on_det) & (t_s < t_on_det + T_WIN_US)].max())
 
+    # S63 G2-STEP definition: pre-step median, 50 % crossing, window to the return crossing - 50 ms
+    pre = float(np.median(setp[(t_s >= t_on_det - 1_000_000) & (t_s < t_on_det)]))
+    mv = np.abs(setp - pre) >= 0.5 * abs(amp)
+    i_g = first((t_s >= t0) & mv)
+    t_on_g2 = int(t_s[i_g])
+    i_n = first((t_s > t_on_g2 + 200_000) & ~mv)
+    t_end_g2 = (int(t_s[i_n]) - 50_000) if i_n is not None else t_on_g2 + T_WIN_US
+    G2_INFO[folder] = dict(t_on_us=t_on_g2, window_ms=(t_end_g2 - t_on_g2) / 1000.0)
+    if gt is not None:
+        d = est - np.interp(t_a, t_g, tru)
+        G2_INFO[folder]["d_pre"] = float(d[(t_a >= t_on_g2 - 1_000_000) & (t_a < t_on_g2)].mean())
+        G2_INFO[folder]["d_end"] = float(d[(t_a >= t_end_g2 - 1_500_000) & (t_a < t_end_g2)].mean())
+
     rows = []
     name = os.path.basename(os.path.normpath(folder))
+    for lab, ser_t, ser in (("est_g2", t_a, est), ("gt_g2", t_g if gt is not None else None, tru if gt is not None else None)):
+        if ser_t is None:
+            continue
+        r, o, s_ = step_metrics(ser_t, ser - pre, amp - 0.0, t_on_g2, t_end_g2)
+        rows.append((name, (t_on_g2 - t_on_fix) / 1000.0, lab, r, o, s_))
     for label, t_on in (("det", t_on_det), ("fix", t_on_fix)):
         r, o, s = step_metrics(t_a, est, amp, t_on)
         rows.append((name, on_offset_ms, f"est_{label}", r, o, s))
@@ -129,7 +155,7 @@ def main():
     rows, sp_max, axis, amp = process(folder)
     lines = [
         f"<!-- {os.path.basename(os.path.normpath(folder))}: axis {axis}, amp {amp} deg, "
-        f"setpoint max in window {sp_max:.2f} deg -->",
+        f"setpoint max in window {sp_max:.2f} deg; G2 {G2_INFO.get(folder)} -->",
         "| flight | t_on - (start+2.0 s) [ms] | variant | rise 10-90 [ms] | overshoot [%] | settle 2 % [ms] |",
         "|---|---|---|---|---|---|",
     ]
