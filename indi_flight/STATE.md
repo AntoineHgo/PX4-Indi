@@ -27,10 +27,10 @@ S63 (launch 20261117-185813, cap $3): A-28 CLOSED (`results/stage3_s63/README.md
    G2-STEP measurement definition written in GATES.md (t_on on setpoint crossing, window ends 50 ms before return step,
    pass on estimate + truth overshoot, est error reported apart). T127 key updated: S62 est OS 0.25-0.97 %, r/p settle
    339-371 ms, yaw 899-914 ms, truth OS <= 0.85 %. A-29 parked (0.14 deg in-band dip, seed3 roll). T128 primary script.
-NEXT (S64): route check 64 first. (0) T128: check `design/t128_g2_step_metrics_s63.md`, compare primary JSON with
-   `results/stage3_s63/t127_key_g2_s62.md` (est OS/settle within one sample, 1.25 ms); commit. (1) r_dot_f noise in
+   T128 primary `bench/g2_step_metrics.py` (+7 tests) AGREES with the key 9/9 (`design/t128_g2_step_metrics_s63.md`).
+NEXT (S64): route check 64 first. (1) r_dot_f noise in
    acro/hover effort check (G4 pre-look, one hover + one acro-stick flight, log rate_sp_dot); (2) attitude-break margin
-   with the new setpoint path (G2). First formal G2-STEP test needs clean tree + binary at HEAD (G1.7).
+   with the new setpoint path (G2). First formal G2-STEP test (metric `bench/g2_step_metrics.py`, update the command template line in GATES.md) needs clean tree + binary at HEAD (G1.7).
    THEN resume the S60 plan: thrust-gap flights on the stage-5 slice (MC_INDI_W_MAX = 2700 for measured thrust; needs a
    NEW hover scenario with thrust gap, motor_fault/thrust_sag scenarios are attitude-mode, N1 C3), A3/A5 + reset deviations
    of T123, slice second key, G5 test list, combined opus review. Bench defect open (N1 C2): disturbance.py payload_add,
@@ -41,7 +41,6 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T128 | primary G2-STEP metric script per GATES.md S63 definition + self-test | sonnet | `bench/g2_step_metrics.py`, `bench/tests/test_g2_step_metrics.py`, `design/t128_g2_step_metrics_s63.md` | re-brief from that note |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -58,6 +57,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 63 | T128 | sonnet | primary G2-STEP metric script + 7 self-tests | done, 8 calls, ~$0.4, break-checked, AGREE with T127 key 9/9 |
 | 62 | T127 | haiku | second key step metrics (independent script) | done, 8 calls, ~$0.08, AGREE 27/27; truth offsets -> A-28 |
 | 62 | T126 | haiku | second key da64bc26b3 vs D-S3-ATT-STEP | done, 3 calls, ~$0.06, AGREE-WITH-ISSUES, yaw toggle fixed |
 | 62 | T125 | sonnet | code D-S3-ATT-STEP + tests + builds | done, 15 calls, ~$0.5, model test OS 0.51 % (11.1 % without), break-checked, committed da64bc26b3 |
