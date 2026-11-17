@@ -657,3 +657,37 @@ S64 (launch 20261117-190447, cap $3): route check 64 (T129, `design/route_check_
 - S69: A-32 PARKED: no regression; same-seed spread comes from parallel host load (seq 1.5 ms = S32, 5-parallel 11 ms). G1.6 protocol note (sequential) in GATES.md.
 - S69: A-30 PARKED: INDI 400 Hz sequential same-seed spread rise <= 4.3 ms / settle 7.5 ms / OS 0.53 pt.
 - S69: N2 closed (A done S66, B = A-9 closed S68, C = Q5 + A-30/A-32 resolved S69). Slice-2 plan `design/slice2_plan_s69.md`.
+- S69: STATE.md S65-S68 session notes moved here:
+   S65 (launch 20261117-192006, cap $1.5): item (3) DONE T131 (`design/g3_hooks_check_s65.md`): loop delay ABSENT;
+   vibration PARTIAL (rotor sinusoid only, no wideband IMU scale); GNSS latency PARTIAL (param SENS_GNSS0_DELAY only,
+   no sample delay; draft says EKF2_GPS_DELAY: fix GATES text); eRPM latency EXISTS; drop RNG seed FIXED (hpp:131),
+   must become per-run. Item (2) CODED T132 (`design/t132_disturbance_c2_s65.md`, self-test OK, re-run S65): profiles
+   sized from SDF (quad5in 0.610 kg, payload 25 % W, gust 10 % W); quad5in CdA 0.012 / CoP 0.02 UNVERIFIED; UNKEYED.
+   S66 (launch 20261117-231245, cap $3): T133 second key of T132 AGREE (note errata appended). N2-A triage DONE
+   (`design/n2a_triage_s66.md`; A-2/A-15 closed, A-5 archive-only, A-1/A-3/A-7 parked, A-4/A-6 open). T134 G1.5
+   pre-test 5 profiles (`results/g15_dist_s66/`): airframe line and wrench peaks OK; open: payload_add thrust +50 %
+   vs 25 % force, com_shift roll excursion +79 deg at onset+26 s, torque_steps pitch/yaw sign (FLU vs FRD?).
+   T136 (`results/g15_dist_s66/investigation.md`): wrench acts 2x on the vehicle (force and torque) and com_shift
+   loses it once at +26 s -> A-31 OPEN, blocks every disturbance result. torque_steps pitch/yaw sign explained
+   (world ENU = body FLU at spawn yaw; PX4 FRD flips y, z): document in disturbance.py, not a defect.
+   T137 read gz-sim 8.15.0 ApplyLinkWrench (`design/a31_wrench_source_s66.md`): one-step msgs summed per step, no
+   mechanism for 2x found. NEXT S67: (a) A-31 first: the 4 tests at the end of that note (payload_add alone first); fix + second key + re-run g15_dist_s66/fly.sh; N2-B (A-9 unit test on new module) and N2-C (A-30 identical 400 Hz re-fly,
+   share with A-4 speed 1/4 test); then item (1) slice 2; build hooks (loop delay, GNSS sample delay, per-run drop
+   seed, IMU noise scale) as one simulator task with second key.
+   Results rule (N1 D): commit metrics/run.json/README of every run in the session that produced it. Next route check: S69.
+Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
+   S67 (launch 20261117-232529, cap $3): A-31 lead: `src/modules/simulation/gz_bridge/server.config:14` already
+   loads ApplyLinkWrench (default.sdf has no plugins, gz_env.sh sets GZ_SIM_SERVER_CONFIG_PATH); disturbance.py adds a
+   2nd instance at runtime -> 2x. DONE: fix fc8905cf90, second key AGREE, A-31 CLOSED, 5 profiles re-flown 1x
+   (`results/a31_fix_s67/`), errata.md E-1 created. A-30 re-fly (`results/a30_refly_s67`): identical runs DIFFER
+   -> Q5 open (non-blocking, rec. G1.6 protocol on INDI). A-9: no path in new module by reading
+   (`design/a9_new_module_s67.md`); module publishes no jerk ff (omega_ff unused): trajectory lag, stage-5 item.
+   T143 (`results/g16_indi_s67`): INDI 400 Hz same-seed spread rise 4 / settle 15 ms / OS 0.7 pts, equal at speed
+   1 and 4; arm instant varies 0.76 s (wall clock); S64 seed1 outside all 11 runs (Q5 addendum).
+   T144 log diff: params identical, S64 binary from a DIRTY tree (f183dad) = leading cause of the outlier.
+   S68 (launch 20261117-234230, cap $3): T145 clean-HEAD re-fly (`results/g2_clean_s68`): 400 Hz table 9/9, seed1 roll
+   rise 192.5 (dirty tree not needed as cause); 800 Hz same-seed spread 14.5/39 ms/1 pt, < 1/2 limit margin; A-30
+   bounded, Q5 addendum 3. T146: A-9 CLOSED (2nd key AGREE, guard gtest break-checked, 35b313d2a5).
+   T147-T150: same-seed spread persists with --sched, PID, v2true, eRPM-lost, and on the EXACT G1.6 cmd (sim v1):
+   rise 11.5 ms at HEAD vs 0.8 ms at S32 under both metrics -> A-32 OPEN, G1.6 FINAL regressed (Q5 addendum 5);
+   on v2 the spread sits mostly in the first step.
