@@ -19,35 +19,23 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    (5) attitude-break margin with the new setpoint path (G2) when the G2 table is resumed.
    Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
    S65-S68 session notes: JOURNAL.md (S69 entry).
-   S69 (launch 20261118-000439, cap $3): route check 69 filed (stop anomaly chasing). A-32 PARKED: host load, not a
-   regression (seq 1.5 ms = S32, 5-parallel 11 ms); G1.6 = sequential runs (GATES note s69). A-30 PARKED (INDI seq
-   rise <= 4.3 ms). N2 closed; Q5 addendum 6 (move to JOURNAL at S70 unless owner objects). Slice-2 plan written.
-   NEXT S70 (per route check 69): stage-5 slice 2 from `design/slice2_plan_s69.md` (brief, haiku fact check and HTE note
-   at its end): one sonnet implementation agent (2 position-mode thrust-gap scenarios via motor_fault motors list,
-   params with MC_INDI_W_MAX, truth-altitude metric + self-test, 3-flight pre-test), haiku second key on the metric;
-   flights SEQUENTIAL when a same-seed or step claim is made. Then T123 deviations A3/A5/reset (McIndiPosControl.cpp
-   :147/:161/:205). Runner has NO RC/manual_control path: needed for G5 stick modes (slice 3). S71: 2nd mode slice
-   + combined opus review of stage-3 safety diff + stage-5 slices. Then hooks (loop delay, GNSS sample delay, per-run
-   drop seed, IMU noise scale). Next route check: S74.
-   S70 (launch 20261118-001644, cap $3): Q5 closed. T156 done (`results/stage5_s70/README.md`): INDI outer loop
-   keeps the thrust gap, z 0.31 m (HTE on) / 0.37 m (frozen) at 4x0.85, 0.19 m at 1 motor 0.8; stock 0.01 m. A11
-   confirmed. D-GAP PROPOSED in DECISIONS.md: rate-loop complementary blend on the measured collective.
-   NEXT S71: (1) opus review of D-GAP, brief ready `design/dgap_review_brief_s70.md` (~$1.1, launch first); (2) sonnet: implement
-   blend in McIndiPosControl/lib + unit test that fails without it + T123 item 1 (reset on setFilter); fly gap085 /
-   loss08 INDI, sequential; (3) PVA mode slice (ZSINE_O6). (4) s5_gap_check: apply the run.json->ulog time offset (second key, README). Single-flight results: same-seed spread not measured.
-   S71 (launch 20261118-003022, cap $3): T158 opus D-GAP r1 = BLOCKING (edge semantics; rate-loop blend SNAPS b to the
-   gap when landed/off/telemetry invalid, indi_rate_control.cpp:336-345, against A16). D-GAP amended in DECISIONS.md
-   (freeze rules, anti-windup, coll_model path, new overturn on HF mode, tb window 0.3-2.5 s, tests). Time-offset
-   hypothesis + closing test in results/stage5_s70/README.md.
-   T159 sonnet r2 (design/dgap_review_r2.md) OPEN on wording (recovery, overturn 'no tb passes', test tolerances);
-   fixed in DECISIONS.md -> D-GAP ACCEPTED for implementation.
-   NEXT S72: (1) launch sonnet with `design/dgap_impl_brief_s71.md` (code + 8 unit tests with break checks +
-   gap085_indi_htoff/loss08_indi sequential, |dz| < 0.06 m) -> results/stage5_s72/README.md; haiku second key on dz;
-   I read the firmware diff and run the tests; (3) the rate-loop snap-vs-freeze question goes into the
-   combined opus review of the stage-3 safety diff + stage-5 slices; (4) PVA mode slice (ZSINE_O6).
+   S69-S71: JOURNAL.md. Route checks 64, 69 in design/. Next route check: S74.
+   S72 (launch 20261118-003830, cap $3): D-GAP implemented and committed (3481bdcf9e, 41d44d461a; reset() model path
+   at u + b, fixed by me after reading the diff). gap085_indi_htoff dz 0.025 m PASS, loss08_indi 0.056 m marginal;
+   second key agrees (`results/stage5_s72/second_key.md`). A-33 OPEN: loss08 holds a_c-a_f = 0.158 m/s2 (control
+   error 0.040 m), blend should be integral at DC. Closing flight loss08_indi_htoff ran at session end (see tasks).
+   NEXT S73: (1) score `results/stage5_s72/loss08_indi_htoff` with `bench/second_key_s72.py` (dz_est, a_c-a_f): ~0 ->
+   HTE double compensation, re-open how HTE feeds the INDI stage (McIndiPosControl.cpp:587, setThrustModel :152);
+   else look for a leak in the u_model path (rate-loop collective, k_cmd). (2) runner: land/re-take-off scenario with
+   the gap kept (spec in stage5_s72 README) -> landed-hold flight. (3) D-GAP margin items (amendment 3: resonance,
+   overshoot, velocity-break PM at tb and tb/3). (4) combined opus review: stage-3 safety diff + stage-5 slices +
+   rate-loop snap-vs-freeze. (5) PVA mode slice (ZSINE_O6). Runner has NO RC/manual path (G5 stick modes, slice 3).
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T160 | S72 D-GAP impl + unit tests + 2 flights | sonnet | results/stage5_s72/README.md | DONE, committed 3481bdcf9e/41d44d461a |
+| T161 | S72 second key | haiku | results/stage5_s72/second_key.md | DONE |
+| F72 | loss08_indi_htoff flight (A-33 closing test) | bg shell | results/stage5_s72/loss08_indi_htoff/ | if no run/flight.ulg: rerun cmd = stage5_s70 README line 17 with --scenario s5_loss08 --controller indi_s72 --params indi_flight/results/stage5_s70/gap_htoff.params |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);

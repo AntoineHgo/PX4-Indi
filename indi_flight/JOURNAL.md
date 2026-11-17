@@ -694,3 +694,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S70: Q5 closed (A-30/A-32 parked: same-seed spread from parallel host load; G1.6 runs sequential, GATES note s69). Moved from QUESTIONS.md.
 - S70: T156 thrust-gap pre-test (7 flights): INDI outer loop z 0.31/0.37 m at 4x0.85 (A11 confirmed), stock 0.01 m; second key T157 agrees <= 0.006 m. D-GAP proposed (blend on collective); review brief written.
 - S71: D-GAP opus r1 BLOCKING (edge semantics) -> amended; sonnet r2 wording fixed; D-GAP ACCEPTED; implementation brief design/dgap_impl_brief_s71.md.
+- S72: D-GAP implemented (T160 sonnet, 3481bdcf9e firmware, 41d44d461a tests incl. 8 + 1 break-checked); orchestrator fixed reset() model-path init (u + b). gap085_indi_htoff standing dz 0.025 m (was 0.372), loss08_indi 0.056 m; haiku second key 0.020 / 0.053; A-33 opened (loss08 held a_c-a_f 0.158 m/s2, control error 0.040 m). Land/re-take-off scenario missing in runner.
