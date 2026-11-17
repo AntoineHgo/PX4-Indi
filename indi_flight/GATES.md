@@ -137,3 +137,16 @@ gate is decided on the frozen final pair in stage 6 with the same tests.
   <= 0.75 deg). Tightening below 5 % not justified: the stock PID's 0 % is an overdamped tune, not a requirement.
 - Also checked, not pass conditions: torque-step peak deviation reported next to the S61 INDI values (no regression of
   more than 10 % expected; a larger one is explained in the report).
+- Measurement definition (written S63 2026-11-17, before the first test; closes A-28, evidence
+  `results/stage3_s63/README.md`). Corrects two defects of the S61 text, no threshold changed:
+  - t_on = first `vehicle_attitude_setpoint` sample whose step-axis angle has moved by >= 50 % of the step from its
+    median over the 1 s before; never the runner's scheduled time (it lags 13-23 ms).
+  - Window [t_on, t_next - 50 ms), t_next = the next setpoint crossing found the same way (return step); the S61 3.0 s
+    window took in the return step of the 3.0 s roll/pitch hold (T127 seed3 roll 'exit at 2.96 s').
+  - Pass metrics (overshoot, 2 % settle, rise 10-90 %) on the estimated attitude against the setpoint, as in S61: the
+    controller's own loop. Also a pass condition (lesson 3): overshoot of the ground truth over the setpoint <= 5 %.
+  - Reported apart, not pass conditions: truth settle against the setpoint, and the estimator error est - truth
+    (mean over [t_on - 1 s, t_on) and over the last 1.5 s of the window). S62 and PID alike: roll/pitch est - truth
+    grows from ~0 to +0.21-0.24 deg in 0.6-1.5 s after a 15 deg step (EKF tilt while accelerating sideways in
+    attitude mode); yaw +0.6-1.0 deg standing bias. It is the same under PID, so it is the stock estimator's, not the
+    controller's; the report states it next to the step results.
