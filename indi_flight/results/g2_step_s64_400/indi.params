@@ -1,0 +1,16 @@
+# S40 model-only G2 pre-test: hover_long, DLY 20, NP 3
+MC_RATE_CTL_TYPE 1
+# S47: appended G1 lines from indi_flight/bench/params/quad5in_indi_g1.params (derived G1) and SENS_BAR_AUTOCAL 0; base = indi_flight/results/stage2_s40/pretest_inj/inj_model_long.params
+MC_INDI_G1_R 1757
+MC_INDI_G1_P 1640
+MC_INDI_G1_Y 205
+SENS_BAR_AUTOCAL 0
+MC_INDI_G2_Y 27
+# S48: ACT_TC matched to plant tau 33 ms (ref_airframe_model.md)
+MC_INDI_ACT_TC 0.050
+# S52: rate lead on (default 1, explicit)
+MC_INDI_LEAD 1
+# S56: 400 Hz (--rate-hz 400), ACT_TC 0.05 default, lead 1
+# S57: measured-rotor path (--sim v2 eRPM telemetry model + CA_R_W_MAX = quad5in maxRotVelocity, as S40 inj_measured_long), 800 Hz
+CA_R_W_MAX 2700
+# S59: injection lines removed; items 1-4 code (65356c4250 + S59 diff)
