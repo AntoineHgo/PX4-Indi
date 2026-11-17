@@ -633,6 +633,9 @@ def main():
         a.imu_rate = MODEL_IMU_RATE.get(a.model, 800)
     if a.out is None:
         a.out = os.path.join(RESULTS_DIR, f"{a.scenario}_{a.controller}_s{a.seed}")
+    # absolute: child processes (disturbance.py) run with cwd=a.out, so a relative path would resolve under itself
+    # and the injector would never see its trigger file (no wrench applied, no error)
+    a.out = os.path.abspath(a.out)
     os.makedirs(a.out, exist_ok=True)
 
     sc = SCENARIOS[a.scenario]
