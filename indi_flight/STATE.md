@@ -37,6 +37,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T160 | S72 D-GAP impl + unit tests + 2 flights | sonnet | results/stage5_s72/README.md | DONE, committed 3481bdcf9e/41d44d461a |
 | T161 | S72 second key | haiku | results/stage5_s72/second_key.md | DONE |
 | F72 | loss08_indi_htoff flight | bg shell | results/stage5_s72/loss08_indi_htoff/ | DONE |
+| F73 | A-33 closing: loss08 with rate blend MC_INDI_ACT_BLD 0.3 / 1.0 (default 0 = off, never set in S72 flights: lesson-9 gap in the rate loop) | bg shell, instances 0/1 | results/stage5_s73/loss08_bld{0.3,1.0}/ | run_scenario.py --scenario s5_loss08 --sim v2 --speed 4 --params results/stage5_s73/gap_bld*.params |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
