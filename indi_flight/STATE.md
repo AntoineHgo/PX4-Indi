@@ -43,7 +43,13 @@ S57 (launch 20261117-071301, cap $3): roll M3a 800/3 Hz re-flown with TP 7.5 (`r
    velocity/acceleration feed-forward (PositionControl.cpp:133/:153), position/attitude as reference breaks (L = T/(1-T));
    INDI M3b: d into t_c after indi_accel_control.cpp:273 (_thrust_prev inherits d); A-26 model form; Tp 9.000 s; 6-9 sessions.
 S58 (launch 20261117-073027, cap $3): D-G2-OUTER-DEFER (outer break note keyed against stage-5 code, not now);
-   D-S3-LANDED, D-S3-FROZEN, D-S3-SPTO written; T117 codes items 1 and 4.
+   D-S3-LANDED, D-S3-FROZEN, D-S3-SPTO written. Items 1 (landed split + t_fb ramp) and 4 (frozen rpm) CODED 65356c4250:
+   tests 4/4 targets pass, break-checked (`design/t117_s3_items_s58.md`), SITL build rc 0, format clean; haiku second key
+   AGREE (`design/t118_second_key_s58.md`, its one issue unreachable). Not flown yet. SITL binary at 65356c4250.
+NEXT (S59): (a) items 2 (start-up exclusion, note sec 2) and 3 (D-S3-SPTO) as code, sonnet ~$1; (b) opus review of the
+   whole stage-3 safety DIFF (65356c4250 + S59) vs DECISIONS, budget $1.1, launch first in S60 if S59 is short;
+   (c) one hover + one landing flight to check the ramp and no frozen false trip (pretest_gate, spectra). Then stage 5
+   hover slice + thrust-gap flight (route check 57 rec 3). Route check 61 due (every 5 sessions, last 57).
 OLD NEXT (S58, superseded by D-G2-OUTER-DEFER for item 1): (1) second key of the break note against source (sonnet, one interface: note vs code, <=8 calls); question the
    L = T/(1-T) reference breaks (ill-conditioned where |T| ~ 1) and the 6-9 session cost vs route check 57 (stage 5 first?);
    then A-26 model script with the two self-tests of note section 6.
@@ -53,7 +59,6 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T117 | code D-S3-LANDED + D-S3-FROZEN + unit tests, break-checked | sonnet | `design/t117_s3_items_s58.md` | re-brief from that file |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
@@ -70,6 +75,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 58 | T118 | haiku | second key items 1+4 diff | done, 6 calls, ~$0.06, AGREE-WITH-ISSUES (issue unreachable) |
+| 58 | T117 | sonnet | code items 1+4 + tests | done, 27 calls, ~$0.7, all pass, break-checked, module not compiled by it |
 | 57 | T116 | sonnet | G2 outer break note | done, 8 calls, ~$0.7, 59 lines, UNKEYED |
 | 57 | T115 | sonnet | route check 57 | done, 6 calls, ~$0.18, acted on |
 | 56 | T114 | haiku | second key D-YAW-INV diff | done, 5 calls, ~$0.05, AGREE-WITH-ISSUES, landed-cycle bug found and fixed |
@@ -92,6 +99,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 45 | T94 | haiku | A-23 hover G1_Y 215 + checks | done, 6 calls, ~$0.1, clean hover |
 
 ## Lessons proposed
+- S58: the px4_sitl_test build does not compile the module (only libs and tests); a coding agent's green tests say nothing
+  about the module wiring: always add `make px4_sitl_default` to the brief.
 - S57: a non-integer fs*Tp did not trip the FFT check on a jittered log because the FRF code switched to its least-squares
   path; know which path a script took before calling a pass a hole. Pick multisine periods that are whole samples at every rate.
 - S54: a module-level loop variable shadowed a deleted local in a model script and silently changed its output; re-run

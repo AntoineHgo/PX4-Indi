@@ -1,0 +1,37 @@
+# Strip BUILD_DIR_SUFFIX (e.g. _replay, _failsafe_web) from CONFIG so the
+# board lookup in cmake/px4_config.cmake sees the bare <vendor>_<model>_<label>
+# even when the build dir is suffixed for variant builds.
+switching NuttX target px4_sitl_default -> px4_sitl_test: wiping submodule state
+[1/18] Building CXX object src/modules/mc_indi_rate_control/CMakeFiles/IndiMeasuredTorque.dir/IndiMeasuredTorque.cpp.o
+[2/18] Linking CXX static library src/modules/mc_indi_rate_control/libIndiMeasuredTorque.a
+[3/18] Generating px4 event json file from source
+[4/18] Generating combined event json file
+[5/18] Generating uORB compatible IDL headers
+[6/18] Generating component_general.json and checksums.h
+[7/18] Building CXX object src/modules/logger/CMakeFiles/modules__logger.dir/logger.cpp.o
+[8/18] Building CXX object src/modules/mavlink/CMakeFiles/modules__mavlink.dir/mavlink_messages.cpp.o
+[9/18] Linking CXX static library src/modules/logger/libmodules__logger.a
+[10/18] ROMFS: copying extras
+[11/18] Linking CXX static library src/modules/mavlink/libmodules__mavlink.a
+[12/18] Building CXX object src/modules/mc_indi_rate_control/CMakeFiles/modules__mc_indi_rate_control.dir/McIndiRateControl.cpp.o
+[13/18] Linking CXX static library src/modules/mc_indi_rate_control/libmodules__mc_indi_rate_control.a
+[14/18] Linking CXX executable mavlink_fuzz_tests
+[15/18] Linking CXX executable bin/px4
+[16/18] Building CXX object src/modules/mc_indi_rate_control/CMakeFiles/functional-IndiMeasuredTorque.dir/IndiMeasuredTorqueTest.cpp.o
+[17/18] Linking CXX executable functional-IndiMeasuredTorque
+[17/18] Running tests
+   Site: fc16aaa458a5
+   Build name: Linux-c++
+Test project /home/ahugo/Documents/Drotek/Codes/PX4-Indi/build/px4_sitl_test
+    Start  28: unit-IndiAccelControl
+1/4 Test  #28: unit-IndiAccelControl ............   Passed    0.00 sec
+    Start  29: unit-indi_rate_control_test
+2/4 Test  #29: unit-indi_rate_control_test ......   Passed    0.05 sec
+    Start 169: unit-IndiInjection
+3/4 Test #169: unit-IndiInjection ...............   Passed    0.00 sec
+    Start 170: functional-IndiMeasuredTorque
+4/4 Test #170: functional-IndiMeasuredTorque ....   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 4
+
+Total Test time (real) =   0.07 sec
