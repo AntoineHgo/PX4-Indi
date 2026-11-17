@@ -29,7 +29,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    velocity/acceleration mode (altitude or position stick) + T123 deviations A3/A5/reset; haiku second key.
    (2) Bench defect N1 C2 (disturbance.py payload_add/com_shift/gust sized for x500): take mass/drag from the flown
    model, G1.5 check per profile. (3) Check the 'NOT FOUND' hooks of the draft (loop delay, GNSS latency, vibration)
-   against stage-1 sim work before building. (4) G2-STEP 400 Hz reported run (3 flights, host bash, cheap).
+   against stage-1 sim work before building. (4) G2-STEP 400 Hz reported run DONE S64 (9/9 within limits, A-30 seed spread parked).
    (5) attitude-break margin with the new setpoint path (G2) when the G2 table is resumed.
    Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
    Results rule (N1 D): commit metrics/run.json/README of every run in the session that produced it. Next route check: S69.

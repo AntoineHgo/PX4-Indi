@@ -153,7 +153,8 @@ gate is decided on the frozen final pair in stage 6 with the same tests.
     controller's; the report states it next to the step results.
 - **First test (S64 2026-11-17, HEAD 360c9ae453, clean tree): 9/9 PASS at 800 Hz**, seeds 1-3; second key AGREES on
   every pass metric (`results/g2_step_s64/README.md`). Roll/pitch OS 0.64-1.29 %, settle 341-366 ms; yaw OS 0.18-0.37 %,
-  settle 913-923 ms; truth OS <= 1.29 %. Torque-step rejection not regressed. Pending: the 400 Hz reported run.
+  settle 913-923 ms; truth OS <= 1.29 %. Torque-step rejection not regressed. 400 Hz reported (S64, `results/g2_step_s64_400/README.md`): 9/9 within
+  the same limits, roll/pitch OS 0.40-1.78 %, settle 312-360 ms; larger seed spread (A-30).
 
 ## G3-G8 test text (S64 2026-11-17, before any first test; NOT final)
 Draft: `design/gates_g3_g8_draft_s64.md` (T130, sonnet, every number PROPOSED). Each gate's section here is finalised,
