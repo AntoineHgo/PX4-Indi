@@ -412,3 +412,19 @@ pre-identification behaviour of decision 3 must cover it).
   derivative is logged as rate_sp_dot. Flight seeds 1-3: OS 0.2-1.0 %, settle 358-394 ms (model 0.6 % / 388): agrees.
 - Overturn if: flight on >= 2 seeds disagrees with the model prediction by > 5 points of overshoot, or r_dot_f raises
   motor-command RMS in hover beyond the G4 limit, or a mode switch shows a setpoint impulse that the reset does not catch.
+
+## D-GAP (S70, PROPOSED, opus review pending before code): decision 2 for the outer loop
+- Evidence: `results/stage5_s70/README.md` (T152, 1 flight each, seed 1). Position hold, 4 motors x0.85 thrust:
+  INDI outer loop standing z error 0.31 m (HTE on) / 0.37 m (HTE frozen); prediction (1-s)g/(Z_P Z_VEL_P_ACC) 0.368;
+  stock mc_pos_control 0.01 m (HTE on), 0.06 m (HTE frozen, vel integrator on), 0.37 m (both off). Single motor 0.8:
+  INDI 0.19 m. A11 mechanism confirmed: measured collective (mean_u from eRPM) cancels the implicit integral.
+- Choice: (d) the rate loop's complementary blend applied to the measured collective: coll_f = coll_meas +
+  LP_tb(coll_model - coll_meas), so measured at high frequency, modelled at DC (integral action restored; sag and
+  weak motors appear as omega drop and are absorbed). One mechanism in both loops (rate: `setActuatorBlendTimeConstant`).
+  tb set from the measured outer-loop margin (G2), not tuned for the gap metric.
+- Alternatives: (a) slow per-motor command-to-omega^2 correction applied to the measured state of both loops (more
+  machinery, motor-health side benefit; fallback if (d) costs margin); (b) integrator on the acceleration error in the
+  module (new state, outer only); (c) stock MPC_*_VEL_I_ACC integrators (stock-tuned, absent in acceleration-only
+  setpoint groups A10/A15, leaves a standing acceleration error).
+- Overturn: (d) gives < 45 deg phase margin on the INDI acceleration/velocity break at a tb that removes the gap within
+  10 s, or the blend reproduces the stage-1 0.1 s blend failure in the collective channel.

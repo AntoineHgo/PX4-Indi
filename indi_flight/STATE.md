@@ -29,11 +29,15 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    :147/:161/:205). Runner has NO RC/manual_control path: needed for G5 stick modes (slice 3). S71: 2nd mode slice
    + combined opus review of stage-3 safety diff + stage-5 slices. Then hooks (loop delay, GNSS sample delay, per-run
    drop seed, IMU noise scale). Next route check: S74.
-   S70 (launch 20261118-001644, cap $3): Q5 closed to JOURNAL. T152 launched (slice 2 part 1, no firmware change).
+   S70 (launch 20261118-001644, cap $3): Q5 closed. T152 done (`results/stage5_s70/README.md`): INDI outer loop
+   keeps the thrust gap, z 0.31 m (HTE on) / 0.37 m (frozen) at 4x0.85, 0.19 m at 1 motor 0.8; stock 0.01 m. A11
+   confirmed. D-GAP PROPOSED in DECISIONS.md: rate-loop complementary blend on the measured collective.
+   NEXT S71: (1) opus review of D-GAP, brief ready `design/dgap_review_brief_s70.md` (~$1.1, launch first); (2) sonnet: implement
+   blend in McIndiPosControl/lib + unit test that fails without it + T123 item 1 (reset on setFilter); fly gap085 /
+   loss08 INDI, sequential; (3) PVA mode slice (ZSINE_O6). (4) s5_gap_check: apply the run.json->ulog time offset (second key, README). Single-flight results: same-seed spread not measured.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T152 | S70 slice 2 part 1: scenarios s5_gap085/s5_loss08, gap.params (W_MAX 2700, v2), `bench/s5_gap_check.py` + self-test, 4 sequential pre-test flights (hover regress, gap INDI, gap stock HTE on, gap stock HTE off) | sonnet | `results/stage5_s70/README.md` | re-brief from `design/slice2_plan_s69.md` items 1-5 |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
