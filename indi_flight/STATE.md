@@ -36,9 +36,13 @@ S59 (launch 20261117-074704, cap $3): items 2 (start-up refusal + foreign torque
    checked by reading only; stop/start within 0.5 s refused). Hover with take-off + landing, 2 seeds, items 1-4 live:
    gate PASS, rate RMS <= 0.006 rad/s, no stale/foreign/frozen flag (`results/stage3_s59/hover_items23/README.md`).
    G1.7 provenance needs a clean tree AND a binary rebuilt at HEAD: commit, rebuild, then fly.
-NEXT (S60): (a) opus review of the whole stage-3 safety DIFF (65356c4250 + eafb26b623^) vs DECISIONS D-S3-*, one
-   interface, <=12 calls, budget $1.1, launch FIRST; (b) route check 61 (sonnet, ~$0.2) if budget remains, else S61;
-   (c) then stage 5 hover slice + thrust-gap flight (route check 57 rec 3). Triggering paths of items 2/3 in SITL: G5.
+Route check 59 (`design/route_check_59.md`, sonnet) ACTED ON: opus review of the stage-3 safety diff DEFERRED to one
+   combined review with the stage-5 hover-slice diff, before any freeze (lesson 19 kept: nothing frozen until then);
+   G3-G8 test text is the gap: write G5 tests (incl. item 2/3 trigger scenarios) before the first G5 flight.
+NEXT (S60): (a) stage-5 hover slice (base A, D-outer-arch) + thrust-gap flight (hover at thrust scale 0.85 and one
+   motor at 0.8; review predicts ~0.37 m standing error for the archived law), sonnet implement, ~$1.5 + second key;
+   (b) G5 test list into GATES.md (~$0.2); (c) combined review (opus, one interface: stage-3 safety diff + slice diff vs
+   DECISIONS) when the slice is in. Next route check: S64.
 Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
@@ -59,6 +63,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Agent ledger (stage 2; stage-1 rows in JOURNAL.md)
 | session | id | model | task | outcome |
 |---|---|---|---|---|
+| 59 | T121 | sonnet | route check 59 | done, 4 calls, ~$0.15, acted on |
 | 59 | T120 | haiku | second key items 2+3 diff | done, 5 calls, ~$0.06, AGREE-WITH-ISSUES (5 minor) |
 | 59 | T119 | sonnet | code items 2+3 + tests | done, 7 calls, ~$0.33, 6/6 pass, break-checked |
 | 58 | T118 | haiku | second key items 1+4 diff | done, 6 calls, ~$0.06, AGREE-WITH-ISSUES (issue unreachable) |
