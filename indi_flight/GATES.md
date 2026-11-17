@@ -56,6 +56,16 @@ G1 status (2026-11-16, s33). Thresholds unchanged; nothing marked passed (Q2, Q3
 
 ## G1 FINAL (2026-11-16, s36): frozen with evidence limits, provisional under Q4-A
 
+**Owner answers (2026-11-17, S50; Q2-Q4 closed, text in JOURNAL.md).** Q2: A amended (G1.1 = logger completeness,
+every published sample logged, <= 0.1 % missing, against gyro/truth counts; holes per evidence limit 1 below).
+Q3: A with the S27 wording ((a1) triggers at the same sim time within 1 IMU period; (a2) response spread <= one
+Commander period 10 ms, latency <= 20 ms; windows anchor on the logged transition). Q4: A, G1 frozen with its
+evidence limits; the "provisional" mark on G1.1, G1.6(a) and stage 2 is lifted. Added item G1.7 (below), required
+before any G2 result counts. G1 counts as passed once G1.7 is implemented and its runner check is break-tested;
+G1.5 stays deferred per injector as written.
+
+| G1.7 provenance | a gate-bearing run records in run.json: commit, clean-tree flag, SITL binary hash (binary built from that commit), sim model file hashes, param file hashes; the runner refuses a gate-bearing run on a dirty tree or a binary not built from the recorded commit | runner refusal break-tested (dirty tree, stale binary) |
+
 Thresholds above unchanged. G1 is frozen in the state below; it is NOT marked passed: the owner has not answered
 Q2, Q3, Q4. If the owner answers Q4-B, every stage-2 result marked "provisional under Q4-A" is re-run after G1
 passes in full; if Q2 or Q3 is answered B or C, G1.1 or G1.6(a) is reopened as written there.
@@ -70,8 +80,12 @@ passes in full; if Q2 or Q3 is answered B or C, G1.1 or G1.6(a) is reopened as w
 | G1.6 | (a) under Q3-A: (a1) met, (a2) response spread within one Commander period, latency within two; (b) spreads recorded, thresholds set with G3/G5; (c) met with stated sources; (d) in force | `results/g16_set_s32/speed{4,1}/README.md`, `results/a20a19_s35/README.md` |
 
 Evidence limits every later verdict carries:
-1. Simulator step holes (A-13): <= 0.05 % of steps, single holes <= 10 ms. Any frequency-response or spectral
-   result leaves out windows containing a hole, or shows it does not change when they are left out.
+1. Holes (amended by owner answer Q2, 2026-11-17 S50; the former global bound 0.05 % / 10 ms is withdrawn, it was
+   already exceeded by S47 `measured_g2`). Two kinds, both reported per gate-bearing run: sim holes (gaps in
+   `sensor_gyro` / `sim_ground_truth`) and controller holes (gaps in `vehicle_angular_velocity` / `actuator_motors`
+   while `sensor_gyro` is continuous: a skipped rate-loop cycle). Every frequency-response or spectral window
+   excludes both kinds, or shows its result unchanged without them. More than 0.1 % holes in a run -> re-fly that
+   run (not a gate failure).
 2. Commander tick (Q3): mode-change response spread <= 10 ms, latency <= 20 ms. Analysis windows anchor on the
    logged transition, never on the trigger.
 3. EKF-truth height (A-14): <= 0.15 m in hover windows; position-hold spread <= +-0.15 m. Tracking scored on truth.

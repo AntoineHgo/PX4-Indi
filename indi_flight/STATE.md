@@ -4,7 +4,7 @@
 - Stage: 3 (inner loop) opened S49; stage 2 (analysis tools, margins) from S36, provisional under Q4-A; stage 1 frozen S36 (G1 FINAL). Started S1 (2026-11-15). Stage 0 done. Session 3: ref airframe model done.
 - Sessions 4-13: history in JOURNAL.md (moved S15). S14: G1.6 runs at speed 1 and 4, review r5 BLOCKING (A18).
 - Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. G1 FROZEN with evidence limits (GATES.md G1 FINAL), not passed until Q2-Q4 answered.
-- Blocker: none. Q2, Q3 open (G1.1 gap rule, G1.6a wording), Q4 open (freeze G1 with limits, S32), not blocking. Q1 closed: A confirmed by owner; flatness A18 reviewed (r5 BLOCKING), answered in
+- Blocker: none. S50: owner answered Q2 (A amended), Q3 (A), Q4 (A + G1.7 provenance); GATES.md updated, provisional mark lifted; QUESTIONS.md empty. Q1 closed: A confirmed by owner; flatness A18 reviewed (r5 BLOCKING), answered in
   `design/flatness_r2.md` (S15): optional increment after base A. Outer-loop study finished; stage 5 = base A.
 - S36: G1 FINAL written in GATES.md (frozen with 5 evidence limits, provisional under Q4-A, not marked passed);
   stage 2 started provisionally; opus review T73 r1 BLOCKING (gyro break misses INDI's model and rotor-speed
@@ -54,7 +54,11 @@ S49 (launch 20261116-224459, cap $2.28): T102 stage-2 summary table (`results/st
    x1.4-2.3 on the a_f term (G4); filter H is in the model (checked). Stage 3 OPEN.
 S49 also: lead falsification sweep (`results/stage2_s49/lead_delay_README.md`, UNKEYED): unmodelled delay calibrated
    ~2.5 ms on tc33_p8; lead K20 at 400 Hz PM 57.0/GM 10.5, K30 52.8/8.1, K40 fails -> stop rule not triggered, K_R 20.
-NEXT (S50): route check 49 done early (`design/route_check_49.md`), adopted: (1) DONE S49 (see above); next a haiku second key of the sweep
+S50 (launch 20261117-011145, cap $2.02): owner answers applied (GATES.md G1 FINAL block, evidence limit 1 = two hole
+   kinds, >0.1 % -> re-fly). G1.7 implemented: `bench/provenance.py` + `run_scenario.py --gate` + self-test (ALL PASS,
+   break-checked), D-G1.7. Current SITL binary is from 32500e0276, not HEAD: rebuild before any --gate run. TODO: a hole
+   reporter per run (sim vs controller holes, extend `bench/a15_gaps.py`?) for evidence limit 1; G1 passes once G1.7 in use.
+NEXT (S51): route check 49 done early (`design/route_check_49.md`), adopted: (1) DONE S49 (see above); next a haiku second key of the sweep
    (own delay model), then: add 3-5 ms delay, ACT_TC 0.033 to `bench/margins_models.py` lead rows at 400/800 Hz; stop D-RATE-LEAD if
    PM < 50 or GM < 8 dB at 400 Hz (model is 2.3-3.5 dB GM optimistic). (2) If it holds: opus review r1 of the note
    vs src/lib/indi_rate_control (one interface, ~$0.6, needs $1.2 left), then code MC_INDI_LEAD + unit test (break-checked),
@@ -96,6 +100,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 | 44 | T91 | haiku | second key limit cycle, 3 logs | done, 7 calls, ~$0.1, CONFIRMED |
 
 ## Lessons proposed
+- S50: break-checks by sed on a .py must run with PYTHONDONTWRITEBYTECODE=1 (or clear __pycache__): a same-size
+  mutation in the same second left a stale .pyc that made the restored file fail.
 - S49: calibrate the unmodelled delay of a loop model on one existing flight before using the model to accept or
   reject a candidate; the lead's verdict at 400 Hz flips between 2.5 and 5 ms of delay.
 - S48: before reading a low margin as a plant or gain problem, put every loop the break closes around into the model

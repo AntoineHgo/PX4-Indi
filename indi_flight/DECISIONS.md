@@ -266,3 +266,13 @@ Open, to be written before code (MISSION "Decisions that are yours"):
 - S49: design note drafted (`design/rate_lead_note.md`, new param MC_INDI_LEAD 0..1). Delay-calibrated model sweep
   (`results/stage2_s49/lead_delay_README.md`, unkeyed): K20 400 Hz PM 57/GM 10.5 dB; K40 fails. Default K_R stays 20.
   Also overturn if: the measured loop delay at 400 Hz is >= 5 ms (K20 GM 7.8 dB in the model).
+
+## D-G1.7 Provenance check (S50, 2026-11-17, from owner answer Q4)
+Choice: `bench/provenance.py`, used by `run_scenario.py --gate`: refuses on a dirty tracked tree, on a SITL binary whose
+generated version header (PX4_GIT_VERSION_STR) is not HEAD, or whose header is newer than the binary; records binary
+SHA-256 and SHA-256 of world, model files and params file in run.json (`provenance`, `gate_bearing`). Self-test
+`bench/tests/test_provenance.py` break-checked (3 mutations caught). Alternatives: compare only firmware paths between
+binary commit and HEAD (fewer rebuilds, but weaker than the owner's wording); hash-only (no refusal). Known limit:
+the header holds the commit hash without a dirty flag, so a binary built from a dirty tree at HEAD passes; the binary
+hash in run.json lets a reader detect it afterwards. Overturn if: a gate run is found with a binary hash that differs
+from the one rebuilt from its commit. Gate analysis scripts must ignore runs with `gate_bearing` false.
