@@ -55,7 +55,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T148 | A-30 discriminator, --sched, 400 Hz seed 1 x5 each: PID / INDI v2true / INDI all-eRPM-lost (T147 done: sched spread 6/15 ms rise) | haiku | `results/a30_disc_s68/README.md` | `bash results/a30_disc_s68/fly.sh` |
+| T149 | A-30: G1.6 cmd (pid_default, sim v1) vs + --sim v2, step_roll seed 1 x5 each (T148: PID v2 spread rise 12 / settle 46 ms, INDI v2true 9/16, INDI eRPM-lost 8/15: not INDI-specific) | haiku | `results/a30_v1v2_s68/README.md` | `bash results/a30_v1v2_s68/fly.sh` |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
