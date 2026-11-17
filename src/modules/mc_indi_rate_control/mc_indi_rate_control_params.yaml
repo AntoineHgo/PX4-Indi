@@ -102,9 +102,12 @@ parameters:
     MC_INDI_ACT_TC:
       description:
         short: INDI actuator time constant
-        long: Time constant of the first order actuator model.
+        long: |-
+          Time constant of the first order actuator model, also used by the rate lead (MC_INDI_LEAD).
+          With the lead, an over-estimate up to 2x the true motor time constant keeps the stability margins,
+          an under-estimate does not: when unsure, round up.
       type: float
-      default: 0.02
+      default: 0.05
       min: 0.001
       max: 0.2
       unit: s
