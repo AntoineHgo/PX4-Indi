@@ -48,6 +48,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T182 | hole_report count-check fix + re-run s86 cells | sonnet | results/stage5_s85_holes/count_fix_s87.md | DONE c5b5a897e9 (unkeyed). S86 README rows for r800_s2 were wrong: real holes (pt1 sim 12.5 ms -> re-fly; pt0 only outer topic 89 Hz max 18.75 ms vs 10 ms limit = spec defect for a topic with period > 10 ms?) |
 | T184 | second key of T182 (code vs spec) | haiku | results/stage5_s85_holes/second_key_s87.md | DONE c9cc245a40 AGREE WITH MINOR |
 | T185 | review attitude-break note vs code | sonnet | design/attitude_break_s86_review.md | DONE: 0 BLOCKING, 2 MAJOR (add call-site test at McIndiRateControl.cpp:231; replace circular x-y-d check by logged rate_sp_dot vs derivative of logged x), 10 MINOR (gate off in ACRO; use hover_xlong; outer loop closed below ~0.3 Hz). Amend note, then implement |
+| T186 | S88 hole_report: raw-gap max-hole + per-topic gap limit as excess over nominal period; re-run s86+s87 | sonnet | results/stage5_s85_holes/fixes_s88.md | S88 launched (20261118-053836) |
+| T187 | S87 xy README + table; rename top_db -> last_bin_db (alias kept) | haiku | results/stage5_s87_xy/README.md | S88 launched |
 | T183 | second key of T181 (xy FRF from CSVs) | haiku | results/stage5_s86_g2outer/t183_second_key.md | DONE d2b66bf3ae: AGREE |L|, PM 54-56; f_c 0.27-0.33 Hz |
 
 ## Open problems
