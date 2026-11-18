@@ -506,3 +506,13 @@ pre-identification behaviour of decision 3 must cover it).
   no step in t_f; landed->airborne: no step) and the weak-motor closed-loop test that fails with tb = 0.
 - Overturn: a flight or unit test showing a torque step at telemetry recovery or take-off larger than the
   high-frequency gap, or a G3 telemetry-loss run whose post-recovery transient exceeds the G3 limits.
+
+## D-G2-PINJ (S82): outer-loop break injected at the INDI stage input, bench parameters MC_INDI_PINJ_*, off by default
+- Choice: d (Schroeder multisine, generator copied from the rate module's module-local IndiInjection) is added to
+  the stock position-loop acceleration output c; u = c + d is the INDI stage's a_ref, so the thrust vector, previous
+  thrust command, D-GAP blend model path and jerk difference all use u. L = -G_cd/G_ud is the velocity/position loop
+  with the INDI acceleration loop closed (serves the D-GAP velocity-break overturn test). With AX = 0, u == c.
+- Alternatives: d at the stage output (thrust/collective): that is the INDI acceleration-loop break, still needed
+  for G2 as a second injection point; injection in mc_pos_control (O-11 zero diff, excluded).
+- Overturn if: the AX = 0 flight is not bit-identical to the build without injector, or the measured L disagrees
+  with the linear model beyond the G2 tolerance without an explained cause.
