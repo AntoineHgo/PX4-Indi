@@ -143,3 +143,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | F111 | S111 | sonnet | fix K110 M-1..M-3, m-2, m-6, 3 mutations | 31 calls, ~79k tok, ~$0.65 | DONE b0486b703e |
 | K111 | S111 | sonnet | second key of b0486b703e (read-only, mutations) | 21 calls, ~55k tok, ~$0.37 | DONE 0 BLOCKING 2 MAJOR |
 | G111 | S111 | sonnet | close K111 F-1/F-3/F-5, test exit codes | 20 calls, ~54k tok, ~$0.4 | DONE 6e8c4fa474 |
+| P112 | S112 | sonnet | 3-flight G3 hook pre-test | 76 calls, ~109k tok, ~$1.2 | DONE 4 set-up faults (README) |

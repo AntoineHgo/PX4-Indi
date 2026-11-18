@@ -43,6 +43,13 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 |---|---|---|---|---|
 (Done rows up to K109: JOURNAL.md S100-S109 entries; ledger LEDGER.md. Yaw model tool defect open: margins_of hangs if ts_true=0.)
 (R110/O110/K110/F111/K111/G111 done: JOURNAL.md S110-S111.)
+(P112 done: results/g3_pretest_s112/README.md, agent-reported, NOT yet verified by orchestrator.)
+S113 FIRST (P112 set-up faults, fix before any G3 batch; each fix keyed): (1) air-relative wind dead: vel_none
+  22400/22401, gz Pose subscriber `No message class registered for 'gz.msgs.Pose'`; (2) independent per-axis inertia
+  draws violate triangle inequality, gz rejects ~1/3 of draws; (3) eRPM loss starts 36/122 ms late (tol 1.25 ms):
+  set_param latency 15-26 ms single, 38-110 ms for 8-param fault set -> apply in sim time; (4) 3 stick_zsine_o6
+  draws tripped height watchdog (2 before any hook) + metrics.py crashes on aborted runs; (5) --sched-anchor never
+  emitted; weak+sat together unchecked. Then route check S113.
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
