@@ -43,8 +43,9 @@ S118: pilot 880a83c63b (I118 + K118 key 0 BLOCKING/2 MAJOR + F118 fixes, 12 test
   stick segment) tripped idx 0 at 59.56 s in the neutral segment -> F118 (pilot from mode switch, clamps x thr0).
   Open K118 items: MAJOR-2 (profile thrust ff vs vz-integral reference: pilot may partly cancel the input,
   measure on one log); MINORs (acro R/P_MAX hard-coded, msg age unchecked, sat anti-windup untested).
-  IN FLIGHT T118 v1: idx 0/21/49 INDI then PID -> results/g3_pilot_s118 (fly.sh, progress.txt, run_NNN,
-  pid_runNNN). NEXT S119: read outcomes; check on run_000 sticks.csv that pilot rows start at the switch, altitude
+  T118 v1 INDI: idx 0 (acro), 21, 49 all "ok" (full 94 s; pilot rows from 52.06 s = switch, 1603 rows on 0).
+  PID controls pid_run000/021/049 IN FLIGHT at session end (fly.sh, progress.txt). NEXT S119: PID outcomes; check
+  on logs (haiku) altitude
   held, acro tilt levelled; PID same; README; commit metrics. Pass -> close D-G3-STICK-PILOT, go to stage 4.
   Fail on both controllers -> acro G3-unprobed (RC118). Uncommitted ok: v0 run at results/g3_pilot_s118_v0_run000.
 S117 sampler rule DONE 981e94f79e (D-G3-STICK-FACTORS). g3_run.py got --stop.
