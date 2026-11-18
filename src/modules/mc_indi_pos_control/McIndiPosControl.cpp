@@ -74,14 +74,8 @@ bool McIndiPosControl::init()
 	return true;
 }
 
-void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active, float tilt_limit_rad, float ht,
-				    vehicle_local_position_setpoint_s &local_pos_sp, vehicle_attitude_setpoint_s &att_sp)
+void McIndiPosControl::pollStageInputs()
 {
-	constexpr hrt_abstime kMaxAge = 20_ms;
-	constexpr hrt_abstime kEscMaxAge = 100_ms;
-	constexpr hrt_abstime kAllocMaxAge = 200_ms;
-	using matrix::Vector3f;
-
 	vehicle_attitude_s att;
 
 	if (_attitude_sub.update(&att)) {
@@ -92,9 +86,27 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 	vehicle_acceleration_s acc;
 
 	if (_acceleration_sub.update(&acc)) {
-		_f_b = Vector3f(acc.xyz);
+		_f_b = matrix::Vector3f(acc.xyz);
 		_acc_time = acc.timestamp;
 	}
+}
+
+bool McIndiPosControl::stageInputsFresh(hrt_abstime now) const
+{
+	// a sample newer than 'now' (published after it was taken) has age 0, not stale
+	auto age = [now](hrt_abstime t) { return (now > t) ? (now - t) : hrt_abstime{0}; };
+	return _q_time != 0 && age(_q_time) <= kStageMaxAge && _acc_time != 0 && age(_acc_time) <= kStageMaxAge;
+}
+
+void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active, float tilt_limit_rad, float ht,
+				    vehicle_local_position_setpoint_s &local_pos_sp, vehicle_attitude_setpoint_s &att_sp)
+{
+	constexpr hrt_abstime kMaxAge = kStageMaxAge;
+	constexpr hrt_abstime kEscMaxAge = 100_ms;
+	constexpr hrt_abstime kAllocMaxAge = 200_ms;
+	using matrix::Vector3f;
+
+	pollStageInputs(); // also polled before PositionControl::update (stageInputsFresh); here for any newer sample
 
 	vehicle_thrust_setpoint_s thr;
 
@@ -822,16 +834,18 @@ void McIndiPosControl::Run()
 						   || _vehicle_control_mode.flag_control_velocity_enabled)
 					       && (_takeoff.getTakeoffState() == TakeoffState::flight) && !flying_but_ground_contact;
 
-			// A2: a_ref = feed-forward + P/D only whenever the INDI stage is requested this cycle (also on the first
-			// active cycle after a bypass, so the stock integral never enters a_ref). In bypass (altitude mode, takeoff
-			// rampup, ground contact) the stock integrator is the only thrust-gap compensation and keeps running.
-			if (want_indi) {
+			const hrt_abstime now = hrt_absolute_time();
+			pollStageInputs();
+
+			// A2: a_ref = feed-forward + P/D only whenever the INDI stage is requested and its inputs are fresh this
+			// cycle (also on the first active cycle after a bypass, so the stock integral never enters a_ref). In bypass
+			// (takeoff rampup, ground contact, stale attitude or acceleration) the stock integrator is the only
+			// thrust-gap compensation and keeps running.
+			if (want_indi && stageInputsFresh(now)) {
 				_control.resetIntegral();
 			}
 
 			_control.setState(states);
-
-			const hrt_abstime now = hrt_absolute_time();
 
 			// Run position control
 			if (_control.update(dt)) {

@@ -104,6 +104,14 @@ private:
 
 	void Run() override;
 
+	/** Poll the attitude and specific-force inputs of the INDI stage. */
+	void pollStageInputs();
+
+	/** True if the attitude and specific force are recent enough for the INDI stage to run. */
+	bool stageInputsFresh(hrt_abstime now) const;
+
+	static constexpr hrt_abstime kStageMaxAge{20_ms};
+
 	/** INDI stage after PositionControl::update (architecture A). Modifies att_sp / local_pos_sp when active. */
 	void runIndiStage(float dt, hrt_abstime now, bool want_active, float tilt_limit_rad, float ht,
 			  vehicle_local_position_setpoint_s &local_pos_sp, vehicle_attitude_setpoint_s &att_sp);
