@@ -190,6 +190,22 @@ private:
 	ImuDelayRing _imu_delay_ring[_MAX_IMU_SENSORS] {};
 	uint64_t _imu_delay_us{0};
 
+	// SIM_GZ_GPS_DLY delay line (hook B): one ring per GNSS instance of fully built sensor_gnss structs.
+	// 0 = bypassed (original publish path). Size: 250 ms at the flown 30 Hz navsat (8 entries), sized for 50 Hz
+	// (14 entries) with >2x margin. Failure injection is applied at release.
+	static constexpr int GNSS_DELAY_LEN = 32;
+	struct GnssDelayRing {
+		sensor_gnss_s e[GNSS_DELAY_LEN] {};
+		int head{0};
+		int n{0};
+		uint32_t overflow{0};
+		bool first_logged{false};
+	};
+	std::mutex _gnss_delay_mutex;
+	GnssDelayRing _gnss_delay_ring[_MAX_GNSS_SENSORS] {};
+	uint64_t _gnss_delay_us{0};
+	void releaseDelayedGnss(uint8_t instance_index, uint64_t now); // caller holds _gnss_delay_mutex
+
 	// Extra white IMU noise (SIM_GZ_IMU_NSC), IMU 0, seeded from SIM_GZ_SEED
 	void addExtraImuNoise(gz::math::Vector3d &accel_b, gz::math::Vector3d &gyro_b);
 	std::mt19937 _imu_noise_rng{};
@@ -273,6 +289,7 @@ private:
 		(ParamInt<px4::params::SIM_GZ_EN_GPS>) _sim_gz_en_gps,
 		(ParamInt<px4::params::SIM_GZ_EN_IMU>) _sim_gz_en_imu,
 		(ParamInt<px4::params::SIM_GZ_DLY_IMU>) _sim_gz_dly_imu,
+		(ParamInt<px4::params::SIM_GZ_GPS_DLY>) _sim_gz_gps_dly,
 		(ParamInt<px4::params::SIM_GZ_EN_MAG>) _sim_gz_en_mag,
 		(ParamFloat<px4::params::SIM_GZ_VIB_ACC>) _sim_gz_vib_acc,
 		(ParamFloat<px4::params::SIM_GZ_VIB_GYR>) _sim_gz_vib_gyr,

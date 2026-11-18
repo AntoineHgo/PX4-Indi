@@ -147,6 +147,19 @@ parameters:
           max: 10
           default: 0
           reboot_required: true
+        SIM_GZ_GPS_DLY:
+          description:
+            short: Added GNSS delivery delay
+            long: Simulator delay line between Gazebo and the PX4 GNSS sensor topic. Delayed fixes keep their
+              original sample time (timestamp_sample is not shifted), timestamp is the delivery time. Released
+              at the first Run() tick (10 ms) after the delay elapsed. Independent of SENS_GNSS0_DELAY. 0
+              bypasses the delay line entirely.
+          type: int32
+          unit: ms
+          min: 0
+          max: 250
+          default: 0
+          reboot_required: true
         SIM_GZ_ERPM_LOSS:
           description:
             short: Motors with total eRPM telemetry loss

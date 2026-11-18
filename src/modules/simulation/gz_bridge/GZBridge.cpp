@@ -90,6 +90,11 @@ int GZBridge::init()
 	PX4_INFO("SIM_GZ_DLY_IMU requested %u us (%s), applied = requested rounded up to the IMU sample period (logged at first release)",
 		 (unsigned)_imu_delay_us, _imu_delay_us == 0 ? "bypassed" : "delay line active");
 
+	// Set before the navsat subscription so no fix is published undelayed
+	_gnss_delay_us = (uint64_t)math::constrain(_sim_gz_gps_dly.get(), (int32_t)0, (int32_t)250) * 1000u;
+	PX4_INFO("SIM_GZ_GPS_DLY requested %u us (%s), release checked per fix and every 10 ms (applied age logged at first release)",
+		 (unsigned)_gnss_delay_us, _gnss_delay_us == 0 ? "bypassed" : "delay line active");
+
 	// OPTIONAL:
 	if (_sim_gz_en_imu.get()) {
 		if (!subscribeImu(false)) {
@@ -201,6 +206,15 @@ void GZBridge::Run()
 		_mixing_interface_servo.updateParams();
 		_mixing_interface_wheel.updateParams();
 		_gimbal.updateParams();
+	}
+
+	if (_gnss_delay_us != 0) {
+		std::lock_guard<std::mutex> lock(_gnss_delay_mutex);
+		const uint64_t now = hrt_absolute_time();
+
+		for (uint8_t i = 0; i < _MAX_GNSS_SENSORS; i++) {
+			releaseDelayedGnss(i, now);
+		}
 	}
 
 	ScheduleDelayed(10_ms);
@@ -987,7 +1001,10 @@ void GZBridge::navSatCallback(const gz::msgs::NavSat &msg, uint8_t instance_inde
 	}
 
 	const uint64_t timestamp = hrt_absolute_time();
-	_failure_config.update();
+
+	if (_gnss_delay_us == 0) {
+		_failure_config.update();
+	}
 
 	// initialize gnss position
 	if (!_pos_ref.isInitialized()) {
@@ -1072,8 +1089,64 @@ void GZBridge::navSatCallback(const gz::msgs::NavSat &msg, uint8_t instance_inde
 	sensor_gnss.vel_ned_valid = true;
 	sensor_gnss.satellites_used = _sim_gps_used.get();
 
-	if (failure_injection::process_gnss(_failure_config, instance_index, sensor_gnss, _gnss_stuck[instance_index])) {
-		_sensor_gnss_pub[instance_index].publish(sensor_gnss);
+	if (_gnss_delay_us == 0) {
+		if (failure_injection::process_gnss(_failure_config, instance_index, sensor_gnss, _gnss_stuck[instance_index])) {
+			_sensor_gnss_pub[instance_index].publish(sensor_gnss);
+		}
+
+		return;
+	}
+
+	// SIM_GZ_GPS_DLY: hold the fully built fix, timestamp_sample stays the true measurement time.
+	std::lock_guard<std::mutex> lock(_gnss_delay_mutex);
+	GnssDelayRing &ring = _gnss_delay_ring[instance_index];
+
+	if (ring.n >= GNSS_DELAY_LEN) {
+		// full: release the oldest entry early (through the normal path), never silently
+		sensor_gnss_s &o = ring.e[ring.head];
+		o.timestamp = hrt_absolute_time();
+		_failure_config.update();
+
+		if (failure_injection::process_gnss(_failure_config, instance_index, o, _gnss_stuck[instance_index])) {
+			_sensor_gnss_pub[instance_index].publish(o);
+		}
+
+		ring.head = (ring.head + 1) % GNSS_DELAY_LEN;
+		ring.n--;
+
+		if (ring.overflow++ == 0) {
+			PX4_WARN("SIM_GZ_GPS_DLY ring overflow (%d entries) on GNSS %u, oldest fix released early",
+				 GNSS_DELAY_LEN, (unsigned)instance_index);
+		}
+	}
+
+	ring.e[(ring.head + ring.n) % GNSS_DELAY_LEN] = sensor_gnss;
+	ring.n++;
+	releaseDelayedGnss(instance_index, hrt_absolute_time());
+}
+
+void GZBridge::releaseDelayedGnss(uint8_t instance_index, uint64_t now)
+{
+	GnssDelayRing &ring = _gnss_delay_ring[instance_index];
+
+	while (ring.n > 0 && now >= ring.e[ring.head].timestamp_sample + _gnss_delay_us) {
+		sensor_gnss_s &o = ring.e[ring.head];
+
+		if (!ring.first_logged) {
+			ring.first_logged = true;
+			PX4_INFO("SIM_GZ_GPS_DLY GNSS %u applied %u us for requested %u us (first release)", (unsigned)instance_index,
+				 (unsigned)(now - o.timestamp_sample), (unsigned)_gnss_delay_us);
+		}
+
+		o.timestamp = now;
+		_failure_config.update();
+
+		if (failure_injection::process_gnss(_failure_config, instance_index, o, _gnss_stuck[instance_index])) {
+			_sensor_gnss_pub[instance_index].publish(o);
+		}
+
+		ring.head = (ring.head + 1) % GNSS_DELAY_LEN;
+		ring.n--;
 	}
 }
 
@@ -1296,10 +1369,11 @@ int GZBridge::print_status()
 	PX4_INFO_RAW("ESC outputs:\n");
 	_mixing_interface_esc.mixingOutput().printStatus();
 
-	PX4_INFO_RAW("Delay lines: DLY_ACT %u us (dropped %u, overflow %u), DLY_IMU %u us (overflow %u/%u/%u)\n",
+	PX4_INFO_RAW("Delay lines: DLY_ACT %u us (dropped %u, overflow %u), DLY_IMU %u us (overflow %u/%u/%u), GPS_DLY %u us (overflow %u/%u)\n",
 		     (unsigned)_mixing_interface_esc._act_delay_us, (unsigned)_mixing_interface_esc._act_dropped,
 		     (unsigned)_mixing_interface_esc._act_overflow, (unsigned)_imu_delay_us,
-		     (unsigned)_imu_delay_ring[0].overflow, (unsigned)_imu_delay_ring[1].overflow, (unsigned)_imu_delay_ring[2].overflow);
+		     (unsigned)_imu_delay_ring[0].overflow, (unsigned)_imu_delay_ring[1].overflow, (unsigned)_imu_delay_ring[2].overflow,
+		     (unsigned)_gnss_delay_us, (unsigned)_gnss_delay_ring[0].overflow, (unsigned)_gnss_delay_ring[1].overflow);
 
 	PX4_INFO_RAW("Servo outputs:\n");
 	_mixing_interface_servo.mixingOutput().printStatus();
