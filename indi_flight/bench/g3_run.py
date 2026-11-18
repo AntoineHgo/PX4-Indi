@@ -82,7 +82,7 @@ def build_run(draw, base_params_path, out_dir):
     else:
         scenario = SCENARIO_STICK
         sched = []
-        stick = ["--stick-mode", mode]
+        stick = ["--stick-mode", mode] + (["--stick-pilot"] if mode in ("stabilized", "acro") else [])
     params_path = os.path.join(out_dir, "g3_params.txt")
     argv += ["--scenario", scenario, "--controller", CONTROLLER, "--model", "quad5in", "--sim", "v2",
              "--rate-hz", str(RATE_HZ), "--seed", str(int(draw["sampler_seed"]) % (2 ** 31)),

@@ -27,6 +27,7 @@ from model_variant import build_variant  # noqa: E402
 import provenance  # noqa: E402
 import scenario_overrides  # noqa: E402
 import stick_profile  # noqa: E402
+import stick_pilot  # noqa: E402
 
 REPO = os.environ.get("PX4_INDI_REPO", os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 # ported to indi_flight/bench: inputs (scenarios, model_variant, disturbance, params) live next to this file, outputs
@@ -151,6 +152,8 @@ class Sim:
         self.pos = None  # (x, y, z) NED
         self.vz = 0.0
         self.yaw = 0.0
+        self.roll = 0.0
+        self.pitch = 0.0
         self.armed = False
         self.main_mode = None
         self.sub_mode = None
@@ -392,6 +395,7 @@ class Sim:
                     r[3] = int(self.t * 1e6)
                 self.sends_pending.clear()
             self.yaw = m.yaw
+            self.roll, self.pitch = m.roll, m.pitch
             self.wd_last_tick = time.time()
             if self.wd_on:
                 self.wd_check(m)
@@ -486,13 +490,16 @@ class Sim:
 
     def send_stick(self, smp):
         """S81: one MANUAL_CONTROL sample (x pitch, y roll, z throttle 0..1000, r yaw), logged as applied (sim time)."""
-        self.sticks.append((int(self.t * 1e6), smp["x"], smp["y"], smp["z"], smp["r"], smp["throttle"], smp["vz_up_demand"]))
+        self.sticks.append((int(self.t * 1e6), smp["x"], smp["y"], smp["z"], smp["r"], smp["throttle"], smp["vz_up_demand"])
+                           + ((smp["pilot_thr"], smp["pilot_roll"], smp["pilot_pitch"]) if "pilot_thr" in smp else ()))
         self.mav.mav.manual_control_send(self.sysid, smp["x"], smp["y"], smp["z"], smp["r"], 0)
 
     def write_sticks(self):
         with open(os.path.join(self.out, "sticks.csv"), "w") as f:
-            f.write("t_sim_us,x,y,z,r,throttle_applied,vz_up_demand_mps\n")
+            f.write("t_sim_us,x,y,z,r,throttle_applied,vz_up_demand_mps"
+                    + (",pilot_thr,pilot_roll_stick,pilot_pitch_stick" if any(len(r) > 7 for r in self.sticks) else "") + "\n")
             for r in self.sticks:
+                r = tuple(r) + ("",) * (10 - len(r)) if any(len(q) > 7 for q in self.sticks) else r  # neutral rows: no pilot columns
                 f.write(",".join(f"{v:.6g}" if isinstance(v, float) else str(v) for v in r) + "\n")
 
     def send_rate(self, p, q, r, thrust):
@@ -650,6 +657,37 @@ def git_info():
     return {"commit": g("rev-parse", "HEAD"), "dirty": bool(g("status", "--porcelain", "--untracked-files=no"))}
 
 
+def make_pilot_sp(sim, a, thr0, meta):
+    """S118 / F118 --stick-pilot: (neutral_sp, stick_sp(t_seg0, st)); ONE Pilot for the whole stick-mode period (design/i118_stick_pilot.md).
+
+    Active from the first sample sent after the manual mode is observed (neutral samples included); before that the plain sample
+    is sent. Reference altitude = altitude at activation + integral of vz_up_demand (0 on neutral rows), kept in the Pilot.
+    Measurements are the latest estimator values (LOCAL_POSITION_NED, ATTITUDE) in sim time.
+    """
+    pilot = stick_pilot.Pilot(a.stick_mode, thr0)
+    meta["stick"]["pilot"] = pilot.params()
+
+    def send(smp):
+        if sim.main_mode != STICK_MAIN_MODE[a.stick_mode]:
+            sim.send_stick(smp)
+            return
+        base = stick_profile.stick_to_thrust(smp["throttle"], a.stick_mode, thr0)
+        c = pilot.track(sim.t, -sim.pos[2], -sim.vz, sim.roll, sim.pitch, smp["vz_up_demand"], base)
+        if pilot.active:
+            z = stick_profile.stick_to_raw(stick_profile.thrust_to_stick(base + c.thr, a.stick_mode, thr0))
+            smp = dict(smp, z=z, throttle=stick_profile.raw_to_stick(z), x=int(round(c.pitch_stick * 1000)),
+                       y=int(round(c.roll_stick * 1000)))
+        smp.update(pilot_thr=c.thr, pilot_roll=c.roll_stick, pilot_pitch=c.pitch_stick)
+        sim.send_stick(smp)
+
+    def neutral():
+        send(stick_profile.neutral_sample(a.stick_mode, thr0))
+
+    def stick(t_seg0, st):
+        return lambda: send(stick_profile.stick_sample(lambda x: traj_pva(st, x), sim.t - t_seg0, a.stick_mode, hover_thr=thr0))
+    return neutral, stick
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--scenario", required=True, choices=sorted(SCENARIOS))
@@ -703,6 +741,9 @@ def main():
                     help="S81: fly a mode='stick' scenario in this manual mode: MANUAL_CONTROL streamed at 50 Hz sim time "
                          "(COM_RC_IN_MODE 1), mode switched by MAV_CMD_DO_SET_MODE after the hover, schedule anchored on "
                          "the observed main mode; sticks.csv in the run dir. Not combinable with --sched")
+    ap.add_argument("--stick-pilot", action="store_true",
+                    help="S118: simulated pilot on the stick scenario in stabilized / acro (altitude PI on thrust, acro levelling); "
+                         "corrections logged in sticks.csv, gains in meta.json. Default off")
     ap.add_argument("--sched", action="store_true",
                     help="D-SCHED: arm, offboard switch and the setpoint stream are played by PX4 (sim_scenario_player, "
                          "schedule file in sim time) instead of being sent over MAVLink; position, attitude and trajectory scenarios (T55)")
@@ -733,6 +774,8 @@ def main():
             sc = scenario_overrides.merge(sc_base, ov)
         except (OSError, ValueError) as e:  # json.JSONDecodeError is a ValueError
             raise SystemExit(f"--scenario-overrides {a.scenario_overrides}: {e}")
+    if a.stick_pilot and not a.stick_mode:
+        raise SystemExit("--stick-pilot goes with --stick-mode")
     if (a.stick_mode is not None) != (sc["mode"] == "stick") or (a.stick_mode and a.sched):
         raise SystemExit("--stick-mode goes with a mode='stick' scenario and not with --sched")
     if a.sched and (sc["mode"] not in ("position", "attitude", "trajectory")
@@ -904,6 +947,8 @@ def main():
             pos_sp = lambda: sim.send_stick(stick_profile.neutral_sample(a.stick_mode, thr0))  # noqa: E731
             meta["stick"] = {"mode": a.stick_mode, "main_mode": STICK_MAIN_MODE[a.stick_mode], "params": STICK_PARAMS,
                              "hover_thr_used": thr0}
+            if a.stick_pilot:  # F118: the pilot starts at the first neutral sample after the mode is observed
+                pos_sp, pilot_stick_sp = make_pilot_sp(sim, a, thr0, meta)
         sim.run(None, sp=pos_sp, until=lambda: sim.t >= T_OFFBOARD_S, wall_timeout=60 + 2 * PRESTREAM_S / a.speed,
                 what="pre_offboard_stream")
         meta["t_offboard_sent_s"] = sim.t
@@ -1008,8 +1053,11 @@ def main():
                 if name == "stick":
                     t_seg0, st = sim.t, sc["traj"]
                     meta["stick"].update({"t0_us": int(t_seg0 * 1e6), "dur_s": dur, "traj": st})
-                    sp = (lambda t_seg0=t_seg0, st=st: sim.send_stick(stick_profile.stick_sample(
-                        lambda tt: traj_pva(st, tt), sim.t - t_seg0, a.stick_mode, hover_thr=thr0)))
+                    if a.stick_pilot:
+                        sp = pilot_stick_sp(t_seg0, st)
+                    else:
+                        sp = (lambda t_seg0=t_seg0, st=st: sim.send_stick(stick_profile.stick_sample(
+                            lambda tt: traj_pva(st, tt), sim.t - t_seg0, a.stick_mode, hover_thr=thr0)))
                 else:
                     sp = pos_sp
             elif mode == "attitude":
