@@ -30,3 +30,7 @@ hover_long, quad5in, sim v2, speed 4, AMP 0.04, TP 10, NP 5, DLY 20, band 0.2-8 
 | pt0_ax3_r400_s2 | 64.5 | 0.62 | 0.291 | 1.17 | PASS |
 
 All 400 Hz cells PASS hole_report, all 800 Hz cells FAIL only on the count cross-check (finding 3). z PM range 58.3-66.1 deg, all >= 45; pt0_ax3_r400_s1 = S83 tb10 (57.3, re-scored S85). Preliminary: cells count only after the count-check fix and a second key of the margins.
+
+## S88 re-fly (hole_report after 688f198ab2)
+- pt1_ax3_r800_s2 re-flown alone (real sim holes before): holes OVERALL PASS; PM 59.6 deg, DM 0.26 s, Ms 1.17, GM nan (no phase crossing in band). Margins UNKEYED.
+- pt0_ax3_r800_s2: FAIL->PASS under D-HOLE-EXCESS (18.75 ms gap on the 89 Hz setpoint topic, excess 7.5 ms), no re-fly.

@@ -39,3 +39,6 @@ DM 0.43-0.67 s against a requirement of a few control periods. pt0 (velocity/pos
 | pt1_ax2_r800_s2 | 61.5 | 0.29 | 19.3 | 0.584 | 1.16 | 0.95 | PASS |
 
 Note (S88): the `top_db` field of the margins JSON is |L| at the last analysed bin (now also written as `last_bin_db`), not a maximum.
+
+## S88 re-fly
+- pt0_ax2_r400_s1 re-flown alone (same seed; first flight outputs in holes_fail_s87/pt0_ax2_r400_s1_first/): holes OVERALL PASS; PM 56.6 deg (first 53.1), GM 18.2 dB, DM 0.50 s, Ms 1.23. All 16 xy cells now PASS holes. Margins UNKEYED.
