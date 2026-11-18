@@ -153,9 +153,9 @@ parameters:
     MC_INDI_ACT_BLD:
       description:
         short: INDI actuator state blend time constant
-        long: Time constant of the complementary blend between the measured (high frequency) and the modelled (low frequency) actuator torque. Restores the integral action of the model state against a steady command/output gap. Only used when MC_INDI_W_MAX is set. Set to 0 to disable (measured torque only).
+        long: Time constant of the complementary blend between the measured (high frequency) and the modelled (low frequency) actuator torque. Restores the integral action of the model state against a steady command/output gap. Only used when MC_INDI_W_MAX is set. Set to 0 to disable (measured torque only), which removes the integral action against a weak motor or a thrust-map error.
       type: float
-      default: 0.0
+      default: 1.0
       min: 0.0
       max: 10.0
       unit: s
