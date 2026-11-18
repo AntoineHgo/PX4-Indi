@@ -117,6 +117,59 @@ def L_indi(w, fs=800.0, **kw):
     return L
 
 
+# Yaw (S107, design/g2_yaw_crosscheck_s107.md).  Flown config of the G2 yaw cells: MC_INDI_K_Y 10 (default), G1_Y 205, G2_Y 27 (bench
+# quad5in_indi_g1.params), ACT_TC 0.05, lead 1 -> c = min(1 x 10 x 0.05, kMaxLeadGain 2) = 0.5, MC_YAW_P 3 (4040_gz_quad5in; the
+# AttitudeControl yaw weight cancels in the small-angle gain), YAW_CUT 0, MC_INDI_INJ_AX 3.  ts_fw = G2_Y/G1_Y, ts_true = J_r/(2 k_m w_h)
+# of the plant (D-G2Y-DERIVE; equal by construction, J_r 5e-6 ASSUMED).  Measured path: Tb 0 as in HEAD_FLIGHT (UNVERIFIED for yaw).
+YAW_FLIGHT = dict(K=10.0, G1=205.0, tau_r=0.033, tau_m=0.05, gyro_fc=40.0, dgyro_fc=20.0, n=1, d_m=0, lat=0, Tb=0.0, g=1.0, eta=1.0,
+                  eta_m=1.0, fb_lead=0.5, att_p=3.0, att_lat=1, sp_lead=True, ts_fw=27.0 / 205.0, ts_true=27.0 / 205.0)
+
+
+def L_indi_yaw(w, fs=800.0, path="meas", **kw):
+    """Yaw INDI rate loop broken at the torque setpoint (M3a), same convention as L_indi (y = c, x = u, L = -c/u).
+    Law (indi_rate_control.cpp step 8, backward Euler): (G1 + G2/T (1 - z^-1)) Delta = nu - (1 + c) a_f + c r_dot,  c = t_fb + Delta.
+    Plant: w' = G1 g eta (m + ts_true m'),  m' = (u - m)/tau_r (rotor spin-up reaction torque ts_true m' = J_r/(2 k_m w_h) m').
+    L = [K F Pn + (1 + c) aF Va + (K + c D) att_p z^-att_lat T z/(1-z) Pn] / Dz - Tf,  Dz = 1 + ts_fw (1 - z^-1)/T,
+    Pn = w/(G1 u) and Va = a/(G1 u) of the sampled plant including the spin-up term; Tf as in L_indi (path 'meas' or 'model')."""
+    p = dict(YAW_FLIGHT)
+    p.update(kw)
+    w = np.asarray(w, float)
+    T = 1.0 / fs
+    zi = np.exp(-1j * w * T)
+    a = math.exp(-T / p["tau_r"])
+    c1 = p["tau_r"] * (1 - a)
+    c2 = T - c1
+    zl = zi ** p["lat"]
+    Ar0 = (1 - a) * zi / (1 - a * zi)
+    ge = p["g"] * p["eta"]
+    # w[k+1] - w[k] = G1 ge [c1 m + c2 u + ts (m[k+1] - m[k])], m[k+1] - m[k] = (1 - a)(u - m)
+    Q = c1 * Ar0 + c2 + p["ts_true"] * (1 - a) * (1 - zi) / (1 - a * zi)
+    Pn = ge * zl * Q * zi / (1 - zi)
+    Va = ge * zl * zi * Q / T
+    F = tf_lpf2p(zi, fs, p["gyro_fc"])
+    aF = F * tf_alpha(zi, fs, p["dgyro_fc"])
+    am = math.exp(-T / p["tau_m"])
+    Tmod = aF * p["eta_m"] * (1 - am) * zi / (1 - am * zi) * zi ** p["d_m"]
+    Tmeas = aF * p["eta"] * Ar0 * zl * zi ** p["n"]
+    if path == "meas":
+        if p["Tb"] > 0:
+            ab = T / (p["Tb"] + T)
+            Tf = Tmeas + ab / (1 - (1 - ab) * zi) * (Tmod - Tmeas)
+        else:
+            Tf = Tmeas
+    else:
+        Tf = Tmod
+    cl = p["fb_lead"]
+    Dz = 1.0 + p["ts_fw"] * (1.0 - zi) / T
+    L = (p["K"] * F * Pn + (1.0 + cl) * aF * Va) / Dz - Tf
+    if p["att_p"] > 0:
+        als = T / (SP_LEAD_TC + T)
+        D = als / (1.0 - (1.0 - als) * zi) * (1.0 - zi) / T
+        lead = cl * D if p["sp_lead"] else 0.0
+        L = L + (p["K"] + lead) * p["att_p"] * zi ** p["att_lat"] * T * zi / (1.0 - zi) * Pn / Dz
+    return L
+
+
 def L_pid(w, fs=800.0, **kw):
     """Discrete PX4 PID rate loop (P on rate error, I from the previous cycle, D on measured angular acceleration)."""
     p = dict(PID_DEF)

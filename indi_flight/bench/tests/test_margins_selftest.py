@@ -409,8 +409,35 @@ def test5_sp_lead():
     print("  T5 D(z) sim vs analytic ok, ratio (K + c D)/K ok, |L| gain %s dB" % np.round(20 * np.log10(abs(Lh) / abs(Ln)), 2))
 
 
+def test6_yaw_model():
+    """S107: MM.L_indi_yaw against its analytic limits (no att path, c = 0, model path, near-ideal lags and filters):
+    (a) matched spin-up (ts_fw = ts_true): the (1 + ts s) of the plant cancels the Dz of the law, L -> K / s e^{-s 1.5 T}
+    (pure integrator plus ZOH and one-sample delay); (b) fw G2 = 0 with a true spin-up ts: L -> K (1 + ts s) / s e^{-s 1.5 T} + ts s;
+    (c) Dz recursion: matched case is independent of ts."""
+    fs, T = 800.0, 1.0 / 800.0
+    f = np.array([0.1, 0.2, 0.4])
+    w = 2 * np.pi * f
+    base = dict(path="model", tau_r=1e-6, tau_m=1e-6, gyro_fc=350.0, dgyro_fc=350.0, fb_lead=0.0, att_p=0.0, K=10.0)
+    for ts in (0.0, 0.1317):
+        L = MM.L_indi_yaw(w, fs, **dict(base, ts_fw=ts, ts_true=ts))
+        ref = 10.0 / (1j * w) * np.exp(-1j * w * 1.5 * T)
+        check(np.allclose(abs(L), abs(ref), rtol=0.01), "T6a |L| ts %g: %s vs %s" % (ts, abs(L), abs(ref)))
+        check(np.allclose(np.angle(L / ref, deg=True), 0.0, atol=1.0), "T6a phase ts %g: %s" % (ts, np.angle(L / ref, deg=True)))
+    ts = 0.1317
+    w2 = 2 * np.pi * np.array([0.5, 1.0])
+    L = MM.L_indi_yaw(w2, fs, **dict(base, ts_fw=0.0, ts_true=ts))
+    # L = K (1 + ts s)/s e^{-1.5 s T} + [(1 + ts s) a_f term - t_f term] = + ts s (acceleration feedback sees the spin-up, t_f does not)
+    ref = 10.0 * (1 + 1j * w2 * ts) / (1j * w2) * np.exp(-1j * w2 * 1.5 * T) + 1j * w2 * ts
+    check(np.allclose(abs(L), abs(ref), rtol=0.02), "T6b |L| %s vs %s" % (abs(L), abs(ref)))
+    check(np.allclose(np.angle(L / ref, deg=True), 0.0, atol=2.0), "T6b phase %s" % np.angle(L / ref, deg=True))
+    print("  T6 yaw L: integrator + 1.5 T delay (matched and unmatched spin-up) within 1 %% and 1 deg, |L| %s" % np.round(abs(L), 3))
+    # roll/pitch untouched by the yaw addition
+    m = MM.margins_of(MM.L_indi, 800.0, **MM.HEAD_FLIGHT)
+    check(abs(m["pm_deg"] - 66.7) < 0.05 and abs(m["gm_db"] - 14.93) < 0.01, "T6c roll HEAD_FLIGHT changed: %s %s" % (m["pm_deg"], m["gm_db"]))
+
+
 def main():
-    tests = [test1_open_loop, test1b_multi_crossing, test2_closed_loop, test3_timebase, test4_models, test5_sp_lead]
+    tests = [test1_open_loop, test1b_multi_crossing, test2_closed_loop, test3_timebase, test4_models, test5_sp_lead, test6_yaw_model]
     for tfn in tests:
         print(tfn.__name__)
         try:
