@@ -899,7 +899,11 @@ TEST_F(IndiAccelBlendTest, NoCollectiveStepAtBypassEdgeModuleConvention)
 
 TEST_F(IndiAccelBlendTest, ThrustContinuousAtTelemetryLossAndRecovery)
 {
-	// steady gap, b converged (u_meas + b = u_model): the loss and the recovery must not step the collective
+	// steady gap, b converged (u_meas + b = u_model): the loss and the recovery must not step the collective.
+	// Filter and delay as in flight: without them the measured path follows its input in one sample and the
+	// test cannot see what is fed while the telemetry is invalid (S96 second key T202: vacuous otherwise)
+	_ctrl.setFilter(100.f, 10.f);
+	_ctrl.setMeasurementDelay(3);
 	startBlend(1.f);
 	run(2000);
 	EXPECT_LT(maxThrustStep(5), 0.01f);
