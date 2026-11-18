@@ -165,3 +165,7 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S119 | I119 | sonnet | IV ident estimator + self-tests | design/i119_ident_iv.md | launched |
 | S120 | K120 | sonnet | second key ident_iv.py (re-impl 2SLS, mismatch, HAC) | design/key_k120_ident_iv.md | done: 1 BLOCKING + 2 MAJOR fixed, 20/20 |
 | S120 | H120 | haiku | M3a injection signals survey | design/h120_m3a_signals.md | done (rate claim unverified) |
+| S122 | RC122 route check | sonnet | design/route_check_122.md | done, accepted |
+| S122 | torque_measured logging cause | sonnet | design/s122_torque_measured_logging.md | done: MC_INDI_W_MAX unset |
+| S122 | run_validity.py + g3_run wiring + tests | sonnet | design/s122_run_validity.md | done, 23 tests |
+| S122 | K122 key of run_validity | sonnet | design/key_k122_run_validity.md | done, 3 BLOCKING open |
