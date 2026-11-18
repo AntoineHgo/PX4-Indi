@@ -721,7 +721,15 @@ def main():
                 meta.setdefault("boot_params", {})["MC_INDI_POS_EN"] = 1
         variant = dict(sc.get("model_variant") or {})
         if a.model_variant:
-            variant.update({k: float(v) for k, v in (kv.split("=", 1) for kv in a.model_variant.split(","))})
+            for kv in a.model_variant.split(","):
+                k, sep, v = kv.partition("=")
+                try:
+                    x = float(v)
+                except ValueError:
+                    x = float("nan")
+                if not sep or not math.isfinite(x) or x <= 0.0:
+                    raise SystemExit(f"--model-variant: bad item '{kv}' (want KEY=positive finite scale)")
+                variant[k.strip()] = x
         # S102 delay lines (gz_bridge, reboot_required, read at gz_bridge init; 0 = bypassed)
         sim.env["PX4_PARAM_SIM_GZ_DLY_ACT"] = str(a.dly_act)
         sim.env["PX4_PARAM_SIM_GZ_DLY_IMU"] = str(a.dly_imu)
