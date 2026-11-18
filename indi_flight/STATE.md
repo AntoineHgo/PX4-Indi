@@ -32,9 +32,7 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-(Done rows up to K100/P100: JOURNAL.md S100/S101 entries.)
-| B100 | S100: model-only batch, 10 flights | haiku | results/g2_rate_modelonly_s100/batch/batch.log | DONE S101: 10/10 PASS, worst GM 10.12 dB, PM 70.8, DM 39.7 ms; torque MODEL_ONLY_VERIFIED |
-| K101 | S101: second key of 12 model-only cells (P100+B100) | self (docker) | results/g2_rate_modelonly_s100/key_k101/summary.md | DONE b9d6cf3285: 12/12 agree |
+(Done rows up to K101/B100: JOURNAL.md S100/S101 entries.)
 | H102 | S102: delay-line hooks A1+A2 in gz_bridge (uncommitted, builds, 0 warnings, not flown) | sonnet | design/delay_line_impl_s102.md | DONE; orchestrator read diff, OK |
 | K102 | S102: second key of H102 | sonnet | design/delay_line_key_s102.md | DONE: 0 BLOCKING, M1+M2 fixed by orchestrator, c6ba02609f |
 | V102 | S102: delay-hook pre-test d0/d5 | haiku | results/delay_pretest_s102/README.md | DONE: IMU PASS (age 0/5000 us), actuator UNVERIFIED -> A-37 |
