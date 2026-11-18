@@ -7,3 +7,6 @@ MC_INDI_G1_P 1640
 MC_INDI_G1_Y 205
 # S47 yaw spin-up term (D-G2Y-DERIVE): G1_Y * J_r/(2 k_m w_h) = 205 * 5e-6/(2*1.9e-8*999) = 27. Without it the yaw loop is bistable (A-25).
 MC_INDI_G2_Y 27
+# S122: rotor speed at full command (gz maxRotVelocity of 4040_gz_quad5in, 2700 rad/s), as in the G2 s107 and stage-5 runs.
+# Without it the measured-torque path is off (IndiMeasuredTorque::enabled() false) and INDI flies on the model only (O-5).
+MC_INDI_W_MAX 2700

@@ -224,3 +224,26 @@ if __name__ == "__main__":
                 fails += 1
                 print("FAIL", name, repr(e)[:200])
     sys.exit(1 if fails else 0)
+
+
+def test_indi_params_carry_rate_ctl_type_1():
+    """S121 TODO: the runner must request MC_RATE_CTL_TYPE 1 for controller indi (else the stock PID loop flies)."""
+    d = draws()[0]
+    res = r.build_run(d, BASE, OUT)
+    assert r.CONTROLLER == "indi"
+    assert int(res["merged_params"]["MC_RATE_CTL_TYPE"]) == 1
+    assert "--controller" in res["argv"] and res["argv"][res["argv"].index("--controller") + 1] == "indi"
+
+
+def test_invalid_run_is_void(monkeypatch=None):
+    import json
+    d = _status_dir({"exit_status": "ok"})
+    orig = r.check_validity
+    r.check_validity = lambda out: {"valid": False, "problems": ["x"], "checked": {}}
+    try:
+        status = {"returncode": 0}
+        assert r.finalize(d, status) == "void"
+    finally:
+        r.check_validity = orig
+    done = json.load(open(os.path.join(d, "g3_done.json")))
+    assert done["outcome"] == "void" and done["returncode"] == 0 and done["validity"]["valid"] is False

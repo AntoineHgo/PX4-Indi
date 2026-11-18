@@ -18,6 +18,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import g3_sample  # noqa: E402
+import run_validity  # noqa: E402
 
 RUN_SCENARIO = os.path.join(HERE, "run_scenario.py")
 CONTROLLER = "indi"
@@ -245,12 +246,25 @@ def classify(out, status):
     return "incomplete", rj
 
 
+def check_validity(out):
+    """run_validity.check_run on out/flight.ulg with the params the runner wrote (g3_params.txt); None if no ulog."""
+    ulg, pp = os.path.join(out, "flight.ulg"), os.path.join(out, "g3_params.txt")
+    if not (os.path.exists(ulg) and os.path.exists(pp)):
+        return None
+    return run_validity.check_run(ulg, read_params(pp), CONTROLLER, expected_rate_hz=RATE_HZ)
+
+
 def finalize(out, status):
     """Record the outcome in g3_done.json (and in run.json as g3_outcome). An aborted run is a finished FAILURE: it gets
     the done marker (outcome 'aborted', not retried, counted as a failure by the campaign). Only an incomplete run
     (timeout, no run.json) gets g3_failed.json and no done marker, so it is retried on the next invocation."""
     outcome, rj = classify(out, status)
     status["outcome"] = outcome
+    validity = check_validity(out)
+    if validity is not None:
+        status["validity"] = validity
+        if not validity["valid"] and outcome in ("ok", "aborted"):
+            outcome = status["outcome"] = "void"  # flew the wrong controller / wrong params: not a usable run
     if outcome == "aborted":
         status["error"] = rj.get("error")
         status["watchdog"] = rj.get("watchdog")
@@ -259,7 +273,7 @@ def finalize(out, status):
         rj["g3_outcome"] = outcome
         with open(os.path.join(out, "run.json"), "w") as fh:
             json.dump(rj, fh, indent=1)
-    if outcome in ("ok", "aborted"):
+    if outcome in ("ok", "aborted", "void"):
         with open(os.path.join(out, "g3_done.json"), "w") as fh:
             fh.write(json.dumps(status) + "\n")
     else:  # no finished marker: the run is retried on the next invocation
