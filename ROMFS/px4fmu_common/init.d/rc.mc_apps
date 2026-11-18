@@ -28,9 +28,15 @@ fi
 #
 mc_att_control start
 
+# Autotune identifies and writes the PID rate gains: not started with the INDI rate controller.
 if param greater -s MC_AT_EN 0
 then
-	mc_autotune_attitude_control start
+	if param compare -s MC_INDI_EN 1
+	then
+		echo "autotune disabled with INDI"
+	else
+		mc_autotune_attitude_control start
+	fi
 fi
 
 #
