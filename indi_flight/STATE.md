@@ -10,9 +10,7 @@ History: JOURNAL.md (S101 entry holds the latest moves). Agent ledger: LEDGER.md
 LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S103.
 Rule (RC64/RC74): inner loop time-boxed, 1 session per law change; no new anomaly chase unless a gate test fails.
 NEXT S102:
-   (i) close K101 (second key of model-only cells, results/g2_rate_modelonly_s100/key_k101/): table primary/key/delta
-   like results/g2_rate_batch_s99/key_k100.md, write results/g2_rate_modelonly_s100/README.md section, update
-   results/g2_rate_table_s99.md (all 24 INDI v2+model-only 800/400 cells covered, all PASS).
+   (i) DONE S101 (b9d6cf3285): K101 12/12 agree, all 24 INDI v2 rate cells (measured + model-only) PASS.
    (ii) PID M1 reference rate cells (reference only, F-5; 800 Hz x3 axes, 1 seed is enough).
    (iii) linear-model cross-check for the v2 path (margins_models.py, T78 UNVERIFIED list below) -> G2 verdict note.
    (iv) next hook: shared sim-time delay line (design/delay_line_hook_s94.md), needed by G3.
@@ -30,7 +28,8 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 |---|---|---|---|---|
 (Done rows up to K100/P100: JOURNAL.md S100/S101 entries.)
 | B100 | S100: model-only batch, 10 flights | haiku | results/g2_rate_modelonly_s100/batch/batch.log | DONE S101: 10/10 PASS, worst GM 10.12 dB, PM 70.8, DM 39.7 ms; torque MODEL_ONLY_VERIFIED |
-| K101 | S101: second key of 12 model-only cells (P100+B100) | self (docker) | results/g2_rate_modelonly_s100/key_k101/*.md | resume: indi_project/docker/run.sh -n k101 -t 900 -- bash indi_flight/results/g2_rate_modelonly_s100/key_k101/run_key.sh |
+| K101 | S101: second key of 12 model-only cells (P100+B100) | self (docker) | results/g2_rate_modelonly_s100/key_k101/summary.md | DONE b9d6cf3285: 12/12 agree |
+(Nothing in flight. S102 starts with (ii): brief a haiku agent; find the PID M1 recipe in JOURNAL S86-S92 / results/stage2_s38.)
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging

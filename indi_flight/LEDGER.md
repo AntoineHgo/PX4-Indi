@@ -115,3 +115,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S100 | K100 | sonnet | second key G2 rate cells 12 flights | 5 calls, ~35k tok | DONE 9621a25d3d 12/12 agree |
 | S100 | P100 | haiku | model-only rate pre-test 2 flights | 15 calls, ~47k tok | DONE db536a8c01 PASS |
 | S100 | B100 | haiku | model-only rate batch 10 flights | - | in flight |
+| K101 | S101 | self (docker, no agent) | second key of 12 model-only G2 rate cells | results/g2_rate_modelonly_s100/key_k101/summary.md | DONE 12/12 agree |
