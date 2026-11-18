@@ -55,7 +55,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T204 | S97: D-ALTCTL-Z implement | sonnet | design/t204_altctl_z_log.md | DONE 52beee60e5 + tests 1d827d62be (diff read; 5/6 fail-before, break-check 3 fail; module compile-only; closed-loop test is regression-only) |
 | T205 | S97: second key on 52beee60e5 + de7c598e1e | sonnet | design/t205_altctl_key.md | DONE: no BLOCKING; double poll removed + DESCEND scope noted (S97); OPEN: 2 MAJOR coverage (no module harness for T203 gate / z_only derivation / want_indi; lib mutations at tilt, guard order, 0.1 threshold, min-collective in z-only), MINOR NaN f_b/q with fresh stamp zeroes integrator |
 | T206 | S98: lib tests T205 (f) 1-5 + pre-gate finite f_b/q | sonnet | design/t206_lib_mutation_tests_log.md | DONE b6e95f88c4 c32d022f9e (diff read; 4/5 break-checked, #5 partly not a bug; module compile-only) |
-| P98 | S98: G5 pre-test: s5_gap085 POSCTL regression + new stick ALTCTL gap scenario | sonnet | results/stage5_s98/README.md | running |
+| P98 | S98: G5 pre-test gap 0.85 | sonnet | results/stage5_s98/README.md | DONE a462b69ad5: offboard standing z err 0.003 m (S70 0.33), ALTCTL 0.035 m, EN+AT_EN 0.027 m no start errors; pretest_gate FAILS rate RMS 0.022-0.024 vs 0.02 (cause open); z-only activity not logged |
+| K98 | S98: haiku second key on P98 numbers from raw ulg | haiku | results/stage5_s98/key_p98.md | running |
 | T202 | S96: second key on bf44ece093 vs review findings 1-5 | sonnet | design/t202_dgap_fix_key.md | DONE: no BLOCKING, 2 MAJOR fixed 25e420b155 dff2b7a805 |
 
 ## Open problems
