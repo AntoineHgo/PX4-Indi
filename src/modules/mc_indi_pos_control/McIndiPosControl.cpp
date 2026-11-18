@@ -106,7 +106,8 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 	constexpr hrt_abstime kAllocMaxAge = 200_ms;
 	using matrix::Vector3f;
 
-	pollStageInputs(); // also polled before PositionControl::update (stageInputsFresh); here for any newer sample
+	// attitude and specific force were polled before PositionControl::update (pollStageInputs): the stage uses the
+	// samples its freshness gate saw, so the integrator reset and can_run agree within a cycle
 
 	vehicle_thrust_setpoint_s thr;
 
