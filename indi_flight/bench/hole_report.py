@@ -79,7 +79,9 @@ def raw_gaps(ts, t_min):
         return []
     dt = np.diff(ts)
     med = float(np.median(dt))
-    return [(int(ts[i]), int(dt[i])) for i in np.flatnonzero(dt > GAP_FACTOR * med).tolist()]
+    # also list any gap whose excess over the nominal period reaches the limit, so slow topics (< 50 Hz) are covered (T188)
+    sel = (dt > GAP_FACTOR * med) | (dt - med > LIM_HOLE_MS * 1000.0)
+    return [(int(ts[i]), int(dt[i])) for i in np.flatnonzero(sel).tolist()]
 
 
 def count_missing(ts, t_min):

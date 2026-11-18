@@ -238,5 +238,10 @@ j = topics(1250); j["actuator_motors"] = with_gap(4000, 15000)
 row = row_of(j, "actuator_motors")
 check("S88c 250 Hz topic, one 15 ms gap: FAIL (excess 11 ms)", not row["pass"] and abs(row["max_excess_ms"] - 11.0) < 1e-6)
 
+# (d) T188: 20 Hz topic (nominal 50 ms), one 61 ms gap: below 1.5 x median but excess 11 ms -> FAIL
+j = topics(1250); j["vehicle_local_position_setpoint"] = with_gap(50000, 61000)
+row = row_of(j, "vehicle_local_position_setpoint")
+check("S88d 20 Hz topic, one 61 ms gap: FAIL (excess 11 ms)", not row["pass"] and abs(row["max_excess_ms"] - 11.0) < 1e-6)
+
 print("ALL PASS" if not fails else f"{len(fails)} FAILED: {fails}")
 sys.exit(1 if fails else 0)
