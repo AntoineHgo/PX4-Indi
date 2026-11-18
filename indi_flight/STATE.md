@@ -32,6 +32,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    S75 (launch 20261118-010441, cap $1.16, no agent): edge semantics DECIDED, no firmware change (D-RATE-BLD-EDGE:
    rate blend snaps to instantaneous gap = correct for a complementary filter; D-GAP keeps freeze).
    S76: rate M3a 800 Hz at tb 1.0/0.3/0.1 flown. S77 (cap $2.91): unit tests done (499e1df991), A-34 traced (open).
+   S78 (cap $1.98, below the $2 needed for (b)): did (c) by model + second key. NEXT S79: route check 79 first.
    NEXT S78: (a) DONE S77 (400 Hz margins, rate precondition 1 met at 400/800); (b) D-GAP
    velocity-break PM at tb, tb/3: NO outer-loop injector exists (`results/stage3_s77_400/velbreak_search.md`):
    sonnet task (~$0.9) = injector at the accel/collective setpoint in mc_indi_pos_control mirroring D-G2-INJ
@@ -53,7 +54,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | F77 | S77 A-34 closing: S57 params at HEAD tb 0 / 1.0 | bg shell | results/stage3_s77_a34/README.md | DONE: blend and load ruled out, likely setpoint lead da64bc26b3; A-34 open with closing test |
 | T164 | S77 D-RATE-BLD unit tests | sonnet | results/stage3_s77_tests/README.md | DONE, 69/69, break-checked, committed 499e1df991 |
 | F77b | S77 rate M3a 400 Hz tb 0 / 1.0, sequential | bg shell | results/stage3_s77_400/README.md | DONE: PM 70, GM 13.3 dB, DM 51 ms both tb |
-| T166 | S78 A-34 closing by model | sonnet | results/stage3_s78_a34/README.md | DONE: shift reproduced, bins fail -> A-35; model change needs a haiku/sonnet second key (lesson 17) before G2 use |
+| T166 | S78 A-34 closing by model | sonnet | results/stage3_s78_a34/README.md | DONE: shift reproduced, bins fail -> A-35; second key T167 no BLOCKING (second_key.md), test Tc made literal + break-checked |
 | F73 | A-33 closing: loss08 with rate blend MC_INDI_ACT_BLD 0.3 / 1.0 (default 0 = off, never set in S72 flights: lesson-9 gap in the rate loop) | bg shell, instances 0/1 | results/stage5_s73/loss08_bld{0.3,1.0}/ | DONE, A-33 closed |
 
 ## Open problems

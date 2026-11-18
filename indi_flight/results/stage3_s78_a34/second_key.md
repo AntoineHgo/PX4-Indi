@@ -1,0 +1,10 @@
+# Second key: setpoint-lead in margins_models.L_indi (d089271558) vs firmware (da64bc26b3)
+
+Verdict: model matches the firmware for roll/pitch (clamp ignored); the self-test catches a wrong gain or sign but not a wrong kSetpointLeadTc value. No BLOCKING finding.
+
+- OK margins_models.py:~111-113: D(z) = als/(1-(1-als) z^-1) * (1-z^-1)/T, als = T/(Tc+T). Firmware: raw=(sp-prev)/dt, y += dt/(Tc+dt)*(raw-y), Tc=0.01 (kSetpointLeadTc). Same coefficients, same sample time, filter after the backward difference, no extra delay (derivative used in the same cycle).
+- OK margins_models.py:~114: gain is cl*D with cl = fb_lead = lead_scale*K*ACT_TC (=1 in HEAD_FLIGHT). Firmware adds +lead_gain*rate_sp_dot to the numerator next to nu=K*err, so nu_eff = K*e + c*r_dot. Sign positive, and the K+cl*D factor on rate_sp is right.
+- OK margins_models.py:~114: placement. The term (K+lead)*att_p*z^-lat*T z^-1/(1-z^-1)*Pn has the same sign convention as K*F*Pn (rate_sp=-att_p*theta, theta integrates w), and the lead multiplies the unfiltered rate_sp only, so it acts on the attitude-loop output path. Correct for a break at the torque setpoint.
+- MINOR test_margins_selftest.py:~T5b/T5c: both the model and the test read MM.SP_LEAD_TC, so a wrong Tc (not 0.01) passes. Add assert MM.SP_LEAD_TC == 0.01, or parse the constant from indi_rate_control.hpp.
+- MINOR test_margins_selftest.py:~T5c: the ratio check hard-codes K=20 (`"K" in base` is always False). It is tautological against the model formula, but it does fail on a wrong gain, sign, filter alpha or filter form (the test D is validated against the firmware recursion in T5b). T5d (|L| rises at 1-5 Hz) is weak and is not a discriminator.
+- MINOR margins_models.py:~HEAD_FLIGHT: fb_lead is used for both the feedback lead and the setpoint lead, as in firmware, but it is not tied to K. Changing K without fb_lead gives an inconsistent c. Yaw is not modeled (firmware also low-passes the yaw setpoint with the 2nd-order filter before the derivative). Neither affects the roll/pitch break.

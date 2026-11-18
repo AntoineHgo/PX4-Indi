@@ -375,7 +375,9 @@ def test5_sp_lead():
     Lh = MM.L_indi(w, fs, **base)
     Ln = MM.L_indi(w, fs, **dict(base, sp_lead=False))
     # (b) D(z) by the firmware recursion on sin(w k T)
-    als = T / (MM.SP_LEAD_TC + T)
+    FW_SP_LEAD_TC = 0.01  # indi_rate_control.hpp kSetpointLeadTc, literal on purpose (second key S78)
+    check(MM.SP_LEAD_TC == FW_SP_LEAD_TC, "T5b model Tc %s != firmware %s" % (MM.SP_LEAD_TC, FW_SP_LEAD_TC))
+    als = T / (FW_SP_LEAD_TC + T)
     for i, wi in enumerate(w):
         n = int(round(fs / f[i] * 40))
         k = np.arange(n)
@@ -398,7 +400,8 @@ def test5_sp_lead():
     Lh_minus = Lh - L_a0
     D = als / (1.0 - (1.0 - als) * zi) * (1.0 - zi) / T
     ratio = Lh_minus / Ln_minus
-    check(np.allclose(ratio, 1.0 + base["fb_lead"] * D / base["K"] if "K" in base else 1.0 + base["fb_lead"] * D / 20.0),
+    K_eff = base.get("K", MM.INDI_DEF["K"])
+    check(np.allclose(ratio, 1.0 + base["fb_lead"] * D / K_eff),
           "T5c lead ratio wrong")
     # (d)
     sel = f <= 5.0
