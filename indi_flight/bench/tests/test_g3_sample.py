@@ -104,6 +104,7 @@ def test_ranges():
         for ax, ik in (("roll", "ixx"), ("pitch", "iyy"), ("yaw", "izz")):    # M4: k * I_scale == e
             assert abs(gc[ax] * isc[ax] - gr[ax]) < 3e-6 and gr[ax] == f["g1_err"][ax]
             assert abs(isc[ax] - f["inertia_scale"][ik]) < EPS
+            assert abs(isc[ax] - r["hooks"]["model_variant"][ik]) < EPS    # key S109 MINOR-1: plant gets same I
             assert r["hooks"]["px4_params"]["MC_INDI_G1_" + ax[0].upper()]["x_nominal"] == gc[ax]
         for k in ("tel_loss", "tel_frozen"):
             e = f[k]
