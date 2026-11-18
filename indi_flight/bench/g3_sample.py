@@ -26,7 +26,7 @@ HOLD_S = 20.0
 HOLD_START_NOMINAL_S = FLIGHT_S - HOLD_S
 
 # ranges (owner floors) -------------------------------------------------------------------------------------------
-G1_ERR = (0.5, 2.0)          # controller G1 / plant G1, log-uniform, per axis
+G1_ERR = (0.5, 2.0)          # realised controller G1 / plant G1, log-uniform, per axis (ctrl mult = e / I_scale)
 TAU = (0.5, 3.0)             # log-uniform, x nominal
 ASYM = (1.0, 3.0)            # tau_down / tau_up, log-uniform; inverted: (1/3, 1)
 ASYM_INV_FRAC = 0.10         # widening
@@ -131,8 +131,14 @@ def digest_int(*parts, bits=63):
 def decode(u, no_wind=False, no_gnss=False):
     """Unit-cube point -> factor dict in physical units (with nominals)."""
     f = {}
-    f["g1_err"] = {"roll": r6(logu(u["g1_r"], *G1_ERR)), "pitch": r6(logu(u["g1_p"], *G1_ERR)),
-                   "yaw": r6(logu(u["g1_y"], *G1_ERR)), "nominal": 1.0, "unit": "controller G1 / plant G1"}
+    # M4 (D-G3-SAMPLER-K108): the drawn e is the realised controller/plant G1 ratio. The plant rate-loop G1 scales as
+    # 1/I_scale per axis, so the controller G1 multiplier written to the run is k = e / I_scale (k * I_scale = e).
+    isc = {"roll": r6(lin(u["ix"], *INERTIA)), "pitch": r6(lin(u["iy"], *INERTIA)), "yaw": r6(lin(u["iz"], *INERTIA))}
+    e = {"roll": r6(logu(u["g1_r"], *G1_ERR)), "pitch": r6(logu(u["g1_p"], *G1_ERR)), "yaw": r6(logu(u["g1_y"], *G1_ERR))}
+    f["g1_err"] = {**e, "nominal": 1.0, "unit": "e = realised controller G1 / plant G1 (alias of g1_ratio)"}
+    f["g1_ratio"] = {**e, "nominal": 1.0, "unit": "e, log-uniform [0.5, 2], controller G1 / plant G1"}
+    f["g1_ctrl_mult"] = {**{a: r6(e[a] / isc[a]) for a in e}, "i_scale": isc, "nominal": 1.0,
+                         "unit": "k = e / I_scale(axis): multiplier on nominal controller G1 (plant G1 ~ G1_nom / I_scale)"}
     tau = logu(u["tau"], *TAU)
     f["tau_scale"] = {"value": r6(tau), "nominal": 1.0, "unit": "x nominal motor tau (up and down)"}
     inv = u["asym_inv"] < ASYM_INV_FRAC
@@ -190,10 +196,15 @@ def decode(u, no_wind=False, no_gnss=False):
         f["wind"] = {"steady_ms": 0.0, "dir_deg": 0.0, "gust_peak_total_ms": 0.0, "gust_amp_ms": 0.0,
                      "gust_offset_s": None, "nominal": 0.0, "unit": "m/s, direction = where the air moves to"}
     else:
-        s = lin(u["wind_s"], *WIND)
-        pk = lin(u["gust_pk"], *GUST_PEAK)
+        # M2 (D-G3-SAMPLER-K108): peak U[3, 9] total, then steady U[0, min(5, peak - 1)] -> gust amp >= 1, peak <= 9.
+        # Corner C4 pins wind_s = 1.0 (never produced by a free draw): steady 5, peak U[6, 9].
+        if u["wind_s"] >= 1.0:
+            pk, s = lin(u["gust_pk"], 6.0, GUST_PEAK[1]), WIND[1]
+        else:
+            pk = lin(u["gust_pk"], *GUST_PEAK)
+            s = lin(u["wind_s"], WIND[0], min(WIND[1], pk - 1.0))
         f["wind"] = {"steady_ms": r6(s), "dir_deg": r6(lin(u["wind_dir"], 0.0, 360.0)),
-                     "gust_peak_total_ms": r6(max(pk, s)), "gust_amp_ms": r6(max(pk - s, 0.0)),
+                     "gust_peak_total_ms": r6(pk), "gust_amp_ms": r6(pk - s),
                      "gust_offset_s": GUST_OFFSET_S, "nominal": 0.0,
                      "unit": "m/s, direction = where the air moves to; gust added on the steady wind"}
     acc, mode = 0.0, MODE_MIX[-1][0]
@@ -221,8 +232,9 @@ def hooks_for(f, gz_seed):
             "--imu-noise-scale": None,   # placeholder, see g4_typical_noise
         },
         "px4_params": {
-            "MC_INDI_G1_R": {"x_nominal": f["g1_err"]["roll"]}, "MC_INDI_G1_P": {"x_nominal": f["g1_err"]["pitch"]},
-            "MC_INDI_G1_Y": {"x_nominal": f["g1_err"]["yaw"]},
+            "MC_INDI_G1_R": {"x_nominal": f["g1_ctrl_mult"]["roll"]},
+            "MC_INDI_G1_P": {"x_nominal": f["g1_ctrl_mult"]["pitch"]},
+            "MC_INDI_G1_Y": {"x_nominal": f["g1_ctrl_mult"]["yaw"]},
             "SIM_GZ_ERPM_LAT": f["tel_latency"]["frames"],
         },
         "model_variant": {"tau": f["tau_scale"]["value"], "tau_up": 1.0, "tau_down": f["tau_asym"]["value"],

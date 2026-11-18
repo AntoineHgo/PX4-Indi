@@ -96,7 +96,15 @@ def test_ranges():
         assert abs(gn["ekf_delay_ms"] - gn["latency_ms"]) <= 100
         w = f["wind"]
         assert _in(w["steady_ms"], 0, 5) and _in(w["dir_deg"], 0, 360)
-        assert _in(w["gust_peak_total_ms"], 3, 9) and _in(w["gust_amp_ms"], 0, 9) and abs(w["steady_ms"] + w["gust_amp_ms"] - w["gust_peak_total_ms"]) < 1e-5 or w["steady_ms"] > w["gust_peak_total_ms"] - EPS
+        pk, amp, st = w["gust_peak_total_ms"], w["gust_amp_ms"], w["steady_ms"]
+        assert _in(pk, 3, 9) and pk <= 9 + EPS                      # m7: checked on every wind run
+        assert amp >= 1.0 - EPS and abs(st + amp - pk) < 1e-5       # M2: gust amplitude >= 1 m/s above steady
+        assert st <= min(5.0, pk - 1.0) + EPS
+        gr, gc, isc = f["g1_ratio"], f["g1_ctrl_mult"], f["g1_ctrl_mult"]["i_scale"]
+        for ax, ik in (("roll", "ixx"), ("pitch", "iyy"), ("yaw", "izz")):    # M4: k * I_scale == e
+            assert abs(gc[ax] * isc[ax] - gr[ax]) < 3e-6 and gr[ax] == f["g1_err"][ax]
+            assert abs(isc[ax] - f["inertia_scale"][ik]) < EPS
+            assert r["hooks"]["px4_params"]["MC_INDI_G1_" + ax[0].upper()]["x_nominal"] == gc[ax]
         for k in ("tel_loss", "tel_frozen"):
             e = f[k]
             if e["on"]:
@@ -122,7 +130,9 @@ def test_lhs_stratification():
         ([r["factors"]["inertia_scale"]["iyy"] for r in rr], 0.7, 1.3, False),
         ([r["factors"]["inertia_scale"]["izz"] for r in rr], 0.7, 1.3, False),
         ([r["factors"]["vibration"]["mult"] for r in rr], 1.0, 5.0, True),
-        ([r["factors"]["wind"]["steady_ms"] for r in rr], 0.0, 5.0, False),
+        ([r["factors"]["wind"]["gust_peak_total_ms"] for r in rr], 3.0, 9.0, False),
+        ([r["factors"]["wind"]["steady_ms"] / min(5.0, r["factors"]["wind"]["gust_peak_total_ms"] - 1.0) for r in rr],
+         0.0, 1.0, False),
         ([r["factors"]["wind"]["dir_deg"] for r in rr], 0.0, 360.0, False),
     ]
     for vals, lo, hi, log in checks:
@@ -177,7 +187,8 @@ def test_corner_pins_exact():
             if c == "C4":
                 g_ = f["gnss"]
                 assert g_["latency_ms"] == 250 and not g_["matched"] and g_["ekf_delay_ms"] == 150
-                assert f["wind"]["steady_ms"] == 5.0 and all(f["g1_err"][a] == 2.0 for a in ("roll", "pitch", "yaw"))
+                assert f["wind"]["steady_ms"] == 5.0 and 6.0 - EPS <= f["wind"]["gust_peak_total_ms"] <= 9.0 and f["wind"]["gust_amp_ms"] >= 1.0 - EPS
+                assert all(f["g1_err"][a] == 2.0 for a in ("roll", "pitch", "yaw"))
             if c == "C5":
                 assert f["vibration"]["mult"] == 5.0 and f["tel_frozen"]["on"] and f["tel_dropout"]["on"]
                 assert f["tel_dropout"]["prob"] == 0.2 and f["tau_scale"]["value"] == 0.5
@@ -215,6 +226,72 @@ def test_pretest_set():
     assert x["x_tel_frozen"]["tel_frozen"]["on"] and not x["x_tel_frozen"]["tel_loss"]["on"]
     assert x["x_asym"]["tau_asym"]["value"] == 3.0
     assert all(r["g4_typical_noise"]["profile"] is None for r in rr)
+
+
+def _u(**kw):
+    u = g._nominal_u()
+    u.update({"asym_inv": 1.0, "sag_on": 1.0, "weak_on": 1.0, "loss_on": 1.0, "frz_on": 1.0, "gnss_match": 1.0})
+    u.update(kw)
+    return u
+
+
+def _close(a, b, rel=2e-6):
+    return abs(a - b) <= rel * max(1.0, abs(b))
+
+
+def test_laws_decode_grid():
+    """Deterministic law checks (M3): linear vs log at u = .25/.5/.75 for every factor with a stated law."""
+    lg = lambda u, lo, hi: lo * (hi / lo) ** u
+    ln = lambda u, lo, hi: lo + u * (hi - lo)
+    for u in (0.25, 0.5, 0.75):
+        f, _ = g.decode(_u(asym=u))
+        assert _close(f["tau_asym"]["value"], lg(u, 1, 3)), "asym log law"
+        f, _ = g.decode(_u(asym=u, asym_inv=0.0))
+        assert _close(f["tau_asym"]["value"], 1 / lg(u, 1, 3)) and f["tau_asym"]["inverted"]
+        f, _ = g.decode(_u(gnss_lat=u))
+        assert f["gnss"]["latency_ms"] == int(round(ln(u, 80, 250))), "gnss latency uniform"
+        f, _ = g.decode(_u(gnss_lat=0.5, gnss_off=u))
+        assert f["gnss"]["mismatch_offset_ms"] == int(round(ln(u, -100, 100))), "mismatch (-100, 100) uniform"
+        f, _ = g.decode(_u(sag_on=0.0, sag=u))
+        assert _close(f["thrust_sag"]["scale"], ln(u, 0.7, 1.0)), "sag uniform"
+        f, _ = g.decode(_u(weak_on=0.0, weak=u))
+        assert _close(f["weak_motor"]["scale"], ln(u, 0.7, 1.0)), "weak uniform"
+        f, _ = g.decode(_u(tau=u, vib=u))
+        assert _close(f["tau_scale"]["value"], lg(u, 0.5, 3.0)) and _close(f["vibration"]["mult"], lg(u, 1, 5))
+        f, _ = g.decode(_u(g1_r=u))
+        assert _close(f["g1_ratio"]["roll"], lg(u, 0.5, 2.0))
+    for u, m in ((0.1, 0), (0.35, 1), (0.6, 2), (0.9, 3)):
+        f, _ = g.decode(_u(weak_on=0.0, weak_motor=u, loss_on=0.0, loss_motor=u, frz_on=0.0, frz_motor=u))
+        assert f["weak_motor"]["motor"] == f["tel_loss"]["motor"] == f["tel_frozen"]["motor"] == m
+    f, _ = g.decode(_u(sag_on=0.0, loss_on=0.0, frz_on=0.0))
+    assert f["thrust_sag"]["ramp_s"] == 10.0 and f["tel_loss"]["duration_s"] == 2.0 and f["tel_frozen"]["duration_s"] == 1.0
+    assert g.GNSS_MISMATCH == (-100, 100)
+
+
+def test_laws_campaign_distributions():
+    """Campaign-level shares at n=300 over several master seeds (tolerances >> sampling spread of the correct law)."""
+    for seed in (11, 12, 13, 14, 15):
+        rr = camp(seed)
+        f = lambda r: r["factors"]
+        # asym log: P(ratio < sqrt 3) = 0.5 (linear would give 0.366)
+        a = [f(r)["tau_asym"]["value"] for r in rr if not f(r)["tau_asym"]["inverted"]]
+        assert 0.43 <= sum(x < math.sqrt(3) for x in a) / len(a) <= 0.57, (seed, "asym law")
+        # GNSS latency uniform on [80,250]: P(lat < 141.4) = 0.361 (log would give 0.5); LHS only (C4 pins 250)
+        lt = [f(r)["gnss"]["latency_ms"] for r in lhs(seed)]
+        assert 0.30 <= sum(x < 141.42 for x in lt) / len(lt) <= 0.42, (seed, "gnss latency law")
+        # mismatch offsets: both signs, spread over (-100, 100)
+        off = [f(r)["gnss"]["mismatch_offset_ms"] for r in rr if not f(r)["gnss"]["matched"]]
+        neg, pos = sum(x < 0 for x in off) / len(off), sum(x > 0 for x in off) / len(off)
+        assert 0.35 <= neg <= 0.65 and 0.35 <= pos <= 0.65 and min(off) < -80 and max(off) > 80, (seed, "mismatch sign")
+        # motor index spread: all four indices drawn, none under 8 % of the on-runs
+        for key in ("weak_motor", "tel_loss", "tel_frozen"):
+            m = [f(r)[key]["motor"] for r in rr if f(r)[key]["on"]]
+            assert all(sum(x == i for x in m) / len(m) >= 0.08 for i in range(4)), (seed, key, "motor index")
+        # sag / weak scale uniform on [0.7, 1]: share in the lower third 0.7..0.8 is 1/3 (log: 0.374, too close, the
+        # decode-grid test pins the law exactly); check the range is covered at both ends
+        for key, on in (("thrust_sag", "on"), ("weak_motor", "on")):
+            v = [f(r)[key]["scale"] for r in lhs(seed) if f(r)[key][on]]
+            assert min(v) < 0.75 and max(v) > 0.95, (seed, key)
 
 
 def test_json_roundtrip_and_keys():
