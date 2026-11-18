@@ -20,31 +20,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
    S65-S68 session notes: JOURNAL.md (S69 entry).
    S69-S71: JOURNAL.md. Route checks 64-79 in design/; next: S84.
-   S72 (launch 20261118-003830, cap $3): D-GAP implemented and committed (3481bdcf9e, 41d44d461a; reset() model path
-   at u + b, fixed by me after reading the diff). gap085_indi_htoff dz 0.025 m PASS, loss08_indi 0.056 m marginal;
-   second key agrees (`results/stage5_s72/second_key.md`). A-33 OPEN: loss08 holds a_c-a_f = 0.158 m/s2 (control
-   error 0.040 m), blend should be integral at DC. Closing flight loss08_indi_htoff: HTE ruled out.
-   S73: A-33 CLOSED (results/stage5_s73/README.md): rate blend MC_INDI_ACT_BLD default 0 = no integral action;
-   blend 0.3/1.0 removes the 10.4 deg standing error. D-RATE-BLD PROPOSED (default 1.0 s, 3 preconditions).
-   S74 (launch 20261118-010057, cap $1.51): route check 74 done (design/route_check_74.md, accepted with one change:
-   the default change waits for the margins, lesson 10). Root cause of recent work: decision 2 (every measured-state
-   loop needs its own integral path). Rule: no new anomaly chase unless a gate test fails; cap one session each.
-   S75 (launch 20261118-010441, cap $1.16, no agent): edge semantics DECIDED, no firmware change (D-RATE-BLD-EDGE:
-   rate blend snaps to instantaneous gap = correct for a complementary filter; D-GAP keeps freeze).
-   S76: rate M3a 800 Hz at tb 1.0/0.3/0.1 flown. S77 (cap $2.91): unit tests done (499e1df991), A-34 traced (open).
-   S78: A-34 model route + second key. S79 (cap $1.40): route check 79 (design/route_check_79.md, accepted):
-   D-RATE-BLD ACCEPTED, firmware default MC_INDI_ACT_BLD 1.0 committed a94d5c181a; A-34/A-35 PARKED (detour
-   under RC74 rule; reopen if a G2 entry fails or when the G2 model cross-check is written). Next route check: S84.
-   NEXT S80: (b) D-GAP velocity-break PM at tb, tb/3: NO outer-loop injector exists
-   (`results/stage3_s77_400/velbreak_search.md`): sonnet task (~$0.9) = injector at the accel/collective setpoint
-   in mc_indi_pos_control mirroring D-G2-INJ (MC_INDI_POS_INJ_*, log c/d/u) + csv script, then haiku second key
-   in a later session; brief it only at a cap >= $1.8 (else do (d) small parts or doc/bookkeeping without agents).
-   (d) runner RC/manual stick-path stub + PVA slice (ZSINE_O6), before land/re-take-off; fix the G3/G5 flight
-   matrix early (RC79 point 3). (e) combined opus review (stage-3 safety diff + stage-5 slices + snap-vs-freeze),
-   land/re-take-off flight. Flights no longer need to set MC_INDI_ACT_BLD 1.0 (now default).
-   S80 (launch 20261118-033048, cap $1.05, no agent): 158 pending metrics/run.json files committed (194109b460);
-   item (d) stub briefed in design/brief_rc_stub_s80.md (launch as one sonnet task at cap >= $1.8). NEXT S81: at
-   cap >= $1.8 launch (b) or (d) brief; else bookkeeping only.
+   S72-S80 (D-GAP, D-RATE-BLD accepted, A-34/A-35 parked, RC74/RC79): JOURNAL.md. Rule (RC74): no new anomaly
+   chase unless a gate test fails, one session cap each. Flights no longer need MC_INDI_ACT_BLD 1.0 (default).
    S82 (launch 20261118-042344, cap $3): T169 stick stub DONE (a1f2b3b124, 53b38dd54e; results/stage5_s81_stick/
    README.md): altctl/posctl fly on both stacks, 50 Hz grid pacing; PID = INDI gain 0.86 (stock setpoint shaping).
    T170 DONE (3b7af1282f fw, 37f3ab90a5, 9278260a9d): MC_INDI_PINJ_* injects at the INDI stage INPUT = velocity/
@@ -63,8 +40,6 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 (S72-S78 rows done, details in JOURNAL.md; A-34/A-35 rows and S76 D-RATE-BLD line are recorded.)
-| T171 | S83 injector second key | sonnet | results/stage5_s82_velbreak/second_key.md | DONE, AGREE WITH MINOR |
-| T172 | S83 stick stub second key | haiku | results/stage5_s81_stick/second_key.md | DONE, DISAGREE (3 rows 33 Hz pre-grid, README overclaims) |
 | B83 | velbreak re-fly TB 1.0/0.33 | host | results/stage5_s83_velbreak/README.md | DONE cdc5f03713, PM 57.3/59.1 deg |
 | T173 | injector minors + pinj_csv self-test | sonnet | results/stage5_s83_velbreak/minors_fix.md | DONE a38533428f, 907f57510d |
 | B83b | stick re-fly x4, grid pacing | host | results/stage5_s83_stick/README.md | DONE: all 50 Hz, gain 0.86 both stacks; open: sched anchor for stick mode (G5) |
