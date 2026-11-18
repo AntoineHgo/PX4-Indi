@@ -704,3 +704,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S78 (2026-11-18): A-34 model test (T166): setpoint lead reproduces the PM/f_c shift within 1.3 deg/0.07 Hz, bin criterion fails on a common model offset -> A-35 opened; A-34 still needs the da64bc26b3^ flight.
 - S78: second key of the margin-model lead (T167) OK; self-test now pins the firmware Tc literally, break-checked.
 - S79 (2026-11-18): route check 79 (design/route_check_79.md): A-34/A-35 were a detour under the RC74 rule, parked; D-RATE-BLD accepted, default MC_INDI_ACT_BLD 1.0 s committed a94d5c181a.
+- S80 (2026-11-18): pending run metrics committed (194109b460); RC/manual stick-path stub briefed (design/brief_rc_stub_s80.md), not launched (cap $1.05).

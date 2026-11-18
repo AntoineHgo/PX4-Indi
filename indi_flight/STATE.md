@@ -42,6 +42,9 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    (d) runner RC/manual stick-path stub + PVA slice (ZSINE_O6), before land/re-take-off; fix the G3/G5 flight
    matrix early (RC79 point 3). (e) combined opus review (stage-3 safety diff + stage-5 slices + snap-vs-freeze),
    land/re-take-off flight. Flights no longer need to set MC_INDI_ACT_BLD 1.0 (now default).
+   S80 (launch 20261118-033048, cap $1.05, no agent): 158 pending metrics/run.json files committed (194109b460);
+   item (d) stub briefed in design/brief_rc_stub_s80.md (launch as one sonnet task at cap >= $1.8). NEXT S81: at
+   cap >= $1.8 launch (b) or (d) brief; else bookkeeping only.
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
 | id | task | agent | output | resume |
