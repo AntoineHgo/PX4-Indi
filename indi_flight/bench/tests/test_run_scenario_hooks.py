@@ -37,6 +37,34 @@ def test_fault_incremental_and_rounding():
     assert abs(cum[2] - 0.25) < 1e-12 and n2[2]["MAX"] == int(round(1999 * 0.5)), (cum, n2)
 
 
+
+class _Cli:
+    def __init__(self, out):
+        self.out = out
+
+    def cli(self, *a, **k):
+        return self.out
+
+
+def test_hover_thrust_valid_flag_and_px4_fallback():
+    """K114 MAJOR: a non-valid or NaN HTE is replaced by MPC_THR_HOVER, clamped [0.05, 0.9] as mc_att_control."""
+    assert rs.hover_thrust(_Cli("    hover_thrust: 0.14\n    hover_thrust_var: 0.0\n    valid: True\n")) == (0.14, True)
+    assert rs.hover_thrust(_Cli("    hover_thrust: 0.31\n    valid: False\n")) == (0.31, False)
+    assert rs.hover_thrust_used(0.31, False, 0.137) == 0.137
+    assert rs.hover_thrust_used(0.14, True, 0.137) == 0.14
+    assert rs.hover_thrust_used(float("nan"), True, 0.137) == 0.137
+    assert rs.hover_thrust_used(None, True, 0.137) == 0.137
+    assert rs.hover_thrust_used(0.02, True, 0.137) == 0.05
+    assert rs.hover_thrust_used(0.95, True, 0.137) == 0.9
+
+
+def test_stick_params_pin_curve_constants():
+    """K114 MINOR 3: the inverse throttle curve constants are pinned in the run, not assumed from airframe defaults."""
+    assert rs.STICK_PARAMS["MPC_THR_CURVE"] == 0
+    assert rs.STICK_PARAMS["MPC_MANTHR_MIN"] == rs.stick_profile.MANTHR_MIN
+    assert rs.STICK_PARAMS["MPC_THR_MAX"] == rs.stick_profile.THR_MAX
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

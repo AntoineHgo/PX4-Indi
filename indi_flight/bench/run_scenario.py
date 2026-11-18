@@ -92,7 +92,9 @@ TAKEOFF_ALT = 5.0
 # S81 --stick-mode: PX4 custom main modes of the HEARTBEAT (px4_custom_mode.h) and the run's stick parameters
 STICK_MAIN_MODE = {"altctl": 2, "posctl": 3, "acro": 5, "stabilized": 7}
 STICK_PARAMS = {"COM_RC_IN_MODE": 1, "COM_RCL_EXCEPT": 7, "MPC_Z_VEL_MAX_UP": stick_profile.VZ_MAX_UP,
-                "MPC_Z_VEL_MAX_DN": stick_profile.VZ_MAX_UP, "MAN_DEADZONE": 0}  # 1 = MAVLink only; no deadzone; stick expo 0.6 is hard-coded and inverted in stick_profile (it gave gain 0.3)
+                "MPC_Z_VEL_MAX_DN": stick_profile.VZ_MAX_UP, "MAN_DEADZONE": 0,
+                "MPC_THR_CURVE": 0, "MPC_MANTHR_MIN": stick_profile.MANTHR_MIN,
+                "MPC_THR_MAX": stick_profile.THR_MAX}  # 1 = MAVLink only; no deadzone; stick expo 0.6 is hard-coded and inverted in stick_profile (it gave gain 0.3)
 ALT_KP, ALT_KD = 0.04, 0.10  # thrust per m / per m/s of altitude error in attitude/rate scenarios
 SETPOINT_PERIOD = 0.02  # sim seconds between offboard setpoints
 # G1.6 determinism (s12): arm and offboard happen at FIXED sim times, so same-seed runs fly the same time slice.
@@ -309,6 +311,13 @@ class Sim:
             row[5] = round(time.time() - self.wall0, 4)  # wall time at return; sim_time_after_us filled by pump()
         if "error" in out.lower() or "not found" in out.lower():
             raise RunError(f"param set {name} {value} failed: {out.strip()}")
+
+    def get_param_float(self, name):
+        out = self.cli("px4-param", "show", "-q", name)
+        m = re.search(r"(-?\d+(?:\.\d*)?(?:[eE][-+]?\d+)?)\s*$", out.strip())
+        if not m:
+            raise RunError(f"param show {name} failed: {out.strip()}")
+        return float(m.group(1))
 
     def get_param(self, name):
         out = self.cli("px4-param", "show", "-q", name)
@@ -588,14 +597,26 @@ def sched_anchor_s(sim):
 
 
 def hover_thrust(sim):
+    """Last hover_thrust_estimate: (hover_thrust or None, valid flag)."""
     out = sim.cli("px4-listener", "hover_thrust_estimate", "-n", "1")
+    ht, valid = None, False
     for line in out.splitlines():
-        if "hover_thrust:" in line and "uncertainty" not in line:
+        key, _, val = line.strip().partition(":")
+        if key == "hover_thrust":
             try:
-                return float(line.split(":")[1])
+                ht = float(val)
             except ValueError:
                 pass
-    return None
+        elif key == "valid":
+            valid = val.strip().lower() in ("true", "1")
+    return ht, valid
+
+
+def hover_thrust_used(ht, valid, thr_hover_param):
+    """Hover thrust mc_att_control centres the stabilized throttle curve on (mc_att_control_main.cpp:237-247):
+    the HTE value if valid and finite, else MPC_THR_HOVER; clamped to [0.05, 0.9] as PX4 does (K114 MAJOR)."""
+    h = ht if (valid and ht is not None and math.isfinite(ht)) else thr_hover_param
+    return min(0.9, max(0.05, h))
 
 
 def run_metrics(out_dir):
@@ -857,9 +878,12 @@ def main():
         hold_pos, hold_yaw = sim.pos, sim.yaw
         meta["t_hold_s"] = sim.t
         meta["hold_pos_ned"], meta["hold_yaw_rad"] = hold_pos, hold_yaw
-        ht = hover_thrust(sim)
+        ht, ht_valid = hover_thrust(sim)
+        thr_hover_param = sim.get_param_float("MPC_THR_HOVER")
         meta["hover_thrust_estimate"] = ht
-        thr0 = ht if ht and 0.1 < ht < 0.9 else 0.5
+        meta["hover_thrust_valid"] = ht_valid
+        meta["mpc_thr_hover"] = thr_hover_param
+        thr0 = hover_thrust_used(ht, ht_valid, thr_hover_param)
         def thr_cmd(tilt):
             """Collective thrust: hover estimate / tilt + PD on altitude error (identical for every controller)."""
             e = sim.pos[2] - hold_pos[2]  # NED z: positive = too low
