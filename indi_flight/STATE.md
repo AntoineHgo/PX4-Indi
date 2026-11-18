@@ -29,7 +29,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    S74 (launch 20261118-010057, cap $1.51): route check 74 done (design/route_check_74.md, accepted with one change:
    the default change waits for the margins, lesson 10). Root cause of recent work: decision 2 (every measured-state
    loop needs its own integral path). Rule: no new anomaly chase unless a gate test fails; cap one session each.
-   NEXT S75: (1) sonnet: rate-blend snap-vs-freeze fix + break-tested weak-motor unit test ; the firmware default
+   NEXT S75: (1) sonnet: rate-blend snap-vs-freeze fix (survey: design/rate_blend_survey_s74.md; rate blend tracks
+   on telemetry loss/landed and reset() zeroes it, D-GAP freezes; decide edge semantics in DECISIONS.md first) + break-tested weak-motor unit test ; the firmware default
    MC_INDI_ACT_BLD 1.0 goes in its own commit only after (2); flights keep setting 1.0 meanwhile.
    (2) ONE merged margin campaign: rate loop M3a at tb 1.0/0.3/0.1 + D-GAP items (velocity-break PM at tb, tb/3),
    single table -> D-RATE-BLD accept/reject. If tb 1.0 fails G2 thresholds: escalate (per-motor estimator = arch change).
