@@ -3,7 +3,7 @@
 ## Status
 - Stage: 3 (inner loop) opened S49; stage 2 (analysis tools, margins) from S36; stage 1 frozen S36 (G1 FINAL). Started S1 (2026-11-15). Stage 0 done. Session 3: ref airframe model done.
 - Gates: G1 PASSED S84 (owner S50 rule; G1.5 per injector, evidence limits) | G2 open (cell table in GATES.md) | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open.
-- Blocker: none. Q6 OPEN (ident concept, not blocking). Q1-Q5, N1, N2 closed. Outer-loop study finished; stage 5 = base A
+- Blocker: none. Q6 CLOSED S120 (B: INDI flies its own ident; conditions (i)-(v) in D-IDENT). No open question. Outer-loop study finished; stage 5 = base A
   (`design/flatness_r2.md`: flatness = optional increment after base A).
 ## Next actions (in order)
 History: JOURNAL.md (S100-S115 entries hold the recent moves). Agent ledger: LEDGER.md. Lessons proposed:
@@ -45,7 +45,12 @@ S119: T118 PASSED (31c9869179): INDI+PID idx 0/21/49 hold ~5 m, acro levelled, v
   I119 (sonnet): IV estimator bench/ident_iv.py + self-tests incl. closed loop -> design/i119_ident_iv.md.
   I119 KILLED (owner): ident_iv.py:149 Pz = Zf @ pinv(Zf) is n x n (19 GB at n~48k), OOM took the supervisor
   down 20:56. Use Zf @ (pinv(Zf) @ X). Size every array before running; files unkeyed, uncommitted.
-  NEXT: key I119 (second sonnet, re-implement), then flight data: hover with M3a injection on quad5in, compare to
+  S120: projector fixed (proj(A)=Zf@(pinv(Zf)@A), ident_iv.py), tests run in Docker pytest (host has none):
+  9/10 pass, test_c_intercept beta err 7.7 % > 5 % (closed loop + intercept): open, for the key.
+  K120 (sonnet, in flight): independent re-impl + review of ident_iv.py vs owner conditions (ii)(iii) ->
+  design/key_k120_ident_iv.md, bench/tests/test_ident_iv_k120.py. Run tests: `indi_project/docker/run.sh -n x -t 300
+  -- bash -c "ulimit -v 4000000; cd indi_flight/bench && python3 -m pytest -q -p no:cacheprovider tests/test_ident_iv*.py"`.
+  NEXT after key: flight data: hover with M3a injection on quad5in, compare to
   derived G1; G2 cells at G1 x0.5/x2 with halved gains (ident config).
 S117 sampler rule DONE 981e94f79e (D-G3-STICK-FACTORS). g3_run.py got --stop.
 P117 G3 probe seed 117 n=60 (45 pos/10 stab/5 acro): results/g3_probe_s117/ (fly.sh, progress.txt, run_NNN/g3_done.json).

@@ -623,7 +623,7 @@ S119 result (results/g3_pilot_s118/README.md): idx 0 (acro), 21, 49 fly the full
 altitude means 4.5-6.2 m vs 5 m, acro tilt 0.0-0.1 deg before LAND; stabilized vz follows the demand (corr 0.99,
 gain 2.0-2.2, same INDI/PID), so the pilot does not cancel the input (K118 MAJOR-2 closed by measurement).
 
-## D-IDENT (S119, PROPOSED, owner question Q6): identification concept (decision 3) and default set (decision 4)
+## D-IDENT (S119 proposed, S120 DECIDED: owner Q6 answer B): identification concept (decision 3) and default set (decision 4)
 - Choice proposed: `design/ident_concept.md`. One closed-loop-aware estimator family (IV regression on measured
   rotor speed, injected multisine as instrument, intercept, saturation excluded) for G1/G2_Y, actuator fit for
   ACT_TC/W_MAX/thrust curve, correlation lag for ERPM_DLY; MC_INDI_DELAY computed from filters. Before identification
@@ -632,3 +632,10 @@ gain 2.0-2.2, same INDI/PID), so the pilot does not cancel the input (K118 MAJOR
 - Alternatives: A ident under PID; C offline-only ident, refuse to arm; D online adaptive (see note sec 3).
 - Overturn: note sec 5 (M1 vs derived > 15 % unexplained; ident gains not holding 6 dB/45 deg at G1 x0.5; no
   convergence to 10 % from x2/x0.5 starts).
+- S120 owner (Q6 = B): INDI flies its own manoeuvre in the ident configuration. Acceptance conditions, each a
+  test before the procedure counts: (i) start independence, SITL ident from G1 x0.5/x1/x2 gives the same estimate
+  (spread <= 10 %) and each within 10 % of true quad5in (estimate following its start = B fails); (ii) multisine band
+  chosen against the halved-gain bandwidth, per-axis instrument strength (first-stage F) and CI reported, weak
+  instrument = failed ident; (iii) regressor and regressand through the same filter and delay, deliberate-mismatch
+  self-test must fail; (iv) four independent excitation directions, regression conditioning reported; (v) once in
+  SITL, same estimator on a PID-flown manoeuvre agrees within tolerance. SITL validates the estimator only.
