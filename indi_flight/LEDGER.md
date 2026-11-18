@@ -81,3 +81,7 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | T179 | S86 | sonnet | hole_report fixes + break tests, 11 calls, ~$0.15 | results/stage5_s85_holes/fixes_s86.md | done 98e977a9f0 |
 | T180 | S86 | sonnet | attitude-break design note, 18 calls, ~$0.3 | design/attitude_break_s86.md | done, unreviewed |
 | T181 | S86 | sonnet | xy break diagnosis from logs, 13 calls, ~$0.15 | results/stage5_s86_g2outer/t181_xy_diagnosis.md | done, top_db misread |
+| T182 | S87 | sonnet | hole_report count fix + re-run | ~32 calls | DONE |
+| T183 | S87 | haiku | second key T181 xy FRF | 9 calls | DONE AGREE |
+| T184 | S87 | haiku | second key T182 | 14 calls | DONE AGREE WITH MINOR |
+| T185 | S87 | sonnet | review attitude-break note vs code | 10 calls | DONE 0 blocking |

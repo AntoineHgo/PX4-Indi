@@ -734,3 +734,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
   pinj_csv reports no-crossover; bench/hole_report.py (evidence limit 1) built, hf + posctl PASS, second key T178;
   AX=0 identity flights: no change beyond same-seed spread (results/stage5_s85_identity/README.md).
 - S87: STATE trimmed; S83-S85 task rows (B83 velbreak PM 57.3/59.1, T173, B83b stick 50 Hz, RC84, T174 accel break pt1 z PM 58.7, T175-T178 keys and hole reporter) are DONE, details in their result READMEs.
+- S87 (20261118-051310): T182 hole_report count fix (c5b5a897e9) + T184 key AGREE WITH MINOR; T183 key of T181 AGREE; B87 xy G2 cells serial AMP 0.08 TP 20: PM 49.7-64.8 deg, GM ~18-19 dB (30c012bc7c); T185 review of attitude-break note: 0 blocking, 2 major test gaps.
