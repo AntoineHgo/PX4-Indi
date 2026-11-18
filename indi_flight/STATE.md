@@ -50,7 +50,10 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T180 | attitude-break note | sonnet | design/attitude_break_s86.md | DONE edc562526a, unreviewed |
 | T181 | xy no-crossover diagnosis | sonnet | results/stage5_s86_g2outer/t181_xy_diagnosis.md | DONE: top_db misread; UNKEYED |
 | B86z | z cells serial, 8 cells | host | results/stage5_s86_g2outer/README.md | DONE: PM 58.3-66.1 deg; 800 Hz cells fail only the count check |
-| B86 | G2 outer cells: pre-test pt0ax1r400, pt1ax1r400, pt1ax3r800 seed 1 | host | results/stage5_s86_g2outer/ (fly.sh PT AX RATE SEED) | in flight; resume: re-run fly.sh per missing cell |
+| B86 | G2 outer cells | host | results/stage5_s86_g2outer/ | DONE (z cells; xy re-fly B87) |
+| B87 | xy cells AMP 0.08 TP 20 hover_xlong, serial | host | results/stage5_s87_xy/ (fly.sh PT AX RATE SEED) | pre-test PASS (PM 54.4, f_c 0.33 Hz, coh>=0.93); batch.sh running (log batch.log); resume: bash batch.sh (skips done cells) |
+| T182 | hole_report count-check fix + re-run s86 cells | sonnet | results/stage5_s85_holes/count_fix_s87.md | in flight |
+| T183 | second key of T181 (xy FRF from CSVs) | haiku | results/stage5_s86_g2outer/t183_second_key.md | in flight |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
