@@ -40,7 +40,9 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    (5444196ab4): velbreak margins unchanged, S84 pt1 re-scored PM 61.3 deg/0.64 Hz (was 58.7, 7/16 bins);
    pinj_csv reports no-crossover; bench/hole_report.py (evidence limit 1) built, hf + posctl PASS, second key T178;
    AX=0 identity flights: no change beyond same-seed spread (results/stage5_s85_identity/README.md).
-   NEXT S86: (1) act on T178 second key; run hole_report on every G2-candidate run; (2) fly remaining G2 outer cells
+   NEXT S86: (1) T178 second key AGREE WITH MINOR (results/stage5_s85_holes/second_key.md): fix finding 2 (hold max
+   controller dt to 10 ms regardless of sim attribution) and 3 (fail "sim not assessable" without sim_ground_truth/
+   sensor_gyro), add count cross-check (finding 1), tests that fail when broken; then run hole_report on every G2 run; (2) fly remaining G2 outer cells
    with one runner (xy velbreak, accel break z/xy at 800/400, two seeds); (3) attitude-break design note;
    then G2 report + G5 text; then (e) combined opus review. Deferred anomalies: A-4, A-6, A-30, A-32, A-34, A-35. Next route check S89.
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
@@ -56,7 +58,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T175 | second key of T174, code vs brief | sonnet | results/stage5_s84_accbreak/second_key.md | DONE AGREE WITH MINOR; param texts fixed, rest accepted (README) |
 | T176 | S85 HF FRF second key + pinj_csv no-crossover fix | sonnet | results/stage5_s84_accbreak/hf_second_key.md | DONE AGREE, 5444196ab4 |
 | T177 | S85 per-run hole reporter + self-test | sonnet | bench/hole_report.py, results/stage5_s85_holes/README.md | DONE 35024c732e |
-| T178 | S85 second key of hole_report | sonnet | results/stage5_s85_holes/second_key.md | in flight; if lost, re-launch same brief |
+| T178 | S85 second key of hole_report | sonnet | results/stage5_s85_holes/second_key.md | DONE AGREE WITH MINOR, recount exact; fixes queued S86 |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
