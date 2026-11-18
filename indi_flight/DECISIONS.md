@@ -538,3 +538,11 @@ hole_report.py frozen at 688f198ab2 for G2/G3 evidence. All serial G2 outer cell
 Alternatives: keep fixing open T188 minors (max_excess under-reported below 1.5x median: report only; median-0 topic
 raises loudly). Reason: route check 89, five sessions of tooling with no gate change. Overturn if a hole_report verdict
 is shown wrong on raw timestamps of a gate log, or a loud error blocks a gate cell.
+
+## D-GATES-G3G8 (S94)
+G3-G8 test text frozen in GATES.md "G3-G8 FINAL (S94)" with 8 orchestrator decisions: no quota on G3 accuracy items
+(every miss in a valid run fails and is explained), owner-floor ranges not narrowed (delay line and GNSS latency hooks
+to build), G4 limits fixed from sources before any G4 measurement, G6 full G3 on the worst-converged identified set.
+Alternatives: 95 % quota on accuracy items (rejected: weakens "within stated limits"); freeze thresholds after the
+pre-test (rejected: fits the test to the result); full G3 per wrong start (10 x 300 runs, cost). Overturn: owner
+answer on G6 sample size, or a G3 pre-test spread > 1/3 of a limit (then owner question, no silent change).
