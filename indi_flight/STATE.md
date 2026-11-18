@@ -34,6 +34,8 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| K115 | key of 8f57b47f7e (HTE valid) | sonnet | design/key_k115_hte.md | re-launch same brief |
+| L116 | RC113 ladder, stick_zsine_o6 INDI nominal + 8 factors | haiku | results/g3_ladder_s116/README.md | re-run missing rows (fly.sh there) |
 (Done rows up to K114/F114: JOURNAL.md S100-S115; ledger LEDGER.md. Yaw model tool defect open: margins_of hangs if ts_true=0.)
 
 ## Open problems
