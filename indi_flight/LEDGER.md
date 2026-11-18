@@ -112,3 +112,6 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S98 | T206 | sonnet | lib mutation tests + module gate | 18 calls, ~63k tok, ~$0.35 | DONE b6e95f88c4 c32d022f9e |
 | S98 | P98 | sonnet | G5 gap pre-test 3 flights | 17 calls, ~46k tok, ~$0.3 | DONE a462b69ad5 |
 | S98 | K98 | haiku | second key P98 from raw ulg | 9 calls, ~37k tok, ~$0.03 | DONE agrees |
+| S100 | K100 | sonnet | second key G2 rate cells 12 flights | 5 calls, ~35k tok | DONE 9621a25d3d 12/12 agree |
+| S100 | P100 | haiku | model-only rate pre-test 2 flights | 15 calls, ~47k tok | DONE db536a8c01 PASS |
+| S100 | B100 | haiku | model-only rate batch 10 flights | - | in flight |

@@ -22,9 +22,9 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    Use pretest_gate only on stationary scenarios, or end its window at the fault.
    S99 DONE: hooks SIM_GZ_SEED + SIM_GZ_IMU_NSC (results/t207_hooks/README.md; accel scale UNVERIFIED, needs full-rate
    accel log before G4). G2 rate table compiled (results/g2_rate_table_s99.md): 7 required cells missing at HEAD.
-   NEXT S100: (i) v2 rate cells DONE (B99, results/g2_rate_batch_s99/README.md): second key on their margins from raw
-   ulg (independent FRF code), then batch model-only cells at HEAD (3 axes x 800/400 x 2 seeds; find model-only
-   recipe in results/stage3_s57/) and PID M1 reference cells; then the linear-model cross-check for the v2 path; (ii) next hook: shared sim-time delay line (design/delay_line_hook_s94.md);
+   S100: v2 cells keyed (K100, 12/12 agree); model-only pre-test PASS, batch B100 in flight.
+   NEXT S101: (i) close B100 (key with second_key_m3a_s100.py --axis), PID M1 reference cells, then the
+   linear-model cross-check for the v2 path; update g2_rate_table; (ii) next hook: shared sim-time delay line (design/delay_line_hook_s94.md);
    (iii) S101 deadline rule (c) below still holds. Old: log a z-only
    active flag in indi_pos_status when next touching the module (P98 could not see it).
    S98: RC98 DONE (design/route_check_98.md): STOP coverage after T206; D-G7-HARNESS decided, impl deferred to
@@ -54,8 +54,9 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T208 | S99: compile G2 rate-cell table | sonnet | results/g2_rate_table_s99.md | DONE: 18 INDI cells, 6 prelim PASS (mostly S57 fw, pre setpoint lead), 0 FAIL, 12 NOT COVERED; 7 of 12 required 800/400 cells missing; no PID rate margins ever; measured-path model cross-check missing |
 | P99 | S99: G2 rate pre-test at HEAD | haiku | results/g2_rate_pretest_s99/README.md | DONE 35f98b3fdb: pitch v2 800 GM 15.7 PM 69.0 DM 46 ms; yaw v2 400 GM 15.5 PM 87.0 DM 164 ms; 18/18 bins |
 | B99 | S99: G2 rate batch v2 at HEAD, 10 flights (fly.sh recipe, INJ_AX 1-3 x 800/400 x seeds 1,2 minus P1/P2) | haiku | results/g2_rate_batch_s99/README.md | DONE: 10/10 PASS, worst GM 13.1 dB (roll 400), PM 68.2 (roll 800), DM >= 46 ms; UNKEYED (second key on m3a margins needed), per-flight axis_check not run, latency assumed 0 frames. Next: model-only cells + key |
-| K100 | S100: second key of B99+P1/P2 margins from raw ulg, all axes | sonnet | results/g2_rate_batch_s99/key_k100.md | in flight; resume: re-launch same brief if file incomplete |
-| P100 | S100: model-only rate pre-test at HEAD (2 flights) | haiku | results/g2_rate_modelonly_s100/README.md | in flight; resume: re-launch if README missing |
+| K100 | S100: second key of B99+P1/P2 margins from raw ulg, all axes | sonnet | results/g2_rate_batch_s99/key_k100.md | DONE 9621a25d3d: 12/12 agree (GM 0.13 dB, PM 0.5 deg, DM 0.6 %), all PASS; same estimator family (checks indexing/window, not plant); no self-test for s41/s100 script |
+| P100 | S100: model-only rate pre-test at HEAD (2 flights) | haiku | results/g2_rate_modelonly_s100/README.md | DONE db536a8c01: MC_INDI_W_MAX 0 (log-verified); pitch400 GM 10.3 PM 72.4 DM 41 ms; yaw800 GM 18.4 PM 91.0 DM 172 ms; PASS |
+| B100 | S100: model-only batch, 10 flights (axes 1-3 x 800/400 x seeds 1,2 minus P400s1/Y800s1) | haiku | results/g2_rate_modelonly_s100/batch/README.md | in flight; resume: re-run batch.sh there, skip cells with margins.txt; then key with bench/second_key_m3a_s100.py |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
