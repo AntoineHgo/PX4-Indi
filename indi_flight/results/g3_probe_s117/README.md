@@ -16,3 +16,14 @@ Set-up note: the first launch of idx 2-59 passed the list as one zsh word, so on
 - Verdict: acro stick_zsine_o6 leaves attitude AND altitude open-loop; outcome is chaotic for both controllers and
   says nothing about the controller (O-13). Acro rows of this probe are scored "scenario-invalid" until the stick
   runner has a pilot model (D-G3-STICK-PILOT, proposed S117).
+
+## Batch result (60/60 flown, summary.txt from summary.py)
+- position 45/45 ok (incl. corners C2 sag+heavy+low G1, C3 saturation+gust, C4 GNSS mismatch+wind 5 m/s, C6 weak motor).
+- stabilized 8/10 ok; acro 3/5 ok. Non-ok: 0 (acro), 21 (stab), 25 (acro), 49 (stab, corner C1).
+- "ok" = no watchdog/abort only. No oscillation detector, steady-state or tracking limit is scored yet
+  (g3_checks.py does not exist): this is NOT a G3 pass of any item.
+- PID controls (ctl_pid.sh <idx>): run 21 PID also hits the ground (height < 0.3 m at 71.2 s vs INDI 67.2 s).
+  Run 49 (G1 e = 2 all axes, tau x3, asym 1.2, delay 10 ms, vib x3.1): PID flies it, INDI sinks 3.4 m; both command
+  the same mean collective (0.133 +- 0.001 over 62-77 s) and show the same roll-rate RMS (84 dps at 77 s, the stick
+  profile), altitude drifts +-3 m open-loop (INDI down, PID up). A 0.3 % thrust difference crosses the 3 m line:
+  not discriminating. Same cause as run 0: open-loop collective (D-G3-STICK-PILOT). Run 25 (acro) not controlled.

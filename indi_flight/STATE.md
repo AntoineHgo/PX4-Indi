@@ -42,8 +42,8 @@ S117 sampler rule DONE 981e94f79e (D-G3-STICK-FACTORS). g3_run.py got --stop.
 P117 G3 probe seed 117 n=60 (45 pos/10 stab/5 acro): results/g3_probe_s117/ (fly.sh, progress.txt, run_NNN/g3_done.json).
   Pretest idx 0,1,16: 1 pos + 16 stab ok; 0 ACRO watchdog trip (sank 3.5 m at 59.8 s; collective 0.1 = HTE
   lower bound, mass 0.76; acro held 11 deg tilt, no levelling). PID control on same draw: ctl_pid_run000/.
-  Hypothesis: open-loop stick collective again -> stick runs need a pilot model (slow altitude PI on throttle,
-  acro levelling) before they count. Rest (57 runs) launched ~20:05, ~80 min. Resume: `setsid nohup bash indi_flight/results/g3_probe_s117/fly.sh 3 <idx...>`
+  P117 DONE: 60/60 flown; pos 45/45, stab 8/10, acro 3/5 no-abort ("ok" = no abort only; nothing scored).
+  Non-ok 0,21,25,49 = open-loop stick collective (PID controls 0,21,49 in README; 25 uncontrolled). Resume: `setsid nohup bash indi_flight/results/g3_probe_s117/fly.sh 3 <idx...>`
   (runs with g3_done.json are skipped by g3_run.py; delete a partial run_NNN without it before re-running).
 K115 DONE (design/key_k115_hte.md, 0 BLOCKING): fix AFTER L116 ends (same runner file): clamp [0.05,0.9] only on
   valid HTE (mc_att_control_main.cpp:241), meta hover_thr_used + hover_thr_source for every run (not stick only),
