@@ -28,3 +28,5 @@ Runner defect found (not a controller effect, outside the scored window): in IND
 AUTO_LAND to POSCTL 0.65 s after the LAND command (83.07 -> 83.72 s), then descended on the low throttle stick and
 disarmed at about 95 s. Likely the pilot keeps sending sticks after LAND and its acro deflection exceeds the
 COM_RC_OVERRIDE threshold. Fix in the runner: centre or stop pilot sticks at the LAND command (open K118 MINOR).
+
+**S121 VOID for INDI:** the "indi" runs here flew the stock rate loop (MC_INDI_EN=0, no boot_params in run.json; base params lacked MC_RATE_CTL_TYPE 1). See JOURNAL S121.

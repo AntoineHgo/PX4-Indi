@@ -888,3 +888,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
   N116 DONE 4e25b1aa00: nominal horiz RMS INDI 2.805 / PID 2.800 m = faulted rows; A-41 closed.
   H116 DONE dce771f1e6 (K115 fixes, 9+3 tests pass, mutations checked; slew-lag m3 not addressed, accepted:
     probes only). Key of a bench-only meta fix not required (no safety path).
+- S121: G3 'indi' runs S110-S118 flew the stock rate loop (no MC_RATE_CTL_TYPE 1 in base params); runner fixed and guarded; P117/T118/ladder INDI verdicts void.

@@ -69,7 +69,9 @@ def _round_ms(x):
 def build_run(draw, base_params_path, out_dir):
     f = draw["factors"]
     base = read_params(base_params_path)
-    params = {}
+    # S121: the INDI rate module starts only from MC_RATE_CTL_TYPE 1 (run_scenario maps it to MC_INDI_EN at boot);
+    # the airframe G1 file does not carry it, so every S112-S118 "indi" probe flew the stock rate loop.
+    params = {"MC_RATE_CTL_TYPE": "1"} if CONTROLLER == "indi" else {}
     applied, not_applied, notes = {}, {}, {}
     argv = []
 

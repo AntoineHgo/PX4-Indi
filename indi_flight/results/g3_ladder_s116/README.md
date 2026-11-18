@@ -85,3 +85,5 @@ Reference: metrics.py defines analytic_reference (hold_pos plus traj_pva at ULog
 Earlier comparable numbers (pid_default traj_lemniscate, not o1 --sched, so not the same scenario): det_g16/traj_lemniscate/r1..r5 horizontal RMS 2.221 to 2.235 m (vertical 0.018 to 0.028 m); t55_pretest_s26/traj_lemniscate_r1 horizontal RMS 2.227 m (vertical 0.022 m).
 
 Nothing committed. Nothing written inside indi_project/.
+
+**S121 VOID for INDI:** the "indi" runs here flew the stock rate loop (MC_INDI_EN=0, no boot_params in run.json; base params lacked MC_RATE_CTL_TYPE 1). See JOURNAL S121.

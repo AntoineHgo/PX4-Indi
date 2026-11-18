@@ -27,3 +27,5 @@ Set-up note: the first launch of idx 2-59 passed the list as one zsh word, so on
   the same mean collective (0.133 +- 0.001 over 62-77 s) and show the same roll-rate RMS (84 dps at 77 s, the stick
   profile), altitude drifts +-3 m open-loop (INDI down, PID up). A 0.3 % thrust difference crosses the 3 m line:
   not discriminating. Same cause as run 0: open-loop collective (D-G3-STICK-PILOT). Run 25 (acro) not controlled.
+
+**S121 VOID for INDI:** the "indi" runs here flew the stock rate loop (MC_INDI_EN=0, no boot_params in run.json; base params lacked MC_RATE_CTL_TYPE 1). See JOURNAL S121.

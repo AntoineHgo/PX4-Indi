@@ -36,6 +36,12 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
    stage 7. M3 PT-change UNVERIFIED. Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36, A-39. PID M1 hook deferred (RC103).
    Flights no longer need MC_INDI_ACT_BLD 1.0 (default). Check script bench/attitude_break_check.py; ratesp_csv.py keyed.
    Guard note: a long inline `git commit -m` was blocked; use `git commit -F <scratch file>`.
+S121 FINDING: every "indi" G3 run S110-S118 (~94: pretest s112, single s113, stick s114/s116, ladder s116, probe
+  s117, pilot s118) flew the STOCK rate loop: base quad5in_indi_g1.params lacks MC_RATE_CTL_TYPE 1, so run.json has
+  no boot_params, MC_INDI_EN=0, no indi_rate_status (hence INDI==PID within cm in T118). G2 s107 unaffected. Fixed:
+  g3_run.py adds MC_RATE_CTL_TYPE 1; run_scenario.py refuses --controller indi without it (tests 20/20). Those
+  INDI verdicts (P117, T118, ladder) are VOID: re-fly T118 idx 0/21/49 with INDI before stage-4 flights. TODO test
+  in test_g3_run.py asserting the flag. esc_status logs at 800 Hz (pilot run_000), actuator_torque_measured not yet seen.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|

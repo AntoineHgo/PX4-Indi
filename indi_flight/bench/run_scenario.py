@@ -802,6 +802,9 @@ def main():
     if a.gate and provenance.refusal(meta["provenance"]):
         raise SystemExit("G1.7 refuses this gate-bearing run: " + provenance.refusal(meta["provenance"]))
     overlay = read_params(a.params) if a.params else {}
+    if a.controller == "indi" and overlay.get("MC_RATE_CTL_TYPE", "0").strip() != "1":
+        # S121: without it the INDI module is not started and the run silently flies the stock rate loop
+        raise SystemExit("--controller indi needs MC_RATE_CTL_TYPE 1 in the params file (starts mc_indi_rate_control)")
     if af_params and overlay.get("MC_RATE_CTL_TYPE", "0").strip() == "1":
         # every INDI run of an airframe with a derived file flies its G1/G2 under the run's own file, which wins on clash
         base = read_params(af_params)
