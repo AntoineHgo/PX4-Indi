@@ -32,3 +32,37 @@ Unverified / open:
 - No run.json applied-record check was done for sag07, wind5, erpmloss, inert13 (the applied field was not found by my key search; only motor_fault was seen).
 - mass13 and inert13 share HTE valid=true; only the mass change was checked in run.json.
 - Nothing committed. Nothing written inside indi_project/.
+
+## b: control flights (S116)
+
+Run by fly_b.sh (serial, progress_b.txt). Container names g3b_*. Stick rows: stick_zsine_o6, --stick-mode stabilized, base params quad5in_indi_g1.params (the PID row uses the same file, as in g3_stick_s114 Commands). Lemniscate rows: o1_lemniscate --controller indi --sched (as in g3_pretest_s112), no --stick-mode. Model quad5in, sim v2, rate 800, same seeds as fly.sh.
+
+Override files: sag07.json used unchanged. For o1_lemniscate the segments are settle / traj / hold (no "stick"), so weak08 and sat were adapted to segment "traj" (weak08_lem.json, sat_lem.json) and wind5 to dist_segment "traj" (wind5_lem.json). Only the segment fields changed. Adapted files were written without running the validator first. The runs accepted them.
+
+| row | rc | run.json exit_status | abort (sim t, height) | applied record (run.json) | vertical RMS / max (m) | horizontal RMS / max (m) | class |
+|---|---|---|---|---|---|---|---|
+| b1 pid_sag07 | 1 | failed | WatchdogTrip height < 0.3 m, t=63.10 s, value 0.283 m | thrust_sag scale 0.7, t0 55.531 s | no metrics (aborted) | no metrics | WATCHDOG |
+| b2 pid_weak08 | 1 | failed | WatchdogTrip height < 0.3 m, t=63.30 s, value 0.292 m | motor_fault motor 1, thrust 0.8, event 58.555 s, applied MAX 2415 of 2700 (omega ratio 0.894) | no metrics | no metrics | WATCHDOG |
+| b3 lem_sag07 | 0 | ok | none | thrust_sag 0.7, t0 55.545 s | 0.053 / 0.098 | 2.816 / 4.837 | FLIES |
+| b4 lem_weak08 | 0 | ok | none | motor_fault motor 1, 0.8, traj event 58.581 s, applied 2415 of 2700 | 0.029 / 0.077 | 2.803 / 4.805 | FLIES |
+| b5 lem_sat | 0 | ok | none | motor_fault motor 1, 0.35, traj event 58.582 s, applied 1597 of 2700 (omega ratio 0.592) | 0.183 / 0.600 | 2.806 / 4.765 | FLIES |
+| b6 lem_wind5 | 0 | ok | none | wind steady 5, peak 7, dir 45 deg; gust_x onset 58.503 s; injector 22401 updates, 0 missing velocity ticks | 0.034 / 0.087 | 2.741 / 4.842 | FLIES |
+
+Metrics are metrics.json position.rms_vertical_m, position.max_dev_vertical_m, position.rms_horizontal_m and position.max_dev_horizontal_m. Truth-trajectory horizontal RMS for the lemniscate rows is 1.15 to 1.37 m (trajectory.truth), so the 2.8 m position figure is not a clean tracking number. No lemniscate nominal run was flown, so the faults are not compared against a baseline.
+
+Aborted rows, from flight.ulg via pyulog (altitude = -local_position z, thrust = -vehicle_thrust_setpoint xyz[2]; ULG time assumed on the run.json event time base):
+
+| row | fault start (s) | altitude before (t0-1..t0) | altitude t0+2..t0+3 | altitude 60-61 / 62-63 | thrust before (t0-3..t0) | thrust after (t0..t0+3) | thrust 62-63.1 | thrust 63-63.5 |
+|---|---|---|---|---|---|---|---|---|
+| b1 pid_sag07 | 55.531 | 5.01 m | 4.91 m | 4.99 / 2.44 m | 0.1367 | 0.137 | 0.141 | 0.169 |
+| b2 pid_weak08 | 58.555 | 5.05 m | 5.68 m | 5.40 / 2.92 m | 0.1367 | 0.139 | 0.139 | 0.172 |
+
+Reading: in stabilized stick mode the collective setpoint stays near the hover stick value (about 0.137 to 0.141) through the fault and through the altitude drop from about 5 m to about 2.4 to 2.9 m at 62 to 63 s. It rises only in the last 0.5 s before the trip. Nothing in the setpoint closes an altitude loop, so the watchdog trip follows the open-loop collective and the fault, not an INDI error.
+
+Classification: b1 and b2 are WATCHDOG (scenario property, same window as the INDI ladder rows). b3 to b6 FLY. None are SETUP-FAULT.
+
+Answers:
+- Does PID trip the same watchdog on sag07 and weak08 stick: yes. height < 0.3 m at 63.10 s (sag07) and 63.30 s (weak08). The INDI ladder rows tripped at 63.03 s and 63.16 s.
+- Does INDI hold altitude on o1_lemniscate with these faults: yes. Vertical RMS 0.03 to 0.18 m across sag07, weak08, sat and wind5. No watchdog trip on any lemniscate row.
+
+Open: the stick-row vertical RMS anomaly from the ladder section is still unresolved. The lemniscate rows report small vertical RMS, so that anomaly is not confirmed by these runs. Nothing committed. Nothing written inside indi_project/.
