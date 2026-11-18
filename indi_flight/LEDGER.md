@@ -126,3 +126,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | H106 | S106 | sonnet | hook B GNSS delay impl+build+1 flight | 14 calls, ~46k tok, ~$0.3 | DONE design/gnss_delay_impl_s106.md, d52576b02a |
 | K106 | S106 | sonnet | second key hook B + 2 flights L=250 | 11 calls, ~43k tok, ~$0.3 | DONE: 1 BLOCKING (SENS_GNSS0_DELAY inert), fixed 99673b62bd |
 | K107 | S106 | sonnet | second key of fix 99673b62bd (read-only) | 3 calls, ~29k tok, ~$0.1 | DONE: no BLOCKING, 1 MINOR accepted |
+| B107 | S107 | sonnet | attitude-break G2 cells at HEAD (6 flights) | 13 calls, ~35k tok, ~$0.5 | DONE 8ec7d4a95b: 6/6 PASS |
