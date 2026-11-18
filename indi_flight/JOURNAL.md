@@ -830,3 +830,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S114: stick_profile stabilized hover stick fixed from mc_att_control throttle_curve (807fd6a08a; S113 log thrust 0.095 = 0.08 + 0.274*(0.137-0.08) confirms the old map as the cause); K113 MINOR 5, 6 closed 3d8e4b5f29. K114 key + F114 re-fly launched.
 - S114: K114 key of 807fd6a08a: 0 BLOCKING, MAJOR thr0 ignores HTE valid flag (fix S115), MINORs (slew, unpinned curve params).
 - S114: F114 stabilized stick re-fly: INDI and PID fly through the switch (fix confirmed); A-40 opened (landing 70.3 s inside window).
+- S115: K114 MAJOR/MINOR 3-4 fixed 8f57b47f7e (key K115 pending); A-40 closed (no early landing, px4.log time base).

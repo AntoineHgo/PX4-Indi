@@ -30,3 +30,6 @@ Notes:
 
 - indi: flies. The vehicle holds through the 52 s switch to STABILIZED (nav 15), no fall.
 - pid_default: flies. Same behaviour, no fall through the switch.
+
+## Correction S115 (A-40 closed)
+The landing at 70.3 s stated above is wrong. In the ULog (sim time) the runner sends NAV_LAND at 83.45 s (INDI) / 83.47 s (PID), after the window end 79.45 s; touchdown about 93.5 s, disarm about 95.5 s; no failsafe action. Both controllers hold the stick phase. Details: `a40_cause.md`. Side observation, not investigated: altitude in the stick phase averages about 6.5 m (5.1-7.7 m) against the 5 m hold (stabilized has no altitude hold).

@@ -66,8 +66,10 @@ S114: stick fix DONE 807fd6a08a (stabilized = mc_att_control throttle_curve MPC_
   Then RC113 ladder (8 single-factor runs, sec 5 order),
   altctl/posctl stick flyability check. Next route check S118.
 S115: K114 MAJOR + MINOR 3/4 fixed 8f57b47f7e (HTE valid flag, MPC_THR_HOVER fallback, curve params pinned;
-  tests break-checked). TODO S116: sonnet key K115 of 8f57b47f7e (budget-cut S115). In flight: A40 (haiku,
-  out results/g3_stick_s114/a40_cause.md); if cut, re-launch. Then RC113 ladder.
+  tests break-checked). A-40 CLOSED (no early landing: NAV_LAND 83.45 s after window; 70.3 s was px4.log time).
+  NEXT S116: (1) sonnet key K115 of 8f57b47f7e (out design/key_k115_hte.md); (2) RC113 ladder (8 single-factor
+  runs, haiku, serial; first re-fly stick nominal to confirm hover_thr_used in run.json = HTE valid); (3)
+  altctl/posctl stick flyability. Side note: stabilized stick phase altitude 6.5 m mean vs 5 m hold (open-loop, ok).
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
