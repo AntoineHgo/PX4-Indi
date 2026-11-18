@@ -34,7 +34,9 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| K115 | key of 8f57b47f7e (HTE valid) | sonnet | design/key_k115_hte.md | re-launch same brief |
+K115 DONE (design/key_k115_hte.md, 0 BLOCKING): fix AFTER L116 ends (same runner file): clamp [0.05,0.9] only on
+  valid HTE (mc_att_control_main.cpp:241), meta hover_thr_used + hover_thr_source for every run (not stick only),
+  tests that catch the 4 surviving mutations (run.json fields x2, stick_profile guard, main() thr0).
 | L116 | RC113 ladder, stick_zsine_o6 INDI nominal + 8 factors | haiku | results/g3_ladder_s116/README.md | re-run missing rows (fly.sh there) |
 (Done rows up to K114/F114: JOURNAL.md S100-S115; ledger LEDGER.md. Yaw model tool defect open: margins_of hangs if ts_true=0.)
 

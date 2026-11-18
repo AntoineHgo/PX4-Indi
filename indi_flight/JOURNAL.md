@@ -831,3 +831,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S114: K114 key of 807fd6a08a: 0 BLOCKING, MAJOR thr0 ignores HTE valid flag (fix S115), MINORs (slew, unpinned curve params).
 - S114: F114 stabilized stick re-fly: INDI and PID fly through the switch (fix confirmed); A-40 opened (landing 70.3 s inside window).
 - S115: K114 MAJOR/MINOR 3-4 fixed 8f57b47f7e (key K115 pending); A-40 closed (no early landing, px4.log time base).
+- S116: K115 key of 8f57b47f7e: 0 BLOCKING; MINORs (fallback clamp, run.json source field for all runs, 4 surviving mutations) queued after L116.
