@@ -68,7 +68,12 @@ G1.5 stays deferred per injector as written.
 
 | G1.7 provenance | a gate-bearing run records in run.json: commit, clean-tree flag, SITL binary hash (binary built from that commit), sim model file hashes, param file hashes; the runner refuses a gate-bearing run on a dirty tree or a binary not built from the recorded commit | runner refusal break-tested (dirty tree, stale binary) |
 
-Thresholds above unchanged. G1 is frozen in the state below; it is NOT marked passed: the owner has not answered
+**G1 PASSED (S84, 2026-11-18)** under the owner's S50 rule above: G1.7 implemented (S50, `bench/provenance.py`,
+`run_scenario.py --gate`), runner refusal break-tested, self-test `bench/tests/test_provenance.py` re-run S84: ALL PASS
+(dirty tree, stale binary, header newer, missing input/binary refused). Carried with the passed gate: G1.5 deferred
+per injector (each injector/plant variant checked before its first campaign), the five evidence limits below, and
+a per-run hole reporter (evidence limit 1: sim vs controller holes) that must exist before any G2 cell counts.
+Historical note (S36, superseded by the line above): G1 is frozen in the state below; it is NOT marked passed: the owner has not answered
 Q2, Q3, Q4. If the owner answers Q4-B, every stage-2 result marked "provisional under Q4-A" is re-run after G1
 passes in full; if Q2 or Q3 is answered B or C, G1.1 or G1.6(a) is reopened as written there.
 
@@ -126,6 +131,17 @@ gate is decided on the frozen final pair in stage 6 with the same tests.
 - **Second key.** Margins recomputed from the same CSV windows by `bench/second_key_margins_s37.py`-style independent
   code (lesson 1); disagreement > 1 dB / 3 deg blocks the result.
 - **One command per item:** to be named here when the G2 runner script exists (stage 2), before the gate run.
+- **Cell table (S84, route check 84).** Every cell is flown on the frozen pair in stage 6 with `--gate` (G1.7); the
+  status column tracks preliminary (pre-freeze) evidence only. Rates: 800 / 400 pass, 267 reported. Paths: INDI
+  measured (v2) and model-only; PID reference.
+
+  | loop | break point | INDI injector | status (S84) |
+  |---|---|---|---|
+  | rate roll/pitch/yaw | M3a torque setpoint (PID: M1 gyro) | MC_INDI_INJ_* (D-G2-INJ) | prelim results 800/400 (stage 2-3, JOURNAL; per-axis table to compile) |
+  | attitude | attitude-loop output (rate setpoint) | to specify (design note + second key) | open |
+  | INDI acceleration z, xy | stage output t_c (MC_INDI_PINJ_PT 1) | T174 S84 | in work |
+  | velocity/position z, xy | stage input a_ref (MC_INDI_PINJ_PT 0, D-G2-PINJ) | done S82 | z prelim PM 57.3 deg (S83); xy open |
+  | hole reporter | evidence limit 1 per run | `bench/a15_gaps.py` to extend | open |
 
 ## G2-STEP Inner-loop attitude step criterion (written S61 2026-11-17, owner note N1 B.2, before its first test)
 - Test: step_roll, step_pitch (15 deg), step_yaw (45 deg) on quad5in, sim v2 (eRPM), 800 Hz (400 Hz reported), speed 4,

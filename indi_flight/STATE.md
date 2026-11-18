@@ -2,7 +2,7 @@
 
 ## Status
 - Stage: 3 (inner loop) opened S49; stage 2 (analysis tools, margins) from S36, provisional under Q4-A; stage 1 frozen S36 (G1 FINAL). Started S1 (2026-11-15). Stage 0 done. Session 3: ref airframe model done.
-- Gates: G1 open | G2 open | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. G1 FROZEN with evidence limits (GATES.md G1 FINAL), not passed until Q2-Q4 answered.
+- Gates: G1 PASSED S84 (owner S50 rule; G1.5 per injector, evidence limits) | G2 open (cell table in GATES.md) | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. G1 FROZEN with evidence limits (GATES.md G1 FINAL), not passed until Q2-Q4 answered.
 - Blocker: none. S50: owner answered Q2 (A amended), Q3 (A), Q4 (A + G1.7 provenance); GATES.md updated, provisional mark lifted; QUESTIONS.md empty. Q1 closed: A confirmed by owner; flatness A18 reviewed (r5 BLOCKING), answered in
   `design/flatness_r2.md` (S15): optional increment after base A. Outer-loop study finished; stage 5 = base A.
 - S36: G1 FINAL written in GATES.md (frozen with 5 evidence limits, provisional under Q4-A, not marked passed);
@@ -43,6 +43,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | B83 | velbreak re-fly TB 1.0/0.33 | host | results/stage5_s83_velbreak/README.md | DONE cdc5f03713, PM 57.3/59.1 deg |
 | T173 | injector minors + pinj_csv self-test | sonnet | results/stage5_s83_velbreak/minors_fix.md | DONE a38533428f, 907f57510d |
 | B83b | stick re-fly x4, grid pacing | host | results/stage5_s83_stick/README.md | DONE: all 50 Hz, gain 0.86 both stacks; open: sched anchor for stick mode (G5) |
+| RC84 | S84 route check | sonnet | design/route_check_84.md | DONE: G1 bookkeeping (done), G2 cell table (done), then T174 |
+| T174 | accel-loop break at stage output (MC_INDI_PINJ_PT) | sonnet | results/stage5_s84_accbreak/NOTES.md | brief design/brief_accbreak_s84.md; uncommitted fw diff if cut |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
