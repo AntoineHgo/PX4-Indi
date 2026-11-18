@@ -11,9 +11,9 @@ DM 0.43-0.67 s against a requirement of a few control periods. pt0 (velocity/pos
 (acceleration break) PM 60.9-64.8. Seed spread up to 7 deg at pt0 (s1 54.4 vs s2 61.8 on ax1 r400).
 
 ## hole_report (tool after c5b5a897e9)
-- 14/16 PASS.
+- 15/16 PASS after the re-fly.
 - pt1_ax2_r400_s1 FAIL, real holes: sim 37.5 ms, controller 57.5 ms. Probably host load: the T182 agent ran hole_report
-  containers during the first cells. Margins of this cell are not counted. Re-fly before the cell enters G2.
+  containers during the first cells. Re-flown alone (same seed): PASS, PM 62.0 deg (first flight 64.2); first flight kept in `holes_fail_s87/`.
 - pt0_ax2_r400_s1 FAIL on the count cross-check only (count-based 9-10 vs gap-based 1-2 at 400 Hz, as in s86
   pt0_ax1_r400_s1, T182 unverified item) and on the 89 Hz outer topic max gap 28.75 ms against a flat 10 ms (spec
   defect queued S88: limit as excess over the nominal period). Max controller-rate gap 7.5 ms.
@@ -33,7 +33,7 @@ DM 0.43-0.67 s against a requirement of a few control periods. pt0 (velocity/pos
 | pt1_ax1_r400_s2 | 63.1 | 0.28 | 18.7 | 0.623 | 1.16 | 0.97 | PASS |
 | pt1_ax1_r800_s1 | 60.9 | 0.29 | 19.3 | 0.591 | 1.16 | 0.96 | PASS |
 | pt1_ax1_r800_s2 | 61.0 | 0.29 | 19.3 | 0.589 | 1.18 | 0.98 | PASS |
-| pt1_ax2_r400_s1 | 64.2 | 0.27 | 18.7 | 0.670 | 1.16 | 0.94 | FAIL (sensor_gyro, sim_ground_truth) |
+| pt1_ax2_r400_s1 (re-fly) | 62.0 | 0.28 | 18.8 | | | | PASS |
 | pt1_ax2_r400_s2 | 61.1 | 0.30 | 18.8 | 0.572 | 1.16 | 0.96 | PASS |
 | pt1_ax2_r800_s1 | 64.8 | 0.29 | 19.3 | 0.622 | 1.16 | 0.97 | PASS |
 | pt1_ax2_r800_s2 | 61.5 | 0.29 | 19.3 | 0.584 | 1.16 | 0.95 | PASS |
