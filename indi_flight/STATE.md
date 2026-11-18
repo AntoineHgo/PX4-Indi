@@ -19,25 +19,29 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    (5) attitude-break margin with the new setpoint path (G2) when the G2 table is resumed.
    Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
    S65-S68 session notes: JOURNAL.md (S69 entry).
-   S69-S71: JOURNAL.md. Route checks 64, 69 in design/. Next route check: S74.
+   S69-S71: JOURNAL.md. Route checks 64, 69 in design/. Route check 74 done; next: S79.
    S72 (launch 20261118-003830, cap $3): D-GAP implemented and committed (3481bdcf9e, 41d44d461a; reset() model path
    at u + b, fixed by me after reading the diff). gap085_indi_htoff dz 0.025 m PASS, loss08_indi 0.056 m marginal;
    second key agrees (`results/stage5_s72/second_key.md`). A-33 OPEN: loss08 holds a_c-a_f = 0.158 m/s2 (control
    error 0.040 m), blend should be integral at DC. Closing flight loss08_indi_htoff: HTE ruled out.
    S73: A-33 CLOSED (results/stage5_s73/README.md): rate blend MC_INDI_ACT_BLD default 0 = no integral action;
    blend 0.3/1.0 removes the 10.4 deg standing error. D-RATE-BLD PROPOSED (default 1.0 s, 3 preconditions).
-   NEXT S74: route check 74 (sonnet) FIRST. (1) D-RATE-BLD preconditions: rate-loop M3a margins at tb 1.0/0.3 (and
-   0.1 to explain the stage-1 crash), rate-blend snap-vs-freeze fix + break-tested weak-motor unit test, then the
-   firmware default change; all later flights set MC_INDI_ACT_BLD 1.0 meanwhile. (2) runner: land/re-take-off scenario with
-   the gap kept (spec in stage5_s72 README) -> landed-hold flight. (3) D-GAP margin items (amendment 3: resonance,
-   overshoot, velocity-break PM at tb and tb/3). (4) combined opus review: stage-3 safety diff + stage-5 slices +
-   rate-loop snap-vs-freeze. (5) PVA mode slice (ZSINE_O6). Runner has NO RC/manual path (G5 stick modes, slice 3).
+   S74 (launch 20261118-010057, cap $1.51): route check 74 done (design/route_check_74.md, accepted with one change:
+   the default change waits for the margins, lesson 10). Root cause of recent work: decision 2 (every measured-state
+   loop needs its own integral path). Rule: no new anomaly chase unless a gate test fails; cap one session each.
+   NEXT S75: (1) sonnet: rate-blend snap-vs-freeze fix + break-tested weak-motor unit test ; the firmware default
+   MC_INDI_ACT_BLD 1.0 goes in its own commit only after (2); flights keep setting 1.0 meanwhile.
+   (2) ONE merged margin campaign: rate loop M3a at tb 1.0/0.3/0.1 + D-GAP items (velocity-break PM at tb, tb/3),
+   single table -> D-RATE-BLD accept/reject. If tb 1.0 fails G2 thresholds: escalate (per-motor estimator = arch change).
+   (3) runner RC/manual stick-path stub + PVA slice (ZSINE_O6), before land/re-take-off.
+   S76: combined opus review (stage-3 safety diff + stage-5 slices + snap-vs-freeze), land/re-take-off flight.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | T160 | S72 D-GAP impl + unit tests + 2 flights | sonnet | results/stage5_s72/README.md | DONE, committed 3481bdcf9e/41d44d461a |
 | T161 | S72 second key | haiku | results/stage5_s72/second_key.md | DONE |
 | F72 | loss08_indi_htoff flight | bg shell | results/stage5_s72/loss08_indi_htoff/ | DONE |
+| T163 | S74 route check 74 | sonnet | design/route_check_74.md | DONE |
 | F73 | A-33 closing: loss08 with rate blend MC_INDI_ACT_BLD 0.3 / 1.0 (default 0 = off, never set in S72 flights: lesson-9 gap in the rate loop) | bg shell, instances 0/1 | results/stage5_s73/loss08_bld{0.3,1.0}/ | DONE, A-33 closed |
 
 ## Open problems

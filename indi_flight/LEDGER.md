@@ -60,3 +60,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S72 | T160 | sonnet | D-GAP impl + 8 tests + 2 flights | 36 calls, ~90k tok, ~$0.8 | done; orchestrator fixed reset() model-path init (+1 test, break-checked) |
 | S72 | T161 | haiku | second key dz + residual split | 8 calls, ~41k tok, ~$0.1 | done, results/stage5_s72/second_key.md |
 | S72 | T162 | haiku | A-33 split on 3 logs | 6 calls, ~39k tok, ~$0.07 | done, results/stage5_s72/a33_split.md |
+| S74 | T163 | sonnet | route check 74 | 6 calls, ~36k tok, ~$0.19 | done, design/route_check_74.md |
