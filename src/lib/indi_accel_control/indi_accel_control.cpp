@@ -240,6 +240,19 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 		return false;
 	}
 
+	// D-ALTCTL-Z: the stock thrust direction must be finite and clearly upward
+	Vector3f n_dir{};
+
+	if (in.z_only) {
+		const float n_norm = allFinite(in.thrust_dir) ? in.thrust_dir.norm() : NAN;
+
+		if (!PX4_ISFINITE(n_norm) || (n_norm < FLT_EPSILON) || (in.thrust_dir(2) >= -0.1f * n_norm)) {
+			return false;
+		}
+
+		n_dir = in.thrust_dir / n_norm;
+	}
+
 	if ((in.dt < kMinDt) || (in.dt > kMaxDt) || (in.q.norm() < 0.5f)) {
 		return false;
 	}
@@ -342,21 +355,33 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 		t_c(2) = -math::max(c_min, kMinUpThrust);
 	}
 
-	// tilt: angle between t_c and -e3 (up in NED), scale the horizontal part keeping t_c,z
-	const float h_max = -t_c(2) * tanf(_tilt_max);
-	const float h = Vector2f(t_c(0), t_c(1)).norm();
+	if (in.z_only) {
+		// D-ALTCTL-Z: keep the INDI vertical command, replace the direction by the stock one (already tilt limited)
+		t_c = n_dir * (t_c(2) / n_dir(2));
 
-	if (h > h_max) {
-		const float s = (h > FLT_EPSILON) ? h_max / h : 0.f;
-		t_c(0) *= s;
-		t_c(1) *= s;
+	} else {
+		// tilt: angle between t_c and -e3 (up in NED), scale the horizontal part keeping t_c,z
+		const float h_max = -t_c(2) * tanf(_tilt_max);
+		const float h = Vector2f(t_c(0), t_c(1)).norm();
+
+		if (h > h_max) {
+			const float s = (h > FLT_EPSILON) ? h_max / h : 0.f;
+			t_c(0) *= s;
+			t_c(1) *= s;
+		}
 	}
 
 	float c = t_c.norm();
 
 	bool clamped = false;
 
-	if (c > c_max) {
+	if (c > c_max && in.z_only) {
+		// direction is fixed: scale the whole vector
+		clamped = true;
+		t_c *= c_max / c;
+		c = t_c.norm();
+
+	} else if (c > c_max) {
 		clamped = true;
 		// keep the vertical component, shrink the horizontal part first
 		const float z_abs = -t_c(2);
@@ -392,7 +417,7 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 	// 8. rate feedforward
 	Vector3f omega_ff{};
 
-	if (_jerk_ff && (c >= kMinThrustForFf)) {
+	if (_jerk_ff && !in.z_only && (c >= kMinThrustForFf)) {
 		const Dcmf R_d(q_d);
 		const Vector3f x_b = R_d.col(0);
 		const Vector3f y_b = R_d.col(1);

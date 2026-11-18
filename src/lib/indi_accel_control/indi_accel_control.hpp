@@ -101,6 +101,10 @@ public:
 		float yawspeed_ref{NAN};   ///< NaN: 0
 		float dt{0.f};             ///< time since the previous call (s), [kMinDt, kMaxDt]
 		bool accel_only{false};    ///< start at a_ref (A14): no p/v terms, a_c = a_ref, p and v are not required
+		/// D-ALTCTL-Z: only the collective is INDI, the direction is thrust_dir (stock thrust vector, NED, any norm,
+		/// z < -0.1 norm). Output thrust vector = thrust_dir/|.| * (t_c,z / n_z), no tilt limit, omega_ff = 0
+		bool z_only{false};
+		matrix::Vector3f thrust_dir{};
 	};
 
 	struct Output {

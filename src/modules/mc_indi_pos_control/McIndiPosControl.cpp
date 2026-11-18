@@ -227,6 +227,9 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 
 		IndiAccelControl::Input in;
 		in.accel_only = true;
+		// D-ALTCTL-Z: climb rate only (no position, no velocity control): INDI collective, stock thrust direction
+		in.z_only = !(_vehicle_control_mode.flag_control_position_enabled || _vehicle_control_mode.flag_control_velocity_enabled);
+		in.thrust_dir = Vector3f(local_pos_sp.thrust[0], local_pos_sp.thrust[1], local_pos_sp.thrust[2]);
 		in.q = _q;
 		in.f_b = _f_b;
 		in.mean_u = _mean_u;
@@ -831,7 +834,8 @@ void McIndiPosControl::Run()
 
 			const bool want_indi = _vehicle_control_mode.flag_armed
 					       && (_vehicle_control_mode.flag_control_position_enabled
-						   || _vehicle_control_mode.flag_control_velocity_enabled)
+						   || _vehicle_control_mode.flag_control_velocity_enabled
+						   || _vehicle_control_mode.flag_control_climb_rate_enabled)
 					       && (_takeoff.getTakeoffState() == TakeoffState::flight) && !flying_but_ground_contact;
 
 			const hrt_abstime now = hrt_absolute_time();
