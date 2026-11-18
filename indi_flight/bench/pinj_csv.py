@@ -5,7 +5,8 @@ estimate the margins with margins_est.py (same convention as m3a_csv.py).
 t = indi_pos_status.timestamp [s], d = inject (MC_INDI_PINJ_*), x = a_c (u = c + d, what the INDI stage sees),
 y = a_c_pre_inject (c, returned to the summation point), so L = -G_yd/G_xd (margins_est.py docstring).
 Window = samples where d != 0 (the module zeroes d outside [t0, t0 + NP*Tp)).
-Usage: pinj_csv.py <flight.ulg> <axis 0|1|2 = x|y|z NED> <out.csv> [--Tp S --fmin HZ --fmax HZ] [--margins]
+Usage: pinj_csv.py <flight.ulg> <axis 0|1|2 = x|y|z NED> <out.csv> [--Tp S --fmin HZ --fmax HZ] [--margins] [--point input|output]
+With --point output (MC_INDI_PINJ_PT = 1): u = t_c_applied = t_c + d (plant input of the acceleration loop), c = t_c.
 """
 import argparse
 import json
@@ -18,7 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import margins_est as me  # noqa: E402
 
 
-def window(ulg, axis):
+def window(ulg, axis, point="input"):
     from pyulog import ULog
     s = [d for d in ULog(ulg, ["indi_pos_status"]).data_list if d.name == "indi_pos_status"][0].data
     t = np.asarray(s["timestamp"], float) * 1e-6
@@ -27,8 +28,12 @@ def window(ulg, axis):
     if nz.size == 0:
         raise SystemExit("no injection on this axis")
     w = slice(nz[0], nz[-1] + 1)
-    x = np.asarray(s[f"a_c[{axis}]"], float)
-    y = np.asarray(s[f"a_c_pre_inject[{axis}]"], float)
+    if point == "output":  # acceleration-loop break (MC_INDI_PINJ_PT = 1): c = t_c, u = t_c_applied = t_c + d
+        x = np.asarray(s[f"t_c_applied[{axis}]"], float)
+        y = np.asarray(s[f"t_c[{axis}]"], float)
+    else:
+        x = np.asarray(s[f"a_c[{axis}]"], float)
+        y = np.asarray(s[f"a_c_pre_inject[{axis}]"], float)
     return np.column_stack([t[w], d[w], x[w], y[w]])
 
 
@@ -47,9 +52,11 @@ def main(argv=None):
     ap.add_argument("--Tp", type=float, default=None, help="multisine period [s], needed for --margins")
     ap.add_argument("--fmin", type=float, default=0.2, help="MC_INDI_PINJ_FLO")
     ap.add_argument("--fmax", type=float, default=8.0, help="MC_INDI_PINJ_FHI")
+    ap.add_argument("--point", choices=("input", "output"), default="input",
+                    help="input: x = a_c, y = a_c_pre_inject (PINJ_PT 0); output: x = t_c_applied, y = t_c (PINJ_PT 1)")
     ap.add_argument("--margins", action="store_true", help="print the margins_est result as JSON")
     a = ap.parse_args(argv)
-    w = window(a.ulg, a.axis)
+    w = window(a.ulg, a.axis, a.point)
     np.savetxt(a.out, w, delimiter=",", header="t,d,x,y", comments="", fmt="%.9g")
     if a.margins:
         if not a.Tp:

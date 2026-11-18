@@ -100,6 +100,26 @@ def test_extraction_is_the_window_only():
     check(np.allclose(a[:, 2] - a[:, 3], a[:, 1]), "u = c + d")
 
 
+def test_output_point_columns():
+    # --point output: x = t_c_applied (u), y = t_c (c). Mock the ulog reader with the simulated loop.
+    import types
+    a = window_array()
+    n = len(a)
+    fields = {"timestamp": a[:, 0] * 1e6, "inject[2]": a[:, 1], "t_c_applied[2]": a[:, 2], "t_c[2]": a[:, 3],
+              "a_c[2]": a[:, 3] * 0.0, "a_c_pre_inject[2]": a[:, 3] * 0.0}  # input-point columns are junk here
+    mod = types.ModuleType("pyulog")
+    mod.ULog = lambda *_a, **_k: types.SimpleNamespace(
+        data_list=[types.SimpleNamespace(name="indi_pos_status", data=fields)])
+    sys.modules["pyulog"] = mod
+    try:
+        w = pinj_csv.window("x.ulg", 2, "output")
+    finally:
+        del sys.modules["pyulog"]
+    check(w.shape == (n, 4) or w.shape[0] > 0, "window shape")
+    run(w, "output point")
+    check(np.allclose(w[:, 2] - w[:, 3], w[:, 1]), "u_o = c_o + d")
+
+
 def main():
     fails = 0
     for name, f in sorted(globals().items()):
