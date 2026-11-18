@@ -77,3 +77,21 @@ With the outer factor the PM deltas fall from ~15 deg to 2-3 deg, and the higher
 reproduced (Kd raises |L|). GM is a high-frequency quantity that O(s) barely changes (computation not repeated
 here). Not a verdict until keyed: effective MPC_* values in the flown runs, and the cancellation of the INDI
 acceleration increment, are UNVERIFIED.
+
+## S93 keyed outer-loop model (T195, design/t195_att_outer_key.md)
+
+T195 derived O(s) from the firmware independently: O = 1 + (Kv + Ki/s)(Kp + s)/s^2 + Kd F(s), F a 5 Hz first-order
+low-pass (MPC_VELD_LP), stock defaults (MPC_XY_P 0.95, VEL_P/I/D_ACC 1.8/0.4/0.2) not overridden by the airframe or
+the flown params; the INDI acceleration increment adds no small-signal path. Implemented as
+`margins_models.outer_factor` / `L_att_indi_outer` (test `test_outer_factor`, checked by breaking it). Roll cells,
+`margins_of(..., fmin=0.5)`:
+
+| rate Hz | model att*O PM / GM | measured PM / GM | dPM / dGM | rule (10 deg / 3 dB) |
+|---|---|---|---|---|
+| 267 | 55.3 / 17.2 | 55.5 / 21.8 | +0.2 / +4.6 | PM ok, GM FAIL |
+| 400 | 56.4 / 18.6 | 56.6 / 22.0 | +0.2 / +3.4 | PM ok, GM FAIL |
+| 800 | 57.6 / 20.3 | 57.3 / 21.9 | -0.3 / +1.6 | PASS |
+
+PM is explained by the outer loop. The GM residue (model 1.6-4.6 dB lower than measured, i.e. conservative, growing as
+the rate falls) stays open under A-36. It is probably the rate-loop model's phase-shape error A-35 near the phase
+crossover, not yet shown. Both values are far above the 6 dB threshold. Yaw: not modelled.
