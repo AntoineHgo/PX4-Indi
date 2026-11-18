@@ -45,6 +45,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T161 | S72 second key | haiku | results/stage5_s72/second_key.md | DONE |
 | F72 | loss08_indi_htoff flight | bg shell | results/stage5_s72/loss08_indi_htoff/ | DONE |
 | T163 | S74 route check 74 | sonnet | design/route_check_74.md | DONE |
+| F76 | S76 (cap $1.05, no agent): D-RATE-BLD rate-loop margins, roll M3a hover_long 800 Hz, tb 1.0/0.3/0.1 (base S57 meas800) | bg shell | results/stage3_s76_bld/ (done.txt, bld*_margins.txt) | `bash indi_flight/results/stage3_s76_bld/fly.sh` (rerun if no ALLDONE) |
 | F73 | A-33 closing: loss08 with rate blend MC_INDI_ACT_BLD 0.3 / 1.0 (default 0 = off, never set in S72 flights: lesson-9 gap in the rate loop) | bg shell, instances 0/1 | results/stage5_s73/loss08_bld{0.3,1.0}/ | DONE, A-33 closed |
 
 ## Open problems
