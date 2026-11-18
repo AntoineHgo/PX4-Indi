@@ -819,3 +819,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S108 (20261118-145323, cap $3): D107 draft reviewed: outer-loop G2 cells (S83/S86/S87, 24 cells, PM >= 49.7 deg, GM >= 18.2 dB, unkeyed, no model) had been missed; design/g2_verdict_s108.md + GATES.md G2 table (93f94320d3). Attitude seed 2 not flown (pre-freeze). G108 G3 sampler launched.
 - S108: G108 G3 sampler bench/g3_sample.py (238079b24f, self-test 9/9, deterministic); D-G3-SAMPLER; K108 second key launched.
 - S108: K108 key of the sampler: 0 BLOCKING, 4 MAJOR (G1-error basis vs drawn inertia, missing gusts, test gaps, saturation share), fixes queued S109.
+- S109 (2026-11-18): S108 G2 table edits committed (0e7fa9dd65, left out of 93f94320d3); raw run captures ignored; K108 MAJORs closed (gust floor, G1 error plant-relative k = e / I_scale, mutation guards), keyed; quad5in plant variants (mass, inertia, tau, up/down) with mass x1.3 flight check; K109 key launched.

@@ -14,8 +14,9 @@ NEXT S108 per RC108 (design/route_check_108.md, filed S107; next route check S11
    S108 DONE 93f94320d3: design/g2_verdict_s108.md + GATES.md G2 table (outer cells S83/S86/S87 added; draft had
      missed them). Attitude seed 2 NOT flown (pre-freeze, stage 6 re-flies all). Offline G2 todo before stage 6:
      outer-cell margin key, linear outer-loop model, A-36/A-39 bound, 267 Hz rows.
-   S109 order: close K108 findings; quad5in model variants (tau, asym, mass, inertia; lift x500-only abort) +
-     frozen-telemetry hook (two keys, G1.5 check); g3_checks.py + key; gate_g3.sh consuming the run JSON hooks block.
+   S109 DONE: K108 closed (D-G3-SAMPLER-K108, 3a245d1590, keyed e634a78671); quad5in variants bd612779a1 (key K109).
+   S110 order: close K109 findings; frozen-telemetry hook (two keys, G1.5 check); g3_checks.py + key; gate_g3.sh
+     consuming the run JSON hooks block (MC_INDI_G1_* x_nominal = k = e / I_scale); then G3 runner + pre-test.
    S109: G3 randomised runner (plant draw per run, all G3 axes incl. GNSS hook B: matched = --gnss-delay == --gps-dly)
      + ~20-run pre-test; fold G1.5 estimator M-vs-X separation (moving scenario) into it.
    S110: first G3 probe batch >= 60 runs. S111: G5 mode/transition batch. S112: G4 noise profiles.
@@ -32,27 +33,15 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-(Done rows up to K101/B100: JOURNAL.md S100/S101 entries.)
-| H102 | S102: delay-line hooks A1+A2 in gz_bridge (uncommitted, builds, 0 warnings, not flown) | sonnet | design/delay_line_impl_s102.md | DONE; orchestrator read diff, OK |
-| K102 | S102: second key of H102 | sonnet | design/delay_line_key_s102.md | DONE: 0 BLOCKING, M1+M2 fixed by orchestrator, c6ba02609f |
-| V102 | S102: delay-hook pre-test d0/d5 | haiku | results/delay_pretest_s102/README.md | DONE: IMU PASS (age 0/5000 us), actuator UNVERIFIED -> A-37 |
-| G104 | S104: scope G2 verdict note (iii), read-only | haiku | design/g2_verdict_scope_s104.md | DONE (haiku, UNVERIFIED): table claim checked: results/g2_rate_table_s99.md "S101 update" holds 24/24 (K100+K101), only its body is pre-S101; A-21 model-vs-measured PM gap ~18 deg (results/stage2_s41/a21_model_vs_measured.md) > 10 deg G2 tolerance: check which loop/version it was before (iii) |
-| X105 | S105: G2 model-vs-measured cross-check, offline | sonnet | design/g2_crosscheck_s105.md | DONE: 16 roll/pitch cells within tol (dPM<=4.7, dGM<=1.86); yaw unmodelled; filters verified; A-21 n/a to v2 |
-| RC103 | S103: route check | sonnet | design/route_check_103.md | DONE: A-37 time-box $0.5 then park; then G5 pre-tests, G2 verdict note, hook B; defer PID M1 |
-| S103 | S103: scope POSCTL stick gap scenario (read-only) | haiku | design/posctl_gap_scope_s103.md | DONE: scenario + --stick-mode posctl, flown |
-| H106 | S106: hook B GNSS delay (SIM_GZ_GPS_DLY) impl+build+1 flight | sonnet | design/gnss_delay_impl_s106.md | DONE d52576b02a (fw) bd0aa768f4 (pretest: age 200000 us x110, 1 Hz log) |
-| K106 | S106: second key of H106 + L=250 flights | sonnet | results/gnss_delay_key_s106/README.md | DONE: BLOCKING (SENS_GNSS0_DELAY inert) fixed 99673b62bd, M2 verified (EKF time err +4 ms matched) |
-| K107 | S106: second key of fix 99673b62bd (read-only) | sonnet | design/gnss_delay_fix_key_s106.md | DONE: no BLOCKING; MINOR overflow releases not in age0 range (accepted, overflow counted); astyle clean |
+(Done rows up to K107: JOURNAL.md S100-S107 entries; ledger LEDGER.md.)
 | Y107 | S107: yaw linear model in margins_models.py + 8 yaw cells cross-check (offline) | sonnet | design/g2_yaw_crosscheck_s107.md | DONE (Y107b, 2nd key of model: law VERIFIED, 0 BLOCKING): model-only 4/4 in tol; measured 1/4 in tol -> A-39. margins_of hangs if ts_true=0 (tool defect, open) |
 | B107 | S107: attitude-break cells (vi) at HEAD, pretest 1 cell then 5 | sonnet | results/g2_attbreak_s107/README.md | DONE 8ec7d4a95b: 6/6 PASS (PM>=56.8, GM>=22 dB, DM>=0.118 s), dPM<=0.5 vs S91 |
 | D107 | S107: DRAFT G2 verdict update (rate+yaw+attitude) for S108 review; does not edit GATES.md | sonnet | design/g2_verdict_s108_draft.md | DONE draft (10 UNVERIFIED). S108: review, then GATES.md. Gate asks worst of 2 runs: attitude S107 cells are 1 seed -> fly seed 2 (6 flights) |
 | G108 | S108: G3 sampler bench/g3_sample.py + self-test + factor->hook map (no flight) | sonnet | design/g3_sampler_s108.md | DONE 238079b24f: 9/9 self-test, deterministic (orchestrator re-ran); hooks 8 exist / 6 partial / 6 missing (tau, asym, mass, inertia on quad5in: run_scenario.py:203 x500-only; frozen telemetry; G4 profile). D-G3-SAMPLER |
 | K108 | S108: second key of g3_sample.py vs GATES G3 spec (read-only) | sonnet | design/g3_sampler_key_s108.md | DONE: 0 BLOCKING, 4 MAJOR, 8 MINOR (key read author note early: partial independence). S109 fix: G1 error as controller/plant ratio incl. drawn inertia (now 0.35-2.6, out of x[0.5,2]); gust present whenever drawn (C4 needs a gust); add tests for surviving mutations; saturation share kept per D-G3-SAMPLER |
-| F109 | S109: g3_sample.py fix per D-G3-SAMPLER-K108 (M2 gust, M4 G1 ratio, M3 guards, m7) | sonnet | design/g3_sampler_fix_s109.md | in flight; if cut: re-run self-test, read note |
-| V109 | S109: quad5in model variants (tau, asym, mass, inertia) in run_scenario.py + 1-2 check flights | sonnet | design/quad5in_variants_s109.md | in flight; if cut: git diff bench/, read note |
-| A103 | S103: A-37 test (a9e5066a55), hover d5/d10 | host bg | results/a37_actlag_s103/README.md | DONE: A-37 closed |
-S102 finding: (ii) PID M1 has NO recipe: the gyro-break hook (`sim_inject`, design/stage2_margins_s35.md l.21) was never built.
-  PID reference is F-5 reference only -> deferred behind (iv); build the M1 hook later in gz_bridge IMU callback beside A2.
+| F109 | S109: g3_sample.py fix per D-G3-SAMPLER-K108 (M2 gust, M4 G1 ratio, M3 guards, m7) | sonnet | design/g3_sampler_fix_s109.md | DONE 3a245d1590: 11/11 (orchestrator re-ran), 16 mutations caught. Needs 2nd key (short, read-only) before G3 pre-test; x_nominal of MC_INDI_G1_* now = k |
+| V109 | S109: quad5in model variants (tau, asym, mass, inertia) in run_scenario.py + 1-2 check flights | sonnet | design/quad5in_variants_s109.md | DONE bd612779a1 (+ --model-variant CLI); mass x1.3 flown (hover u x1.295, 45f2b6d2c9); tau/asym/inertia offline only |
+| K109 | S109: second key of V109 (read-only + offline SDF diff) | sonnet | design/quad5in_variants_key_s109.md | in flight; if cut: re-launch same brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging

@@ -133,3 +133,6 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | D107-review | S108 | self | review of D107 draft against result READMEs | ~8 calls | DONE: outer-cell omission corrected, 93f94320d3 |
 | G108 | S108 | sonnet | G3 sampler + self-test + hook map | 19 calls, ~85k tok, ~$0.65 | DONE 238079b24f |
 | K108 | S108 | sonnet | second key of g3_sample.py | 11 calls, ~71k tok, ~$0.45 | DONE 0 BLOCKING 4 MAJOR 8 MINOR |
+| F109 | S109 | sonnet | G3 sampler fix per D-G3-SAMPLER-K108 | 8 calls, ~55k tok, ~$0.35 | DONE 3a245d1590, 16 mutations caught |
+| K109a | S109 | sonnet | second key of F109 (read-only) | 5 calls, ~32k tok, ~$0.15 | DONE 0 BLOCKING 0 MAJOR 2 MINOR (closed e634a78671) |
+| V109 | S109 | sonnet | quad5in plant variants + mass flight check | 13 calls, ~41k tok, ~$0.45 | DONE bd612779a1, 45f2b6d2c9 |
