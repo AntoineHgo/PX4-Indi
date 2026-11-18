@@ -79,10 +79,22 @@ def test_b_closed_loop_ols_biased_iv_recovers(ratio):
 
 
 def test_c_intercept():
-    alpha, ua, inj = closed_loop(0.5, seed=11, c0=12.0)
-    r = I.iv_effectiveness(alpha[2000:], ua[2000:], inj[2000:])
-    assert abs(r["intercept"] - 12.0) < 2.5, r["intercept"]
-    assert abs(r["beta"][0] / G1 - 1) < 0.05
+    """Closed loop with intercept. One 120 s record has a seed-to-seed spread of ~11 % on this plant (K120: a single-seed
+    5 % check was a seed lottery), so the test checks what the estimator owes: no bias (mean over 12 seeds within 3
+    standard errors of the mean) and an honest standard error (HAC z-score spread near 1, classical one over-confident)."""
+    errs, zs, ics = [], [], []
+    for seed in range(11, 23):
+        alpha, ua, inj = closed_loop(0.5, seed=seed, c0=12.0)
+        r = I.iv_effectiveness(alpha[2000:], ua[2000:], inj[2000:])
+        errs.append(r["beta"][0] / G1 - 1)
+        zs.append((r["beta"][0] - G1) / r["se"][0])
+        ics.append(r["intercept"])
+    assert abs(np.mean(ics) - 12.0) < 1.0, ics
+    # unbiased within its own precision (3 standard errors of the mean over seeds); the absolute 10 % accuracy is the
+    # flight acceptance test of D-IDENT (i), set by record length and excitation, not by this plant
+    assert abs(np.mean(errs)) < 3 * np.std(errs, ddof=1) / np.sqrt(len(errs)), errs
+    zsd = float(np.sqrt(np.mean(np.square(zs))))
+    assert 0.5 < zsd < 1.6, zsd
 
 
 def test_d_latency_three_samples():

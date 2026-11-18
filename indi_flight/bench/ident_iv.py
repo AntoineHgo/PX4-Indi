@@ -110,7 +110,18 @@ def _ols(X, y):
     return beta, np.sqrt(np.diag(cov)), res
 
 
-def iv_effectiveness(y, x, z, lags=None, exclude=None):
+def _hac(U, L):
+    """Newey-West long-run covariance of the rows of U (n, m), Bartlett weights, L lags. O(n m) memory.
+
+    Rows dropped by `exclude` are treated as contiguous (approximation across short saturation gaps)."""
+    S = U.T @ U
+    for l in range(1, min(L, len(U) - 1) + 1):
+        G = U[l:].T @ U[:-l]
+        S += (1 - l / (L + 1)) * (G + G.T)
+    return S
+
+
+def iv_effectiveness(y, x, z, lags=None, exclude=None, hac_lags=200):
     """Two-stage least squares of y on [1, x] with instruments [1, z(t-l) for l in lags].
 
     y        (n,) angular acceleration about one axis, rad/s^2 (already filtered, see prepare_regression)
@@ -123,7 +134,12 @@ def iv_effectiveness(y, x, z, lags=None, exclude=None):
     exclude  optional bool (n,), True = drop the sample (saturated); lags use the unmasked series, rows dropped
              after building the instrument matrix. Non-finite rows are dropped too.
 
-    Returns dict: beta (k,), intercept, se (k,), se_intercept, n, f_first (first-stage F of the excluded
+    hac_lags Newey-West lags in samples for se and J (about 0.5 s at the caller's rate; the disturbance is coloured,
+             so the classical se is over-confident, K120 M1: z-spread 1.7-2.7 instead of 1).
+
+    Returns dict: beta (k,), intercept, se (k,) HAC, se_intercept, se_classical (k,), j_stat, j_df (Hansen
+    over-identification test; a filter or delay mismatch between y and x shows as a large J, K120 B1; the caller
+    rejects on J or on f_min < 10), n, f_first (first-stage F of the excluded
     instruments, per regressor), f_min, ols{beta, intercept, se, se_intercept}.
     """
     y = np.asarray(y, float)
@@ -148,7 +164,7 @@ def iv_effectiveness(y, x, z, lags=None, exclude=None):
     Zf = np.hstack([one, Z])
     # first stage. Never form the n x n projector Zf pinv(Zf): at n ~ 48k it is 19 GB (I119 OOM, S119).
     # proj(A) = Zf (pinv(Zf) A) costs O(n q) memory.
-    Zf_pinv = np.linalg.pinv(Zf)  # (q+1, n)
+    Zf_pinv = np.linalg.pinv(Zf, rcond=1e-10)  # (q+1, n); explicit rcond (K120 M2: default drops dense lags)
 
     def proj(a):
         return Zf @ (Zf_pinv @ a)
@@ -157,8 +173,16 @@ def iv_effectiveness(y, x, z, lags=None, exclude=None):
     beta = np.linalg.solve(Xh.T @ X, Xh.T @ y)
     res = y - X @ beta
     s2 = float(res @ res) / max(n - X.shape[1], 1)
-    cov = s2 * np.linalg.inv(Xh.T @ Xh)
+    A = np.linalg.inv(Xh.T @ Xh)
+    se_classical = np.sqrt(np.diag(s2 * A))
+    cov = A @ _hac(Xh * res[:, None], hac_lags) @ A
     se = np.sqrt(np.diag(cov))
+    # Hansen J on the instrument moments (HAC weighting): large when y and x are not aligned in filter or delay
+    g = Zf * res[:, None]
+    S = _hac(g, hac_lags)
+    gm = g.sum(0)
+    j_stat = float(gm @ np.linalg.pinv(S, rcond=1e-10) @ gm)
+    j_df = int(np.linalg.matrix_rank(S, tol=1e-10 * np.linalg.norm(S, 2))) - X.shape[1]
     # first-stage F (excluded instruments) per regressor, each regressed alone on [1, Z]
     q = Z.shape[1]
     f_first = []
@@ -170,6 +194,7 @@ def iv_effectiveness(y, x, z, lags=None, exclude=None):
         f_first.append(((rss0 - rss1) / q) / (rss1 / max(n - q - 1, 1)) if rss1 > 0 else np.inf)
     ob, ose, _ = _ols(X, y)
     return dict(beta=beta[1:], intercept=float(beta[0]), se=se[1:], se_intercept=float(se[0]), n=n,
+                se_classical=se_classical[1:], j_stat=j_stat, j_df=j_df,
                 f_first=np.array(f_first), f_min=float(min(f_first)),
                 ols=dict(beta=ob[1:], intercept=float(ob[0]), se=ose[1:], se_intercept=float(ose[0])))
 
