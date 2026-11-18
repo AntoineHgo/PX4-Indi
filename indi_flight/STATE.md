@@ -7,7 +7,7 @@
   (`design/flatness_r2.md`: flatness = optional increment after base A).
 ## Next actions (in order)
 History: JOURNAL.md (S107 entry holds the latest moves). Agent ledger: LEDGER.md. Lessons proposed:
-LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S113.
+LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S118 (RC113 filed).
 Rule (RC64/RC74): inner loop time-boxed, 1 session per law change; no new anomaly chase unless a gate test fails.
 NEXT S108 per RC108 (design/route_check_108.md, filed S107; next route check S113). Accepted with one amendment:
    G3/G5 batches before the stage-6 freeze are PROBES of the current stack (find failures early), not gate evidence.
@@ -44,14 +44,19 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 (Done rows up to K109: JOURNAL.md S100-S109 entries; ledger LEDGER.md. Yaw model tool defect open: margins_of hangs if ts_true=0.)
 (R110/O110/K110/F111/K111/G111 done: JOURNAL.md S110-S111.)
 (P112 done: results/g3_pretest_s112/README.md, agent-reported, NOT yet verified by orchestrator.)
-S113 FIRST (P112 set-up faults, fix before any G3 batch; each fix keyed): (1) air-relative wind dead: vel_none
-  22400/22401, gz Pose subscriber `No message class registered for 'gz.msgs.Pose'`; (2) independent per-axis inertia
-  draws violate triangle inequality, gz rejects ~1/3 of draws; (3) eRPM loss starts 36/122 ms late (tol 1.25 ms):
-  set_param latency 15-26 ms single, 38-110 ms for 8-param fault set -> apply in sim time; (4) 3 stick_zsine_o6
-  draws tripped height watchdog (2 before any hook) + metrics.py crashes on aborted runs; (5) --sched-anchor never
-  emitted; weak+sat together unchecked. Then route check S113.
-S113 in flight: RC113 (sonnet, design/route_check_113.md); F113 (sonnet, faults 1, 2, 4b; log
-  results/g3_pretest_s112/fix_s113.md). Next: key K113 of F113, then fault 3 (eRPM loss in sim time), fault 4a.
+P112 faults: 1, 2, 4b fixed S113; 3 (eRPM loss 36-122 ms late) accepted, effective time to be taken from the log;
+  4a explained (stick fault below); 5 dropped (RC113). Weak+sat together still unflown (ladder covers it).
+S113: RC113 filed 140164bc93 (accepted: single-factor ladder S114-S115 before 60-run mixed batch S116; drop
+  --sched-anchor + set_param-latency fixes, eRPM-loss lateness logged as applied; stop rule in RC113 sec 5).
+  F113 faults 1, 2, 4b fixed 09515cd8ae (40 tests pass, orchestrator ran them). In flight: K113 (sonnet, key of
+  09515cd8ae: DONE 95eff712f6, 0 BLOCKING; S114 fix MINOR 5 = g3_run classify() says ok on rc 0 even if run.json
+  exit_status failed, MINOR 6 = aborted metrics.json lacks window (a11/g1_checks KeyError)). M113 DONE 9b208ba0a7
+  (results/g3_single_s113/README.md): stabilized stick scenarios fall at the 52 s mode switch for INDI m1.3, INDI m1.0
+  and PID m1.0 alike -> SET-UP FAULT, not controller: bench/stick_profile.py:54 hover stick = 2*hover_thr-1 ignores
+  the PX4 manual throttle curve (MPC_THR_CURVE / MPC_THR_HOVER; mid stick = hover under default curve, UNVERIFIED).
+S114 FIRST: (a) fix stick_profile stabilized/acro hover stick from the PX4 source mapping + test + key, re-fly
+  stick_zsine_o6 stabilized nominal (O-13 flyability, INDI and PID); also check altctl/posctl stick scenarios fly;
+  (b) K113 MINOR 5, 6. Then RC113 ladder (8 single-factor runs, sec 5 order). Next route check S118.
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
