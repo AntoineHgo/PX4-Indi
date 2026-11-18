@@ -736,3 +736,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S87: STATE trimmed; S83-S85 task rows (B83 velbreak PM 57.3/59.1, T173, B83b stick 50 Hz, RC84, T174 accel break pt1 z PM 58.7, T175-T178 keys and hole reporter) are DONE, details in their result READMEs.
 - S87 (20261118-051310): T182 hole_report count fix (c5b5a897e9) + T184 key AGREE WITH MINOR; T183 key of T181 AGREE; B87 xy G2 cells serial AMP 0.08 TP 20: PM 49.7-64.8 deg, GM ~18-19 dB (30c012bc7c); T185 review of attitude-break note: 0 blocking, 2 major test gaps.
 - S88 (2026-11-18, cap $1.75): hole_report D-HOLE-EXCESS (dd9dd0705e, keyed T188, slow-topic fix 688f198ab2); last_bin_db rename 5243e845b9; re-fly of two G2 cells, both holes PASS (e73e39e9ec).
+- S89: RC89 filed (stop tooling, freeze hole_report); T189 re-run: all serial G2 cells PASS, 3 FAIL = parallel pre-test only; D-HOLE-FREEZE.

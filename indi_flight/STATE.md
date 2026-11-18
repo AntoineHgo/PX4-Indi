@@ -30,8 +30,11 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    S87 (launch 20261118-051310): T182 count fix c5b5a897e9 + T184 key AGREE WITH MINOR; T183 key of T181 AGREE;
    xy re-fly B87 (stage5_s87_xy, hover_xlong 150 s, AMP 0.08 TP 20).
    S88 (launch 20261118-053836, cap $1.75): (1)(3) done (T186, T187, D-HOLE-EXCESS); (2) B88 done; T188 key closed.
-   NEXT S89: re-run hole_report (688f198ab2) on the 28 G2 cells, host idle; route check 89; then
-   (4) act on T185 review of attitude-break note, then implement; then G2 report + G5 text; then combined opus review. Deferred anomalies: A-4, A-6, A-30, A-32, A-34, A-35. Next route check S89.
+   S89 (launch 20261118-054540, cap $1.05): B88 metrics committed 51a0a42817; T189 all serial G2 outer cells PASS
+   hole_report (3 FAIL = S86 parallel pre-test, not evidence); D-HOLE-FREEZE; RC89 (design/route_check_89.md): STOP
+   tooling, cosmetic re-flies, anomaly chases.
+   NEXT S90 (per RC89): (1) amend attitude-break note per T185 (2 MAJOR), implement + fly attitude break (G2);
+   (2) write G2 report section (outer z+xy cells done) + G5 text; (3) combined opus review. Deferred anomalies: A-4, A-6, A-30, A-32, A-34, A-35. Next route check S94.
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
 | id | task | agent | output | resume |
@@ -50,6 +53,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T187 | rename top_db -> last_bin_db | haiku | margins_est.py | DONE 5243e845b9 (README rewrite reverted, kept S87 one) |
 | T188 | second key of T186 (code vs spec) | haiku | results/stage5_s85_holes/second_key_s88.md | DONE: AGREE WITH MINOR; slow-topic escape fixed 688f198ab2 (test S88d). Open minors: max_excess under-reported below 1.5x median (report only); median-0 topic -> OverflowError at hole_report.py:58 (loud). S89: re-run hole_report on 28 cells (host idle, no flight running) |
 | B88 | re-fly s86 pt1_ax3_r800_s2, s87 pt0_ax2_r400_s1 | host | READMEs of s86/s87 | DONE e73e39e9ec: both holes PASS, PM 59.6 / 56.6 deg (unkeyed) |
+| T189 | S89 hole_report re-run | haiku | results/stage5_s85_holes/rerun_s89.md | DONE: serial cells all PASS |
+| RC89 | route check 89 | sonnet | design/route_check_89.md | DONE |
 | T183 | second key of T181 (xy FRF from CSVs) | haiku | results/stage5_s86_g2outer/t183_second_key.md | DONE d2b66bf3ae: AGREE |L|, PM 54-56; f_c 0.27-0.33 Hz |
 
 ## Open problems

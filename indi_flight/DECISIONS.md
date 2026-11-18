@@ -532,3 +532,9 @@ failed an 89 Hz topic (period 11.2 ms) on one 18.75 ms gap with nothing lost. Al
 rate-dependent), limit in periods (rejected: at 400 Hz one period is 2.5 ms, too strict for the analysis).
 Effect: s86 pt0_ax3_r800_s2 FAIL->PASS; 27 other cells unchanged (results/stage5_s85_holes/fixes_s88.md).
 Overturn if: a cell passing under this rule shows a coherence or margin defect traceable to a logging gap.
+
+## D-HOLE-FREEZE (S89)
+hole_report.py frozen at 688f198ab2 for G2/G3 evidence. All serial G2 outer cells PASS (results/stage5_s85_holes/rerun_s89.md).
+Alternatives: keep fixing open T188 minors (max_excess under-reported below 1.5x median: report only; median-0 topic
+raises loudly). Reason: route check 89, five sessions of tooling with no gate change. Overturn if a hole_report verdict
+is shown wrong on raw timestamps of a gate log, or a loud error blocks a gate cell.
