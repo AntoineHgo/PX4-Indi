@@ -74,3 +74,16 @@ does NOT follow the start (start x4 range -> 0.8 % change), but a small monotoni
 (1742 -> 1756), larger than the CI: CI is not the whole error budget (J significant). Roll axis only; pitch and yaw
 not flown. x2 start = lower loop gain, larger roll (18.7 deg) and weaker instrument (F 902, still >> 10).
 Status: roll (i) and (ii) met in SITL, UNKEYED until K124 (design/key_k124_ident_fit.md) closes.
+
+## S124 pitch and yaw (G1 x1, INJ_AX 2 / 3, inj_axpitch/axyaw.params, out axpitch / axyaw)
+
+| axis | inj window (s) | IV G1 | 95 % CI | OLS | F | J (df 7) | derived | dev |
+|---|---|---|---|---|---|---|---|---|
+| pitch | 20.0-78.0 | 1634.1 | +-1.3 (0.1 %) | 1632.4 | 4297 | 88.2 | 1640 | -0.4 % |
+| yaw | 20.1-78.0 | 102.8 | +-15.0 (14.6 %) | 111.8 | 11292 | 107.1 | 205 | -50 % |
+
+Pitch: consistent with roll. Yaw: NOT a valid estimate. ident_fit.py regresses alpha = G1 u + c only; in yaw the
+rotor spin-up reaction torque (G2_Y du/dt, opposite sign, comparable size at injection frequencies up to 60 Hz) is
+omitted and biases G1_Y down, and the CI is 15 %. Yaw needs a two-regressor IV (u, du/dt) with two instrument sets
+(decision 5, D-YAW). Yaw ident = open item for S125. Yaw flight first attempt left an empty output dir (container
+did not start in the parallel launch, cause not investigated); re-flown alone, ok.
