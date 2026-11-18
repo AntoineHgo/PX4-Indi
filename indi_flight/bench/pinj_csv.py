@@ -44,7 +44,7 @@ def estimate(a, Tp, fmin, fmax, discard=1):
     if int(np.sum(res["accepted"])) < 2:  # nothing to interpolate (all bins failed coherence): explicit, not an IndexError
         nan = float("nan")
         return res, {"pm_deg": nan, "dm_s": nan, "gm_db": nan, "crossings": [], "phase_crossings": [],
-                     "band_limited": True, "top_db": nan, "no_accepted_bins": True}, fs
+                     "band_limited": True, "last_bin_db": nan, "top_db": nan, "no_accepted_bins": True}, fs
     return res, me.margins_from_frf(res), fs
 
 

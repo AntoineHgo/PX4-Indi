@@ -251,15 +251,15 @@ def margins(w, L, n_dense=20000, band_limit_db=-10.0, top_rejected=False):
         wp = float(np.exp(lq[i] + fr * (lq[i + 1] - lq[i])))
         pcross.append({"w": wp, "f": wp / 2 / np.pi, "gm_db": float(-20 * mm / np.log(10))})
     S = 1.0 / np.abs(1.0 + np.exp(m + 1j * p))
-    top_db = float(20 * np.log10(np.abs(L[-1])))
-    bl = bool(top_db >= band_limit_db or top_rejected)
+    last_bin_db = float(20 * np.log10(np.abs(L[-1])))  # |L| at the highest analysed bin (not a maximum)
+    bl = bool(last_bin_db >= band_limit_db or top_rejected)
     nan = float("nan")
     return {
         "pm_deg": min([c["pm_deg"] for c in cross], default=nan),  #BRK_first
         "dm_s": min([c["dm_s"] for c in cross], default=nan),
         "gm_db": min([c["gm_db"] for c in pcross], default=nan),
         "crossings": cross, "phase_crossings": pcross,
-        "band_limited": bl, "top_db": top_db,
+        "band_limited": bl, "last_bin_db": last_bin_db, "top_db": last_bin_db,
         "Ms": float(S.max()), "Ms_db": float(20 * np.log10(S.max())), "w_Ms": float(np.exp(lq[np.argmax(S)])),
     }
 

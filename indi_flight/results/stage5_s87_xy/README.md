@@ -37,3 +37,5 @@ DM 0.43-0.67 s against a requirement of a few control periods. pt0 (velocity/pos
 | pt1_ax2_r400_s2 | 61.1 | 0.30 | 18.8 | 0.572 | 1.16 | 0.96 | PASS |
 | pt1_ax2_r800_s1 | 64.8 | 0.29 | 19.3 | 0.622 | 1.16 | 0.97 | PASS |
 | pt1_ax2_r800_s2 | 61.5 | 0.29 | 19.3 | 0.584 | 1.16 | 0.95 | PASS |
+
+Note (S88): the `top_db` field of the margins JSON is |L| at the last analysed bin (now also written as `last_bin_db`), not a maximum.
