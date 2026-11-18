@@ -16,13 +16,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    (2) Bench defect N1 C2 (disturbance.py payload_add/com_shift/gust sized for x500): take mass/drag from the flown
    model, G1.5 check per profile. (3) Check the 'NOT FOUND' hooks of the draft (loop delay, GNSS latency, vibration)
    against stage-1 sim work before building. (4) G2-STEP 400 Hz reported run DONE S64 (9/9 within limits, A-30 seed spread parked).
-   S96 DONE: T199 BLOCKING confirmed + all 5 findings fixed (T200), autotune/watchdog (T201); second key T202
-   (design/t202_dgap_fix_key.md): its 2 MAJORs fixed by orchestrator 25e420b155 (vacuous test, break-checked) and
-   dff2b7a805 (integral hoist, compile-only). Open MINORs: lower mean_u limit untested; lagging mean_u at reset untested;
-   permanently saturated motor freezes b (no gap tracking): state in report limits.
-   dff2b7a805 keyed OK (T203, design/t203_integral_hoist_key.md); MINOR: want_indi true + stage bypass on stale
    inputs zeroes the stock integrator every cycle (no gap compensation in that fault): gate pre-update reset on
-   fresh inputs.
    NEXT S99: (0) check pretest_gate rate-RMS definition vs key (cheap); then (b) sim hooks below; log a z-only
    active flag in indi_pos_status when next touching the module (P98 could not see it).
    S98: RC98 DONE (design/route_check_98.md): STOP coverage after T206; D-G7-HARNESS decided, impl deferred to
@@ -53,15 +47,13 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 |---|---|---|---|---|
 (S72-S78 rows done, details in JOURNAL.md; A-34/A-35 rows and S76 D-RATE-BLD line are recorded.)
 (S93-S95 rows T194-T199 and S96 T201: JOURNAL.md. S86-S92 rows B87, T185, T189, RC89, T190, T191, B91, T192/T193, B91c, B92 all DONE: JOURNAL.md S93 entry.)
-| T200 | S96 (launch 20261118-094323): T199 BLOCKING CONFIRMED by orchestrator (_coll_meas = vehicle_thrust_setpoint, commanded, passed as mean_u). Fix findings 1,2,4,5 + 3 (integrator reset only when INDI ran) in indi_accel_control + mc_indi_pos_control, tests first with break-checks | sonnet | design/t200_dgap_fixes_log.md | DONE bf44ece093 (diff read; 5 new tests fail-before/pass-after; module side F3-F5 compile-only; residue: stock integral in a_ref on the 1st active cycle after bypass; ALTCTL not served by INDI: F-2 open item, note in log) |
-| T204 | S97: D-ALTCTL-Z implement | sonnet | design/t204_altctl_z_log.md | DONE 52beee60e5 + tests 1d827d62be (diff read; 5/6 fail-before, break-check 3 fail; module compile-only; closed-loop test is regression-only) |
-| T205 | S97: second key on 52beee60e5 + de7c598e1e | sonnet | design/t205_altctl_key.md | DONE: no BLOCKING; double poll removed + DESCEND scope noted (S97); OPEN: 2 MAJOR coverage (no module harness for T203 gate / z_only derivation / want_indi; lib mutations at tilt, guard order, 0.1 threshold, min-collective in z-only), MINOR NaN f_b/q with fresh stamp zeroes integrator |
 | T206 | S98: lib tests T205 (f) 1-5 + pre-gate finite f_b/q | sonnet | design/t206_lib_mutation_tests_log.md | DONE b6e95f88c4 c32d022f9e (diff read; 4/5 break-checked, #5 partly not a bug; module compile-only) |
 | P98 | S98: G5 pre-test gap 0.85 | sonnet | results/stage5_s98/README.md | DONE a462b69ad5: offboard standing z err 0.003 m (S70 0.33), ALTCTL 0.035 m, EN+AT_EN 0.027 m no start errors; pretest_gate FAILS rate RMS 0.022-0.024 vs 0.02 (cause open); z-only activity not logged |
 | K98 | S98: haiku second key on P98 | haiku | results/stage5_s98/key_p98.md | DONE: gt z mean err +10..20 s = +0.011/-0.001/-0.002 m (A/B/C) agrees with P98 to 0.04 m; body-rate RMS 0.001-0.006 rad/s, so pretest_gate 0.022 'rate RMS' is another quantity (check its definition, 1 call) |
-| T202 | S96: second key on bf44ece093 vs review findings 1-5 | sonnet | design/t202_dgap_fix_key.md | DONE: no BLOCKING, 2 MAJOR fixed 25e420b155 dff2b7a805 |
 
 ## Open problems
+- Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
+  mean_u at reset, lower mean_u limit untested, DESCEND failsafe tests (T202/T205 rows in JOURNAL S98).
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
   open per item: `sim_review.md` for simulator work, `module_parity.md` for stage 3/5, `test_review.md` for stage 3,
   `ident_review.md` for stage 4, `remetric.py`/`hover.py` for the errata.
