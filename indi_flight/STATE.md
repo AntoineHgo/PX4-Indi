@@ -41,7 +41,7 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 | K108 | S108: second key of g3_sample.py vs GATES G3 spec (read-only) | sonnet | design/g3_sampler_key_s108.md | DONE: 0 BLOCKING, 4 MAJOR, 8 MINOR (key read author note early: partial independence). S109 fix: G1 error as controller/plant ratio incl. drawn inertia (now 0.35-2.6, out of x[0.5,2]); gust present whenever drawn (C4 needs a gust); add tests for surviving mutations; saturation share kept per D-G3-SAMPLER |
 | F109 | S109: g3_sample.py fix per D-G3-SAMPLER-K108 (M2 gust, M4 G1 ratio, M3 guards, m7) | sonnet | design/g3_sampler_fix_s109.md | DONE 3a245d1590: 11/11 (orchestrator re-ran), 16 mutations caught. Needs 2nd key (short, read-only) before G3 pre-test; x_nominal of MC_INDI_G1_* now = k |
 | V109 | S109: quad5in model variants (tau, asym, mass, inertia) in run_scenario.py + 1-2 check flights | sonnet | design/quad5in_variants_s109.md | DONE bd612779a1 (+ --model-variant CLI); mass x1.3 flown (hover u x1.295, 45f2b6d2c9); tau/asym/inertia offline only |
-| K109 | S109: second key of V109 (read-only + offline SDF diff) | sonnet | design/quad5in_variants_key_s109.md | in flight; if cut: re-launch same brief |
+| K109 | S109: second key of V109 (read-only + offline SDF diff) | sonnet | design/quad5in_variants_key_s109.md | DONE: 0 BLOCKING; MAJOR = no driver maps hooks.model_variant -> --model-variant (G3 runner S110 must, with a test); MINOR parse fixed S109; tau/asym/inertia to be flown in G3 pre-test |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
