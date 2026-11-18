@@ -53,8 +53,10 @@ Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a inject
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| R122a | model-only INDI re-fly idx 0, 49 | - | results/g3_refly_s121/ | `setsid nohup bash indi_flight/results/g3_refly_s121/fly.sh 2 0 49` |
-| R122b | INDI+W_MAX re-fly idx 0/21/49 (check g3_done.json validity, measured_torque_in_use ~1) | - | results/g3_refly_s122/ | `setsid nohup bash indi_flight/results/g3_refly_s122/fly.sh 3 0 21 49` |
+(none) S122 DONE: re-fly idx 0/21/49 with W_MAX all ok + valid, measured path in use (results/g3_refly_s122/README.md,
+  8cfbc36d85). T118 INDI half restored. Model-only s121 idx 49 aborted: runner pilot sticks -> POSCTL after LAND
+  (K118 MINOR: fix in runner before the next stick batch). NEXT S123: key run_validity.py (sonnet, ~$0.15), then
+  RC122 S123 plan (M3a ident hover).
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
