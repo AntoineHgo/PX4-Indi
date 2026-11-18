@@ -218,6 +218,21 @@ while [ ! -f indi_flight/DONE ] && [ ! -f indi_flight/STOP ]; do
   history to JOURNAL.md and lessons or ledger rows to LESSONS_PROPOSED.md or LEDGER.md, then commit."
 		log "run $runs: STATE.md is $state_bytes bytes (budget $STATE_MAX_BYTES), the orchestrator is told to trim it"
 	fi
+	# results/ must end every session clean: each path committed or ignored (owner rule, 2026-11-18)
+	dirty_results=$(git status --porcelain --untracked-files=all -- indi_flight/results 2>/dev/null)
+	if [ -n "$dirty_results" ]; then
+		n_dirty=$(wc -l <<<"$dirty_results")
+		dirty_dirs=$(sed -E 's/^...//; s/^"//; s#^indi_flight/results/([^/]+).*#\1#' <<<"$dirty_results" | sort | uniq -c | sort -rn | head -25 |
+			awk '{printf "    %s (%d)\n", $2, $1}')
+		prompt="$prompt
+- indi_flight/results has $n_dirty uncommitted or untracked paths (git status --porcelain -uall indi_flight/results).
+  Owner rule: every path under indi_flight/results is either committed or ignored at the end of each session.
+  Before other work, sort them: commit evidence (metrics, run.json, READMEs, scripts, plots and small CSVs a note
+  cites); add raw captures and files over 1 MB to indi_flight/.gitignore by pattern; then commit. Only the output
+  of a flight still running may stay dirty, and its directory must be named in STATE.md. Directories (paths):
+$dirty_dirs"
+		log "run $runs: indi_flight/results has $n_dirty dirty paths, the orchestrator is told to commit or ignore them"
+	fi
 
 	claude -p "$prompt" \
 		--name "indi-orchestrator $ts" \
@@ -242,6 +257,8 @@ while [ ! -f indi_flight/DONE ] && [ ! -f indi_flight/STOP ]; do
 		awk '!seen[$1]++ {n++; if (n == 1) f = $2; if ($2 > m) m = $2} END {if (n) printf "%dk start, %dk max, %d turns", f/1000, m/1000, n}')
 	log "run $runs: exit $rc after ${elapsed}s, result $subtype, cost \$${cost:-?}, session $session, context ${ctx:-?}"
 	calibrate_window "$LOG_DIR/run-$ts.jsonl" "${cost:-?}"
+	left=$(git status --porcelain --untracked-files=all -- indi_flight/results 2>/dev/null | wc -l)
+	[ "$left" -eq 0 ] || log "run $runs: left $left dirty paths in indi_flight/results (next session is told to sort them)"
 
 	# the usage gate at the top of the loop decides whether the next launch has room;
 	# here only guard against a session that fails straight away for another reason
