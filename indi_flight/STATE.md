@@ -59,6 +59,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T176 | S85 HF FRF second key + pinj_csv no-crossover fix | sonnet | results/stage5_s84_accbreak/hf_second_key.md | DONE AGREE, 5444196ab4 |
 | T177 | S85 per-run hole reporter + self-test | sonnet | bench/hole_report.py, results/stage5_s85_holes/README.md | DONE 35024c732e |
 | T178 | S85 second key of hole_report | sonnet | results/stage5_s85_holes/second_key.md | DONE AGREE WITH MINOR, recount exact; fixes queued S86 |
+| T179 | S86 hole_report fixes (findings 1-3) + break tests | sonnet | results/stage5_s85_holes/fixes_s86.md | in flight (agent commits) |
+| B86 | G2 outer cells: pre-test pt0ax1r400, pt1ax1r400, pt1ax3r800 seed 1 | host | results/stage5_s86_g2outer/ (fly.sh PT AX RATE SEED) | in flight; resume: re-run fly.sh per missing cell |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
