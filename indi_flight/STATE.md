@@ -46,6 +46,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T194 | S93 (launch 20261118-091231, cap $3): attitude-break linear model L_att_indi/L_att_pid + identity self-test + model-vs-measured table (note sec 5) | sonnet | design/t194_att_model_log.md, results/stage5_s91_attbreak/model_vs_measured.md | DONE 85fb907177 f38ecf5ba3: tests 5/5; model PM ~15 deg above measured -> A-36; S93 outer-loop factor O(s) brings delta to 2-3 deg (unkeyed) |
 | T196 | S94: G2 report section draft | sonnet | report/g2_margins.md | DONE 4542ca1d83 (2 numbers spot-checked) |
 | T197 | S94: G3-G8 final test-text proposal + hook check | sonnet | design/gates_g3_g8_final_s94.md | DONE 18af6e3a66 (8 decisions in GATES.md) |
+| T198 | S95 (launch 20261118-093647): opus review stage-3 safety items code vs design/stage3_items_note.md + D-S3-* | opus | design/review_s95_stage3_safety.md | relaunch with same brief if file missing/incomplete |
+| T199 | S95: opus review D-GAP + landed/take-off handling in mc_indi_pos_control/indi_accel_control vs DECISIONS D-GAP | opus | design/review_s95_stage5_slice.md | same |
 | T195 | key of A-36: independent outer-loop factor from firmware source + flown params | sonnet | design/t195_att_outer_key.md | DONE: agrees; O(s) in margins_models 9df899212c; PM within 0.3 deg, GM residue open (A-36) |
 
 ## Open problems
