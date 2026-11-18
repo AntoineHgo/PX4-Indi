@@ -15,8 +15,8 @@ NEXT S104 (RC103 done S103; next route check S108). RC103 order: G5 POSCTL pre-t
    (ii) PID M1 reference rate cells (reference only, F-5; 800 Hz x3 axes, 1 seed is enough).
    (iii) linear-model cross-check for the v2 path (margins_models.py, T78 UNVERIFIED list below) -> G2 verdict note.
    (iv) delay hooks A1+A2 DONE S102 (c6ba02609f, keyed K102); hook B GNSS open.
-   (v) G5 pre-test: P98 already flew gap 0.85 in offboard, ALTCTL, EN+AT_EN (JOURNAL S98); remaining = POSCTL
-       (manual position) gap, needs a stick-mode POSCTL scenario (s5_gap085 is offboard).
+   (v) G5 POSCTL gap flown S103 (results/g5_posctl_s103): -0.09 m standing truth-z error -> A-38. FIRST in S104:
+       A-38 closing test from run/flight.ulg (nav_state, trajectory_setpoint z vs truth z), haiku, then decide.
    (vi) attitude-break margin with the new setpoint path (G2) when the G2 table is resumed.
    Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
    Old: log a z-only active flag in indi_pos_status when next touching the module (P98 could not see it).
@@ -35,6 +35,7 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 | K102 | S102: second key of H102 | sonnet | design/delay_line_key_s102.md | DONE: 0 BLOCKING, M1+M2 fixed by orchestrator, c6ba02609f |
 | V102 | S102: delay-hook pre-test d0/d5 | haiku | results/delay_pretest_s102/README.md | DONE: IMU PASS (age 0/5000 us), actuator UNVERIFIED -> A-37 |
 | RC103 | S103: route check | sonnet | design/route_check_103.md | DONE: A-37 time-box $0.5 then park; then G5 pre-tests, G2 verdict note, hook B; defer PID M1 |
+| S103 | S103: scope POSCTL stick gap scenario (read-only) | haiku | design/posctl_gap_scope_s103.md | DONE: scenario + --stick-mode posctl, flown |
 | A103 | S103: A-37 test (a9e5066a55), hover d5/d10 | host bg | results/a37_actlag_s103/README.md | DONE: A-37 closed |
 S102 finding: (ii) PID M1 has NO recipe: the gyro-break hook (`sim_inject`, design/stage2_margins_s35.md l.21) was never built.
   PID reference is F-5 reference only -> deferred behind (iv); build the M1 hook later in gz_bridge IMU callback beside A2.
