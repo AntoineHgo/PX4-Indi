@@ -54,9 +54,11 @@ S113: RC113 filed 140164bc93 (accepted: single-factor ladder S114-S115 before 60
   (results/g3_single_s113/README.md): stabilized stick scenarios fall at the 52 s mode switch for INDI m1.3, INDI m1.0
   and PID m1.0 alike -> SET-UP FAULT, not controller: bench/stick_profile.py:54 hover stick = 2*hover_thr-1 ignores
   the PX4 manual throttle curve (MPC_THR_CURVE / MPC_THR_HOVER; mid stick = hover under default curve, UNVERIFIED).
-S114 FIRST: (a) fix stick_profile stabilized/acro hover stick from the PX4 source mapping + test + key, re-fly
-  stick_zsine_o6 stabilized nominal (O-13 flyability, INDI and PID); also check altctl/posctl stick scenarios fly;
-  (b) K113 MINOR 5, 6. Then RC113 ladder (8 single-factor runs, sec 5 order). Next route check S118.
+S114: stick fix DONE 807fd6a08a (stabilized = mc_att_control throttle_curve MPC_THR_CURVE 0, centre = HTE; acro
+  unchanged; tests break-checked). K113 MINOR 5, 6 DONE 3d8e4b5f29. In flight S114: K114 (sonnet key of 807fd6a08a,
+  out design/key_k114_stick.md); F114 (haiku re-fly stick_zsine_o6 stabilized nominal INDI + PID, out
+  results/g3_stick_s114/README.md). If cut: re-launch both. Then RC113 ladder (8 single-factor runs, sec 5 order),
+  altctl/posctl stick flyability check. Next route check S118.
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
