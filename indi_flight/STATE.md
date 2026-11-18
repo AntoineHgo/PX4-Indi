@@ -20,7 +20,12 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    S98 (0) EXPLAINED: pretest_gate window [airborne+15, +45 s) = 47-77 s contains the 0.85 fault at ~71 s, the step
    transient inflates rate RMS (S70 hover_gap had no step in window: 0.0037); key +10..20 s after fault: 0.001-0.006.
    Use pretest_gate only on stationary scenarios, or end its window at the fault.
-   NEXT S99: (b) sim hooks below; log a z-only
+   S99 DONE: hooks SIM_GZ_SEED + SIM_GZ_IMU_NSC (results/t207_hooks/README.md; accel scale UNVERIFIED, needs full-rate
+   accel log before G4). G2 rate table compiled (results/g2_rate_table_s99.md): 7 required cells missing at HEAD.
+   NEXT S100: (i) read P99 pre-test; if OK, haiku serial batch of the missing rate cells at HEAD, 2 seeds each
+   (pitch/yaw v2 800+400, roll v2 400, pitch/yaw model-only 400, + re-fly S57-era model-only cells at HEAD) and PID
+   M1 reference cells; second key on margins; (ii) next hook: shared sim-time delay line (design/delay_line_hook_s94.md);
+   (iii) S101 deadline rule (c) below still holds. Old: log a z-only
    active flag in indi_pos_status when next touching the module (P98 could not see it).
    S98: RC98 DONE (design/route_check_98.md): STOP coverage after T206; D-G7-HARNESS decided, impl deferred to
    stage 7. Order now: (a) G5 pre-test s5_gap085 POSCTL + stick ALTCTL gap + EN/AT_EN start check; (b) S99 sim
@@ -50,6 +55,9 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 |---|---|---|---|---|
 (S72-S78 rows done, details in JOURNAL.md; A-34/A-35 rows and S76 D-RATE-BLD line are recorded.)
 (S93-S95 rows T194-T199 and S96 T201: JOURNAL.md. S86-S92 rows B87, T185, T189, RC89, T190, T191, B91, T192/T193, B91c, B92 all DONE: JOURNAL.md S93 entry.)
+| T207 | S99: sim hooks SIM_GZ_SEED (drop RNG) + SIM_GZ_IMU_NSC (IMU noise scale), build, 2-flight G1.5 check | sonnet | design/t207_seed_noise_hooks_log.md | DONE fdcc54ed63 9d48cea369 (diff read, astyle clean): drop frac 0.10, seeds differ, gyro sigma ratio 3.0; second key K99 -> results/t207_hooks/key_k99.md |
+| T208 | S99: compile G2 rate-cell table | sonnet | results/g2_rate_table_s99.md | DONE: 18 INDI cells, 6 prelim PASS (mostly S57 fw, pre setpoint lead), 0 FAIL, 12 NOT COVERED; 7 of 12 required 800/400 cells missing; no PID rate margins ever; measured-path model cross-check missing |
+| P99 | S99: G2 rate pre-test at HEAD: pitch v2 800 Hz, yaw v2 400 Hz | haiku | results/g2_rate_pretest_s99/README.md | if incomplete: relaunch same brief |
 | T206 | S98: lib tests T205 (f) 1-5 + pre-gate finite f_b/q | sonnet | design/t206_lib_mutation_tests_log.md | DONE b6e95f88c4 c32d022f9e (diff read; 4/5 break-checked, #5 partly not a bug; module compile-only) |
 | P98 | S98: G5 pre-test gap 0.85 | sonnet | results/stage5_s98/README.md | DONE a462b69ad5: offboard standing z err 0.003 m (S70 0.33), ALTCTL 0.035 m, EN+AT_EN 0.027 m no start errors; pretest_gate FAILS rate RMS 0.022-0.024 vs 0.02 (cause open); z-only activity not logged |
 | K98 | S98: haiku second key on P98 | haiku | results/stage5_s98/key_p98.md | DONE: gt z mean err +10..20 s = +0.011/-0.001/-0.002 m (A/B/C) agrees with P98 to 0.04 m; body-rate RMS 0.001-0.006 rad/s, so pretest_gate 0.022 'rate RMS' is another quantity (check its definition, 1 call) |
