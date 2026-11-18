@@ -846,7 +846,9 @@ void McIndiPosControl::Run()
 			// cycle (also on the first active cycle after a bypass, so the stock integral never enters a_ref). In bypass
 			// (takeoff rampup, ground contact, stale attitude or acceleration) the stock integrator is the only
 			// thrust-gap compensation and keeps running.
-			if (want_indi && stageInputsFresh(now)) {
+			// the library rejects a non-finite specific force or attitude (norm < 0.5): same condition here, else the
+			// integrator is zeroed every cycle while the stage never runs
+			if (want_indi && stageInputsFresh(now) && _f_b.isAllFinite() && _q.isAllFinite() && (_q.norm() >= 0.5f)) {
 				_control.resetIntegral();
 			}
 
