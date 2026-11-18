@@ -817,9 +817,15 @@ void McIndiPosControl::Run()
 				_control.resetIntegralXY();
 			}
 
-			// A2: a_ref = feed-forward + P/D only, but only while the INDI stage runs (previous cycle's state): in bypass
-			// (altitude mode, takeoff rampup, ground contact) the stock integrator is the only thrust-gap compensation
-			if (_indi_active) {
+			const bool want_indi = _vehicle_control_mode.flag_armed
+					       && (_vehicle_control_mode.flag_control_position_enabled
+						   || _vehicle_control_mode.flag_control_velocity_enabled)
+					       && (_takeoff.getTakeoffState() == TakeoffState::flight) && !flying_but_ground_contact;
+
+			// A2: a_ref = feed-forward + P/D only whenever the INDI stage is requested this cycle (also on the first
+			// active cycle after a bypass, so the stock integral never enters a_ref). In bypass (altitude mode, takeoff
+			// rampup, ground contact) the stock integrator is the only thrust-gap compensation and keeps running.
+			if (want_indi) {
 				_control.resetIntegral();
 			}
 
@@ -858,10 +864,6 @@ void McIndiPosControl::Run()
 			vehicle_attitude_setpoint_s attitude_setpoint{};
 			_control.getAttitudeSetpoint(attitude_setpoint);
 
-			const bool want_indi = _vehicle_control_mode.flag_armed
-					       && (_vehicle_control_mode.flag_control_position_enabled
-						   || _vehicle_control_mode.flag_control_velocity_enabled)
-					       && (_takeoff.getTakeoffState() == TakeoffState::flight) && !flying_but_ground_contact;
 			runIndiStage(dt, now, want_indi, _tilt_limit_slew_rate.getState(), ht, local_pos_sp, attitude_setpoint);
 
 			// zero the stock integrator only on cycles where the INDI stage actually ran (this cycle)
