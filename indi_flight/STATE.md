@@ -53,11 +53,14 @@ Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a inject
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-(none) S123: K122 3 BLOCKING fixed 46b2e2ceb2 (design/fix_k122_s123.md, broken-checked, 26 tests). H123 DONE
-  f49f8029f8 (results/ident_m3a_s123/README.md): M3a hover pos0/pos1 valid, MC_INDI_INJ_AMP 0.003 (0.01 = 25 deg,
-  void; AMP is per component x18), INJ_DLY 8, NP 6, roll <= 7.3 deg. esc_status/actuator_torque_measured 800 Hz
-  (H120 "100 Hz" doubt CLOSED). measured_torque_in_use 84 % of samples (check: ground phase only?).
-  NEXT S124: run bench/ident_iv.py on pos0/pos1 (SNR at AMP 0.003 UNVERIFIED), then x0.5/x2 starts, D-IDENT verdict.
+| S124 | DONE fit pos0/pos1: G1_R 1748 (-0.5 %), F ~4600 (bf16a6b2f0, 8d79294d24) | sonnet | results/ident_m3a_s123/fit_s124.md | - |
+| S124 | DONE flights G1 x0.5/x2 + fit: 1742/1756 (bde2b92983) | bash bg | fit_s124.md sec "start independence" | - |
+| S124 | K124 key of ident_fit.py | sonnet | design/key_k124_ident_fit.md | re-brief |
+S124 RESULT (roll only, UNKEYED until K124): D-IDENT (i) spread 0.8 %, all within 0.8 % of 1757; (ii) F 902-27091,
+  CI +-0.1 %. Trend 1742->1756 with start > CI (J significant): CI not the whole error budget. Flights NOT at halved
+  gains (ident config says halved). Pitch x1: 1634 (-0.4 %, 1ed8d935ed). Yaw 103 vs 205 INVALID: fit omits G2_Y du/dt.
+  NEXT S125: close K124; yaw two-regressor IV (u, du/dt; D-YAW), cond (iv) conditioning, cond (v) PID-flown
+  manoeuvre, halved-gain re-fly once; then defaults file draft + G5 list.
 S122 DONE: re-fly idx 0/21/49 with W_MAX all ok + valid, measured path in use (results/g3_refly_s122/README.md,
   8cfbc36d85). T118 INDI half restored. Model-only s121 idx 49 aborted: runner pilot sticks -> POSCTL after LAND
   (K118 MINOR: fix in runner before the next stick batch). K122 key DONE (design/key_k122_run_validity.md): 3

@@ -895,3 +895,6 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S122: re-fly idx 21 with real INDI ok (a85d58f5ef): z ~5 m under stick z-sine, landed; esc_status 750 Hz in log; actuator_torque_measured absent.
 - S122: RC122 filed (accepted). MC_INDI_W_MAX missing from G3 base params -> all G3 INDI runs model-only; fixed 0a49572149 + run_validity.py (void runs). Re-fly T118 idx 0/21/49 INDI+measured: all ok (8cfbc36d85).
 - S123: K122 blocking fixed (46b2e2ceb2, fail closed). M3a ident hover pretest pos0/pos1 valid at INJ_AMP 0.003 (f49f8029f8); eRPM path 800 Hz confirmed. Next: ident_iv.py offline.
+- S124: ident_fit.py IV driver; M3a roll G1_R 1748 (x1), 1742 (x0.5 start), 1756 (x2 start), pitch 1634, all within
+  0.8 % of derived; yaw invalid (G2 term omitted). K124 key: 3 BLOCKING (no failing mismatch test, no F/J gate,
+  homoskedastic F), MAJOR: ZOH regressor (actuator_torque_measured changes every ~2.4 samples), J-shift pre-test CI.

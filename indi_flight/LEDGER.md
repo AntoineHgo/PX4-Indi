@@ -171,3 +171,5 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S122 | K122 key of run_validity | sonnet | design/key_k122_run_validity.md | done, 3 BLOCKING open |
 | S123 | fix K122 3 BLOCKING (run_validity/g3_run) | sonnet | design/fix_k122_s123.md | done, 26 tests, broken-checked, 9 calls ~$0.17 |
 | S123 | M3a ident hover pretest POS_EN 0/1 | sonnet | results/ident_m3a_s123/README.md | done, both valid, 11 calls ~$0.20 |
+| S124 | IV fit driver + fit pos0/pos1 | sonnet | results/ident_m3a_s123/fit_s124.md | done, G1_R 1748, 34 calls ~$0.55 |
+| S124 | K124 key of ident_fit.py | sonnet | design/key_k124_ident_fit.md | done, 3 BLOCKING 6 MAJOR 4 MINOR, 14 calls ~$0.30 |
