@@ -37,6 +37,25 @@ def test_clip_and_modes():
     assert s["z"] == round((2 * 0.4 - 1 + sp.THRUST_GAIN * 1.5 / 3.0) * 500 + 500)
 
 
+def test_stabilized_hover_is_centre_stick():
+    """S114: under MPC_THR_CURVE 0 centre stick is hover thrust whatever the hover value (S113 sent ~-0.73)."""
+    for h in (0.137, 0.3, 0.5, 0.7):
+        assert sp.neutral_sample("stabilized", hover_thr=h)["z"] == 500
+        assert sp.neutral_sample("acro", hover_thr=h)["z"] == round((2 * h - 1) * 500 + 500)
+
+
+def test_stabilized_round_trip_through_px4_curve():
+    """The stick sent maps back, through an independent copy of mc_att_control throttle_curve, to the demand."""
+    def px4_curve(stick, hover, tmin=0.08, tmax=1.0):   # interpolateNXY over {-1, 0, 1} -> {tmin, hover, tmax}
+        return tmin + (stick + 1) * (hover - tmin) if stick < 0 else hover + stick * (tmax - hover)
+    h = 0.137
+    for t in (0.0, 0.3, math.pi / 4, 1.0, 2.5):
+        s = sp.stick_sample(_pva_sine, t, "stabilized", hover_thr=h)
+        want = h + 0.5 * sp.THRUST_GAIN * s["vz_up_demand"] / 3.0
+        assert abs(px4_curve(s["throttle"], h) - want) < 0.003   # int rounding of z: 1/500 stick step
+        assert abs(sp.stick_to_thrust(s["throttle"], "stabilized", h) - px4_curve(s["throttle"], h)) < 1e-9
+
+
 def test_zsine_o6_profile():
     from run_scenario import traj_pva
     from scenarios import ZSINE_O6

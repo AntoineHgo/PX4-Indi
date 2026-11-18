@@ -2,8 +2,13 @@
 
 Pure functions, no PX4 or MAVLink imports. In altctl / posctl the throttle stick is a vertical-velocity demand:
 expo(stick) = vz_up / VZ_MAX_UP (MPC_Z_VEL_MAX_UP and _DN set to VZ_MAX_UP, MAN_DEADZONE 0, expo 0.6 inverted), so the z profile of a trajectory
-(ZSINE_O6) becomes a stick profile. In stabilized / acro the throttle stick is thrust: stick = 2 thr_hover - 1 + GAIN
-* demand (unverified shape, only a flight stub). x / y / r (pitch, roll, yaw) stay neutral.
+(ZSINE_O6) becomes a stick profile. In stabilized / acro the throttle stick is thrust; the collective thrust demand
+is thr = thr_hover + GAIN / 2 * demand, and the stick is the inverse of the PX4 map (S114 fix: S113 used the acro map
+in stabilized too, which sent about MANTHR_MIN and the vehicle fell at the mode switch):
+- acro (mc_rate_control / mc_indi_rate_control): thr = (stick + 1) / 2, so stick = 2 thr - 1;
+- stabilized (mc_att_control throttle_curve, MPC_THR_CURVE default 0): piecewise linear through (-1, MPC_MANTHR_MIN),
+  (0, hover thrust estimate), (1, MPC_THR_MAX), so centre stick = hover. thr_hover passed in is the runner's HTE read.
+x / y / r (pitch, roll, yaw) stay neutral.
 MANUAL_CONTROL fields: x pitch, y roll, r yaw in [-1000, 1000]; z throttle in [0, 1000] (500 = centre), see
 mavlink_receiver.cpp handle_message_manual_control (throttle = z / 500 - 1).
 """
@@ -12,6 +17,8 @@ VZ_MAX_UP = 3.0         # m/s, MPC_Z_VEL_MAX_UP (PX4 default, set explicitly in 
 THRUST_GAIN = 0.15      # stabilized / acro: throttle stick change per unit of demand (vz_up / VZ_MAX_UP)
 STICK_EXPO = 0.6        # hard-coded in src/lib/sticks/Sticks.hpp (getThrottleZeroCenteredExpo), no parameter
 VELOCITY_MODES = ("altctl", "posctl")
+MANTHR_MIN = 0.08       # MPC_MANTHR_MIN default (multicopter_stabilized_mode_params.yaml), airborne value of the curve
+THR_MAX = 1.0           # MPC_THR_MAX default (multicopter_position_control_limits_params.yaml)
 
 
 def stick_to_raw(stick):
@@ -51,14 +58,34 @@ def stick_sample(pva, t, mode, vz_max=VZ_MAX_UP, hover_thr=0.5):
     if mode in VELOCITY_MODES:
         stick = inv_expo(vz_up / vz_max)  # PX4 applies expo 0.6 to the stick before scaling by MPC_Z_VEL_MAX_UP / _DN
     elif mode in ("stabilized", "acro"):
-        stick = 2.0 * hover_thr - 1.0 + THRUST_GAIN * vz_up / vz_max
+        stick = thrust_to_stick(hover_thr + 0.5 * THRUST_GAIN * vz_up / vz_max, mode, hover_thr)
     else:
         raise ValueError(mode)
     z = stick_to_raw(stick)
     return dict(x=0, y=0, z=z, r=0, throttle=raw_to_stick(z), vz_up_demand=vz_up)
 
 
+def thrust_to_stick(thr, mode, hover_thr):
+    """Throttle stick in [-1, 1] that PX4 maps to collective thrust thr in this manual-thrust mode (see module doc)."""
+    if mode == "acro":
+        return 2.0 * thr - 1.0
+    if mode == "stabilized":
+        if thr >= hover_thr:
+            return (thr - hover_thr) / (THR_MAX - hover_thr)
+        return (thr - hover_thr) / (hover_thr - MANTHR_MIN)
+    raise ValueError(mode)
+
+
+def stick_to_thrust(stick, mode, hover_thr):
+    """Forward PX4 map (for tests and log checks): acro linear, stabilized throttle_curve with MPC_THR_CURVE 0."""
+    if mode == "acro":
+        return 0.5 * (stick + 1.0)
+    if mode == "stabilized":
+        return hover_thr + stick * ((THR_MAX - hover_thr) if stick >= 0 else (hover_thr - MANTHR_MIN))
+    raise ValueError(mode)
+
+
 def neutral_sample(mode, hover_thr=0.5):
     """Centred sticks: zero climb rate in altctl / posctl, hover thrust in stabilized / acro."""
-    z = 500 if mode in VELOCITY_MODES else stick_to_raw(2.0 * hover_thr - 1.0)
+    z = 500 if mode in VELOCITY_MODES else stick_to_raw(thrust_to_stick(hover_thr, mode, hover_thr))
     return dict(x=0, y=0, z=z, r=0, throttle=raw_to_stick(z), vz_up_demand=0.0)
