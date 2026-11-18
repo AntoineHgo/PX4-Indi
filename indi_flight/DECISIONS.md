@@ -560,3 +560,16 @@ ALTCTL.
 Scope note (T205): want_indi accepts any climb-rate-only mode, so the DESCEND failsafe (and any other climb-rate-only
 nav state) also runs the z-only stage. Intended: F-2 covers failsafes, and DESCEND has the same semantics as ALTCTL
 with neutral sticks. G5 flies it.
+
+## D-G7-HARNESS (S98): module-level tests of mc_indi_pos_control via extracted pure helpers, SITL for wiring
+- Problem (T205 MAJOR 6): the module's decision logic (want_indi flags, z_only derivation, the T203 pre-update
+  integrator gate with its age constant and validity checks) has no test; G7 asks for module-level tests that fail
+  when a behaviour is broken.
+- Options: (A) uORB functional gtest that instantiates McIndiPosControl (heavy: work queue, parameters, many topics;
+  no precedent in the stock MC modules); (B) move the pure conditions into a small header in the module (precedent:
+  IndiPosInjection.hpp + IndiPosInjectionTest.cpp, px4_add_unit_gtest) and unit-test them, the module calling them
+  unchanged; (C) SITL flights only.
+- Decision: B now (one sonnet task after T206), C for the wiring (G5 flights already exercise it). A is not built
+  unless a G7 reviewer finds a wiring defect B and C both miss.
+- Overturn if: a defect is found in the glue between the helpers and uORB that neither the unit tests nor the G5
+  flights caught.
