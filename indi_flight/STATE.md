@@ -6,31 +6,24 @@
 - Blocker: none. QUESTIONS.md empty (Q1-Q5, N1, N2 closed). Outer-loop study finished; stage 5 = base A
   (`design/flatness_r2.md`: flatness = optional increment after base A).
 ## Next actions (in order)
-History: JOURNAL.md (S107 entry holds the latest moves). Agent ledger: LEDGER.md. Lessons proposed:
+History: JOURNAL.md (S100-S115 entries hold the recent moves). Agent ledger: LEDGER.md. Lessons proposed:
 LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S118 (RC113 filed).
 Rule (RC64/RC74): inner loop time-boxed, 1 session per law change; no new anomaly chase unless a gate test fails.
-NEXT S108 per RC108 (design/route_check_108.md, filed S107; next route check S113). Accepted with one amendment:
+Plan RC108 (design/route_check_108.md) + RC113 (design/route_check_113.md, accepted):
    G3/G5 batches before the stage-6 freeze are PROBES of the current stack (find failures early), not gate evidence.
-   S108 DONE 93f94320d3: design/g2_verdict_s108.md + GATES.md G2 table (outer cells S83/S86/S87 added; draft had
-     missed them). Attitude seed 2 NOT flown (pre-freeze, stage 6 re-flies all). Offline G2 todo before stage 6:
-     outer-cell margin key, linear outer-loop model, A-36/A-39 bound, 267 Hz rows.
-   S109 DONE: K108 closed (D-G3-SAMPLER-K108, 3a245d1590, keyed e634a78671); quad5in variants bd612779a1 (key K109).
-   S110 DONE: G3 driver g3_run.py (c5acce1b39, K109 MAJOR closed) + scenario overrides/wind (fc3ef9e626), key K110.
-   S111 DONE: K110 M-1..M-3 closed b0486b703e (air-relative gust_x drag via gz pose finite diff; timed eRPM loss;
-     motor_fault list), keyed K111 (0 BLOCKING), K111 F-1/F-3/F-5 closed 6e8c4fa474 (runner hooks pinned, 4 mutations
-     caught). F-2 accepted bounded: pose/clock threads, velocity lag 0-1 pose period, applied wrench logged.
-     All gust_x results before b0486b703e are not comparable (drag was wind-only).
-   S112 order: 3-flight pre-test (haiku runs, serial): o1_lemniscate --sched and stick_zsine_o6, overrides with
-     motor_fault list (weak+sat) + timed erpm_loss + wind. Check on logs: pose topic gives velocity (run.json
-     disturbance.injector vel_none small), eRPM loss window at drawn offset/duration, timings under --sched /
-     --sched-anchor (K110 m-5), sub-run set_param latency (K111 F-4). Then frozen-telemetry hook (two keys);
-     g3_checks.py + key; gate_g3.sh consuming run JSON hooks block; then ~20-run pre-test.
-   S109: G3 randomised runner (plant draw per run, all G3 axes incl. GNSS hook B: matched = --gnss-delay == --gps-dly)
-     + ~20-run pre-test; fold G1.5 estimator M-vs-X separation (moving scenario) into it.
-   S110: first G3 probe batch >= 60 runs. S111: G5 mode/transition batch. S112: G4 noise profiles.
+   Offline G2 todo before stage 6: outer-cell margin key, linear outer-loop model, A-36/A-39 bound, 267 Hz rows
+     (verdict design/g2_verdict_s108.md).
+   G3 tooling: g3_run.py driver, quad5in variants, scenario overrides/wind/motor_fault/timed eRPM loss (S109-S111,
+     keyed). gust_x results before b0486b703e not comparable. eRPM-loss lateness 36-122 ms: take effective time
+     from the log. Weak+sat together still unflown (ladder covers it).
+   Stick scenarios: stabilized centre = HTE (807fd6a08a), runner thr0 honours HTE valid flag, fallback
+     MPC_THR_HOVER (8f57b47f7e). A-40 closed. Stabilized stick altitude 6.5 m mean vs 5 m hold (open loop, ok).
+   NEXT S116: (1) sonnet key K115 of 8f57b47f7e (out design/key_k115_hte.md); (2) RC113 ladder (8 single-factor
+     runs, haiku, serial, RC113 sec 5 order; first re-fly stick nominal to confirm hover_thr_used in run.json = HTE
+     valid); (3) altctl/posctl stick flyability. Then 60-run mixed G3 probe batch; then frozen-telemetry hook (two
+     keys), g3_checks.py + key, gate_g3.sh; G5 mode batch; G4 noise profiles.
    STOP: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair, PID M1 hook, hooks without a consumer,
-     stand-alone anomaly chases (fold A-4, A-6 into G3/G5 side-cells).
-   Done history (RC103 list i-vi, hooks A1/A2/B, A-37, A-38, yaw model): JOURNAL.md S101-S107.
+     stand-alone anomaly chases (fold A-4, A-6 into G3/G5 side-cells), --sched-anchor and set_param-latency fixes.
    Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
    Old: log a z-only active flag in indi_pos_status when next touching the module (P98 could not see it).
 Notes: pretest_gate only on stationary scenarios, or end its window at the fault (S98). S99 hooks SIM_GZ_SEED +
@@ -41,35 +34,7 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-(Done rows up to K109: JOURNAL.md S100-S109 entries; ledger LEDGER.md. Yaw model tool defect open: margins_of hangs if ts_true=0.)
-(R110/O110/K110/F111/K111/G111 done: JOURNAL.md S110-S111.)
-(P112 done: results/g3_pretest_s112/README.md, agent-reported, NOT yet verified by orchestrator.)
-P112 faults: 1, 2, 4b fixed S113; 3 (eRPM loss 36-122 ms late) accepted, effective time to be taken from the log;
-  4a explained (stick fault below); 5 dropped (RC113). Weak+sat together still unflown (ladder covers it).
-S113: RC113 filed 140164bc93 (accepted: single-factor ladder S114-S115 before 60-run mixed batch S116; drop
-  --sched-anchor + set_param-latency fixes, eRPM-loss lateness logged as applied; stop rule in RC113 sec 5).
-  F113 faults 1, 2, 4b fixed 09515cd8ae (40 tests pass, orchestrator ran them). In flight: K113 (sonnet, key of
-  09515cd8ae: DONE 95eff712f6, 0 BLOCKING; S114 fix MINOR 5 = g3_run classify() says ok on rc 0 even if run.json
-  exit_status failed, MINOR 6 = aborted metrics.json lacks window (a11/g1_checks KeyError)). M113 DONE 9b208ba0a7
-  (results/g3_single_s113/README.md): stabilized stick scenarios fall at the 52 s mode switch for INDI m1.3, INDI m1.0
-  and PID m1.0 alike -> SET-UP FAULT, not controller: bench/stick_profile.py:54 hover stick = 2*hover_thr-1 ignores
-  the PX4 manual throttle curve (MPC_THR_CURVE / MPC_THR_HOVER; mid stick = hover under default curve, UNVERIFIED).
-S114: stick fix DONE 807fd6a08a (stabilized = mc_att_control throttle_curve MPC_THR_CURVE 0, centre = HTE; acro
-  unchanged; tests break-checked). K113 MINOR 5, 6 DONE 3d8e4b5f29. In flight S114: K114 (sonnet key of 807fd6a08a,
-  out design/key_k114_stick.md); F114 (haiku re-fly stick_zsine_o6 stabilized nominal INDI + PID, out
-  results/g3_stick_s114/README.md). If cut: re-launch F114. K114 DONE (design/key_k114_stick.md, 0 BLOCKING):
-  S115 fix MAJOR = run_scenario.py:860 thr0 ignores hover_thrust_estimate.valid (PX4 then uses MPC_THR_HOVER; runner
-  falls back 0.5): use `valid`, fallback MPC_THR_HOVER read from params (stabilized centre stick is immune, only the
-  increment slope and acro are hit); pin MPC_THR_CURVE 0 / MPC_MANTHR_MIN / MPC_THR_MAX in STICK_PARAMS.
-  F114 DONE: stabilized stick flies through the 52 s switch, INDI and PID (hover thrust 0.137 held). NEW A-40: both
-  land at 70.3 s, before window end 79.4 s: close A-40 first in S115 (haiku: vehicle_command/nav_state from ulog).
-  Then RC113 ladder (8 single-factor runs, sec 5 order),
-  altctl/posctl stick flyability check. Next route check S118.
-S115: K114 MAJOR + MINOR 3/4 fixed 8f57b47f7e (HTE valid flag, MPC_THR_HOVER fallback, curve params pinned;
-  tests break-checked). A-40 CLOSED (no early landing: NAV_LAND 83.45 s after window; 70.3 s was px4.log time).
-  NEXT S116: (1) sonnet key K115 of 8f57b47f7e (out design/key_k115_hte.md); (2) RC113 ladder (8 single-factor
-  runs, haiku, serial; first re-fly stick nominal to confirm hover_thr_used in run.json = HTE valid); (3)
-  altctl/posctl stick flyability. Side note: stabilized stick phase altitude 6.5 m mean vs 5 m hold (open-loop, ok).
+(Done rows up to K114/F114: JOURNAL.md S100-S115; ledger LEDGER.md. Yaw model tool defect open: margins_of hangs if ts_true=0.)
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
