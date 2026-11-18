@@ -186,3 +186,5 @@ SCENARIOS["s5_loss08"] = {**_S5_GAP, "motor_fault": dict(segment="up", motor=2, 
 SCENARIOS["s5_gap085_altctl"] = dict(mode="stick", axis=None, traj=ZSINE_O6,
                                      segments=[("settle", 15.0, 0.0), ("up", 5.0, 0.0), ("hold", 40.0, 0.0)],
                                      motor_fault=dict(segment="up", motors=[0, 1, 2, 3], thrust_scale=0.85))
+# S103: same in manual POSCTL (fly with --stick-mode posctl), G5 pre-test of the position-mode thrust gap.
+SCENARIOS["s5_gap085_posctl"] = {**SCENARIOS["s5_gap085_altctl"]}
