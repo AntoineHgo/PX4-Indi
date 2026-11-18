@@ -31,3 +31,9 @@ FW "S57" = 296766019a / f9f70d6ef9 (before setpoint lead da64bc26b3); "HEAD" = S
 - Conflicts: (1) S53 800 Hz model-only PM 86 vs S57 400 Hz 84.4: consistent. (2) roll 400 Hz: S57 model-only PM 84.4/GM 10.5 vs S77 PM 70.5/GM 13.3; likely HEAD + measured path, but S77 README does not state path or whether file = S57 meas800: UNVERIFIED. (3) GATES.md:104-145 plateau rule (GM = min of GM and 1/|L| where arg within 10 deg of -180) : no source states it was applied; the S56-S57 GM values are plain crossings, UNVERIFIED.
 - Not verified: no linear-model cross-check (PM within 10 deg, GM within 3 dB) for measured path (meas800 README says not done); second key for S57 rate numbers unconfirmed (single FRF key stated for 400/267); S53 raw data; pitch numbers only in JOURNAL (no README read); measured-path telemetry latency not defined; PID results none; yaw M3a is only a 1-sample-of-plant per seed (seeds change noise only).
 - Attitude-break cells (S91/S92, PM >= 55 deg) are a different loop, excluded.
+
+## S101 update
+The required v2 800/400 rate cells are now covered at HEAD for both actuator-state paths: measured (B99 + P99, keyed
+K100, 12/12 PASS, worst GM 13.1 dB) and model-only (P100 + B100, keyed K101, 12/12 PASS, worst GM 10.12 dB, PM 70.8
+deg, DM 39.7 ms). Still open for the G2 verdict: linear-model cross-check of the v2 path, PID M1 reference cells
+(reference only, F-5), 250 Hz reported.

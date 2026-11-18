@@ -32,3 +32,8 @@ Gate window: 36.0-51.0 s since boot (first airborne + 4 s, 15 s long). Rate RMS 
 ## Files
 - `fly.sh`, `params_pitch.params`, `params_yaw.params`, `fly_stdout.log`, `done.txt`.
 - Per flight (`P400/`, `Y800/`): `s1/flight.ulg` (raw, untracked), `margins.txt`, `gate.md`, `gate_stdout.txt`, `rates.txt`, `axis_check.txt`, `s1.csv`, `stdout.log`, `post.log`.
+
+## S101: batch B100 closed and second-keyed (K101)
+B100 (batch/batch.sh, 10 cells) all flew (fly=0 post=0), torque_check MODEL_ONLY_VERIFIED on each cell. With P100,
+all 12 model-only cells (roll/pitch/yaw x 800/400 Hz x seeds 1,2) PASS: worst GM 10.12 dB, PM 70.8 deg, DM 39.7 ms.
+Second key K101: 12/12 agree, table in key_k101/summary.md.
