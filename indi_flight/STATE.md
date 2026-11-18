@@ -23,7 +23,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    dff2b7a805 keyed OK (T203, design/t203_integral_hoist_key.md); MINOR: want_indi true + stage bypass on stale
    inputs zeroes the stock integrator every cycle (no gap compensation in that fault): gate pre-update reset on
    fresh inputs.
-   NEXT S97: (a) fix the T203 MINOR; (b) F-2: INDI serves ALTCTL by adding
+   S97: (a) DONE de7c598e1e (compile-only); (b) decided D-ALTCTL-Z (e92a576e01), impl T204. Was: (b) F-2: INDI serves ALTCTL by adding
    flag_control_climb_rate_enabled to want_indi (T200 log sec F3: the stage only needs finite a_c); (c) 2-flight SITL pre-test: thrust-gap hover 0.85 in POSCTL and ALTCTL + MC_INDI_EN=1
    MC_AT_EN=1 start check; then the sim hooks (old S96 plan below), yaw cell, identification slice.
    (5) attitude-break margin with the new setpoint path (G2) when the G2 table is resumed.
@@ -54,6 +54,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 (S72-S78 rows done, details in JOURNAL.md; A-34/A-35 rows and S76 D-RATE-BLD line are recorded.)
 (S93-S95 rows T194-T199 and S96 T201: JOURNAL.md. S86-S92 rows B87, T185, T189, RC89, T190, T191, B91, T192/T193, B91c, B92 all DONE: JOURNAL.md S93 entry.)
 | T200 | S96 (launch 20261118-094323): T199 BLOCKING CONFIRMED by orchestrator (_coll_meas = vehicle_thrust_setpoint, commanded, passed as mean_u). Fix findings 1,2,4,5 + 3 (integrator reset only when INDI ran) in indi_accel_control + mc_indi_pos_control, tests first with break-checks | sonnet | design/t200_dgap_fixes_log.md | DONE bf44ece093 (diff read; 5 new tests fail-before/pass-after; module side F3-F5 compile-only; residue: stock integral in a_ref on the 1st active cycle after bypass; ALTCTL not served by INDI: F-2 open item, note in log) |
+| T204 | S97: D-ALTCTL-Z implement (library z_only input + module want_indi climb-rate), tests break-checked | sonnet | design/t204_altctl_z_log.md | in flight; if cut: read log, finish or redo |
 | T202 | S96: second key on bf44ece093 vs review findings 1-5 | sonnet | design/t202_dgap_fix_key.md | DONE: no BLOCKING, 2 MAJOR fixed 25e420b155 dff2b7a805 |
 
 ## Open problems
