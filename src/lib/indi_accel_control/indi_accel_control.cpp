@@ -212,6 +212,13 @@ Quatf IndiAccelControl::bodyzToAttitude(Vector3f body_z, const float yaw_sp)
 	return Quatf(R_sp);
 }
 
+void IndiAccelControl::setAppliedThrust(float c_applied)
+{
+	if (PX4_ISFINITE(c_applied)) {
+		_thrust_prev = math::constrain(c_applied / (_g_t * _k_cmd), _thr_min, _thr_max);
+	}
+}
+
 bool IndiAccelControl::update(const Input &in, Output &out)
 {
 	// 9. required inputs, checked before any state is touched

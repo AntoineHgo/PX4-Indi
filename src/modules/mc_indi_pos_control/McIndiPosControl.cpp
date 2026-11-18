@@ -188,7 +188,9 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 
 		// u = c + d replaces c in the whole stage: thrust vector, previous thrust command, blend model path and jerk
 		// difference are all computed from u, so every feedback path closes through u
-		const Vector3f a_ref = a_c_pre_inject + inject;
+		// MC_INDI_PINJ_PT = 1 moves d to the stage output instead (acceleration-loop break): a_ref = c
+		const bool inject_output = (_param_indi_pinj_pt.get() == 1) && (inject_axis >= 0);
+		const Vector3f a_ref = inject_output ? a_c_pre_inject : (a_c_pre_inject + inject);
 
 		IndiAccelControl::Input in;
 		in.accel_only = true;
@@ -207,6 +209,14 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 		_indi.setBlendHold(blend_hold);
 
 		if (_indi.update(in, out)) {
+			// output point: u_o = t_c + d is what the vehicle gets; the library models the actuator from it
+			Vector3f t_c_applied = out.t_c;
+
+			if (inject_output && (fabsf(inject(inject_axis)) > 0.f)) {
+				t_c_applied += inject;
+				_indi.setAppliedThrust(t_c_applied.norm());
+			}
+
 			indi_pos_status_s status{};
 			status.timestamp = hrt_absolute_time();
 			out.a_c.copyTo(status.a_c); // u
@@ -215,6 +225,7 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 			out.a_f.copyTo(status.a_f);
 			out.t_f.copyTo(status.t_f);
 			out.t_c.copyTo(status.t_c);
+			t_c_applied.copyTo(status.t_c_applied);
 			out.omega_ff.copyTo(status.omega_ff);
 			status.mean_u = _mean_u;
 			status.mean_u_valid = fresh_esc;
@@ -224,7 +235,7 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 			status.blend_frozen = out.blend_frozen;
 			_indi_pos_status_pub.publish(status);
 
-			const Vector3f thr_vec = out.t_c / G; // normalised thrust vector (NED), norm = collective
+			const Vector3f thr_vec = t_c_applied / G; // normalised thrust vector (NED), norm = collective
 			ControlMath::thrustToAttitude(thr_vec, yaw_sp, att_sp);
 			local_pos_sp.thrust[0] = thr_vec(0);
 			local_pos_sp.thrust[1] = thr_vec(1);

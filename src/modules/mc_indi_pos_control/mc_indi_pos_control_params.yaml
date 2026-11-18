@@ -97,6 +97,15 @@ parameters:
       min: 1
       max: 20
       default: 3
+    MC_INDI_PINJ_PT:
+      description:
+        short: Excitation injection point
+        long: "Bench and system identification only. 0 adds the excitation to the commanded acceleration at the input of the INDI stage (measures the velocity and position loop with the acceleration loop closed). 1 adds it to the commanded specific thrust at the output of the INDI stage (breaks the acceleration loop itself). Only used when MC_INDI_PINJ_AX is not 0."
+      type: enum
+      values:
+        0: Stage input
+        1: Stage output
+      default: 0
     MC_INDI_PINJ_DLY:
       description:
         short: Excitation start delay

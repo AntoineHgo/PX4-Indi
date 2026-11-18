@@ -245,6 +245,7 @@ private:
 		(ParamFloat<px4::params::MC_INDI_PINJ_FLO>) _param_indi_pinj_flo,
 		(ParamFloat<px4::params::MC_INDI_PINJ_FHI>) _param_indi_pinj_fhi,
 		(ParamInt<px4::params::MC_INDI_PINJ_NP>)    _param_indi_pinj_np,
+		(ParamInt<px4::params::MC_INDI_PINJ_PT>)    _param_indi_pinj_pt,
 		(ParamFloat<px4::params::MC_INDI_PINJ_DLY>) _param_indi_pinj_dly
 	);
 

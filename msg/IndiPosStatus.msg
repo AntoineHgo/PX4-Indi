@@ -7,6 +7,7 @@ float32[3] inject		# bench loop-break excitation d, MC_INDI_PINJ_* (m/s^2), 0 wh
 float32[3] a_f			# measured filtered acceleration (m/s^2)
 float32[3] t_f			# measured filtered specific thrust vector (m/s^2)
 float32[3] t_c			# commanded specific thrust vector after saturation (m/s^2)
+float32[3] t_c_applied		# specific thrust vector sent to the attitude setpoint: t_c, plus d at the stage output when MC_INDI_PINJ_PT is 1 (m/s^2)
 float32[3] omega_ff		# body rate feedforward from the jerk reference (rad/s)
 float32[4] q_d			# attitude setpoint from the commanded thrust vector and yaw, NAN while holding (logging only)
 

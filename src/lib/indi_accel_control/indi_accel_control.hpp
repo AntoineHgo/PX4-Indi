@@ -157,6 +157,14 @@ public:
 	/// Freeze b (landed, bypass, edges). Takes effect on the next update(); b is held, never reset.
 	void setBlendHold(bool hold) { _blend_hold = hold; }
 
+	/**
+	 * Bench loop break at the stage output: the vehicle receives a thrust-acceleration magnitude c_applied (m/s^2)
+	 * other than the one update() returned. Sets the previous thrust command to the clamped normalised value of it
+	 * (same conversion and limits as update()), so the blend model path follows what the actuator was given.
+	 * Non finite values are ignored.
+	 */
+	void setAppliedThrust(float c_applied);
+
 	void setFeedforward(bool jerk_ff) { _jerk_ff = jerk_ff; }
 
 	/**

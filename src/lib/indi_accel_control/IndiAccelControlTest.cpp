@@ -371,6 +371,28 @@ TEST_F(IndiAccelControlTest, InvalidMeanUUsesPreviousThrustCommand)
 	EXPECT_NEAR(-out.t_f(2), kGt * thrust_prev * 1.2f, 1e-4f);
 }
 
+TEST_F(IndiAccelControlTest, AppliedThrustSetsModelPath)
+{
+	// stage-output loop break: with invalid telemetry the model path must follow the applied collective, not t_c
+	_ctrl.setThrustModel(kGt, 1.2f);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt);
+	IndiAccelControl::Input in = hoverInput();
+	in.a_ref = Vector3f(0.f, 0.f, -2.f);
+	IndiAccelControl::Output out;
+	ASSERT_TRUE(_ctrl.update(in, out));
+	const float c_applied = 0.9f * kG;
+	_ctrl.setAppliedThrust(c_applied);
+	in.mean_u = kNaN;
+	in.mean_u_valid = false;
+	ASSERT_TRUE(_ctrl.update(in, out));
+	EXPECT_NEAR(-out.t_f(2), c_applied, 1e-3f);
+	// non finite is ignored
+	const float before = out.thrust;
+	_ctrl.setAppliedThrust(kNaN);
+	ASSERT_TRUE(_ctrl.update(in, out));
+	EXPECT_NEAR(-out.t_f(2), kGt * before * 1.2f, 1e-3f);
+}
+
 TEST_F(IndiAccelControlTest, ReferenceHandlingAndVelocityLimits)
 {
 	IndiAccelControl::Input in = hoverInput();
