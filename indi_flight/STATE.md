@@ -17,7 +17,10 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    model, G1.5 check per profile. (3) Check the 'NOT FOUND' hooks of the draft (loop delay, GNSS latency, vibration)
    against stage-1 sim work before building. (4) G2-STEP 400 Hz reported run DONE S64 (9/9 within limits, A-30 seed spread parked).
    inputs zeroes the stock integrator every cycle (no gap compensation in that fault): gate pre-update reset on
-   NEXT S99: (0) check pretest_gate rate-RMS definition vs key (cheap); then (b) sim hooks below; log a z-only
+   S98 (0) EXPLAINED: pretest_gate window [airborne+15, +45 s) = 47-77 s contains the 0.85 fault at ~71 s, the step
+   transient inflates rate RMS (S70 hover_gap had no step in window: 0.0037); key +10..20 s after fault: 0.001-0.006.
+   Use pretest_gate only on stationary scenarios, or end its window at the fault.
+   NEXT S99: (b) sim hooks below; log a z-only
    active flag in indi_pos_status when next touching the module (P98 could not see it).
    S98: RC98 DONE (design/route_check_98.md): STOP coverage after T206; D-G7-HARNESS decided, impl deferred to
    stage 7. Order now: (a) G5 pre-test s5_gap085 POSCTL + stick ALTCTL gap + EN/AT_EN start check; (b) S99 sim

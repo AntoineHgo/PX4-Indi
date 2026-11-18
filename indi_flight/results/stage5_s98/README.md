@@ -26,3 +26,5 @@ Prediction without gap compensation: 0.368 m. S70 reference for s5_gap085 (same 
 - Single-key: seed 1 only, no repeat; the 0.01-0.04 m differences between A/B/C are not significant.
 - C: MC_INDI_EN 1 echoed in px4.log; MC_AT_EN 1 not echoed (no "curr -> new" line) although the param exists (mc_autotune_attitude_control); "autotune disabled with INDI" is printed, so the autotune module declined by design. No start error.
 - Untracked raw logs: A_gap085, B_altctl, C_altctl_at, *.stdout.txt (empty on success). Nothing committed; scenarios.py edited (s5_gap085_altctl).
+
+S98 note: pretest_gate FAIL on A/B/C is a window artefact: its window [47, 77) s includes the motor fault at ~71 s; the step transient raises rate RMS. Key K98 over fault+10..20 s: body-rate RMS 0.001-0.006 rad/s.
