@@ -65,6 +65,48 @@ def test_stick_params_pin_curve_constants():
     assert rs.STICK_PARAMS["MPC_THR_MAX"] == rs.stick_profile.THR_MAX
 
 
+def test_hover_thrust_fallback_not_clamped():
+    """K115 m2: PX4 clamps only the valid HTE value; MPC_THR_HOVER is used as is (att_control_main.cpp:246)."""
+    assert rs.hover_thrust_used(0.31, False, 0.03) == 0.03
+    assert rs.hover_thrust_used(None, True, 0.95) == 0.95
+    assert rs.hover_thrust_used(0.03, True, 0.137) == 0.05
+
+
+def test_hover_meta_fields_and_source():
+    """K115 M1/M2: run.json hover fields for every run, with the source of the value used."""
+    m = rs.hover_meta(0.14, True, 0.137)
+    assert m == {"hover_thrust_estimate": 0.14, "hover_thrust_valid": True, "mpc_thr_hover": 0.137,
+                 "hover_thr_used": 0.14, "hover_thr_source": "hte"}
+    m = rs.hover_meta(0.31, False, 0.137)
+    assert m["hover_thrust_valid"] is False and m["mpc_thr_hover"] == 0.137
+    assert m["hover_thr_used"] == 0.137 and m["hover_thr_source"] == "mpc_thr_hover"
+    assert rs.hover_meta(float("nan"), True, 0.2)["hover_thr_source"] == "mpc_thr_hover"
+
+
+def test_main_wires_thr0_from_hover_meta():
+    """K115 wiring: main() derives thr0 from hover_meta (HTE valid -> HTE, else param), no ad-hoc fallback."""
+    import inspect
+    src = inspect.getsource(rs.main)
+    assert 'meta.update(hover_meta(ht, ht_valid, thr_hover_param))' in src
+    assert 'thr0 = meta["hover_thr_used"]' in src
+    assert 'ht or' not in src
+
+
+def test_stick_profile_guard_matches_px4_range():
+    """K115 m1/m2: hover 0.05-0.08 (valid for PX4) inverts; 0 and THR_MAX are rejected."""
+    sp = rs.stick_profile
+    for h in (0.05, 0.06, 0.08, 0.5, 0.9):
+        assert sp.neutral_sample("stabilized", hover_thr=h)["z"] == 500
+        assert sp.thrust_to_stick(0.3, "stabilized", h) > -1.0 - 1e-9
+    assert sp.thrust_to_stick(0.03, "stabilized", 0.06) == 0.0   # below-hover thrust unreachable when hover <= MANTHR_MIN
+    for h in (0.0, 1.0, -0.1):
+        try:
+            sp.thrust_to_stick(0.3, "stabilized", h)
+        except ValueError:
+            continue
+        raise AssertionError(f"hover {h} accepted")
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

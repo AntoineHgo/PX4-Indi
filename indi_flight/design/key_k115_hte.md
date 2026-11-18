@@ -32,3 +32,13 @@ mc_att_control_main.cpp:237-247: valid -> clamp(hte, .05, .9); else -> MPC_THR_H
 
 ## UNVERIFIED
 px4-param show -q float output format and px4-listener "valid: True" text (regex/parse only checked against the test fixture); no sim run.
+
+## Fix (S116, H116)
+Tests: tests/test_run_scenario_hooks.py 5 -> 9 (test_stick_profile.py unchanged, 3 -> 3 pass; hooks+stick all pass). Each mutation applied once, test failed, file restored (cmp vs backup).
+- M1 run.json hover fields: run_scenario.py `hover_meta()` (after hover_thrust_used, ~l.622), used by main() `meta.update(hover_meta(...))`. Test `test_hover_meta_fields_and_source`. Mutations (drop hover_thr_used, hover_thr_source, mpc_thr_hover, hover_thrust_valid): all caught.
+- M2 every run records meta["hover_thr_used"] and meta["hover_thr_source"] ("hte"/"mpc_thr_hover"); meta["stick"]["hover_thr_used"] kept. Same test.
+- m1 stick_profile guard: test `test_stick_profile_guard_matches_px4_range`; guard removed -> caught.
+- m2 hover_thrust_used (run_scenario.py ~l.615): clamp only the valid HTE value, param fallback unclamped as PX4. Test `test_hover_thrust_fallback_not_clamped`; clamping the fallback again -> caught.
+- Guard (stick_profile.py:73): now `0 < hover < THR_MAX` since PX4 accepts hover 0.05-0.08 (the curve is still monotone there); below-hover thrust with hover <= MANTHR_MIN saturates to stick 0 (unreachable, also avoids /0 at 0.08). Mutation removing that branch -> caught (assertion added to the guard test).
+- main() wiring (thr0 = ht or 0.5): `test_main_wires_thr0_from_hover_meta` (source-inspection of main, not a behavioural test); mutation caught.
+- m3 (slew lag) not addressed; still UNVERIFIED-in-sim. No sim run for this fix.

@@ -70,10 +70,13 @@ def thrust_to_stick(thr, mode, hover_thr):
     if mode == "acro":
         return 2.0 * thr - 1.0
     if mode == "stabilized":
-        if not MANTHR_MIN < hover_thr < THR_MAX:
-            raise ValueError(f"hover thrust {hover_thr} outside ({MANTHR_MIN}, {THR_MAX}): curve not invertible")
+        # PX4 accepts hover in [0.05, 0.9] (also below MANTHR_MIN); only 0 / THR_MAX make the curve non-invertible
+        if not 0.0 < hover_thr < THR_MAX:
+            raise ValueError(f"hover thrust {hover_thr} outside (0, {THR_MAX}): curve not invertible")
         if thr >= hover_thr:
             return (thr - hover_thr) / (THR_MAX - hover_thr)
+        if hover_thr <= MANTHR_MIN:  # curve never goes below hover: lower thrust unreachable, saturate at centre
+            return 0.0
         return (thr - hover_thr) / (hover_thr - MANTHR_MIN)
     raise ValueError(mode)
 

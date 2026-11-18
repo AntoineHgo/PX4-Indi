@@ -614,9 +614,18 @@ def hover_thrust(sim):
 
 def hover_thrust_used(ht, valid, thr_hover_param):
     """Hover thrust mc_att_control centres the stabilized throttle curve on (mc_att_control_main.cpp:237-247):
-    the HTE value if valid and finite, else MPC_THR_HOVER; clamped to [0.05, 0.9] as PX4 does (K114 MAJOR)."""
-    h = ht if (valid and ht is not None and math.isfinite(ht)) else thr_hover_param
-    return min(0.9, max(0.05, h))
+    a valid finite HTE value clamped to [0.05, 0.9]; otherwise MPC_THR_HOVER as is (PX4 does not clamp the param)."""
+    if valid and ht is not None and math.isfinite(ht):
+        return min(0.9, max(0.05, ht))
+    return thr_hover_param
+
+
+def hover_meta(ht, valid, thr_hover_param):
+    """run.json hover fields for every run (K115 M1/M2): raw HTE, valid flag, param, value used and its source."""
+    used = hover_thrust_used(ht, valid, thr_hover_param)
+    src = "hte" if (valid and ht is not None and math.isfinite(ht)) else "mpc_thr_hover"
+    return {"hover_thrust_estimate": ht, "hover_thrust_valid": valid, "mpc_thr_hover": thr_hover_param,
+            "hover_thr_used": used, "hover_thr_source": src}
 
 
 def run_metrics(out_dir):
@@ -880,10 +889,8 @@ def main():
         meta["hold_pos_ned"], meta["hold_yaw_rad"] = hold_pos, hold_yaw
         ht, ht_valid = hover_thrust(sim)
         thr_hover_param = sim.get_param_float("MPC_THR_HOVER")
-        meta["hover_thrust_estimate"] = ht
-        meta["hover_thrust_valid"] = ht_valid
-        meta["mpc_thr_hover"] = thr_hover_param
-        thr0 = hover_thrust_used(ht, ht_valid, thr_hover_param)
+        meta.update(hover_meta(ht, ht_valid, thr_hover_param))
+        thr0 = meta["hover_thr_used"]
         def thr_cmd(tilt):
             """Collective thrust: hover estimate / tilt + PD on altitude error (identical for every controller)."""
             e = sim.pos[2] - hold_pos[2]  # NED z: positive = too low
