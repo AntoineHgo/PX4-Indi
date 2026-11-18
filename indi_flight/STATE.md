@@ -7,7 +7,7 @@
   (`design/flatness_r2.md`: flatness = optional increment after base A).
 ## Next actions (in order)
 History: JOURNAL.md (S100-S115 entries hold the recent moves). Agent ledger: LEDGER.md. Lessons proposed:
-LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S118 (RC113 filed).
+LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S122 (RC118 filed).
 Rule (RC64/RC74): inner loop time-boxed, 1 session per law change; no new anomaly chase unless a gate test fails.
 Plan RC108 (design/route_check_108.md) + RC113 (design/route_check_113.md, accepted):
    G3/G5 batches before the stage-6 freeze are PROBES of the current stack (find failures early), not gate evidence.
@@ -20,12 +20,13 @@ Plan RC108 (design/route_check_108.md) + RC113 (design/route_check_113.md, accep
      MPC_THR_HOVER (8f57b47f7e). A-40 closed. Stabilized stick altitude 6.5 m mean vs 5 m hold (open loop, ok).
    S116 DONE: K115 key + fixes, RC113 ladder + controls + nominal baseline (results/g3_ladder_s116, JOURNAL S116).
    S117 DONE: D-G3-STICK-FACTORS (981e94f79e); altctl/posctl excluded from batch (not in MODE_MIX); probe P117.
-   NEXT S118: (1) score P117 (results/g3_probe_s117): outcome counts by mode/corner, explain every non-ok
-     position/stabilized run (acro = scenario-invalid, README); (2) D-G3-STICK-PILOT (DECISIONS, proposed):
-     runner pilot model (altitude PI on throttle, acro levelling) + self-test + key, re-fly acro idx 0 INDI+PID.
-     Then frozen-telemetry hook (two keys), g3_checks.py + key, gate_g3.sh; G5 mode batch; G4 noise profiles.
-   Stage 5 note: o1_lemniscate --sched horizontal RMS 2.80 m for INDI and PID alike (A-41 closed); which outer
-     loop --controller indi uses on o1 is UNVERIFIED; check before setting the G3 o1 tracking limit.
+   RC118 (design/route_check_118.md, ACCEPTED): stick pilot time-boxed to S118-S119 (key + re-fly idx 0/21/49
+     INDI+PID); if acro still fails for both, acro = G3-unprobed, G5 carries it. Then STAGE 4 (identification
+     chain from x2/x0.5 starts, defaults file, minimal G4 profile) S119-S121, then G5 build (base A, every mode)
+     S122-S125. DEFERRED until defaults exist: g3_checks.py, gate_g3.sh, frozen-telemetry hook, G4 profiles.
+     Next route check S122.
+   S118 check: G3/o1 probes ran MC_INDI_POS_EN=0 (ulog param, run_001): INDI rate loop under STOCK mc_pos_control.
+     G3 evidence for the INDI outer loop needs MC_INDI_POS_EN=1 in the base params (stage 5).
    STOP: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair, PID M1 hook, hooks without a consumer,
      stand-alone anomaly chases (fold A-4, A-6 into G3/G5 side-cells), --sched-anchor and set_param-latency fixes.
    Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
@@ -38,6 +39,14 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+S118: pilot 880a83c63b (I118 + K118 key 0 BLOCKING/2 MAJOR + F118 fixes, 12 tests). v0 flight (pilot only in
+  stick segment) tripped idx 0 at 59.56 s in the neutral segment -> F118 (pilot from mode switch, clamps x thr0).
+  Open K118 items: MAJOR-2 (profile thrust ff vs vz-integral reference: pilot may partly cancel the input,
+  measure on one log); MINORs (acro R/P_MAX hard-coded, msg age unchecked, sat anti-windup untested).
+  IN FLIGHT T118 v1: idx 0/21/49 INDI then PID -> results/g3_pilot_s118 (fly.sh, progress.txt, run_NNN,
+  pid_runNNN). NEXT S119: read outcomes; check on run_000 sticks.csv that pilot rows start at the switch, altitude
+  held, acro tilt levelled; PID same; README; commit metrics. Pass -> close D-G3-STICK-PILOT, go to stage 4.
+  Fail on both controllers -> acro G3-unprobed (RC118). Uncommitted ok: v0 run at results/g3_pilot_s118_v0_run000.
 S117 sampler rule DONE 981e94f79e (D-G3-STICK-FACTORS). g3_run.py got --stop.
 P117 G3 probe seed 117 n=60 (45 pos/10 stab/5 acro): results/g3_probe_s117/ (fly.sh, progress.txt, run_NNN/g3_done.json).
   Pretest idx 0,1,16: 1 pos + 16 stab ok; 0 ACRO watchdog trip (sank 3.5 m at 59.8 s; collective 0.1 = HTE

@@ -158,3 +158,7 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S116 | H116 | sonnet | K115 fixes + tests | design/key_k115_hte.md | done, 8 calls |
 | S116 | A116 | haiku | altctl/posctl stick flyability 3 flights | results/g3_stick_modes_s116/README.md | done, 9 calls (README by orchestrator) |
 | S117 | G117 | sonnet | sampler stick-factor rule + 4 tests + DECISIONS | bench/g3_sample.py | done, 19 calls, mutations checked |
+| S118 | RC118 | sonnet | route check | design/route_check_118.md | done, 6 calls |
+| S118 | I118 | sonnet | stick pilot impl + tests | design/i118_stick_pilot.md | done, 10 calls |
+| S118 | K118 | sonnet | key of pilot | design/key_k118_pilot.md | done, 8 calls, 0 BLOCKING 2 MAJOR |
+| S118 | F118 | sonnet | pilot fixes + 3 tests | design/i118_stick_pilot.md F118 | done, 16 calls |

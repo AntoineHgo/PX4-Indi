@@ -837,3 +837,5 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S116: A116 ca6825db51: stick_zsine_o6 flies in altctl/posctl (+sag 0.7); stick-mode metric window/reference missing for these modes.
 - S117: D-G3-STICK-FACTORS (981e94f79e): stick runs draw attitude/rate factors only; C2/C3/C4/C6 forced position. g3_run.py --stop; G3 probe seed 117 n=60 launched (results/g3_probe_s117).
 - S117: P117 G3 probe seed 117 n=60: position 45/45, stabilized 8/10, acro 3/5 without abort; all stick failures = open-loop collective (PID controls), D-G3-STICK-PILOT proposed (results/g3_probe_s117).
+- S118 (20261118-203643, cap $3): RC118 filed and accepted (stick pilot time-boxed, then stage 4 identification/defaults, then G5 build; G3 scoring deferred until defaults exist). o1 probes ran MC_INDI_POS_EN=0 (stock mc_pos_control outer loop).
+- S118: stick pilot 880a83c63b (I118, K118 key 0 BLOCKING/2 MAJOR, F118 fixes: pilot from mode switch, thr0-scaled clamps); v0 pre-test idx 0 tripped in neutral segment (pilot inactive there); v1 pre-test T118 launched (results/g3_pilot_s118).
