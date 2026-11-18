@@ -1099,3 +1099,160 @@ TEST_F(IndiAccelZOnlyTest, ClosedLoopCollectiveRemovesVerticalError)
 	EXPECT_NEAR(az, a_ref_z, 0.05f);
 	EXPECT_NEAR(Vector2f(out.t_c(0), out.t_c(1)).norm(), 0.f, 1e-6f);
 }
+
+// T206: coverage added after the T205 second-key review (each test was break-checked against a library mutation)
+
+TEST_F(IndiAccelZOnlyTest, TiltedClosedLoopStateConsistentWithNorm)
+{
+	// stock direction and body z tilted 30 deg; plant vertical a = -g_t u cos(tilt) + g, thrust scale 0.85
+	const float tilt_rad = M_PI_F / 6.f;
+	const Vector3f n(sinf(tilt_rad), 0.f, -cosf(tilt_rad));
+	const Quatf q(Eulerf(0.f, -tilt_rad, 0.f));
+	const Vector3f zb = Dcmf(q).col(2);
+	ASSERT_NEAR(zb.dot(-n), 1.f, 1e-5f);
+
+	const float scale = 0.85f;
+	_ctrl.setBlendTimeConstant(0.2f);
+	float u_cmd = kG / (kGt * cosf(tilt_rad));
+	_ctrl.reset(Vector3f(0.f, 0.f, -kGt * scale * u_cmd), u_cmd, scale * u_cmd);
+	const float a_ref_z = -1.f;
+	IndiAccelControl::Output out;
+	float az = 0.f;
+
+	for (int i = 0; i < 800; i++) {
+		IndiAccelControl::Input in = hoverInput();
+		in.z_only = true;
+		in.accel_only = true;
+		in.thrust_dir = n * 7.f; // arbitrary norm
+		in.q = q;
+		in.a_ref = Vector3f(0.f, 0.f, a_ref_z);
+		in.v_ref = Vector3f(NAN, NAN, NAN);
+		in.p_ref = Vector3f(NAN, NAN, NAN);
+		const float u_meas = scale * u_cmd;
+		in.f_b = Vector3f(0.f, 0.f, -kGt * u_meas);
+		in.mean_u = u_meas;
+		ASSERT_TRUE(_ctrl.update(in, out));
+		// stored state / output thrust is the norm of t_c, not its vertical component
+		EXPECT_NEAR(out.thrust, out.t_c.norm() / kGt, 1e-5f);
+		EXPECT_NEAR(out.t_c.norm() * cosf(tilt_rad), -out.t_c(2), 1e-4f);
+		u_cmd = out.thrust;
+		az = out.a_f(2);
+	}
+
+	EXPECT_NEAR(az, a_ref_z, 0.05f);
+	// steady state: the plant delivers scale * thrust along body z, vertical demand g - a_ref_z
+	EXPECT_NEAR(out.thrust, (kG - a_ref_z) / (kGt * cosf(tilt_rad) * scale), 0.01f);
+}
+
+TEST_F(IndiAccelZOnlyTest, InvalidThrustDirLeavesNoState)
+{
+	// guard before any state update: invalid call (different f_b, mean_u, a_ref) then valid == fresh controller + valid
+	IndiAccelControl fresh;
+	fresh.setGains(Vector3f(1.f, 1.f, 1.f), Vector3f(2.f, 2.f, 4.f));
+	fresh.setLimits(10.f, 3.f, 1.5f, 0.7f, 0.1f, 1.f);
+	fresh.setThrustModel(kGt, 1.f);
+	fresh.setFilter(50.f, 5.f); // real low pass: any state update would show
+	fresh.setMeasurementDelay(0);
+	fresh.setFeedforward(true);
+	fresh.setBlendTimeConstant(0.2f);
+	fresh.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
+	_ctrl.setFilter(50.f, 5.f);
+	_ctrl.setBlendTimeConstant(0.2f);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
+
+	IndiAccelControl::Input bad = zInput();
+	bad.thrust_dir = Vector3f(1.f, 0.f, -0.05f);
+	bad.f_b = Vector3f(3.f, -2.f, -25.f);
+	bad.mean_u = 0.9f;
+	bad.a_ref = Vector3f(4.f, 4.f, -7.f);
+	IndiAccelControl::Output out_bad;
+
+	for (int i = 0; i < 3; i++) {
+		EXPECT_FALSE(_ctrl.update(bad, out_bad));
+	}
+
+	for (int i = 0; i < 3; i++) {
+		IndiAccelControl::Output a, b;
+		ASSERT_TRUE(_ctrl.update(zInput(), a));
+		ASSERT_TRUE(fresh.update(zInput(), b));
+		EXPECT_EQ(a.thrust, b.thrust);
+		EXPECT_EQ(a.blend, b.blend);
+		EXPECT_EQ((a.t_c - b.t_c).norm(), 0.f);
+		EXPECT_EQ((a.a_f - b.a_f).norm(), 0.f);
+		EXPECT_EQ((a.j_used - b.j_used).norm(), 0.f);
+	}
+}
+
+TEST_F(IndiAccelZOnlyTest, ThrustDirGuardThresholds)
+{
+	// up-ratio -n_z/|n| must exceed 0.1: 0.08 rejected, 0.12 accepted
+	auto dir = [](float r) { return Vector3f(sqrtf(1.f - r * r), 0.f, -r); };
+	IndiAccelControl::Output out;
+	IndiAccelControl::Input in = zInput();
+
+	in.thrust_dir = dir(0.08f) * 5.f;
+	EXPECT_FALSE(_ctrl.update(in, out));
+	in.thrust_dir = dir(0.12f) * 5.f;
+	EXPECT_TRUE(_ctrl.update(in, out));
+
+	// scale invariance of the ratio test, and a tiny but valid direction is rejected by the norm test
+	in.thrust_dir = dir(0.08f) * 1e-3f;
+	EXPECT_FALSE(_ctrl.update(in, out));
+	in.thrust_dir = Vector3f(0.f, 0.f, -1e-8f);
+	EXPECT_FALSE(_ctrl.update(in, out));
+}
+
+TEST_F(IndiAccelZOnlyTest, VerticalFloorAndMinCollective)
+{
+	IndiAccelControl::Output out;
+	const float tilt_rad = M_PI_F / 6.f;
+	const Vector3f n(sinf(tilt_rad), 0.f, -cosf(tilt_rad));
+	IndiAccelControl::Input in = zInput();
+	in.thrust_dir = n;
+	in.a_ref = Vector3f(0.f, 0.f, 30.f); // commands downward acceleration: t_c,z would be > 0
+
+	// c_min (2.0) > kMinUpThrust: floor value is c_min on the vertical axis, direction kept
+	ASSERT_TRUE(_ctrl.update(in, out));
+	const float c_min = kGt * 0.1f;
+	EXPECT_NEAR(out.t_c(2), -c_min, 1e-4f);
+	EXPECT_NEAR(out.thrust, c_min / cosf(tilt_rad) / kGt, 1e-5f);
+	EXPECT_NEAR(out.t_c.normalized().dot(n), 1.f, 1e-5f);
+
+	// thr_min = 0: c_min = 0, the up-thrust floor 0.1 applies on the vertical component (not a sign flip)
+	_ctrl.setLimits(10.f, 3.f, 1.5f, 0.7f, 0.f, 1.f);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
+	ASSERT_TRUE(_ctrl.update(in, out));
+	EXPECT_NEAR(out.t_c(2), -0.1f, 1e-5f);
+	EXPECT_NEAR(out.t_c.norm(), 0.1f / cosf(tilt_rad), 1e-5f);
+	EXPECT_NEAR(out.t_c.normalized().dot(n), 1.f, 1e-5f);
+
+	// level direction, default limits: the same floor via the c_min branch gives thrust == thr_min
+	_ctrl.setLimits(10.f, 3.f, 1.5f, 0.7f, 0.1f, 1.f);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
+	in.thrust_dir = Vector3f(0.f, 0.f, -1.f);
+	ASSERT_TRUE(_ctrl.update(in, out));
+	EXPECT_NEAR(out.thrust, 0.1f, 1e-6f);
+	EXPECT_NEAR(out.t_c(2), -c_min, 1e-4f);
+}
+
+TEST_F(IndiAccelZOnlyTest, VerticalDemandNotLimitedByThreeAxisTiltLimit)
+{
+	// a_ref has a large horizontal part: the 3-axis path is tilt limited (and shrinks its horizontal part). The
+	// z-only vertical output must equal the unlimited demand t_f,z + a_c,z - a_f,z = -(g + 1)
+	const float tilt_rad = 0.8726646f;
+	IndiAccelControl::Input in = zInput();
+	in.thrust_dir = Vector3f(sinf(tilt_rad), 0.f, -cosf(tilt_rad));
+	in.a_ref = Vector3f(30.f, 0.f, -1.f);
+
+	IndiAccelControl::Output out_z;
+	ASSERT_TRUE(_ctrl.update(in, out_z));
+	EXPECT_NEAR(out_z.t_c(2), -(kG + 1.f), 1e-4f);
+	EXPECT_NEAR(tilt(out_z.t_c), tilt_rad, 1e-4f); // stock direction, not the 3-axis one
+
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
+	in.z_only = false;
+	IndiAccelControl::Output out_3;
+	ASSERT_TRUE(_ctrl.update(in, out_3));
+	EXPECT_NEAR(tilt(out_3.t_c), 0.7f, 1e-4f); // the 3-axis path is tilt limited here
+	EXPECT_NEAR(out_z.t_c(2), out_3.t_c(2), 1e-4f);
+}
