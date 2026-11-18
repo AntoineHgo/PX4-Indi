@@ -99,3 +99,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | RC93 | S93 | sonnet | route check 93 | 6 calls, ~$0.15 | DONE |
 | T196 | S94 | sonnet | G2 report section draft | 18 calls, ~$0.45 | DONE, 2 numbers spot-checked |
 | T197 | S94 | sonnet | G3-G8 final text proposal + hook table | 15 calls, ~$0.45 | DONE, 8 decisions applied |
+| T198 | S94 | sonnet | delay-line hook design note | 10 calls, ~$0.25 | DONE, step size and GNSS path unverified |
