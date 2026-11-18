@@ -60,7 +60,10 @@ S114: stick fix DONE 807fd6a08a (stabilized = mc_att_control throttle_curve MPC_
   results/g3_stick_s114/README.md). If cut: re-launch F114. K114 DONE (design/key_k114_stick.md, 0 BLOCKING):
   S115 fix MAJOR = run_scenario.py:860 thr0 ignores hover_thrust_estimate.valid (PX4 then uses MPC_THR_HOVER; runner
   falls back 0.5): use `valid`, fallback MPC_THR_HOVER read from params (stabilized centre stick is immune, only the
-  increment slope and acro are hit); pin MPC_THR_CURVE 0 / MPC_MANTHR_MIN / MPC_THR_MAX in STICK_PARAMS. Then RC113 ladder (8 single-factor runs, sec 5 order),
+  increment slope and acro are hit); pin MPC_THR_CURVE 0 / MPC_MANTHR_MIN / MPC_THR_MAX in STICK_PARAMS.
+  F114 DONE: stabilized stick flies through the 52 s switch, INDI and PID (hover thrust 0.137 held). NEW A-40: both
+  land at 70.3 s, before window end 79.4 s: close A-40 first in S115 (haiku: vehicle_command/nav_state from ulog).
+  Then RC113 ladder (8 single-factor runs, sec 5 order),
   altctl/posctl stick flyability check. Next route check S118.
 
 ## Open problems

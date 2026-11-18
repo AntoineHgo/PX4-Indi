@@ -829,3 +829,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S113: M113 3 flights: stick_zsine_o6 stabilized falls at the 52 s mode switch for INDI m1.3, INDI m1.0 and PID m1.0 alike (thrust 0.65-0.69 x hover): stick_profile.py hover stick 2*hover_thr-1 ignores the PX4 throttle curve. Set-up fault, not a controller finding; FAULT 3 of P112 explained.
 - S114: stick_profile stabilized hover stick fixed from mc_att_control throttle_curve (807fd6a08a; S113 log thrust 0.095 = 0.08 + 0.274*(0.137-0.08) confirms the old map as the cause); K113 MINOR 5, 6 closed 3d8e4b5f29. K114 key + F114 re-fly launched.
 - S114: K114 key of 807fd6a08a: 0 BLOCKING, MAJOR thr0 ignores HTE valid flag (fix S115), MINORs (slew, unpinned curve params).
+- S114: F114 stabilized stick re-fly: INDI and PID fly through the switch (fix confirmed); A-40 opened (landing 70.3 s inside window).
