@@ -57,7 +57,10 @@ S113: RC113 filed 140164bc93 (accepted: single-factor ladder S114-S115 before 60
 S114: stick fix DONE 807fd6a08a (stabilized = mc_att_control throttle_curve MPC_THR_CURVE 0, centre = HTE; acro
   unchanged; tests break-checked). K113 MINOR 5, 6 DONE 3d8e4b5f29. In flight S114: K114 (sonnet key of 807fd6a08a,
   out design/key_k114_stick.md); F114 (haiku re-fly stick_zsine_o6 stabilized nominal INDI + PID, out
-  results/g3_stick_s114/README.md). If cut: re-launch both. Then RC113 ladder (8 single-factor runs, sec 5 order),
+  results/g3_stick_s114/README.md). If cut: re-launch F114. K114 DONE (design/key_k114_stick.md, 0 BLOCKING):
+  S115 fix MAJOR = run_scenario.py:860 thr0 ignores hover_thrust_estimate.valid (PX4 then uses MPC_THR_HOVER; runner
+  falls back 0.5): use `valid`, fallback MPC_THR_HOVER read from params (stabilized centre stick is immune, only the
+  increment slope and acro are hit); pin MPC_THR_CURVE 0 / MPC_MANTHR_MIN / MPC_THR_MAX in STICK_PARAMS. Then RC113 ladder (8 single-factor runs, sec 5 order),
   altctl/posctl stick flyability check. Next route check S118.
 
 ## Open problems
