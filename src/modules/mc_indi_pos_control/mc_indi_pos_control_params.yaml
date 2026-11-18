@@ -42,7 +42,7 @@ parameters:
     MC_INDI_PINJ_AX:
       description:
         short: INDI outer-loop bench excitation axis
-        long: "Bench and system identification only. Adds a multisine to the commanded acceleration of the selected axis (north, east or down) and also feeds it back to the INDI stage. It runs while armed and not landed, for MC_INDI_PINJ_NP periods after MC_INDI_PINJ_DLY, and starts again at each arm. Set to 0 to disable."
+        long: "Bench and system identification only. Adds a multisine to the commanded acceleration of the selected axis and also feeds it back to the INDI stage. It runs while armed and not landed, for MC_INDI_PINJ_NP periods after MC_INDI_PINJ_DLY, and starts again at each arm."
       type: enum
       values:
         0: Off
@@ -100,7 +100,7 @@ parameters:
     MC_INDI_PINJ_PT:
       description:
         short: Excitation injection point
-        long: "Bench and system identification only. 0 adds the excitation to the commanded acceleration at the input of the INDI stage (measures the velocity and position loop with the acceleration loop closed). 1 adds it to the commanded specific thrust at the output of the INDI stage (breaks the acceleration loop itself). Only used when MC_INDI_PINJ_AX is not 0."
+        long: "Bench and system identification only. Stage input measures the velocity and position loop with the INDI acceleration loop closed. Stage output adds the excitation to the thrust vector sent to the attitude setpoint, which breaks the loop at the plant input. Only used when MC_INDI_PINJ_AX is not 0."
       type: enum
       values:
         0: Stage input
