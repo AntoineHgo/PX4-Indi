@@ -95,11 +95,15 @@ def test_ranges():
         assert 80 <= gn["latency_ms"] <= 250 and gn["ekf_delay_ms"] >= 0
         assert abs(gn["ekf_delay_ms"] - gn["latency_ms"]) <= 100
         w = f["wind"]
-        assert _in(w["steady_ms"], 0, 5) and _in(w["dir_deg"], 0, 360)
-        pk, amp, st = w["gust_peak_total_ms"], w["gust_amp_ms"], w["steady_ms"]
-        assert _in(pk, 3, 9) and pk <= 9 + EPS                      # m7: checked on every wind run
-        assert amp >= 1.0 - EPS and abs(st + amp - pk) < 1e-5       # M2: gust amplitude >= 1 m/s above steady
-        assert st <= min(5.0, pk - 1.0) + EPS
+        if "not_drawn" in w:        # D-G3-STICK-FACTORS: stick-mode run, wind is off
+            assert r["mode"] != "position" and w["steady_ms"] == 0.0 and w["gust_peak_total_ms"] == 0.0
+            w = None
+        if w is not None:
+          assert _in(w["steady_ms"], 0, 5) and _in(w["dir_deg"], 0, 360)
+          pk, amp, st = w["gust_peak_total_ms"], w["gust_amp_ms"], w["steady_ms"]
+          assert _in(pk, 3, 9) and pk <= 9 + EPS                      # m7: checked on every wind run
+          assert amp >= 1.0 - EPS and abs(st + amp - pk) < 1e-5       # M2: gust amplitude >= 1 m/s above steady
+          assert st <= min(5.0, pk - 1.0) + EPS
         gr, gc, isc = f["g1_ratio"], f["g1_ctrl_mult"], f["g1_ctrl_mult"]["i_scale"]
         for ax, ik in (("roll", "ixx"), ("pitch", "iyy"), ("yaw", "izz")):    # M4: k * I_scale == e
             assert abs(gc[ax] * isc[ax] - gr[ax]) < 3e-6 and gr[ax] == f["g1_err"][ax]
@@ -128,13 +132,20 @@ def test_lhs_stratification():
         ([r["factors"]["tau_scale"]["value"] for r in rr], 0.5, 3.0, True),
         ([r["factors"]["mass_scale"]["value"] for r in rr], 0.7, 1.3, False),
         ([r["factors"]["vibration"]["mult"] for r in rr], 1.0, 5.0, True),
-        ([r["factors"]["wind"]["gust_peak_total_ms"] for r in rr], 3.0, 9.0, False),
-        ([r["factors"]["wind"]["steady_ms"] / min(5.0, r["factors"]["wind"]["gust_peak_total_ms"] - 1.0) for r in rr],
-         0.0, 1.0, False),
-        ([r["factors"]["wind"]["dir_deg"] for r in rr], 0.0, 360.0, False),
     ]
     for vals, lo, hi, log in checks:
         assert strata(vals, lo, hi, log) == full
+    # D-G3-STICK-FACTORS: wind is drawn only in position runs; those keep one point per used stratum (no two share one)
+    pos = [r for r in rr if r["mode"] == "position"]
+    wchecks = [
+        ([r["factors"]["wind"]["gust_peak_total_ms"] for r in pos], 3.0, 9.0, False),
+        ([r["factors"]["wind"]["steady_ms"] / min(5.0, r["factors"]["wind"]["gust_peak_total_ms"] - 1.0) for r in pos],
+         0.0, 1.0, False),
+        ([r["factors"]["wind"]["dir_deg"] for r in pos], 0.0, 360.0, False),
+    ]
+    for vals, lo, hi, log in wchecks:
+        st = strata(vals, lo, hi, log)
+        assert len(set(st)) == len(st) and len(pos) > 0.6 * n
     # discrete: delay steps (9) and telemetry latency (4) are balanced to +-2 counts per level
     for key, k, levels in (("loop_delay", "steps", 9), ("tel_latency", "frames", 4)):
         cnt = [sum(r["factors"][key][k] == i for r in rr) for i in range(levels)]
@@ -175,8 +186,9 @@ def test_conditional_fractions_n300():
     rr = lhs()
     tol = 0.02                                                     # stratified: normally exact to 1/240
     f = lambda r: r["factors"]
-    assert abs(_frac(rr, lambda r: f(r)["thrust_sag"]["on"]) - 0.40) <= tol
-    assert abs(_frac(rr, lambda r: f(r)["weak_motor"]["on"]) - 0.30) <= tol
+    pos = [r for r in rr if r["mode"] == "position"]               # D-G3-STICK-FACTORS: sag/weak only drawn here
+    assert abs(_frac(pos, lambda r: f(r)["thrust_sag"]["on"]) - 0.40) <= 0.06
+    assert abs(_frac(pos, lambda r: f(r)["weak_motor"]["on"]) - 0.30) <= 0.06
     assert abs(_frac(rr, lambda r: f(r)["tel_dropout"]["on"]) - 0.40) <= tol
     assert abs(_frac(rr, lambda r: f(r)["tel_loss"]["on"]) - 0.20) <= tol
     assert abs(_frac(rr, lambda r: f(r)["tel_frozen"]["on"]) - 0.20) <= tol
@@ -339,3 +351,49 @@ if __name__ == "__main__":
                 print("FAIL", name, repr(e)[:200])
     print("failures:", fails)
     sys.exit(1 if fails else 0)
+
+
+def test_stick_modes_draw_no_thrust_or_wind():          # D-G3-STICK-FACTORS (a)
+    stick = [r for r in camp() if r["mode"] in ("stabilized", "acro")]
+    assert len(stick) > 40
+    for r in stick:
+        f = r["factors"]
+        assert not f["thrust_sag"]["on"] and f["thrust_sag"]["scale"] == 1.0
+        assert not f["saturation"]["on"] and f["saturation"]["scale"] == 1.0
+        assert not f["weak_motor"]["on"] and f["weak_motor"]["scale"] == 1.0
+        w = f["wind"]
+        assert w["steady_ms"] == 0.0 and w["dir_deg"] == 0.0 and w["gust_peak_total_ms"] == 0.0
+        assert w["gust_amp_ms"] == 0.0 and w["gust_offset_s"] is None
+        for k in ("thrust_sag", "saturation", "weak_motor", "wind"):
+            assert f[k]["not_drawn"] == "stick mode (D-G3-STICK-FACTORS)"
+    # attitude/rate factors are still drawn in stick runs
+    assert len({r["factors"]["tau_scale"]["value"] for r in stick}) > 20
+    assert any(r["factors"]["tel_dropout"]["on"] for r in stick)
+
+
+def test_thrust_wind_corners_are_position():            # D-G3-STICK-FACTORS (b)
+    runs = [r for r in camp() if "corner" in r]
+    for c in ("C2", "C3", "C4", "C6"):
+        rc = [r for r in runs if r["corner"] == c]
+        assert len(rc) == 10
+        for r in rc:
+            assert r["mode"] == "position" and r["mode_forced"] == "position (D-G3-STICK-FACTORS)"
+    assert all("mode_forced" not in r for r in runs if r["corner"] in ("C1", "C5"))
+    assert {r["mode"] for r in runs if r["corner"] in ("C1", "C5")} - {"position"}   # drawn mode kept (pins checked in
+    # test_corner_pins_exact, which now also covers sag/sat/wind/weak on every run of C2/C3/C4/C6)
+
+
+def test_free_mode_shares_after_rule():                  # D-G3-STICK-FACTORS (c)
+    for seed in (11, 12):
+        rr = [r for r in camp(seed) if r["kind"] == "lhs"]
+        assert abs(_frac(rr, lambda r: r["mode"] == "position") - 0.70) <= 0.02
+        assert abs(_frac(rr, lambda r: r["mode"] == "stabilized") - 0.20) <= 0.02
+        assert abs(_frac(rr, lambda r: r["mode"] == "acro") - 0.10) <= 0.02
+
+
+def test_pretest_thrust_wind_extremes_are_position():   # D-G3-STICK-FACTORS (d)
+    x = {r["kind"].split()[1]: r for r in g.pretest(9) if r["kind"].startswith("pretest x_")}
+    for k in ("x_sag", "x_weak", "x_saturation", "x_wind"):
+        assert x[k]["mode"] == "position", k
+    assert x["x_sag"]["factors"]["thrust_sag"]["on"] and x["x_weak"]["factors"]["weak_motor"]["on"]
+    assert x["x_saturation"]["factors"]["saturation"]["on"] and x["x_wind"]["factors"]["wind"]["gust_peak_total_ms"] == 9.0

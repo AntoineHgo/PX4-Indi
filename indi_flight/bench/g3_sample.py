@@ -97,6 +97,9 @@ NOMINAL_U = {
     "loss_t": 0.0, "frz_on": 1.0, "frz_motor": 0.0, "frz_t": 0.0, "vib": 0.0, "gnss_lat": 0.0,
     "gnss_match": 0.0, "gnss_off": 0.5, "wind_s": 0.0, "wind_dir": 0.0, "gust_pk": 0.0, "mode": 0.0,
 }
+STICK_MODES = ("stabilized", "acro")
+# D-G3-STICK-FACTORS: pins of these dims need a closed-loop altitude, so the corner is flown in position mode
+THRUST_WIND_PINS = ("sag_on", "weak_on", "sat_on", "wind_s")
 DIMS = sorted(NOMINAL_U)
 # sat_on is never drawn: the saturation corner is set only by the C3 pin (sat_on = 0), see decode()
 DIMS_FREE = [d for d in DIMS if d != "sat_on"]
@@ -240,6 +243,21 @@ def decode(u, no_wind=False, no_gnss=False):
         if u["mode"] < acc - 1e-12:
             mode = name
             break
+    if mode in STICK_MODES:
+        # D-G3-STICK-FACTORS (S117): stick scenarios have an open-loop collective and no altitude/position hold, so
+        # thrust loss and wind trip the height watchdog for PID and INDI alike. Only attitude/rate factors are drawn.
+        # The RNG was consumed above, so position runs keep their bytes.
+        why = "stick mode (D-G3-STICK-FACTORS)"
+        f["thrust_sag"] = {"on": False, "scale": 1.0, "ramp_s": SAG_RAMP_S, "nominal": 1.0,
+                           "unit": "available thrust scale, uniform, all motors", "not_drawn": why}
+        f["saturation"] = {"on": False, "scale": 1.0, "hover_margin": SAT_HOVER_MARGIN, "nominal": 1.0,
+                           "unit": "available thrust scale = 0.27 x mass_scale (2.0 x hover thrust); replaces sag",
+                           "not_drawn": why}
+        f["weak_motor"] = {"on": False, "motor": f["weak_motor"]["motor"], "scale": 1.0, "nominal": 1.0,
+                           "unit": "one motor available thrust scale", "not_drawn": why}
+        f["wind"] = {"steady_ms": 0.0, "dir_deg": 0.0, "gust_peak_total_ms": 0.0, "gust_amp_ms": 0.0,
+                     "gust_offset_s": None, "nominal": 0.0, "unit": "m/s, direction = where the air moves to",
+                     "not_drawn": why}
     return f, mode
 
 
@@ -337,7 +355,11 @@ def campaign(master, n):
         for j in range(cnt):
             u = free_point(crng, DIMS_FREE)
             u.update({k: float(v) for k, v in CORNERS[c].items()})
-            runs.append(make_run(master, idx, f"corner {c}", u, {"corner": c, "pins": CORNERS[c]}))
+            extra = {"corner": c, "pins": CORNERS[c]}
+            if any(k in CORNERS[c] for k in THRUST_WIND_PINS):
+                u["mode"] = 0.0       # D-G3-STICK-FACTORS: keep the pinned thrust/wind content
+                extra["mode_forced"] = "position (D-G3-STICK-FACTORS)"
+            runs.append(make_run(master, idx, f"corner {c}", u, extra))
             idx += 1
     return runs
 

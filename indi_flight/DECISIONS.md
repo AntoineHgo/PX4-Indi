@@ -597,3 +597,10 @@ calm/wind split leaves item 3 calm limits untested, or the owner reads the satur
   the owner range). Overturn: an identified G1 on a variant model disagrees with G1_nom / I_s by more than 10 %.
 - M3: the self-test gets a guard for every surviving mutation listed in K108 (asym log law, GNSS latency law,
   mismatch sign range, sag/weak law, weak/loss motor index spread, loss/frozen durations, sag ramp).
+
+## D-G3-STICK-FACTORS (S117)
+- Rule: in mode stabilized or acro the sampler draws only attitude/rate factors (G1, tau, asymmetry, delay, mass, inertia, telemetry, vibration, GNSS); thrust_sag, saturation, weak_motor and wind are set to nominal "off" with `not_drawn`. Corners C2, C3, C4, C6 (pinned sag, saturation, wind, weak motor) are forced to position (`mode_forced`); pretest extremes x_sag, x_weak, x_saturation, x_wind already fly position. C1, C5 and free draws keep the drawn mode (RNG order unchanged).
+- Reason: S116 ladder (results/g3_ladder_s116/README.md): PID and INDI both trip the height watchdog with sag 0.7 / weak 0.8 in stabilized stick (open-loop collective, no altitude hold), so those runs test the scenario, not the controller.
+- Alternatives: draw everything in every mode and count watchdog trips as scenario failures; add altitude hold to the stick scenario; give stick runs altctl.
+- Consequence: thrust and wind coverage only in position-mode runs (about 70 % of free runs plus the thrust/wind corners). altctl/posctl stick scenarios are not in MODE_MIX and stay out of the first probe batch until metrics.py has a reference/window for them (RC113 stop rule).
+- Overturn: a stick scenario with closed-loop altitude (e.g. altctl) enters the batch; thrust factors can then be drawn there.
