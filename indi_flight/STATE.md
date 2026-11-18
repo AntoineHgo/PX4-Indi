@@ -41,7 +41,8 @@ S121 FINDING: every "indi" G3 run S110-S118 (~94: pretest s112, single s113, sti
   no boot_params, MC_INDI_EN=0, no indi_rate_status (hence INDI==PID within cm in T118). G2 s107 unaffected. Fixed:
   g3_run.py adds MC_RATE_CTL_TYPE 1; run_scenario.py refuses --controller indi without it (tests 20/20). Those
   INDI verdicts (P117, T118, ladder) are VOID: re-fly T118 idx 0/21/49 with INDI before stage-4 flights. TODO test
-  in test_g3_run.py asserting the flag. esc_status logs at 800 Hz (pilot run_000), actuator_torque_measured not yet seen.
+  in test_g3_run.py asserting the flag. RUNNING (S121, setsid): INDI re-fly idx 21 -> results/g3_refly_s121/
+  (stream_21.txt; check run.json boot_params MC_INDI_EN=1 and indi_rate_status in the ulog, then idx 0/49). esc_status logs at 800 Hz (pilot run_000), actuator_torque_measured not yet seen.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
