@@ -739,3 +739,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S89: RC89 filed (stop tooling, freeze hole_report); T189 re-run: all serial G2 cells PASS, 3 FAIL = parallel pre-test only; D-HOLE-FREEZE.
 - S89 STATE trim: task rows T179-T184, T186-T188, B86, B86z, B88 done (outputs listed in LEDGER.md and the S86-S88 entries).
 - S90 (2026-11-18): G2 attitude break at the rate setpoint implemented (b41dd6ec81, T190) and keyed (T191, 3 MAJOR on gating/restart fixed 2bed1ae95a, test checked by breaking it); not flown yet.
+- S91 (2026-11-18): attitude-break pre-test PASS at RAMP 0.06 (roll 400 Hz PM 56.6 deg, GM 22.0 dB, f_c 1.32 Hz); ratesp_csv.py extractor + key T193 (bbb52f0982, 5da12a76d8); cells batch B91c launched.

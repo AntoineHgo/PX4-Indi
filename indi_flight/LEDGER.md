@@ -92,3 +92,5 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | RC89 | S89 | sonnet | route check 89 | design/route_check_89.md | done |
 | T190 | S90 | sonnet | amend attitude-break note + implement injector, call-site test, check script | design/t190_impl_log.md | done (25 calls) |
 | T191 | S90 | sonnet | second key b41dd6ec81 vs attitude-break note sec 1-3,8 | design/attitude_break_s90_key.md | done (14 calls), 0 BLOCKING 3 MAJOR |
+| T192 | S91 | sonnet | ratesp_csv.py extractor + self-test | DONE |
+| T193 | S91 | sonnet | second key of ratesp_csv.py | AGREE WITH MINOR |
