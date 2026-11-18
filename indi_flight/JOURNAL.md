@@ -898,3 +898,8 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S124: ident_fit.py IV driver; M3a roll G1_R 1748 (x1), 1742 (x0.5 start), 1756 (x2 start), pitch 1634, all within
   0.8 % of derived; yaw invalid (G2 term omitted). K124 key: 3 BLOCKING (no failing mismatch test, no F/J gate,
   homoskedastic F), MAJOR: ZOH regressor (actuator_torque_measured changes every ~2.4 samples), J-shift pre-test CI.
+- S121/S122 findings (moved from STATE S125): G3 runs S110-S118 flew the STOCK rate loop (no MC_RATE_CTL_TYPE 1;
+  fixed g3_run.py + run_scenario guard, P117/T118/ladder INDI verdicts VOID); G3 base params lacked MC_INDI_W_MAX
+  -> measured path OFF, s121 re-flies MODEL-ONLY (fixed 0a49572149, run_validity.py). S122 re-fly idx 0/21/49 with
+  W_MAX all ok + valid (results/g3_refly_s122, 8cfbc36d85). K122 key 3 BLOCKING (W_MAX alias, check_validity
+  exception, missing g3_params.txt) fixed S123.
