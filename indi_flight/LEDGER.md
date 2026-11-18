@@ -157,3 +157,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S116 | N116 | haiku | nominal lemniscate INDI+PID | same README sec c | done, 11 calls, A-41 closed |
 | S116 | H116 | sonnet | K115 fixes + tests | design/key_k115_hte.md | done, 8 calls |
 | S116 | A116 | haiku | altctl/posctl stick flyability 3 flights | results/g3_stick_modes_s116/README.md | done, 9 calls (README by orchestrator) |
+| S117 | G117 | sonnet | sampler stick-factor rule + 4 tests + DECISIONS | bench/g3_sample.py | done, 19 calls, mutations checked |

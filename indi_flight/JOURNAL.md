@@ -835,3 +835,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S116: L116 ladder (e97d826b27): 5/9 fly; sag/weak/sat trip height watchdog on stabilized stick (open-loop collective hypothesis); L116b control flights launched.
 - S116: L116b controls a7ac9375c0: PID trips the same watchdog on stick sag/weak (scenario: open-loop stabilized collective); INDI holds altitude on o1_lemniscate with sag/weak/sat/wind. K115 fixes dce771f1e6. A-41 opened and closed 4e25b1aa00 (o1 horiz RMS 2.80 m nominal, INDI = PID).
 - S116: A116 ca6825db51: stick_zsine_o6 flies in altctl/posctl (+sag 0.7); stick-mode metric window/reference missing for these modes.
+- S117: D-G3-STICK-FACTORS (981e94f79e): stick runs draw attitude/rate factors only; C2/C3/C4/C6 forced position. g3_run.py --stop; G3 probe seed 117 n=60 launched (results/g3_probe_s117).

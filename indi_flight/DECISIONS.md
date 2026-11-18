@@ -604,3 +604,14 @@ calm/wind split leaves item 3 calm limits untested, or the owner reads the satur
 - Alternatives: draw everything in every mode and count watchdog trips as scenario failures; add altitude hold to the stick scenario; give stick runs altctl.
 - Consequence: thrust and wind coverage only in position-mode runs (about 70 % of free runs plus the thrust/wind corners). altctl/posctl stick scenarios are not in MODE_MIX and stay out of the first probe batch until metrics.py has a reference/window for them (RC113 stop rule).
 - Overturn: a stick scenario with closed-loop altitude (e.g. altctl) enters the batch; thrust factors can then be drawn there.
+
+## D-G3-STICK-PILOT (S117, proposed; implement S118)
+Stick scenarios get a simulated pilot in the runner: a slow altitude PI on throttle (about 0.2-0.3 Hz, applied
+around the hover throttle) in stabilized and acro, and in acro an attitude-levelling term (rate command = stick -
+k x attitude, k about 1-2 /s) so the pilot behaves like a human holding the vehicle. Reason: S117 probe run_000 (acro)
+sank 3.5 m with INDI and 2 m with PID in the same window, PID then held 32 deg tilt and climbed to 159 m: the open-loop
+stick scenario tests chaos, not the controller (results/g3_probe_s117/README.md). Alternatives: drop acro from G3
+(F-2 requires acro, G5 then carries it alone); widen the watchdog (weakens the test); stick input on rate only with an
+external altitude hold (no PX4 mode does that). With the pilot loop, thrust factors may be drawn again in stick modes
+(overturn condition of D-G3-STICK-FACTORS). Overturn: the pilot loop bandwidth interacts with the controller under
+test (pilot loop closed > 1/5 of the attitude bandwidth), or a human-pilot model from the literature disagrees.
