@@ -47,16 +47,9 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 (S72-S78 rows done, details in JOURNAL.md; A-34/A-35 rows and S76 D-RATE-BLD line are recorded.)
-(S86-S92 rows B87, T185, T189, RC89, T190, T191, B91, T192/T193, B91c, B92 all DONE: JOURNAL.md S93 entry.)
-| T194 | S93 (launch 20261118-091231, cap $3): attitude-break linear model L_att_indi/L_att_pid + identity self-test + model-vs-measured table (note sec 5) | sonnet | design/t194_att_model_log.md, results/stage5_s91_attbreak/model_vs_measured.md | DONE 85fb907177 f38ecf5ba3: tests 5/5; model PM ~15 deg above measured -> A-36; S93 outer-loop factor O(s) brings delta to 2-3 deg (unkeyed) |
-| T196 | S94: G2 report section draft | sonnet | report/g2_margins.md | DONE 4542ca1d83 (2 numbers spot-checked) |
-| T197 | S94: G3-G8 final test-text proposal + hook check | sonnet | design/gates_g3_g8_final_s94.md | DONE 18af6e3a66 (8 decisions in GATES.md) |
-| T198 | S95 (launch 20261118-093647): opus review stage-3 safety items code vs design/stage3_items_note.md + D-S3-* | opus | design/review_s95_stage3_safety.md | DONE: NOT BLOCKING; MAJOR item 5 autotune start never coded (rc.mc_apps starts autotune with INDI on); MINOR: watchdog uses publisher stamp (use receipt time), PID-after-INDI start not refused, no start-refusal test |
-| T199 | S95: opus review D-GAP + landed/take-off handling in mc_indi_pos_control/indi_accel_control vs DECISIONS D-GAP | opus | design/review_s95_stage5_slice.md | DONE: BLOCKING (bypass->active edge thrust step of b, :252-255), 4 MAJOR (step on telemetry return :291 accel lib; gap not removed in altitude mode; anti-windup ignores mean_u limit; T123 filter-reset bug unfixed), MINOR tb=0 erases b; no tests. Orchestrator spot-check S95: :252 passes _coll_meas when fresh_thr, so BLOCKING may be misread -> adjudicate first in S96 |
+(S93-S95 rows T194-T199 and S96 T201: JOURNAL.md. S86-S92 rows B87, T185, T189, RC89, T190, T191, B91, T192/T193, B91c, B92 all DONE: JOURNAL.md S93 entry.)
 | T200 | S96 (launch 20261118-094323): T199 BLOCKING CONFIRMED by orchestrator (_coll_meas = vehicle_thrust_setpoint, commanded, passed as mean_u). Fix findings 1,2,4,5 + 3 (integrator reset only when INDI ran) in indi_accel_control + mc_indi_pos_control, tests first with break-checks | sonnet | design/t200_dgap_fixes_log.md | DONE bf44ece093 (diff read; 5 new tests fail-before/pass-after; module side F3-F5 compile-only; residue: stock integral in a_ref on the 1st active cycle after bypass; ALTCTL not served by INDI: F-2 open item, note in log) |
 | T202 | S96: second key on bf44ece093 vs review findings 1-5 | sonnet | design/t202_dgap_fix_key.md | in flight |
-| T201 | S96: stage-3 item 5 autotune not started with MC_INDI_EN=1 (rc.mc_apps) + rate watchdog on receipt time | sonnet | design/t201_autotune_watchdog_log.md | DONE b7a171b4b5 4385e8f56a (diff read by orchestrator; SITL start test MC_INDI_EN=1 MC_AT_EN=1 not run; start-refusal test needs SITL shell, open) |
-| T195 | key of A-36: independent outer-loop factor from firmware source + flown params | sonnet | design/t195_att_outer_key.md | DONE: agrees; O(s) in margins_models 9df899212c; PM within 0.3 deg, GM residue open (A-36) |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
