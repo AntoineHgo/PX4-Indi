@@ -67,6 +67,9 @@ bool GZMixingInterfaceESC::init(const std::string &world_name, const std::string
 
 	_esc_status_pub.advertise();
 
+	PX4_INFO("SIM_GZ_DLY_ACT requested %u us (%s), applied = requested rounded up to the ESC output period (logged at first release)",
+		 (unsigned)_act_delay_us, _act_delay_us == 0 ? "bypassed" : "delay line active");
+
 	ScheduleNow();
 
 	return true;
@@ -110,11 +113,82 @@ bool GZMixingInterfaceESC::updateOutputs(float outputs[MAX_ACTUATORS], unsigned 
 		}
 
 		if (_actuators_pub.Valid()) {
-			return _actuators_pub.Publish(rotor_velocity_message);
+			if (_act_delay_us == 0) {
+				return _actuators_pub.Publish(rotor_velocity_message);
+			}
+
+			return publishDelayed(rotor_velocity_message);
 		}
 	}
 
 	return false;
+}
+
+bool GZMixingInterfaceESC::publishDelayed(const gz::msgs::Actuators &msg)
+{
+	// Called from updateOutputs() with _node_mutex held. Time base: hrt_absolute_time() (slaved to the gz clock).
+	const uint64_t now = hrt_absolute_time();
+
+	if (_act_delay_n >= ACT_DELAY_LEN) {
+		// Never silent: drop the oldest entry, count it
+		_act_delay_head = (_act_delay_head + 1) % ACT_DELAY_LEN;
+		_act_delay_n--;
+
+		if (++_act_overflow == 1) {
+			PX4_WARN("SIM_GZ_DLY_ACT ring overflow (%d entries), oldest command dropped", ACT_DELAY_LEN);
+		}
+	}
+
+	ActDelayEntry &e = _act_delay[(_act_delay_head + _act_delay_n) % ACT_DELAY_LEN];
+	e.t_in = now;
+	e.count = math::min((unsigned)msg.velocity_size(), (unsigned)MAX_ACTUATORS);
+
+	for (unsigned i = 0; i < e.count; i++) {
+		e.vel[i] = msg.velocity(i);
+	}
+
+	_act_delay_n++;
+
+	// Release: newest entry that is due, older due entries are dropped (the gz side keeps only the last command)
+	int due = 0;
+
+	while (due < _act_delay_n
+	       && now >= _act_delay[(_act_delay_head + due) % ACT_DELAY_LEN].t_in + _act_delay_us) {
+		due++;
+	}
+
+	if (due == 0) {
+		return true; // nothing due yet, not an error
+	}
+
+	const ActDelayEntry &out = _act_delay[(_act_delay_head + due - 1) % ACT_DELAY_LEN];
+
+	if (due > 1) {
+		if (_act_dropped == 0) {
+			PX4_INFO("SIM_GZ_DLY_ACT: output calls irregular, due commands skipped (counted, latest wins)");
+		}
+
+		_act_dropped += due - 1;
+	}
+
+	if (!_act_first_logged) {
+		_act_first_logged = true;
+		PX4_INFO("SIM_GZ_DLY_ACT applied %u us for requested %u us (first release)",
+			 (unsigned)(now - out.t_in), (unsigned)_act_delay_us);
+	}
+
+	gz::msgs::Actuators delayed;
+	auto *vel = delayed.mutable_velocity();
+	vel->Reserve(out.count);
+
+	for (unsigned i = 0; i < out.count; i++) {
+		vel->Add(out.vel[i]);
+	}
+
+	_act_delay_head = (_act_delay_head + due) % ACT_DELAY_LEN;
+	_act_delay_n -= due;
+
+	return _actuators_pub.Publish(delayed);
 }
 
 void GZMixingInterfaceESC::Run()

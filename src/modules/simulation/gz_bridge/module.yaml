@@ -123,6 +123,30 @@ parameters:
           max: 8
           default: 0
           reboot_required: true
+        SIM_GZ_DLY_ACT:
+          description:
+            short: Added motor command delay
+            long: Simulator delay line on the motor commands sent from PX4 to Gazebo (ESC output path). The
+              delay is quantised up to the next output call (output period), see the boot log line.
+              0 bypasses the delay line entirely.
+          type: int32
+          unit: ms
+          min: 0
+          max: 10
+          default: 0
+          reboot_required: true
+        SIM_GZ_DLY_IMU:
+          description:
+            short: Added IMU delay
+            long: Simulator delay line between Gazebo and the PX4 accelerometer and gyroscope drivers, same delay
+              for both. Delayed samples keep their original sample time (timestamp_sample is not shifted).
+              Quantised up to the next IMU sample. 0 bypasses the delay line entirely.
+          type: int32
+          unit: ms
+          min: 0
+          max: 10
+          default: 0
+          reboot_required: true
         SIM_GZ_ERPM_LOSS:
           description:
             short: Motors with total eRPM telemetry loss

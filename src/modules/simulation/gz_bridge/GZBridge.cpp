@@ -85,6 +85,11 @@ int GZBridge::init()
 		return PX4_ERROR;
 	}
 
+	// Set before the IMU subscription so no sample is published undelayed (the callback thread reads it)
+	_imu_delay_us = (uint64_t)math::constrain(_sim_gz_dly_imu.get(), (int32_t)0, (int32_t)10) * 1000u;
+	PX4_INFO("SIM_GZ_DLY_IMU requested %u us (%s), applied = requested rounded up to the IMU sample period (logged at first release)",
+		 (unsigned)_imu_delay_us, _imu_delay_us == 0 ? "bypassed" : "delay line active");
+
 	// OPTIONAL:
 	if (_sim_gz_en_imu.get()) {
 		if (!subscribeImu(false)) {
@@ -710,9 +715,57 @@ void GZBridge::imuCallback(const gz::msgs::IMU &msg, uint8_t instance_index)
 		addRotorVibration(timestamp_sample, accel_b, gyro_b);
 	}
 
-	// Update the specific IMU instance wrapper
-	_px4_accel[instance_index].update(timestamp, accel_b.X(), accel_b.Y(), accel_b.Z());
-	_px4_gyro[instance_index].update(timestamp, gyro_b.X(), gyro_b.Y(), gyro_b.Z());
+	if (_imu_delay_us == 0) {
+		// Update the specific IMU instance wrapper
+		_px4_accel[instance_index].update(timestamp, accel_b.X(), accel_b.Y(), accel_b.Z());
+		_px4_gyro[instance_index].update(timestamp, gyro_b.X(), gyro_b.Y(), gyro_b.Z());
+		return;
+	}
+
+	// SIM_GZ_DLY_IMU: hold the sample, release every entry whose age reached the delay. The sample time passed to
+	// the drivers stays the ORIGINAL one (never shifted); only the publication moment is later. All due samples
+	// are released in order (none dropped: the vehicle_imu integrator needs every sample).
+	std::lock_guard<std::mutex> lock(_imu_delay_mutex);
+	ImuDelayRing &ring = _imu_delay_ring[instance_index];
+
+	if (ring.n >= IMU_DELAY_LEN) {
+		// Never silent: release the oldest early rather than lose it, count it
+		const ImuDelayEntry &o = ring.e[ring.head];
+		_px4_accel[instance_index].update(o.timestamp_sample, o.accel[0], o.accel[1], o.accel[2]);
+		_px4_gyro[instance_index].update(o.timestamp_sample, o.gyro[0], o.gyro[1], o.gyro[2]);
+		ring.head = (ring.head + 1) % IMU_DELAY_LEN;
+		ring.n--;
+
+		if (++ring.overflow == 1) {
+			PX4_WARN("SIM_GZ_DLY_IMU ring overflow (%d entries) on IMU %u, oldest sample released early",
+				 IMU_DELAY_LEN, (unsigned)instance_index);
+		}
+	}
+
+	ImuDelayEntry &in = ring.e[(ring.head + ring.n) % IMU_DELAY_LEN];
+	in.timestamp_sample = timestamp;
+	in.accel[0] = accel_b.X(); in.accel[1] = accel_b.Y(); in.accel[2] = accel_b.Z();
+	in.gyro[0] = gyro_b.X(); in.gyro[1] = gyro_b.Y(); in.gyro[2] = gyro_b.Z();
+	ring.n++;
+
+	// Release clock = the newest sample's own gz header stamp (exact sim time, independent of when the clock
+	// callback last advanced hrt). Stored sample times are <= their stamps, so the delay is never shortened.
+	const uint64_t now = timestamp_sample;
+
+	while (ring.n > 0 && now >= ring.e[ring.head].timestamp_sample + _imu_delay_us) {
+		const ImuDelayEntry &o = ring.e[ring.head];
+
+		if (!ring.first_logged) {
+			ring.first_logged = true;
+			PX4_INFO("SIM_GZ_DLY_IMU IMU %u applied %u us for requested %u us (first release)", (unsigned)instance_index,
+				 (unsigned)(now - o.timestamp_sample), (unsigned)_imu_delay_us);
+		}
+
+		_px4_accel[instance_index].update(o.timestamp_sample, o.accel[0], o.accel[1], o.accel[2]);
+		_px4_gyro[instance_index].update(o.timestamp_sample, o.gyro[0], o.gyro[1], o.gyro[2]);
+		ring.head = (ring.head + 1) % IMU_DELAY_LEN;
+		ring.n--;
+	}
 }
 
 void GZBridge::poseInfoCallback(const gz::msgs::Pose_V &msg)
@@ -1242,6 +1295,11 @@ int GZBridge::print_status()
 {
 	PX4_INFO_RAW("ESC outputs:\n");
 	_mixing_interface_esc.mixingOutput().printStatus();
+
+	PX4_INFO_RAW("Delay lines: DLY_ACT %u us (dropped %u, overflow %u), DLY_IMU %u us (overflow %u/%u/%u)\n",
+		     (unsigned)_mixing_interface_esc._act_delay_us, (unsigned)_mixing_interface_esc._act_dropped,
+		     (unsigned)_mixing_interface_esc._act_overflow, (unsigned)_imu_delay_us,
+		     (unsigned)_imu_delay_ring[0].overflow, (unsigned)_imu_delay_ring[1].overflow, (unsigned)_imu_delay_ring[2].overflow);
 
 	PX4_INFO_RAW("Servo outputs:\n");
 	_mixing_interface_servo.mixingOutput().printStatus();

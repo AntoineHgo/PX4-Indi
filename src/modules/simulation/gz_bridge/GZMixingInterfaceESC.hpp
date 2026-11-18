@@ -75,6 +75,10 @@ public:
 			_random_state = (z != 0) ? z : 0x12345678u;
 		}
 
+		int32_t dly_act_ms = 0;
+		param_get(param_find("SIM_GZ_DLY_ACT"), &dly_act_ms);
+		_act_delay_us = (uint32_t)math::constrain(dly_act_ms, (int32_t)0, (int32_t)10) * 1000u;
+
 		_erpm_latency = math::constrain(_erpm_latency, (int32_t)0, (int32_t)ERPM_DELAY_LEN - 1);
 		_erpm_poles = math::max(_erpm_poles, (int32_t)2);
 		updateParams();
@@ -111,6 +115,8 @@ private:
 
 	void Run() override;
 
+	bool publishDelayed(const gz::msgs::Actuators &msg);
+
 	void motorSpeedCallback(const gz::msgs::Actuators &actuators);
 	void jointStateCallback(const gz::msgs::Model &model);
 
@@ -140,6 +146,22 @@ private:
 	int32_t _erpm_last_rpm[esc_status_s::CONNECTED_ESC_MAX] {}; // last decoded value, held on a dropped frame
 	uint32_t _erpm_errors[esc_status_s::CONNECTED_ESC_MAX] {};
 	uint32_t _random_state{0x12345678u}; // SIM_GZ_SEED 0: fixed, dropouts repeatable run to run
+
+	// SIM_GZ_DLY_ACT delay line (hook A1). Only touched from updateOutputs(), which runs inside Run() under
+	// _node_mutex. 0 = bypassed. Size: 10 ms at up to 3.2 kHz output calls (PX4 rate loop at most 800 Hz).
+	static constexpr int ACT_DELAY_LEN = 32;
+	struct ActDelayEntry {
+		uint64_t t_in{0};
+		unsigned count{0};
+		double vel[MAX_ACTUATORS] {};
+	};
+	uint32_t _act_delay_us{0};
+	ActDelayEntry _act_delay[ACT_DELAY_LEN] {};
+	int _act_delay_head{0}; // oldest entry
+	int _act_delay_n{0};    // entries stored
+	uint32_t _act_dropped{0}; // due entries skipped (latest wins)
+	uint32_t _act_overflow{0};
+	bool _act_first_logged{false};
 
 	gz::transport::Node &_node;
 	pthread_mutex_t _node_mutex;

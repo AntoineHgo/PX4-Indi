@@ -40,6 +40,7 @@
 
 #include <mathlib/math/WhiteGaussianNoise.hpp>
 #include <random>
+#include <mutex>
 #include <px4_platform_common/atomic.h>
 #include <px4_platform_common/defines.h>
 #include <px4_platform_common/module.h>
@@ -169,6 +170,26 @@ private:
 	float _vib_phase[_MAX_VIB_ROTORS] {}; // rotor angle [rad]
 	uint64_t _vib_timestamp_last{0};
 
+	// SIM_GZ_DLY_IMU delay line (hook A2), one ring per IMU instance, shared mutex (gz transport callbacks of
+	// different instances may run on different threads). 0 = bypassed. Size: 10 ms at up to 3.2 kHz IMU rate
+	// (flown world: 800 Hz, 1.25 ms step => 8 samples + margin).
+	static constexpr int IMU_DELAY_LEN = 32;
+	struct ImuDelayEntry {
+		uint64_t timestamp_sample{0};
+		double accel[3] {};
+		double gyro[3] {};
+	};
+	struct ImuDelayRing {
+		ImuDelayEntry e[IMU_DELAY_LEN] {};
+		int head{0};
+		int n{0};
+		uint32_t overflow{0};
+		bool first_logged{false};
+	};
+	std::mutex _imu_delay_mutex;
+	ImuDelayRing _imu_delay_ring[_MAX_IMU_SENSORS] {};
+	uint64_t _imu_delay_us{0};
+
 	// Extra white IMU noise (SIM_GZ_IMU_NSC), IMU 0, seeded from SIM_GZ_SEED
 	void addExtraImuNoise(gz::math::Vector3d &accel_b, gz::math::Vector3d &gyro_b);
 	std::mt19937 _imu_noise_rng{};
@@ -251,6 +272,7 @@ private:
 		(ParamInt<px4::params::SIM_GZ_EN_ODOM>) _sim_gz_en_odom,
 		(ParamInt<px4::params::SIM_GZ_EN_GPS>) _sim_gz_en_gps,
 		(ParamInt<px4::params::SIM_GZ_EN_IMU>) _sim_gz_en_imu,
+		(ParamInt<px4::params::SIM_GZ_DLY_IMU>) _sim_gz_dly_imu,
 		(ParamInt<px4::params::SIM_GZ_EN_MAG>) _sim_gz_en_mag,
 		(ParamFloat<px4::params::SIM_GZ_VIB_ACC>) _sim_gz_vib_acc,
 		(ParamFloat<px4::params::SIM_GZ_VIB_GYR>) _sim_gz_vib_gyr,
