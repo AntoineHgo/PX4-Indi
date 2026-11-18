@@ -132,3 +132,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | D107 | S107 | sonnet | draft G2 verdict update (no edits to GATES.md) | 7 calls, ~37k tok, ~$0.15 | DONE design/g2_verdict_s108_draft.md |
 | D107-review | S108 | self | review of D107 draft against result READMEs | ~8 calls | DONE: outer-cell omission corrected, 93f94320d3 |
 | G108 | S108 | sonnet | G3 sampler + self-test + hook map | 19 calls, ~85k tok, ~$0.65 | DONE 238079b24f |
+| K108 | S108 | sonnet | second key of g3_sample.py | 11 calls, ~71k tok, ~$0.45 | DONE 0 BLOCKING 4 MAJOR 8 MINOR |

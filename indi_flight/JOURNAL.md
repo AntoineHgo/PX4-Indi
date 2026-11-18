@@ -818,3 +818,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S107 (2026-11-18): yaw linear model L_indi_yaw + self-test (b05d07c555); Y107b second key of the law (0 BLOCKING) and yaw cross-check: model-only 4/4 within tolerance, measured-path 400 Hz dGM -9.7/-9.1 dB -> A-39 deferred (gate still passes, GM 15.5 dB); attitude-break cells re-flown at HEAD 6/6 PASS, dPM <= 0.5 deg vs S91 (8ec7d4a95b).
 - S108 (20261118-145323, cap $3): D107 draft reviewed: outer-loop G2 cells (S83/S86/S87, 24 cells, PM >= 49.7 deg, GM >= 18.2 dB, unkeyed, no model) had been missed; design/g2_verdict_s108.md + GATES.md G2 table (93f94320d3). Attitude seed 2 not flown (pre-freeze). G108 G3 sampler launched.
 - S108: G108 G3 sampler bench/g3_sample.py (238079b24f, self-test 9/9, deterministic); D-G3-SAMPLER; K108 second key launched.
+- S108: K108 key of the sampler: 0 BLOCKING, 4 MAJOR (G1-error basis vs drawn inertia, missing gusts, test gaps, saturation share), fixes queued S109.
