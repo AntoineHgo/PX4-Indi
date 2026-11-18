@@ -29,7 +29,9 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 (Done rows up to K100/P100: JOURNAL.md S100/S101 entries.)
 | B100 | S100: model-only batch, 10 flights | haiku | results/g2_rate_modelonly_s100/batch/batch.log | DONE S101: 10/10 PASS, worst GM 10.12 dB, PM 70.8, DM 39.7 ms; torque MODEL_ONLY_VERIFIED |
 | K101 | S101: second key of 12 model-only cells (P100+B100) | self (docker) | results/g2_rate_modelonly_s100/key_k101/summary.md | DONE b9d6cf3285: 12/12 agree |
-(Nothing in flight. S102 starts with (ii): brief a haiku agent; find the PID M1 recipe in JOURNAL S86-S92 / results/stage2_s38.)
+| H102 | S102: delay-line hooks A1 (actuator) + A2 (IMU) in gz_bridge, per design/delay_line_hook_s94.md s.1-3,5,7; build | sonnet | design/delay_line_impl_s102.md | if cut: read that file, `git diff --stat src/modules/simulation/gz_bridge`, rebuild |
+S102 finding: (ii) PID M1 has NO recipe: the gyro-break hook (`sim_inject`, design/stage2_margins_s35.md l.21) was never built.
+  PID reference is F-5 reference only -> deferred behind (iv); build the M1 hook later in gz_bridge IMU callback beside A2.
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
