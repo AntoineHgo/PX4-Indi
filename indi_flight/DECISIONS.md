@@ -573,3 +573,5 @@ with neutral sticks. G5 flies it.
   unless a G7 reviewer finds a wiring defect B and C both miss.
 - Overturn if: a defect is found in the glue between the helpers and uORB that neither the unit tests nor the G5
   flights caught.
+- Amended S98 per route check 98: implementation of B deferred to stage 7 (G7 packaging); until then the module
+  logic is covered by G5 SITL flights. No further coverage tasks before the G5 pre-test.

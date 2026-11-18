@@ -23,8 +23,11 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    dff2b7a805 keyed OK (T203, design/t203_integral_hoist_key.md); MINOR: want_indi true + stage bypass on stale
    inputs zeroes the stock integrator every cycle (no gap compensation in that fault): gate pre-update reset on
    fresh inputs.
-   S98: RC98 + T206 launched; module harness DECIDED D-G7-HARNESS (pure helpers + unit gtest, SITL for wiring;
-   task not yet launched). Then the 2-3 flight pre-test below (s5_gap085 regression + new stick altctl gap scenario).
+   S98: RC98 DONE (design/route_check_98.md): STOP coverage after T206; D-G7-HARNESS decided, impl deferred to
+   stage 7. Order now: (a) G5 pre-test s5_gap085 POSCTL + stick ALTCTL gap + EN/AT_EN start check; (b) S99 sim
+   hooks per design/gates_g3_g8_final_s94.md sec 1 (drop seed, shared delay line, IMU noise scale) + G2 verdict
+   (yaw, model-only "not covered"); (c) if hooks/G2 verdict not done by S101, ask owner to narrow G2. Dropped:
+   anomaly chases A-4/6/30/32/34-36, tooling keys. Then the 2-3 flight pre-test below (s5_gap085 regression + new stick altctl gap scenario).
    S97: (a) DONE de7c598e1e (compile-only); (b) decided D-ALTCTL-Z (e92a576e01), impl T204. Pre-test recipe: s5_gap085
    (offboard pos) exists; ALTCTL needs a new mode="stick" scenario with motor_fault (allowed without --sched), flown with
    --stick-mode altctl; command in results/stage5_s70/README.md line 17; metric bench/s5_gap_check.py. Was: (b) F-2: INDI serves ALTCTL by adding
