@@ -20,7 +20,10 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    (design/t202_dgap_fix_key.md): its 2 MAJORs fixed by orchestrator 25e420b155 (vacuous test, break-checked) and
    dff2b7a805 (integral hoist, compile-only). Open MINORs: lower mean_u limit untested; lagging mean_u at reset untested;
    permanently saturated motor freezes b (no gap tracking): state in report limits.
-   NEXT S97: (a) haiku/sonnet key on dff2b7a805 (10 lines); (b) F-2: INDI serves ALTCTL by adding
+   dff2b7a805 keyed OK (T203, design/t203_integral_hoist_key.md); MINOR: want_indi true + stage bypass on stale
+   inputs zeroes the stock integrator every cycle (no gap compensation in that fault): gate pre-update reset on
+   fresh inputs.
+   NEXT S97: (a) fix the T203 MINOR; (b) F-2: INDI serves ALTCTL by adding
    flag_control_climb_rate_enabled to want_indi (T200 log sec F3: the stage only needs finite a_c); (c) 2-flight SITL pre-test: thrust-gap hover 0.85 in POSCTL and ALTCTL + MC_INDI_EN=1
    MC_AT_EN=1 start check; then the sim hooks (old S96 plan below), yaw cell, identification slice.
    (5) attitude-break margin with the new setpoint path (G2) when the G2 table is resumed.
