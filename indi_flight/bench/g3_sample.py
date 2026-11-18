@@ -47,6 +47,8 @@ VIB_X1_ACC, VIB_X1_GYR = 1.0, 0.05   # m/s^2, rad/s per rotor (provisional, deci
 GNSS_LAT = (80, 250)         # ms, integer ms so that "matched" is exact
 GNSS_MATCH_FRAC = 0.50
 GNSS_MISMATCH = (-100, 100)  # ms around the latency, min 0
+# wind dir_deg (0..360) is in the gz WORLD frame: ENU, x east, y north, the direction the air moves TO (disturbance.py:
+# w = (cos, sin) * speed), not a meteorological "from" bearing and not a PX4 NED course.
 WIND = (0.0, 5.0)            # steady m/s
 GUST_PEAK = (3.0, 9.0)       # m/s, peak TOTAL wind (steady + gust), 9 m/s = 10 % W
 MODE_MIX = (("position", 0.70), ("stabilized", 0.20), ("acro", 0.10))
@@ -291,7 +293,7 @@ def make_run(master, idx, kind, u, extra=None, no_wind=False, no_gnss=False):
     run = {"schema": SCHEMA, "master_seed": master, "run_index": idx, "kind": kind, "sampler_seed": seed,
            "gz_seed": gz_seed, "airframe": "quad5in", "flight_s": FLIGHT_S, "mode": mode,
            "timeline": {"hold_start_nominal_s": HOLD_START_NOMINAL_S, "hold_s": HOLD_S,
-                        "note": "event offsets are seconds after the hold segment starts"},
+                        "note": "event offsets are seconds after the main-segment (traj/stick) anchor"},
            "factors": f, "g4_typical_noise": {"profile": None, "status": "placeholder: G4 typical profile does not exist yet"},
            "hooks": hooks_for(f, gz_seed)}
     if extra:

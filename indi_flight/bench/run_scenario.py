@@ -492,6 +492,21 @@ class Sim:
                                               [1, 0, 0, 0], p, q, r, thrust)
 
 
+def fault_apply(cum_scale, ents, nom_all):
+    """Multiply each entry's thrust_scale into cum_scale (per motor, in place); return the SIM_GZ_EC MIN/MAX values to
+    set per motor: nominal * sqrt(cumulative scale) (thrust ~ omega^2), rounded to int."""
+    for f in ents:
+        for fm in (f.get("motors") or [f["motor"]]):
+            cum_scale[fm] *= f["thrust_scale"]
+    return {fm: {k: int(round(v * math.sqrt(cum_scale[fm]))) for k, v in nom_all[fm].items()} for fm in nom_all}
+
+
+def erpm_loss_split(dur, t_on, t_len, motor):
+    """Timed eRPM loss inside one segment of length dur: [(label, duration_s, motor_bitmask or None)] for pre (t_on),
+    loss (t_len, bit 1 << motor) and post (the rest of the segment)."""
+    return [("pre", t_on, None), ("loss", t_len, 1 << motor), ("post", dur - t_on - t_len, None)]
+
+
 def traj_phase(traj, t):
     """Phase of a closed trajectory: phase rate ramps 0 -> w (smoothstep, ramp_s), cruises, ramps back to 0, and the
     total phase is laps * 2 pi, so the path starts and ends at the hold position with zero velocity."""
@@ -932,10 +947,7 @@ def main():
                 meta["erpm_loss"]["on_us" if on else "off_us"] = int(sim.t * 1e6)
             ents = [f for f in faults if f["segment"] == name]
             if ents:
-                for f in ents:
-                    for fm in (f.get("motors") or [f["motor"]]):
-                        cum_scale[fm] *= f["thrust_scale"]
-                new_all = {fm: {k: int(round(v * math.sqrt(cum_scale[fm]))) for k, v in nom_all[fm].items()} for fm in fmotors}
+                new_all = fault_apply(cum_scale, ents, nom_all)
                 k_om = math.sqrt(cum_scale[fmotors[0]])
                 t_req = sim.t
                 for fm in fmotors:
@@ -982,12 +994,10 @@ def main():
                 sp = (lambda sp0=sp: (sag_tick(), sp0() if sp0 else None))
             if loss and "duration_s" in loss and name == loss["start"]:
                 # timed eRPM loss (sim time): on at segment start + offset, off `duration_s` later, the rest of the segment as is
-                t_on, t_len = loss["start_offset_s"], loss["duration_s"]
-                for what, dt, bit in (("pre", t_on, None), ("loss", t_len, 1 << loss["motor"]), ("post", None, None)):
+                for what, d, bit in erpm_loss_split(dur, loss["start_offset_s"], loss["duration_s"], loss["motor"]):
                     if bit is not None:
                         sim.set_param("SIM_GZ_ERPM_LOSS", bit)
                         meta["erpm_loss"]["on_us"] = int(sim.t * 1e6)
-                    d = (dur - t_on - t_len) if dt is None else dt
                     if d > 0:
                         sim.run(d, sp=sp, what=f"scenario:{name}:{what}")
                     if what == "loss":
@@ -1031,6 +1041,12 @@ def main():
         if sim.sticks:
             sim.write_sticks()
             meta["sticks_csv"] = "sticks.csv"
+        dsum = os.path.join(a.out, "disturbance_summary.json")  # gust_x injector: vel-None ticks (F-3), absent for other profiles
+        if os.path.exists(dsum) and isinstance(meta.get("disturbance"), dict):
+            try:
+                meta["disturbance"]["injector"] = json.load(open(dsum))
+            except ValueError as e:
+                meta["disturbance"]["injector"] = {"error": f"unreadable disturbance_summary.json: {e}"}
         meta["wall_time_s"] = round(time.time() - t_wall0, 1)
         meta["exit_status"] = "ok" if ok else "failed"
         json.dump(meta, open(os.path.join(a.out, "run.json"), "w"), indent=1)

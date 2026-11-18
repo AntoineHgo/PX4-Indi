@@ -254,6 +254,12 @@ def main():
     def say(*m):
         print(time.strftime("%H:%M:%S"), *m, file=log)
 
+    def write_summary():
+        # read by run_scenario.py into run.json["disturbance"]["injector"]: a gust_x run with vel-None ticks is marked
+        if a.profile == "gust_x":
+            json.dump({"profile": a.profile, "vel_none_ticks": state["vel_none"], "updates": state["n"],
+                       "first_valid_vel_sim_s": state["vel_first_t"]}, open(os.path.join(a.out, "disturbance_summary.json"), "w"))
+
     node = Node()
     fn, dur = PROFILES[a.profile]
     wind_given = any(x is not None for x in (a.wind_steady, a.wind_peak, a.wind_dir))
@@ -318,7 +324,7 @@ def main():
 
     csv = open(os.path.join(a.out, "disturbance.csv"), "w", buffering=1)
     csv.write("sim_time_s,px4_time_s,fx,fy,fz,tx,ty,tz\n")
-    state = {"onset": None, "t": None, "ended": False, "last_pub": None, "n": 0, "stop": False, "t_end_sim": None, "vel_none": 0}
+    state = {"onset": None, "t": None, "ended": False, "last_pub": None, "n": 0, "stop": False, "t_end_sim": None, "vel_none": 0, "vel_first_t": None}
     wall0 = time.time()
 
     def apply(wr):
@@ -355,10 +361,14 @@ def main():
             state["ended"], state["t_end_sim"] = True, t
             pub_clear.publish(entity())
             say(f"profile ended at sim {t:.3f}, wrench cleared")
+            write_summary()
         else:
             if a.profile == "gust_x":  # air-relative drag: feed the vehicle ground-truth velocity (None until 2 pose samples)
                 wr = fn(tp, af, pv.vel)
                 state["vel_none"] += pv.vel is None
+                if pv.vel is not None and state["vel_first_t"] is None:
+                    state["vel_first_t"] = t
+                    write_summary()
             else:
                 wr = fn(tp, af)
             apply(wr)
@@ -381,7 +391,9 @@ def main():
             break
         time.sleep(0.2)
     pub_clear.publish(entity())
-    say(f"exit, {state['n']} wrench updates, {state['vel_none']} gust_x updates without a velocity (legacy force)")
+    say(f"exit, {state['n']} wrench updates, {state['vel_none']} gust_x updates without a velocity (legacy force), "
+        f"first valid velocity at sim {state['vel_first_t']}")
+    write_summary()
     csv.close()
     return 0
 
