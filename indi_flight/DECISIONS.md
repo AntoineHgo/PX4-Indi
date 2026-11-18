@@ -516,3 +516,11 @@ pre-identification behaviour of decision 3 must cover it).
   for G2 as a second injection point; injection in mc_pos_control (O-11 zero diff, excluded).
 - Overturn if: the AX = 0 flight is not bit-identical to the build without injector, or the measured L disagrees
   with the linear model beyond the G2 tolerance without an explained cause.
+- S84 addendum (D-G2-PINJ-OUT): MC_INDI_PINJ_PT 1 moves d to the stage output (u_o = t_c + d to the attitude
+  setpoint; library previous command set from the applied collective, setAppliedThrust). This break closes every
+  path through the plant input, so with a matched actuator model the INDI incremental terms cancel and L is
+  dominated by the outer loops; the INDI-specific part (mismatch, D-GAP blend) is read above ~3 Hz. Alternatives:
+  break inside the library between t_f and t_c (isolates INDI's mismatch loop but is not a physical loop-break
+  point), or none (G2 would lack the plant-input cell). Overturn if: the output-break L at crossover differs from
+  the input-break L by more than the G2 tolerance without an explained cause, or the second key finds the applied
+  command and the library state inconsistent.
