@@ -48,6 +48,8 @@ def test_ok_and_incomplete_outcomes():
     assert r.finalize(d, {"returncode": None, "timeout_s": 1.0}) == "incomplete"
     assert os.path.exists(os.path.join(d, "g3_failed.json")) and not os.path.exists(os.path.join(d, "g3_done.json"))
     assert json.load(open(os.path.join(d, "g3_failed.json")))["outcome"] == "incomplete"
+    d = _status_dir({"exit_status": "failed", "error": "crash"})   # K113 MINOR 5: rc 0 but run.json says failed
+    assert r.finalize(d, {"returncode": 0}) == "aborted"
 
 
 def argval(argv, flag):

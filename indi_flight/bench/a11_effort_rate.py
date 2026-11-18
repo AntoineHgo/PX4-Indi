@@ -54,7 +54,11 @@ def selftest():
 
 def run(d):
     from pyulog import ULog
-    w = json.load(open(os.path.join(d, "metrics.json")))["window"]
+    met = json.load(open(os.path.join(d, "metrics.json")))
+    if "window" not in met:  # K113 MINOR 6: aborted run, no scored window
+        print(f"{d}: skipped, metrics.json has no window (aborted run)")
+        return None
+    w = met["window"]
     ul = ULog(os.path.join(d, "flight.ulg"), ["actuator_motors"])
     am = ul.get_dataset("actuator_motors").data
     t = am["timestamp"] * 1e-6
@@ -73,5 +77,6 @@ if __name__ == "__main__":
         for d in sorted(glob.glob(os.path.join(root, "*", "r*"))):
             if os.path.exists(os.path.join(d, "flight.ulg")):
                 res[d] = run(d)
-                print(d, {k: round(v, 4) for k, v in res[d].items()})
+                if res[d] is not None:
+                    print(d, {k: round(v, 4) for k, v in res[d].items()})
     json.dump(res, open("results/a11_effort_rate.json", "w"), indent=1)

@@ -231,15 +231,15 @@ def command(argv):
 def classify(out, status):
     """Outcome of a finished runner call. 'ok'; 'aborted' = the flight ran and ended early (watchdog trip, crash, no
     ulog: run.json exit_status 'failed'); 'incomplete' = no verdict (timeout, runner died before writing run.json)."""
-    if status.get("returncode") == 0:
-        return "ok", None
     try:
         with open(os.path.join(out, "run.json")) as fh:
             rj = json.load(fh)
     except (OSError, ValueError):
-        return "incomplete", None
-    if rj.get("exit_status") == "failed":
+        rj = None
+    if rj is not None and rj.get("exit_status") == "failed":  # K113 MINOR 5: a failed run.json wins over rc 0
         return "aborted", rj
+    if status.get("returncode") == 0:
+        return "ok", rj
     return "incomplete", rj
 
 

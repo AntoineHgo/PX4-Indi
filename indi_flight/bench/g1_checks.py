@@ -100,6 +100,9 @@ def g13(set_dir):
         name = "/".join(r.split(os.sep)[-2:])
         meta = json.load(open(os.path.join(r, "run.json")))
         met = json.load(open(os.path.join(r, "metrics.json")))
+        if "window" not in met:  # K113 MINOR 6: an aborted run's metrics.json has no window; listed, not scored
+            print(f"| {name} | window.start_s | - | - | - | skipped: no window (exit_status {meta.get('exit_status')}) |")
+            continue
         # window start: ULog offboard anchor + 3 s (OFFBOARD_SETTLE_S), tolerance 1 ms (second_key_window.py TOL_MS)
         t2 = (first_offboard_us(os.path.join(r, "flight.ulg")) + 3_000_000) * 1e-6
         t1 = met["window"]["start_s"]
