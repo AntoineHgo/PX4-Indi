@@ -1260,6 +1260,174 @@ TEST(IndiRateControlBlendTest, LandedBlendTracksWithoutAccumulating)
 	EXPECT_NEAR(ctrl.getActuatorBlend()(0), gap, 1e-3f);
 }
 
+namespace
+{
+
+/// largest one cycle change of the fed back torque and of (t_f_meas + blend), the complementary sum
+struct BlendStepResult {
+	float max_step_tf{0.f};
+	float max_step_sum{0.f};
+};
+
+void blendCycle(IndiRateControl &ctrl, const Vector3f &alloc, const Vector3f &meas, bool valid, bool landed,
+		float &prev_tf, float &prev_sum, BlendStepResult &res, bool record)
+{
+	ctrl.setMeasuredTorque(meas, valid);
+	ctrl.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, landed);
+	const float tf = ctrl.getFilteredTorque()(0);
+	const float sum = ctrl.getFilteredMeasuredTorque()(0) + ctrl.getActuatorBlend()(0);
+
+	if (record) {
+		res.max_step_tf = fmaxf(res.max_step_tf, fabsf(tf - prev_tf));
+		res.max_step_sum = fmaxf(res.max_step_sum, fabsf(sum - prev_sum));
+	}
+
+	prev_tf = tf;
+	prev_sum = sum;
+}
+
+} // namespace
+
+// S77: telemetry loss and recovery with a standing gap (measured = 0.8 x model) must not step the fed back torque.
+// Tolerance 1e-3 normalised: 0.2 % of the 0.5 torque, 100x below the 0.1 gap that a snap failure would expose.
+TEST(IndiRateControlBlendTest, TelemetryRecoveryWithSteadyGapHasNoStep)
+{
+	const Vector3f alloc(0.5f, 0.f, 0.f);
+	const Vector3f meas(0.4f, 0.f, 0.f);
+	IndiRateControl ctrl = makeController();
+	ctrl.setActuatorBlendTimeConstant(1.f);
+	BlendStepResult res;
+	float tf = 0.f;
+	float sum = 0.f;
+
+	for (int i = 0; i < 4000; i++) { // 10 s, 10 Tb
+		blendCycle(ctrl, alloc, meas, true, false, tf, sum, res, false);
+	}
+
+	ASSERT_TRUE(ctrl.measurementInUse());
+	ASSERT_NEAR(ctrl.getActuatorBlend()(0), 0.1f, 2e-3f);
+	const float tf_converged = tf;
+
+	// loss for 200 cycles (0.5 s), then recovery including the kN cycle warm-up
+	for (int i = 0; i < 200; i++) {
+		blendCycle(ctrl, alloc, meas, false, false, tf, sum, res, true);
+		ASSERT_FALSE(ctrl.measurementInUse());
+	}
+
+	for (int i = 0; i < 4 * kN + 400; i++) {
+		blendCycle(ctrl, alloc, meas, true, false, tf, sum, res, true);
+	}
+
+	ASSERT_TRUE(ctrl.measurementInUse());
+	EXPECT_LT(res.max_step_tf, 1e-3f);
+	EXPECT_LT(res.max_step_sum, 1e-3f);
+	EXPECT_NEAR(tf, tf_converged, 2e-3f);
+}
+
+// S77: landed -> airborne with a standing gap: the blend holds the tracked gap, no step beyond the D-S3-LANDED ramp.
+TEST(IndiRateControlBlendTest, LandedToAirborneWithSteadyGapHasNoBlendStep)
+{
+	const Vector3f alloc(0.5f, 0.f, 0.f);
+	const Vector3f meas(0.4f, 0.f, 0.f);
+	IndiRateControl ctrl = makeController();
+	ctrl.setActuatorBlendTimeConstant(1.f);
+	BlendStepResult res;
+	float tf = 0.f;
+	float sum = 0.f;
+
+	for (int i = 0; i < 1200; i++) {
+		blendCycle(ctrl, alloc, meas, true, true, tf, sum, res, false);
+	}
+
+	ASSERT_TRUE(ctrl.measurementInUse());
+	const float gap = ctrl.getFilteredModelTorque()(0) - ctrl.getFilteredMeasuredTorque()(0);
+	ASSERT_GT(gap, 0.09f);
+	ASSERT_NEAR(ctrl.getActuatorBlend()(0), gap, 1e-6f);
+
+	// airborne: the blend and the complementary sum stay on the gap / the model for the whole transition
+	for (int i = 0; i < 400; i++) {
+		blendCycle(ctrl, alloc, meas, true, false, tf, sum, res, false);
+		ASSERT_NEAR(ctrl.getActuatorBlend()(0), gap, 1e-3f) << "cycle " << i;
+		ASSERT_NEAR(ctrl.getFilteredMeasuredTorque()(0) + ctrl.getActuatorBlend()(0),
+			    ctrl.getFilteredModelTorque()(0), 1e-3f) << "cycle " << i;
+	}
+}
+
+namespace
+{
+
+/// Roll plant with its own actuator lag (0.04 s, the controller assumes kActuatorTc) and a weak motor: the true torque
+/// is 0.8 x the actuator state. The controller is given the true torque as its measurement.
+class WeakMotorPlant
+{
+public:
+	WeakMotorPlant()
+	{
+		_lpf.set_cutoff_frequency(1.f / kDt, 40.f);
+		_alpha.setCutoffFreq(1.f / kDt, 20.f);
+	}
+
+	void step(float command, float disturbance)
+	{
+		_act += (1.f - expf(-kDt / 0.04f)) * (command - _act);
+		const float accel = kG1True * kEff * _act + disturbance;
+		_accel_f = _alpha.update(_lpf.apply(accel));
+		_rate += accel * kDt;
+	}
+
+	float rate() const { return _rate; }
+	float accelFiltered() const { return _accel_f; }
+	float trueTorque() const { return kEff * _act; }
+
+	static constexpr float kEff = 0.8f;
+
+private:
+	math::LowPassFilter2p<float> _lpf;
+	AlphaFilter<float> _alpha;
+	float _act{0.f};
+	float _accel_f{0.f};
+	float _rate{0.f};
+};
+
+/// mean rate over the last second after 10 s of zero rate setpoint with a constant -20 rad/s^2 disturbance
+float weakMotorRateError(float blend_tc)
+{
+	IndiRateControl ctrl = makeController();
+	ctrl.setActuatorBlendTimeConstant(blend_tc);
+	WeakMotorPlant plant;
+	float command = 0.f;
+	float err_sum = 0.f;
+	int err_n = 0;
+
+	for (int i = 0; i < 4000; i++) {
+		ctrl.setMeasuredTorque(Vector3f(plant.trueTorque(), 0.f, 0.f), true);
+		command = ctrl.update(Vector3f(plant.rate(), 0.f, 0.f), Vector3f(), Vector3f(plant.accelFiltered(), 0.f, 0.f),
+				      Vector3f(command, 0.f, 0.f), kDt, false)(0);
+		plant.step(command, -20.f);
+
+		if (i >= 3600) {
+			err_sum += plant.rate();
+			err_n++;
+		}
+	}
+
+	return err_sum / err_n;
+}
+
+} // namespace
+
+// S77 (lesson 9): the measured actuator state already contains the weak motor, so without the blend the INDI
+// increment cancels the integral action and leaves a standing rate error. With tb = 1 s the model carries the low
+// frequencies and the error vanishes.
+TEST(IndiRateControlBlendClosedLoopTest, WeakMotorStandingErrorRemovedByBlend)
+{
+	const float err_blend = weakMotorRateError(1.f);
+	const float err_off = weakMotorRateError(0.f);
+	printf("weak motor rate error: tb=1 %g, tb=0 %g\n", (double)err_blend, (double)err_off);
+	EXPECT_LT(fabsf(err_blend), 0.01f);
+	EXPECT_GT(fabsf(err_off), 0.1f);
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // Rate prediction lead (D-RATE-LEAD): num_i = nu_i - (1 + c_i) a_f_i + ..., c_i = lead K_i tau_c, 0 on ground, <= 2
 // ---------------------------------------------------------------------------------------------------------------
