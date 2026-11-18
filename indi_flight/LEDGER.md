@@ -96,3 +96,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | T193 | S91 | sonnet | second key of ratesp_csv.py | AGREE WITH MINOR |
 | T194 | S93 | sonnet | attitude-break linear model + tests + table | 16 calls, ~$0.45 | DONE |
 | T195 | S93 | sonnet | key: outer-loop factor from firmware | 9 calls, ~$0.25 | DONE agrees |
+| RC93 | S93 | sonnet | route check 93 | 6 calls, ~$0.15 | DONE |

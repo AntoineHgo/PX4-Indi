@@ -28,9 +28,11 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    S93 (launch 20261118-091231, cap $3): attitude-break model + outer-loop factor (T194, T195): PM matches measured
    within 0.3 deg; GM model 1.6-4.6 dB conservative (A-36 residue, linked A-35); PID model-only ref in
    results/stage5_s91_attbreak/model_vs_measured.md.
-   NEXT S94: (1) route check 94 (sonnet, due). (2) G2 report section (outer z+xy+attitude, with model cross-check
-   and A-36 caveat) + G5 text (sonnet draft, needs cap >= ~$1.5). (3) combined opus review (~$1.1, launch first in
-   a session with cap >= $2.5). M3 PT-change still UNVERIFIED. Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36.
+   RC93 (design/route_check_93.md, accepted): stop model refinement, tooling keys, cosmetic re-flies; A-36 residue
+   accepted as conservative and bounded. NEXT S94: (1) G2 report section (outer z+xy+attitude, model cross-check,
+   A-36 caveat), sonnet draft, 1 session. S95: G3-G8 + G5 test text in GATES.md, then combined opus review (~$1.1,
+   launch first, cap >= $2.5). S96-S97: yaw cell + first identification slice (decision 3; G6 depends on it).
+   M3 PT-change UNVERIFIED. Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36. Next route check S98.
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
 | id | task | agent | output | resume |
