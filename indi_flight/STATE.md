@@ -23,24 +23,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    S72-S80 (D-GAP, D-RATE-BLD accepted, A-34/A-35 parked, RC74/RC79): JOURNAL.md. Rule (RC74): no new anomaly
    chase unless a gate test fails, one session cap each. Flights no longer need MC_INDI_ACT_BLD 1.0 (default).
    S82-S85 session notes: JOURNAL.md (moved S86). Guard note: use `git commit -F <scratch file>` for long messages.
-   S86 (launch 20261118-050243, cap $3): T179 hole_report fixes DONE 98e977a9f0; G2 outer runner
-   results/stage5_s86_g2outer/fly.sh (README: findings 1-3); z cells PM 62.8-63.7 deg; G2 cells fly ONE AT A TIME
-   (parallel -> holes); xy no-crossover = top_db misread (T181 UNKEYED); attitude-break note design/attitude_break_s86.md
-   (T180, unreviewed; check its L_att identity: L_att = A L_rate/(1+L_rate) expected).
-   S87 (launch 20261118-051310): T182 count fix c5b5a897e9 + T184 key AGREE WITH MINOR; T183 key of T181 AGREE;
-   xy re-fly B87 (stage5_s87_xy, hover_xlong 150 s, AMP 0.08 TP 20).
-   S88 (launch 20261118-053836, cap $1.75): (1)(3) done (T186, T187, D-HOLE-EXCESS); (2) B88 done; T188 key closed.
-   S89 (launch 20261118-054540, cap $1.05): B88 metrics committed 51a0a42817; T189 all serial G2 outer cells PASS
-   hole_report (3 FAIL = S86 parallel pre-test, not evidence); D-HOLE-FREEZE; RC89 (design/route_check_89.md): STOP
-   tooling, cosmetic re-flies, anomaly chases.
-   S90 (launch 20261118-081145, cap $3): attitude break (MC_INDI_INJ_PT 1, amp MC_INDI_INJ_RAMP) implemented
-   b41dd6ec81 + fix 2bed1ae95a (T191 key: 3 MAJOR resolved, design/attitude_break_s90_key.md); 7/7 Indi suites pass,
-   SITL builds. Check script bench/attitude_break_check.py (self-test 6/6, never run on a real ULog).
-   S91 (launch 20261118-082350, cap $1.98): attitude-break pre-test PASS (RAMP 0.06; roll 400 Hz PM 56.6 GM 22.0
-   f_c 1.32, delay margin 0.119 s); extractor bbb52f0982 keyed; B91c 6 cells DONE 9d28ea5b0a: PM 56.6-73.8,
-   GM 21.9-34.3 dB, all checks/holes PASS (table in stage5_s91_attbreak/README.md).
-   S92 (launch 20261118-083617, cap $1.28): 267 Hz reported roll cell DONE 259cb251d0 (PM 55.5, GM 21.8; holes
-   count-disagree flag only, not re-flown). No agent launched (cap below 2x sonnet cost).
+   S86-S92 (G2 outer z/xy cells, attitude-break fw + cells 267/400/800 Hz all PASS, RC89: STOP tooling,
+   cosmetic re-flies, anomaly chases): JOURNAL.md. Check script bench/attitude_break_check.py; ratesp_csv.py keyed.
    NEXT S93: (1) attitude break: linear-model cross-check (note sec 5, sonnet), PID reference at the same break
    (note sec 4); M3 PT-change still UNVERIFIED. Needs a launch cap >= ~$2.
    (2) G2 report section (outer z+xy+attitude) + G5 text;
@@ -50,16 +34,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 (S72-S78 rows done, details in JOURNAL.md; A-34/A-35 rows and S76 D-RATE-BLD line are recorded.)
-| B87 | xy cells AMP 0.08 TP 20 hover_xlong, serial | host | results/stage5_s87_xy/ (fly.sh PT AX RATE SEED) | DONE 30c012bc7c: 16 cells PM 49.7-64.8, GM 18.2-19.3 dB, f_c 0.27-0.34 Hz; holes 15/16 after re-fly 66589220a9 (pt0_ax2_r400_s1: count check + 89 Hz limit, tool fix S88) |
-| T185 | review attitude-break note vs code | sonnet | design/attitude_break_s86_review.md | DONE: 0 BLOCKING, 2 MAJOR (add call-site test at McIndiRateControl.cpp:231; replace circular x-y-d check by logged rate_sp_dot vs derivative of logged x), 10 MINOR (gate off in ACRO; use hover_xlong; outer loop closed below ~0.3 Hz). Amend note, then implement |
-| T189 | S89 hole_report re-run | haiku | results/stage5_s85_holes/rerun_s89.md | DONE: serial cells all PASS |
-| RC89 | route check 89 | sonnet | design/route_check_89.md | DONE |
-| T190 | S90: amend attitude-break note (sec 8) + implement PT=1 rate-sp break | sonnet | design/t190_impl_log.md | DONE b41dd6ec81 fw, d7bb0e7bd9 check script, 947d510823 note; 7/7 Indi test suites pass (Docker, re-run by orchestrator). UNVERIFIED: check script on real ULog, AX=0 real-log bit-identity |
-| T191 | second key of b41dd6ec81 vs note | sonnet | design/attitude_break_s90_key.md | DONE: 0 BLOCKING, 3 MAJOR fixed 2bed1ae95a |
-| B91 | S91 attitude-break pre-test, roll 400 Hz, RAMP 0.03/0.06 | host | results/stage5_s91_attbreak/README.md | DONE 5da12a76d8: PASS for RAMP 0.06, PM 56.6 GM 22.0 f_c 1.32 |
-| T192/T193 | ratesp_csv.py extractor + key | sonnet | design/t193_ratesp_key.md | DONE bbb52f0982, AGREE WITH MINOR (interior d==0 gaps not counted) |
-| B91c | attitude cells ax2/3 r400, ax1-3 r800, RAMP 0.06, serial | host | results/stage5_s91_attbreak/README.md | DONE 9d28ea5b0a |
-| B92 | S92 (launch 20261118-083617, cap $1.28): 267 Hz reported roll cell (D-RATE267), RAMP 0.06 | host | results/stage5_s91_attbreak/README.md | DONE 259cb251d0 |
+(S86-S92 rows B87, T185, T189, RC89, T190, T191, B91, T192/T193, B91c, B92 all DONE: JOURNAL.md S93 entry.)
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
