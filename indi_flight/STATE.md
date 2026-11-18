@@ -16,10 +16,11 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    (2) Bench defect N1 C2 (disturbance.py payload_add/com_shift/gust sized for x500): take mass/drag from the flown
    model, G1.5 check per profile. (3) Check the 'NOT FOUND' hooks of the draft (loop delay, GNSS latency, vibration)
    against stage-1 sim work before building. (4) G2-STEP 400 Hz reported run DONE S64 (9/9 within limits, A-30 seed spread parked).
-   S95 DONE: combined review T198/T199 (rows below). NEXT S96 (replaces old S96 plan, hooks move to S97):
-   (a) adjudicate T199 BLOCKING with a unit test asserting thrust continuity at bypass->active and telemetry-return
-   edges (sonnet, write test first, break-check); (b) fix the confirmed T199 MAJORs + T123 filter reset; (c) stage-3
-   item 5 autotune start (rc.mc_apps, MC_INDI_EN) + watchdog receipt time; second key on each. Freeze waits on these.
+   S96 DONE: T199 BLOCKING confirmed + all 5 findings fixed (T200), autotune/watchdog (T201); second key T202.
+   NEXT S97: (a) act on T202 findings; (b) F-2: INDI serves ALTCTL by adding flag_control_climb_rate_enabled to
+   want_indi (T200 log sec F3 says the stage only needs finite a_c) + zero the stock integral on the cycle INDI
+   becomes active (residue); (c) 2-flight SITL pre-test: thrust-gap hover 0.85 in POSCTL and ALTCTL + MC_INDI_EN=1
+   MC_AT_EN=1 start check; then the sim hooks (old S96 plan below), yaw cell, identification slice.
    (5) attitude-break margin with the new setpoint path (G2) when the G2 table is resumed.
    Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
    S65-S68 session notes: JOURNAL.md (S69 entry).
@@ -52,8 +53,9 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T197 | S94: G3-G8 final test-text proposal + hook check | sonnet | design/gates_g3_g8_final_s94.md | DONE 18af6e3a66 (8 decisions in GATES.md) |
 | T198 | S95 (launch 20261118-093647): opus review stage-3 safety items code vs design/stage3_items_note.md + D-S3-* | opus | design/review_s95_stage3_safety.md | DONE: NOT BLOCKING; MAJOR item 5 autotune start never coded (rc.mc_apps starts autotune with INDI on); MINOR: watchdog uses publisher stamp (use receipt time), PID-after-INDI start not refused, no start-refusal test |
 | T199 | S95: opus review D-GAP + landed/take-off handling in mc_indi_pos_control/indi_accel_control vs DECISIONS D-GAP | opus | design/review_s95_stage5_slice.md | DONE: BLOCKING (bypass->active edge thrust step of b, :252-255), 4 MAJOR (step on telemetry return :291 accel lib; gap not removed in altitude mode; anti-windup ignores mean_u limit; T123 filter-reset bug unfixed), MINOR tb=0 erases b; no tests. Orchestrator spot-check S95: :252 passes _coll_meas when fresh_thr, so BLOCKING may be misread -> adjudicate first in S96 |
-| T200 | S96 (launch 20261118-094323): T199 BLOCKING CONFIRMED by orchestrator (_coll_meas = vehicle_thrust_setpoint, commanded, passed as mean_u). Fix findings 1,2,4,5 + 3 (integrator reset only when INDI ran) in indi_accel_control + mc_indi_pos_control, tests first with break-checks | sonnet | design/t200_dgap_fixes_log.md | in flight |
-| T201 | S96: stage-3 item 5 autotune not started with MC_INDI_EN=1 (rc.mc_apps) + rate watchdog on receipt time | sonnet | design/t201_autotune_watchdog_log.md | in flight |
+| T200 | S96 (launch 20261118-094323): T199 BLOCKING CONFIRMED by orchestrator (_coll_meas = vehicle_thrust_setpoint, commanded, passed as mean_u). Fix findings 1,2,4,5 + 3 (integrator reset only when INDI ran) in indi_accel_control + mc_indi_pos_control, tests first with break-checks | sonnet | design/t200_dgap_fixes_log.md | DONE bf44ece093 (diff read; 5 new tests fail-before/pass-after; module side F3-F5 compile-only; residue: stock integral in a_ref on the 1st active cycle after bypass; ALTCTL not served by INDI: F-2 open item, note in log) |
+| T202 | S96: second key on bf44ece093 vs review findings 1-5 | sonnet | design/t202_dgap_fix_key.md | in flight |
+| T201 | S96: stage-3 item 5 autotune not started with MC_INDI_EN=1 (rc.mc_apps) + rate watchdog on receipt time | sonnet | design/t201_autotune_watchdog_log.md | DONE b7a171b4b5 4385e8f56a (diff read by orchestrator; SITL start test MC_INDI_EN=1 MC_AT_EN=1 not run; start-refusal test needs SITL shell, open) |
 | T195 | key of A-36: independent outer-loop factor from firmware source + flown params | sonnet | design/t195_att_outer_key.md | DONE: agrees; O(s) in margins_models 9df899212c; PM within 0.3 deg, GM residue open (A-36) |
 
 ## Open problems
