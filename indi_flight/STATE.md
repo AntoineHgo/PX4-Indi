@@ -29,8 +29,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    (T180, unreviewed; check its L_att identity: L_att = A L_rate/(1+L_rate) expected).
    S87 (launch 20261118-051310): T182 count fix c5b5a897e9 + T184 key AGREE WITH MINOR; T183 key of T181 AGREE;
    xy re-fly B87 (stage5_s87_xy, hover_xlong 150 s, AMP 0.08 TP 20).
-   S88 (launch 20261118-053836, cap $1.75): (1)(3) done (T186, T187, D-HOLE-EXCESS); (2) re-fly B88 in flight.
-   NEXT S89: close T188 key; record B88 results in s86/s87 READMEs and commit cell metrics; route check 89; then
+   S88 (launch 20261118-053836, cap $1.75): (1)(3) done (T186, T187, D-HOLE-EXCESS); (2) B88 done; T188 key closed.
+   NEXT S89: re-run hole_report (688f198ab2) on the 28 G2 cells, host idle; route check 89; then
    (4) act on T185 review of attitude-break note, then implement; then G2 report + G5 text; then combined opus review. Deferred anomalies: A-4, A-6, A-30, A-32, A-34, A-35. Next route check S89.
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
@@ -49,7 +49,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T186 | S88 hole_report raw-gap + excess limit (D-HOLE-EXCESS) | sonnet | results/stage5_s85_holes/fixes_s88.md | DONE dd9dd0705e: s86 pt0_ax3_r800_s2 FAIL->PASS, 27 unchanged |
 | T187 | rename top_db -> last_bin_db | haiku | margins_est.py | DONE 5243e845b9 (README rewrite reverted, kept S87 one) |
 | T188 | second key of T186 (code vs spec) | haiku | results/stage5_s85_holes/second_key_s88.md | DONE: AGREE WITH MINOR; slow-topic escape fixed 688f198ab2 (test S88d). Open minors: max_excess under-reported below 1.5x median (report only); median-0 topic -> OverflowError at hole_report.py:58 (loud). S89: re-run hole_report on 28 cells (host idle, no flight running) |
-| B88 | re-fly s86 pt1_ax3_r800_s2 then s87 pt0_ax2_r400_s1 (old outputs in holes_fail_s87/) | host | results/stage5_s87_xy/refly_s88.log | S88 launched; if cut: re-run both fly.sh lines serially, check *_holes.txt OVERALL |
+| B88 | re-fly s86 pt1_ax3_r800_s2, s87 pt0_ax2_r400_s1 | host | READMEs of s86/s87 | DONE e73e39e9ec: both holes PASS, PM 59.6 / 56.6 deg (unkeyed) |
 | T183 | second key of T181 (xy FRF from CSVs) | haiku | results/stage5_s86_g2outer/t183_second_key.md | DONE d2b66bf3ae: AGREE |L|, PM 54-56; f_c 0.27-0.33 Hz |
 
 ## Open problems
