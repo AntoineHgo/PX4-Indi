@@ -32,6 +32,7 @@
  ****************************************************************************/
 
 #include "McIndiRateControl.hpp"
+#include "IndiInjectionStep.hpp"
 
 #include <drivers/drv_hrt.h>
 #include <mathlib/math/Limits.hpp>
@@ -108,7 +109,9 @@ McIndiRateControl::parameters_updated()
 	_rate_sp_watchdog.setTimeout(_param_mc_indi_sp_to.get());
 
 	// bench-only loop-break excitation, rebuilt only when one of its values changed
-	_injection.setParameters(_param_mc_indi_inj_ax.get(), _param_mc_indi_inj_amp.get(), _param_mc_indi_inj_tp.get(),
+	// PT 1 (rate setpoint, rad/s) takes its amplitude from MC_INDI_INJ_RAMP, MC_INDI_INJ_AMP (torque) is ignored then
+	const float inject_amp = (_param_mc_indi_inj_pt.get() == 1) ? _param_mc_indi_inj_ramp.get() : _param_mc_indi_inj_amp.get();
+	_injection.setParameters(_param_mc_indi_inj_ax.get(), inject_amp, _param_mc_indi_inj_tp.get(),
 				 _param_mc_indi_inj_fmin.get(), _param_mc_indi_inj_fmax.get(), _param_mc_indi_inj_np.get(), _param_mc_indi_inj_dly.get());
 
 	// the actuator model filter must match the sensor filter chain of the angular acceleration
@@ -227,26 +230,31 @@ McIndiRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f &ang
 				       && torque_measured.isAllFinite();
 	_indi.setMeasuredTorque(torque_measured, measurement_valid);
 
-	// c: controller output
-	const Vector3f torque_setpoint_pre_inject = _indi.update(rates, _rates_setpoint, angular_accel, torque_allocated_prev, dt,
-			landed, maybe_landed);
-
-	// d: bench loop-break excitation on one axis, not computed (u == c) when MC_INDI_INJ_AX is 0
-	Vector3f inject{};
-	const int inject_axis = _injection.axis();
-
-	if (inject_axis >= 0) {
-		inject(inject_axis) = _injection.update(timestamp_sample, armed, landed);
-	}
+	// c: controller output and bench loop-break excitation d (torque setpoint or rate setpoint, MC_INDI_INJ_PT)
+	IndiInjectionStepIn step_in{};
+	step_in.point = _param_mc_indi_inj_pt.get();
+	step_in.armed = armed;
+	step_in.landed = landed;
+	step_in.maybe_landed = maybe_landed;
+	step_in.rate_sp_break_allowed = !_rate_sp_stale && _vehicle_control_mode.flag_control_attitude_enabled;
+	step_in.timestamp_sample = timestamp_sample;
+	step_in.dt = dt;
+	IndiInjectionStepOut step{};
+	runIndiInjectionStep(_indi, _injection, step_in, rates, _rates_setpoint, angular_accel, torque_allocated_prev, step);
 
 	// u = c + d: the published setpoint and the stored previous setpoint, so every feedback path closes through u
-	const Vector3f torque_setpoint = torque_setpoint_pre_inject + inject;
+	const Vector3f torque_setpoint_pre_inject = step.torque_pre_inject;
+	const Vector3f inject = step.torque_inject;
+	const Vector3f torque_setpoint = step.torque_sp;
 
 	indi_rate_status_s indi_rate_status{};
 	indi_rate_status.timestamp_sample = timestamp_sample;
 	torque_setpoint_pre_inject.copyTo(indi_rate_status.torque_sp_pre_inject);
 	inject.copyTo(indi_rate_status.inject);
 	torque_setpoint.copyTo(indi_rate_status.torque_sp);
+	step.rates_sp_pre_inject.copyTo(indi_rate_status.rates_sp_pre_inject);
+	step.rates_sp_inject.copyTo(indi_rate_status.rates_sp_inject);
+	step.rates_sp_applied.copyTo(indi_rate_status.rates_sp_applied);
 	_indi.getNu().copyTo(indi_rate_status.nu);
 	_indi.getLeadGain().copyTo(indi_rate_status.lead_gain);
 	_indi.getRateSpDot().copyTo(indi_rate_status.rate_sp_dot);

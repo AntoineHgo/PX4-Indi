@@ -220,6 +220,8 @@ private:
 		(ParamFloat<px4::params::MC_INDI_INJ_FMIN>) _param_mc_indi_inj_fmin,
 		(ParamFloat<px4::params::MC_INDI_INJ_FMAX>) _param_mc_indi_inj_fmax,
 		(ParamInt<px4::params::MC_INDI_INJ_NP>) _param_mc_indi_inj_np,
-		(ParamFloat<px4::params::MC_INDI_INJ_DLY>) _param_mc_indi_inj_dly
+		(ParamFloat<px4::params::MC_INDI_INJ_DLY>) _param_mc_indi_inj_dly,
+		(ParamInt<px4::params::MC_INDI_INJ_PT>) _param_mc_indi_inj_pt,
+		(ParamFloat<px4::params::MC_INDI_INJ_RAMP>) _param_mc_indi_inj_ramp
 	)
 };

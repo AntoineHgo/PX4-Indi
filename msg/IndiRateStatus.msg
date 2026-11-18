@@ -18,6 +18,11 @@ float32[3] torque_sp_pre_inject		# c: INDI controller output (normalised torque)
 float32[3] inject			# d: injected excitation (normalised torque)
 float32[3] torque_sp			# u = c + d, before the non-finite guard of the published vehicle_torque_setpoint
 
+# bench attitude loop break (MC_INDI_INJ_PT 1): x = y + d is the rate setpoint the INDI law received, all zero otherwise
+float32[3] rates_sp_pre_inject		# y: rate setpoint held in the module (rad/s)
+float32[3] rates_sp_inject		# d: injected excitation (rad/s)
+float32[3] rates_sp_applied		# x = y + d (rad/s)
+
 bool rate_sp_stale			# no vehicle_rates_setpoint within MC_INDI_SP_TO while armed: rate setpoint zeroed, thrust held
 
 bool foreign_torque_pub			# a vehicle_torque_setpoint not published by this module was received (second rate controller)
