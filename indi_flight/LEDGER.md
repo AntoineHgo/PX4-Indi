@@ -129,3 +129,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | B107 | S107 | sonnet | attitude-break G2 cells at HEAD (6 flights) | 13 calls, ~35k tok, ~$0.5 | DONE 8ec7d4a95b: 6/6 PASS |
 | Y107b | S107 | sonnet | yaw model second key + 8-cell cross-check (offline) | 32 calls, ~75k tok, ~$0.6 | DONE design/g2_yaw_crosscheck_s107.md, A-39 |
 | RC108 | S107 | sonnet | route check (filed early) | 5 calls, ~33k tok, ~$0.15 | DONE design/route_check_108.md, accepted with amendment (G3/G5 before freeze = probes) |
+| D107 | S107 | sonnet | draft G2 verdict update (no edits to GATES.md) | 7 calls, ~37k tok, ~$0.15 | DONE design/g2_verdict_s108_draft.md |

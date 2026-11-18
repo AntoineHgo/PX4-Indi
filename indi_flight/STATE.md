@@ -44,6 +44,7 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 | K107 | S106: second key of fix 99673b62bd (read-only) | sonnet | design/gnss_delay_fix_key_s106.md | DONE: no BLOCKING; MINOR overflow releases not in age0 range (accepted, overflow counted); astyle clean |
 | Y107 | S107: yaw linear model in margins_models.py + 8 yaw cells cross-check (offline) | sonnet | design/g2_yaw_crosscheck_s107.md | DONE (Y107b, 2nd key of model: law VERIFIED, 0 BLOCKING): model-only 4/4 in tol; measured 1/4 in tol -> A-39. margins_of hangs if ts_true=0 (tool defect, open) |
 | B107 | S107: attitude-break cells (vi) at HEAD, pretest 1 cell then 5 | sonnet | results/g2_attbreak_s107/README.md | DONE 8ec7d4a95b: 6/6 PASS (PM>=56.8, GM>=22 dB, DM>=0.118 s), dPM<=0.5 vs S91 |
+| D107 | S107: DRAFT G2 verdict update (rate+yaw+attitude) for S108 review; does not edit GATES.md | sonnet | design/g2_verdict_s108_draft.md | DONE draft (10 UNVERIFIED). S108: review, then GATES.md. Gate asks worst of 2 runs: attitude S107 cells are 1 seed -> fly seed 2 (6 flights) |
 | A103 | S103: A-37 test (a9e5066a55), hover d5/d10 | host bg | results/a37_actlag_s103/README.md | DONE: A-37 closed |
 S102 finding: (ii) PID M1 has NO recipe: the gyro-break hook (`sim_inject`, design/stage2_margins_s35.md l.21) was never built.
   PID reference is F-5 reference only -> deferred behind (iv); build the M1 hook later in gz_bridge IMU callback beside A2.
