@@ -90,3 +90,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | T188 | S88 | haiku | second key T186 | done, AGREE WITH MINOR |
 | T189 | S89 | haiku | hole_report re-run 26 cells | rerun_s89.md | done |
 | RC89 | S89 | sonnet | route check 89 | design/route_check_89.md | done |
+| T190 | S90 | sonnet | amend attitude-break note + implement injector, call-site test, check script | design/t190_impl_log.md | running |
