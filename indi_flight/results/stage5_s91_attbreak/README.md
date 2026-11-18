@@ -30,9 +30,20 @@ Delay margin (PM / (360 f_c)): 0.119 s. Unverified: gate restart on a PT change 
 | roll | 800 | 57.3 | 21.9 | 1.319 | 0.121 | 0.880 | PASS | PASS |
 | pitch | 800 | 58.1 | 21.9 | 1.311 | 0.123 | 0.931 | PASS | PASS |
 | yaw | 800 | 73.8 | 33.9 | 0.454 | 0.452 | 1.000 | PASS (rate_sp_dot SKIP on yaw) | PASS |
+| roll | 267 (reported, S92) | 55.5 | 21.8 | 1.364 | 0.113 | not computed | PASS | FAIL (count-disagree flag only, see below) |
 
 All six cells are above the G2 thresholds (GM >= 6 dB, PM >= 45 deg, delay margin >= 2 periods + telemetry latency,
 i.e. a few ms). All windows are 50.0 s and max |x-y-d| is 3e-8. Limits: the attitude loop is measured with the
 outer loops closed (open question 2 of design/attitude_break_s86.md); there is no linear-model cross-check yet
-(note sec 5); no PID reference at this break (note sec 4); 250 Hz not flown; one seed. Roll at 800 Hz has
+(note sec 5); no PID reference at this break (note sec 4); 250 Hz reported point flown at 267 Hz (D-RATE267) for roll only; one seed. Roll at 800 Hz has
 coherence 0.88 < 0.9 at the lowest bins of the decade, which are far from crossover.
+
+## S92: 267 Hz reported cell (batch267.sh)
+
+Roll, 800/3 = 266.7 Hz (D-RATE267; the runner rejects 250), RAMP 0.06, seed 1, same firmware and pipeline as
+batch.sh. PM 55.5 deg, GM 21.8 dB, f_c 1.364 Hz, delay margin 0.113 s (30 periods), window 50.0 s, max gap
+0.0005 periods, max |x-y-d| 3e-8, check PASS. hole_report OVERALL FAIL comes only from the count-disagree flag on
+vehicle_torque_setpoint and actuator_motors: 2 intervals of 6.25 ms (5 physics steps instead of 3) with 0 messages
+missing by count, i.e. timestamp jitter, no lost controller output; all missing-% and excess limits pass. Not
+re-flown (RC89: no cosmetic re-flies); the cell is reported, not a pass cell. Coherence not computed.
+Margins move little from 400 to 267 Hz (PM 56.6 -> 55.5 deg), as expected with crossover at 1.3 Hz.
