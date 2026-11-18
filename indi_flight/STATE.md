@@ -25,16 +25,20 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    S82-S85 session notes: JOURNAL.md (moved S86). Guard note: use `git commit -F <scratch file>` for long messages.
    S86-S92 (G2 outer z/xy cells, attitude-break fw + cells 267/400/800 Hz all PASS, RC89: STOP tooling,
    cosmetic re-flies, anomaly chases): JOURNAL.md. Check script bench/attitude_break_check.py; ratesp_csv.py keyed.
-   NEXT S93: (1) attitude break: linear-model cross-check (note sec 5, sonnet), PID reference at the same break
-   (note sec 4); M3 PT-change still UNVERIFIED. Needs a launch cap >= ~$2.
-   (2) G2 report section (outer z+xy+attitude) + G5 text;
-   (3) combined opus review. Deferred anomalies: A-4, A-6, A-30, A-32, A-34, A-35. Next route check S94.
+   S93 (launch 20261118-091231, cap $3): attitude-break model + outer-loop factor (T194, T195): PM matches measured
+   within 0.3 deg; GM model 1.6-4.6 dB conservative (A-36 residue, linked A-35); PID model-only ref in
+   results/stage5_s91_attbreak/model_vs_measured.md.
+   NEXT S94: (1) route check 94 (sonnet, due). (2) G2 report section (outer z+xy+attitude, with model cross-check
+   and A-36 caveat) + G5 text (sonnet draft, needs cap >= ~$1.5). (3) combined opus review (~$1.1, launch first in
+   a session with cap >= $2.5). M3 PT-change still UNVERIFIED. Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36.
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 (S72-S78 rows done, details in JOURNAL.md; A-34/A-35 rows and S76 D-RATE-BLD line are recorded.)
 (S86-S92 rows B87, T185, T189, RC89, T190, T191, B91, T192/T193, B91c, B92 all DONE: JOURNAL.md S93 entry.)
+| T194 | S93 (launch 20261118-091231, cap $3): attitude-break linear model L_att_indi/L_att_pid + identity self-test + model-vs-measured table (note sec 5) | sonnet | design/t194_att_model_log.md, results/stage5_s91_attbreak/model_vs_measured.md | DONE 85fb907177 f38ecf5ba3: tests 5/5; model PM ~15 deg above measured -> A-36; S93 outer-loop factor O(s) brings delta to 2-3 deg (unkeyed) |
+| T195 | key of A-36: independent outer-loop factor from firmware source + flown params | sonnet | design/t195_att_outer_key.md | DONE: agrees; O(s) in margins_models 9df899212c; PM within 0.3 deg, GM residue open (A-36) |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);

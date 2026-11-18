@@ -771,3 +771,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
   | T192/T193 | ratesp_csv.py extractor + key | sonnet | design/t193_ratesp_key.md | DONE bbb52f0982, AGREE WITH MINOR (interior d==0 gaps not counted) |
   | B91c | attitude cells ax2/3 r400, ax1-3 r800, RAMP 0.06, serial | host | results/stage5_s91_attbreak/README.md | DONE 9d28ea5b0a |
   | B92 | S92 (launch 20261118-083617, cap $1.28): 267 Hz reported roll cell (D-RATE267), RAMP 0.06 | host | results/stage5_s91_attbreak/README.md | DONE 259cb251d0 |
+- S93 (2026-11-18): attitude-break linear model L_att_indi/L_att_pid (85fb907177, T194); model PM 15 deg high -> A-36; closed outer loop O(s) derived independently (T195) and added (9df899212c): PM within 0.3 deg of all roll cells, GM residue 1.6-4.6 dB (model conservative) kept open; PID model-only reference at the break recorded (7b328f45a4 and following).

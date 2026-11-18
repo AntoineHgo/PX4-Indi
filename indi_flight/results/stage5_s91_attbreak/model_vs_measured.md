@@ -95,3 +95,9 @@ the flown params; the INDI acceleration increment adds no small-signal path. Imp
 PM is explained by the outer loop. The GM residue (model 1.6-4.6 dB lower than measured, i.e. conservative, growing as
 the rate falls) stays open under A-36. It is probably the rate-loop model's phase-shape error A-35 near the phase
 crossover, not yet shown. Both values are far above the 6 dB threshold. Yaw: not modelled.
+
+### PID reference at the same break (model only, not measured; note sec 4)
+
+L_att_pid with MC_ROLLRATE_P/I/D 0.03/0.06/0.0006, att_p 8, G1 1757 (flown MC_INDI_G1_R, same normalised-torque
+plant), x O(s), roll: 267 Hz PM 55.7 / GM 13.2 dB; 400 Hz 56.9 / 14.0; 800 Hz 58.1 / 14.9 (without O: 70.9-73.0 deg,
+14.9-16.7 dB). The PID model inherits the A-35/A-36 caveats; the PID rate-loop model was not yet compared with measured PID data at this G1.
