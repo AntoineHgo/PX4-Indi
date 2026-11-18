@@ -3,7 +3,7 @@
 ## Status
 - Stage: 3 (inner loop) opened S49; stage 2 (analysis tools, margins) from S36; stage 1 frozen S36 (G1 FINAL). Started S1 (2026-11-15). Stage 0 done. Session 3: ref airframe model done.
 - Gates: G1 PASSED S84 (owner S50 rule; G1.5 per injector, evidence limits) | G2 open (cell table in GATES.md) | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open.
-- Blocker: none. QUESTIONS.md empty (Q1-Q5, N1, N2 closed). Outer-loop study finished; stage 5 = base A
+- Blocker: none. Q6 OPEN (ident concept, not blocking). Q1-Q5, N1, N2 closed. Outer-loop study finished; stage 5 = base A
   (`design/flatness_r2.md`: flatness = optional increment after base A).
 ## Next actions (in order)
 History: JOURNAL.md (S100-S115 entries hold the recent moves). Agent ledger: LEDGER.md. Lessons proposed:
@@ -39,15 +39,12 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-S118: pilot 880a83c63b (I118 + K118 key 0 BLOCKING/2 MAJOR + F118 fixes, 12 tests). v0 flight (pilot only in
-  stick segment) tripped idx 0 at 59.56 s in the neutral segment -> F118 (pilot from mode switch, clamps x thr0).
-  Open K118 items: MAJOR-2 (profile thrust ff vs vz-integral reference: pilot may partly cancel the input,
-  measure on one log); MINORs (acro R/P_MAX hard-coded, msg age unchecked, sat anti-windup untested).
-  T118 v1 INDI: idx 0 (acro), 21, 49 all "ok" (full 94 s; pilot rows from 52.06 s = switch, 1603 rows on 0).
-  PID controls pid_run000/021/049 IN FLIGHT at session end (fly.sh, progress.txt). NEXT S119: PID outcomes; check
-  on logs (haiku) altitude
-  held, acro tilt levelled; PID same; README; commit metrics. Pass -> close D-G3-STICK-PILOT, go to stage 4.
-  Fail on both controllers -> acro G3-unprobed (RC118). Uncommitted ok: v0 run at results/g3_pilot_s118_v0_run000.
+S119: T118 PASSED (31c9869179): INDI+PID idx 0/21/49 hold ~5 m, acro levelled, vz follows demand (corr 0.99);
+  D-G3-STICK-PILOT decided. Open: runner keeps pilot sticks after LAND -> RC override to POSCTL (README; fix in runner
+  when next touched, K118 MINORs). STAGE 4 OPENED: design/ident_concept.md + D-IDENT (PROPOSED) + Q6 to owner.
+  I119 (sonnet): IV estimator bench/ident_iv.py + self-tests incl. closed loop -> design/i119_ident_iv.md.
+  NEXT: key I119 (second sonnet, re-implement), then flight data: hover with M3a injection on quad5in, compare to
+  derived G1; G2 cells at G1 x0.5/x2 with halved gains (ident config).
 S117 sampler rule DONE 981e94f79e (D-G3-STICK-FACTORS). g3_run.py got --stop.
 P117 G3 probe seed 117 n=60 (45 pos/10 stab/5 acro): results/g3_probe_s117/ (fly.sh, progress.txt, run_NNN/g3_done.json).
   Pretest idx 0,1,16: 1 pos + 16 stab ok; 0 ACRO watchdog trip (sank 3.5 m at 59.8 s; collective 0.1 = HTE

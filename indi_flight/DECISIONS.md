@@ -622,3 +622,13 @@ alternative kept (RC118 sec 3): stabilized/acro as stick-step-and-release recove
 S119 result (results/g3_pilot_s118/README.md): idx 0 (acro), 21, 49 fly the full window with INDI and PID; segment
 altitude means 4.5-6.2 m vs 5 m, acro tilt 0.0-0.1 deg before LAND; stabilized vz follows the demand (corr 0.99,
 gain 2.0-2.2, same INDI/PID), so the pilot does not cancel the input (K118 MAJOR-2 closed by measurement).
+
+## D-IDENT (S119, PROPOSED, owner question Q6): identification concept (decision 3) and default set (decision 4)
+- Choice proposed: `design/ident_concept.md`. One closed-loop-aware estimator family (IV regression on measured
+  rotor speed, injected multisine as instrument, intercept, saturation excluded) for G1/G2_Y, actuator fit for
+  ACT_TC/W_MAX/thrust curve, correlation lag for ERPM_DLY; MC_INDI_DELAY computed from filters. Before identification
+  INDI flies a conservative ident configuration (gains halved), full gains gated by an ident-status parameter.
+  Defaults: bandwidth gains transfer; physical parameters have conservative ident defaults only.
+- Alternatives: A ident under PID; C offline-only ident, refuse to arm; D online adaptive (see note sec 3).
+- Overturn: note sec 5 (M1 vs derived > 15 % unexplained; ident gains not holding 6 dB/45 deg at G1 x0.5; no
+  convergence to 10 % from x2/x0.5 starts).
