@@ -119,3 +119,5 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S102 | H102 | sonnet | delay-line hooks A1+A2 gz_bridge, build | 21 calls, ~60k tok | DONE builds, uncommitted |
 | S102 | K102 | sonnet | second key H102 code vs spec | 12 calls, ~47k tok | DONE 0 BLOCKING, 2 MAJOR fixed |
 | S102 | V102 | haiku | delay-hook pre-test 2 flights | 13 calls, ~40k tok | DONE IMU PASS, ACT unverified (A-37) |
+| S103 | RC103 | sonnet | route check | 7 calls, ~37k tok | DONE design/route_check_103.md |
+| S103 | S103 | haiku | POSCTL gap scenario scope | 6 calls, ~31k tok | DONE design/posctl_gap_scope_s103.md |
