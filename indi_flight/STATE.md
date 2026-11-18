@@ -44,7 +44,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T181 | xy no-crossover diagnosis | sonnet | results/stage5_s86_g2outer/t181_xy_diagnosis.md | DONE: top_db misread; UNKEYED |
 | B86z | z cells serial, 8 cells | host | results/stage5_s86_g2outer/README.md | DONE: PM 58.3-66.1 deg; 800 Hz cells fail only the count check |
 | B86 | G2 outer cells | host | results/stage5_s86_g2outer/ | DONE (z cells; xy re-fly B87) |
-| B87 | xy cells AMP 0.08 TP 20 hover_xlong, serial | host | results/stage5_s87_xy/ (fly.sh PT AX RATE SEED) | DONE 30c012bc7c: 16 cells PM 49.7-64.8, GM 18.2-19.3 dB, f_c 0.27-0.34 Hz; holes 14/16 (pt1_ax2_r400_s1 re-fly) |
+| B87 | xy cells AMP 0.08 TP 20 hover_xlong, serial | host | results/stage5_s87_xy/ (fly.sh PT AX RATE SEED) | DONE 30c012bc7c: 16 cells PM 49.7-64.8, GM 18.2-19.3 dB, f_c 0.27-0.34 Hz; holes 15/16 after re-fly 66589220a9 (pt0_ax2_r400_s1: count check + 89 Hz limit, tool fix S88) |
 | T182 | hole_report count-check fix + re-run s86 cells | sonnet | results/stage5_s85_holes/count_fix_s87.md | DONE c5b5a897e9 (unkeyed). S86 README rows for r800_s2 were wrong: real holes (pt1 sim 12.5 ms -> re-fly; pt0 only outer topic 89 Hz max 18.75 ms vs 10 ms limit = spec defect for a topic with period > 10 ms?) |
 | T184 | second key of T182 (code vs spec) | haiku | results/stage5_s85_holes/second_key_s87.md | DONE c9cc245a40 AGREE WITH MINOR |
 | T185 | review attitude-break note vs code | sonnet | design/attitude_break_s86_review.md | DONE: 0 BLOCKING, 2 MAJOR (add call-site test at McIndiRateControl.cpp:231; replace circular x-y-d check by logged rate_sp_dot vs derivative of logged x), 10 MINOR (gate off in ACRO; use hover_xlong; outer loop closed below ~0.3 Hz). Amend note, then implement |
