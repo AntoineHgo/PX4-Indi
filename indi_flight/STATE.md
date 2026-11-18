@@ -53,7 +53,9 @@ Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a inject
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-(none) S122 DONE: re-fly idx 0/21/49 with W_MAX all ok + valid, measured path in use (results/g3_refly_s122/README.md,
+| H123 | M3a ident hover pretest POS_EN 0 and 1 | sonnet | results/ident_m3a_s123/README.md | check README; re-fly missing flight |
+S123: K122 3 BLOCKING fixed 46b2e2ceb2 (design/fix_k122_s123.md, broken-checked, 26 tests).
+S122 DONE: re-fly idx 0/21/49 with W_MAX all ok + valid, measured path in use (results/g3_refly_s122/README.md,
   8cfbc36d85). T118 INDI half restored. Model-only s121 idx 49 aborted: runner pilot sticks -> POSCTL after LAND
   (K118 MINOR: fix in runner before the next stick batch). K122 key DONE (design/key_k122_run_validity.md): 3
   BLOCKING open: CA_R_W_MAX alias not translated (run_validity.py:14,58-64); exception in check_validity loses the
