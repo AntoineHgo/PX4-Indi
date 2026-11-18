@@ -21,8 +21,9 @@ Plan RC108 (design/route_check_108.md) + RC113 (design/route_check_113.md, accep
    S116 DONE: K115 key + fixes, RC113 ladder + controls + nominal baseline (results/g3_ladder_s116, JOURNAL S116).
    NEXT S117: (1) g3_run.py sampler rule from S116: stabilized/acro stick scenarios draw only attitude/rate
      factors (mass, inertia, tau, delay, G1, eRPM loss/latency, vibration, GNSS); thrust_sag, weak motor,
-     saturation and wind only on position-hold scenarios (o1_lemniscate etc.); record in DECISIONS (D-G3-STICK-
-     FACTORS) + test; (2) altctl/posctl stick flyability (1 flight each); (3) 60-run mixed G3 probe batch.
+     saturation and wind only on position-hold scenarios (o1_lemniscate, posctl stick); record in DECISIONS
+     (D-G3-STICK-FACTORS) + test; (2) altctl/posctl stick metric window + reference (or exclude them from the
+     first batch: stop rule RC113); (3) 60-run mixed G3 probe batch.
      Then frozen-telemetry hook (two keys), g3_checks.py + key, gate_g3.sh; G5 mode batch; G4 noise profiles.
    Stage 5 note: o1_lemniscate --sched horizontal RMS 2.80 m for INDI and PID alike (A-41 closed); which outer
      loop --controller indi uses on o1 is UNVERIFIED; check before setting the G3 o1 tracking limit.
@@ -47,7 +48,8 @@ L116 DONE e97d826b27 (results/g3_ladder_s116/README.md): nominal, mass13, inert1
 L116b DONE a7ac9375c0: PID trips the same watchdog (sag07 63.10 s, weak08 63.30 s) -> scenario property: stick
   stabilized is for attitude/rate factors only; thrust/wind factors go on position-hold scenarios. INDI on
   o1_lemniscate --sched holds altitude with sag/weak/sat/wind (vert RMS 0.03-0.18 m). A-41 opened (horiz 2.8 m).
-| A116 | altctl/posctl stick flyability (INDI nominal x2 + posctl sag07) | haiku | results/g3_stick_modes_s116/README.md | re-run |
+A116 DONE ca6825db51: stick_zsine_o6 flies in altctl, posctl, posctl+sag07 (INDI). metrics.py has no stick-mode
+  reference/window for altctl/posctl (vertical = commanded climb): add one before these enter the batch.
 N116 DONE 4e25b1aa00: nominal horiz RMS INDI 2.805 / PID 2.800 m = faulted rows; A-41 closed.
 H116 DONE dce771f1e6 (K115 fixes, 9+3 tests pass, mutations checked; slew-lag m3 not addressed, accepted:
   probes only). Key of a bench-only meta fix not required (no safety path).
