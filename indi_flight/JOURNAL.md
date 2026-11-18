@@ -800,3 +800,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
   (shared sim-time delay line for loop delay + GNSS latency; G5 event injectors; per-run sampler g3_sample.py;
   telemetry-drop seed per run), each with G1.5 check + second key. Delay line designed: design/delay_line_hook_s94.md
   (check world step and GNSS path first). S97: yaw cell + first identification slice.
+- S98 (2026-11-18): RC98 (stop coverage, defer harness to stage 7, D-G7-HARNESS); T206 lib mutation tests b6e95f88c4 + module gate c32d022f9e; P98 G5 pre-test gap 0.85: standing z error ~0 in offboard, ALTCTL, EN+AT_EN (S70: 0.33 m), keyed K98 from raw ulg.
