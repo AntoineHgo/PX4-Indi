@@ -50,6 +50,8 @@ S113 FIRST (P112 set-up faults, fix before any G3 batch; each fix keyed): (1) ai
   set_param latency 15-26 ms single, 38-110 ms for 8-param fault set -> apply in sim time; (4) 3 stick_zsine_o6
   draws tripped height watchdog (2 before any hook) + metrics.py crashes on aborted runs; (5) --sched-anchor never
   emitted; weak+sat together unchecked. Then route check S113.
+S113 in flight: RC113 (sonnet, design/route_check_113.md); F113 (sonnet, faults 1, 2, 4b; log
+  results/g3_pretest_s112/fix_s113.md). Next: key K113 of F113, then fault 3 (eRPM loss in sim time), fault 4a.
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
