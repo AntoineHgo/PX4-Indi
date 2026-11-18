@@ -66,8 +66,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T171 | S83 injector second key | sonnet | results/stage5_s82_velbreak/second_key.md | DONE, AGREE WITH MINOR |
 | T172 | S83 stick stub second key | haiku | results/stage5_s81_stick/second_key.md | DONE, DISAGREE (3 rows 33 Hz pre-grid, README overclaims) |
 | B83 | velbreak re-fly TB 1.0/0.33 | host | results/stage5_s83_velbreak/README.md | DONE cdc5f03713, PM 57.3/59.1 deg |
-| T173 | injector minors (re-arm, yaml) + pinj_csv self-test, NOT committed by agent | sonnet | results/stage5_s83_velbreak/minors_fix.md | read diff, run tests, commit fw + tooling apart |
-| B83b | stick re-fly x4 with grid pacing (after T173 commit) | host | results/stage5_s83_stick/ | `bash indi_flight/results/stage5_s83_stick/flyall.sh`, then `python3 indi_flight/bench/stick_check.py <4 dirs>` in docker |
+| T173 | injector minors + pinj_csv self-test | sonnet | results/stage5_s83_velbreak/minors_fix.md | DONE a38533428f, 907f57510d |
+| B83b | stick re-fly x4, grid pacing | host | results/stage5_s83_stick/README.md | DONE: all 50 Hz, gain 0.86 both stacks; open: sched anchor for stick mode (G5) |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
