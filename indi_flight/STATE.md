@@ -53,8 +53,11 @@ Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a inject
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| H123 | M3a ident hover pretest POS_EN 0 and 1 | sonnet | results/ident_m3a_s123/README.md | check README; re-fly missing flight |
-S123: K122 3 BLOCKING fixed 46b2e2ceb2 (design/fix_k122_s123.md, broken-checked, 26 tests).
+(none) S123: K122 3 BLOCKING fixed 46b2e2ceb2 (design/fix_k122_s123.md, broken-checked, 26 tests). H123 DONE
+  f49f8029f8 (results/ident_m3a_s123/README.md): M3a hover pos0/pos1 valid, MC_INDI_INJ_AMP 0.003 (0.01 = 25 deg,
+  void; AMP is per component x18), INJ_DLY 8, NP 6, roll <= 7.3 deg. esc_status/actuator_torque_measured 800 Hz
+  (H120 "100 Hz" doubt CLOSED). measured_torque_in_use 84 % of samples (check: ground phase only?).
+  NEXT S124: run bench/ident_iv.py on pos0/pos1 (SNR at AMP 0.003 UNVERIFIED), then x0.5/x2 starts, D-IDENT verdict.
 S122 DONE: re-fly idx 0/21/49 with W_MAX all ok + valid, measured path in use (results/g3_refly_s122/README.md,
   8cfbc36d85). T118 INDI half restored. Model-only s121 idx 49 aborted: runner pilot sticks -> POSCTL after LAND
   (K118 MINOR: fix in runner before the next stick batch). K122 key DONE (design/key_k122_run_validity.md): 3
