@@ -1,0 +1,13 @@
+RUN FAILED: WatchdogTrip: watchdog: height < 0.3 m (sim t=62.09, value=0.213)
+METRICS FAILED: Traceback (most recent call last):
+  File "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/metrics.py", line 753, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/metrics.py", line 745, in main
+    res = compute(ULog(a.ulog), run)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/metrics.py", line 531, in compute
+    out["window"] = {"start_s": w0 * 1e-6, "end_s": w1 * 1e-6, "duration_s": (w1 - w0) * 1e-6,
+                                                    ~~~^~~~~~
+TypeError: unsupported operand type(s) for *: 'NoneType' and 'float'
+
