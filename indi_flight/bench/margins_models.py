@@ -138,6 +138,57 @@ def L_pid(w, fs=800.0, **kw):
     return (p["Kp"] + Ii) * F * p["G1"] * Pn + p["Kd"] * al * F * p["G1"] * Va
 
 
+# ------------------------------------------------------------------------------------------ attitude loop (T194)
+def _att_path(zi, fs, att_p, att_lat):
+    """Attitude integrator and P gain seen from the rate setpoint: att_p z^-att_lat T z/(1-z)  (theta[k+1] = theta[k] + T w[k])."""
+    T = 1.0 / fs
+    return att_p * zi ** att_lat * T * zi / (1.0 - zi)
+
+
+def _pn(zi, fs, p):
+    """Pn = w/(G1 u) of the sampled plant (same expression as L_indi / L_pid)."""
+    T = 1.0 / fs
+    a = math.exp(-T / p["tau_r"])
+    c1 = p["tau_r"] * (1 - a)
+    c2 = T - c1
+    Ar0 = (1 - a) * zi / (1 - a * zi)
+    return p["g"] * p["eta"] * zi ** p["lat"] * (c1 * Ar0 + c2) * zi / (1 - zi)
+
+
+def L_att_indi(w, fs=800.0, **kw):
+    """Attitude loop broken at the rate setpoint (S86 break: x = rates_sp_applied, y = rates_sp_pre_inject, L = -Y/X).
+    L_att = A_att * T_cl, A_att = att_p z^-att_lat T z/(1-z), T_cl = closed INDI rate loop from rate setpoint to measured rate
+    w = (K + lead) Pn / (1 + L_rate), lead = fb_lead * D (sp_lead only), L_rate = L_indi with att_p = 0.  Defaults: HEAD_FLIGHT.
+    Small-angle hover linearisation, no outer loop, roll/pitch only (yaw is not modelled)."""
+    p = dict(INDI_DEF)
+    p.update(HEAD_FLIGHT)
+    p.update(kw)
+    w = np.asarray(w, float)
+    T = 1.0 / fs
+    zi = np.exp(-1j * w * T)
+    Lr = L_indi(w, fs, **dict(p, att_p=0.0))
+    als = T / (SP_LEAD_TC + T)
+    D = als / (1.0 - (1.0 - als) * zi) * (1.0 - zi) / T
+    lead = p["fb_lead"] * D if p["sp_lead"] else 0.0
+    Tcl = (p["K"] + lead) * _pn(zi, fs, p) / (1.0 + Lr)
+    return _att_path(zi, fs, p["att_p"], p["att_lat"]) * Tcl
+
+
+def L_att_pid(w, fs=800.0, **kw):
+    """Same break for the PX4 PID rate loop: T_cl = (Kp + Ki T z^-1/(1-z^-1)) G1 Pn / (1 + L_pid), L_att = A_att * T_cl.
+    Parameters: PID_DEF (+ att_p 8, att_lat 1 from HEAD_FLIGHT).  No setpoint feed-forward in the PID law."""
+    p = dict(PID_DEF)
+    p.update(att_p=HEAD_FLIGHT["att_p"], att_lat=HEAD_FLIGHT["att_lat"])
+    p.update(kw)
+    w = np.asarray(w, float)
+    T = 1.0 / fs
+    zi = np.exp(-1j * w * T)
+    Lr = L_pid(w, fs, **{k: v for k, v in p.items() if k not in ("att_p", "att_lat")})
+    Ii = p["Ki"] * T * zi / (1 - zi)
+    Tcl = (p["Kp"] + Ii) * p["G1"] * _pn(zi, fs, p) / (1.0 + Lr)
+    return _att_path(zi, fs, p["att_p"], p["att_lat"]) * Tcl
+
+
 # ------------------------------------------------------------------------------------------ analytic, continuous (s)
 def _L_cont_s(s, fs=800.0, **kw):
     """Continuous approximation of L_indi at complex s: ZOH = T/2 delay, lags and delays as e^{-sT}-factors (note 4.1)."""
