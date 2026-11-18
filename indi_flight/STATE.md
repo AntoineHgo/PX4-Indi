@@ -15,8 +15,11 @@ NEXT S108 per RC108 (design/route_check_108.md, filed S107; next route check S11
      missed them). Attitude seed 2 NOT flown (pre-freeze, stage 6 re-flies all). Offline G2 todo before stage 6:
      outer-cell margin key, linear outer-loop model, A-36/A-39 bound, 267 Hz rows.
    S109 DONE: K108 closed (D-G3-SAMPLER-K108, 3a245d1590, keyed e634a78671); quad5in variants bd612779a1 (key K109).
-   S110 order: close K109 findings; frozen-telemetry hook (two keys, G1.5 check); g3_checks.py + key; gate_g3.sh
-     consuming the run JSON hooks block (MC_INDI_G1_* x_nominal = k = e / I_scale); then G3 runner + pre-test.
+   S110 DONE: G3 driver g3_run.py (c5acce1b39, K109 MAJOR closed) + scenario overrides/wind (fc3ef9e626), key K110.
+   S111 order: close K110 findings; G3 scenario timeline check (o1_lemniscate --sched / stick_zsine_o6 UNVERIFIED,
+     fly 1 draw each with overrides incl. motor_fault + erpm_loss = 3-flight pre-test); frozen-telemetry hook (two
+     keys); g3_checks.py + key; gate_g3.sh consuming run JSON hooks block; then ~20-run pre-test.
+     Open: wind drag air-relative? (K110 item 2); eRPM loss uses segment window, not drawn offset/duration.
    S109: G3 randomised runner (plant draw per run, all G3 axes incl. GNSS hook B: matched = --gnss-delay == --gps-dly)
      + ~20-run pre-test; fold G1.5 estimator M-vs-X separation (moving scenario) into it.
    S110: first G3 probe batch >= 60 runs. S111: G5 mode/transition batch. S112: G4 noise profiles.
@@ -42,7 +45,8 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 | F109 | S109: g3_sample.py fix per D-G3-SAMPLER-K108 (M2 gust, M4 G1 ratio, M3 guards, m7) | sonnet | design/g3_sampler_fix_s109.md | DONE 3a245d1590: 11/11 (orchestrator re-ran), 16 mutations caught. Needs 2nd key (short, read-only) before G3 pre-test; x_nominal of MC_INDI_G1_* now = k |
 | V109 | S109: quad5in model variants (tau, asym, mass, inertia) in run_scenario.py + 1-2 check flights | sonnet | design/quad5in_variants_s109.md | DONE bd612779a1 (+ --model-variant CLI); mass x1.3 flown (hover u x1.295, 45f2b6d2c9); tau/asym/inertia offline only |
 | R110 | S110: G3 driver bench/g3_run.py (draw -> run_scenario args incl. model_variant, unmapped factors flagged, dry-run, self-test), no flight | sonnet | design/g3_runner_s110.md | DONE c5acce1b39: 6/6 (orchestrator re-ran), mutation caught. Wind, timed faults (sag/sat/weak/eRPM loss), frozen tel, G4 profile NOT applied: run_scenario.py has no input; scenario = o1_lemniscate/stick_zsine_o6 UNVERIFIED |
-| O110 | S110: run_scenario.py --scenario-overrides JSON (thrust_sag, motor_fault, erpm_loss, wind params) + g3_run.py uses it + 1 check flight | sonnet | design/scenario_overrides_s110.md | IN FLIGHT; needs 2nd key S111 |
+| O110 | S110: run_scenario.py --scenario-overrides JSON (thrust_sag, motor_fault, erpm_loss, wind params) + g3_run.py uses it + 1 check flight | sonnet | design/scenario_overrides_s110.md | DONE fc3ef9e626 (+48ef5120e5 flight meta): tests pass (orchestrator re-ran). Wind applied (+y, 0.066/0.184 N). Sag: cmd +16 % (exp 17.6), esc rpm unchanged (expected if sag = omega-per-command map: hover omega same). UNVERIFIED: overrides under --sched, motor_fault/eRPM loss unflown, eRPM loss window = segment not drawn offset/duration, weak motor dropped when saturation drawn |
+| K110 | S110: 2nd key of O110 (read-only): overrides merge, wind param, g3_run mapping vs sampler | sonnet | design/scenario_overrides_key_s110.md | IN FLIGHT |
 | K109 | S109: second key of V109 (read-only + offline SDF diff) | sonnet | design/quad5in_variants_key_s109.md | DONE: 0 BLOCKING; MAJOR = no driver maps hooks.model_variant -> --model-variant (G3 runner S110 must, with a test); MINOR parse fixed S109; tau/asym/inertia to be flown in G3 pre-test |
 
 ## Open problems
