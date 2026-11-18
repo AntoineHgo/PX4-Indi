@@ -274,12 +274,13 @@ def main():
     ap.add_argument("--out-root", required=True)
     ap.add_argument("--dry-run", action="store_true", help="print the commands, write nothing but nothing is flown")
     ap.add_argument("--start", type=int, default=0, help="first run index to process")
+    ap.add_argument("--stop", type=int, default=None, help="last run index to process (inclusive); draws still use --n")
     ap.add_argument("--timeout-s", type=float, default=1800.0, help="wall-clock timeout per run")
     a = ap.parse_args()
 
     draws = g3_sample.campaign(a.seed, a.n)
     for d in draws:
-        if d["run_index"] < a.start:
+        if d["run_index"] < a.start or (a.stop is not None and d["run_index"] > a.stop):
             continue
         out = os.path.join(a.out_root, f"run_{d['run_index']:03d}")
         r = build_run(d, a.base_params, out)

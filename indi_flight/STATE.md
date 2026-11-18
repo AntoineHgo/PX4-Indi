@@ -39,6 +39,10 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+S117 sampler rule DONE 981e94f79e (D-G3-STICK-FACTORS). g3_run.py got --stop.
+P117 G3 probe seed 117 n=60 (45 pos/10 stab/5 acro): results/g3_probe_s117/ (fly.sh, progress.txt, run_NNN/g3_done.json).
+  Pretest idx 0,1,16 first; then rest. Resume: `setsid nohup bash indi_flight/results/g3_probe_s117/fly.sh 3 <idx...>`
+  (runs with g3_done.json are skipped by g3_run.py; delete a partial run_NNN without it before re-running).
 K115 DONE (design/key_k115_hte.md, 0 BLOCKING): fix AFTER L116 ends (same runner file): clamp [0.05,0.9] only on
   valid HTE (mc_att_control_main.cpp:241), meta hover_thr_used + hover_thr_source for every run (not stick only),
   tests that catch the 4 surviving mutations (run.json fields x2, stick_profile guard, main() thr0).
