@@ -964,3 +964,138 @@ TEST_F(IndiAccelBlendTest, SetFilterReconfigDoesNotStepThrust)
 	EXPECT_LT(maxThrustStep(100), 0.01f);
 	EXPECT_LT(fabsf(_u_cmd - c), 0.01f);
 }
+
+// ---- D-ALTCTL-Z: z_only (collective INDI, stock direction) ----
+
+namespace
+{
+
+class IndiAccelZOnlyTest : public IndiAccelControlTest
+{
+protected:
+	static IndiAccelControl::Input zInput()
+	{
+		IndiAccelControl::Input in = hoverInput();
+		in.a_ref = Vector3f(0.5f, -0.3f, -1.f);
+		in.z_only = true;
+		in.thrust_dir = Vector3f(2.f, -1.f, -8.f); // arbitrary norm, tilted
+		return in;
+	}
+};
+
+} // namespace
+
+TEST_F(IndiAccelZOnlyTest, OutputParallelToThrustDir)
+{
+	IndiAccelControl::Input in = zInput();
+	IndiAccelControl::Output out;
+	ASSERT_TRUE(_ctrl.update(in, out));
+	const Vector3f n = in.thrust_dir.normalized();
+	EXPECT_NEAR(out.t_c.normalized().dot(n), 1.f, 1e-5f);
+	EXPECT_NEAR(out.t_c.cross(n).norm(), 0.f, 1e-4f);
+	// attitude z axis equals -n
+	const Vector3f zb = Dcmf(out.q_d).col(2);
+	EXPECT_NEAR(zb.dot(-n), 1.f, 1e-5f);
+}
+
+TEST_F(IndiAccelZOnlyTest, VerticalComponentMatchesThreeAxis)
+{
+	IndiAccelControl::Input in = zInput();
+	IndiAccelControl::Output out_z;
+	ASSERT_TRUE(_ctrl.update(in, out_z));
+
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
+	in.z_only = false;
+	IndiAccelControl::Output out_3;
+	ASSERT_TRUE(_ctrl.update(in, out_3));
+	EXPECT_NEAR(out_z.t_c(2), out_3.t_c(2), 1e-4f);
+	// not the same direction as the 3-axis output (xy a_ref differs from the stock direction)
+	EXPECT_GT((out_z.t_c - out_3.t_c).norm(), 0.1f);
+}
+
+TEST_F(IndiAccelZOnlyTest, InvalidThrustDirReturnsFalse)
+{
+	IndiAccelControl::Output out;
+	out.thrust = 0.77f;
+	const Vector3f bad[] = {
+		Vector3f(kNaN, 0.f, -1.f), Vector3f(0.f, 0.f, kNaN), Vector3f(1.f, 0.f, 0.f),
+		Vector3f(0.f, 0.f, 1.f), Vector3f(1.f, 0.f, -0.05f), Vector3f(0.f, 0.f, 0.f)
+	};
+
+	for (const Vector3f &d : bad) {
+		IndiAccelControl::Input in = zInput();
+		in.thrust_dir = d;
+		EXPECT_FALSE(_ctrl.update(in, out));
+	}
+
+	EXPECT_EQ(out.thrust, 0.77f);
+	// the same input with a valid direction is accepted
+	EXPECT_TRUE(_ctrl.update(zInput(), out));
+}
+
+TEST_F(IndiAccelZOnlyTest, OmegaFfZero)
+{
+	IndiAccelControl::Input in = zInput();
+	in.j_ref = Vector3f(5.f, 5.f, 5.f);
+	IndiAccelControl::Output out;
+	ASSERT_TRUE(_ctrl.update(in, out));
+	EXPECT_EQ(out.omega_ff.norm(), 0.f);
+
+	// negative control: the 3-axis path does produce a feedforward for the same jerk
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
+	in.z_only = false;
+	ASSERT_TRUE(_ctrl.update(in, out));
+	EXPECT_GT(out.omega_ff.norm(), 1e-3f);
+}
+
+TEST_F(IndiAccelZOnlyTest, CollectiveLimitsApplyNoTiltLimit)
+{
+	IndiAccelControl::Input in = zInput();
+	in.thrust_dir = Vector3f(10.f, 0.f, -1.f); // ~84 deg, beyond the 0.7 rad library limit but z < -0.1 norm fails
+	IndiAccelControl::Output out;
+	EXPECT_FALSE(_ctrl.update(in, out));
+
+	in.thrust_dir = Vector3f(2.f, 0.f, -1.f); // 63 deg > 0.7 rad (40 deg) limit: kept
+	ASSERT_TRUE(_ctrl.update(in, out));
+	EXPECT_NEAR(tilt(out.t_c), atan2f(2.f, 1.f), 1e-4f);
+
+	// thrust max: |t_c| limited to g_t * thr_max, direction kept
+	in.a_ref = Vector3f(0.f, 0.f, -30.f);
+	ASSERT_TRUE(_ctrl.update(in, out));
+	EXPECT_NEAR(out.thrust, 1.f, 1e-6f);
+	EXPECT_NEAR(out.t_c.norm(), kGt, 1e-3f);
+	EXPECT_NEAR(tilt(out.t_c), atan2f(2.f, 1.f), 1e-4f);
+}
+
+TEST_F(IndiAccelZOnlyTest, ClosedLoopCollectiveRemovesVerticalError)
+{
+	// plant: thrust scale 0.85, vertical axis, level vehicle; collective blend active
+	const float scale = 0.85f;
+	_ctrl.setBlendTimeConstant(0.2f);
+	float u_cmd = kG / kGt;
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), u_cmd, scale * u_cmd);
+	const float a_ref_z = -1.f;
+	IndiAccelControl::Output out;
+	float az = 0.f;
+
+	for (int i = 0; i < 600; i++) {
+		IndiAccelControl::Input in = hoverInput();
+		in.z_only = true;
+		in.thrust_dir = Vector3f(0.f, 0.f, -1.f);
+		in.a_ref = Vector3f(0.f, 0.f, a_ref_z);
+		in.v_ref = Vector3f(NAN, NAN, NAN);
+		in.p_ref = Vector3f(NAN, NAN, NAN);
+		in.v = Vector3f(0.f, 0.f, 0.f);
+		in.accel_only = true;
+		const float u_meas = scale * u_cmd;
+		in.f_b = Vector3f(0.f, 0.f, -kGt * u_meas);
+		in.mean_u = u_meas;
+		ASSERT_TRUE(_ctrl.update(in, out));
+		u_cmd = out.thrust;
+		az = out.a_f(2);
+	}
+
+	// measured vertical acceleration converges to a_ref z (it was +kG*(1-0.85)... ~ 1.5 m/s^2 off at start)
+	EXPECT_NEAR(az, a_ref_z, 0.05f);
+	EXPECT_NEAR(Vector2f(out.t_c(0), out.t_c(1)).norm(), 0.f, 1e-6f);
+}
