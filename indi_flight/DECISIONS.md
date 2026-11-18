@@ -524,3 +524,11 @@ pre-identification behaviour of decision 3 must cover it).
   point), or none (G2 would lack the plant-input cell). Overturn if: the output-break L at crossover differs from
   the input-break L by more than the G2 tolerance without an explained cause, or the second key finds the applied
   command and the library state inconsistent.
+
+## D-HOLE-EXCESS (S88): log-hole limit per topic, as excess over the nominal period (tool-spec fix, G1/G2 evidence)
+Max hole per topic from RAW timestamp gaps, before duplicate cancelling (T184 escape: a k=2 gap next to a duplicate
+left the list). A gap is a hole when gap - median(raw dt) > 10 ms; count checks unchanged. Reason: a flat 10 ms
+failed an 89 Hz topic (period 11.2 ms) on one 18.75 ms gap with nothing lost. Alternatives: flat limit (rejected,
+rate-dependent), limit in periods (rejected: at 400 Hz one period is 2.5 ms, too strict for the analysis).
+Effect: s86 pt0_ax3_r800_s2 FAIL->PASS; 27 other cells unchanged (results/stage5_s85_holes/fixes_s88.md).
+Overturn if: a cell passing under this rule shows a coherence or margin defect traceable to a logging gap.
