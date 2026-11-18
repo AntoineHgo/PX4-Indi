@@ -701,3 +701,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S75 (2026-11-18): D-RATE-BLD-EDGE decided from code read: rate blend keeps snap-to-gap on inactive edges, D-GAP keeps freeze; D-RATE-BLD precondition 2 settled, unit tests remain. No agent (cap $1.16).
 - S77 (2026-11-18): A-34 traced (blend and host load ruled out; setpoint lead da64bc26b3 likely, closing test open). D-RATE-BLD preconditions 2-3 met: edge + weak-motor closed-loop tests committed 499e1df991. 400 Hz rate M3a flown (results/stage3_s77_400).
 - S77: 400 Hz rate M3a PM 70 / GM 13.3 dB / DM 51 ms at tb 0 and 1.0 (results/stage3_s77_400); outer-loop injector missing, next S78 item.
+- S78 (2026-11-18): A-34 model test (T166): setpoint lead reproduces the PM/f_c shift within 1.3 deg/0.07 Hz, bin criterion fails on a common model offset -> A-35 opened; A-34 still needs the da64bc26b3^ flight.

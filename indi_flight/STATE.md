@@ -37,7 +37,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    sonnet task (~$0.9) = injector at the accel/collective setpoint in mc_indi_pos_control mirroring D-G2-INJ
    (MC_INDI_POS_INJ_*, log c/d/u) + csv script, then haiku second key; brief it at a cap >= $2. Then D-RATE-BLD
    accept + firmware default MC_INDI_ACT_BLD 1.0 in its own commit (flights keep setting 1.0 meanwhile);
-   (c) A-34 closing test (worktree build at da64bc26b3^, or setpoint lead in margins_models.py);
+   (c) A-34: model route done S78 (shift explained, bins fail on A-35 offset); left = haiku flight at
+   da64bc26b3^ (worktree build, S57 file, expect PM 77.5 within 2 deg); A-35 (model 1-8 Hz offset) before G2 freeze;
    (d) runner RC/manual stick-path stub + PVA slice (ZSINE_O6), before land/re-take-off;
    (e) combined opus review (stage-3 safety diff + stage-5 slices + snap-vs-freeze), land/re-take-off flight.
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
@@ -52,6 +53,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | F77 | S77 A-34 closing: S57 params at HEAD tb 0 / 1.0 | bg shell | results/stage3_s77_a34/README.md | DONE: blend and load ruled out, likely setpoint lead da64bc26b3; A-34 open with closing test |
 | T164 | S77 D-RATE-BLD unit tests | sonnet | results/stage3_s77_tests/README.md | DONE, 69/69, break-checked, committed 499e1df991 |
 | F77b | S77 rate M3a 400 Hz tb 0 / 1.0, sequential | bg shell | results/stage3_s77_400/README.md | DONE: PM 70, GM 13.3 dB, DM 51 ms both tb |
+| T166 | S78 A-34 closing by model | sonnet | results/stage3_s78_a34/README.md | DONE: shift reproduced, bins fail -> A-35; model change needs a haiku/sonnet second key (lesson 17) before G2 use |
 | F73 | A-33 closing: loss08 with rate blend MC_INDI_ACT_BLD 0.3 / 1.0 (default 0 = off, never set in S72 flights: lesson-9 gap in the rate loop) | bg shell, instances 0/1 | results/stage5_s73/loss08_bld{0.3,1.0}/ | DONE, A-33 closed |
 
 ## Open problems
