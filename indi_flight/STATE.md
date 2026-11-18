@@ -27,11 +27,13 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    results/stage5_s86_g2outer/fly.sh (README: findings 1-3); z cells PM 62.8-63.7 deg; G2 cells fly ONE AT A TIME
    (parallel -> holes); xy no-crossover = top_db misread (T181 UNKEYED); attitude-break note design/attitude_break_s86.md
    (T180, unreviewed; check its L_att identity: L_att = A L_rate/(1+L_rate) expected).
-   NEXT S87: (1) hole_report count check: disagreement of 1 flagged FAIL (spec > 1) and actuator_motors differs by 3 at
-   800 Hz on healthy runs -> fix + test (sonnet), re-run on all s86 cells; (2) seed-2 z cells done (README);
-   (3) second key of T181 (haiku: recompute xy FRF from the CSVs), rename top_db, re-fly xy cells serially with
-   AMP 0.08 TP 20 (pt0/pt1 x ax1,2 x 400/800 x 2 seeds); (4) review attitude-break note (sonnet, one interface: note vs
-   code), then implement; then G2 report + G5 text; then (e) combined opus review. Deferred anomalies: A-4, A-6, A-30, A-32, A-34, A-35. Next route check S89.
+   S87 (launch 20261118-051310): T182 count fix c5b5a897e9 + T184 key AGREE WITH MINOR; T183 key of T181 AGREE;
+   xy re-fly B87 (stage5_s87_xy, hover_xlong 150 s, AMP 0.08 TP 20).
+   NEXT S88: (1) hole_report: max-hole from RAW gaps (T184 escape: a k=2 gap absorbed by a dup leaves the list) and
+   max-gap limit per topic as excess over nominal period (89 Hz outer topic: 18.75 ms gap = 1.67 periods, fails a
+   flat 10 ms) -> log as tool-spec fix in DECISIONS.md, test, re-run s86+s87 holes; (2) re-fly cells with real holes
+   (s86 pt1_ax3_r800_s2); (3) S87 xy README + table, rename top_db (margins_est.py:254, last bin, not max);
+   (4) act on T185 review of attitude-break note, then implement; then G2 report + G5 text; then combined opus review. Deferred anomalies: A-4, A-6, A-30, A-32, A-34, A-35. Next route check S89.
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
 | id | task | agent | output | resume |
@@ -52,8 +54,10 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | B86z | z cells serial, 8 cells | host | results/stage5_s86_g2outer/README.md | DONE: PM 58.3-66.1 deg; 800 Hz cells fail only the count check |
 | B86 | G2 outer cells | host | results/stage5_s86_g2outer/ | DONE (z cells; xy re-fly B87) |
 | B87 | xy cells AMP 0.08 TP 20 hover_xlong, serial | host | results/stage5_s87_xy/ (fly.sh PT AX RATE SEED) | pre-test PASS (PM 54.4, f_c 0.33 Hz, coh>=0.93); batch.sh running (log batch.log); resume: bash batch.sh (skips done cells) |
-| T182 | hole_report count-check fix + re-run s86 cells | sonnet | results/stage5_s85_holes/count_fix_s87.md | in flight |
-| T183 | second key of T181 (xy FRF from CSVs) | haiku | results/stage5_s86_g2outer/t183_second_key.md | in flight |
+| T182 | hole_report count-check fix + re-run s86 cells | sonnet | results/stage5_s85_holes/count_fix_s87.md | DONE c5b5a897e9 (unkeyed). S86 README rows for r800_s2 were wrong: real holes (pt1 sim 12.5 ms -> re-fly; pt0 only outer topic 89 Hz max 18.75 ms vs 10 ms limit = spec defect for a topic with period > 10 ms?) |
+| T184 | second key of T182 (code vs spec) | haiku | results/stage5_s85_holes/second_key_s87.md | DONE c9cc245a40 AGREE WITH MINOR |
+| T185 | review attitude-break note vs code | sonnet | design/attitude_break_s86_review.md | in flight (if cut: re-launch, file has partial) |
+| T183 | second key of T181 (xy FRF from CSVs) | haiku | results/stage5_s86_g2outer/t183_second_key.md | DONE d2b66bf3ae: AGREE |L|, PM 54-56; f_c 0.27-0.33 Hz |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
