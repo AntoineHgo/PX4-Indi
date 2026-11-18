@@ -22,9 +22,9 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    Use pretest_gate only on stationary scenarios, or end its window at the fault.
    S99 DONE: hooks SIM_GZ_SEED + SIM_GZ_IMU_NSC (results/t207_hooks/README.md; accel scale UNVERIFIED, needs full-rate
    accel log before G4). G2 rate table compiled (results/g2_rate_table_s99.md): 7 required cells missing at HEAD.
-   NEXT S100: (i) read P99 pre-test; if OK, haiku serial batch of the missing rate cells at HEAD, 2 seeds each
-   (pitch/yaw v2 800+400, roll v2 400, pitch/yaw model-only 400, + re-fly S57-era model-only cells at HEAD) and PID
-   M1 reference cells; second key on margins; (ii) next hook: shared sim-time delay line (design/delay_line_hook_s94.md);
+   NEXT S100: (i) v2 rate cells DONE (B99, results/g2_rate_batch_s99/README.md): second key on their margins from raw
+   ulg (independent FRF code), then batch model-only cells at HEAD (3 axes x 800/400 x 2 seeds; find model-only
+   recipe in results/stage3_s57/) and PID M1 reference cells; then the linear-model cross-check for the v2 path; (ii) next hook: shared sim-time delay line (design/delay_line_hook_s94.md);
    (iii) S101 deadline rule (c) below still holds. Old: log a z-only
    active flag in indi_pos_status when next touching the module (P98 could not see it).
    S98: RC98 DONE (design/route_check_98.md): STOP coverage after T206; D-G7-HARNESS decided, impl deferred to
