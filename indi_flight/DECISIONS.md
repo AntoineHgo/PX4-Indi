@@ -575,3 +575,11 @@ with neutral sticks. G5 flies it.
   flights caught.
 - Amended S98 per route check 98: implementation of B deferred to stage 7 (G7 packaging); until then the module
   logic is covered by G5 SITL flights. No further coverage tasks before the G5 pre-test.
+
+## D-G3-SAMPLER (S108)
+Sampler `bench/g3_sample.py` choices (details design/g3_sampler_s108.md): saturation only in corner C3 (10 of 300
+runs; GATES text "10 % of runs (inside the corner set)" contradicts C3 = 10 runs; it is a beyond-range widening, class (b),
+so 10 runs suffice); wind steady 0-5 m/s drawn in every run as the factor table says, so "calm" limits apply only where
+the draw is near 0 (to settle in g3_checks: calm = steady < 1 m/s and no gust); pre-test = 15 grouped extremes + 5 sampled.
+Alternatives: 30 saturation runs outside corners; wind in a fraction of runs. Overturn: second key or pre-test shows the
+calm/wind split leaves item 3 calm limits untested, or the owner reads the saturation share as 30 runs.
