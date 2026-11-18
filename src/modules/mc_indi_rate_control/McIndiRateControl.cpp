@@ -114,6 +114,12 @@ McIndiRateControl::parameters_updated()
 	_injection.setParameters(_param_mc_indi_inj_ax.get(), inject_amp, _param_mc_indi_inj_tp.get(),
 				 _param_mc_indi_inj_fmin.get(), _param_mc_indi_inj_fmax.get(), _param_mc_indi_inj_np.get(), _param_mc_indi_inj_dly.get());
 
+	// a break-point change never continues a running sequence at the other point
+	if (_param_mc_indi_inj_pt.get() != _inject_point_prev) {
+		_inject_point_prev = _param_mc_indi_inj_pt.get();
+		_injection.restart();
+	}
+
 	// the actuator model filter must match the sensor filter chain of the angular acceleration
 	float gyro_cutoff = 0.f;
 	float dgyro_cutoff = 0.f;

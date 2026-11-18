@@ -73,6 +73,9 @@ public:
 	 */
 	float update(uint64_t timestamp_sample_us, bool armed, bool landed);
 
+	/** Restart the sequence (delay first) at the next update, e.g. when the break point changes */
+	void restart() { _started = false; }
+
 	/** Multisine at time t (s) after the origin, no gating */
 	double waveform(double t) const;
 

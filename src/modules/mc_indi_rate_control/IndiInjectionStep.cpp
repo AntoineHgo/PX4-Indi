@@ -45,10 +45,11 @@ void runIndiInjectionStep(IndiRateControl &indi, IndiInjection &injection, const
 		matrix::Vector3f rates_sp_applied = rates_sp;
 		matrix::Vector3f rates_sp_inject{};
 
-		if (in.rate_sp_break_allowed && !indi.getFault()) {
-			rates_sp_inject(axis) = injection.update(in.timestamp_sample, in.armed, in.landed);
-			rates_sp_applied(axis) = rates_sp(axis) + rates_sp_inject(axis);
-		}
+		// the generator runs every cycle; a closed gate acts as a disarm, so the sequence restarts from zero after its
+		// delay when the gate reopens (no step into the multisine, no partial window, disarm reset never skipped)
+		const bool gate_open = in.rate_sp_break_allowed && !indi.getFault();
+		rates_sp_inject(axis) = injection.update(in.timestamp_sample, in.armed && gate_open, in.landed);
+		rates_sp_applied(axis) = rates_sp(axis) + rates_sp_inject(axis);
 
 		out.torque_pre_inject = indi.update(rates, rates_sp_applied, angular_accel, torque_allocated_prev, in.dt, in.landed,
 						    in.maybe_landed);

@@ -296,14 +296,16 @@ parameters:
       description:
         short: INDI bench excitation break point
         long: |-
-          Bench and system identification only. Where the MC_INDI_INJ_AX excitation enters. 0: INDI torque setpoint
-          (rate loop break, amplitude MC_INDI_INJ_AMP). 1: rate setpoint received from the attitude controller
-          (attitude loop break, amplitude MC_INDI_INJ_RAMP, MC_INDI_INJ_AMP is ignored). With 1 the excitation is zero
-          unless an attitude controlled mode is active and the rate setpoint is fresh.
+          Bench and system identification only. Where the MC_INDI_INJ_AX excitation enters. The torque setpoint
+          break uses MC_INDI_INJ_AMP; the rate setpoint break (attitude loop) uses MC_INDI_INJ_RAMP and is zero
+          unless an attitude controlled mode is active, the rate setpoint is fresh and the law has no fault; the
+          sequence restarts when that gate reopens or this parameter changes.
       type: enum
       values:
         0: Torque setpoint
         1: Rate setpoint
+      min: 0
+      max: 1
       default: 0
     MC_INDI_INJ_RAMP:
       description:

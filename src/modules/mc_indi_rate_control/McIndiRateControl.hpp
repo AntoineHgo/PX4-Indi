@@ -123,6 +123,7 @@ private:
 
 	IndiRateControl _indi; ///< INDI rate law
 	IndiInjection _injection; ///< bench loop-break excitation (MC_INDI_INJ_*), off by default
+	int32_t _inject_point_prev{0}; ///< MC_INDI_INJ_PT at the last parameter update
 
 	ActuatorEffectivenessMultirotor _effectiveness{this}; ///< rotor geometry, same parameters as the control allocator
 	IndiMeasuredTorque _measured_torque_model;

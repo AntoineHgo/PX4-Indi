@@ -231,3 +231,40 @@ TEST(IndiInjectionStepTest, RateSetpointBreakGating)
 		}
 	}
 }
+
+// A gate that closes in flight (v 0: stale or ACRO, v 1: law fault on the previous cycle) zeroes d and restarts the
+// sequence from its beginning when it reopens: d then equals a fresh generator started at the reopening cycle.
+TEST(IndiInjectionStepTest, RateSetpointBreakGateClosingRestartsSequence)
+{
+	const Vector3f z, sp(0.2f, 0.1f, 0.f);
+	const Vector3f nan_rates(NAN, 0.f, 0.f);
+
+	for (int v = 0; v < 2; v++) {
+		IndiRateControl law = makeLaw();
+		IndiInjection inj;
+		IndiInjection ref;
+		setup(inj, 1);
+		setup(ref, 1);
+		const int closed_first = (v == 0) ? 300 : 301;
+		const int reopen = (v == 0) ? 310 : 302;
+		float peak_after = 0.f;
+
+		for (int k = 0; k < 800; k++) {
+			const uint64_t t = kT0 + (uint64_t)k * 2500;
+			IndiInjectionStepIn in = stepIn(1, t);
+			in.rate_sp_break_allowed = !(v == 0 && k >= 300 && k < 310);
+			IndiInjectionStepOut out{};
+			runIndiInjectionStep(law, inj, in, (v == 1 && k == 300) ? nan_rates : z, sp, z, z, out);
+
+			if (k >= closed_first && k < reopen) {
+				EXPECT_EQ(out.rates_sp_inject(0), 0.f) << "v " << v << " k " << k;
+
+			} else if (k >= reopen) {
+				EXPECT_EQ(out.rates_sp_inject(0), ref.update(t, true, false)) << "v " << v << " k " << k;
+				peak_after = fmaxf(peak_after, fabsf(out.rates_sp_inject(0)));
+			}
+		}
+
+		EXPECT_GT(peak_after, 0.05f) << "v " << v;
+	}
+}
