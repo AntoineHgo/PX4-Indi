@@ -147,3 +147,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | RC113 | S113 | sonnet | route check 113 | 8 calls, ~34k tok, ~$0.15 | DONE design/route_check_113.md |
 | F113 | S113 | sonnet | fix P112 faults 1, 2, 4b | 36 calls, ~78k tok, ~$0.45 | DONE 09515cd8ae |
 | K113 | S113 | sonnet | key of 09515cd8ae | 12 calls, ~39k tok, ~$0.2 | DONE 0 BLOCKING 0 MAJOR 3 MINOR |
+| M113 | S113 | sonnet | stick_zsine_o6 mass-only discriminator, 3 flights | 18 calls, ~51k tok, ~$0.3 | DONE set-up fault (stabilized hover stick) |
