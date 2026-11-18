@@ -120,6 +120,39 @@ def test_output_point_columns():
     check(np.allclose(w[:, 2] - w[:, 3], w[:, 1]), "u_o = c_o + d")
 
 
+def test_no_crossover_reported_explicitly():
+    # |L| < 1 everywhere in the band (K = 0.3 -> |L| < 1 above 0.3 rad/s): no gain crossover. Must be reported, not silent.
+    global K
+    k0, K = K, 0.3
+    try:
+        a = window_array()
+    finally:
+        K = k0
+    res, mg, fs = pinj_csv.estimate(a, TP, FMIN, FMAX)
+    check(not mg["crossings"], "synthetic case must have no |L| = 1 crossing")
+    rep = pinj_csv.crossing_report(res, mg)
+    check(rep["gain_crossover"]["in_band"] is False, "gain crossover must be flagged absent")
+    mx = rep["gain_crossover"]["max_L_db"]
+    check(mx < 0.0 and abs(mx - 20 * np.log10(np.abs(res["L"][res["accepted"]]).max())) < 1e-9, "max |L| dB reported")
+    check("no 0 dB crossover in band" in rep["gain_crossover"]["text"], "explicit text")
+    check(rep["gain_crossover"]["f_at_max_hz"] > 0.0, "frequency of max reported")
+    check("phase_crossover" in rep and "in_band" in rep["phase_crossover"], "phase crossover status reported")
+    print("no-crossover report:", rep["gain_crossover"]["text"])
+
+
+def test_no_accepted_bins_does_not_raise():
+    # all bins rejected (x, y uncorrelated with d): the margins estimate used to die with IndexError on an empty spline
+    a = window_array()
+    rng = np.random.default_rng(3)
+    a[:, 2] = rng.standard_normal(len(a))
+    a[:, 3] = rng.standard_normal(len(a))
+    res, mg, fs = pinj_csv.estimate(a, TP, FMIN, FMAX)
+    check(not res["accepted"].any(), "setup: every bin must be rejected")
+    rep = pinj_csv.crossing_report(res, mg)
+    check(rep["gain_crossover"]["in_band"] is False and "no accepted bins" in rep["gain_crossover"]["text"],
+          "explicit no-accepted-bins report")
+
+
 def main():
     fails = 0
     for name, f in sorted(globals().items()):

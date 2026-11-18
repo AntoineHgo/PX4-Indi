@@ -134,9 +134,10 @@ def _ls_phasors(t, sigs, freqs, Tp, discard):
         sel = (t >= t0 + p * Tp - 1e-9) & (t < t0 + (p + 1) * Tp - 1e-9)
         tt = t[sel] - t0
         ang = 2 * np.pi * tt[:, None] * freqs[None, :]
-        A = np.hstack([np.cos(ang), np.sin(ang)])
-        coef = np.linalg.lstsq(A, sigs[:, sel].T, rcond=None)[0]  # (2K, 3)
-        out.append((coef[:K] - 1j * coef[K:]).T)  # (3, K) phasors
+        # constant column: signals with a mean (e.g. z acceleration near -g) would otherwise bias every phasor
+        A = np.hstack([np.cos(ang), np.sin(ang), np.ones((tt.size, 1))])
+        coef = np.linalg.lstsq(A, sigs[:, sel].T, rcond=None)[0]  # (2K+1, 3)
+        out.append((coef[:K] - 1j * coef[K:2 * K]).T)  # (3, K) phasors
     Z = np.array(out)  # (M, 3, K)
     return Z[:, 0], Z[:, 1], Z[:, 2]
 

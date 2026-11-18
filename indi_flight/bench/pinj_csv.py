@@ -41,7 +41,39 @@ def estimate(a, Tp, fmin, fmax, discard=1):
     t, d, x, y = a.T
     fs = 1.0 / np.median(np.diff(t))
     res = me.frf_periodic(d, x, y, fs, Tp, me.log_bins(fmin, fmax, Tp), discard, t=t)
+    if int(np.sum(res["accepted"])) < 2:  # nothing to interpolate (all bins failed coherence): explicit, not an IndexError
+        nan = float("nan")
+        return res, {"pm_deg": nan, "dm_s": nan, "gm_db": nan, "crossings": [], "phase_crossings": [],
+                     "band_limited": True, "top_db": nan, "no_accepted_bins": True}, fs
     return res, me.margins_from_frf(res), fs
+
+
+def crossing_report(res, mg):
+    """Explicit in-band status of the gain (|L| = 1) and phase (-180 deg) crossovers, for the --margins JSON.
+    A missing crossover is a result (e.g. |L| < 1 over the whole band), not an error."""
+    acc = np.asarray(res["accepted"], bool)
+    f = np.asarray(res["f"], float)[acc]
+    L = np.asarray(res["L"])[acc]
+    if mg.get("no_accepted_bins") or f.size == 0:
+        t = "no accepted bins (coherence below threshold everywhere): no crossover can be assessed"
+        return {"gain_crossover": {"in_band": False, "text": t}, "phase_crossover": {"in_band": False, "text": t}}
+    db = 20 * np.log10(np.abs(L))
+    i = int(np.argmax(db))
+    if mg["crossings"]:
+        g = {"in_band": True, "f_c_hz": [c["f_c"] for c in mg["crossings"]], "text": "gain crossover in band"}
+    else:
+        g = {"in_band": False, "max_L_db": float(db[i]), "f_at_max_hz": float(f[i]),
+             "text": "no 0 dB crossover in band (%.2f-%.2f Hz, accepted bins), max |L| = %.1f dB at %.2f Hz"
+                     % (f[0], f[-1], db[i], f[i])}
+    if mg["phase_crossings"]:
+        p = {"in_band": True, "f_hz": [c["f"] for c in mg["phase_crossings"]], "text": "phase crossover in band"}
+    else:
+        ph = np.degrees(np.unwrap(np.angle(L)))
+        j = int(np.argmin(ph))
+        p = {"in_band": False, "min_arg_deg": float(ph[j]), "f_at_min_hz": float(f[j]),
+             "text": "no -180 deg crossover in band, lowest unwrapped arg L = %.1f deg at %.2f Hz; |L| there %.1f dB"
+                     % (ph[j], f[j], db[j])}
+    return {"gain_crossover": g, "phase_crossover": p}
 
 
 def main(argv=None):
@@ -63,7 +95,7 @@ def main(argv=None):
             raise SystemExit("--margins needs --Tp")
         res, mg, fs = estimate(w, a.Tp, a.fmin, a.fmax)
         out = {"fs": fs, "margins": mg, "f": res["f"], "coh_x": res["g2_xd"], "coh_y": res["g2_yd"],
-               "L_abs": np.abs(res["L"]), "accepted": res["accepted"]}
+               "L_abs": np.abs(res["L"]), "accepted": res["accepted"], "report": crossing_report(res, mg)}
         print(json.dumps(out, indent=1, default=lambda o: o.tolist() if hasattr(o, "tolist") else str(o)))
 
 
