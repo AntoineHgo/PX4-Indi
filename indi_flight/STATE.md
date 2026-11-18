@@ -23,7 +23,9 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    dff2b7a805 keyed OK (T203, design/t203_integral_hoist_key.md); MINOR: want_indi true + stage bypass on stale
    inputs zeroes the stock integrator every cycle (no gap compensation in that fault): gate pre-update reset on
    fresh inputs.
-   S97: (a) DONE de7c598e1e (compile-only); (b) decided D-ALTCTL-Z (e92a576e01), impl T204. Was: (b) F-2: INDI serves ALTCTL by adding
+   S97: (a) DONE de7c598e1e (compile-only); (b) decided D-ALTCTL-Z (e92a576e01), impl T204. Pre-test recipe: s5_gap085
+   (offboard pos) exists; ALTCTL needs a new mode="stick" scenario with motor_fault (allowed without --sched), flown with
+   --stick-mode altctl; command in results/stage5_s70/README.md line 17; metric bench/s5_gap_check.py. Was: (b) F-2: INDI serves ALTCTL by adding
    flag_control_climb_rate_enabled to want_indi (T200 log sec F3: the stage only needs finite a_c); (c) 2-flight SITL pre-test: thrust-gap hover 0.85 in POSCTL and ALTCTL + MC_INDI_EN=1
    MC_AT_EN=1 start check; then the sim hooks (old S96 plan below), yaw cell, identification slice.
    (5) attitude-break margin with the new setpoint path (G2) when the G2 table is resumed.
