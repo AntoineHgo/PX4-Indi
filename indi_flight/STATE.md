@@ -9,11 +9,12 @@
 History: JOURNAL.md (S101 entry holds the latest moves). Agent ledger: LEDGER.md. Lessons proposed:
 LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S103.
 Rule (RC64/RC74): inner loop time-boxed, 1 session per law change; no new anomaly chase unless a gate test fails.
-NEXT S102:
+NEXT S103 (route check due S103: do it first, sonnet, design/route_check_NN.md):
+   (0) close A-37: actuator delay lag in flight (step input, truth rotor speed or per-call age); then hook B (GNSS, note s.4).
    (i) DONE S101 (b9d6cf3285): K101 12/12 agree, all 24 INDI v2 rate cells (measured + model-only) PASS.
    (ii) PID M1 reference rate cells (reference only, F-5; 800 Hz x3 axes, 1 seed is enough).
    (iii) linear-model cross-check for the v2 path (margins_models.py, T78 UNVERIFIED list below) -> G2 verdict note.
-   (iv) next hook: shared sim-time delay line (design/delay_line_hook_s94.md), needed by G3.
+   (iv) delay hooks A1+A2 DONE S102 (c6ba02609f, keyed K102); hook B GNSS open.
    (v) G5 pre-test s5_gap085 POSCTL + stick ALTCTL gap + EN/AT_EN start check (RC98 order (a)).
    (vi) attitude-break margin with the new setpoint path (G2) when the G2 table is resumed.
    Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
@@ -31,7 +32,7 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 | K101 | S101: second key of 12 model-only cells (P100+B100) | self (docker) | results/g2_rate_modelonly_s100/key_k101/summary.md | DONE b9d6cf3285: 12/12 agree |
 | H102 | S102: delay-line hooks A1+A2 in gz_bridge (uncommitted, builds, 0 warnings, not flown) | sonnet | design/delay_line_impl_s102.md | DONE; orchestrator read diff, OK |
 | K102 | S102: second key of H102 | sonnet | design/delay_line_key_s102.md | DONE: 0 BLOCKING, M1+M2 fixed by orchestrator, c6ba02609f |
-| V102 | S102: delay-hook pre-test, 2 hover flights (0/0 and 5/5 ms), IMU age + actuator lag | haiku | results/delay_pretest_s102/README.md | if cut: rerun results/delay_pretest_s102/fly.sh |
+| V102 | S102: delay-hook pre-test d0/d5 | haiku | results/delay_pretest_s102/README.md | DONE: IMU PASS (age 0/5000 us), actuator UNVERIFIED -> A-37 |
 S102 finding: (ii) PID M1 has NO recipe: the gyro-break hook (`sim_inject`, design/stage2_margins_s35.md l.21) was never built.
   PID reference is F-5 reference only -> deferred behind (iv); build the M1 hook later in gz_bridge IMU callback beside A2.
 

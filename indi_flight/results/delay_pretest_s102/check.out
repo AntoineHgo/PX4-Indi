@@ -1,0 +1,15 @@
+PASS
+gate_d0=0
+PASS
+gate_d5=0
+== indi_flight/results/delay_pretest_s102/d0/flight.ulg
+  rates Hz: sensor_gyro 800.0  actuator_motors 800.0  esc_status 800.0
+  (a) IMU age us: median 0.0 min 0.0 max 0.0 n 89058
+  (b) lag ms per motor [31.25, 31.25, 31.25, 31.25] median 31.25
+== indi_flight/results/delay_pretest_s102/d5/flight.ulg
+  rates Hz: sensor_gyro 800.0  actuator_motors 800.0  esc_status 800.0
+  (a) IMU age us: median 5000.0 min 5000.0 max 5000.0 n 88352
+  (b) lag ms per motor [28.75, 28.75, 30.0, 31.25] median 29.38
+CHECK a d5 IMU age in [3750,6250] us: PASS (5000.0)
+CHECK a-neg d0 IMU age not ~5000 (|med|<1250): PASS (0.0)
+CHECK b lag d5-d0 in [3.75,6.25] ms: FAIL (-1.88)

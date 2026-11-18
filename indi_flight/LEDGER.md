@@ -118,4 +118,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | K101 | S101 | self (docker, no agent) | second key of 12 model-only G2 rate cells | results/g2_rate_modelonly_s100/key_k101/summary.md | DONE 12/12 agree |
 | S102 | H102 | sonnet | delay-line hooks A1+A2 gz_bridge, build | 21 calls, ~60k tok | DONE builds, uncommitted |
 | S102 | K102 | sonnet | second key H102 code vs spec | 12 calls, ~47k tok | DONE 0 BLOCKING, 2 MAJOR fixed |
-| S102 | V102 | haiku | delay-hook pre-test 2 flights | - | in flight |
+| S102 | V102 | haiku | delay-hook pre-test 2 flights | 13 calls, ~40k tok | DONE IMU PASS, ACT unverified (A-37) |
