@@ -54,6 +54,35 @@ def test_validation():
     assert so.wind_flags(SCENARIOS["gust_x"]) == []
 
 
+def test_window_validation_and_fault_list():
+    sc = SCENARIOS["o1_lemniscate"]            # settle 3, traj 17.8, hold 3 = 23.8 s
+    ok = {"erpm_loss": {"motor": 1, "start": "traj", "start_offset_s": 2.0, "duration_s": 2.0}}
+    so.merge(sc, ok)
+    for bad in ({"start_offset_s": 20.0}, {"duration_s": 0.0}, {"start_offset_s": -1.0}, {"motor": 4}):
+        try:
+            so.merge(sc, {"erpm_loss": {**ok["erpm_loss"], **bad}})
+        except ValueError:
+            continue
+        raise AssertionError(f"accepted {bad}")
+    gust = {"disturbance": "gust_x", "wind": {"steady": 2.0}}
+    so.merge(sc, {**gust, "dist_segment": "traj"})
+    try:
+        so.merge(sc, {**gust, "dist_segment": "hold"})  # 13 s of profile from 20.8 s: beyond 23.8 s
+    except ValueError as e:
+        assert "window" in str(e)
+    else:
+        raise AssertionError("late wind accepted")
+    two = [{"segment": "traj", "motor": 2, "thrust_scale": 0.8}, {"segment": "traj", "motors": [0, 1, 2, 3], "thrust_scale": 0.9}]
+    m = so.merge(sc, {"motor_fault": two})
+    assert so.fault_entries(m) == two and so.fault_entries(sc) == [] and len(so.fault_entries({"motor_fault": two[0]})) == 1
+    try:
+        so.merge(sc, {"motor_fault": []})
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("empty fault list accepted")
+
+
 def test_existing_scenarios_unchanged_without_overrides():
     # every shipped scenario: no wind key -> injector gets no extra argument
     assert all(so.wind_flags(sc) == [] for sc in SCENARIOS.values())

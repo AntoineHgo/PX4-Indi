@@ -9,6 +9,7 @@ sim time (time_boot_ms in MAVLink messages) so the speed factor does not matter 
 Always ends: every wait has a wall-clock timeout, cleanup runs in `finally`.
 """
 import argparse
+import copy
 import glob
 import json
 import math
@@ -893,17 +894,20 @@ def main():
             meta["disturbance"] = {"profile": sc["disturbance"], "onset_px4_s": onset, "onset_us": int(onset * 1e6),
                                    "csv": "disturbance.csv", **({"wind": sc["wind"]} if sc.get("wind") else {})}
             json.dump({"onset_px4_s": onset}, open(os.path.join(a.out, "disturbance_trigger.json"), "w"))
-        fault = sc.get("motor_fault")
-        if fault:  # plant change: read nominal MIN/MAX of the motor's gz channel now (param index = motor + 1)
-            # `motor` (one index, T8/H4) or `motors` (list, V' W3): every listed motor gets the same thrust scale
-            fmotors = fault.get("motors") or [fault["motor"]]
-            nom_all = {}
-            for fm in fmotors:
-                nom_all[fm] = {k: sim.get_param(f"SIM_GZ_EC_{k}{fm + 1}") for k in ("MIN", "MAX")}
-            meta["motor_fault"] = {"motor": fmotors[0], "thrust_scale": fault["thrust_scale"],
-                                   "nominal": nom_all[fmotors[0]], "segment": fault["segment"]}
+        faults = scenario_overrides.fault_entries(sc)  # one dict or a list (weak motor + saturation); scales multiply per motor
+        fault = bool(faults)
+        if faults:  # plant change: read nominal MIN/MAX of each affected motor's gz channel now (param index = motor + 1)
+            # `motor` (one index, T8/H4) or `motors` (list, V' W3): every listed motor gets the entry's thrust scale
+            f_ms = [f.get("motors") or [f["motor"]] for f in faults]
+            fmotors = sorted({m for ms in f_ms for m in ms})
+            nom_all = {fm: {k: sim.get_param(f"SIM_GZ_EC_{k}{fm + 1}") for k in ("MIN", "MAX")} for fm in fmotors}
+            cum_scale = {fm: 1.0 for fm in fmotors}  # product of the thrust scales applied so far, per motor
+            meta["motor_fault"] = {"motor": fmotors[0], "thrust_scale": faults[0]["thrust_scale"],
+                                   "nominal": nom_all[fmotors[0]], "segment": faults[0]["segment"]}
             if len(fmotors) > 1:
                 meta["motor_fault"].update({"motors": list(fmotors), "nominal_all": {str(m): v for m, v in nom_all.items()}})
+            if len(faults) > 1:
+                meta["motor_fault"]["entries"] = copy.deepcopy(faults)
         loss = sc.get("erpm_loss")  # dict(motor, start, end): total eRPM loss from segment start to segment end
         if loss:
             meta["erpm_loss"] = dict(loss)
@@ -922,13 +926,17 @@ def main():
                     sag_state["next"] += 0.5
         prev = 0.0
         for name, dur, val in sc["segments"]:
-            if loss and name in (loss["start"], loss["end"]):
+            if loss and "end" in loss and name in (loss["start"], loss["end"]):
                 on = name == loss["start"]
                 sim.set_param("SIM_GZ_ERPM_LOSS", (1 << loss["motor"]) if on else 0)
                 meta["erpm_loss"]["on_us" if on else "off_us"] = int(sim.t * 1e6)
-            if fault and name == fault["segment"]:
-                k_om = math.sqrt(fault["thrust_scale"])
-                new_all = {fm: {k: int(round(v * k_om)) for k, v in nom_all[fm].items()} for fm in fmotors}
+            ents = [f for f in faults if f["segment"] == name]
+            if ents:
+                for f in ents:
+                    for fm in (f.get("motors") or [f["motor"]]):
+                        cum_scale[fm] *= f["thrust_scale"]
+                new_all = {fm: {k: int(round(v * math.sqrt(cum_scale[fm]))) for k, v in nom_all[fm].items()} for fm in fmotors}
+                k_om = math.sqrt(cum_scale[fmotors[0]])
                 t_req = sim.t
                 for fm in fmotors:
                     for k, v in new_all[fm].items():
@@ -972,13 +980,27 @@ def main():
                 sp = None
             if sag:
                 sp = (lambda sp0=sp: (sag_tick(), sp0() if sp0 else None))
-            sim.run(dur, sp=sp, what=f"scenario:{name}")
+            if loss and "duration_s" in loss and name == loss["start"]:
+                # timed eRPM loss (sim time): on at segment start + offset, off `duration_s` later, the rest of the segment as is
+                t_on, t_len = loss["start_offset_s"], loss["duration_s"]
+                for what, dt, bit in (("pre", t_on, None), ("loss", t_len, 1 << loss["motor"]), ("post", None, None)):
+                    if bit is not None:
+                        sim.set_param("SIM_GZ_ERPM_LOSS", bit)
+                        meta["erpm_loss"]["on_us"] = int(sim.t * 1e6)
+                    d = (dur - t_on - t_len) if dt is None else dt
+                    if d > 0:
+                        sim.run(d, sp=sp, what=f"scenario:{name}:{what}")
+                    if what == "loss":
+                        sim.set_param("SIM_GZ_ERPM_LOSS", 0)
+                        meta["erpm_loss"]["off_us"] = int(sim.t * 1e6)
+            else:
+                sim.run(dur, sp=sp, what=f"scenario:{name}")
             prev = val
             seg_elapsed += dur
         meta["t_window_end_us"] = int(seg_now() * 1e6)
         if sag:
             sim.set_param("SIM_GZ_THR_SC", 1.0)
-        if loss and loss["end"] is None:
+        if loss and loss.get("end", 1) is None:
             sim.set_param("SIM_GZ_ERPM_LOSS", 0)
         sim.run(4.0, sp=pos_sp, what="recover")  # outside the metrics window
 

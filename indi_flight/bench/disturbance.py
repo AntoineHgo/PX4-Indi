@@ -122,16 +122,52 @@ def wind_speed(t, steady=WIND_RAMP_TO, amp=GUST_AMP):
     return steady  # hold (profile end handled by the caller)
 
 
-def gust_x(t, af, steady=WIND_RAMP_TO, amp=GUST_AMP, dir_deg=0.0):
+def gust_x(t, af, steady=WIND_RAMP_TO, amp=GUST_AMP, dir_deg=0.0, vel=None):
     """Wrench (fx, fy, fz, tx, ty, tz) at the CoM, world frame, for profile time t. steady / amp (gust added on the steady
     wind) in m/s; dir_deg = where the air moves to, from world +x towards +y (gust_diag convention). Defaults: +x, 3 m/s,
-    +6 m/s (bit-identical to before: dir 0 takes the old +x branch)."""
-    v = wind_speed(t, steady, amp)
-    d = af.c_drag * v * abs(v)
-    f = (d, 0.0, 0.0) if dir_deg == 0.0 else (d * math.cos(math.radians(dir_deg)), d * math.sin(math.radians(dir_deg)), 0.0)
+    +6 m/s.
+    vel = vehicle ground-truth world velocity (vx, vy, vz) m/s, same frame as the wind: the force is then the drag of the
+    AIR-RELATIVE velocity, F = c_drag * (w - v) * |w - v| (vector form). The gz models (quad5in, x500) have no body drag
+    (only the per-rotor rotorDragCoefficient), so the whole drag is injected here, not only the wind part. vel=None is the
+    legacy pure force c_drag * w * |w| (v taken as 0; bit-identical to the old code)."""
+    w = wind_speed(t, steady, amp)
+    if vel is None:
+        d = af.c_drag * w * abs(w)
+        f = (d, 0.0, 0.0) if dir_deg == 0.0 else (d * math.cos(math.radians(dir_deg)), d * math.sin(math.radians(dir_deg)), 0.0)
+    else:
+        rel = (w * math.cos(math.radians(dir_deg)) - vel[0], w * math.sin(math.radians(dir_deg)) - vel[1], -vel[2])
+        n = math.sqrt(rel[0] ** 2 + rel[1] ** 2 + rel[2] ** 2)
+        f = (af.c_drag * rel[0] * n, af.c_drag * rel[1] * n, af.c_drag * rel[2] * n)
     r = (0.0, 0.0, af.cop_z)
     tq = (r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0])
     return (*f, *tq)
+
+
+def wind_profile_args(steady, peak, dir_deg):
+    """CLI --wind-steady/--wind-peak/--wind-dir (any may be None) -> (steady, gust amp ABOVE steady, dir_deg).
+    peak is the TOTAL wind in the gust, so amp = peak - steady. Raises ValueError unless 0 <= steady <= peak."""
+    st = WIND_RAMP_TO if steady is None else steady
+    pk = st + GUST_AMP if peak is None else peak
+    if st < 0 or pk < st:
+        raise ValueError("need 0 <= --wind-steady <= --wind-peak")
+    return st, pk - st, (dir_deg or 0.0)
+
+
+class PoseVelocity:
+    """Finite-difference world velocity of a pose stream, deterministic in the sample times (sim time, s). update() returns
+    None until two samples at least min_dt apart exist; the velocity is then held between differences."""
+
+    def __init__(self, min_dt=0.004):
+        self.min_dt, self.last, self.vel = min_dt, None, None
+
+    def update(self, t, pos):
+        if self.last is None:
+            self.last = (t, tuple(pos))
+        elif t - self.last[0] >= self.min_dt:
+            dt = t - self.last[0]
+            self.vel = tuple((pos[i] - self.last[1][i]) / dt for i in range(3))
+            self.last = (t, tuple(pos))
+        return self.vel
 
 
 def payload_add(t, af):
@@ -225,12 +261,12 @@ def main():
         print("--wind-* only for --profile gust_x", file=sys.stderr)
         return 2
     if wind_given:
-        st = WIND_RAMP_TO if a.wind_steady is None else a.wind_steady
-        pk = st + GUST_AMP if a.wind_peak is None else a.wind_peak
-        if st < 0 or pk < st:
-            print("need 0 <= --wind-steady <= --wind-peak", file=sys.stderr)
+        try:
+            st, am, dd = wind_profile_args(a.wind_steady, a.wind_peak, a.wind_dir)
+        except ValueError as e:
+            print(e, file=sys.stderr)
             return 2
-        fn = lambda t, af_, st=st, am=pk - st, dd=(a.wind_dir or 0.0): gust_x(t, af_, st, am, dd)  # noqa: E731
+        fn = lambda t, af_, vel=None, st=st, am=am, dd=dd: gust_x(t, af_, st, am, dd, vel)  # noqa: E731
     af = load_airframe(a.airframe or airframe_from_model(a.model), a.sdf)
     w = f"/world/{a.world}"
 
@@ -282,7 +318,7 @@ def main():
 
     csv = open(os.path.join(a.out, "disturbance.csv"), "w", buffering=1)
     csv.write("sim_time_s,px4_time_s,fx,fy,fz,tx,ty,tz\n")
-    state = {"onset": None, "t": None, "ended": False, "last_pub": None, "n": 0, "stop": False, "t_end_sim": None}
+    state = {"onset": None, "t": None, "ended": False, "last_pub": None, "n": 0, "stop": False, "t_end_sim": None, "vel_none": 0}
     wall0 = time.time()
 
     def apply(wr):
@@ -291,6 +327,14 @@ def main():
         m.wrench.force.x, m.wrench.force.y, m.wrench.force.z = wr[0:3]
         m.wrench.torque.x, m.wrench.torque.y, m.wrench.torque.z = wr[3:6]
         pub.publish(m)
+
+    pv = PoseVelocity()
+
+    def on_pose(msg):  # /world/<w>/pose/info: pose of every entity, stamped with sim time
+        for p in msg.pose:
+            if p.name == a.model:
+                pv.update(msg.header.stamp.sec + msg.header.stamp.nsec * 1e-9, (p.position.x, p.position.y, p.position.z))
+                return
 
     def on_clock(msg):
         t = msg.sim.sec + msg.sim.nsec * 1e-9
@@ -312,11 +356,19 @@ def main():
             pub_clear.publish(entity())
             say(f"profile ended at sim {t:.3f}, wrench cleared")
         else:
-            wr = fn(tp, af)
+            if a.profile == "gust_x":  # air-relative drag: feed the vehicle ground-truth velocity (None until 2 pose samples)
+                wr = fn(tp, af, pv.vel)
+                state["vel_none"] += pv.vel is None
+            else:
+                wr = fn(tp, af)
             apply(wr)
         state["n"] += 1
         csv.write(f"{t:.4f},{t - CLOCK_OFFSET_S:.4f}," + ",".join(f"{x:.5f}" for x in wr) + "\n")
 
+    from gz.msgs10.pose_v_pb2 import Pose_V
+    if not node.subscribe(Pose_V, f"{w}/pose/info", on_pose):
+        say("subscribe to pose/info failed")
+        return 3
     if not node.subscribe(Clock, f"{w}/clock", on_clock):
         say("subscribe to clock failed")
         return 3
@@ -329,7 +381,7 @@ def main():
             break
         time.sleep(0.2)
     pub_clear.publish(entity())
-    say(f"exit, {state['n']} wrench updates")
+    say(f"exit, {state['n']} wrench updates, {state['vel_none']} gust_x updates without a velocity (legacy force)")
     csv.close()
     return 0
 

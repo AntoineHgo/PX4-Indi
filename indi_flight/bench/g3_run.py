@@ -143,10 +143,12 @@ def build_run(draw, base_params_path, out_dir):
     main_seg = MAIN_SEGMENT[scenario]
     tl = f["tel_loss"]
     if tl["on"]:
-        ov["erpm_loss"] = {"motor": int(tl["motor"]), "start": main_seg, "end": END_SEGMENT}
-        applied["tel_loss"] = {"motor": tl["motor"], "start": main_seg, "end": END_SEGMENT, "via": "scenario-overrides erpm_loss"}
-        notes["tel_loss"] = (f"segment-granular: loss runs from the start of '{main_seg}' to the start of '{END_SEGMENT}', not "
-                             f"the drawn start_offset {tl['start_offset_s']} s / duration {tl['duration_s']} s")
+        ov["erpm_loss"] = {"motor": int(tl["motor"]), "start": main_seg, "start_offset_s": tl["start_offset_s"],
+                           "duration_s": tl["duration_s"]}
+        applied["tel_loss"] = {"motor": tl["motor"], "start": main_seg, "start_offset_s": tl["start_offset_s"],
+                               "duration_s": tl["duration_s"], "via": "scenario-overrides erpm_loss (timed, sim time)"}
+        notes["tel_loss"] = (f"anchor = start of '{main_seg}' (the single anchor of all timed G3 events): loss from "
+                             f"+{tl['start_offset_s']} s for {tl['duration_s']} s (sim time)")
     else:
         applied["tel_loss"] = {"on": False}
     if f["tel_frozen"]["on"]:
@@ -174,20 +176,20 @@ def build_run(draw, base_params_path, out_dir):
         notes["thrust_sag"] = f"ramp length is the scenario window, not the drawn ramp_s {sg.get('ramp_s')}"
     else:
         applied["thrust_sag"] = {"on": False}
+    faults = []
     if sat["on"]:
-        ov["motor_fault"] = {"segment": main_seg, "motors": [0, 1, 2, 3], "thrust_scale": sat["scale"]}
+        faults.append({"segment": main_seg, "motors": [0, 1, 2, 3], "thrust_scale": sat["scale"]})
         applied["saturation"] = {"scale": sat["scale"], "via": f"scenario-overrides motor_fault, all motors, step at '{main_seg}'"}
     else:
         applied["saturation"] = {"on": False}
     if wk["on"]:
-        if sat["on"]:
-            not_applied["weak_motor"] = "scenario has one motor_fault slot, already used by saturation (all motors)"
-        else:
-            ov["motor_fault"] = {"segment": main_seg, "motor": int(wk["motor"]), "thrust_scale": wk["scale"]}
-            applied["weak_motor"] = {"motor": wk["motor"], "scale": wk["scale"],
-                                     "via": f"scenario-overrides motor_fault, step at '{main_seg}'"}
+        faults.append({"segment": main_seg, "motor": int(wk["motor"]), "thrust_scale": wk["scale"]})
+        applied["weak_motor"] = {"motor": wk["motor"], "scale": wk["scale"],
+                                 "via": f"scenario-overrides motor_fault, step at '{main_seg}' (multiplies with saturation)"}
     else:
         applied["weak_motor"] = {"on": False}
+    if faults:
+        ov["motor_fault"] = faults[0] if len(faults) == 1 else faults
 
     # wind: gust_x profile, world frame, direction = where the air moves to --------------------------------------------------
     w = f["wind"]

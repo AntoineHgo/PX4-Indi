@@ -50,7 +50,8 @@ GNSS_MISMATCH = (-100, 100)  # ms around the latency, min 0
 WIND = (0.0, 5.0)            # steady m/s
 GUST_PEAK = (3.0, 9.0)       # m/s, peak TOTAL wind (steady + gust), 9 m/s = 10 % W
 MODE_MIX = (("position", 0.70), ("stabilized", 0.20), ("acro", 0.10))
-# event timing inside the hold segment (s after hold start): gust at the start, telemetry faults start in [1, 5]
+# event timing: ALL offsets are s after the ANCHOR = start of the runner's main segment (traj / stick); S111 single anchor.
+# (was: inside the hold segment (s after hold start): gust at the start, telemetry faults start in [1, 5]
 GUST_OFFSET_S = 0.0
 FAULT_START = (1.0, 5.0)
 
@@ -175,11 +176,11 @@ def decode(u, no_wind=False, no_gnss=False):
     loss_on = u["loss_on"] < LOSS_FRAC
     f["tel_loss"] = {"on": bool(loss_on), "motor": pick(u["loss_motor"], 4), "duration_s": LOSS_S,
                      "start_offset_s": r6(lin(u["loss_t"], *FAULT_START)) if loss_on else None,
-                     "nominal": None, "unit": "s after hold start; total eRPM loss on one motor"}
+                     "nominal": None, "unit": "s after anchor (main-segment start); total eRPM loss on one motor"}
     frz_on = u["frz_on"] < FROZEN_FRAC
     f["tel_frozen"] = {"on": bool(frz_on), "motor": pick(u["frz_motor"], 4), "duration_s": FROZEN_S,
                        "start_offset_s": r6(lin(u["frz_t"], *FAULT_START)) if frz_on else None,
-                       "nominal": None, "unit": "s after hold start; rpm bit-identical for 1 s on one motor"}
+                       "nominal": None, "unit": "s after anchor (main-segment start); rpm bit-identical for 1 s on one motor"}
     vm = logu(u["vib"], *VIB)
     f["vibration"] = {"mult": r6(vm), "acc_ms2": r6(VIB_X1_ACC * vm), "gyr_rads": r6(VIB_X1_GYR * vm),
                       "x1_point": {"acc_ms2": VIB_X1_ACC, "gyr_rads": VIB_X1_GYR, "status": "provisional (S94 dec. 1)"},
@@ -243,19 +244,19 @@ def hooks_for(f, gz_seed):
         "timed": [],
         "disturbance": {"profile": "gust_x (needs parametrised steady/peak/direction)", "steady_ms": f["wind"]["steady_ms"],
                         "gust_amp_ms": f["wind"]["gust_amp_ms"], "dir_deg": f["wind"]["dir_deg"],
-                        "start": "hold start + gust_offset_s"},
+                        "start": "anchor (main-segment start); gust_offset_s not used (fixed profile timing)"},
     }
     sag = f["thrust_sag"] if f["thrust_sag"]["on"] else f["saturation"]
     if sag["on"]:
-        h["timed"].append({"hook": "SIM_GZ_THR_SC", "ramp_to": sag["scale"], "ramp_s": SAG_RAMP_S, "t0": "hover start"})
+        h["timed"].append({"hook": "SIM_GZ_THR_SC", "ramp_to": sag["scale"], "ramp_s": SAG_RAMP_S, "t0": "anchor (main-segment start)"})
     w = f["weak_motor"]
     if w["on"]:
         h["timed"].append({"hook": "SIM_GZ_EC_MAX{motor+1} scaled (motor_fault)", "motor": w["motor"], "thrust_scale": w["scale"],
-                           "t0": "hover start"})
+                           "t0": "anchor (main-segment start)"})
     for key, p in (("tel_loss", "SIM_GZ_ERPM_LOSS bit"), ("tel_frozen", "frozen rpm (no hook)")):
         e = f[key]
         if e["on"]:
-            h["timed"].append({"hook": p, "motor": e["motor"], "t_after_hold_start_s": e["start_offset_s"],
+            h["timed"].append({"hook": p, "motor": e["motor"], "t_after_anchor_s": e["start_offset_s"],
                                "duration_s": e["duration_s"]})
     return h
 
