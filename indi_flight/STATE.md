@@ -9,7 +9,8 @@
 History: JOURNAL.md (S101 entry holds the latest moves). Agent ledger: LEDGER.md. Lessons proposed:
 LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S103.
 Rule (RC64/RC74): inner loop time-boxed, 1 session per law change; no new anomaly chase unless a gate test fails.
-NEXT S105 (RC103 done S103; next route check S108). RC103 order: G5 POSCTL pre-test (v) DONE, G2 verdict note (iii) NEXT, hook B.
+NEXT S106 (RC103 done S103; next route check S108). RC103 order: (v) DONE, (iii) DONE S105, hook B NEXT,
+   then yaw linear model in margins_models.py (8 yaw cells lack cross-check, design/g2_verdict_rate_s105.md).
    (0) DONE S103: A-37 closed (DLY_ACT lag d+[0,1.25 ms), results/a37_actlag_s103). Hook B (GNSS, note s.4) after (v),(iii).
    (i) DONE S101 (b9d6cf3285): K101 12/12 agree, all 24 INDI v2 rate cells (measured + model-only) PASS.
    (ii) PID M1 reference rate cells (reference only, F-5; 800 Hz x3 axes, 1 seed is enough).
@@ -35,6 +36,7 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 | K102 | S102: second key of H102 | sonnet | design/delay_line_key_s102.md | DONE: 0 BLOCKING, M1+M2 fixed by orchestrator, c6ba02609f |
 | V102 | S102: delay-hook pre-test d0/d5 | haiku | results/delay_pretest_s102/README.md | DONE: IMU PASS (age 0/5000 us), actuator UNVERIFIED -> A-37 |
 | G104 | S104: scope G2 verdict note (iii), read-only | haiku | design/g2_verdict_scope_s104.md | DONE (haiku, UNVERIFIED): table claim checked: results/g2_rate_table_s99.md "S101 update" holds 24/24 (K100+K101), only its body is pre-S101; A-21 model-vs-measured PM gap ~18 deg (results/stage2_s41/a21_model_vs_measured.md) > 10 deg G2 tolerance: check which loop/version it was before (iii) |
+| X105 | S105: G2 model-vs-measured cross-check, offline | sonnet | design/g2_crosscheck_s105.md | DONE: 16 roll/pitch cells within tol (dPM<=4.7, dGM<=1.86); yaw unmodelled; filters verified; A-21 n/a to v2 |
 | RC103 | S103: route check | sonnet | design/route_check_103.md | DONE: A-37 time-box $0.5 then park; then G5 pre-tests, G2 verdict note, hook B; defer PID M1 |
 | S103 | S103: scope POSCTL stick gap scenario (read-only) | haiku | design/posctl_gap_scope_s103.md | DONE: scenario + --stick-mode posctl, flown |
 | A103 | S103: A-37 test (a9e5066a55), hover d5/d10 | host bg | results/a37_actlag_s103/README.md | DONE: A-37 closed |
@@ -47,5 +49,5 @@ S102 finding: (ii) PID M1 has NO recipe: the gyro-break hook (`sim_inject`, desi
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
   open per item: `sim_review.md` for simulator work, `module_parity.md` for stage 3/5, `test_review.md` for stage 3,
   `ident_review.md` for stage 4, `remetric.py`/`hover.py` for the errata.
-- Unmodelled in margins_models.py (T78 UNVERIFIED list): AlphaFilter coefficient formula, LPF2p coefficients from
-  memory, gz/ESC latency 0, measured path = eta x motor state, yaw, attitude loop; 267 Hz analytic only.
+- Unmodelled in margins_models.py (T78 UNVERIFIED list; filters verified S105): gz/ESC latency 0 (likely cause of
+  1-2 dB 400 Hz GM residual), measured path = eta x motor state, yaw, attitude loop; 267 Hz analytic only.

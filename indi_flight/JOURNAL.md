@@ -813,3 +813,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S103 (2026-11-18): RC103 (design/route_check_103.md); A-37 closed (a9e5066a55 release-age windows, results/a37_actlag_s103): DLY_ACT lag d+[0,1.25 ms) in flight at 5 and 10 ms, usable in G3.
 - S103: G5 POSCTL gap pre-test (results/g5_posctl_s103): -0.09 m standing truth-z error, A-38 opened (setpoint re-latch vs z-path, ulog check next).
 - S104 (2026-11-18): A-38 closed (results/g5_posctl_s103 README A-38 section, a38_check.py): setpoint not re-latched, est-sp 0.000 m after the 0.85 gap; -0.07 m truth error is a pre-existing estimator vertical offset. Next: G2 verdict note (iii).
+- S105 (2026-11-18): G2 verdict note for the INDI v2 rate loop (design/g2_verdict_rate_s105.md): 16 roll/pitch cells cross-checked against margins_models.py within tolerance (dPM<=4.7 deg, dGM<=1.86 dB); 8 yaw cells open (no yaw model); filter models verified against source; A-21 shown not to apply to v2.

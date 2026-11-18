@@ -122,3 +122,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S103 | RC103 | sonnet | route check | 7 calls, ~37k tok | DONE design/route_check_103.md |
 | S103 | S103 | haiku | POSCTL gap scenario scope | 6 calls, ~31k tok | DONE design/posctl_gap_scope_s103.md |
 | G104 | S104 | haiku | G2 verdict note scope (read-only) | 13 calls, ~53k tok, ~$0.06 | DONE design/g2_verdict_scope_s104.md |
+| X105 | S105 | sonnet | G2 model-vs-measured cross-check (offline) | 14 calls, ~55k tok, ~$0.35 | DONE design/g2_crosscheck_s105.md |
