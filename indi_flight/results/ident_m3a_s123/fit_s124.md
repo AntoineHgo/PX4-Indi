@@ -55,3 +55,22 @@ exclusion test included. All 3 tests PASS (run by calling the test functions dir
   identified in the controller's own normalisation, not in physical units).
 - The xcorr lag is biased by feedback if disturbance dominates; the driver compensates with the J-minimising lag instead.
 - Yaw / pitch not fitted. Start-independence (condition i) not tested (both logs flew G1 = 1757).
+
+## S124 start independence (D-IDENT condition (i), roll only)
+
+Flights: same command as fly.sh with `--params inj_g1x0p5.params` / `inj_g1x2.params` (G1_R/P/Y all scaled x0.5 / x2,
+gains not halved, POS_EN 0), `--out g1x0p5` / `g1x2`, containers s124x0p5 / s124x2 (run in parallel).
+Fit: `python3 indi_flight/bench/ident_fit.py <ulg> --axis roll --t0 <inj start+2> --t1 <inj end-2>`.
+
+| start G1_R | flown | inj window (s) | max roll (deg) | IV G1_R | 95 % CI | F | J (df 7) | vs 1757 |
+|---|---|---|---|---|---|---|---|---|
+| x0.5 | 878 | 20.7-78.5 | 3.4 | 1742.3 | +-1.9 | 27091 | 89.1 | -0.8 % |
+| x1 (pos0) | 1757 | 20.6-78.4 | 7.3 | 1748.9 | +-1.7 | 4549 | 45 | -0.5 % |
+| x1 (pos1) | 1757 | 20.6-78.5 | 7.2 | 1747.3 | +-1.5 | 4676 | 64 | -0.6 % |
+| x2 | 3514 | 18.7-76.7 | 18.7 | 1756.1 | +-1.3 | 902 | 14.0 | -0.05 % |
+
+Spread across starts (max-min)/mean = 0.8 % (limit 10 %); each within 0.8 % of 1757 (limit 10 %). The estimate
+does NOT follow the start (start x4 range -> 0.8 % change), but a small monotonic trend with the start exists
+(1742 -> 1756), larger than the CI: CI is not the whole error budget (J significant). Roll axis only; pitch and yaw
+not flown. x2 start = lower loop gain, larger roll (18.7 deg) and weaker instrument (F 902, still >> 10).
+Status: roll (i) and (ii) met in SITL, UNKEYED until K124 (design/key_k124_ident_fit.md) closes.
