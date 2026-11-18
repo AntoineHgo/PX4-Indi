@@ -583,3 +583,17 @@ so 10 runs suffice); wind steady 0-5 m/s drawn in every run as the factor table 
 the draw is near 0 (to settle in g3_checks: calm = steady < 1 m/s and no gust); pre-test = 15 grouped extremes + 5 sampled.
 Alternatives: 30 saturation runs outside corners; wind in a fraction of runs. Overturn: second key or pre-test shows the
 calm/wind split leaves item 3 calm limits untested, or the owner reads the saturation share as 30 runs.
+
+## D-G3-SAMPLER-K108 (S109): resolution of K108 MAJOR findings
+- M1 saturation share: kept at 10 runs (C3), per D-G3-SAMPLER. No change.
+- M2 gust: whenever wind is drawn, gust amplitude >= 1 m/s above steady and total peak <= 9 m/s (owner cap): draw
+  peak U[3, 9], then steady U[0, min(5, peak - 1)]; C4 pins steady 5 and draws peak U[6, 9]. Alternative: gust on top of
+  steady (total could reach 10 > owner 9 m/s cap). Overturn: owner reads the 9 m/s as gust amplitude, not total.
+- M4 G1 error: the drawn factor e in [0.5, 2] (log) IS the realised controller/plant ratio (spec S64 text). The rate-loop
+  plant G1 scales as 1/inertia_scale per axis, so the controller G1 multiplier written to the run is e / I_scale
+  (plant G1 = G1_nom / I_s, controller = k G1_nom, ratio k I_s = e). Mass does not enter the rate-loop G1. Dynamic
+  thrust loss (sag, weak motor) lowers plant G1 further during the run; it is a separate G3 axis and is recorded, not
+  compensated. The run record holds e, I_s, k. Alternative: multiplier on nominal (realised ratio 0.35-2.6, outside
+  the owner range). Overturn: an identified G1 on a variant model disagrees with G1_nom / I_s by more than 10 %.
+- M3: the self-test gets a guard for every surviving mutation listed in K108 (asym log law, GNSS latency law,
+  mismatch sign range, sag/weak law, weak/loss motor index spread, loss/frozen durations, sag ramp).
