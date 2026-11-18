@@ -627,6 +627,10 @@ def main():
     ap.add_argument("--vib-acc", type=float, default=0.0, help="v2: IMU vibration accel amplitude per rotor [m/s^2]")
     ap.add_argument("--vib-gyr", type=float, default=0.0, help="v2: IMU vibration gyro amplitude per rotor [rad/s]")
     ap.add_argument("--erpm-drop", type=float, default=0.0, help="v2: probability of a dropped eRPM frame")
+    ap.add_argument("--sim-seed", type=int, default=0,
+                    help="v2: SIM_GZ_SEED, seed of eRPM dropout and extra IMU noise streams (0 = fixed default streams)")
+    ap.add_argument("--imu-noise-scale", type=float, default=1.0,
+                    help="v2: SIM_GZ_IMU_NSC, total IMU noise stddev multiplier vs the SDF noise (1..10)")
     ap.add_argument("--gnss-delay", type=int, default=None,
                     help="SENS_GNSS0_DELAY [ms]; the gz GNSS has no latency but stamps no sample time, so the stock "
                          "110 ms makes the EKF lead the truth by 110 ms (D-s8-gnss-delay); unset keeps the stock value")
@@ -715,6 +719,10 @@ def main():
             sim.env["PX4_PARAM_SIM_GZ_ESC_FB"] = "2" if a.sim == "v2" else "1"
             sim.env["PX4_PARAM_SIM_GZ_ERPM_DRP"] = str(a.erpm_drop)
             meta["erpm_drop"] = a.erpm_drop
+            sim.env["PX4_PARAM_SIM_GZ_SEED"] = str(a.sim_seed)
+            sim.env["PX4_PARAM_SIM_GZ_IMU_NSC"] = str(a.imu_noise_scale)
+            meta["sim_seed"] = a.sim_seed
+            meta["imu_noise_scale"] = a.imu_noise_scale
             if a.vib_acc > 0 or a.vib_gyr > 0:  # needs the rotor joint speeds of SIM_GZ_ESC_FB >= 1
                 sim.env["PX4_PARAM_SIM_GZ_VIB_ACC"] = str(a.vib_acc)
                 sim.env["PX4_PARAM_SIM_GZ_VIB_GYR"] = str(a.vib_gyr)
