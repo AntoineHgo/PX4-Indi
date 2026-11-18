@@ -33,8 +33,13 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    S89 (launch 20261118-054540, cap $1.05): B88 metrics committed 51a0a42817; T189 all serial G2 outer cells PASS
    hole_report (3 FAIL = S86 parallel pre-test, not evidence); D-HOLE-FREEZE; RC89 (design/route_check_89.md): STOP
    tooling, cosmetic re-flies, anomaly chases.
-   NEXT S90 (per RC89): (1) amend attitude-break note per T185 (2 MAJOR), implement + fly attitude break (G2);
-   (2) write G2 report section (outer z+xy cells done) + G5 text; (3) combined opus review. Deferred anomalies: A-4, A-6, A-30, A-32, A-34, A-35. Next route check S94.
+   S90 (launch 20261118-081145, cap $3): attitude break (MC_INDI_INJ_PT 1, amp MC_INDI_INJ_RAMP) implemented
+   b41dd6ec81 + fix 2bed1ae95a (T191 key: 3 MAJOR resolved, design/attitude_break_s90_key.md); 7/7 Indi suites pass,
+   SITL builds. Check script bench/attitude_break_check.py (self-test 6/6, never run on a real ULog).
+   NEXT S91: (1) attitude-break PRE-TEST, 1 flight serial, hover_xlong, PT 1, one axis: confirm d appears after DLY,
+   gate restarts work (M3 PT-change UNVERIFIED), new IndiRateStatus fields logged at rate without drops, run
+   attitude_break_check.py; then fly the cells serially (G2). (2) G2 report section (outer z+xy) + G5 text;
+   (3) combined opus review. Deferred anomalies: A-4, A-6, A-30, A-32, A-34, A-35. Next route check S94.
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
 | id | task | agent | output | resume |
@@ -45,7 +50,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T189 | S89 hole_report re-run | haiku | results/stage5_s85_holes/rerun_s89.md | DONE: serial cells all PASS |
 | RC89 | route check 89 | sonnet | design/route_check_89.md | DONE |
 | T190 | S90: amend attitude-break note (sec 8) + implement PT=1 rate-sp break | sonnet | design/t190_impl_log.md | DONE b41dd6ec81 fw, d7bb0e7bd9 check script, 947d510823 note; 7/7 Indi test suites pass (Docker, re-run by orchestrator). UNVERIFIED: check script on real ULog, AX=0 real-log bit-identity |
-| T191 | second key of b41dd6ec81 vs note | sonnet | design/attitude_break_s90_key.md | if not DONE, re-launch same brief (see LEDGER) |
+| T191 | second key of b41dd6ec81 vs note | sonnet | design/attitude_break_s90_key.md | DONE: 0 BLOCKING, 3 MAJOR fixed 2bed1ae95a |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);

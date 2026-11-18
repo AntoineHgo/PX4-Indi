@@ -738,3 +738,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S88 (2026-11-18, cap $1.75): hole_report D-HOLE-EXCESS (dd9dd0705e, keyed T188, slow-topic fix 688f198ab2); last_bin_db rename 5243e845b9; re-fly of two G2 cells, both holes PASS (e73e39e9ec).
 - S89: RC89 filed (stop tooling, freeze hole_report); T189 re-run: all serial G2 cells PASS, 3 FAIL = parallel pre-test only; D-HOLE-FREEZE.
 - S89 STATE trim: task rows T179-T184, T186-T188, B86, B86z, B88 done (outputs listed in LEDGER.md and the S86-S88 entries).
+- S90 (2026-11-18): G2 attitude break at the rate setpoint implemented (b41dd6ec81, T190) and keyed (T191, 3 MAJOR on gating/restart fixed 2bed1ae95a, test checked by breaking it); not flown yet.
