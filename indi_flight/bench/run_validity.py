@@ -12,6 +12,7 @@ RATE_TOPIC = "indi_rate_status"
 POS_TOPIC = "indi_pos_status"
 REL_TOL = 1e-4
 ALIASED = ("MC_RATE_CTL_TYPE",)
+PARAM_ALIAS = {"CA_R_W_MAX": "MC_INDI_W_MAX"}  # run_scenario.py:826 renames it for indi runs
 
 
 def _close(a, b):
@@ -55,6 +56,8 @@ def check_run(ulog_path, requested_params, controller, expected_rate_hz=800.0, _
         except (TypeError, ValueError):
             problems.append(f"param {name}: non-numeric requested value {want!r}")
             continue
+        if controller == "indi" and name in PARAM_ALIAS:
+            name = PARAM_ALIAS[name]  # the runner applied the value under the translated name
         if name not in init:
             if name in ALIASED:
                 cmp[name] = {"want": want, "got": None, "note": "boot alias, covered by MC_INDI_EN"}

@@ -249,8 +249,10 @@ def classify(out, status):
 def check_validity(out):
     """run_validity.check_run on out/flight.ulg with the params the runner wrote (g3_params.txt); None if no ulog."""
     ulg, pp = os.path.join(out, "flight.ulg"), os.path.join(out, "g3_params.txt")
-    if not (os.path.exists(ulg) and os.path.exists(pp)):
+    if not os.path.exists(ulg):
         return None
+    if not os.path.exists(pp):  # K122 #2: requested params unknown -> cannot verify -> fail closed
+        return {"valid": False, "problems": ["g3_params.txt missing, requested params cannot be checked"], "checked": {}}
     return run_validity.check_run(ulg, read_params(pp), CONTROLLER, expected_rate_hz=RATE_HZ)
 
 
@@ -260,7 +262,10 @@ def finalize(out, status):
     (timeout, no run.json) gets g3_failed.json and no done marker, so it is retried on the next invocation."""
     outcome, rj = classify(out, status)
     status["outcome"] = outcome
-    validity = check_validity(out)
+    try:
+        validity = check_validity(out)
+    except Exception as e:  # noqa: BLE001  K122 #3: an unverifiable run must not pass or lose its outcome
+        validity = {"valid": False, "problems": [f"check_validity raised {type(e).__name__}: {e}"], "checked": {}}
     if validity is not None:
         status["validity"] = validity
         if not validity["valid"] and outcome in ("ok", "aborted"):

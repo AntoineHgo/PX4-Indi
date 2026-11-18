@@ -247,3 +247,28 @@ def test_invalid_run_is_void(monkeypatch=None):
         r.check_validity = orig
     done = json.load(open(os.path.join(d, "g3_done.json")))
     assert done["outcome"] == "void" and done["returncode"] == 0 and done["validity"]["valid"] is False
+
+
+def test_missing_params_file_is_void():  # K122 #2
+    import json
+    d = _status_dir({"exit_status": "ok"})
+    open(os.path.join(d, "flight.ulg"), "wb").close()
+    assert r.finalize(d, {"returncode": 0}) == "void"
+    done = json.load(open(os.path.join(d, "g3_done.json")))
+    assert done["validity"]["valid"] is False and "g3_params.txt" in done["validity"]["problems"][0]
+
+
+def test_check_validity_exception_is_void():  # K122 #3
+    import json
+    d = _status_dir({"exit_status": "ok"})
+    orig = r.check_validity
+
+    def boom(out):
+        raise ValueError("boom")
+    r.check_validity = boom
+    try:
+        assert r.finalize(d, {"returncode": 0}) == "void"
+    finally:
+        r.check_validity = orig
+    done = json.load(open(os.path.join(d, "g3_done.json")))
+    assert done["outcome"] == "void" and "boom" in done["validity"]["problems"][0]
