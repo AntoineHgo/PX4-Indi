@@ -63,3 +63,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S74 | T163 | sonnet | route check 74 | 6 calls, ~36k tok, ~$0.19 | done, design/route_check_74.md |
 | S74 | T164 | haiku | rate-blend edge survey | 10 calls, ~41k tok, ~$0.04 | done, design/rate_blend_survey_s74.md |
 | T164 | S77 | sonnet | D-RATE-BLD unit tests (edges + weak-motor closed loop) | results/stage3_s77_tests/README.md | running |
+| T164 | S77 | sonnet | done: 3 blend tests, 69/69, break-checked, 13 calls | results/stage3_s77_tests/README.md |
