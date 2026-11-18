@@ -36,10 +36,13 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    S84: RC84 done (design/route_check_84.md), G1 PASSED, G2 cell table in GATES.md, T174 launched.
    S84 HF output-break re-fly (1.5-10 Hz): abs(L) <= -10 dB, no -180 crossing (UNKEYED, results/stage5_s84_accbreak/
    README.md); pinj_csv --margins raises when no crossover in band (fix).
-   NEXT S85 (RC84 plan): (1) haiku/sonnet second key of hf_frf.txt with margins_est coherence + pinj_csv fix; AX=0 identity flight;
-   (2) per-run hole reporter (extend bench/a15_gaps.py, self-test); (3) fly remaining G2 outer cells with one runner
-   (xy velbreak, accel break z/xy at 800/400); (4) attitude-break design note. S86: G2 report + G5 text; then (e)
-   combined opus review. Deferred anomalies: A-4, A-6, A-30, A-32, A-34, A-35. Next route check S89.
+   S85 (launch 20261118-045636, cap $3): HF FRF second key AGREE; margins_est LS-phasor DC-term defect fixed
+   (5444196ab4): velbreak margins unchanged, S84 pt1 re-scored PM 61.3 deg/0.64 Hz (was 58.7, 7/16 bins);
+   pinj_csv reports no-crossover; bench/hole_report.py (evidence limit 1) built, hf + posctl PASS, second key T178;
+   AX=0 identity flights: no change beyond same-seed spread (results/stage5_s85_identity/README.md).
+   NEXT S86: (1) act on T178 second key; run hole_report on every G2-candidate run; (2) fly remaining G2 outer cells
+   with one runner (xy velbreak, accel break z/xy at 800/400, two seeds); (3) attitude-break design note;
+   then G2 report + G5 text; then (e) combined opus review. Deferred anomalies: A-4, A-6, A-30, A-32, A-34, A-35. Next route check S89.
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
 | id | task | agent | output | resume |
@@ -51,6 +54,9 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | RC84 | S84 route check | sonnet | design/route_check_84.md | DONE: G1 bookkeeping (done), G2 cell table (done), then T174 |
 | T174 | accel-loop break at stage output (MC_INDI_PINJ_PT) | sonnet | results/stage5_s84_accbreak/README.md | DONE 20b1c9c48b fw, 292b71c333 tool; z pre-test PM 58.7 deg 0.62 Hz; HF bins incoherent |
 | T175 | second key of T174, code vs brief | sonnet | results/stage5_s84_accbreak/second_key.md | DONE AGREE WITH MINOR; param texts fixed, rest accepted (README) |
+| T176 | S85 HF FRF second key + pinj_csv no-crossover fix | sonnet | results/stage5_s84_accbreak/hf_second_key.md | DONE AGREE, 5444196ab4 |
+| T177 | S85 per-run hole reporter + self-test | sonnet | bench/hole_report.py, results/stage5_s85_holes/README.md | DONE 35024c732e |
+| T178 | S85 second key of hole_report | sonnet | results/stage5_s85_holes/second_key.md | in flight; if lost, re-launch same brief |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);

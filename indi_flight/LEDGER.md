@@ -75,3 +75,6 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | T174 | S84 | sonnet | accel-loop stage-output break, 20 calls, ~$0.4 | results/stage5_s84_accbreak/NOTES.md | done, committed |
 | RC84 | S84 | sonnet | route check 84, 8 calls, ~$0.5 | design/route_check_84.md | done, acted on |
 | T175 | S84 | sonnet | second key of T174, 10 calls, ~$0.15 | results/stage5_s84_accbreak/second_key.md | AGREE WITH MINOR, minors fixed or accepted |
+| T176 | S85 | sonnet | HF FRF second key + pinj_csv fix, 11 calls, ~$0.2 | results/stage5_s84_accbreak/hf_second_key.md | AGREE; found margins_est DC defect |
+| T177 | S85 | sonnet | per-run hole reporter + self-test, 10 calls, ~$0.2 | results/stage5_s85_holes/README.md | done, committed |
+| T178 | S85 | sonnet | second key of hole_report | results/stage5_s85_holes/second_key.md | launched |
