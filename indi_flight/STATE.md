@@ -34,7 +34,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    907f57510d pinj_csv self-test); velbreak re-fly z PM 57.3 (tb 1.0) / 59.1 deg (tb 0.33): D-GAP PM overturn NOT
    met (cdc5f03713); stick second key DISAGREE (33 Hz rows pre-grid, README overclaim) -> 4 rows re-flown (B83b).
    S84: RC84 done (design/route_check_84.md), G1 PASSED, G2 cell table in GATES.md, T174 launched.
-   NEXT S85 (RC84 plan): (1) act on T175 second key (fix minors); HF band (2-20 Hz) re-excite for D-GAP;
+   NEXT S85 (RC84 plan): (1) HF band (2-20 Hz, higher AMP, more NP) output-break re-fly for D-GAP; AX=0 identity flight;
    (2) per-run hole reporter (extend bench/a15_gaps.py, self-test); (3) fly remaining G2 outer cells with one runner
    (xy velbreak, accel break z/xy at 800/400); (4) attitude-break design note. S86: G2 report + G5 text; then (e)
    combined opus review. Deferred anomalies: A-4, A-6, A-30, A-32, A-34, A-35. Next route check S89.
@@ -48,7 +48,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | B83b | stick re-fly x4, grid pacing | host | results/stage5_s83_stick/README.md | DONE: all 50 Hz, gain 0.86 both stacks; open: sched anchor for stick mode (G5) |
 | RC84 | S84 route check | sonnet | design/route_check_84.md | DONE: G1 bookkeeping (done), G2 cell table (done), then T174 |
 | T174 | accel-loop break at stage output (MC_INDI_PINJ_PT) | sonnet | results/stage5_s84_accbreak/README.md | DONE 20b1c9c48b fw, 292b71c333 tool; z pre-test PM 58.7 deg 0.62 Hz; HF bins incoherent |
-| T175 | second key of T174, code vs brief | sonnet | results/stage5_s84_accbreak/second_key.md | relaunch same brief if missing (S84 prompt: 5 checks) |
+| T175 | second key of T174, code vs brief | sonnet | results/stage5_s84_accbreak/second_key.md | DONE AGREE WITH MINOR; param texts fixed, rest accepted (README) |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);

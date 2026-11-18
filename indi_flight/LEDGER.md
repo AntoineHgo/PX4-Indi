@@ -74,4 +74,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | T173 | S83 | sonnet | injector minors + pinj_csv self-test, 24 calls, ~$0.25 | results/stage5_s83_velbreak/minors_fix.md |
 | T174 | S84 | sonnet | accel-loop stage-output break, 20 calls, ~$0.4 | results/stage5_s84_accbreak/NOTES.md | done, committed |
 | RC84 | S84 | sonnet | route check 84, 8 calls, ~$0.5 | design/route_check_84.md | done, acted on |
-| T175 | S84 | sonnet | second key of T174 | results/stage5_s84_accbreak/second_key.md | launched |
+| T175 | S84 | sonnet | second key of T174, 10 calls, ~$0.15 | results/stage5_s84_accbreak/second_key.md | AGREE WITH MINOR, minors fixed or accepted |

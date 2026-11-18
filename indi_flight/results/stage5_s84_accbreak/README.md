@@ -31,3 +31,9 @@ Analysis: `bench/pinj_csv.py --point output` -> `pt1_pinj_z.csv`, `pt1_margins.j
 ## Open (before this counts in G2)
 AX = 0 / PT = 0 behaviour-identical flight (code inspection only so far); second key of the code against the brief;
 x and y axes; 800 Hz; two seeds; hole report (evidence limit 1); linear-model cross-check of the output-break L.
+
+## Second key (T175, S84): AGREE WITH MINOR (`second_key.md`)
+Fixed: param long texts no longer re-list enum options (PINJ_PT, PINJ_AX). Accepted as bench limits (PT 1 only):
+`_coll_clamped`, `omega_ff` and the logged `q_d` come from t_c, not u_o; u_o bypasses the library tilt/collective
+clamps (keep AMP below the hover vertical thrust margin; a z AMP above ~g could invert the vector). The unit test
+does not exercise the clamp; the pinj_csv self-test checks the column mapping only (pyulog mocked).
