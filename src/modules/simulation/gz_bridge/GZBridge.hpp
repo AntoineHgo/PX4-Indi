@@ -39,6 +39,7 @@
 #include "GZGimbal.hpp"
 
 #include <mathlib/math/WhiteGaussianNoise.hpp>
+#include <random>
 #include <px4_platform_common/atomic.h>
 #include <px4_platform_common/defines.h>
 #include <px4_platform_common/module.h>
@@ -168,6 +169,12 @@ private:
 	float _vib_phase[_MAX_VIB_ROTORS] {}; // rotor angle [rad]
 	uint64_t _vib_timestamp_last{0};
 
+	// Extra white IMU noise (SIM_GZ_IMU_NSC), IMU 0, seeded from SIM_GZ_SEED
+	void addExtraImuNoise(gz::math::Vector3d &accel_b, gz::math::Vector3d &gyro_b);
+	std::mt19937 _imu_noise_rng{};
+	std::normal_distribution<double> _imu_noise_dist{0.0, 1.0};
+	bool _imu_noise_init{false};
+
 	static constexpr uint8_t _MAX_MAG_SENSORS = 2;
 	PX4Magnetometer  _px4_mag[_MAX_MAG_SENSORS] {
 		{197388},  // 197388: DRV_MAG_DEVTYPE_MAGSIM, BUS: 1, ADDR: 3, TYPE: SIMULATION
@@ -247,6 +254,8 @@ private:
 		(ParamInt<px4::params::SIM_GZ_EN_MAG>) _sim_gz_en_mag,
 		(ParamFloat<px4::params::SIM_GZ_VIB_ACC>) _sim_gz_vib_acc,
 		(ParamFloat<px4::params::SIM_GZ_VIB_GYR>) _sim_gz_vib_gyr,
-		(ParamFloat<px4::params::SIM_GZ_VIB_RPM>) _sim_gz_vib_rpm
+		(ParamFloat<px4::params::SIM_GZ_VIB_RPM>) _sim_gz_vib_rpm,
+		(ParamInt<px4::params::SIM_GZ_SEED>) _sim_gz_seed,
+		(ParamFloat<px4::params::SIM_GZ_IMU_NSC>) _sim_gz_imu_nsc
 	)
 };

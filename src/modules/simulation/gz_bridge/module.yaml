@@ -142,6 +142,29 @@ parameters:
           max: 1.0
           decimal: 3
           default: 1.0
+        SIM_GZ_SEED:
+          description:
+            short: Seed for the simulator random streams (eRPM dropouts, extra IMU noise)
+            long: 0 keeps the fixed default streams (identical in every run). A non-zero value selects an
+              independent, repeatable draw for the SIM_GZ_ERPM_DRP dropout generator and for the SIM_GZ_IMU_NSC noise.
+          type: int32
+          min: 0
+          max: 2147483647
+          default: 0
+          reboot_required: true
+        SIM_GZ_IMU_NSC:
+          description:
+            short: Total IMU noise stddev multiplier relative to the SDF noise
+            long: The SDF gaussian noise of the first IMU (gyro 8.7266e-4 rad/s, accel 6.37e-3 / 6.37e-3 / 6.86e-3 m/s^2
+              per axis) is multiplied by this factor in total stddev. Above 1 the bridge adds zero-mean white gaussian
+              noise of stddev sigma*sqrt(s^2-1) per axis, before the rotor vibration term, seeded from SIM_GZ_SEED.
+              Dimensionless, 1 adds nothing.
+          type: float
+          min: 1.0
+          max: 10.0
+          decimal: 2
+          default: 1.0
+          reboot_required: true
         SIM_GZ_VIB_ACC:
           description:
             short: Simulated IMU vibration, accelerometer amplitude per rotor

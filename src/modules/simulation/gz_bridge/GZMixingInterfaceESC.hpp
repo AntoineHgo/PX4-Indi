@@ -64,6 +64,17 @@ public:
 		param_get(param_find("SIM_GZ_ERPM_POL"), &_erpm_poles);
 		param_get(param_find("SIM_GZ_ERPM_DRP"), &_erpm_drop_probability);
 		param_get(param_find("SIM_GZ_ERPM_LAT"), &_erpm_latency);
+		int32_t seed = 0;
+		param_get(param_find("SIM_GZ_SEED"), &seed);
+
+		if (seed != 0) { // splitmix32 of the seed, never 0 for xorshift
+			uint32_t z = static_cast<uint32_t>(seed) + 0x9e3779b9u;
+			z = (z ^ (z >> 16)) * 0x85ebca6bu;
+			z = (z ^ (z >> 13)) * 0xc2b2ae35u;
+			z ^= z >> 16;
+			_random_state = (z != 0) ? z : 0x12345678u;
+		}
+
 		_erpm_latency = math::constrain(_erpm_latency, (int32_t)0, (int32_t)ERPM_DELAY_LEN - 1);
 		_erpm_poles = math::max(_erpm_poles, (int32_t)2);
 		updateParams();
@@ -128,7 +139,7 @@ private:
 	int _erpm_delay_idx{0};
 	int32_t _erpm_last_rpm[esc_status_s::CONNECTED_ESC_MAX] {}; // last decoded value, held on a dropped frame
 	uint32_t _erpm_errors[esc_status_s::CONNECTED_ESC_MAX] {};
-	uint32_t _random_state{0x12345678u}; // fixed seed: dropouts are repeatable run to run
+	uint32_t _random_state{0x12345678u}; // SIM_GZ_SEED 0: fixed, dropouts repeatable run to run
 
 	gz::transport::Node &_node;
 	pthread_mutex_t _node_mutex;

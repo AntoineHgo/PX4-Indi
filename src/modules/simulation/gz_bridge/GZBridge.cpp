@@ -620,6 +620,34 @@ void GZBridge::airspeedCallback(const gz::msgs::AirSpeed &msg)
 	_differential_pressure_pub.publish(report);
 }
 
+void GZBridge::addExtraImuNoise(gz::math::Vector3d &accel_b, gz::math::Vector3d &gyro_b)
+{
+	// Base stddev = SDF values in indi_flight/sim/staged/quad5in_base_model_a14.sdf (gyro lines ~186-198, accel ~208-221).
+	// Axes are FLU in the SDF, the accel z sigma is 0.00686. FLU->FRD only flips signs, so x/y/z sigmas stay per axis.
+	static constexpr double GYRO_SIGMA = 0.0008726646; // rad/s per axis
+	static constexpr double ACCEL_SIGMA_X = 0.00637;   // m/s^2
+	static constexpr double ACCEL_SIGMA_Y = 0.00637;
+	static constexpr double ACCEL_SIGMA_Z = 0.00686;
+
+	const double s = _sim_gz_imu_nsc.get();
+
+	if (s <= 1.0) {
+		return;
+	}
+
+	if (!_imu_noise_init) {
+		// separate stream from the dropout RNG: different mixing constant; seed 0 -> fixed constant
+		const uint32_t seed = static_cast<uint32_t>(_sim_gz_seed.get());
+		_imu_noise_rng.seed(seed == 0 ? 0xA5A5A5A5u : (seed * 0x9e3779b1u) ^ 0x5bd1e995u);
+		_imu_noise_init = true;
+	}
+
+	const double k = std::sqrt(s * s - 1.0);
+	auto n = [&]() { return _imu_noise_dist(_imu_noise_rng); };
+	gyro_b += gz::math::Vector3d(n(), n(), n()) * (GYRO_SIGMA * k);
+	accel_b += gz::math::Vector3d(n() * ACCEL_SIGMA_X, n() * ACCEL_SIGMA_Y, n() * ACCEL_SIGMA_Z) * k;
+}
+
 void GZBridge::addRotorVibration(uint64_t timestamp_sample, gz::math::Vector3d &accel_b, gz::math::Vector3d &gyro_b)
 {
 	const float dt = (_vib_timestamp_last > 0 && timestamp_sample > _vib_timestamp_last)
@@ -678,6 +706,7 @@ void GZBridge::imuCallback(const gz::msgs::IMU &msg, uint8_t instance_index)
 					    msg.angular_velocity().z()));
 
 	if (instance_index == 0) {
+		addExtraImuNoise(accel_b, gyro_b); // before the vibration term
 		addRotorVibration(timestamp_sample, accel_b, gyro_b);
 	}
 
