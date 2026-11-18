@@ -33,6 +33,8 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 | H102 | S102: delay-line hooks A1+A2 in gz_bridge (uncommitted, builds, 0 warnings, not flown) | sonnet | design/delay_line_impl_s102.md | DONE; orchestrator read diff, OK |
 | K102 | S102: second key of H102 | sonnet | design/delay_line_key_s102.md | DONE: 0 BLOCKING, M1+M2 fixed by orchestrator, c6ba02609f |
 | V102 | S102: delay-hook pre-test d0/d5 | haiku | results/delay_pretest_s102/README.md | DONE: IMU PASS (age 0/5000 us), actuator UNVERIFIED -> A-37 |
+| RC103 | S103: route check | sonnet | design/route_check_103.md | DONE: A-37 time-box $0.5 then park; then G5 pre-tests, G2 verdict note, hook B; defer PID M1 |
+| A103 | S103: A-37 test, release-age windows (a9e5066a55), build + hover d5/d10 | host bg | results/a37_actlag_s103/fly.out, d{5,10}/px4.log `grep 'DLY_ACT window'` | rerun fly.sh |
 S102 finding: (ii) PID M1 has NO recipe: the gyro-break hook (`sim_inject`, design/stage2_margins_s35.md l.21) was never built.
   PID reference is F-5 reference only -> deferred behind (iv); build the M1 hook later in gz_bridge IMU callback beside A2.
 
