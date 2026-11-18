@@ -18,10 +18,14 @@ Plan RC108 (design/route_check_108.md) + RC113 (design/route_check_113.md, accep
      from the log. Weak+sat together still unflown (ladder covers it).
    Stick scenarios: stabilized centre = HTE (807fd6a08a), runner thr0 honours HTE valid flag, fallback
      MPC_THR_HOVER (8f57b47f7e). A-40 closed. Stabilized stick altitude 6.5 m mean vs 5 m hold (open loop, ok).
-   NEXT S116: (1) sonnet key K115 of 8f57b47f7e (out design/key_k115_hte.md); (2) RC113 ladder (8 single-factor
-     runs, haiku, serial, RC113 sec 5 order; first re-fly stick nominal to confirm hover_thr_used in run.json = HTE
-     valid); (3) altctl/posctl stick flyability. Then 60-run mixed G3 probe batch; then frozen-telemetry hook (two
-     keys), g3_checks.py + key, gate_g3.sh; G5 mode batch; G4 noise profiles.
+   S116 DONE: K115 key + fixes, RC113 ladder + controls + nominal baseline (results/g3_ladder_s116, JOURNAL S116).
+   NEXT S117: (1) g3_run.py sampler rule from S116: stabilized/acro stick scenarios draw only attitude/rate
+     factors (mass, inertia, tau, delay, G1, eRPM loss/latency, vibration, GNSS); thrust_sag, weak motor,
+     saturation and wind only on position-hold scenarios (o1_lemniscate etc.); record in DECISIONS (D-G3-STICK-
+     FACTORS) + test; (2) altctl/posctl stick flyability (1 flight each); (3) 60-run mixed G3 probe batch.
+     Then frozen-telemetry hook (two keys), g3_checks.py + key, gate_g3.sh; G5 mode batch; G4 noise profiles.
+   Stage 5 note: o1_lemniscate --sched horizontal RMS 2.80 m for INDI and PID alike (A-41 closed); which outer
+     loop --controller indi uses on o1 is UNVERIFIED; check before setting the G3 o1 tracking limit.
    STOP: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair, PID M1 hook, hooks without a consumer,
      stand-alone anomaly chases (fold A-4, A-6 into G3/G5 side-cells), --sched-anchor and set_param-latency fixes.
    Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
@@ -40,7 +44,12 @@ K115 DONE (design/key_k115_hte.md, 0 BLOCKING): fix AFTER L116 ends (same runner
 L116 DONE e97d826b27 (results/g3_ladder_s116/README.md): nominal, mass13, inert13, erpmloss, gnssmis fly; wind5
   flies with 4.6 m horiz RMS (stabilized has no position hold: expected); sag07, weak08, sat(one motor x0.35)
   trip height watchdog 60-63 s. Hypothesis: open-loop stabilized collective, not controller.
-| L116b | control: PID sag07+weak08 on stick; INDI sag07/weak08/sat/wind5 on o1_lemniscate | haiku | results/g3_ladder_s116/README.md (section b) | re-run missing rows |
+L116b DONE a7ac9375c0: PID trips the same watchdog (sag07 63.10 s, weak08 63.30 s) -> scenario property: stick
+  stabilized is for attitude/rate factors only; thrust/wind factors go on position-hold scenarios. INDI on
+  o1_lemniscate --sched holds altitude with sag/weak/sat/wind (vert RMS 0.03-0.18 m). A-41 opened (horiz 2.8 m).
+N116 DONE 4e25b1aa00: nominal horiz RMS INDI 2.805 / PID 2.800 m = faulted rows; A-41 closed.
+H116 DONE dce771f1e6 (K115 fixes, 9+3 tests pass, mutations checked; slew-lag m3 not addressed, accepted:
+  probes only). Key of a bench-only meta fix not required (no safety path).
 (Done rows up to K114/F114: JOURNAL.md S100-S115; ledger LEDGER.md. Yaw model tool defect open: margins_of hangs if ts_true=0.)
 
 ## Open problems

@@ -833,3 +833,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S115: K114 MAJOR/MINOR 3-4 fixed 8f57b47f7e (key K115 pending); A-40 closed (no early landing, px4.log time base).
 - S116: K115 key of 8f57b47f7e: 0 BLOCKING; MINORs (fallback clamp, run.json source field for all runs, 4 surviving mutations) queued after L116.
 - S116: L116 ladder (e97d826b27): 5/9 fly; sag/weak/sat trip height watchdog on stabilized stick (open-loop collective hypothesis); L116b control flights launched.
+- S116: L116b controls a7ac9375c0: PID trips the same watchdog on stick sag/weak (scenario: open-loop stabilized collective); INDI holds altitude on o1_lemniscate with sag/weak/sat/wind. K115 fixes dce771f1e6. A-41 opened and closed 4e25b1aa00 (o1 horiz RMS 2.80 m nominal, INDI = PID).

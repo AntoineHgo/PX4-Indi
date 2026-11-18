@@ -151,3 +151,8 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | K114 | sonnet | key of stick fix 807fd6a08a | design/key_k114_stick.md |
 | F114 | haiku | re-fly stick_zsine_o6 stabilized INDI+PID | results/g3_stick_s114/README.md |
 | S115 | A40 | haiku | A-40 early landing cause | results/g3_stick_s114/a40_cause.md | done, 10 calls, A-40 closed |
+| S116 | K115 | sonnet | key of 8f57b47f7e (HTE valid) | design/key_k115_hte.md | done, 6 calls, 0 BLOCKING |
+| S116 | L116 | haiku | single-factor ladder 9 flights | results/g3_ladder_s116/README.md | done, 33 calls (first launch wrong params path, re-run) |
+| S116 | L116b | haiku | 6 control flights (PID stick, INDI lemniscate) | same README sec b | done, 13 calls |
+| S116 | N116 | haiku | nominal lemniscate INDI+PID | same README sec c | done, 11 calls, A-41 closed |
+| S116 | H116 | sonnet | K115 fixes + tests | design/key_k115_hte.md | done, 8 calls |
