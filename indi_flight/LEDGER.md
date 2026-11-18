@@ -150,3 +150,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | M113 | S113 | sonnet | stick_zsine_o6 mass-only discriminator, 3 flights | 18 calls, ~51k tok, ~$0.3 | DONE set-up fault (stabilized hover stick) |
 | K114 | sonnet | key of stick fix 807fd6a08a | design/key_k114_stick.md |
 | F114 | haiku | re-fly stick_zsine_o6 stabilized INDI+PID | results/g3_stick_s114/README.md |
+| S115 | A40 | haiku | A-40 early landing cause | results/g3_stick_s114/a40_cause.md | in flight |

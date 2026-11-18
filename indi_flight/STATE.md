@@ -65,6 +65,9 @@ S114: stick fix DONE 807fd6a08a (stabilized = mc_att_control throttle_curve MPC_
   land at 70.3 s, before window end 79.4 s: close A-40 first in S115 (haiku: vehicle_command/nav_state from ulog).
   Then RC113 ladder (8 single-factor runs, sec 5 order),
   altctl/posctl stick flyability check. Next route check S118.
+S115: K114 MAJOR + MINOR 3/4 fixed 8f57b47f7e (HTE valid flag, MPC_THR_HOVER fallback, curve params pinned;
+  tests break-checked). TODO S116: sonnet key K115 of 8f57b47f7e (budget-cut S115). In flight: A40 (haiku,
+  out results/g3_stick_s114/a40_cause.md); if cut, re-launch. Then RC113 ladder.
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
