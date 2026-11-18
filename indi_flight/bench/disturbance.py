@@ -107,25 +107,28 @@ def airframe_from_model(model):
 CLOCK_OFFSET_S = 0.0
 
 
-def wind_speed(t):
-    """Wind speed (m/s, +x) at profile time t (s)."""
+def wind_speed(t, steady=WIND_RAMP_TO, amp=GUST_AMP):
+    """Wind speed (m/s, along the profile direction) at profile time t (s). Defaults = the original gust_x numbers."""
     if t < 0:
         return 0.0
     if t < WIND_RAMP_T:
-        return WIND_RAMP_TO * t / WIND_RAMP_T
+        return steady * t / WIND_RAMP_T
     t -= WIND_RAMP_T
     if t < WIND_HOLD1_T:
-        return WIND_RAMP_TO
+        return steady
     t -= WIND_HOLD1_T
     if t < GUST_T:
-        return WIND_RAMP_TO + GUST_AMP * 0.5 * (1.0 - math.cos(2.0 * math.pi * t / GUST_T))
-    return WIND_RAMP_TO  # hold (profile end handled by the caller)
+        return steady + amp * 0.5 * (1.0 - math.cos(2.0 * math.pi * t / GUST_T))
+    return steady  # hold (profile end handled by the caller)
 
 
-def gust_x(t, af):
-    """Wrench (fx, fy, fz, tx, ty, tz) at the CoM, world frame, for profile time t."""
-    v = wind_speed(t)
-    f = (af.c_drag * v * abs(v), 0.0, 0.0)
+def gust_x(t, af, steady=WIND_RAMP_TO, amp=GUST_AMP, dir_deg=0.0):
+    """Wrench (fx, fy, fz, tx, ty, tz) at the CoM, world frame, for profile time t. steady / amp (gust added on the steady
+    wind) in m/s; dir_deg = where the air moves to, from world +x towards +y (gust_diag convention). Defaults: +x, 3 m/s,
+    +6 m/s (bit-identical to before: dir 0 takes the old +x branch)."""
+    v = wind_speed(t, steady, amp)
+    d = af.c_drag * v * abs(v)
+    f = (d, 0.0, 0.0) if dir_deg == 0.0 else (d * math.cos(math.radians(dir_deg)), d * math.sin(math.radians(dir_deg)), 0.0)
     r = (0.0, 0.0, af.cop_z)
     tq = (r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0])
     return (*f, *tq)
@@ -194,6 +197,10 @@ def main():
     ap.add_argument("--add-system", choices=("auto", "yes", "no"), default="auto",
                     help="auto: add ApplyLinkWrench at runtime only if the gz server config lacks it (A-31)")
     ap.add_argument("--wall-timeout", type=float, default=900.0)
+    ap.add_argument("--wind-steady", type=float, default=None, help="gust_x only: steady wind m/s (default 3)")
+    ap.add_argument("--wind-peak", type=float, default=None, help="gust_x only: peak TOTAL wind m/s in the gust (default 9)")
+    ap.add_argument("--wind-dir", type=float, default=None,
+                    help="gust_x only: deg from world +x towards +y, where the air moves to (default 0)")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     trigger = os.path.join(a.out, "disturbance_trigger.json")
@@ -213,6 +220,17 @@ def main():
 
     node = Node()
     fn, dur = PROFILES[a.profile]
+    wind_given = any(x is not None for x in (a.wind_steady, a.wind_peak, a.wind_dir))
+    if wind_given and a.profile != "gust_x":
+        print("--wind-* only for --profile gust_x", file=sys.stderr)
+        return 2
+    if wind_given:
+        st = WIND_RAMP_TO if a.wind_steady is None else a.wind_steady
+        pk = st + GUST_AMP if a.wind_peak is None else a.wind_peak
+        if st < 0 or pk < st:
+            print("need 0 <= --wind-steady <= --wind-peak", file=sys.stderr)
+            return 2
+        fn = lambda t, af_, st=st, am=pk - st, dd=(a.wind_dir or 0.0): gust_x(t, af_, st, am, dd)  # noqa: E731
     af = load_airframe(a.airframe or airframe_from_model(a.model), a.sdf)
     w = f"/world/{a.world}"
 

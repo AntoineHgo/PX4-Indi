@@ -25,6 +25,10 @@ CONTROLLER = "indi"
 # o1_lemniscate (trajectory, --sched) is a stand-in. Stick modes use stick_zsine_o6 + --stick-mode.
 SCENARIO_POSITION = "o1_lemniscate"
 SCENARIO_STICK = "stick_zsine_o6"
+# main flight segment (start of the fault / wind window) and the segment that ends an eRPM loss, per scenario
+MAIN_SEGMENT = {SCENARIO_POSITION: "traj", SCENARIO_STICK: "stick"}
+END_SEGMENT = "hold"
+OVERRIDES_NAME = "g3_scenario_overrides.json"
 RATE_HZ = 800
 G1_PARAMS = (("roll", "MC_INDI_G1_R"), ("pitch", "MC_INDI_G1_P"), ("yaw", "MC_INDI_G1_Y"))
 NOMINAL_EPS = 1e-9
@@ -135,13 +139,20 @@ def build_run(draw, base_params_path, out_dir):
         applied["tel_dropout"] = {"prob": td["prob"]}
     else:
         applied["tel_dropout"] = {"on": False}
-    for key, why in (("tel_loss", "timed eRPM loss: no CLI argument (SIM_GZ_ERPM_LOSS only toggled by scenario key erpm_loss "
-                                  "between named segments)"),
-                     ("tel_frozen", "hook missing")):
-        if f[key]["on"]:
-            not_applied[key] = why
-        else:
-            applied[key] = {"on": False}
+    ov = {}   # --scenario-overrides content (bench/scenario_overrides.py)
+    main_seg = MAIN_SEGMENT[scenario]
+    tl = f["tel_loss"]
+    if tl["on"]:
+        ov["erpm_loss"] = {"motor": int(tl["motor"]), "start": main_seg, "end": END_SEGMENT}
+        applied["tel_loss"] = {"motor": tl["motor"], "start": main_seg, "end": END_SEGMENT, "via": "scenario-overrides erpm_loss"}
+        notes["tel_loss"] = (f"segment-granular: loss runs from the start of '{main_seg}' to the start of '{END_SEGMENT}', not "
+                             f"the drawn start_offset {tl['start_offset_s']} s / duration {tl['duration_s']} s")
+    else:
+        applied["tel_loss"] = {"on": False}
+    if f["tel_frozen"]["on"]:
+        not_applied["tel_frozen"] = "hook missing"
+    else:
+        applied["tel_frozen"] = {"on": False}
 
     # vibration ---------------------------------------------------------------------------------------------------
     vb = f["vibration"]
@@ -155,20 +166,44 @@ def build_run(draw, base_params_path, out_dir):
         argv += ["--gnss-delay", str(int(g["ekf_delay_ms"]))]
     applied["gnss"] = {"latency_ms": g["latency_ms"], "ekf_delay_ms": g["ekf_delay_ms"]}
 
-    # thrust: sag / saturation / weak motor are timed, scenario-key only ------------------------------------------------
-    for key in ("thrust_sag", "saturation", "weak_motor"):
-        if f[key]["on"]:
-            not_applied[key] = "timed hook, no CLI argument (scenario keys thrust_sag / motor_fault only)"
+    # thrust: sag (ramp over the window), saturation (all motors step), weak motor (one motor step) -------------------------
+    sg, sat, wk = f["thrust_sag"], f["saturation"], f["weak_motor"]
+    if sg["on"]:
+        ov["thrust_sag"] = {"scale": sg["scale"]}
+        applied["thrust_sag"] = {"scale": sg["scale"], "via": "scenario-overrides thrust_sag (linear ramp over the whole window)"}
+        notes["thrust_sag"] = f"ramp length is the scenario window, not the drawn ramp_s {sg.get('ramp_s')}"
+    else:
+        applied["thrust_sag"] = {"on": False}
+    if sat["on"]:
+        ov["motor_fault"] = {"segment": main_seg, "motors": [0, 1, 2, 3], "thrust_scale": sat["scale"]}
+        applied["saturation"] = {"scale": sat["scale"], "via": f"scenario-overrides motor_fault, all motors, step at '{main_seg}'"}
+    else:
+        applied["saturation"] = {"on": False}
+    if wk["on"]:
+        if sat["on"]:
+            not_applied["weak_motor"] = "scenario has one motor_fault slot, already used by saturation (all motors)"
         else:
-            applied[key] = {"on": False}
+            ov["motor_fault"] = {"segment": main_seg, "motor": int(wk["motor"]), "thrust_scale": wk["scale"]}
+            applied["weak_motor"] = {"motor": wk["motor"], "scale": wk["scale"],
+                                     "via": f"scenario-overrides motor_fault, step at '{main_seg}'"}
+    else:
+        applied["weak_motor"] = {"on": False}
 
-    # wind --------------------------------------------------------------------------------------------------------------
+    # wind: gust_x profile, world frame, direction = where the air moves to --------------------------------------------------
     w = f["wind"]
     if w["steady_ms"] == 0.0 and w["gust_amp_ms"] == 0.0:
         applied["wind"] = {"steady_ms": 0.0, "gust_amp_ms": 0.0}
     else:
-        not_applied["wind"] = ("no CLI argument: gust_x disturbance profile is not parametrised "
-                               "(steady/peak/direction)")
+        ov["disturbance"] = "gust_x"
+        ov["dist_segment"] = main_seg
+        ov["wind"] = {"steady": w["steady_ms"], "peak": w["gust_peak_total_ms"], "dir_deg": w["dir_deg"]}
+        applied["wind"] = {"steady_ms": w["steady_ms"], "gust_peak_total_ms": w["gust_peak_total_ms"], "dir_deg": w["dir_deg"],
+                           "via": f"scenario-overrides wind, profile starts at '{main_seg}'"}
+        notes["wind"] = ("gust_x timing is fixed (2 s ramp, 10 s hold, 1 s gust, 15 s hold, 28 s) from the segment start; the drawn "
+                         f"gust_offset_s {w.get('gust_offset_s')} is not used")
+
+    if ov:
+        argv += ["--scenario-overrides", os.path.join(out_dir, OVERRIDES_NAME)]
 
     # G4 typical-noise profile ------------------------------------------------------------------------------------------
     not_applied["g4_typical_noise"] = "hook missing"
@@ -183,7 +218,7 @@ def build_run(draw, base_params_path, out_dir):
 
     merged = dict(base)
     merged.update(params)
-    return {"argv": argv, "params": params, "merged_params": merged, "applied": applied, "not_applied": not_applied,
+    return {"argv": argv, "params": params, "overrides": ov, "merged_params": merged, "applied": applied, "not_applied": not_applied,
             "notes": notes}
 
 
@@ -217,6 +252,9 @@ def main():
             fh.write(json.dumps({"draw": d, "build": r, "command": cmd}, indent=1, sort_keys=True) + "\n")
         with open(os.path.join(out, "g3_params.txt"), "w") as fh:
             fh.write(fmt_params(r["merged_params"]))
+        if r["overrides"]:
+            with open(os.path.join(out, OVERRIDES_NAME), "w") as fh:
+                fh.write(json.dumps(r["overrides"], indent=1, sort_keys=True) + "\n")
         done = os.path.join(out, "g3_done.json")
         if os.path.exists(done):
             print(f"run_{d['run_index']:03d}: finished marker present, skipped", flush=True)

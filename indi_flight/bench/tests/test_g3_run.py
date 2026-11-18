@@ -98,6 +98,39 @@ def test_argv_flags():
         assert 0 <= int(argval(a, "--dly-act") or 0) <= 10
 
 
+def test_overrides_applied_and_valid():
+    import json
+    import scenario_overrides as so
+    from scenarios import SCENARIOS
+    seen = {"thrust_sag": 0, "motor_fault": 0, "erpm_loss": 0, "wind": 0}
+    for d in draws():
+        b = r.build_run(d, BASE, OUT)
+        f, ov = d["factors"], b["overrides"]
+        assert ("--scenario-overrides" in b["argv"]) == bool(ov)
+        sc = SCENARIOS[b["applied"]["mode"]["scenario"]]
+        so.merge(sc, ov)                                  # valid against the real scenario (segments exist)
+        json.dumps(ov)
+        for k in seen:
+            seen[k] += k in ov
+        assert ("thrust_sag" in ov) == f["thrust_sag"]["on"] and ("erpm_loss" in ov) == f["tel_loss"]["on"]
+        if f["thrust_sag"]["on"]:
+            assert ov["thrust_sag"]["scale"] == f["thrust_sag"]["scale"] and "thrust_sag" in b["applied"] and "thrust_sag" not in b["not_applied"]
+        if f["saturation"]["on"]:
+            assert ov["motor_fault"]["motors"] == [0, 1, 2, 3] and ov["motor_fault"]["thrust_scale"] == f["saturation"]["scale"]
+        elif f["weak_motor"]["on"]:
+            assert ov["motor_fault"]["motor"] == f["weak_motor"]["motor"] and ov["motor_fault"]["thrust_scale"] == f["weak_motor"]["scale"]
+        if f["weak_motor"]["on"] and f["saturation"]["on"]:
+            assert "weak_motor" in b["not_applied"]
+        w = f["wind"]
+        if w["steady_ms"] or w["gust_amp_ms"]:
+            assert ov["wind"] == {"steady": w["steady_ms"], "peak": w["gust_peak_total_ms"], "dir_deg": w["dir_deg"]}
+            assert "wind" in b["applied"] and "wind" not in b["not_applied"]
+        else:
+            assert "wind" not in ov
+        assert b["not_applied"].keys() <= {"tel_frozen", "g4_typical_noise", "weak_motor"}
+    assert all(v > 5 for v in seen.values()), seen
+
+
 def test_determinism():
     a = [r.build_run(d, BASE, OUT)["argv"] for d in g.campaign(21, 50)]
     b = [r.build_run(d, BASE, OUT)["argv"] for d in g.campaign(21, 50)]

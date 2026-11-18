@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from scenarios import SCENARIOS  # noqa: E402
 from model_variant import build_variant  # noqa: E402
 import provenance  # noqa: E402
+import scenario_overrides  # noqa: E402
 import stick_profile  # noqa: E402
 
 REPO = os.environ.get("PX4_INDI_REPO", os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
@@ -627,6 +628,10 @@ def main():
                          "267 = 800/3, the 'reported 250 Hz' point). Sets vehicle_angular_velocity rate")
     ap.add_argument("--vib-acc", type=float, default=0.0, help="v2: IMU vibration accel amplitude per rotor [m/s^2]")
     ap.add_argument("--vib-gyr", type=float, default=0.0, help="v2: IMU vibration gyro amplitude per rotor [rad/s]")
+    ap.add_argument("--scenario-overrides", default=None, metavar="FILE.json",
+                    help="JSON object whose top-level keys replace (shallow merge) the same keys of the selected scenario: "
+                         "thrust_sag, motor_fault, erpm_loss, wind {steady, peak, dir_deg}, disturbance, dist_segment; unknown keys and "
+                         "unknown segment names are rejected (bench/scenario_overrides.py); the overrides are recorded in run.json")
     ap.add_argument("--erpm-drop", type=float, default=0.0, help="v2: probability of a dropped eRPM frame")
     ap.add_argument("--sim-seed", type=int, default=0,
                     help="v2: SIM_GZ_SEED, seed of eRPM dropout and extra IMU noise streams (0 = fixed default streams)")
@@ -674,10 +679,18 @@ def main():
     os.makedirs(a.out, exist_ok=True)
 
     sc = SCENARIOS[a.scenario]
+    sc_base = sc
+    ov = None
+    if a.scenario_overrides:
+        try:
+            ov = json.load(open(a.scenario_overrides))
+            sc = scenario_overrides.merge(sc_base, ov)
+        except (OSError, ValueError) as e:  # json.JSONDecodeError is a ValueError
+            raise SystemExit(f"--scenario-overrides {a.scenario_overrides}: {e}")
     if (a.stick_mode is not None) != (sc["mode"] == "stick") or (a.stick_mode and a.sched):
         raise SystemExit("--stick-mode goes with a mode='stick' scenario and not with --sched")
     if a.sched and (sc["mode"] not in ("position", "attitude", "trajectory")
-                    or any(k in sc for k in ("disturbance", "motor_fault", "erpm_loss", "thrust_sag"))):
+                    or any(k in sc_base for k in ("disturbance", "motor_fault", "erpm_loss", "thrust_sag"))):
         raise SystemExit("--sched supports position, attitude and trajectory scenarios without runner-side hooks "
                          "(disturbance, motor_fault, erpm_loss, thrust_sag need the runner's segment times)")
     meta = {"scenario": a.scenario, "controller": a.controller, "seed": a.seed, "speed": a.speed, "sim": a.sim,
@@ -687,6 +700,10 @@ def main():
             "physics_step_s": world_step_s(), "world": os.path.join(WORLDS_DIR, "default.sdf"),
             "imu_rate": a.imu_rate, "rate_hz": a.rate_hz,
             "imu_filter_hz": {"IMU_GYRO_CUTOFF": IMU_GYRO_CUTOFF_HZ, "IMU_DGYRO_CUTOFF": IMU_DGYRO_CUTOFF_HZ}}
+    if ov is not None:
+        meta["scenario_overrides"] = {"file": os.path.abspath(a.scenario_overrides), "overrides": ov, "merged_keys": sorted(ov),
+                                      "merged_hooks": {k: sc[k] for k in ("disturbance", "dist_segment", "wind", "thrust_sag",
+                                                                           "motor_fault", "erpm_loss") if k in sc}}
     af_params = os.path.join(HERE_PARAMS, f"{a.model}_indi_g1.params")  # derived airframe INDI parameters (S46/S47)
     af_params = af_params if os.path.exists(af_params) else None
     prov_files = [os.path.join(WORLDS_DIR, "default.sdf"), a.params, af_params]
@@ -769,7 +786,8 @@ def main():
         sim.start_px4()
         if sc.get("disturbance"):  # idle injector: loads the wrench system, waits for the onset trigger
             sim.spawn(["python3", os.path.join(os.path.dirname(os.path.abspath(__file__)), "disturbance.py"),
-                       "--profile", sc["disturbance"], "--out", a.out, "--model", f"{a.model}_0"], "disturbance.stdout")
+                       "--profile", sc["disturbance"], "--out", a.out, "--model", f"{a.model}_0"]
+                      + scenario_overrides.wind_flags(sc), "disturbance.stdout")
         for k, v in {**BASE_PARAMS, **(STICK_PARAMS if a.stick_mode else {}), **overlay}.items():
             sim.set_param(k, v)
             meta["params_applied"][k] = v
@@ -873,7 +891,7 @@ def main():
             dist_seg = sc.get("dist_segment", "dist")
             onset = sim.t + sum(d for n, d, _ in sc["segments"][:[n for n, _, _ in sc["segments"]].index(dist_seg)])
             meta["disturbance"] = {"profile": sc["disturbance"], "onset_px4_s": onset, "onset_us": int(onset * 1e6),
-                                   "csv": "disturbance.csv"}
+                                   "csv": "disturbance.csv", **({"wind": sc["wind"]} if sc.get("wind") else {})}
             json.dump({"onset_px4_s": onset}, open(os.path.join(a.out, "disturbance_trigger.json"), "w"))
         fault = sc.get("motor_fault")
         if fault:  # plant change: read nominal MIN/MAX of the motor's gz channel now (param index = motor + 1)
@@ -953,7 +971,7 @@ def main():
             if a.sched:  # T55: the player publishes the setpoints (att / pva rows of sched.txt), the runner only waits
                 sp = None
             if sag:
-                sp = (lambda sp0=sp: (sag_tick(), sp0()))
+                sp = (lambda sp0=sp: (sag_tick(), sp0() if sp0 else None))
             sim.run(dur, sp=sp, what=f"scenario:{name}")
             prev = val
             seg_elapsed += dur
