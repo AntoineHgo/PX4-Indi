@@ -16,6 +16,10 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    (2) Bench defect N1 C2 (disturbance.py payload_add/com_shift/gust sized for x500): take mass/drag from the flown
    model, G1.5 check per profile. (3) Check the 'NOT FOUND' hooks of the draft (loop delay, GNSS latency, vibration)
    against stage-1 sim work before building. (4) G2-STEP 400 Hz reported run DONE S64 (9/9 within limits, A-30 seed spread parked).
+   S95 DONE: combined review T198/T199 (rows below). NEXT S96 (replaces old S96 plan, hooks move to S97):
+   (a) adjudicate T199 BLOCKING with a unit test asserting thrust continuity at bypass->active and telemetry-return
+   edges (sonnet, write test first, break-check); (b) fix the confirmed T199 MAJORs + T123 filter reset; (c) stage-3
+   item 5 autotune start (rc.mc_apps, MC_INDI_EN) + watchdog receipt time; second key on each. Freeze waits on these.
    (5) attitude-break margin with the new setpoint path (G2) when the G2 table is resumed.
    Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
    S65-S68 session notes: JOURNAL.md (S69 entry).
@@ -46,8 +50,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T194 | S93 (launch 20261118-091231, cap $3): attitude-break linear model L_att_indi/L_att_pid + identity self-test + model-vs-measured table (note sec 5) | sonnet | design/t194_att_model_log.md, results/stage5_s91_attbreak/model_vs_measured.md | DONE 85fb907177 f38ecf5ba3: tests 5/5; model PM ~15 deg above measured -> A-36; S93 outer-loop factor O(s) brings delta to 2-3 deg (unkeyed) |
 | T196 | S94: G2 report section draft | sonnet | report/g2_margins.md | DONE 4542ca1d83 (2 numbers spot-checked) |
 | T197 | S94: G3-G8 final test-text proposal + hook check | sonnet | design/gates_g3_g8_final_s94.md | DONE 18af6e3a66 (8 decisions in GATES.md) |
-| T198 | S95 (launch 20261118-093647): opus review stage-3 safety items code vs design/stage3_items_note.md + D-S3-* | opus | design/review_s95_stage3_safety.md | relaunch with same brief if file missing/incomplete |
-| T199 | S95: opus review D-GAP + landed/take-off handling in mc_indi_pos_control/indi_accel_control vs DECISIONS D-GAP | opus | design/review_s95_stage5_slice.md | same |
+| T198 | S95 (launch 20261118-093647): opus review stage-3 safety items code vs design/stage3_items_note.md + D-S3-* | opus | design/review_s95_stage3_safety.md | DONE: NOT BLOCKING; MAJOR item 5 autotune start never coded (rc.mc_apps starts autotune with INDI on); MINOR: watchdog uses publisher stamp (use receipt time), PID-after-INDI start not refused, no start-refusal test |
+| T199 | S95: opus review D-GAP + landed/take-off handling in mc_indi_pos_control/indi_accel_control vs DECISIONS D-GAP | opus | design/review_s95_stage5_slice.md | DONE: BLOCKING (bypass->active edge thrust step of b, :252-255), 4 MAJOR (step on telemetry return :291 accel lib; gap not removed in altitude mode; anti-windup ignores mean_u limit; T123 filter-reset bug unfixed), MINOR tb=0 erases b; no tests. Orchestrator spot-check S95: :252 passes _coll_meas when fresh_thr, so BLOCKING may be misread -> adjudicate first in S96 |
 | T195 | key of A-36: independent outer-loop factor from firmware source + flown params | sonnet | design/t195_att_outer_key.md | DONE: agrees; O(s) in margins_models 9df899212c; PM within 0.3 deg, GM residue open (A-36) |
 
 ## Open problems

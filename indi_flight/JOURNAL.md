@@ -775,3 +775,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S93: route check 93 (design/route_check_93.md): report G2 next, then G3-G8/G5 text + opus review, then identification slice early; stop model refinement.
 - S94 (2026-11-18, launch 20261118-092623, cap $3): G2 report section report/g2_margins.md (T196, preliminary, gate not passed); G3-G8 FINAL text in GATES.md with D-GATES-G3G8 (T197): no accuracy quota, owner ranges kept, hooks MISSING: loop delay, GNSS latency, G5 event injectors, per-run sampler.
 - S94: design/delay_line_hook_s94.md (T198, sonnet): loop-delay/GNSS-latency hook design for S96; unverified: GNSS path, world step.
+- S95 (20261118-093647): combined opus review T198 (stage-3 safety, NOT BLOCKING, item 5 autotune never coded) + T199 (stage-5 D-GAP slice, BLOCKING edge thrust step, 4 MAJOR; BLOCKING to adjudicate S96). design/review_s95_*.md.

@@ -100,3 +100,5 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | T196 | S94 | sonnet | G2 report section draft | 18 calls, ~$0.45 | DONE, 2 numbers spot-checked |
 | T197 | S94 | sonnet | G3-G8 final text proposal + hook table | 15 calls, ~$0.45 | DONE, 8 decisions applied |
 | T198 | S94 | sonnet | delay-line hook design note | 10 calls, ~$0.25 | DONE, step size and GNSS path unverified |
+| S95 | T198 | opus | stage-3 safety review | 13 calls, ~68k tok, ~$0.65 | NOT BLOCKING, 1 MAJOR |
+| S95 | T199 | opus | stage-5 D-GAP slice review | 11 calls, ~77k tok, ~$0.7 | BLOCKING (disputed), 4 MAJOR |
