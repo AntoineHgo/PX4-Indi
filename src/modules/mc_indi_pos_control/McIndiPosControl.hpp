@@ -42,6 +42,7 @@
 #include "GotoControl/GotoControl.hpp"
 #include <lib/indi_accel_control/indi_accel_control.hpp>
 #include <lib/indi_rate_control/indi_rate_control.hpp>
+#include <uORB/topics/control_allocator_status.h>
 #include <uORB/topics/esc_status.h>
 #include <uORB/topics/vehicle_acceleration.h>
 #include <uORB/topics/vehicle_attitude.h>
@@ -113,6 +114,7 @@ private:
 	uORB::Subscription _acceleration_sub{ORB_ID(vehicle_acceleration)};
 	uORB::Subscription _esc_status_sub{ORB_ID(esc_status)};
 	uORB::Subscription _thrust_setpoint_sub{ORB_ID(vehicle_thrust_setpoint)};
+	uORB::Subscription _alloc_status_sub{ORB_ID(control_allocator_status)};
 	matrix::Quatf _q{};
 	matrix::Vector3f _f_b{};
 	float _mean_u{NAN};
@@ -126,6 +128,9 @@ private:
 	int _stage_reason{-1};		///< last reported stage condition bitmask (instrument)
 	int _stage_reports{0};		///< number of stage reports printed (capped)
 	float _filter_hz{0.f};
+	int _rate_dev_count{0};	///< consecutive cycles with a rate deviation > 20 % (filter re-config hysteresis)
+	bool _alloc_saturated{false};	///< latest control_allocator_status reports saturation
+	hrt_abstime _alloc_time{0};
 	float _filter_cut{-1.f};
 	param_t _w_max_handle{PARAM_INVALID};
 	float _rotor_w_max{0.f};

@@ -58,7 +58,7 @@ protected:
 		_ctrl.setFilter(0.f, 0.f);
 		_ctrl.setMeasurementDelay(0);
 		_ctrl.setFeedforward(true);
-		_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt);
+		_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
 	}
 
 	/// hover state, level attitude, references equal to the state, a_c = 0 unless a_ref is set
@@ -92,7 +92,7 @@ protected:
 TEST_F(IndiAccelControlTest, HoverEquilibrium)
 {
 	_ctrl.setThrustModel(kGt, 1.1f);
-	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt / 1.1f, kG / kGt);
 	IndiAccelControl::Input in = hoverInput();
 	in.yaw_ref = 0.5f;
 	IndiAccelControl::Output out;
@@ -118,7 +118,7 @@ TEST_F(IndiAccelControlTest, AccelOnlyEntryStartsAtARef)
 	const float G = 14.f;			// effectiveness, specific force per unit normalised thrust
 	const float T_meas = kG / G;		// hover collective
 	_ctrl.setThrustModel(G, 1.f);
-	_ctrl.reset(Vector3f(0.f, 0.f, -kG), T_meas);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), T_meas, T_meas);
 	IndiAccelControl::Input in = hoverInput();
 	in.accel_only = true;
 	in.p = Vector3f(NAN, NAN, NAN);	// p and v are not required in this mode
@@ -147,7 +147,7 @@ TEST_F(IndiAccelControlTest, AccelOnlyEntryStartsAtARef)
 TEST_F(IndiAccelControlTest, PureIndiIncrement)
 {
 	_ctrl.setThrustModel(kGt, 1.1f);
-	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
 	IndiAccelControl::Input in = hoverInput();
 	in.a_ref = Vector3f(0.f, 0.f, -1.f); // a_c - a_f = (0, 0, -1)
 	IndiAccelControl::Output out;
@@ -163,7 +163,7 @@ TEST_F(IndiAccelControlTest, ModelErrorIsRemovedByMeasuredAcceleration)
 	// the accelerometer shows a_f = (0, 0, +1) (e.g. extra drag/mass): the command rises by exactly 1
 	IndiAccelControl::Input in = hoverInput();
 	in.f_b = Vector3f(0.f, 0.f, -kG + 1.f);
-	_ctrl.reset(in.f_b, in.mean_u);
+	_ctrl.reset(in.f_b, in.mean_u, in.mean_u);
 	IndiAccelControl::Output out;
 	ASSERT_TRUE(_ctrl.update(in, out));
 	EXPECT_NEAR(out.a_f(2), 1.f, 1e-5f);
@@ -288,7 +288,7 @@ TEST_F(IndiAccelControlTest, ResetGivesZeroIncrementOnFirstCycle)
 	IndiAccelControl::Input in = hoverInput();
 	in.f_b = Vector3f(0.5f, -0.3f, -12.f);
 	in.mean_u = 0.6f;
-	_ctrl.reset(in.f_b, in.mean_u);
+	_ctrl.reset(in.f_b, in.mean_u, in.mean_u);
 	IndiAccelControl::Output out;
 	ASSERT_TRUE(_ctrl.update(in, out));
 	// a_f from the measurement and t_f from the model are both initialised to the sample
@@ -310,7 +310,7 @@ TEST_F(IndiAccelControlTest, FilterMatching)
 		const float u0 = kG / kGt;
 		const float df = -2.f;
 		const float du = 0.1f;
-		_ctrl.reset(Vector3f(0.f, 0.f, f0), u0);
+		_ctrl.reset(Vector3f(0.f, 0.f, f0), u0, u0);
 		IndiAccelControl::Input in = hoverInput();
 		IndiAccelControl::Output out;
 		float resp_f[20];
@@ -344,7 +344,7 @@ TEST_F(IndiAccelControlTest, MeasurementDelayClamp)
 
 	// no filter: a step on mean u appears exactly kMaxDelaySamples cycles later
 	_ctrl.setMeasurementDelay(100);
-	_ctrl.reset(Vector3f(0.f, 0.f, -kG), 0.5f);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), 0.5f, 0.5f);
 	IndiAccelControl::Input in = hoverInput();
 	IndiAccelControl::Output out;
 
@@ -359,7 +359,7 @@ TEST_F(IndiAccelControlTest, MeasurementDelayClamp)
 TEST_F(IndiAccelControlTest, InvalidMeanUUsesPreviousThrustCommand)
 {
 	_ctrl.setThrustModel(kGt, 1.2f);
-	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
 	IndiAccelControl::Input in = hoverInput();
 	in.a_ref = Vector3f(0.f, 0.f, -2.f);
 	IndiAccelControl::Output out;
@@ -375,7 +375,7 @@ TEST_F(IndiAccelControlTest, AppliedThrustSetsModelPath)
 {
 	// stage-output loop break: with invalid telemetry the model path must follow the applied collective, not t_c
 	_ctrl.setThrustModel(kGt, 1.2f);
-	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
 	IndiAccelControl::Input in = hoverInput();
 	in.a_ref = Vector3f(0.f, 0.f, -2.f);
 	IndiAccelControl::Output out;
@@ -542,7 +542,7 @@ TEST_F(IndiAccelControlTest, JerkFeedforwardCoordinatedTurn)
 		in.j_ref = j;
 		in.yaw_ref = 0.f;
 		_ctrl.setLimits(10.f, 3.f, 1.5f, 1.2f, 0.1f, 1.f);
-		_ctrl.reset(in.f_b, in.mean_u);
+		_ctrl.reset(in.f_b, in.mean_u, in.mean_u);
 		IndiAccelControl::Output out;
 		ASSERT_TRUE(_ctrl.update(in, out));
 
@@ -607,7 +607,7 @@ TEST_F(IndiAccelControlTest, JerkBackwardDifferenceAndHold)
 
 	// reset clears the held difference, first cycle after has no history
 	in.j_ref = Vector3f(kNaN, kNaN, kNaN);
-	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
 	in.a_ref = Vector3f(20.f, 0.f, 0.f);
 	ASSERT_TRUE(_ctrl.update(in, out));
 	EXPECT_EQ(out.j_used(0), 0.f);
@@ -625,7 +625,7 @@ TEST_F(IndiAccelControlTest, JerkDifferenceFiltered)
 {
 	// a_ref ramp at 5 m/s^3 that only changes every second cycle (setpoint stream at half the loop rate)
 	_ctrl.setFilter(100.f, 10.f);
-	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
 	IndiAccelControl::Input in = hoverInput();
 	in.j_ref = Vector3f(kNaN, kNaN, kNaN);
 	IndiAccelControl::Output out;
@@ -658,7 +658,7 @@ TEST_F(IndiAccelControlTest, OmegaFfIndependentOfYawRate)
 		IndiAccelControl::Output outs[2];
 
 		for (int k = 0; k < 2; k++) {
-			_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt);
+			_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
 			IndiAccelControl::Input in = hoverInput();
 			in.a_ref = Vector3f(a_h, 0.f, 0.f);
 			in.j_ref = Vector3f(0.4f, 0.7f, 0.f);
@@ -690,7 +690,7 @@ protected:
 	{
 		_ctrl.setBlendTimeConstant(tb);
 		_u_cmd = kG / kGt;
-		_ctrl.reset(Vector3f(0.f, 0.f, -kG), kScale * _u_cmd);
+		_ctrl.reset(Vector3f(0.f, 0.f, -kG), _u_cmd, kScale * _u_cmd);
 	}
 
 	/// one cycle at hover (a_ref = 0), plant feedback from the previous collective
@@ -698,7 +698,7 @@ protected:
 	{
 		IndiAccelControl::Input in = hoverInput();
 		const float u_meas = kScale * _u_cmd;
-		in.f_b = Vector3f(0.f, 0.f, -kGt * u_meas);
+		in.f_b = Vector3f(0.f, 0.f, -kGt * u_meas - _dist);
 		in.mean_u = u_meas;
 		in.mean_u_valid = valid;
 		IndiAccelControl::Output out;
@@ -734,7 +734,28 @@ protected:
 		EXPECT_LT(fabsf(_ctrl.blend() - b0), 0.003f);
 	}
 
+	/// module bypass convention: reset(f_b, c, mean_u) with c the commanded collective, mean_u the measured one
+	void moduleReset(float c, float mean_u)
+	{
+		_ctrl.reset(Vector3f(0.f, 0.f, -kG), c, mean_u);
+	}
+
+	/// largest change of the thrust command between consecutive cycles over n cycles (the first one against _u_cmd)
+	float maxThrustStep(int n, bool valid = true)
+	{
+		float m = 0.f;
+
+		for (int i = 0; i < n; i++) {
+			const float prev = _u_cmd;
+			EXPECT_TRUE(step(valid));
+			m = fmaxf(m, fabsf(_u_cmd - prev));
+		}
+
+		return m;
+	}
+
 	float _u_cmd{kG / kGt};
+	float _dist{0.f};	///< unmodelled upward acceleration (m/s^2)
 	IndiAccelControl::Output _out{};
 };
 
@@ -784,7 +805,7 @@ TEST_F(IndiAccelBlendTest, ModuleResetDoesNotTouchBlend)
 {
 	warmUp();
 	const float b0 = _ctrl.blend();
-	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kScale * _u_cmd);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), _u_cmd, kScale * _u_cmd);
 	EXPECT_LT(fabsf(_ctrl.blend() - b0), 1e-6f);
 	expectNoStepAfter(b0);
 }
@@ -813,7 +834,7 @@ TEST_F(IndiAccelBlendTest, FrozenAtBypassA3A8)
 	_ctrl.setBlendHold(true);
 
 	for (int i = 0; i < 50; i++) {
-		_ctrl.reset(Vector3f(0.f, 0.f, -kG), 0.6f);
+		_ctrl.reset(Vector3f(0.f, 0.f, -kG), 0.6f / kScale, 0.6f);
 	}
 
 	EXPECT_LT(fabsf(_ctrl.blend() - b0), 1e-6f);
@@ -830,7 +851,7 @@ TEST_F(IndiAccelBlendTest, NoDriftAfterResetWithoutHold)
 	run(2000);
 	const float b0 = _ctrl.blend();
 	ASSERT_GT(fabsf(b0), 0.01f);
-	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kScale * _u_cmd);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), _u_cmd, kScale * _u_cmd);
 	_ctrl.setBlendHold(false);
 
 	for (int i = 0; i < 40; i++) {
@@ -849,4 +870,93 @@ TEST_F(IndiAccelBlendTest, FrozenAtE7EdgeSingleCycle)
 	EXPECT_LT(fabsf(_ctrl.blend() - b0), 1e-6f);
 	_ctrl.setBlendHold(false);
 	expectNoStepAfter(b0);
+}
+
+TEST_F(IndiAccelBlendTest, NoCollectiveStepAtBypassEdgeModuleConvention)
+{
+	// steady gap, b converged: the module's bypass branch resets with the commanded collective c (it has no measured
+	// thrust) and the measured mean_u when ESC telemetry is fresh. The first active cycle must return c.
+	_ctrl.setFilter(100.f, 10.f); // as in flight: the measured path settles over the filter time
+	startBlend(1.f);
+	run(2000);
+	ASSERT_GT(fabsf(_ctrl.blend()), 0.01f);
+	const float c = _u_cmd;
+
+	for (int telemetry = 0; telemetry < 2; telemetry++) {
+		_ctrl.setBlendHold(true);
+
+		for (int i = 0; i < 20; i++) {
+			moduleReset(c, telemetry ? kScale *c : kNaN);
+		}
+
+		_ctrl.setBlendHold(false);
+		_u_cmd = c;
+		ASSERT_TRUE(step());
+		EXPECT_LT(fabsf(_out.thrust - c), 0.01f) << "telemetry " << telemetry;
+		EXPECT_LT(maxThrustStep(100), 0.01f) << "telemetry " << telemetry;
+	}
+}
+
+TEST_F(IndiAccelBlendTest, ThrustContinuousAtTelemetryLossAndRecovery)
+{
+	// steady gap, b converged (u_meas + b = u_model): the loss and the recovery must not step the collective
+	startBlend(1.f);
+	run(2000);
+	EXPECT_LT(maxThrustStep(5), 0.01f);
+	EXPECT_LT(maxThrustStep(1, false), 0.01f);  // loss edge
+	EXPECT_LT(maxThrustStep(100, false), 0.01f);
+	EXPECT_LT(maxThrustStep(1, true), 0.01f);   // recovery edge
+	EXPECT_LT(maxThrustStep(100, true), 0.01f);
+}
+
+TEST_F(IndiAccelBlendTest, FrozenWhenMeasuredUAtLimit)
+{
+	// the measured mean_u is stuck at the physical limit below what the model asks for: b must not wind up
+	startBlend(1.f);
+
+	for (int i = 0; i < 500; i++) {
+		IndiAccelControl::Input in = hoverInput();
+		in.mean_u = 0.995f;
+		in.f_b = Vector3f(0.f, 0.f, -kGt * in.mean_u);
+		in.mean_u_valid = true;
+		IndiAccelControl::Output out;
+		ASSERT_TRUE(_ctrl.update(in, out));
+	}
+
+	EXPECT_LT(fabsf(_ctrl.blend()), 0.01f);
+}
+
+TEST_F(IndiAccelBlendTest, FrozenWhenAllocatorSaturated)
+{
+	startBlend(1.f);
+	run(200);
+	const float b0 = _ctrl.blend();
+
+	for (int i = 0; i < 300; i++) {
+		IndiAccelControl::Input in = hoverInput();
+		in.mean_u = 0.3f; // far from the model: would wind b up
+		in.mean_u_valid = true;
+		in.alloc_saturated = true;
+		IndiAccelControl::Output out;
+		ASSERT_TRUE(_ctrl.update(in, out));
+		EXPECT_TRUE(out.blend_frozen);
+	}
+
+	EXPECT_LT(fabsf(_ctrl.blend() - b0), 1e-6f);
+}
+
+TEST_F(IndiAccelBlendTest, SetFilterReconfigDoesNotStepThrust)
+{
+	// steady hover with the thrust gap (b converged): zeroed filters would drop the output to a_c - g e3
+	// plus an unmodelled updraft that only the filtered measured acceleration knows about
+	_ctrl.setFilter(100.f, 10.f);
+	_dist = 2.f;
+	startBlend(1.f);
+	run(2000);
+	const float c = _u_cmd;
+	_ctrl.setFilter(80.f, 10.f);
+	EXPECT_LT(maxThrustStep(1), 0.01f);
+	EXPECT_LT(fabsf(_u_cmd - c), 0.01f);
+	EXPECT_LT(maxThrustStep(100), 0.01f);
+	EXPECT_LT(fabsf(_u_cmd - c), 0.01f);
 }

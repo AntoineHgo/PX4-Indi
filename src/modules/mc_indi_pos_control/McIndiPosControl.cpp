@@ -79,6 +79,7 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 {
 	constexpr hrt_abstime kMaxAge = 20_ms;
 	constexpr hrt_abstime kEscMaxAge = 100_ms;
+	constexpr hrt_abstime kAllocMaxAge = 200_ms;
 	using matrix::Vector3f;
 
 	vehicle_attitude_s att;
@@ -141,11 +142,31 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 	const float rate = (dt > 1e-4f) ? roundf(1.f / dt) : 0.f;
 	const float cut = _param_indi_lpf.get();
 
-	if (rate > 5.f && (fabsf(rate - _filter_hz) > 0.2f * _filter_hz || !isEqualF(cut, _filter_cut))) {
+	// hysteresis: a rate deviation of more than 20 % must persist for kRateDevCycles cycles (a single late
+	// sample must not re-configure the filters, and the return from it must not either)
+	constexpr int kRateDevCycles = 5;
+	const bool rate_dev = (rate > 5.f) && (fabsf(rate - _filter_hz) > 0.2f * _filter_hz);
+	_rate_dev_count = rate_dev ? math::min(_rate_dev_count + 1, kRateDevCycles) : 0;
+
+	if (rate > 5.f && (_filter_hz <= 0.f || _rate_dev_count >= kRateDevCycles || !isEqualF(cut, _filter_cut))) {
 		_filter_hz = rate;
 		_filter_cut = cut;
-		_indi.setFilter(_filter_hz, cut);
-		_indi_active = false; // force a reset below
+		_rate_dev_count = 0;
+		_indi.setFilter(_filter_hz, cut); // re-seeds the filters from their last output (no zero state)
+	}
+
+	// control allocator saturation (freezes the collective blend), fresh reports only
+	control_allocator_status_s alloc;
+
+	if (_alloc_status_sub.update(&alloc)) {
+		bool sat = !alloc.thrust_setpoint_achieved;
+
+		for (int j = 0; j < 4; j++) {
+			sat = sat || (alloc.actuator_saturation[j] != control_allocator_status_s::ACTUATOR_SATURATION_OK);
+		}
+
+		_alloc_saturated = sat;
+		_alloc_time = (alloc.timestamp != 0) ? alloc.timestamp : now;
 	}
 
 	const float G = IndiAccelControl::kGravity / math::max(ht, 0.05f);
@@ -198,6 +219,7 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 		in.f_b = _f_b;
 		in.mean_u = _mean_u;
 		in.mean_u_valid = fresh_esc;
+		in.alloc_saturated = _alloc_saturated && (_alloc_time != 0) && (age(_alloc_time) <= kAllocMaxAge);
 		in.a_ref = a_ref;
 		in.yaw_ref = yaw_sp;
 		in.dt = dt;
@@ -247,11 +269,12 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 	}
 
 	// bypass: stock attitude setpoint is published, the stage tracks the thrust actually commanded (A3)
-	_indi.setBlendHold(true); // D-GAP: reset() below keeps b and restarts the model path at u + b (no drift at the return)
+	_indi.setBlendHold(true); // D-GAP: reset() below keeps b; model path from the commanded collective, measured path from the ESC mean u
 	const float coll_stock = -att_sp.thrust_body[2];
 	const float coll = fresh_thr ? _coll_meas : (PX4_ISFINITE(coll_stock) ? coll_stock : _last_thrust);
 	const float c = PX4_ISFINITE(coll) ? math::max(coll, 0.f) : 0.f;
-	_indi.reset(fresh_acc ? _f_b : Vector3f(0.f, 0.f, -c * G), c);
+	// c is the COMMANDED collective (not measured): the measured mean u is passed separately (NaN: use u_model - b)
+	_indi.reset(fresh_acc ? _f_b : Vector3f(0.f, 0.f, -c * G), c, fresh_esc ? _mean_u : NAN);
 	_last_thrust = PX4_ISFINITE(coll_stock) ? coll_stock : c;
 	_indi_active = false;
 }
@@ -794,7 +817,12 @@ void McIndiPosControl::Run()
 				_control.resetIntegralXY();
 			}
 
-			_control.resetIntegral(); // A2: a_ref = feed-forward + P/D only
+			// A2: a_ref = feed-forward + P/D only, but only while the INDI stage runs (previous cycle's state): in bypass
+			// (altitude mode, takeoff rampup, ground contact) the stock integrator is the only thrust-gap compensation
+			if (_indi_active) {
+				_control.resetIntegral();
+			}
+
 			_control.setState(states);
 
 			const hrt_abstime now = hrt_absolute_time();
@@ -825,8 +853,6 @@ void McIndiPosControl::Run()
 				}
 			}
 
-			_control.resetIntegral();
-
 			vehicle_local_position_setpoint_s local_pos_sp{};
 			_control.getLocalPositionSetpoint(local_pos_sp);
 			vehicle_attitude_setpoint_s attitude_setpoint{};
@@ -837,6 +863,11 @@ void McIndiPosControl::Run()
 						   || _vehicle_control_mode.flag_control_velocity_enabled)
 					       && (_takeoff.getTakeoffState() == TakeoffState::flight) && !flying_but_ground_contact;
 			runIndiStage(dt, now, want_indi, _tilt_limit_slew_rate.getState(), ht, local_pos_sp, attitude_setpoint);
+
+			// zero the stock integrator only on cycles where the INDI stage actually ran (this cycle)
+			if (_indi_active) {
+				_control.resetIntegral();
+			}
 
 			// Publish internal position control setpoints
 			// on top of the input/feed-forward setpoints these containt the PID corrections

@@ -79,6 +79,13 @@ void IndiAccelControl::setFilter(float sample_freq_hz, float cutoff_hz)
 	_lpf_u.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
 	_lpf_um.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
 	_lpf_j.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
+
+	// set_cutoff_frequency() zeroes the delay elements (output would fall to 0 and take the filter time to
+	// come back): re-seed every filter from its last output instead
+	_lpf_f.reset(_last_f_b);
+	_lpf_u.reset(_last_u);
+	_lpf_um.reset(_last_um);
+	_lpf_j.reset(_j_diff_f);
 }
 
 void IndiAccelControl::setThrustModel(float g_t, float k_cmd)
@@ -103,18 +110,23 @@ void IndiAccelControl::setBlendTimeConstant(float tb_s)
 	}
 }
 
-void IndiAccelControl::reset(const Vector3f &f_b, float mean_u)
+void IndiAccelControl::reset(const Vector3f &f_b, float coll_cmd, float mean_u)
 {
 	const Vector3f f = allFinite(f_b) ? f_b : Vector3f(0.f, 0.f, -kGravity);
-	const float u = PX4_ISFINITE(mean_u) ? mean_u : kGravity / _g_t;
+	const float c = PX4_ISFINITE(coll_cmd) ? math::max(coll_cmd, 0.f) : kGravity / (_g_t * _k_cmd);
 
-	// D-GAP: the model path starts at u + b (its steady relation to the measured path), so the blend sees no
-	// innovation across the reset and b does not drift at the edge (A16: held, never reset)
-	const float u_model = u + _b;
+	// D-GAP: model path = commanded collective (u_model = c * k_cmd). Measured path = the measured mean u when it is
+	// given, else its steady relation to the model path, u_model - b. Either way u_meas + b = u_model at the
+	// restart (no collective step at the edge, no innovation for b; A16: b is held, never reset)
+	const float u_model = c * _k_cmd;
+	const float u = PX4_ISFINITE(mean_u) ? mean_u : (u_model - _b);
 
 	_lpf_f.reset(f);
 	_lpf_u.reset(u);
 	_lpf_um.reset(u_model);
+	_last_f_b = f;
+	_last_u = u;
+	_last_um = u_model;
 
 	for (int i = 0; i <= kMaxDelaySamples; i++) {
 		_u_buf[i] = u;
@@ -122,7 +134,7 @@ void IndiAccelControl::reset(const Vector3f &f_b, float mean_u)
 	}
 
 	_u_idx = 0;
-	_thrust_prev = u_model / _k_cmd;
+	_thrust_prev = c;
 
 	_time = 0.f;
 	_a_ref_prev.zero();
@@ -284,29 +296,35 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 
 	// 3. measured acceleration
 	const Vector3f f_bf = _lpf_f.apply(in.f_b);
+	_last_f_b = f_bf;
 	const Vector3f a_f = R * f_bf + Vector3f(0.f, 0.f, kGravity);
 
 	// 4. measured thrust
 	const float u_model = _thrust_prev * _k_cmd;
-	const float u_in = in.mean_u_valid ? in.mean_u : u_model;
+	// invalid telemetry: feed u_model - b so that u_meas_f + b stays continuous (no step at loss or recovery)
+	const float u_in = in.mean_u_valid ? in.mean_u : (u_model - _b);
 	_u_idx = (_u_idx + 1) % (kMaxDelaySamples + 1);
 	_u_buf[_u_idx] = u_in;
 	_um_buf[_u_idx] = u_model;
 	const int i_d = (_u_idx + kMaxDelaySamples + 1 - _delay) % (kMaxDelaySamples + 1);
 	const float u_meas_f = _lpf_u.apply(_u_buf[i_d]);
 	const float u_model_f = _lpf_um.apply(_um_buf[i_d]);
+	_last_u = u_meas_f;
+	_last_um = u_model_f;
 
 	// D-GAP blend: b = LP_tb(u_model - u_meas), held (never reset) on the ground, at bypass edges (hold flag),
 	// while the telemetry is invalid and while the collective is clamped (anti-windup)
-	const bool blend_frozen = _blend_hold || !in.mean_u_valid || _coll_clamped;
+	// anti-windup also on the measured mean_u at its physical limit and on the allocator saturation report
+	const bool u_at_limit = in.mean_u_valid && (in.mean_u >= kMeanUSatLimit);
+	const bool blend_frozen = _blend_hold || !in.mean_u_valid || _coll_clamped || u_at_limit || in.alloc_saturated;
 
 	if ((_tb > 0.f) && !blend_frozen) {
 		_b += (in.dt / (_tb + in.dt)) * ((u_model_f - u_meas_f) - _b);
 		_b = math::constrain(_b, -kMaxBlend, kMaxBlend);
 	}
 
-	// invalid telemetry: u_f = u_model (the measured path was fed the model value as well)
-	const float u_f = (_tb > 0.f) ? (in.mean_u_valid ? (u_meas_f + _b) : u_model_f) : u_meas_f;
+	// u_f = u_meas_f + b also with invalid telemetry (the measured path was fed u_model - b)
+	const float u_f = (_tb > 0.f) ? (u_meas_f + _b) : u_meas_f;
 	const Vector3f t_f = z_b * (-_g_t * u_f);
 
 	// 5. INDI increment

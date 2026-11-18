@@ -60,7 +60,7 @@
 class IndiAccelControl
 {
 public:
-	IndiAccelControl() { reset(matrix::Vector3f(0.f, 0.f, -kGravity), 0.f); }
+	IndiAccelControl() { reset(matrix::Vector3f(0.f, 0.f, -kGravity), 0.f, NAN); }
 	~IndiAccelControl() = default;
 
 	/// Maximum supported delay of the mean rotor thrust sample in controller cycles
@@ -82,6 +82,8 @@ public:
 	static constexpr float kMaxTiltLimit = 1.5f;
 	/// Bound of the collective blend state b (u units)
 	static constexpr float kMaxBlend = 0.3f;
+	/// Measured mean u at or above this (physical limit 1) freezes the blend (anti-windup)
+	static constexpr float kMeanUSatLimit = 0.98f;
 
 	struct Input {
 		matrix::Vector3f p{};      ///< position NED (m)
@@ -90,6 +92,7 @@ public:
 		matrix::Vector3f f_b{};    ///< accelerometer specific force, body frame (m/s^2)
 		float mean_u{NAN};         ///< mean normalised rotor thrust (only used if mean_u_valid)
 		bool mean_u_valid{false};
+		bool alloc_saturated{false}; ///< allocator reports saturation (motors or unallocated thrust): b is frozen
 		matrix::Vector3f p_ref{NAN, NAN, NAN};  ///< NaN component: no position term on that axis
 		matrix::Vector3f v_ref{NAN, NAN, NAN};  ///< NaN component: 0 feedforward on that axis
 		matrix::Vector3f a_ref{NAN, NAN, NAN};  ///< NaN component: 0
@@ -130,8 +133,7 @@ public:
 
 	/**
 	 * One filter for f_b (3D) and one for the mean thrust, same sample rate and cut-off (filter matching).
-	 * cutoff_hz <= 0, non finite or >= sample_freq_hz / 2 disables both. Resets the filter states: call
-	 * reset() afterwards.
+	 * cutoff_hz <= 0, non finite or >= sample_freq_hz / 2 disables both. Re-seeds the filter states from their last outputs.
 	 */
 	void setFilter(float sample_freq_hz, float cutoff_hz);
 
@@ -168,11 +170,14 @@ public:
 	void setFeedforward(bool jerk_ff) { _jerk_ff = jerk_ff; }
 
 	/**
-	 * Initialise the filters and the delay buffer to these values (no increment step), forget the jerk
-	 * difference history and set the previous thrust command to the model value mean_u / k_cmd.
-	 * Non finite arguments are replaced by hover values.
+	 * Initialise the filters and the delay buffers (no increment step) and forget the jerk difference history.
+	 * @param coll_cmd commanded collective (thrust command units): model path u_model = coll_cmd * k_cmd and the
+	 *        previous thrust command are set from it.
+	 * @param mean_u MEASURED mean rotor thrust, or NaN if not available: measured path starts at it, else at the
+	 *        steady relation u_model - b (so u_meas + b = u_model, no collective step at the first update).
+	 * Non finite coll_cmd or f_b are replaced by hover values.
 	 */
-	void reset(const matrix::Vector3f &f_b, float mean_u);
+	void reset(const matrix::Vector3f &f_b, float coll_cmd, float mean_u);
 
 	/**
 	 * Run one cycle.
@@ -224,6 +229,10 @@ private:
 	bool _blend_hold{false};
 	bool _coll_clamped{false};	///< collective was clamped in the previous update
 	float _thrust_prev{0.f};
+	// last filter outputs, to re-seed the filters after setFilter()
+	matrix::Vector3f _last_f_b{0.f, 0.f, -kGravity};
+	float _last_u{0.f};
+	float _last_um{0.f};
 
 	// jerk backward difference state
 	float _time{0.f};
