@@ -63,6 +63,7 @@
 #include <px4_platform_common/tasks.h>
 #include <uORB/Publication.hpp>
 #include <uORB/Subscription.hpp>
+#include "IndiPosInjection.hpp"
 #include <uORB/SubscriptionCallback.hpp>
 #include <uORB/topics/hover_thrust_estimate.h>
 #include <uORB/topics/indi_pos_status.h>
@@ -107,6 +108,7 @@ private:
 			  vehicle_local_position_setpoint_s &local_pos_sp, vehicle_attitude_setpoint_s &att_sp);
 
 	IndiAccelControl _indi;
+	IndiPosInjection _injection; ///< bench loop-break excitation of the commanded acceleration (MC_INDI_PINJ_*), off by default
 	uORB::Subscription _attitude_sub{ORB_ID(vehicle_attitude)};
 	uORB::Subscription _acceleration_sub{ORB_ID(vehicle_acceleration)};
 	uORB::Subscription _esc_status_sub{ORB_ID(esc_status)};
@@ -236,7 +238,14 @@ private:
 
 		(ParamFloat<px4::params::MC_INDI_POS_LPF>)  _param_indi_lpf,
 		(ParamInt<px4::params::MC_INDI_POS_DLY>)    _param_indi_dly,
-		(ParamFloat<px4::params::MC_INDI_POS_TB>)   _param_indi_tb
+		(ParamFloat<px4::params::MC_INDI_POS_TB>)   _param_indi_tb,
+		(ParamInt<px4::params::MC_INDI_PINJ_AX>)    _param_indi_pinj_ax,
+		(ParamFloat<px4::params::MC_INDI_PINJ_AMP>) _param_indi_pinj_amp,
+		(ParamFloat<px4::params::MC_INDI_PINJ_TP>)  _param_indi_pinj_tp,
+		(ParamFloat<px4::params::MC_INDI_PINJ_FLO>) _param_indi_pinj_flo,
+		(ParamFloat<px4::params::MC_INDI_PINJ_FHI>) _param_indi_pinj_fhi,
+		(ParamInt<px4::params::MC_INDI_PINJ_NP>)    _param_indi_pinj_np,
+		(ParamFloat<px4::params::MC_INDI_PINJ_DLY>) _param_indi_pinj_dly
 	);
 
 	math::WelfordMean<float> _sample_interval_s{};

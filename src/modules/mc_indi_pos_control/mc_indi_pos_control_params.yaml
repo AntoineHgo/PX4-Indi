@@ -39,3 +39,75 @@ parameters:
       decimal: 1
       increment: 0.1
       default: 1.0
+    MC_INDI_PINJ_AX:
+      description:
+        short: INDI outer-loop bench excitation axis
+        long: |-
+          Bench and system identification only. Adds a multisine excitation d to the commanded acceleration of one
+          NED axis (u = c + d, also fed back to the INDI stage states) while armed and not landed, for
+          MC_INDI_PINJ_NP periods from the first such cycle. Set to 0 to disable, the acceleration is then unchanged.
+      type: enum
+      values:
+        0: Off
+        1: X (north)
+        2: Y (east)
+        3: Z (down)
+      default: 0
+    MC_INDI_PINJ_AMP:
+      description:
+        short: Excitation amplitude per sine component
+      type: float
+      unit: m/s^2
+      min: 0
+      max: 2
+      decimal: 3
+      increment: 0.005
+      default: 0.05
+    MC_INDI_PINJ_TP:
+      description:
+        short: Excitation multisine period
+      type: float
+      unit: s
+      min: 1
+      max: 100
+      decimal: 1
+      increment: 1
+      default: 20
+    MC_INDI_PINJ_FLO:
+      description:
+        short: Excitation lowest frequency
+      type: float
+      unit: Hz
+      min: 0.05
+      max: 10
+      decimal: 2
+      increment: 0.05
+      default: 0.2
+    MC_INDI_PINJ_FHI:
+      description:
+        short: Excitation highest frequency
+      type: float
+      unit: Hz
+      min: 0.1
+      max: 30
+      decimal: 1
+      increment: 0.5
+      default: 8
+    MC_INDI_PINJ_NP:
+      description:
+        short: Excitation number of periods
+      type: int32
+      min: 1
+      max: 20
+      default: 3
+    MC_INDI_PINJ_DLY:
+      description:
+        short: Excitation start delay
+        long: Delay after the first armed and airborne cycle, so that the excitation starts in established flight.
+      type: float
+      unit: s
+      min: 0
+      max: 100
+      decimal: 1
+      increment: 1
+      default: 0

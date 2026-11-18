@@ -32,6 +32,13 @@
 ############################################################################
 
 
+px4_add_library(IndiPosInjection
+	IndiPosInjection.cpp
+	IndiPosInjection.hpp
+)
+target_compile_options(IndiPosInjection PRIVATE ${MAX_CUSTOM_OPT_LEVEL})
+target_include_directories(IndiPosInjection PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
 px4_add_module(
 	MODULE modules__mc_indi_pos_control
 	MAIN mc_indi_pos_control
@@ -45,6 +52,7 @@ px4_add_module(
 	DEPENDS
 		IndiAccelControl
 		IndiRateControl
+		IndiPosInjection
 		controllib
 		geo
 		SlewRate
@@ -56,3 +64,5 @@ px4_add_module(
 # directory: link them by name, resolved at generate time (MODULES_MC_POS_CONTROL is a Kconfig dependency).
 target_link_libraries(modules__mc_indi_pos_control PRIVATE GotoControl PositionControl Takeoff)
 target_include_directories(modules__mc_indi_pos_control PRIVATE ${PX4_SOURCE_DIR}/src/modules/mc_pos_control)
+
+px4_add_unit_gtest(SRC IndiPosInjectionTest.cpp LINKLIBS IndiPosInjection)

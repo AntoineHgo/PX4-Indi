@@ -1,7 +1,9 @@
 uint64 timestamp		# time since system start (microseconds)
 
 # Outer-loop INDI internals (published by mc_indi_pos_control while its external mode is active), NED world frame
-float32[3] a_c			# commanded acceleration (m/s^2)
+float32[3] a_c			# commanded acceleration u = c + d, input of the INDI stage (m/s^2)
+float32[3] a_c_pre_inject	# commanded acceleration c before the bench excitation (m/s^2)
+float32[3] inject		# bench loop-break excitation d, MC_INDI_PINJ_* (m/s^2), 0 when off
 float32[3] a_f			# measured filtered acceleration (m/s^2)
 float32[3] t_f			# measured filtered specific thrust vector (m/s^2)
 float32[3] t_c			# commanded specific thrust vector after saturation (m/s^2)

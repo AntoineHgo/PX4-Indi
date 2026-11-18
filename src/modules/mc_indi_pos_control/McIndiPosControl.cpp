@@ -159,14 +159,15 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 	const bool fresh_acc = _acc_time != 0 && age(_acc_time) <= kMaxAge;
 	const bool fresh_thr = _thr_time != 0 && age(_thr_time) <= kMaxAge;
 	const bool fresh_esc = _mean_u_valid && age(_esc_time) <= kEscMaxAge;
-	const Vector3f a_ref(local_pos_sp.acceleration[0], local_pos_sp.acceleration[1], local_pos_sp.acceleration[2]);
+	// c: commanded acceleration of the stock position loop, the input of the INDI stage
+	const Vector3f a_c_pre_inject(local_pos_sp.acceleration[0], local_pos_sp.acceleration[1], local_pos_sp.acceleration[2]);
 
 	const float yaw_sp = matrix::Eulerf(matrix::Quatf(att_sp.q_d)).psi();
-	const bool can_run = want_active && fresh_att && fresh_acc && a_ref.isAllFinite() && rate > 5.f;
+	const bool can_run = want_active && fresh_att && fresh_acc && a_c_pre_inject.isAllFinite() && rate > 5.f;
 
 	// instrument: report each change of the stage conditions (bit set = condition met), capped
 	const bool lib_ok_prev = _indi_active;
-	const int reason = (want_active ? 1 : 0) | (fresh_att ? 2 : 0) | (fresh_acc ? 4 : 0) | (a_ref.isAllFinite() ? 8 : 0)
+	const int reason = (want_active ? 1 : 0) | (fresh_att ? 2 : 0) | (fresh_acc ? 4 : 0) | (a_c_pre_inject.isAllFinite() ? 8 : 0)
 			   | (rate > 5.f ? 16 : 0) | (fresh_esc ? 32 : 0) | (lib_ok_prev ? 64 : 0);
 
 	if (reason != _stage_reason && _stage_reports < 20) {
@@ -177,6 +178,18 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 	_stage_reason = reason;
 
 	if (can_run) {
+		// d: bench loop-break excitation on one NED axis, not computed (u == c) when MC_INDI_PINJ_AX is 0
+		Vector3f inject{};
+		const int inject_axis = _injection.axis();
+
+		if (inject_axis >= 0) {
+			inject(inject_axis) = _injection.update(now, _vehicle_control_mode.flag_armed, _vehicle_land_detected.landed);
+		}
+
+		// u = c + d replaces c in the whole stage: thrust vector, previous thrust command, blend model path and jerk
+		// difference are all computed from u, so every feedback path closes through u
+		const Vector3f a_ref = a_c_pre_inject + inject;
+
 		IndiAccelControl::Input in;
 		in.accel_only = true;
 		in.q = _q;
@@ -196,7 +209,9 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 		if (_indi.update(in, out)) {
 			indi_pos_status_s status{};
 			status.timestamp = hrt_absolute_time();
-			out.a_c.copyTo(status.a_c);
+			out.a_c.copyTo(status.a_c); // u
+			a_c_pre_inject.copyTo(status.a_c_pre_inject);
+			inject.copyTo(status.inject);
 			out.a_f.copyTo(status.a_f);
 			out.t_f.copyTo(status.t_f);
 			out.t_c.copyTo(status.t_c);
@@ -355,6 +370,9 @@ void McIndiPosControl::parameters_update(bool force)
 		_control.setHorizontalThrustMargin(_param_mpc_thr_xy_marg.get());
 		_indi.setMeasurementDelay(_param_indi_dly.get());
 		_indi.setBlendTimeConstant(_param_indi_tb.get());
+		// bench-only loop-break excitation, rebuilt only when one of its values changed
+		_injection.setParameters(_param_indi_pinj_ax.get(), _param_indi_pinj_amp.get(), _param_indi_pinj_tp.get(),
+					 _param_indi_pinj_flo.get(), _param_indi_pinj_fhi.get(), _param_indi_pinj_np.get(), _param_indi_pinj_dly.get());
 
 		float w_max = 0.f;
 		_rotor_w_max = (_w_max_handle != PARAM_INVALID && param_get(_w_max_handle, &w_max) == PX4_OK
