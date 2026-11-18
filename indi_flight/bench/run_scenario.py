@@ -631,6 +631,10 @@ def main():
                     help="v2: SIM_GZ_SEED, seed of eRPM dropout and extra IMU noise streams (0 = fixed default streams)")
     ap.add_argument("--imu-noise-scale", type=float, default=1.0,
                     help="v2: SIM_GZ_IMU_NSC, total IMU noise stddev multiplier vs the SDF noise (1..10)")
+    ap.add_argument("--dly-act", type=int, default=0, choices=range(0, 11), metavar="0..10",
+                    help="SIM_GZ_DLY_ACT [ms], motor command delay PX4 -> gz (quantised to the mixer period)")
+    ap.add_argument("--dly-imu", type=int, default=0, choices=range(0, 11), metavar="0..10",
+                    help="SIM_GZ_DLY_IMU [ms], IMU delay gz -> PX4 (quantised to the IMU period)")
     ap.add_argument("--gnss-delay", type=int, default=None,
                     help="SENS_GNSS0_DELAY [ms]; the gz GNSS has no latency but stamps no sample time, so the stock "
                          "110 ms makes the EKF lead the truth by 110 ms (D-s8-gnss-delay); unset keeps the stock value")
@@ -713,6 +717,11 @@ def main():
                 sim.env["PX4_PARAM_MC_INDI_POS_EN"] = "1"
                 meta.setdefault("boot_params", {})["MC_INDI_POS_EN"] = 1
         variant = dict(sc.get("model_variant") or {})
+        # S102 delay lines (gz_bridge, reboot_required, read at gz_bridge init; 0 = bypassed)
+        sim.env["PX4_PARAM_SIM_GZ_DLY_ACT"] = str(a.dly_act)
+        sim.env["PX4_PARAM_SIM_GZ_DLY_IMU"] = str(a.dly_imu)
+        meta["dly_act_ms"] = a.dly_act
+        meta["dly_imu_ms"] = a.dly_imu
         if a.sim != "v1":  # read once when gz_bridge starts
             if a.model == "x500":  # quad5in/model.sdf already carries the per-step JointStatePublisher
                 variant["rpm"] = True
