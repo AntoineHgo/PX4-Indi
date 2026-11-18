@@ -810,3 +810,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S101: B100 model-only batch 10/10 PASS + P100 2/2: worst GM 10.12 dB (roll400_s2), PM 70.8 deg (pitch400_s2), DM 39.7 ms; torque_check MODEL_ONLY_VERIFIED on cells.
 - S102: (ii) PID M1 has no recipe (gyro-break sim_inject hook from design/stage2_margins_s35.md never built); deferred behind G3 delay-line hooks (iv), H102 sonnet implements A1+A2.
 - S102: delay-line hooks A1+A2 built (H102), second-keyed (K102: M1 init order, M2 IMU clock fixed), committed c6ba02609f; runner --dly-act/--dly-imu; pre-test V102: IMU delay exact, actuator delay unverified -> A-37.
+- S103 (2026-11-18): RC103 (design/route_check_103.md); A-37 closed (a9e5066a55 release-age windows, results/a37_actlag_s103): DLY_ACT lag d+[0,1.25 ms) in flight at 5 and 10 ms, usable in G3.

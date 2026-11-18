@@ -9,19 +9,20 @@
 History: JOURNAL.md (S101 entry holds the latest moves). Agent ledger: LEDGER.md. Lessons proposed:
 LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S103.
 Rule (RC64/RC74): inner loop time-boxed, 1 session per law change; no new anomaly chase unless a gate test fails.
-NEXT S103 (route check due S103: do it first, sonnet, design/route_check_NN.md):
-   (0) close A-37: actuator delay lag in flight (step input, truth rotor speed or per-call age); then hook B (GNSS, note s.4).
+NEXT S104 (RC103 done S103; next route check S108). RC103 order: G5 POSCTL pre-test (v), G2 verdict note (iii), hook B.
+   (0) DONE S103: A-37 closed (DLY_ACT lag d+[0,1.25 ms), results/a37_actlag_s103). Hook B (GNSS, note s.4) after (v),(iii).
    (i) DONE S101 (b9d6cf3285): K101 12/12 agree, all 24 INDI v2 rate cells (measured + model-only) PASS.
    (ii) PID M1 reference rate cells (reference only, F-5; 800 Hz x3 axes, 1 seed is enough).
    (iii) linear-model cross-check for the v2 path (margins_models.py, T78 UNVERIFIED list below) -> G2 verdict note.
    (iv) delay hooks A1+A2 DONE S102 (c6ba02609f, keyed K102); hook B GNSS open.
-   (v) G5 pre-test s5_gap085 POSCTL + stick ALTCTL gap + EN/AT_EN start check (RC98 order (a)).
+   (v) G5 pre-test: P98 already flew gap 0.85 in offboard, ALTCTL, EN+AT_EN (JOURNAL S98); remaining = POSCTL
+       (manual position) gap, needs a stick-mode POSCTL scenario (s5_gap085 is offboard).
    (vi) attitude-break margin with the new setpoint path (G2) when the G2 table is resumed.
    Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
    Old: log a z-only active flag in indi_pos_status when next touching the module (P98 could not see it).
 Notes: pretest_gate only on stationary scenarios, or end its window at the fault (S98). S99 hooks SIM_GZ_SEED +
    SIM_GZ_IMU_NSC done (accel scale UNVERIFIED, needs full-rate accel log before G4). D-G7-HARNESS decided, impl
-   stage 7. M3 PT-change UNVERIFIED. Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36.
+   stage 7. M3 PT-change UNVERIFIED. Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36. PID M1 hook deferred (RC103).
    Flights no longer need MC_INDI_ACT_BLD 1.0 (default). Check script bench/attitude_break_check.py; ratesp_csv.py keyed.
    Guard note: a long inline `git commit -m` was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
@@ -34,7 +35,7 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 | K102 | S102: second key of H102 | sonnet | design/delay_line_key_s102.md | DONE: 0 BLOCKING, M1+M2 fixed by orchestrator, c6ba02609f |
 | V102 | S102: delay-hook pre-test d0/d5 | haiku | results/delay_pretest_s102/README.md | DONE: IMU PASS (age 0/5000 us), actuator UNVERIFIED -> A-37 |
 | RC103 | S103: route check | sonnet | design/route_check_103.md | DONE: A-37 time-box $0.5 then park; then G5 pre-tests, G2 verdict note, hook B; defer PID M1 |
-| A103 | S103: A-37 test, release-age windows (a9e5066a55), build + hover d5/d10 | host bg | results/a37_actlag_s103/fly.out, d{5,10}/px4.log `grep 'DLY_ACT window'` | rerun fly.sh |
+| A103 | S103: A-37 test (a9e5066a55), hover d5/d10 | host bg | results/a37_actlag_s103/README.md | DONE: A-37 closed |
 S102 finding: (ii) PID M1 has NO recipe: the gyro-break hook (`sim_inject`, design/stage2_margins_s35.md l.21) was never built.
   PID reference is F-5 reference only -> deferred behind (iv); build the M1 hook later in gz_bridge IMU callback beside A2.
 
