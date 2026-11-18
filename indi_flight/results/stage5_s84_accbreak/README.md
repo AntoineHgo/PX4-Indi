@@ -45,3 +45,14 @@ to fix: report "no crossover" instead of raising). FRF by an inline per-bin leas
 `hf_frf.txt`. abs(L) -10.1 dB at 1.6 Hz falling to -22.9 dB at 3.8 Hz, then -17 to -18 dB over 7.6-9.4 Hz; arg L
 -62 to -131 deg; no -180 deg crossing in 1.6-9.4 Hz, so the INDI/D-GAP high-frequency part has GM > 17 dB in this
 band. No coherence computed (single run, single script): second key and margins_est coherence before use.
+
+## HF second key (S85, T176 + orchestrator): AGREE (`hf_second_key.md`, `hf_margins_s85.json`)
+Independent per-period LS phasor + H1 re-computation matches `hf_frf.txt` within 0.05 dB / 0.2 deg at all 9 bins,
+coherence >= 0.985. The S84 `--margins` crash was a `margins_est._ls_phasors` defect (no constant column: the z
+signals have a mean near -g, which biased every phasor on the non-uniform time base and rejected all bins), not only
+the missing crossover. Fixed S85 (constant column added; `bench/tests/test_margins_selftest.py` ALL PASS); pinj_csv
+now reports "no crossover in band" explicitly (two tests, failed before the fix). Re-run: all 9 bins accepted,
+coh_y >= 0.987, max |L| -10.1 dB at 1.6 Hz, lowest arg L -131.0 deg at 9.4 Hz, Ms 1.26 dB. Reading: no gain or phase
+crossover in 1.6-9.4 Hz; GM > 17 dB is a bound for this band only (phase still falling at 9.4 Hz, stage at 89 Hz).
+Earlier margins_est results used zero-mean rate/attitude signals or the uniform-grid FFT path; whether any earlier
+non-uniform LS result had a signal mean is NOT yet checked (open: re-run the S82-S84 velbreak/pt1 margins).
