@@ -17,7 +17,10 @@ cd <repo>
 git tag indi-stage1-final 353c017971 && git push origin indi-stage1-final   # freeze stage 1
 chmod -R a-w indi_project            # archive read-only on disk (undo: chmod -R u+w indi_project)
 mkdir -p indi_flight/logs
-nohup indi_flight/run_orchestrator.sh > indi_flight/logs/supervisor.nohup 2>&1 &
+# outside the editor, memory-capped: an out-of-memory kill stops only the offending process (S119 lost the
+# supervisor when a 19 GB test process took the VS Code scope down)
+systemd-run --user --unit=indi-orch -p MemoryMax=20G -p OOMPolicy=continue --working-directory="$PWD" \
+  bash -c 'indi_flight/run_orchestrator.sh >> indi_flight/logs/supervisor.nohup.out 2>&1'
 ```
 
 The supervisor creates and switches to `feat/indi-flight`; the orchestrator's first session commits this folder.
