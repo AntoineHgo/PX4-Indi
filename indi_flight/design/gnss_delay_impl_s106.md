@@ -16,3 +16,8 @@
 - UNVERIFIED: ages exactly 200000 (hrt tick granularity equals release time; real jitter not exposed at 1 Hz log); EKF response/matched-mismatched
   behaviour not evaluated; failure injection (stuck/dropout) at release not exercised; overflow path not exercised; multi-instance (EN_GPS=2) not run;
   gz GNSS logged only 1 Hz so rate of 30 Hz is from the SDF, not measured.
+
+## S106 correction (orchestrator, after K106)
+Releasing with the true `timestamp_sample` made `SENS_GNSS0_DELAY` inert (VehicleGPSPosition keeps a driver
+sample time below `timestamp`). The release now stamps `timestamp_sample = timestamp`; true age goes to
+`age_min_us/age_max_us` (print_status `age0`). Evidence: `results/gnss_delay_key_s106/README.md`.

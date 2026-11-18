@@ -636,7 +636,7 @@ def main():
     ap.add_argument("--dly-imu", type=int, default=0, choices=range(0, 11), metavar="0..10",
                     help="SIM_GZ_DLY_IMU [ms], IMU delay gz -> PX4 (quantised to the IMU period)")
     ap.add_argument("--gps-dly", type=int, default=0, choices=range(0, 251), metavar="0..250",
-                    help="SIM_GZ_GPS_DLY [ms], GNSS delivery delay gz -> PX4 (timestamp_sample kept; independent of --gnss-delay)")
+                    help="SIM_GZ_GPS_DLY [ms], GNSS delivery delay gz -> PX4 (no sample time reported, as the undelayed path; matched compensation is --gnss-delay equal to it)")
     ap.add_argument("--gnss-delay", type=int, default=None,
                     help="SENS_GNSS0_DELAY [ms]; the gz GNSS has no latency but stamps no sample time, so the stock "
                          "110 ms makes the EKF lead the truth by 110 ms (D-s8-gnss-delay); unset keeps the stock value")
