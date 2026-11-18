@@ -635,6 +635,8 @@ def main():
                     help="SIM_GZ_DLY_ACT [ms], motor command delay PX4 -> gz (quantised to the mixer period)")
     ap.add_argument("--dly-imu", type=int, default=0, choices=range(0, 11), metavar="0..10",
                     help="SIM_GZ_DLY_IMU [ms], IMU delay gz -> PX4 (quantised to the IMU period)")
+    ap.add_argument("--gps-dly", type=int, default=0, choices=range(0, 251), metavar="0..250",
+                    help="SIM_GZ_GPS_DLY [ms], GNSS delivery delay gz -> PX4 (timestamp_sample kept; independent of --gnss-delay)")
     ap.add_argument("--gnss-delay", type=int, default=None,
                     help="SENS_GNSS0_DELAY [ms]; the gz GNSS has no latency but stamps no sample time, so the stock "
                          "110 ms makes the EKF lead the truth by 110 ms (D-s8-gnss-delay); unset keeps the stock value")
@@ -722,6 +724,8 @@ def main():
         sim.env["PX4_PARAM_SIM_GZ_DLY_IMU"] = str(a.dly_imu)
         meta["dly_act_ms"] = a.dly_act
         meta["dly_imu_ms"] = a.dly_imu
+        sim.env["PX4_PARAM_SIM_GZ_GPS_DLY"] = str(a.gps_dly)
+        meta["gps_dly_ms"] = a.gps_dly
         if a.sim != "v1":  # read once when gz_bridge starts
             if a.model == "x500":  # quad5in/model.sdf already carries the per-step JointStatePublisher
                 variant["rpm"] = True
