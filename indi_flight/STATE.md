@@ -19,7 +19,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    (5) attitude-break margin with the new setpoint path (G2) when the G2 table is resumed.
    Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
    S65-S68 session notes: JOURNAL.md (S69 entry).
-   S69-S71: JOURNAL.md. Route checks 64, 69 in design/. Route check 74 done; next: S79.
+   S69-S71: JOURNAL.md. Route checks 64-79 in design/; next: S84.
    S72 (launch 20261118-003830, cap $3): D-GAP implemented and committed (3481bdcf9e, 41d44d461a; reset() model path
    at u + b, fixed by me after reading the diff). gap085_indi_htoff dz 0.025 m PASS, loss08_indi 0.056 m marginal;
    second key agrees (`results/stage5_s72/second_key.md`). A-33 OPEN: loss08 holds a_c-a_f = 0.158 m/s2 (control
@@ -32,30 +32,22 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    S75 (launch 20261118-010441, cap $1.16, no agent): edge semantics DECIDED, no firmware change (D-RATE-BLD-EDGE:
    rate blend snaps to instantaneous gap = correct for a complementary filter; D-GAP keeps freeze).
    S76: rate M3a 800 Hz at tb 1.0/0.3/0.1 flown. S77 (cap $2.91): unit tests done (499e1df991), A-34 traced (open).
-   S78 (cap $1.98, below the $2 needed for (b)): did (c) by model + second key. NEXT S79: route check 79 first.
-   NEXT S78: (a) DONE S77 (400 Hz margins, rate precondition 1 met at 400/800); (b) D-GAP
-   velocity-break PM at tb, tb/3: NO outer-loop injector exists (`results/stage3_s77_400/velbreak_search.md`):
-   sonnet task (~$0.9) = injector at the accel/collective setpoint in mc_indi_pos_control mirroring D-G2-INJ
-   (MC_INDI_POS_INJ_*, log c/d/u) + csv script, then haiku second key; brief it at a cap >= $2. Then D-RATE-BLD
-   accept + firmware default MC_INDI_ACT_BLD 1.0 in its own commit (flights keep setting 1.0 meanwhile);
-   (c) A-34: model route done S78 (shift explained, bins fail on A-35 offset); left = haiku flight at
-   da64bc26b3^ (worktree build, S57 file, expect PM 77.5 within 2 deg); A-35 (model 1-8 Hz offset) before G2 freeze;
-   (d) runner RC/manual stick-path stub + PVA slice (ZSINE_O6), before land/re-take-off;
-   (e) combined opus review (stage-3 safety diff + stage-5 slices + snap-vs-freeze), land/re-take-off flight.
+   S78: A-34 model route + second key. S79 (cap $1.40): route check 79 (design/route_check_79.md, accepted):
+   D-RATE-BLD ACCEPTED, firmware default MC_INDI_ACT_BLD 1.0 committed a94d5c181a; A-34/A-35 PARKED (detour
+   under RC74 rule; reopen if a G2 entry fails or when the G2 model cross-check is written). Next route check: S84.
+   NEXT S80: (b) D-GAP velocity-break PM at tb, tb/3: NO outer-loop injector exists
+   (`results/stage3_s77_400/velbreak_search.md`): sonnet task (~$0.9) = injector at the accel/collective setpoint
+   in mc_indi_pos_control mirroring D-G2-INJ (MC_INDI_POS_INJ_*, log c/d/u) + csv script, then haiku second key
+   in a later session; brief it only at a cap >= $1.8 (else do (d) small parts or doc/bookkeeping without agents).
+   (d) runner RC/manual stick-path stub + PVA slice (ZSINE_O6), before land/re-take-off; fix the G3/G5 flight
+   matrix early (RC79 point 3). (e) combined opus review (stage-3 safety diff + stage-5 slices + snap-vs-freeze),
+   land/re-take-off flight. Flights no longer need to set MC_INDI_ACT_BLD 1.0 (now default).
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T160 | S72 D-GAP impl + unit tests + 2 flights | sonnet | results/stage5_s72/README.md | DONE, committed 3481bdcf9e/41d44d461a |
-| T161 | S72 second key | haiku | results/stage5_s72/second_key.md | DONE |
-| F72 | loss08_indi_htoff flight | bg shell | results/stage5_s72/loss08_indi_htoff/ | DONE |
-| T163 | S74 route check 74 | sonnet | design/route_check_74.md | DONE |
-| F76 | S76 D-RATE-BLD roll M3a 800 Hz tb 1.0/0.3/0.1 | bg shell | results/stage3_s76_bld/README.md | DONE: PM 68 deg, GM 16 dB, DM 43-46 ms at every tb (no tb effect); precondition 1 met at 800 Hz. TODO: add A-34 row (PM 68 vs S57 77 deg, f_c 4.1 vs 3.1 Hz, same params; closing test = S57 params at HEAD blend off, else bisect) to ANOMALIES.md and an S76 line under D-RATE-BLD in DECISIONS.md (guard blocked my heredoc) |
-| F77 | S77 A-34 closing: S57 params at HEAD tb 0 / 1.0 | bg shell | results/stage3_s77_a34/README.md | DONE: blend and load ruled out, likely setpoint lead da64bc26b3; A-34 open with closing test |
-| T164 | S77 D-RATE-BLD unit tests | sonnet | results/stage3_s77_tests/README.md | DONE, 69/69, break-checked, committed 499e1df991 |
-| F77b | S77 rate M3a 400 Hz tb 0 / 1.0, sequential | bg shell | results/stage3_s77_400/README.md | DONE: PM 70, GM 13.3 dB, DM 51 ms both tb |
-| T166 | S78 A-34 closing by model | sonnet | results/stage3_s78_a34/README.md | DONE: shift reproduced, bins fail -> A-35; second key T167 no BLOCKING (second_key.md), test Tc made literal + break-checked |
-| F73 | A-33 closing: loss08 with rate blend MC_INDI_ACT_BLD 0.3 / 1.0 (default 0 = off, never set in S72 flights: lesson-9 gap in the rate loop) | bg shell, instances 0/1 | results/stage5_s73/loss08_bld{0.3,1.0}/ | DONE, A-33 closed |
+| - | none in flight (S79) | | | |
+(S72-S78 rows done, details in JOURNAL.md; A-34/A-35 rows and S76 D-RATE-BLD line are recorded.)
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);

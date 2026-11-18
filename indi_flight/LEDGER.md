@@ -67,3 +67,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | T165 | S77 | haiku | velocity-break injector search: none exists, 11 calls | results/stage3_s77_400/velbreak_search.md |
 | T166 | S78 | sonnet | A-34 setpoint lead in margins_models.py, shift reproduced, bins fail (A-35), 18 calls, ~$0.44 | results/stage3_s78_a34/README.md |
 | T167 | S78 | sonnet | second key of the lead model: no BLOCKING, 2 MINOR (test Tc fixed), 4 calls, ~$0.15 | results/stage3_s78_a34/second_key.md |
+| 79 | T168 | sonnet | route check 79 | done, 5 calls, ~$0.2, acted on (default committed, A-34/A-35 parked) |

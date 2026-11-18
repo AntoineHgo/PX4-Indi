@@ -459,7 +459,7 @@ pre-identification behaviour of decision 3 must cover it).
      present: |b| after re-take-off within 10 % of its pre-landing value and max |dz| in the first 5 s after
      take-off < 0.15 m.
 
-## D-RATE-BLD (S73, PROPOSED; precondition 2 settled S75 by D-RATE-BLD-EDGE): decision 2 for the rate loop = the existing complementary blend, ON by default
+## D-RATE-BLD (S73, ACCEPTED S79; precondition 2 settled S75 by D-RATE-BLD-EDGE): decision 2 for the rate loop = the existing complementary blend, ON by default
 - Evidence: A-33 (`results/stage5_s73/README.md`). With MC_INDI_ACT_BLD = 0 (firmware default) one motor at 0.8
   holds a 10.4 deg standing attitude error (rate error ~1 rad/s) because measured actuator state removes the
   integral action (lesson 9). Blend 0.3 s and 1.0 s both remove it (sp-vs-actual 0.05 / 0.06 deg).
@@ -482,6 +482,8 @@ pre-identification behaviour of decision 3 must cover it).
   to the setpoint lead da64bc26b3, not the blend (`results/stage3_s77_a34/README.md`). Left before the default
   changes: the D-GAP velocity-break items. 400 Hz flown S77 (`results/stage3_s77_400/README.md`): PM 70 deg,
   GM 13.3 dB, DM 51 ms at tb 0 and 1.0: precondition 1 met at 400 and 800 Hz (roll).
+- S79: ACCEPTED, firmware default MC_INDI_ACT_BLD 1.0 s (a94d5c181a). The D-GAP velocity-break items concern the
+  outer loop's own blend, not this rate-loop default (route check 79); they stay a D-GAP precondition.
 
 ## D-RATE-BLD-EDGE (S75, DECIDED): rate blend restarts at the instantaneous gap; D-GAP keeps its freeze
 - Question (D-RATE-BLD precondition 2): the rate blend (`indi_rate_control.cpp` 5d) sets `_blend = t_gap` whenever
