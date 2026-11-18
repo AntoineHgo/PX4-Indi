@@ -474,6 +474,9 @@ pre-identification behaviour of decision 3 must cover it).
   invalid) settled and break-tested; (3) a unit test with a weak-motor closed-loop plant that fails with tb = 0.
 - Overturn: margins at tb 1.0 below the G2 thresholds, or a G3 pre-test where the blend's DC model path diverges
   (G1 error x2, telemetry loss) -> option (ii).
+- S76: precondition 1 met at 800 Hz roll (`results/stage3_s76_bld/README.md`): PM 68 deg, GM 16 dB, DM 43-46 ms at
+  tb 1.0/0.3/0.1, no tb effect (blend corner below the 4 Hz crossover); the stage-1 0.1 s crash is not a rate-loop
+  margin at hover on this airframe. Open: 400 Hz, D-GAP velocity-break items, A-34 (PM shift vs S57).
 
 ## D-RATE-BLD-EDGE (S75, DECIDED): rate blend restarts at the instantaneous gap; D-GAP keeps its freeze
 - Question (D-RATE-BLD precondition 2): the rate blend (`indi_rate_control.cpp` 5d) sets `_blend = t_gap` whenever
