@@ -174,6 +174,21 @@ def L_att_indi(w, fs=800.0, **kw):
     return _att_path(zi, fs, p["att_p"], p["att_lat"]) * Tcl
 
 
+def outer_factor(w, Kp=0.95, Kv=1.8, Ki=0.4, Kd=0.2, fd=5.0):
+    """Horizontal outer loop seen at the attitude break (A-36, keyed T195, design/t195_att_outer_key.md).
+    Small-angle hover: v = g phi/s, x = v/s, phi_sp = a_sp/g with PositionControl P-PID (MPC_XY_P, MPC_XY_VEL_P/I/D_ACC,
+    stock defaults), D on the velocity derivative low-passed at MPC_VELD_LP (fd).  The INDI acceleration increment
+    cancels in the small-signal sense.  O = 1 + (Kv + Ki/s)(Kp + s)/s^2 + Kd F(s); EKF velocity lag not modelled."""
+    s = 1j * np.asarray(w, float)
+    F = 1.0 / (1.0 + s / (2 * np.pi * fd))
+    return 1.0 + (Kv + Ki / s) * (Kp + s) / s ** 2 + Kd * F
+
+
+def L_att_indi_outer(w, fs=800.0, outer=None, **kw):
+    """L_att_indi times the closed horizontal outer loop (the S91 cells were flown in position mode)."""
+    return L_att_indi(w, fs, **kw) * outer_factor(w, **(outer or {}))
+
+
 def L_att_pid(w, fs=800.0, **kw):
     """Same break for the PX4 PID rate loop: T_cl = (Kp + Ki T z^-1/(1-z^-1)) G1 Pn / (1 + L_pid), L_att = A_att * T_cl.
     Parameters: PID_DEF (+ att_p 8, att_lat 1 from HEAD_FLIGHT).  No setpoint feed-forward in the PID law."""

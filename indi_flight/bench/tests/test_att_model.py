@@ -64,6 +64,18 @@ def test_ideal_rate_loop_integrator_margins():
         assert m["gm_db"] is None or (isinstance(m["gm_db"], float) and math.isnan(m["gm_db"])) or m["gm_db"] > 40
 
 
+def test_outer_factor():
+    """A-36: O = 1 with zero gains; independent hand value at 1.3 Hz with stock MPC gains (T195: |O| 1.19, -13 deg)."""
+    w = np.array([2 * math.pi * 1.3])
+    assert abs(M.outer_factor(w, 0, 0, 0, 0)[0] - 1) < 1e-12
+    s = 1j * w[0]
+    O = 1 + 1.8 / s + 0.95 * 1.8 / s ** 2 + 0.4 / s ** 2 + 0.4 * 0.95 / s ** 3 + 0.2 / (1 + s / (2 * math.pi * 5.0))
+    assert abs(M.outer_factor(w)[0] - O) < 1e-12
+    assert abs(abs(O) - 1.19) < 0.02 and abs(math.degrees(np.angle(O)) + 13) < 1.0
+    Lo = M.L_att_indi_outer(w, 400.0)[0] / M.L_att_indi(w, 400.0)[0]
+    assert abs(Lo - O) < 1e-12
+
+
 if __name__ == "__main__":
     for k, v in list(globals().items()):
         if k.startswith("test_"):
