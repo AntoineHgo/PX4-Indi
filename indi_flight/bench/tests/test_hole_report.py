@@ -92,5 +92,34 @@ check("dropout counted as logger", r["classes"]["logger"]["count"] == 1 and r["c
 r = hr.analyse(topics(1250), T0, END, dropouts=[(T0 + 40_000_000, 15.0)])
 check("15 ms dropout FAIL", not r["classes"]["logger"]["pass"] and not r["pass"])
 
+# S86 fix 2: the 10 ms limit holds for controller gaps attributed to a sim hole (12 ms controller hole next to a 2.5 ms sim hole)
+t = T0 + 30_000_000
+r = hr.analyse(topics(1250, sim_cut=[(t, t + 2 * 1250)], ctrl_cut=[(t + 2 * 1250, t + 2 * 1250 + 12_000)]), T0, END)
+check("S86 12 ms controller hole next to 2.5 ms sim hole FAIL",
+      (not r["pass"]) and r["classes"]["controller"]["max_hole_ms"] >= 12.0 and not r["classes"]["controller"]["pass"])
+
+# S86 fix 3: no primary sim topic (only decimated *_groundtruth) -> "sim: not assessable", not a silent pass
+j = topics(1250); del j["sim_ground_truth"]; del j["sensor_gyro"]
+j["vehicle_attitude_groundtruth"] = np.delete(reg(1250), np.arange(5000, 40000, 8))
+r = hr.analyse(j, T0, END)
+check("S86 no primary sim topic: not assessable FAIL", (not r["pass"]) and not r["classes"]["sim"]["pass"]
+      and "not assessable" in r["classes"]["sim"].get("verdict", "") and "not assessable" in hr.fmt(r, "x"))
+check("S86 primary sim topic present: assessable", "verdict" not in hr.analyse(topics(1250), T0, END)["classes"]["sim"])
+
+# S86 fix 1: count cross-check. 5 isolated lost samples (gap-based missing 5) balanced by 5 far-away duplicate stamps
+# (count-based missing 0): the two methods disagree by 5 > 1 -> not PASS even though each alone is under the limits.
+j = topics(1250); m = j["actuator_motors"]
+lost = np.arange(5000, 45000, 8000)
+m = np.delete(m, lost)
+m = np.insert(m, np.arange(5000, 45000, 8000) + 4000, m[np.arange(5000, 45000, 8000) + 4000])
+j["actuator_motors"] = m
+r = hr.analyse(j, T0, END)
+row = [x for x in r["topics"] if x["topic"] == "actuator_motors"][0]
+check("S86 count cross-check disagreement is not PASS", row["missing"] == 5 and row["missing_count_based"] == 0
+      and row["count_disagree"] and not row["pass"] and not r["pass"])
+check("S86 count cross-check agrees on a real hole", [x for x in hr.analyse(
+      topics(1250, ctrl_cut=[(T0 + 30_000_000, T0 + 30_000_000 + 4 * 1250)]), T0, END)["topics"]
+      if x["topic"] == "actuator_motors"][0]["missing_count_based"] == 4)
+
 print("ALL PASS" if not fails else f"{len(fails)} FAILED: {fails}")
 sys.exit(1 if fails else 0)
