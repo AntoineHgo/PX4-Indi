@@ -605,7 +605,7 @@ calm/wind split leaves item 3 calm limits untested, or the owner reads the satur
 - Consequence: thrust and wind coverage only in position-mode runs (about 70 % of free runs plus the thrust/wind corners). altctl/posctl stick scenarios are not in MODE_MIX and stay out of the first probe batch until metrics.py has a reference/window for them (RC113 stop rule).
 - Overturn: a stick scenario with closed-loop altitude (e.g. altctl) enters the batch; thrust factors can then be drawn there.
 
-## D-G3-STICK-PILOT (S117, proposed; implemented S118 880a83c63b, pre-test T118 pending)
+## D-G3-STICK-PILOT (S117; implemented S118 880a83c63b; pre-test T118 PASSED S119, decided)
 Stick scenarios get a simulated pilot in the runner: a slow altitude PI on throttle (about 0.2-0.3 Hz, applied
 around the hover throttle) in stabilized and acro, and in acro an attitude-levelling term (rate command = stick -
 k x attitude, k about 1-2 /s) so the pilot behaves like a human holding the vehicle. Reason: S117 probe run_000 (acro)
@@ -619,3 +619,6 @@ S118 addendum: pilot active from the manual-mode switch (neutral rows included),
 flight tripped in the neutral segment); integral clamp = thr0, total thrust clamped to the stick range (K118
 MAJOR-1). RC118 time-box: if acro idx 0 fails for INDI and PID with the pilot, acro is G3-unprobed and G5 carries it;
 alternative kept (RC118 sec 3): stabilized/acro as stick-step-and-release recovery scenarios without a pilot.
+S119 result (results/g3_pilot_s118/README.md): idx 0 (acro), 21, 49 fly the full window with INDI and PID; segment
+altitude means 4.5-6.2 m vs 5 m, acro tilt 0.0-0.1 deg before LAND; stabilized vz follows the demand (corr 0.99,
+gain 2.0-2.2, same INDI/PID), so the pilot does not cancel the input (K118 MAJOR-2 closed by measurement).
