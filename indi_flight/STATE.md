@@ -29,10 +29,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    (T180, unreviewed; check its L_att identity: L_att = A L_rate/(1+L_rate) expected).
    S87 (launch 20261118-051310): T182 count fix c5b5a897e9 + T184 key AGREE WITH MINOR; T183 key of T181 AGREE;
    xy re-fly B87 (stage5_s87_xy, hover_xlong 150 s, AMP 0.08 TP 20).
-   NEXT S88: (1) hole_report: max-hole from RAW gaps (T184 escape: a k=2 gap absorbed by a dup leaves the list) and
-   max-gap limit per topic as excess over nominal period (89 Hz outer topic: 18.75 ms gap = 1.67 periods, fails a
-   flat 10 ms) -> log as tool-spec fix in DECISIONS.md, test, re-run s86+s87 holes; (2) re-fly cells with real holes
-   (s86 pt1_ax3_r800_s2); (3) S87 xy README + table, rename top_db (margins_est.py:254, last bin, not max);
+   S88 (launch 20261118-053836, cap $1.75): (1)(3) done (T186, T187, D-HOLE-EXCESS); (2) re-fly B88 in flight.
+   NEXT S89: close T188 key; record B88 results in s86/s87 READMEs and commit cell metrics; route check 89; then
    (4) act on T185 review of attitude-break note, then implement; then G2 report + G5 text; then combined opus review. Deferred anomalies: A-4, A-6, A-30, A-32, A-34, A-35. Next route check S89.
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
@@ -48,8 +46,10 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T182 | hole_report count-check fix + re-run s86 cells | sonnet | results/stage5_s85_holes/count_fix_s87.md | DONE c5b5a897e9 (unkeyed). S86 README rows for r800_s2 were wrong: real holes (pt1 sim 12.5 ms -> re-fly; pt0 only outer topic 89 Hz max 18.75 ms vs 10 ms limit = spec defect for a topic with period > 10 ms?) |
 | T184 | second key of T182 (code vs spec) | haiku | results/stage5_s85_holes/second_key_s87.md | DONE c9cc245a40 AGREE WITH MINOR |
 | T185 | review attitude-break note vs code | sonnet | design/attitude_break_s86_review.md | DONE: 0 BLOCKING, 2 MAJOR (add call-site test at McIndiRateControl.cpp:231; replace circular x-y-d check by logged rate_sp_dot vs derivative of logged x), 10 MINOR (gate off in ACRO; use hover_xlong; outer loop closed below ~0.3 Hz). Amend note, then implement |
-| T186 | S88 hole_report: raw-gap max-hole + per-topic gap limit as excess over nominal period; re-run s86+s87 | sonnet | results/stage5_s85_holes/fixes_s88.md | S88 launched (20261118-053836) |
-| T187 | S87 xy README + table; rename top_db -> last_bin_db (alias kept) | haiku | results/stage5_s87_xy/README.md | S88 launched |
+| T186 | S88 hole_report raw-gap + excess limit (D-HOLE-EXCESS) | sonnet | results/stage5_s85_holes/fixes_s88.md | DONE dd9dd0705e: s86 pt0_ax3_r800_s2 FAIL->PASS, 27 unchanged |
+| T187 | rename top_db -> last_bin_db | haiku | margins_est.py | DONE 5243e845b9 (README rewrite reverted, kept S87 one) |
+| T188 | second key of T186 (code vs spec) | haiku | results/stage5_s85_holes/second_key_s88.md | S88 launched |
+| B88 | re-fly s86 pt1_ax3_r800_s2 then s87 pt0_ax2_r400_s1 (old outputs in holes_fail_s87/) | host | results/stage5_s87_xy/refly_s88.log | S88 launched; if cut: re-run both fly.sh lines serially, check *_holes.txt OVERALL |
 | T183 | second key of T181 (xy FRF from CSVs) | haiku | results/stage5_s86_g2outer/t183_second_key.md | DONE d2b66bf3ae: AGREE |L|, PM 54-56; f_c 0.27-0.33 Hz |
 
 ## Open problems
