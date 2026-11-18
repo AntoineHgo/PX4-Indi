@@ -48,7 +48,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T185 | review attitude-break note vs code | sonnet | design/attitude_break_s86_review.md | DONE: 0 BLOCKING, 2 MAJOR (add call-site test at McIndiRateControl.cpp:231; replace circular x-y-d check by logged rate_sp_dot vs derivative of logged x), 10 MINOR (gate off in ACRO; use hover_xlong; outer loop closed below ~0.3 Hz). Amend note, then implement |
 | T186 | S88 hole_report raw-gap + excess limit (D-HOLE-EXCESS) | sonnet | results/stage5_s85_holes/fixes_s88.md | DONE dd9dd0705e: s86 pt0_ax3_r800_s2 FAIL->PASS, 27 unchanged |
 | T187 | rename top_db -> last_bin_db | haiku | margins_est.py | DONE 5243e845b9 (README rewrite reverted, kept S87 one) |
-| T188 | second key of T186 (code vs spec) | haiku | results/stage5_s85_holes/second_key_s88.md | S88 launched |
+| T188 | second key of T186 (code vs spec) | haiku | results/stage5_s85_holes/second_key_s88.md | DONE: AGREE WITH MINOR; slow-topic escape fixed 688f198ab2 (test S88d). Open minors: max_excess under-reported below 1.5x median (report only); median-0 topic -> OverflowError at hole_report.py:58 (loud). S89: re-run hole_report on 28 cells (host idle, no flight running) |
 | B88 | re-fly s86 pt1_ax3_r800_s2 then s87 pt0_ax2_r400_s1 (old outputs in holes_fail_s87/) | host | results/stage5_s87_xy/refly_s88.log | S88 launched; if cut: re-run both fly.sh lines serially, check *_holes.txt OVERALL |
 | T183 | second key of T181 (xy FRF from CSVs) | haiku | results/stage5_s86_g2outer/t183_second_key.md | DONE d2b66bf3ae: AGREE |L|, PM 54-56; f_c 0.27-0.33 Hz |
 
