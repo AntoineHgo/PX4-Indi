@@ -9,11 +9,13 @@
 History: JOURNAL.md (S101 entry holds the latest moves). Agent ledger: LEDGER.md. Lessons proposed:
 LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S103.
 Rule (RC64/RC74): inner loop time-boxed, 1 session per law change; no new anomaly chase unless a gate test fails.
-NEXT S107 (RC103 done S103; next route check S108). RC103 order: (v) DONE, (iii) DONE S105, hook B DONE S106
+NEXT S108 (RC103 done S103; route check due S108). RC103 order: (v) DONE, (iii) DONE S105, hook B DONE S106
    (d52576b02a + fix 99673b62bd; matched = --gnss-delay equal to --gps-dly; results/gnss_delay_key_s106/README.md).
-   S107: yaw linear model in margins_models.py (8 yaw
-   cells lack cross-check, design/g2_verdict_rate_s105.md). G1.5 estimator M-vs-X separation needs a moving
-   scenario: do it in the G3 pre-test, not before.
+   S107 DONE: yaw model b05d07c555 + Y107b note: 4 model-only yaw cells cross-checked; 4 measured-path cells
+   not (A-39 deferred, 400 Hz dGM -9.7 dB, measured GM still 15.5 dB). G1.5 estimator M-vs-X separation needs a
+   moving scenario: do it in the G3 pre-test, not before.
+   S108: route check (due) FIRST, then update G2 verdict note + GATES.md G2 table with yaw (S107) and attitude
+   (results/g2_attbreak_s107) cells; then G5 pre-tests per RC103.
    (0) DONE S103: A-37 closed (DLY_ACT lag d+[0,1.25 ms), results/a37_actlag_s103). Hook B (GNSS, note s.4) after (v),(iii).
    (i) DONE S101 (b9d6cf3285): K101 12/12 agree, all 24 INDI v2 rate cells (measured + model-only) PASS.
    (ii) PID M1 reference rate cells (reference only, F-5; 800 Hz x3 axes, 1 seed is enough).
@@ -26,7 +28,7 @@ NEXT S107 (RC103 done S103; next route check S108). RC103 order: (v) DONE, (iii)
    Old: log a z-only active flag in indi_pos_status when next touching the module (P98 could not see it).
 Notes: pretest_gate only on stationary scenarios, or end its window at the fault (S98). S99 hooks SIM_GZ_SEED +
    SIM_GZ_IMU_NSC done (accel scale UNVERIFIED, needs full-rate accel log before G4). D-G7-HARNESS decided, impl
-   stage 7. M3 PT-change UNVERIFIED. Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36. PID M1 hook deferred (RC103).
+   stage 7. M3 PT-change UNVERIFIED. Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36, A-39. PID M1 hook deferred (RC103).
    Flights no longer need MC_INDI_ACT_BLD 1.0 (default). Check script bench/attitude_break_check.py; ratesp_csv.py keyed.
    Guard note: a long inline `git commit -m` was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
@@ -45,7 +47,7 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 | H106 | S106: hook B GNSS delay (SIM_GZ_GPS_DLY) impl+build+1 flight | sonnet | design/gnss_delay_impl_s106.md | DONE d52576b02a (fw) bd0aa768f4 (pretest: age 200000 us x110, 1 Hz log) |
 | K106 | S106: second key of H106 + L=250 flights | sonnet | results/gnss_delay_key_s106/README.md | DONE: BLOCKING (SENS_GNSS0_DELAY inert) fixed 99673b62bd, M2 verified (EKF time err +4 ms matched) |
 | K107 | S106: second key of fix 99673b62bd (read-only) | sonnet | design/gnss_delay_fix_key_s106.md | DONE: no BLOCKING; MINOR overflow releases not in age0 range (accepted, overflow counted); astyle clean |
-| Y107 | S107: yaw linear model in margins_models.py + 8 yaw cells cross-check (offline) | sonnet | design/g2_yaw_crosscheck_s107.md | S107: 1st run cut; L_indi_yaw + test6 on disk (uncommitted, ALL PASS); Y107b relaunched to finish the cells + note |
+| Y107 | S107: yaw linear model in margins_models.py + 8 yaw cells cross-check (offline) | sonnet | design/g2_yaw_crosscheck_s107.md | DONE (Y107b, 2nd key of model: law VERIFIED, 0 BLOCKING): model-only 4/4 in tol; measured 1/4 in tol -> A-39. margins_of hangs if ts_true=0 (tool defect, open) |
 | B107 | S107: attitude-break cells (vi) at HEAD, pretest 1 cell then 5 | sonnet | results/g2_attbreak_s107/README.md | DONE 8ec7d4a95b: 6/6 PASS (PM>=56.8, GM>=22 dB, DM>=0.118 s), dPM<=0.5 vs S91 |
 | A103 | S103: A-37 test (a9e5066a55), hover d5/d10 | host bg | results/a37_actlag_s103/README.md | DONE: A-37 closed |
 S102 finding: (ii) PID M1 has NO recipe: the gyro-break hook (`sim_inject`, design/stage2_margins_s35.md l.21) was never built.

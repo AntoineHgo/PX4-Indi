@@ -127,3 +127,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | K106 | S106 | sonnet | second key hook B + 2 flights L=250 | 11 calls, ~43k tok, ~$0.3 | DONE: 1 BLOCKING (SENS_GNSS0_DELAY inert), fixed 99673b62bd |
 | K107 | S106 | sonnet | second key of fix 99673b62bd (read-only) | 3 calls, ~29k tok, ~$0.1 | DONE: no BLOCKING, 1 MINOR accepted |
 | B107 | S107 | sonnet | attitude-break G2 cells at HEAD (6 flights) | 13 calls, ~35k tok, ~$0.5 | DONE 8ec7d4a95b: 6/6 PASS |
+| Y107b | S107 | sonnet | yaw model second key + 8-cell cross-check (offline) | 32 calls, ~75k tok, ~$0.6 | DONE design/g2_yaw_crosscheck_s107.md, A-39 |
