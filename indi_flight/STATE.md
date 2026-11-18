@@ -34,7 +34,7 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 | H102 | S102: delay-line hooks A1+A2 in gz_bridge (uncommitted, builds, 0 warnings, not flown) | sonnet | design/delay_line_impl_s102.md | DONE; orchestrator read diff, OK |
 | K102 | S102: second key of H102 | sonnet | design/delay_line_key_s102.md | DONE: 0 BLOCKING, M1+M2 fixed by orchestrator, c6ba02609f |
 | V102 | S102: delay-hook pre-test d0/d5 | haiku | results/delay_pretest_s102/README.md | DONE: IMU PASS (age 0/5000 us), actuator UNVERIFIED -> A-37 |
-| G104 | S104: scope G2 verdict note (iii), read-only | haiku | design/g2_verdict_scope_s104.md | DONE (haiku, UNVERIFIED): GATES.md G2 table l.103-144 still shows 6 PASS/21 NOT COVERED vs 24 PASS in (i): update table first; A-21 model-vs-measured PM gap ~18 deg (results/stage2_s41/a21_model_vs_measured.md) > 10 deg G2 tolerance: check which loop/version it was before (iii) |
+| G104 | S104: scope G2 verdict note (iii), read-only | haiku | design/g2_verdict_scope_s104.md | DONE (haiku, UNVERIFIED): table claim checked: results/g2_rate_table_s99.md "S101 update" holds 24/24 (K100+K101), only its body is pre-S101; A-21 model-vs-measured PM gap ~18 deg (results/stage2_s41/a21_model_vs_measured.md) > 10 deg G2 tolerance: check which loop/version it was before (iii) |
 | RC103 | S103: route check | sonnet | design/route_check_103.md | DONE: A-37 time-box $0.5 then park; then G5 pre-tests, G2 verdict note, hook B; defer PID M1 |
 | S103 | S103: scope POSCTL stick gap scenario (read-only) | haiku | design/posctl_gap_scope_s103.md | DONE: scenario + --stick-mode posctl, flown |
 | A103 | S103: A-37 test (a9e5066a55), hover d5/d10 | host bg | results/a37_actlag_s103/README.md | DONE: A-37 closed |
