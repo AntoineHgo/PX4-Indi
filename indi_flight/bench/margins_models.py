@@ -34,7 +34,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import margins_est as ME  # noqa: E402
 
 INDI_DEF = dict(eta=1.0, g=1.0, Tb=0.0, tau_r=0.033, tau_m=0.02, d_m=0, n=1, K=20.0, G1=320.0,
-                gyro_fc=40.0, dgyro_fc=20.0, lat=0, meas=False, eta_m=1.0)
+                gyro_fc=40.0, dgyro_fc=20.0, lat=0, meas=False, eta_m=1.0,
+                fb_lead=0.0, att_p=0.0, sp_lead=False, att_lat=1)
+# Firmware time constant of the setpoint-path lead filter (indi_rate_control.hpp kSetpointLeadTc)
+SP_LEAD_TC = 0.01
+# HEAD firmware, flown config of S57/S76/S77 (meas800.params): measured-rotor path, MC_INDI_LEAD 1 x K 20 x ACT_TC 0.05 -> c = 1,
+# MC_ROLL_P 8 (airframe 4040_gz_quad5in; attitude path closed), setpoint-path lead on.  sp_lead=False reproduces the law before da64bc26b3.
+# (Plain L_indi keeps its legacy defaults: no lead, no attitude path, so the G2 tables and the self-test are unchanged.)
+HEAD_FLIGHT = dict(meas=True, Tb=0.0, n=1, tau_m=0.05, fb_lead=1.0, att_p=8.0, sp_lead=True, att_lat=1)
+PRE_DA64 = dict(HEAD_FLIGHT, sp_lead=False)
 PID_DEF = dict(eta=1.0, g=1.0, tau_r=0.033, Kp=0.03, Ki=0.06, Kd=0.0006, G1=320.0, gyro_fc=40.0, dgyro_fc=20.0, lat=0)
 
 
@@ -95,7 +103,18 @@ def L_indi(w, fs=800.0, **kw):
         Bl = ab / (1 - (1 - ab) * zi)
     else:
         Bl = 0.0 * zi
-    return _assemble(p["K"], F, aF, Pn, Va, Tmod, Tmeas, Bl, p["meas"])
+    cl = p["fb_lead"]
+    L = _assemble(p["K"], F, (1.0 + cl) * aF, Pn, Va, Tmod, Tmeas, Bl, p["meas"])
+    if p["att_p"] > 0:
+        # attitude path (A-34 / S78): rate_sp = -att_p * theta, theta[k+1] = theta[k] + T w[k] (+ att_lat samples of
+        # setpoint latency).  nu = K (rate_sp - F w) gives K att_p theta; with sp_lead the setpoint-path lead of
+        # da64bc26b3 adds cl * r_dot, r_dot = first order LPF (kSetpointLeadTc, discrete, alpha = T/(Tc+T)) of the
+        # backward difference of rate_sp (the 1000 rad/s^2 clamp is nonlinear and ignored).
+        als = T / (SP_LEAD_TC + T)
+        D = als / (1.0 - (1.0 - als) * zi) * (1.0 - zi) / T
+        lead = cl * D if p["sp_lead"] else 0.0
+        L = L + (p["K"] + lead) * p["att_p"] * zi ** p["att_lat"] * T * zi / (1.0 - zi) * Pn
+    return L
 
 
 def L_pid(w, fs=800.0, **kw):

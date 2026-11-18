@@ -362,8 +362,52 @@ def test4_models():
             print("  T4c " + msg)
 
 
+def test5_sp_lead():
+    """A-34 / S78: setpoint-path lead option of MM.L_indi. (a) legacy defaults unchanged, (b) the lead term equals
+    att_p cl D(z) T z^-1/(1-z^-1) Pn with D from the firmware recursion (filtered backward difference, kSetpointLeadTc)
+    run sample by sample on a sine, (c) sp_lead False removes exactly that term, (d) lead raises |L| at 1-5 Hz."""
+    fs, T = 800.0, 1.0 / 800.0
+    f = np.array([1.0, 2.5, 5.0, 10.0])
+    w = 2 * np.pi * f
+    base = dict(MM.HEAD_FLIGHT)
+    L0 = MM.L_indi(w, fs)
+    check(np.allclose(L0, MM.L_indi(w, fs, fb_lead=0.0, att_p=0.0, sp_lead=False)), "T5a legacy defaults changed")
+    Lh = MM.L_indi(w, fs, **base)
+    Ln = MM.L_indi(w, fs, **dict(base, sp_lead=False))
+    # (b) D(z) by the firmware recursion on sin(w k T)
+    als = T / (MM.SP_LEAD_TC + T)
+    for i, wi in enumerate(w):
+        n = int(round(fs / f[i] * 40))
+        k = np.arange(n)
+        sp = np.sin(wi * k * T)
+        dot, prev, out = 0.0, 0.0, np.zeros(n)
+        for j in range(n):
+            raw = (sp[j] - prev) / T
+            dot += als * (raw - dot)
+            prev = sp[j]
+            out[j] = dot
+        sl = slice(n // 2, n)  # steady state, whole periods (n/2 = 20 periods)
+        Dnum = 2j * np.mean(out[sl] * np.exp(-1j * wi * k[sl] * T))  # out = Im(D e^{jwkT}) -> D
+        zi = np.exp(-1j * wi * T)
+        Dan = als / (1.0 - (1.0 - als) * zi) * (1.0 - zi) / T
+        check(abs(Dnum - Dan) / abs(Dan) < 0.01, "T5b D(z) %.1f Hz: sim %s analytic %s" % (f[i], Dnum, Dan))
+    # (c) difference = cl D att_p z^-lat T z^-1/(1-z^-1) Pn ; Pn recovered from the att_p = 0 loop is not separable, so rebuild
+    zi = np.exp(-1j * w * T)
+    L_a0 = MM.L_indi(w, fs, **dict(base, att_p=0.0))
+    Ln_minus = Ln - L_a0  # attitude term without sp lead = K att_p z^-lat T z^-1/(1-z^-1) Pn
+    Lh_minus = Lh - L_a0
+    D = als / (1.0 - (1.0 - als) * zi) * (1.0 - zi) / T
+    ratio = Lh_minus / Ln_minus
+    check(np.allclose(ratio, 1.0 + base["fb_lead"] * D / base["K"] if "K" in base else 1.0 + base["fb_lead"] * D / 20.0),
+          "T5c lead ratio wrong")
+    # (d)
+    sel = f <= 5.0
+    check(np.all(abs(Lh[sel]) > abs(Ln[sel])), "T5d lead must raise |L| at 1-5 Hz")
+    print("  T5 D(z) sim vs analytic ok, ratio (K + c D)/K ok, |L| gain %s dB" % np.round(20 * np.log10(abs(Lh) / abs(Ln)), 2))
+
+
 def main():
-    tests = [test1_open_loop, test1b_multi_crossing, test2_closed_loop, test3_timebase, test4_models]
+    tests = [test1_open_loop, test1b_multi_crossing, test2_closed_loop, test3_timebase, test4_models, test5_sp_lead]
     for tfn in tests:
         print(tfn.__name__)
         try:
