@@ -9,7 +9,7 @@ Classes (a gap = interval between consecutive samples > 1.5 x the topic's own me
   sim         gap in a simulator topic (sim_ground_truth, *_groundtruth, sensor_gyro) = physics steps not delivered.
   controller  gap in a controller-rate topic (vehicle_angular_velocity, vehicle_torque_setpoint, actuator_motors) or in an
               outer-loop topic (vehicle_local_position_setpoint) that no sim hole overlaps.
-Nominal rate = the topic's median period (no hardcoded 800 Hz). Missing samples per gap = round(dt / median) - 1; fraction =
+Nominal rate = the topic's median period (no hardcoded 800 Hz). Missing samples per gap = round(dt / median) - 1 minus the duplicate stamps (publish jitter) next to it, one per period; fraction =
 missing / (missing + logged samples) over the analysed span. Max single hole = largest gap dt in ms.
 Limits (G1.1): missing fraction sim <= 0.05 %, controller and logger <= 0.1 %; single hole <= 10 ms.
 Logger fraction = sum(dropout durations) / analysed span. The sim fraction uses the primary sim topic (first present of
@@ -32,11 +32,12 @@ LIM_FRAC = {"sim": 5e-4, "controller": 1e-3, "logger": 1e-3}
 LIM_HOLE_MS = 10.0
 GAP_FACTOR = 1.5
 SKIP_US = 1_000_000
+DUP_NOISE = LIM_FRAC["controller"]   # tolerated unpaired duplicate stamps per duplicate stamp (count cross-check)
 DUP_WINDOW = 8   # samples: a duplicate stamp cancels a one-sample gap this close (logger/publisher jitter)
 
 
 def find_gaps(ts, t_min):
-    """-> (gaps [(t_start, dt)], median_period_us, n_samples) on samples >= t_min."""
+    """-> (gaps [(t_start, dt, missing_samples)], median_period_us, n_samples) on samples >= t_min."""
     ts = np.sort(np.asarray(ts, dtype=np.int64))
     ts = ts[ts >= t_min]
     if ts.size < 3:
@@ -44,15 +45,24 @@ def find_gaps(ts, t_min):
     dt = np.diff(ts)
     med = float(np.median(dt))
     gi = np.flatnonzero(dt > GAP_FACTOR * med)
-    zi = set(np.flatnonzero(dt == 0).tolist())
+    zl = np.flatnonzero(dt == 0).tolist()
+    used = set()
     keep = []
-    for i in gi.tolist():   # a gap next to a duplicate stamp (dt == 0) is publish-time jitter: no sample is missing
-        j = next((k for k in sorted(zi, key=lambda k: abs(k - i)) if abs(k - i) <= DUP_WINDOW), None)
-        if j is not None and dt[i] <= 2.0 * med + 1:
-            zi.discard(j)
-        else:
-            keep.append(i)
-    return [(int(ts[i]), int(dt[i])) for i in keep], med, int(ts.size)
+    for i in gi.tolist():   # each duplicate stamp (dt == 0) near a gap is publish-time jitter and absorbs one missing period of it
+        k = int(round(dt[i] / med))
+        miss = max(k - 1, 0)
+        while miss > 0:
+            # earliest unused duplicate inside the window: with equal windows this maximises the number of gap/duplicate pairs
+            j = next((q for q in zl if q not in used and q >= i - DUP_WINDOW), None)
+            if j is not None and j > i + DUP_WINDOW:
+                j = None
+            if j is None:
+                break
+            used.add(j)
+            miss -= 1
+        if miss > 0 or dt[i] > 2.0 * med + 1:   # a gap longer than 2 periods stays listed (10 ms limit) even if its count is absorbed
+            keep.append((int(ts[i]), int(dt[i]), miss))
+    return keep, med, int(ts.size)
 
 
 def count_missing(ts, t_min):
@@ -73,9 +83,9 @@ def _overlaps(t, dt, intervals, pad):
 def _stats(gaps, med, n, span_us, cls, hold_gaps=None):
     """hold_gaps: gaps whose max dt is held to the 10 ms limit (default = gaps). Controller passes every non-logger gap here
     so a controller hole attributed to a sim hole still has to meet the limit."""
-    missing = sum(max(round(dt / med) - 1, 0) for _, dt in gaps)
+    missing = sum(m for _, _, m in gaps)
     frac = missing / (missing + n) if n else float("nan")
-    mx = max((dt for _, dt in (gaps if hold_gaps is None else hold_gaps)), default=0.0) / 1000.0
+    mx = max((dt for _, dt, _ in (gaps if hold_gaps is None else hold_gaps)), default=0.0) / 1000.0
     ok = cls == "sim-info" or (frac <= LIM_FRAC[cls] and mx <= LIM_HOLE_MS)
     return {"class": cls, "count": len(gaps), "missing": missing, "samples": n, "median_ms": med / 1000.0,
             "rate_hz": 1e6 / med, "missing_frac": frac, "max_hole_ms": mx, "pass": bool(ok)}
@@ -102,7 +112,7 @@ def analyse(topics, t_start, t_end, dropouts=()):
             if info:
                 r["class"] = "sim-info"
             else:
-                sim_iv += [(t, t + dt) for t, dt in s]
+                sim_iv += [(t, t + dt) for t, dt, _ in s]
             r["topic"] = name
             rows.append(r)
             if sim_primary is None and name in ("sim_ground_truth", "sensor_gyro"):
@@ -116,12 +126,19 @@ def analyse(topics, t_start, t_end, dropouts=()):
             nl = [g for g in gaps if not _overlaps(g[0], g[1], drop_iv, pad)]   # not logger-explained
             c = [g for g in nl if not _overlaps(g[0], g[1], sim_iv, pad)]
             r = _stats(c, med, n, span, "controller", hold_gaps=nl)   # 10 ms limit holds even if a sim hole explains the gap
-            # count cross-check: gap-based missing (all non-logger gaps) vs round(span/median)+1-n; > 1 apart = not PASS
-            gm = sum(max(round(dt / med) - 1, 0) for _, dt in nl)
+            # count cross-check: gap-based missing (all non-logger gaps) vs round(span/median)+1-n; > tolerance (1 + DUP_NOISE x duplicate stamps) apart = not PASS
+            gm = sum(m for _, _, m in nl)
             lg = [g for g in gaps if g not in nl]   # logger-explained gaps are not in gm, so remove them from the count basis
-            cm = count_missing(topics[name], t_min) - sum(max(round(dt / med) - 1, 0) for _, dt in lg)
+            cm = count_missing(topics[name], t_min) - sum(m for _, _, m in lg)
             r["missing_count_based"] = cm
-            r["count_disagree"] = abs(cm - gm) > 1
+            # tolerance: 1 (rounding of span/median) + DUP_NOISE * (number of duplicate stamps). A duplicate stamp that no gap
+            # within DUP_WINDOW can absorb moves gap-based missing above count-based missing by exactly 1 each (gm - cm = unpaired
+            # duplicates); on healthy 800 Hz flights that is ~0.07 % of the dups. DUP_NOISE equals the controller missing limit.
+            tsr = np.asarray(topics[name], dtype=np.int64)
+            nd = int(np.count_nonzero(np.diff(np.sort(tsr[tsr >= t_min])) == 0))
+            tol = 1 + int(DUP_NOISE * nd)
+            r["count_tol"] = tol
+            r["count_disagree"] = abs(cm - gm) > tol
             if r["count_disagree"]:
                 r["pass"] = False
             r["topic"] = name

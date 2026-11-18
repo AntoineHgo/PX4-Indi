@@ -121,5 +121,77 @@ check("S86 count cross-check agrees on a real hole", [x for x in hr.analyse(
       topics(1250, ctrl_cut=[(T0 + 30_000_000, T0 + 30_000_000 + 4 * 1250)]), T0, END)["topics"]
       if x["topic"] == "actuator_motors"][0]["missing_count_based"] == 4)
 
+# S87: count cross-check tolerance. Disagreement = duplicate stamps not absorbed by a gap; > 1 FAILs, <= 1 is tolerated.
+def motors_row(j):
+    return [x for x in hr.analyse(j, T0, END)["topics"] if x["topic"] == "actuator_motors"][0]
+
+
+def lose_and_dup(n):
+    """n isolated lost samples balanced by n far-away duplicate stamps -> gap-based n, count-based 0."""
+    j = topics(1250)
+    idx = np.arange(5000, 5000 + 8000 * n, 8000)
+    m = np.delete(j["actuator_motors"], idx)
+    m = np.insert(m, idx + 4000, m[idx + 4000])
+    j["actuator_motors"] = m
+    return j
+
+
+# healthy 800 Hz, stamps jittered by +-1 us (rounded to int us), publisher dup stamps + 1-2 period gaps like the s86 flights
+rng = np.random.default_rng(1)
+j = topics(1250)
+for k in ("vehicle_angular_velocity", "vehicle_torque_setpoint", "actuator_motors"):
+    j[k] = j[k] + rng.integers(-1, 2, j[k].size)
+m = j["actuator_motors"].copy()
+for p in range(2000, 50000, 5000):   # dup stamp followed by a 2-period gap (publish jitter), no lost sample
+    m[p + 1] = m[p]
+    m[p + 2] = m[p] + 2 * 1250
+    m[p + 3:] = m[p + 3:]
+j["actuator_motors"] = np.sort(m)
+r = hr.analyse(j, T0, END)
+check("S87 healthy 800 Hz with 1 us jitter and publish jitter: PASS", r["pass"] and not motors_row(j)["count_disagree"])
+
+# the s86 defect: a 3-period gap (2 missing by dt) with ONE duplicate stamp = 1 real lost sample; both methods must say 1
+j = topics(1250); m = j["actuator_motors"]
+m = np.delete(m, [30001, 30002])      # gap of 3 periods
+m = np.insert(m, 30000, m[30000])     # + one duplicate stamp next to it
+j["actuator_motors"] = m
+row = motors_row(j)
+check("S87 3-period gap + 1 dup: gap-based == count-based == 1, no disagree",
+      row["missing"] == 1 and row["missing_count_based"] == 1 and not row["count_disagree"])
+
+# a single real dropped sample is still reported as missing by both methods (and PASS, 1/72000 << 0.1 %)
+j = topics(1250); j["actuator_motors"] = np.delete(j["actuator_motors"], 20000)
+row = motors_row(j)
+check("S87 single dropped sample reported", row["missing"] == 1 and row["missing_count_based"] == 1
+      and row["count"] == 1 and not row["count_disagree"])
+
+# disagreement of 1 passes, 2 fails (> 1)
+check("S87 count disagreement of 1 tolerated", motors_row(lose_and_dup(1))["pass"] and not motors_row(lose_and_dup(1))["count_disagree"])
+row = motors_row(lose_and_dup(2))
+check("S87 count disagreement of 2 FAILs", row["missing"] - row["missing_count_based"] == 2 and row["count_disagree"]
+      and not row["pass"] and not hr.analyse(lose_and_dup(2), T0, END)["pass"])
+
+# tolerance scales with the duplicate-stamp count: 1200 dup+gap publish-jitter pairs -> tolerance 1 + int(0.001 * ~1200) = 2
+def jittery(extra_far_dups):
+    j = topics(1250)
+    base = j["actuator_motors"]
+    for q in range(40, base.size - 40, 40):   # dup stamp + 2-period gap: 1 stamp replaced, nothing lost
+        base[q + 1] = base[q]
+        base[q + 2] = base[q] + 2 * 1250
+    base = np.sort(base)
+    fars = np.arange(1000, 1000 + 20 * extra_far_dups, 20) * 1 + 20   # >= 8 samples away from every pair
+    fars = fars - (fars % 40) + 20
+    j["actuator_motors"] = np.insert(base, fars, base[fars]) if extra_far_dups else base
+    return j
+
+
+row = motors_row(jittery(0))
+check("S87 many publish-jitter dups: PASS, tolerance scales", row["pass"] and row["count_tol"] >= 2 and not row["count_disagree"])
+row = motors_row(jittery(2))
+check("S87 2 unpaired dups among ~1200: within tolerance", row["pass"] and not row["count_disagree"]
+      and abs(row["missing"] - row["missing_count_based"]) == 2)
+row = motors_row(jittery(6))
+check("S87 6 unpaired dups among ~1200: FAIL", row["count_disagree"] and not row["pass"])
+
 print("ALL PASS" if not fails else f"{len(fails)} FAILED: {fails}")
 sys.exit(1 if fails else 0)
