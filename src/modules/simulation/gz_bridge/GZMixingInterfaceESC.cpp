@@ -169,12 +169,31 @@ bool GZMixingInterfaceESC::publishDelayed(const gz::msgs::Actuators &msg)
 		}
 
 		_act_dropped += due - 1;
+		_act_stat_drops += due - 1;
 	}
+
+	const uint64_t age = now - out.t_in;
 
 	if (!_act_first_logged) {
 		_act_first_logged = true;
 		PX4_INFO("SIM_GZ_DLY_ACT applied %u us for requested %u us (first release)",
-			 (unsigned)(now - out.t_in), (unsigned)_act_delay_us);
+			 (unsigned)age, (unsigned)_act_delay_us);
+	}
+
+	_act_stat_n++;
+	_act_stat_age_sum += age;
+	_act_stat_age_min = math::min(_act_stat_age_min, age);
+	_act_stat_age_max = math::max(_act_stat_age_max, age);
+
+	if (_act_stat_n >= ACT_STAT_WINDOW) {
+		PX4_INFO("SIM_GZ_DLY_ACT window t=%llu us: releases %u, age min %u mean %u max %u us, skipped %u",
+			 (unsigned long long)now, (unsigned)_act_stat_n, (unsigned)_act_stat_age_min,
+			 (unsigned)(_act_stat_age_sum / _act_stat_n), (unsigned)_act_stat_age_max, (unsigned)_act_stat_drops);
+		_act_stat_n = 0;
+		_act_stat_drops = 0;
+		_act_stat_age_min = UINT64_MAX;
+		_act_stat_age_max = 0;
+		_act_stat_age_sum = 0;
 	}
 
 	gz::msgs::Actuators delayed;

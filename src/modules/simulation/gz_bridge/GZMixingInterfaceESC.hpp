@@ -163,6 +163,14 @@ private:
 	uint32_t _act_overflow{0};
 	bool _act_first_logged{false};
 
+	// Release-age statistics over a window of releases, printed at the end of each window (A-37 closing test)
+	static constexpr uint32_t ACT_STAT_WINDOW = 4000;
+	uint32_t _act_stat_n{0};
+	uint32_t _act_stat_drops{0};
+	uint64_t _act_stat_age_min{UINT64_MAX};
+	uint64_t _act_stat_age_max{0};
+	uint64_t _act_stat_age_sum{0};
+
 	gz::transport::Node &_node;
 	pthread_mutex_t _node_mutex;
 
