@@ -181,3 +181,8 @@ SCENARIOS["vp_tau2_loss2_att"] = {**_ATT, **_V_PLANT["tau2"], "motor_fault": dic
 _S5_GAP = dict(mode="position", axis=None, segments=[("settle", 15.0, 0.0), ("up", 5.0, 0.0), ("hold", 40.0, 0.0)])
 SCENARIOS["s5_gap085"] = {**_S5_GAP, "motor_fault": dict(segment="up", motors=[0, 1, 2, 3], thrust_scale=0.85)}
 SCENARIOS["s5_loss08"] = {**_S5_GAP, "motor_fault": dict(segment="up", motor=2, thrust_scale=0.8)}
+
+# Stage-5 P98: ALTCTL thrust gap. Neutral sticks (no "stick" segment), motors lose 15 % at "up" and stay lost (D-ALTCTL-Z).
+SCENARIOS["s5_gap085_altctl"] = dict(mode="stick", axis=None, traj=ZSINE_O6,
+                                     segments=[("settle", 15.0, 0.0), ("up", 5.0, 0.0), ("hold", 40.0, 0.0)],
+                                     motor_fault=dict(segment="up", motors=[0, 1, 2, 3], thrust_scale=0.85))
