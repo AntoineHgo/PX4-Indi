@@ -55,8 +55,10 @@ Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a inject
 |---|---|---|---|---|
 (none) S122 DONE: re-fly idx 0/21/49 with W_MAX all ok + valid, measured path in use (results/g3_refly_s122/README.md,
   8cfbc36d85). T118 INDI half restored. Model-only s121 idx 49 aborted: runner pilot sticks -> POSCTL after LAND
-  (K118 MINOR: fix in runner before the next stick batch). NEXT S123: key run_validity.py (sonnet, ~$0.15), then
-  RC122 S123 plan (M3a ident hover).
+  (K118 MINOR: fix in runner before the next stick batch). K122 key DONE (design/key_k122_run_validity.md): 3
+  BLOCKING open: CA_R_W_MAX alias not translated (run_validity.py:14,58-64); exception in check_validity loses the
+  outcome (g3_run.py:263, wrap and fail closed); ulog without g3_params.txt skips the check (g3_run.py:251).
+  NEXT S123: fix those 3 (sonnet ~$0.15, test each by breaking), then RC122 S123 plan (M3a ident hover).
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
