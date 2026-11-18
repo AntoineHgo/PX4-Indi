@@ -66,3 +66,22 @@ Answers:
 - Does INDI hold altitude on o1_lemniscate with these faults: yes. Vertical RMS 0.03 to 0.18 m across sag07, weak08, sat and wind5. No watchdog trip on any lemniscate row.
 
 Open: the stick-row vertical RMS anomaly from the ladder section is still unresolved. The lemniscate rows report small vertical RMS, so that anomaly is not confirmed by these runs. Nothing committed. Nothing written inside indi_project/.
+
+## c: nominal lemniscate baseline (S116, A-41)
+
+Run by fly_c.sh (serial, progress_c.txt, containers g3c_*). Same command as the lem_* rows of fly_b.sh (o1_lemniscate, --sched, quad5in, sim v2, rate 800, same seeds, params quad5in_indi_g1.params) but without --scenario-overrides, so no faults.
+
+| row | rc | run.json exit_status | vertical RMS / max (m) | horizontal RMS / max (m) |
+|---|---|---|---|---|
+| c1 lem_nominal_indi (--controller indi) | 0 | ok | 0.030 / 0.086 | 2.805 / 4.827 |
+| c2 lem_nominal_pid (--controller pid_default) | 0 | ok | 0.032 / 0.087 | 2.800 / 4.820 |
+
+Metrics from metrics.json position.rms_vertical_m, max_dev_vertical_m, rms_horizontal_m, max_dev_horizontal_m (metrics.json exit_status field is null, so the status is from run.json).
+
+Comparison with section b lem_* rows (faulted, horizontal RMS 2.741 to 2.816 m, vertical RMS 0.029 to 0.183 m): the nominal horizontal RMS is in the same band, so the ~2.8 m horizontal figure is not caused by the faults. Nominal INDI and nominal PID both give about 2.80 m horizontal RMS, which matches the fault rows.
+
+Reference: metrics.py defines analytic_reference (hold_pos plus traj_pva at ULog times) and truth_local_position (sim ground truth). The grep did not confirm which one the o1 horizontal metric uses. This is unverified.
+
+Earlier comparable numbers (pid_default traj_lemniscate, not o1 --sched, so not the same scenario): det_g16/traj_lemniscate/r1..r5 horizontal RMS 2.221 to 2.235 m (vertical 0.018 to 0.028 m); t55_pretest_s26/traj_lemniscate_r1 horizontal RMS 2.227 m (vertical 0.022 m).
+
+Nothing committed. Nothing written inside indi_project/.
