@@ -11,7 +11,7 @@ LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route
 Rule (RC64/RC74): inner loop time-boxed, 1 session per law change; no new anomaly chase unless a gate test fails.
 NEXT S107 (RC103 done S103; next route check S108). RC103 order: (v) DONE, (iii) DONE S105, hook B DONE S106
    (d52576b02a + fix 99673b62bd; matched = --gnss-delay equal to --gps-dly; results/gnss_delay_key_s106/README.md).
-   S107: check K107 note; `make format` check on gz_bridge; then yaw linear model in margins_models.py (8 yaw
+   S107: yaw linear model in margins_models.py (8 yaw
    cells lack cross-check, design/g2_verdict_rate_s105.md). G1.5 estimator M-vs-X separation needs a moving
    scenario: do it in the G3 pre-test, not before.
    (0) DONE S103: A-37 closed (DLY_ACT lag d+[0,1.25 ms), results/a37_actlag_s103). Hook B (GNSS, note s.4) after (v),(iii).
@@ -44,7 +44,7 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 | S103 | S103: scope POSCTL stick gap scenario (read-only) | haiku | design/posctl_gap_scope_s103.md | DONE: scenario + --stick-mode posctl, flown |
 | H106 | S106: hook B GNSS delay (SIM_GZ_GPS_DLY) impl+build+1 flight | sonnet | design/gnss_delay_impl_s106.md | DONE d52576b02a (fw) bd0aa768f4 (pretest: age 200000 us x110, 1 Hz log) |
 | K106 | S106: second key of H106 + L=250 flights | sonnet | results/gnss_delay_key_s106/README.md | DONE: BLOCKING (SENS_GNSS0_DELAY inert) fixed 99673b62bd, M2 verified (EKF time err +4 ms matched) |
-| K107 | S106: second key of fix 99673b62bd (read-only) | sonnet | design/gnss_delay_fix_key_s106.md | in flight; resume: re-launch same brief if note missing |
+| K107 | S106: second key of fix 99673b62bd (read-only) | sonnet | design/gnss_delay_fix_key_s106.md | DONE: no BLOCKING; MINOR overflow releases not in age0 range (accepted, overflow counted); astyle clean |
 | A103 | S103: A-37 test (a9e5066a55), hover d5/d10 | host bg | results/a37_actlag_s103/README.md | DONE: A-37 closed |
 S102 finding: (ii) PID M1 has NO recipe: the gyro-break hook (`sim_inject`, design/stage2_margins_s35.md l.21) was never built.
   PID reference is F-5 reference only -> deferred behind (iv); build the M1 hook later in gz_bridge IMU callback beside A2.
