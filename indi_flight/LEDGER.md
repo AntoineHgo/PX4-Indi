@@ -121,3 +121,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S102 | V102 | haiku | delay-hook pre-test 2 flights | 13 calls, ~40k tok | DONE IMU PASS, ACT unverified (A-37) |
 | S103 | RC103 | sonnet | route check | 7 calls, ~37k tok | DONE design/route_check_103.md |
 | S103 | S103 | haiku | POSCTL gap scenario scope | 6 calls, ~31k tok | DONE design/posctl_gap_scope_s103.md |
+| G104 | S104 | haiku | G2 verdict note scope (read-only) | 13 calls, ~53k tok, ~$0.06 | DONE design/g2_verdict_scope_s104.md |
