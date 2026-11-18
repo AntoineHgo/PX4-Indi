@@ -705,3 +705,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S78: second key of the margin-model lead (T167) OK; self-test now pins the firmware Tc literally, break-checked.
 - S79 (2026-11-18): route check 79 (design/route_check_79.md): A-34/A-35 were a detour under the RC74 rule, parked; D-RATE-BLD accepted, default MC_INDI_ACT_BLD 1.0 s committed a94d5c181a.
 - S80 (2026-11-18): pending run metrics committed (194109b460); RC/manual stick-path stub briefed (design/brief_rc_stub_s80.md), not launched (cap $1.05).
+- S82 (2026-11-18): T169 stick-path stub finished by orchestrator: expo inverted, 50 Hz grid pacing; altctl/posctl flown PID and INDI (results/stage5_s81_stick/README.md). T170 outer-loop accel-break injector launched (design/brief_velbreak_s82.md).

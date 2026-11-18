@@ -45,11 +45,15 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    S80 (launch 20261118-033048, cap $1.05, no agent): 158 pending metrics/run.json files committed (194109b460);
    item (d) stub briefed in design/brief_rc_stub_s80.md (launch as one sonnet task at cap >= $1.8). NEXT S81: at
    cap >= $1.8 launch (b) or (d) brief; else bookkeeping only.
+   S82 (launch 20261118-042344, cap $3): T169 stick stub DONE (a1f2b3b124, 53b38dd54e; results/stage5_s81_stick/
+   README.md): altctl/posctl fly on both stacks, 50 Hz grid pacing; PID = INDI gain 0.86 (stock setpoint shaping).
+   NEXT S83: haiku second key of the stub (code to brief_rc_stub_s80.md); G5 metric vs vehicle_local_position_setpoint;
+   T170 review + commit if not done in S82; then (e) or PVA slice.
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T169 | S81 (launch 20261118-041210, cap $3): stick-path stub, brief design/brief_rc_stub_s80.md | sonnet | results/stage5_s81_stick/NOTES.md | if cut: read NOTES.md, relaunch remaining steps |
+| T170 | S82: outer-loop accel-break injector (item b), brief design/brief_velbreak_s82.md, no commit by agent | sonnet | results/stage5_s82_velbreak/NOTES.md | if cut: read NOTES.md + `git diff --stat`, finish remaining steps |
 (S72-S78 rows done, details in JOURNAL.md; A-34/A-35 rows and S76 D-RATE-BLD line are recorded.)
 
 ## Open problems
