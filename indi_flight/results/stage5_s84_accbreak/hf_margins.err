@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/pinj_csv.py", line 71, in <module>
+    main()
+  File "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/pinj_csv.py", line 64, in main
+    res, mg, fs = estimate(w, a.Tp, a.fmin, a.fmax)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/pinj_csv.py", line 44, in estimate
+    return res, me.margins_from_frf(res), fs
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/margins_est.py", line 268, in margins_from_frf
+    return margins(res["w"][a], res["L"][a], top_rejected=not bool(a[-1]), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/margins_est.py", line 235, in margins
+    lq = np.linspace(lw[0], lw[-1], n_dense)
+                     ~~^^^
+IndexError: index 0 is out of bounds for axis 0 with size 0

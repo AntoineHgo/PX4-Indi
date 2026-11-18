@@ -37,3 +37,11 @@ Fixed: param long texts no longer re-list enum options (PINJ_PT, PINJ_AX). Accep
 `_coll_clamped`, `omega_ff` and the logged `q_d` come from t_c, not u_o; u_o bypasses the library tilt/collective
 clamps (keep AMP below the hover vertical thrust margin; a z AMP above ~g could invert the vector). The unit test
 does not exercise the clamp; the pinj_csv self-test checks the column mapping only (pyulog mocked).
+
+## HF re-fly (S84, orchestrator, UNKEYED)
+`hf.params`: PT 1, z, band 1.5-10 Hz, AMP 0.12, TP 5, NP 8 (stage runs at ~89 Hz, so 10 Hz < 0.4x rate). The
+`pinj_csv.py --margins` step crashed (no crossover in band, empty interpolation: `hf_margins.err`; a pinj_csv defect
+to fix: report "no crossover" instead of raising). FRF by an inline per-bin least-squares fit, first period dropped:
+`hf_frf.txt`. abs(L) -10.1 dB at 1.6 Hz falling to -22.9 dB at 3.8 Hz, then -17 to -18 dB over 7.6-9.4 Hz; arg L
+-62 to -131 deg; no -180 deg crossing in 1.6-9.4 Hz, so the INDI/D-GAP high-frequency part has GM > 17 dB in this
+band. No coherence computed (single run, single script): second key and margins_est coherence before use.
