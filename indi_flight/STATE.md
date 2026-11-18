@@ -16,11 +16,15 @@ NEXT S108 per RC108 (design/route_check_108.md, filed S107; next route check S11
      outer-cell margin key, linear outer-loop model, A-36/A-39 bound, 267 Hz rows.
    S109 DONE: K108 closed (D-G3-SAMPLER-K108, 3a245d1590, keyed e634a78671); quad5in variants bd612779a1 (key K109).
    S110 DONE: G3 driver g3_run.py (c5acce1b39, K109 MAJOR closed) + scenario overrides/wind (fc3ef9e626), key K110.
-   S111 order: close K110 MAJORs + mutation gaps (one sonnet task: air-relative drag needs vehicle velocity in the
-     injector; eRPM loss drawn offset/duration; motor_fault list for weak + saturation; then short re-key); G3 scenario timeline check (o1_lemniscate --sched / stick_zsine_o6 UNVERIFIED,
-     fly 1 draw each with overrides incl. motor_fault + erpm_loss = 3-flight pre-test); frozen-telemetry hook (two
-     keys); g3_checks.py + key; gate_g3.sh consuming run JSON hooks block; then ~20-run pre-test.
-     Open: wind drag air-relative? (K110 item 2); eRPM loss uses segment window, not drawn offset/duration.
+   S111 DONE: K110 M-1..M-3 closed b0486b703e (air-relative gust_x drag via gz pose finite diff; timed eRPM loss;
+     motor_fault list), keyed K111 (0 BLOCKING), K111 F-1/F-3/F-5 closed 6e8c4fa474 (runner hooks pinned, 4 mutations
+     caught). F-2 accepted bounded: pose/clock threads, velocity lag 0-1 pose period, applied wrench logged.
+     All gust_x results before b0486b703e are not comparable (drag was wind-only).
+   S112 order: 3-flight pre-test (haiku runs, serial): o1_lemniscate --sched and stick_zsine_o6, overrides with
+     motor_fault list (weak+sat) + timed erpm_loss + wind. Check on logs: pose topic gives velocity (run.json
+     disturbance.injector vel_none small), eRPM loss window at drawn offset/duration, timings under --sched /
+     --sched-anchor (K110 m-5), sub-run set_param latency (K111 F-4). Then frozen-telemetry hook (two keys);
+     g3_checks.py + key; gate_g3.sh consuming run JSON hooks block; then ~20-run pre-test.
    S109: G3 randomised runner (plant draw per run, all G3 axes incl. GNSS hook B: matched = --gnss-delay == --gps-dly)
      + ~20-run pre-test; fold G1.5 estimator M-vs-X separation (moving scenario) into it.
    S110: first G3 probe batch >= 60 runs. S111: G5 mode/transition batch. S112: G4 noise profiles.
@@ -38,9 +42,7 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 (Done rows up to K109: JOURNAL.md S100-S109 entries; ledger LEDGER.md. Yaw model tool defect open: margins_of hangs if ts_true=0.)
-| R110 | S110: G3 driver bench/g3_run.py (draw -> run_scenario args incl. model_variant, unmapped factors flagged, dry-run, self-test), no flight | sonnet | design/g3_runner_s110.md | DONE c5acce1b39: 6/6 (orchestrator re-ran), mutation caught. Wind, timed faults (sag/sat/weak/eRPM loss), frozen tel, G4 profile NOT applied: run_scenario.py has no input; scenario = o1_lemniscate/stick_zsine_o6 UNVERIFIED |
-| O110 | S110: run_scenario.py --scenario-overrides JSON (thrust_sag, motor_fault, erpm_loss, wind params) + g3_run.py uses it + 1 check flight | sonnet | design/scenario_overrides_s110.md | DONE fc3ef9e626 (+48ef5120e5 flight meta): tests pass (orchestrator re-ran). Wind applied (+y, 0.066/0.184 N). Sag: cmd +16 % (exp 17.6), esc rpm unchanged (expected if sag = omega-per-command map: hover omega same). UNVERIFIED: overrides under --sched, motor_fault/eRPM loss unflown, eRPM loss window = segment not drawn offset/duration, weak motor dropped when saturation drawn |
-| K110 | S110: 2nd key of O110 (read-only): overrides merge, wind param, g3_run mapping vs sampler | sonnet | design/scenario_overrides_key_s110.md | DONE: 0 BLOCKING, 3 MAJOR (drag not air-relative, pre-existing disturbance.py:127; eRPM loss window = whole segment ~18 s vs drawn 2 s; weak motor dropped when saturation drawn: one motor_fault slot), 3 surviving mutations (wind peak CLI disturbance.py:233, eRPM motor index, weak-motor segment), MINORs. Fix S111 before pre-test |
+(R110/O110/K110/F111/K111/G111 done: JOURNAL.md S110-S111.)
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging

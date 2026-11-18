@@ -140,3 +140,6 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | R110 | S110 | sonnet | G3 driver g3_run.py + self-test, dry-run only | 16 calls, ~56k tok, ~$0.35 | DONE c5acce1b39; K109 MAJOR closed; 6 factors unmapped |
 | O110 | S110 | sonnet | scenario overrides + wind params + g3_run mapping + 1 flight | 33 calls, ~85k tok, ~$0.55 | DONE fc3ef9e626, 48ef5120e5 |
 | K110 | S110 | sonnet | second key of O110 (read-only, mutations in temp copies) | 23 calls, ~61k tok, ~$0.3 | DONE 0 BLOCKING 3 MAJOR 3 test gaps |
+| F111 | S111 | sonnet | fix K110 M-1..M-3, m-2, m-6, 3 mutations | 31 calls, ~79k tok, ~$0.65 | DONE b0486b703e |
+| K111 | S111 | sonnet | second key of b0486b703e (read-only, mutations) | 21 calls, ~55k tok, ~$0.37 | DONE 0 BLOCKING 2 MAJOR |
+| G111 | S111 | sonnet | close K111 F-1/F-3/F-5, test exit codes | 20 calls, ~54k tok, ~$0.4 | DONE 6e8c4fa474 |
