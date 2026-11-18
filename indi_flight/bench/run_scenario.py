@@ -200,9 +200,7 @@ class Sim:
 
     def apply_model_variant(self, spec):
         """Per-run model copy with scaled values; PX4 spawns $PX4_GZ_MODELS/x500, x500_base resolves via the path."""
-        if self.a.model != "x500":
-            raise SystemExit("model variants are x500-only until the stage-1b port of model_variant.py")
-        vdir, rec = build_variant(spec, self.out, self.env["PX4_GZ_MODELS"])
+        vdir, rec = build_variant(spec, self.out, self.env["PX4_GZ_MODELS"], model=self.a.model)
         self.env["PX4_GZ_MODELS"] = vdir
         self.env["GZ_SIM_RESOURCE_PATH"] = vdir + ":" + self.env.get("GZ_SIM_RESOURCE_PATH", "")
         return rec
@@ -609,6 +607,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--scenario", required=True, choices=sorted(SCENARIOS))
     ap.add_argument("--controller", required=True)
+    ap.add_argument("--model-variant", default=None, metavar="K=V,...",
+                    help="plant variant scale factors merged over the scenario's model_variant, e.g. mass=1.3,tau=2,tau_up=1.5,"
+                         "ixx=0.7 (keys: bench/model_variant.py); applied to --model quad5in or x500, recorded in run.json")
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--speed", type=float, default=1.0)
     ap.add_argument("--model", default="quad5in", help="gz model: quad5in (reference airframe) or x500 (archive)")
@@ -719,6 +720,8 @@ def main():
                 sim.env["PX4_PARAM_MC_INDI_POS_EN"] = "1"
                 meta.setdefault("boot_params", {})["MC_INDI_POS_EN"] = 1
         variant = dict(sc.get("model_variant") or {})
+        if a.model_variant:
+            variant.update({k: float(v) for k, v in (kv.split("=", 1) for kv in a.model_variant.split(","))})
         # S102 delay lines (gz_bridge, reboot_required, read at gz_bridge init; 0 = bypassed)
         sim.env["PX4_PARAM_SIM_GZ_DLY_ACT"] = str(a.dly_act)
         sim.env["PX4_PARAM_SIM_GZ_DLY_IMU"] = str(a.dly_imu)

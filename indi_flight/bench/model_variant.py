@@ -35,18 +35,28 @@ def _copy_model(src, dst, real=("model.sdf", "model.config")):
             os.symlink(s, d)
 
 
-def build_variant(spec, out_dir, stock_models):
-    """Returns (variant_models_dir, record). record holds original and new values for run.json."""
+def build_variant(spec, out_dir, stock_models, model="x500"):
+    """Returns (variant_models_dir, record). record holds original and new values for run.json.
+
+    model="quad5in": same keys, on quad5in/quad5in_base. mass also scales the four rotor link masses (total mass x factor,
+    like the x500 note above the rotor links keep their physical <inertia>, which is never touched); rpm is not
+    supported (quad5in already carries a per-step JointStatePublisher).
+    """
     bad = set(spec) - set(ALLOWED)
     if bad:
         raise ValueError(f"unknown model_variant keys {sorted(bad)}; allowed {ALLOWED}")
     root = os.path.join(os.path.abspath(out_dir), "model_variant")
     shutil.rmtree(root, ignore_errors=True)
-    for m in ("x500", "x500_base"):
+    if model not in ("x500", "quad5in"):
+        raise ValueError(f"unknown model {model}")
+    if model == "quad5in" and spec.get("rpm"):
+        raise ValueError("rpm is x500-only; quad5in already has the JointStatePublisher")
+    base = model + "_base"
+    for m in (model, base):
         _copy_model(os.path.join(stock_models, m), os.path.join(root, m))
-    rec = {"scale": dict(spec), "dir": root, "stock_models": stock_models, "original": {}, "new": {}}
+    rec = {"model": model, "scale": dict(spec), "dir": root, "stock_models": stock_models, "original": {}, "new": {}}
 
-    base_path = os.path.join(root, "x500_base", "model.sdf")
+    base_path = os.path.join(root, base, "model.sdf")
     tree = ET.parse(base_path)
     inertial = None
     for link in tree.getroot().iter("link"):
@@ -54,13 +64,24 @@ def build_variant(spec, out_dir, stock_models):
             inertial = link.find("inertial")
             break
     if inertial is None:
-        raise RuntimeError("base_link <inertial> not found in x500_base/model.sdf")
+        raise RuntimeError("base_link <inertial> not found in " + base + "/model.sdf")
     for key in ALLOWED[:4]:
         if key in spec:
             el = inertial.find("mass") if key == "mass" else inertial.find("inertia").find(key)
             old = float(el.text)
             el.text = repr(old * spec[key])
             rec["original"][key], rec["new"][key] = old, old * spec[key]
+    if model == "quad5in" and "mass" in spec:
+        rm = []
+        for link in tree.getroot().iter("link"):
+            if link.get("name", "").startswith("rotor_"):
+                el = link.find("inertial").find("mass")
+                old = float(el.text)
+                el.text = repr(old * spec["mass"])
+                rm.append((old, old * spec["mass"]))
+        if len(rm) != 4:
+            raise RuntimeError(f"expected 4 rotor links in {base}/model.sdf, found {len(rm)}")
+        rec["original"]["rotor_mass"], rec["new"]["rotor_mass"] = [a for a, _ in rm], [b for _, b in rm]
     if "imu_rate" in spec:
         sensors = [s for s in tree.getroot().iter("sensor") if s.get("name") == "imu_sensor"]
         if len(sensors) != 1:
@@ -71,7 +92,7 @@ def build_variant(spec, out_dir, stock_models):
     tree.write(base_path)
 
     if {"tau", "tau_up", "tau_down"} & set(spec):
-        x_path = os.path.join(root, "x500", "model.sdf")
+        x_path = os.path.join(root, model, "model.sdf")
         tree = ET.parse(x_path)
         n = 0
         for tag, own in (("timeConstantUp", "tau_up"), ("timeConstantDown", "tau_down")):
@@ -83,11 +104,11 @@ def build_variant(spec, out_dir, stock_models):
                 rec["new"].setdefault(tag, []).append(old * factor)
                 n += 1
         if n != 8:
-            raise RuntimeError(f"expected 8 motor time constants in x500/model.sdf, found {n}")
+            raise RuntimeError(f"expected 8 motor time constants in {model}/model.sdf, found {n}")
         tree.write(x_path)
 
     if spec.get("rpm"):
-        x_path = os.path.join(root, "x500", "model.sdf")
+        x_path = os.path.join(root, model, "model.sdf")
         tree = ET.parse(x_path)
         plugin = ET.SubElement(tree.getroot().find("model"), "plugin",
                                filename="gz-sim-joint-state-publisher-system",
