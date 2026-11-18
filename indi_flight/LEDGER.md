@@ -163,3 +163,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S118 | K118 | sonnet | key of pilot | design/key_k118_pilot.md | done, 8 calls, 0 BLOCKING 2 MAJOR |
 | S118 | F118 | sonnet | pilot fixes + 3 tests | design/i118_stick_pilot.md F118 | done, 16 calls |
 | S119 | I119 | sonnet | IV ident estimator + self-tests | design/i119_ident_iv.md | launched |
+| S120 | K120 | sonnet | second key ident_iv.py (re-impl 2SLS, mismatch, HAC) | design/key_k120_ident_iv.md | done: 1 BLOCKING + 2 MAJOR fixed, 20/20 |

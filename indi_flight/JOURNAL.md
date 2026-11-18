@@ -872,3 +872,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
   - (v) Cross-check, once in SITL: the same estimator on a PID-flown manoeuvre gives the same values within tolerance.
   SITL validates the estimator only; unmodelled effects (prop wash, frame flex, ESC non-linearity) stay in G4/G6
   scope.
+- S120: Q6 closed (B), D-IDENT decided; ident_iv.py O(n) projection; K120 key: point estimate agrees with independent 2SLS, J mismatch detector + HAC se + rcond added, test_c fixed (seed lottery), 20/20 pass, mutations checked.
