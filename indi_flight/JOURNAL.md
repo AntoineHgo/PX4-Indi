@@ -788,3 +788,15 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S96: T202 key found 2 MAJOR in bf44ece093 (vacuous telemetry-continuity test; stock integral in first INDI cycle); fixed 25e420b155, dff2b7a805.
 - S97 (launch 20261118-095515): T203 minor fixed de7c598e1e (reset gated on fresh inputs); D-ALTCTL-Z decided (ALTCTL served by a z-only INDI stage, stock tilt kept) and implemented (T204) 52beee60e5; second key T205.
 - S97: T205 key: no BLOCKING; double poll removed; DESCEND included in z-only scope (DECISIONS); coverage MAJORs carried to S98.
+- S97 STATE trim: moved from STATE.md:
+  S93 (launch 20261118-091231, cap $3): attitude-break model + outer-loop factor (T194, T195): PM matches measured
+  within 0.3 deg; GM model 1.6-4.6 dB conservative (A-36 residue, linked A-35); PID model-only ref in
+  results/stage5_s91_attbreak/model_vs_measured.md.
+  RC93 (design/route_check_93.md, accepted): stop model refinement, tooling keys, cosmetic re-flies; A-36 residue
+  accepted as conservative and bounded. S94 DONE: G2 report section (report/g2_margins.md, 4542ca1d83; empty cells:
+  PID measured, model-only at HEAD, yaw/pitch v2, 267 Hz outer, telemetry latency value, 2nd key S86/S87/S91);
+  G3-G8 FINAL text in GATES.md + D-GATES-G3G8 (18af6e3a66). NEXT S95: combined opus review of stage-3 safety diff +
+  stage-5 slice (~$1.1, launch first, cap >= $2.5). S96: sim hooks MISSING per design/gates_g3_g8_final_s94.md sec 1
+  (shared sim-time delay line for loop delay + GNSS latency; G5 event injectors; per-run sampler g3_sample.py;
+  telemetry-drop seed per run), each with G1.5 check + second key. Delay line designed: design/delay_line_hook_s94.md
+  (check world step and GNSS path first). S97: yaw cell + first identification slice.

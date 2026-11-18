@@ -40,17 +40,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    S82-S85 session notes: JOURNAL.md (moved S86). Guard note: use `git commit -F <scratch file>` for long messages.
    S86-S92 (G2 outer z/xy cells, attitude-break fw + cells 267/400/800 Hz all PASS, RC89: STOP tooling,
    cosmetic re-flies, anomaly chases): JOURNAL.md. Check script bench/attitude_break_check.py; ratesp_csv.py keyed.
-   S93 (launch 20261118-091231, cap $3): attitude-break model + outer-loop factor (T194, T195): PM matches measured
-   within 0.3 deg; GM model 1.6-4.6 dB conservative (A-36 residue, linked A-35); PID model-only ref in
-   results/stage5_s91_attbreak/model_vs_measured.md.
-   RC93 (design/route_check_93.md, accepted): stop model refinement, tooling keys, cosmetic re-flies; A-36 residue
-   accepted as conservative and bounded. S94 DONE: G2 report section (report/g2_margins.md, 4542ca1d83; empty cells:
-   PID measured, model-only at HEAD, yaw/pitch v2, 267 Hz outer, telemetry latency value, 2nd key S86/S87/S91);
-   G3-G8 FINAL text in GATES.md + D-GATES-G3G8 (18af6e3a66). NEXT S95: combined opus review of stage-3 safety diff +
-   stage-5 slice (~$1.1, launch first, cap >= $2.5). S96: sim hooks MISSING per design/gates_g3_g8_final_s94.md sec 1
-   (shared sim-time delay line for loop delay + GNSS latency; G5 event injectors; per-run sampler g3_sample.py;
-   telemetry-drop seed per run), each with G1.5 check + second key. Delay line designed: design/delay_line_hook_s94.md
-   (check world step and GNSS path first). S97: yaw cell + first identification slice.
+   S93-S96 notes (attitude-break model, RC93, G2 report section, G3-G8 FINAL, sim hooks MISSING list in
+   design/gates_g3_g8_final_s94.md sec 1, delay line design/delay_line_hook_s94.md): JOURNAL.md S97 entry.
    M3 PT-change UNVERIFIED. Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36. Next route check S98.
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
