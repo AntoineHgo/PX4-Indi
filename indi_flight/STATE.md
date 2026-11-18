@@ -31,14 +31,16 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    loop needs its own integral path). Rule: no new anomaly chase unless a gate test fails; cap one session each.
    S75 (launch 20261118-010441, cap $1.16, no agent): edge semantics DECIDED, no firmware change (D-RATE-BLD-EDGE:
    rate blend snaps to instantaneous gap = correct for a complementary filter; D-GAP keeps freeze).
-   S76 (cap $1.05, no agent): margin item (2) flown for the rate loop at 800 Hz, see F76. NEXT S77 = remaining S76 list.
-   S76 list: (1) sonnet (needs cap >= $1.2): unit tests = edge break tests (no t_f step at telemetry recovery with a
-   steady gap, none at landed->airborne) + weak-motor closed-loop test failing at tb = 0 (break-check); the firmware default
-   MC_INDI_ACT_BLD 1.0 goes in its own commit only after (2); flights keep setting 1.0 meanwhile.
-   (2) ONE merged margin campaign: rate loop M3a at tb 1.0/0.3/0.1 + D-GAP items (velocity-break PM at tb, tb/3),
-   single table -> D-RATE-BLD accept/reject. If tb 1.0 fails G2 thresholds: escalate (per-motor estimator = arch change).
-   (3) runner RC/manual stick-path stub + PVA slice (ZSINE_O6), before land/re-take-off.
-   S76: combined opus review (stage-3 safety diff + stage-5 slices + snap-vs-freeze), land/re-take-off flight.
+   S76: rate M3a 800 Hz at tb 1.0/0.3/0.1 flown. S77 (cap $2.91): unit tests done (499e1df991), A-34 traced (open).
+   NEXT S78: (a) DONE S77 (400 Hz margins, rate precondition 1 met at 400/800); (b) D-GAP
+   velocity-break PM at tb, tb/3: NO outer-loop injector exists (`results/stage3_s77_400/velbreak_search.md`):
+   sonnet task (~$0.9) = injector at the accel/collective setpoint in mc_indi_pos_control mirroring D-G2-INJ
+   (MC_INDI_POS_INJ_*, log c/d/u) + csv script, then haiku second key; brief it at a cap >= $2. Then D-RATE-BLD
+   accept + firmware default MC_INDI_ACT_BLD 1.0 in its own commit (flights keep setting 1.0 meanwhile);
+   (c) A-34 closing test (worktree build at da64bc26b3^, or setpoint lead in margins_models.py);
+   (d) runner RC/manual stick-path stub + PVA slice (ZSINE_O6), before land/re-take-off;
+   (e) combined opus review (stage-3 safety diff + stage-5 slices + snap-vs-freeze), land/re-take-off flight.
+   Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
@@ -49,7 +51,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | F76 | S76 D-RATE-BLD roll M3a 800 Hz tb 1.0/0.3/0.1 | bg shell | results/stage3_s76_bld/README.md | DONE: PM 68 deg, GM 16 dB, DM 43-46 ms at every tb (no tb effect); precondition 1 met at 800 Hz. TODO: add A-34 row (PM 68 vs S57 77 deg, f_c 4.1 vs 3.1 Hz, same params; closing test = S57 params at HEAD blend off, else bisect) to ANOMALIES.md and an S76 line under D-RATE-BLD in DECISIONS.md (guard blocked my heredoc) |
 | F77 | S77 A-34 closing: S57 params at HEAD tb 0 / 1.0 | bg shell | results/stage3_s77_a34/README.md | DONE: blend and load ruled out, likely setpoint lead da64bc26b3; A-34 open with closing test |
 | T164 | S77 D-RATE-BLD unit tests | sonnet | results/stage3_s77_tests/README.md | DONE, 69/69, break-checked, committed 499e1df991 |
-| F77b | S77 rate M3a 400 Hz tb 0 / 1.0, sequential | bg shell | results/stage3_s77_400/ | `bash indi_flight/results/stage3_s77_400/fly.sh`; then README + DECISIONS D-RATE-BLD line |
+| F77b | S77 rate M3a 400 Hz tb 0 / 1.0, sequential | bg shell | results/stage3_s77_400/README.md | DONE: PM 70, GM 13.3 dB, DM 51 ms both tb |
 | F73 | A-33 closing: loss08 with rate blend MC_INDI_ACT_BLD 0.3 / 1.0 (default 0 = off, never set in S72 flights: lesson-9 gap in the rate loop) | bg shell, instances 0/1 | results/stage5_s73/loss08_bld{0.3,1.0}/ | DONE, A-33 closed |
 
 ## Open problems

@@ -480,7 +480,8 @@ pre-identification behaviour of decision 3 must cover it).
 - S77: preconditions 2 and 3 met: edge break tests and a weak-motor closed-loop test (tb 0: 0.25 rad/s standing
   error, tb 1: 1.6e-5) committed 499e1df991, each break-checked (`results/stage3_s77_tests/README.md`). A-34 traced
   to the setpoint lead da64bc26b3, not the blend (`results/stage3_s77_a34/README.md`). Left before the default
-  changes: 400 Hz margins at tb 1.0 (S77 flight) and the D-GAP velocity-break items.
+  changes: the D-GAP velocity-break items. 400 Hz flown S77 (`results/stage3_s77_400/README.md`): PM 70 deg,
+  GM 13.3 dB, DM 51 ms at tb 0 and 1.0: precondition 1 met at 400 and 800 Hz (roll).
 
 ## D-RATE-BLD-EDGE (S75, DECIDED): rate blend restarts at the instantaneous gap; D-GAP keeps its freeze
 - Question (D-RATE-BLD precondition 2): the rate blend (`indi_rate_control.cpp` 5d) sets `_blend = t_gap` whenever
