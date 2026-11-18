@@ -56,3 +56,7 @@ coh_y >= 0.987, max |L| -10.1 dB at 1.6 Hz, lowest arg L -131.0 deg at 9.4 Hz, M
 crossover in 1.6-9.4 Hz; GM > 17 dB is a bound for this band only (phase still falling at 9.4 Hz, stage at 89 Hz).
 Earlier margins_est results used zero-mean rate/attitude signals or the uniform-grid FFT path; whether any earlier
 non-uniform LS result had a signal mean is NOT yet checked (open: re-run the S82-S84 velbreak/pt1 margins).
+Re-run of earlier LS-path margins with the fixed estimator (S85): S83 velbreak tb10 PM 57.28 / tb033 59.10 deg,
+unchanged (< 0.001 deg; input-break signals have no mean). S84 pt1 (output break, z accel mean near -g) CHANGED:
+old 7/16 bins accepted, PM 58.7 deg at 0.62 Hz; new 13/16 bins, PM 61.3 deg at 0.64 Hz (`pt1_margins_s85.json`).
+The S84 pt1 number above is superseded by this one (errata: defect in margins_est, not in the flight).
