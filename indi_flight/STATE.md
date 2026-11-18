@@ -6,24 +6,19 @@
 - Blocker: none. QUESTIONS.md empty (Q1-Q5, N1, N2 closed). Outer-loop study finished; stage 5 = base A
   (`design/flatness_r2.md`: flatness = optional increment after base A).
 ## Next actions (in order)
-History: JOURNAL.md (S101 entry holds the latest moves). Agent ledger: LEDGER.md. Lessons proposed:
-LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S103.
+History: JOURNAL.md (S107 entry holds the latest moves). Agent ledger: LEDGER.md. Lessons proposed:
+LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S113.
 Rule (RC64/RC74): inner loop time-boxed, 1 session per law change; no new anomaly chase unless a gate test fails.
-NEXT S108 (RC103 done S103; route check due S108). RC103 order: (v) DONE, (iii) DONE S105, hook B DONE S106
-   (d52576b02a + fix 99673b62bd; matched = --gnss-delay equal to --gps-dly; results/gnss_delay_key_s106/README.md).
-   S107 DONE: yaw model b05d07c555 + Y107b note: 4 model-only yaw cells cross-checked; 4 measured-path cells
-   not (A-39 deferred, 400 Hz dGM -9.7 dB, measured GM still 15.5 dB). G1.5 estimator M-vs-X separation needs a
-   moving scenario: do it in the G3 pre-test, not before.
-   S108: route check (due) FIRST, then update G2 verdict note + GATES.md G2 table with yaw (S107) and attitude
-   (results/g2_attbreak_s107) cells; then G5 pre-tests per RC103.
-   (0) DONE S103: A-37 closed (DLY_ACT lag d+[0,1.25 ms), results/a37_actlag_s103). Hook B (GNSS, note s.4) after (v),(iii).
-   (i) DONE S101 (b9d6cf3285): K101 12/12 agree, all 24 INDI v2 rate cells (measured + model-only) PASS.
-   (ii) PID M1 reference rate cells (reference only, F-5; 800 Hz x3 axes, 1 seed is enough).
-   (iii) linear-model cross-check for the v2 path (margins_models.py, T78 UNVERIFIED list below) -> G2 verdict note.
-   (iv) delay hooks A1+A2 DONE S102 (c6ba02609f, keyed K102); hook B GNSS open.
-   (v) DONE S104: A-38 closed (est-sp 0.000 m after gap; -0.07 m is estimator truth-est offset present before
-       the event). G5 rows must report truth-sp and truth-est separately (lesson 3).
-   (vi) DONE S107: attitude-break cells at HEAD 6/6 PASS (results/g2_attbreak_s107); not yet in GATES.md G2 table.
+NEXT S108 per RC108 (design/route_check_108.md, filed S107; next route check S113). Accepted with one amendment:
+   G3/G5 batches before the stage-6 freeze are PROBES of the current stack (find failures early), not gate evidence.
+   S108: G2 verdict note + GATES.md G2 table from existing results only (rate 24 cells S101, yaw cross-check S107
+     with A-39 caveat, attitude 6/6 results/g2_attbreak_s107); no new flights.
+   S109: G3 randomised runner (plant draw per run, all G3 axes incl. GNSS hook B: matched = --gnss-delay == --gps-dly)
+     + ~20-run pre-test; fold G1.5 estimator M-vs-X separation (moving scenario) into it.
+   S110: first G3 probe batch >= 60 runs. S111: G5 mode/transition batch. S112: G4 noise profiles.
+   STOP: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair, PID M1 hook, hooks without a consumer,
+     stand-alone anomaly chases (fold A-4, A-6 into G3/G5 side-cells).
+   Done history (RC103 list i-vi, hooks A1/A2/B, A-37, A-38, yaw model): JOURNAL.md S101-S107.
    Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
    Old: log a z-only active flag in indi_pos_status when next touching the module (P98 could not see it).
 Notes: pretest_gate only on stationary scenarios, or end its window at the fault (S98). S99 hooks SIM_GZ_SEED +
