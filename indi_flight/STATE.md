@@ -38,8 +38,14 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
    Guard note: a long inline `git commit -m` was blocked; use `git commit -F <scratch file>`.
 S121 FINDING: every "indi" G3 run S110-S118 flew the STOCK rate loop (base params lacked MC_RATE_CTL_TYPE 1).
   Fixed in g3_run.py + run_scenario.py guard; P117/T118/ladder INDI verdicts VOID. TODO test in test_g3_run.py
-  asserting the flag. S122: idx 21 re-flown with real INDI: ok (z ~5 m, landed; results/g3_refly_s121/README.md).
-  esc_status logged 750 Hz; actuator_torque_measured NOT in log (check why before ident).
+  asserting the flag (DONE S122). S122: idx 21 re-flown with real INDI: ok (z ~5 m, landed; g3_refly_s121/README.md).
+S122 FINDING 2: G3 base params lacked MC_INDI_W_MAX (G2 s107/stage-5 runs had 2700) -> measured path OFF
+  (measured_torque_in_use 0, no actuator_torque_measured; design/s122_torque_measured_logging.md). s121 re-flies
+  are MODEL-ONLY. Fixed 0a49572149 (+ run_validity.py: g3_done.json "validity", outcome "void"; 23 tests;
+  UNKEYED: two-key review before gate use). Re-fly idx 0/21/49 with W_MAX -> results/g3_refly_s122/.
+RC122 (design/route_check_122.md, ACCEPTED): S123 = M3a ident hover (POS_EN 0 and 1 once each), estimator offline
+  from x0.5/x1/x2; S124 = estimator verdict on D-IDENT (i)-(iii), draft defaults file, G5 list. Also run
+  run_validity over past result sets that are cited as evidence (G2 s107, stage-5) once keyed.
 Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a injection on quad5in (roll, AMP ~0.01,
   NP >= 6, settle delay, halved gains; design/h120_m3a_signals.md), estimator bench/ident_iv.py offline (K120 keyed;
   size arrays, ulimit -v 4000000), compare to derived G1; then G2 cells at G1 x0.5/x2 (ident config).
@@ -47,7 +53,8 @@ Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a inject
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| R122 | INDI re-fly T118 idx 0, 49 (setsid) | - | results/g3_refly_s121/run_000, run_049, progress.txt | `setsid nohup bash indi_flight/results/g3_refly_s121/fly.sh 2 0 49` |
+| R122a | model-only INDI re-fly idx 0, 49 | - | results/g3_refly_s121/ | `setsid nohup bash indi_flight/results/g3_refly_s121/fly.sh 2 0 49` |
+| R122b | INDI+W_MAX re-fly idx 0/21/49 (check g3_done.json validity, measured_torque_in_use ~1) | - | results/g3_refly_s122/ | `setsid nohup bash indi_flight/results/g3_refly_s122/fly.sh 3 0 21 49` |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
