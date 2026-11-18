@@ -23,6 +23,9 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    dff2b7a805 keyed OK (T203, design/t203_integral_hoist_key.md); MINOR: want_indi true + stage bypass on stale
    inputs zeroes the stock integrator every cycle (no gap compensation in that fault): gate pre-update reset on
    fresh inputs.
+   NEXT S98: route check 98 (due, sonnet, first); then T205 open items: lib tests for the 4 named mutations + gate
+   finite f_b/q (one sonnet task); module harness question: decide in DECISIONS (harness vs SITL evidence for G7);
+   then the 2-3 flight pre-test below (s5_gap085 regression + new stick altctl gap scenario).
    S97: (a) DONE de7c598e1e (compile-only); (b) decided D-ALTCTL-Z (e92a576e01), impl T204. Pre-test recipe: s5_gap085
    (offboard pos) exists; ALTCTL needs a new mode="stick" scenario with motor_fault (allowed without --sched), flown with
    --stick-mode altctl; command in results/stage5_s70/README.md line 17; metric bench/s5_gap_check.py. Was: (b) F-2: INDI serves ALTCTL by adding
@@ -56,7 +59,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 (S72-S78 rows done, details in JOURNAL.md; A-34/A-35 rows and S76 D-RATE-BLD line are recorded.)
 (S93-S95 rows T194-T199 and S96 T201: JOURNAL.md. S86-S92 rows B87, T185, T189, RC89, T190, T191, B91, T192/T193, B91c, B92 all DONE: JOURNAL.md S93 entry.)
 | T200 | S96 (launch 20261118-094323): T199 BLOCKING CONFIRMED by orchestrator (_coll_meas = vehicle_thrust_setpoint, commanded, passed as mean_u). Fix findings 1,2,4,5 + 3 (integrator reset only when INDI ran) in indi_accel_control + mc_indi_pos_control, tests first with break-checks | sonnet | design/t200_dgap_fixes_log.md | DONE bf44ece093 (diff read; 5 new tests fail-before/pass-after; module side F3-F5 compile-only; residue: stock integral in a_ref on the 1st active cycle after bypass; ALTCTL not served by INDI: F-2 open item, note in log) |
-| T204 | S97: D-ALTCTL-Z implement (library z_only input + module want_indi climb-rate), tests break-checked | sonnet | design/t204_altctl_z_log.md | in flight; if cut: read log, finish or redo |
+| T204 | S97: D-ALTCTL-Z implement | sonnet | design/t204_altctl_z_log.md | DONE 52beee60e5 + tests 1d827d62be (diff read; 5/6 fail-before, break-check 3 fail; module compile-only; closed-loop test is regression-only) |
+| T205 | S97: second key on 52beee60e5 + de7c598e1e | sonnet | design/t205_altctl_key.md | DONE: no BLOCKING; double poll removed + DESCEND scope noted (S97); OPEN: 2 MAJOR coverage (no module harness for T203 gate / z_only derivation / want_indi; lib mutations at tilt, guard order, 0.1 threshold, min-collective in z-only), MINOR NaN f_b/q with fresh stamp zeroes integrator |
 | T202 | S96: second key on bf44ece093 vs review findings 1-5 | sonnet | design/t202_dgap_fix_key.md | DONE: no BLOCKING, 2 MAJOR fixed 25e420b155 dff2b7a805 |
 
 ## Open problems

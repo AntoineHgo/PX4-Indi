@@ -557,3 +557,6 @@ centred sticks the vehicle keeps its ground speed indefinitely instead of slowin
 leave ALTCTL on the stock integrator (rejected: F-2, and lesson 9 gap then handled only by PID I).
 Overturn: a G5 ALTCTL flight with a z transient or oscillation at the mode switch, or the owner asking for INDI xy in
 ALTCTL.
+Scope note (T205): want_indi accepts any climb-rate-only mode, so the DESCEND failsafe (and any other climb-rate-only
+nav state) also runs the z-only stage. Intended: F-2 covers failsafes, and DESCEND has the same semantics as ALTCTL
+with neutral sticks. G5 flies it.

@@ -786,3 +786,5 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
   | T201 | S96: stage-3 item 5 autotune not started with MC_INDI_EN=1 (rc.mc_apps) + rate watchdog on receipt time | sonnet | design/t201_autotune_watchdog_log.md | DONE b7a171b4b5 4385e8f56a (diff read by orchestrator; SITL start test MC_INDI_EN=1 MC_AT_EN=1 not run; start-refusal test needs SITL shell, open) |
   | T195 | key of A-36: independent outer-loop factor from firmware source + flown params | sonnet | design/t195_att_outer_key.md | DONE: agrees; O(s) in margins_models 9df899212c; PM within 0.3 deg, GM residue open (A-36) |
 - S96: T202 key found 2 MAJOR in bf44ece093 (vacuous telemetry-continuity test; stock integral in first INDI cycle); fixed 25e420b155, dff2b7a805.
+- S97 (launch 20261118-095515): T203 minor fixed de7c598e1e (reset gated on fresh inputs); D-ALTCTL-Z decided (ALTCTL served by a z-only INDI stage, stock tilt kept) and implemented (T204) 52beee60e5; second key T205.
+- S97: T205 key: no BLOCKING; double poll removed; DESCEND included in z-only scope (DECISIONS); coverage MAJORs carried to S98.
