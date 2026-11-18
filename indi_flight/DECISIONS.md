@@ -459,7 +459,7 @@ pre-identification behaviour of decision 3 must cover it).
      present: |b| after re-take-off within 10 % of its pre-landing value and max |dz| in the first 5 s after
      take-off < 0.15 m.
 
-## D-RATE-BLD (S73, PROPOSED): decision 2 for the rate loop = the existing complementary blend, ON by default
+## D-RATE-BLD (S73, PROPOSED; precondition 2 settled S75 by D-RATE-BLD-EDGE): decision 2 for the rate loop = the existing complementary blend, ON by default
 - Evidence: A-33 (`results/stage5_s73/README.md`). With MC_INDI_ACT_BLD = 0 (firmware default) one motor at 0.8
   holds a 10.4 deg standing attitude error (rate error ~1 rad/s) because measured actuator state removes the
   integral action (lesson 9). Blend 0.3 s and 1.0 s both remove it (sp-vs-actual 0.05 / 0.06 deg).
@@ -474,3 +474,25 @@ pre-identification behaviour of decision 3 must cover it).
   invalid) settled and break-tested; (3) a unit test with a weak-motor closed-loop plant that fails with tb = 0.
 - Overturn: margins at tb 1.0 below the G2 thresholds, or a G3 pre-test where the blend's DC model path diverges
   (G1 error x2, telemetry loss) -> option (ii).
+
+## D-RATE-BLD-EDGE (S75, DECIDED): rate blend restarts at the instantaneous gap; D-GAP keeps its freeze
+- Question (D-RATE-BLD precondition 2): the rate blend (`indi_rate_control.cpp` 5d) sets `_blend = t_gap` whenever
+  it is not active (measurement not in use, tb = 0, landed) and `reset()` zeroes it; D-GAP freezes its bias `b` on
+  every edge. Should the rate blend freeze too?
+- Analysis (code read S75, survey `design/rate_blend_survey_s74.md`): the two states are different objects. The
+  rate `_blend` is the low-pass part of a complementary filter, output `t_f_meas + LP(t_model - t_meas)`; its correct
+  initial value is the current gap, which already contains any steady gap (weak motor, sag), so restarting there is
+  bumpless (output = model at the switch) and loses nothing. D-GAP's `b` is a learned bias of the thrust model that
+  cannot be re-derived from one sample, so it must be held. While the blend is inactive the output is the model path
+  (or pure model when landed: `t_f_meas + t_gap`), which keeps the integral action of model-feedback INDI.
+  `reset()` zeroing `_blend` is harmless: `resetStates()` also zeroes `_meas_valid_cycles`, so the next 20 cycles
+  track the gap before the measurement is used. Frozen-but-valid telemetry is a separate item (stage-3 frozen
+  detection), not a blend edge.
+- Choice: keep the current semantics (track/snap when inactive, freeze the integrator on maybe_landed, hold on the
+  fault path). No firmware change. Alternatives: freeze on loss/landed (D-GAP style: a bump of the high-frequency
+  gap at recovery, no benefit since the steady gap is re-captured at once); one shared helper with D-GAP (would force
+  one semantics on two different states).
+- Remaining for D-RATE-BLD: break tests of these edges in the unit tests (recovery after loss with a steady gap:
+  no step in t_f; landed->airborne: no step) and the weak-motor closed-loop test that fails with tb = 0.
+- Overturn: a flight or unit test showing a torque step at telemetry recovery or take-off larger than the
+  high-frequency gap, or a G3 telemetry-loss run whose post-recovery transient exceeds the G3 limits.
