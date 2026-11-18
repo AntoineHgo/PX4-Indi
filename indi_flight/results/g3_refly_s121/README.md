@@ -13,3 +13,8 @@ Raw ulog/console untracked (gitignore).
 
 Signal check (run_021): esc_status logged at 750 Hz (not 100 Hz as the H120 note claimed); actuator_torque_measured
 not in the log (topic name only in the format section).
+| 0 | ACRO 38 s, LAND 69 s, then POSCTL 70 s | boot MC_INDI_EN=1 | ok; z 3.80/5.68/8.45 |
+| 49 | STABILIZED 38 s, LAND 70 s, then POSCTL 71 s | boot MC_INDI_EN=1 | aborted: wall timeout in 'land' (pilot sticks after LAND -> POSCTL, K118 MINOR) |
+
+S122: all runs here flew with MC_INDI_W_MAX unset, so on the actuator MODEL only (measured_torque_in_use 0).
+Measured-path re-fly: ../g3_refly_s122.
