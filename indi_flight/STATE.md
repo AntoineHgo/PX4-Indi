@@ -40,22 +40,10 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 (S72-S78 rows done, details in JOURNAL.md; A-34/A-35 rows and S76 D-RATE-BLD line are recorded.)
-| T179 | S86 hole_report fixes (findings 1-3) + break tests | sonnet | results/stage5_s85_holes/fixes_s86.md | DONE 98e977a9f0; S83/S84 single flights still PASS |
-| T180 | attitude-break note | sonnet | design/attitude_break_s86.md | DONE edc562526a, unreviewed |
-| T181 | xy no-crossover diagnosis | sonnet | results/stage5_s86_g2outer/t181_xy_diagnosis.md | DONE: top_db misread; UNKEYED |
-| B86z | z cells serial, 8 cells | host | results/stage5_s86_g2outer/README.md | DONE: PM 58.3-66.1 deg; 800 Hz cells fail only the count check |
-| B86 | G2 outer cells | host | results/stage5_s86_g2outer/ | DONE (z cells; xy re-fly B87) |
 | B87 | xy cells AMP 0.08 TP 20 hover_xlong, serial | host | results/stage5_s87_xy/ (fly.sh PT AX RATE SEED) | DONE 30c012bc7c: 16 cells PM 49.7-64.8, GM 18.2-19.3 dB, f_c 0.27-0.34 Hz; holes 15/16 after re-fly 66589220a9 (pt0_ax2_r400_s1: count check + 89 Hz limit, tool fix S88) |
-| T182 | hole_report count-check fix + re-run s86 cells | sonnet | results/stage5_s85_holes/count_fix_s87.md | DONE c5b5a897e9 (unkeyed). S86 README rows for r800_s2 were wrong: real holes (pt1 sim 12.5 ms -> re-fly; pt0 only outer topic 89 Hz max 18.75 ms vs 10 ms limit = spec defect for a topic with period > 10 ms?) |
-| T184 | second key of T182 (code vs spec) | haiku | results/stage5_s85_holes/second_key_s87.md | DONE c9cc245a40 AGREE WITH MINOR |
 | T185 | review attitude-break note vs code | sonnet | design/attitude_break_s86_review.md | DONE: 0 BLOCKING, 2 MAJOR (add call-site test at McIndiRateControl.cpp:231; replace circular x-y-d check by logged rate_sp_dot vs derivative of logged x), 10 MINOR (gate off in ACRO; use hover_xlong; outer loop closed below ~0.3 Hz). Amend note, then implement |
-| T186 | S88 hole_report raw-gap + excess limit (D-HOLE-EXCESS) | sonnet | results/stage5_s85_holes/fixes_s88.md | DONE dd9dd0705e: s86 pt0_ax3_r800_s2 FAIL->PASS, 27 unchanged |
-| T187 | rename top_db -> last_bin_db | haiku | margins_est.py | DONE 5243e845b9 (README rewrite reverted, kept S87 one) |
-| T188 | second key of T186 (code vs spec) | haiku | results/stage5_s85_holes/second_key_s88.md | DONE: AGREE WITH MINOR; slow-topic escape fixed 688f198ab2 (test S88d). Open minors: max_excess under-reported below 1.5x median (report only); median-0 topic -> OverflowError at hole_report.py:58 (loud). S89: re-run hole_report on 28 cells (host idle, no flight running) |
-| B88 | re-fly s86 pt1_ax3_r800_s2, s87 pt0_ax2_r400_s1 | host | READMEs of s86/s87 | DONE e73e39e9ec: both holes PASS, PM 59.6 / 56.6 deg (unkeyed) |
 | T189 | S89 hole_report re-run | haiku | results/stage5_s85_holes/rerun_s89.md | DONE: serial cells all PASS |
 | RC89 | route check 89 | sonnet | design/route_check_89.md | DONE |
-| T183 | second key of T181 (xy FRF from CSVs) | haiku | results/stage5_s86_g2outer/t183_second_key.md | DONE d2b66bf3ae: AGREE |L|, PM 54-56; f_c 0.27-0.33 Hz |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
