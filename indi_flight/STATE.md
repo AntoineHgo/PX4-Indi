@@ -22,24 +22,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    S69-S71: JOURNAL.md. Route checks 64-79 in design/; next: S84.
    S72-S80 (D-GAP, D-RATE-BLD accepted, A-34/A-35 parked, RC74/RC79): JOURNAL.md. Rule (RC74): no new anomaly
    chase unless a gate test fails, one session cap each. Flights no longer need MC_INDI_ACT_BLD 1.0 (default).
-   S82 (launch 20261118-042344, cap $3): T169 stick stub DONE (a1f2b3b124, 53b38dd54e; results/stage5_s81_stick/
-   README.md): altctl/posctl fly on both stacks, 50 Hz grid pacing; PID = INDI gain 0.86 (stock setpoint shaping).
-   T170 DONE (3b7af1282f fw, 37f3ab90a5, 9278260a9d): MC_INDI_PINJ_* injects at the INDI stage INPUT = velocity/
-   position break (INDI accel loop closed), z PM 54.4 deg at 0.60 Hz, tb 1.0, pre-test only (results/stage5_s82_
-   velbreak/README.md lists open items). The G2 accel-loop break (d at stage output) is still missing.
-   NEXT S83 (cheap first): (1) haiku second keys: stick stub (to brief_rc_stub_s80.md) and injector (to
-   brief_velbreak_s82.md); (2) re-fly velbreak with DLY >= 15 s / NP 5 at tb 1.0 and tb/3 (D-GAP overturn test);
-   (3) G5 stick metric vs vehicle_local_position_setpoint; then (e) or PVA slice.
-   S83 (launch 20261118-043259, cap $3): injector second key AGREE WITH MINOR, minors fixed (a38533428f fw,
-   907f57510d pinj_csv self-test); velbreak re-fly z PM 57.3 (tb 1.0) / 59.1 deg (tb 0.33): D-GAP PM overturn NOT
-   met (cdc5f03713); stick second key DISAGREE (33 Hz rows pre-grid, README overclaim) -> 4 rows re-flown (B83b).
-   S84: RC84 done (design/route_check_84.md), G1 PASSED, G2 cell table in GATES.md, T174 launched.
-   S84 HF output-break re-fly (1.5-10 Hz): abs(L) <= -10 dB, no -180 crossing (UNKEYED, results/stage5_s84_accbreak/
-   README.md); pinj_csv --margins raises when no crossover in band (fix).
-   S85 (launch 20261118-045636, cap $3): HF FRF second key AGREE; margins_est LS-phasor DC-term defect fixed
-   (5444196ab4): velbreak margins unchanged, S84 pt1 re-scored PM 61.3 deg/0.64 Hz (was 58.7, 7/16 bins);
-   pinj_csv reports no-crossover; bench/hole_report.py (evidence limit 1) built, hf + posctl PASS, second key T178;
-   AX=0 identity flights: no change beyond same-seed spread (results/stage5_s85_identity/README.md).
+   S82-S85 session notes: JOURNAL.md (moved S86). Guard note: use `git commit -F <scratch file>` for long messages.
    S86 (launch 20261118-050243, cap $3): T179 hole_report fixes DONE 98e977a9f0; G2 outer runner
    results/stage5_s86_g2outer/fly.sh (README: findings 1-3); z cells PM 62.8-63.7 deg; G2 cells fly ONE AT A TIME
    (parallel -> holes); xy no-crossover = top_db misread (T181 UNKEYED); attitude-break note design/attitude_break_s86.md
