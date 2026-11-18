@@ -1,62 +1,36 @@
 # STATE (budget 8000 bytes: read at every launch, resume essentials only)
 
 ## Status
-- Stage: 3 (inner loop) opened S49; stage 2 (analysis tools, margins) from S36, provisional under Q4-A; stage 1 frozen S36 (G1 FINAL). Started S1 (2026-11-15). Stage 0 done. Session 3: ref airframe model done.
-- Gates: G1 PASSED S84 (owner S50 rule; G1.5 per injector, evidence limits) | G2 open (cell table in GATES.md) | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open. G1 FROZEN with evidence limits (GATES.md G1 FINAL), not passed until Q2-Q4 answered.
-- Blocker: none. S50: owner answered Q2 (A amended), Q3 (A), Q4 (A + G1.7 provenance); GATES.md updated, provisional mark lifted; QUESTIONS.md empty. Q1 closed: A confirmed by owner; flatness A18 reviewed (r5 BLOCKING), answered in
-  `design/flatness_r2.md` (S15): optional increment after base A. Outer-loop study finished; stage 5 = base A.
-- S36: G1 FINAL written in GATES.md (frozen with 5 evidence limits, provisional under Q4-A, not marked passed);
-  stage 2 started provisionally; opus review T73 r1 BLOCKING (gyro break misses INDI's model and rotor-speed
-  paths) answered by D-G2-BREAK (M3a torque-setpoint break) and note section 7; r2 CLOSED.
+- Stage: 3 (inner loop) opened S49; stage 2 (analysis tools, margins) from S36; stage 1 frozen S36 (G1 FINAL). Started S1 (2026-11-15). Stage 0 done. Session 3: ref airframe model done.
+- Gates: G1 PASSED S84 (owner S50 rule; G1.5 per injector, evidence limits) | G2 open (cell table in GATES.md) | G3 open | G4 open | G5 open | G6 open | G7 open | G8 open.
+- Blocker: none. QUESTIONS.md empty (Q1-Q5, N1, N2 closed). Outer-loop study finished; stage 5 = base A
+  (`design/flatness_r2.md`: flatness = optional increment after base A).
 ## Next actions (in order)
-S44-S67 history: JOURNAL.md. Agent ledger: LEDGER.md. Lessons proposed: LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief).
-NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change from now on):
-   (1) stage-5 slice 2: thrust-gap hover in position mode (NEW scenario, N1 C3; MC_INDI_W_MAX 2700) + one
-   velocity/acceleration mode (altitude or position stick) + T123 deviations A3/A5/reset; haiku second key.
-   (2) Bench defect N1 C2 (disturbance.py payload_add/com_shift/gust sized for x500): take mass/drag from the flown
-   model, G1.5 check per profile. (3) Check the 'NOT FOUND' hooks of the draft (loop delay, GNSS latency, vibration)
-   against stage-1 sim work before building. (4) G2-STEP 400 Hz reported run DONE S64 (9/9 within limits, A-30 seed spread parked).
-   inputs zeroes the stock integrator every cycle (no gap compensation in that fault): gate pre-update reset on
-   S98 (0) EXPLAINED: pretest_gate window [airborne+15, +45 s) = 47-77 s contains the 0.85 fault at ~71 s, the step
-   transient inflates rate RMS (S70 hover_gap had no step in window: 0.0037); key +10..20 s after fault: 0.001-0.006.
-   Use pretest_gate only on stationary scenarios, or end its window at the fault.
-   S99 DONE: hooks SIM_GZ_SEED + SIM_GZ_IMU_NSC (results/t207_hooks/README.md; accel scale UNVERIFIED, needs full-rate
-   accel log before G4). G2 rate table compiled (results/g2_rate_table_s99.md): 7 required cells missing at HEAD.
-   S100: v2 cells keyed (K100, 12/12 agree); model-only pre-test PASS, batch B100 in flight.
-   NEXT S101: (i) close B100 (key with second_key_m3a_s100.py --axis), PID M1 reference cells, then the
-   linear-model cross-check for the v2 path; update g2_rate_table; (ii) next hook: shared sim-time delay line (design/delay_line_hook_s94.md);
-   (iii) S101 deadline rule (c) below still holds. Old: log a z-only
-   active flag in indi_pos_status when next touching the module (P98 could not see it).
-   S98: RC98 DONE (design/route_check_98.md): STOP coverage after T206; D-G7-HARNESS decided, impl deferred to
-   stage 7. Order now: (a) G5 pre-test s5_gap085 POSCTL + stick ALTCTL gap + EN/AT_EN start check; (b) S99 sim
-   hooks per design/gates_g3_g8_final_s94.md sec 1 (drop seed, shared delay line, IMU noise scale) + G2 verdict
-   (yaw, model-only "not covered"); (c) if hooks/G2 verdict not done by S101, ask owner to narrow G2. Dropped:
-   anomaly chases A-4/6/30/32/34-36, tooling keys. Then the 2-3 flight pre-test below (s5_gap085 regression + new stick altctl gap scenario).
-   (5) attitude-break margin with the new setpoint path (G2) when the G2 table is resumed.
+History: JOURNAL.md (S101 entry holds the latest moves). Agent ledger: LEDGER.md. Lessons proposed:
+LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S103.
+Rule (RC64/RC74): inner loop time-boxed, 1 session per law change; no new anomaly chase unless a gate test fails.
+NEXT S102:
+   (i) close K101 (second key of model-only cells, results/g2_rate_modelonly_s100/key_k101/): table primary/key/delta
+   like results/g2_rate_batch_s99/key_k100.md, write results/g2_rate_modelonly_s100/README.md section, update
+   results/g2_rate_table_s99.md (all 24 INDI v2+model-only 800/400 cells covered, all PASS).
+   (ii) PID M1 reference rate cells (reference only, F-5; 800 Hz x3 axes, 1 seed is enough).
+   (iii) linear-model cross-check for the v2 path (margins_models.py, T78 UNVERIFIED list below) -> G2 verdict note.
+   (iv) next hook: shared sim-time delay line (design/delay_line_hook_s94.md), needed by G3.
+   (v) G5 pre-test s5_gap085 POSCTL + stick ALTCTL gap + EN/AT_EN start check (RC98 order (a)).
+   (vi) attitude-break margin with the new setpoint path (G2) when the G2 table is resumed.
    Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
-   S65-S68 session notes: JOURNAL.md (S69 entry).
-   S69-S71: JOURNAL.md. Route checks 64-79 in design/; next: S84.
-   S72-S80 (D-GAP, D-RATE-BLD accepted, A-34/A-35 parked, RC74/RC79): JOURNAL.md. Rule (RC74): no new anomaly
-   chase unless a gate test fails, one session cap each. Flights no longer need MC_INDI_ACT_BLD 1.0 (default).
-   S82-S85 session notes: JOURNAL.md (moved S86). Guard note: use `git commit -F <scratch file>` for long messages.
-   S86-S92 (G2 outer z/xy cells, attitude-break fw + cells 267/400/800 Hz all PASS, RC89: STOP tooling,
-   cosmetic re-flies, anomaly chases): JOURNAL.md. Check script bench/attitude_break_check.py; ratesp_csv.py keyed.
-   S93-S96 notes (attitude-break model, RC93, G2 report section, G3-G8 FINAL, sim hooks MISSING list in
-   design/gates_g3_g8_final_s94.md sec 1, delay line design/delay_line_hook_s94.md): JOURNAL.md S97 entry.
-   M3 PT-change UNVERIFIED. Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36. Next route check S98.
-   Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
+   Old: log a z-only active flag in indi_pos_status when next touching the module (P98 could not see it).
+Notes: pretest_gate only on stationary scenarios, or end its window at the fault (S98). S99 hooks SIM_GZ_SEED +
+   SIM_GZ_IMU_NSC done (accel scale UNVERIFIED, needs full-rate accel log before G4). D-G7-HARNESS decided, impl
+   stage 7. M3 PT-change UNVERIFIED. Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36.
+   Flights no longer need MC_INDI_ACT_BLD 1.0 (default). Check script bench/attitude_break_check.py; ratesp_csv.py keyed.
+   Guard note: a long inline `git commit -m` was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-(S72-S78 rows done, details in JOURNAL.md; A-34/A-35 rows and S76 D-RATE-BLD line are recorded.)
-(S93-S95 rows T194-T199 and S96 T201: JOURNAL.md. S86-S92 rows B87, T185, T189, RC89, T190, T191, B91, T192/T193, B91c, B92 all DONE: JOURNAL.md S93 entry.)
-| T207 | S99: sim hooks SIM_GZ_SEED (drop RNG) + SIM_GZ_IMU_NSC (IMU noise scale), build, 2-flight G1.5 check | sonnet | design/t207_seed_noise_hooks_log.md | DONE fdcc54ed63 9d48cea369 (diff read, astyle clean): drop frac 0.10, seeds differ, gyro sigma ratio 3.0; second key K99 -> results/t207_hooks/key_k99.md |
-| T208 | S99: compile G2 rate-cell table | sonnet | results/g2_rate_table_s99.md | DONE: 18 INDI cells, 6 prelim PASS (mostly S57 fw, pre setpoint lead), 0 FAIL, 12 NOT COVERED; 7 of 12 required 800/400 cells missing; no PID rate margins ever; measured-path model cross-check missing |
-| P99 | S99: G2 rate pre-test at HEAD | haiku | results/g2_rate_pretest_s99/README.md | DONE 35f98b3fdb: pitch v2 800 GM 15.7 PM 69.0 DM 46 ms; yaw v2 400 GM 15.5 PM 87.0 DM 164 ms; 18/18 bins |
-| B99 | S99: G2 rate batch v2 at HEAD, 10 flights (fly.sh recipe, INJ_AX 1-3 x 800/400 x seeds 1,2 minus P1/P2) | haiku | results/g2_rate_batch_s99/README.md | DONE: 10/10 PASS, worst GM 13.1 dB (roll 400), PM 68.2 (roll 800), DM >= 46 ms; UNKEYED (second key on m3a margins needed), per-flight axis_check not run, latency assumed 0 frames. Next: model-only cells + key |
-| K100 | S100: second key of B99+P1/P2 margins from raw ulg, all axes | sonnet | results/g2_rate_batch_s99/key_k100.md | DONE 9621a25d3d: 12/12 agree (GM 0.13 dB, PM 0.5 deg, DM 0.6 %), all PASS; same estimator family (checks indexing/window, not plant); no self-test for s41/s100 script |
-| P100 | S100: model-only rate pre-test at HEAD (2 flights) | haiku | results/g2_rate_modelonly_s100/README.md | DONE db536a8c01: MC_INDI_W_MAX 0 (log-verified); pitch400 GM 10.3 PM 72.4 DM 41 ms; yaw800 GM 18.4 PM 91.0 DM 172 ms; PASS |
-| B100 | S100: model-only batch, 10 flights (axes 1-3 x 800/400 x seeds 1,2 minus P400s1/Y800s1) | haiku | results/g2_rate_modelonly_s100/batch/README.md | in flight; resume: re-run batch.sh there, skip cells with margins.txt; then key with bench/second_key_m3a_s100.py |
+(Done rows up to K100/P100: JOURNAL.md S100/S101 entries.)
+| B100 | S100: model-only batch, 10 flights | haiku | results/g2_rate_modelonly_s100/batch/batch.log | DONE S101: 10/10 PASS, worst GM 10.12 dB, PM 70.8, DM 39.7 ms; torque MODEL_ONLY_VERIFIED |
+| K101 | S101: second key of 12 model-only cells (P100+B100) | self (docker) | results/g2_rate_modelonly_s100/key_k101/*.md | resume: indi_project/docker/run.sh -n k101 -t 900 -- bash indi_flight/results/g2_rate_modelonly_s100/key_k101/run_key.sh |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
@@ -64,6 +38,5 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
   open per item: `sim_review.md` for simulator work, `module_parity.md` for stage 3/5, `test_review.md` for stage 3,
   `ident_review.md` for stage 4, `remetric.py`/`hover.py` for the errata.
-
 - Unmodelled in margins_models.py (T78 UNVERIFIED list): AlphaFilter coefficient formula, LPF2p coefficients from
   memory, gz/ESC latency 0, measured path = eta x motor state, yaw, attitude loop; 267 Hz analytic only.
