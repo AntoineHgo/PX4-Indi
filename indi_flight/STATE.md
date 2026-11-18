@@ -9,14 +9,14 @@
 History: JOURNAL.md (S101 entry holds the latest moves). Agent ledger: LEDGER.md. Lessons proposed:
 LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S103.
 Rule (RC64/RC74): inner loop time-boxed, 1 session per law change; no new anomaly chase unless a gate test fails.
-NEXT S104 (RC103 done S103; next route check S108). RC103 order: G5 POSCTL pre-test (v), G2 verdict note (iii), hook B.
+NEXT S105 (RC103 done S103; next route check S108). RC103 order: G5 POSCTL pre-test (v) DONE, G2 verdict note (iii) NEXT, hook B.
    (0) DONE S103: A-37 closed (DLY_ACT lag d+[0,1.25 ms), results/a37_actlag_s103). Hook B (GNSS, note s.4) after (v),(iii).
    (i) DONE S101 (b9d6cf3285): K101 12/12 agree, all 24 INDI v2 rate cells (measured + model-only) PASS.
    (ii) PID M1 reference rate cells (reference only, F-5; 800 Hz x3 axes, 1 seed is enough).
    (iii) linear-model cross-check for the v2 path (margins_models.py, T78 UNVERIFIED list below) -> G2 verdict note.
    (iv) delay hooks A1+A2 DONE S102 (c6ba02609f, keyed K102); hook B GNSS open.
-   (v) G5 POSCTL gap flown S103 (results/g5_posctl_s103): -0.09 m standing truth-z error -> A-38. FIRST in S104:
-       A-38 closing test from run/flight.ulg (nav_state, trajectory_setpoint z vs truth z), haiku, then decide.
+   (v) DONE S104: A-38 closed (est-sp 0.000 m after gap; -0.07 m is estimator truth-est offset present before
+       the event). G5 rows must report truth-sp and truth-est separately (lesson 3).
    (vi) attitude-break margin with the new setpoint path (G2) when the G2 table is resumed.
    Later: G5 build order (draft end), combined opus review of stage-3 safety diff + stage-5 slice before any freeze.
    Old: log a z-only active flag in indi_pos_status when next touching the module (P98 could not see it).
