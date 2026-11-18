@@ -34,7 +34,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    G3-G8 FINAL text in GATES.md + D-GATES-G3G8 (18af6e3a66). NEXT S95: combined opus review of stage-3 safety diff +
    stage-5 slice (~$1.1, launch first, cap >= $2.5). S96: sim hooks MISSING per design/gates_g3_g8_final_s94.md sec 1
    (shared sim-time delay line for loop delay + GNSS latency; G5 event injectors; per-run sampler g3_sample.py;
-   telemetry-drop seed per run), each with G1.5 check + second key. S97: yaw cell + first identification slice.
+   telemetry-drop seed per run), each with G1.5 check + second key. Delay line designed: design/delay_line_hook_s94.md
+   (check world step and GNSS path first). S97: yaw cell + first identification slice.
    M3 PT-change UNVERIFIED. Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36. Next route check S98.
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
