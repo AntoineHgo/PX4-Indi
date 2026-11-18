@@ -49,7 +49,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none in flight (S79) | | | |
+| T169 | S81 (launch 20261118-041210, cap $3): stick-path stub, brief design/brief_rc_stub_s80.md | sonnet | results/stage5_s81_stick/NOTES.md | if cut: read NOTES.md, relaunch remaining steps |
 (S72-S78 rows done, details in JOURNAL.md; A-34/A-35 rows and S76 D-RATE-BLD line are recorded.)
 
 ## Open problems
