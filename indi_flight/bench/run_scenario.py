@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from scenarios import SCENARIOS  # noqa: E402
 from model_variant import build_variant  # noqa: E402
 import provenance  # noqa: E402
+import stick_profile  # noqa: E402
 
 REPO = os.environ.get("PX4_INDI_REPO", os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 # ported to indi_flight/bench: inputs (scenarios, model_variant, disturbance, params) live next to this file, outputs
@@ -86,6 +87,10 @@ LOG_TOPICS = [
     "sim_schedule_applied",  # D-SCHED s24: row applied by sim_scenario_player (queue 8), only published with --sched
 ]
 TAKEOFF_ALT = 5.0
+# S81 --stick-mode: PX4 custom main modes of the HEARTBEAT (px4_custom_mode.h) and the run's stick parameters
+STICK_MAIN_MODE = {"altctl": 2, "posctl": 3, "acro": 5, "stabilized": 7}
+STICK_PARAMS = {"COM_RC_IN_MODE": 1, "COM_RCL_EXCEPT": 7, "MPC_Z_VEL_MAX_UP": stick_profile.VZ_MAX_UP,
+                "MPC_Z_VEL_MAX_DN": stick_profile.VZ_MAX_UP, "MAN_DEADZONE": 0}  # 1 = MAVLink only; no deadzone; stick expo 0.6 is hard-coded and inverted in stick_profile (it gave gain 0.3)
 ALT_KP, ALT_KD = 0.04, 0.10  # thrust per m / per m/s of altitude error in attitude/rate scenarios
 SETPOINT_PERIOD = 0.02  # sim seconds between offboard setpoints
 # G1.6 determinism (s12): arm and offboard happen at FIXED sim times, so same-seed runs fly the same time slice.
@@ -158,6 +163,9 @@ class Sim:
         self.wall0 = time.time()
         self.sends = []
         self.sends_pending = []  # blocking rows still waiting for their sim_time_after (next ATTITUDE)
+        self.sp_period = SETPOINT_PERIOD  # sim s between sp() calls
+        self.sp_grid = False  # --stick-mode: sp() on a fixed sim-time grid (see run), offboard paths unchanged
+        self.sticks = []  # S81 --stick-mode: applied MANUAL_CONTROL samples (sim time, raw fields), written to sticks.csv
 
     # ---------- sends log ----------
     SENDS_COLS = ("kind", "intended_sim_time_us", "sim_time_before_us", "sim_time_after_us", "wall_time_s",
@@ -437,7 +445,8 @@ class Sim:
                                    time.time() - self.wd_last_tick)
             if self.pump() and sp is not None and self.t >= next_sp:
                 sp()
-                next_sp = self.t + SETPOINT_PERIOD
+                # S82 stick mode: fixed sim-time grid (t + period landed on every 3rd ~15 ms ATTITUDE tick = 33 Hz)
+                next_sp = max(next_sp + self.sp_period, self.t) if self.sp_grid else self.t + self.sp_period
 
     def send_pos(self, pos, yaw):
         self.log_send("send_pos", f"x={pos[0]:.5g};y={pos[1]:.5g};z={pos[2]:.5g};yaw={yaw:.5g}")
@@ -465,6 +474,17 @@ class Sim:
         self.log_send("send_att", f"roll={roll:.5g};pitch={pitch:.5g};yaw={yaw:.5g};thrust={thrust:.5g}")
         self.mav.mav.set_attitude_target_send(int(self.t * 1e3), self.sysid, 1, 0b00000111,
                                               self.quat(roll, pitch, yaw), 0, 0, 0, thrust)
+
+    def send_stick(self, smp):
+        """S81: one MANUAL_CONTROL sample (x pitch, y roll, z throttle 0..1000, r yaw), logged as applied (sim time)."""
+        self.sticks.append((int(self.t * 1e6), smp["x"], smp["y"], smp["z"], smp["r"], smp["throttle"], smp["vz_up_demand"]))
+        self.mav.mav.manual_control_send(self.sysid, smp["x"], smp["y"], smp["z"], smp["r"], 0)
+
+    def write_sticks(self):
+        with open(os.path.join(self.out, "sticks.csv"), "w") as f:
+            f.write("t_sim_us,x,y,z,r,throttle_applied,vz_up_demand_mps\n")
+            for r in self.sticks:
+                f.write(",".join(f"{v:.6g}" if isinstance(v, float) else str(v) for v in r) + "\n")
 
     def send_rate(self, p, q, r, thrust):
         self.log_send("send_rate", f"p={p:.5g};q={q:.5g};r={r:.5g};thrust={thrust:.5g}")
@@ -617,6 +637,10 @@ def main():
                     help="logger starts with -f so the log covers the time before arm (--no-log-from-start: from arm)")
     ap.add_argument("--sched-anchor", action="store_true",
                     help="T53: with --sched, append an anchor on offboard (nav_state 14); the rows after it are offsets from it: two sp_hold rows 3 s and 6 s after it (hover) or the scenario rows starting 3 s after it (T55)")
+    ap.add_argument("--stick-mode", choices=sorted(STICK_MAIN_MODE), default=None,
+                    help="S81: fly a mode='stick' scenario in this manual mode: MANUAL_CONTROL streamed at 50 Hz sim time "
+                         "(COM_RC_IN_MODE 1), mode switched by MAV_CMD_DO_SET_MODE after the hover, schedule anchored on "
+                         "the observed main mode; sticks.csv in the run dir. Not combinable with --sched")
     ap.add_argument("--sched", action="store_true",
                     help="D-SCHED: arm, offboard switch and the setpoint stream are played by PX4 (sim_scenario_player, "
                          "schedule file in sim time) instead of being sent over MAVLink; position, attitude and trajectory scenarios (T55)")
@@ -639,6 +663,8 @@ def main():
     os.makedirs(a.out, exist_ok=True)
 
     sc = SCENARIOS[a.scenario]
+    if (a.stick_mode is not None) != (sc["mode"] == "stick") or (a.stick_mode and a.sched):
+        raise SystemExit("--stick-mode goes with a mode='stick' scenario and not with --sched")
     if a.sched and (sc["mode"] not in ("position", "attitude", "trajectory")
                     or any(k in sc for k in ("disturbance", "motor_fault", "erpm_loss", "thrust_sag"))):
         raise SystemExit("--sched supports position, attitude and trajectory scenarios without runner-side hooks "
@@ -712,7 +738,7 @@ def main():
         if sc.get("disturbance"):  # idle injector: loads the wrench system, waits for the onset trigger
             sim.spawn(["python3", os.path.join(os.path.dirname(os.path.abspath(__file__)), "disturbance.py"),
                        "--profile", sc["disturbance"], "--out", a.out, "--model", f"{a.model}_0"], "disturbance.stdout")
-        for k, v in {**BASE_PARAMS, **overlay}.items():
+        for k, v in {**BASE_PARAMS, **(STICK_PARAMS if a.stick_mode else {}), **overlay}.items():
             sim.set_param(k, v)
             meta["params_applied"][k] = v
         # logger reads SDLOG_PROFILE only at start: restart it so the full-rate profile takes effect
@@ -775,6 +801,12 @@ def main():
 
         # offboard: stream setpoints, then switch mode
         pos_sp = None if a.sched else (lambda: sim.send_pos(hold_pos, hold_yaw))  # noqa: E731
+        if a.stick_mode:  # S82: 50 Hz mean on a fixed sim-time grid (ATTITUDE ticks are ~15 ms apart)
+            sim.sp_grid = True
+            # S81: neutral sticks instead of the position stream (no offboard in this run)
+            pos_sp = lambda: sim.send_stick(stick_profile.neutral_sample(a.stick_mode, thr0))  # noqa: E731
+            meta["stick"] = {"mode": a.stick_mode, "main_mode": STICK_MAIN_MODE[a.stick_mode], "params": STICK_PARAMS,
+                             "hover_thr_used": thr0}
         sim.run(None, sp=pos_sp, until=lambda: sim.t >= T_OFFBOARD_S, wall_timeout=60 + 2 * PRESTREAM_S / a.speed,
                 what="pre_offboard_stream")
         meta["t_offboard_sent_s"] = sim.t
@@ -782,9 +814,11 @@ def main():
             meta["offboard_late_s"] = round(sim.t - T_OFFBOARD_S, 3)
         # stage 8: INDI POS replaces offboard and is reported as AUTO (4) / EXTERNALn (sub mode >= 11)
         indip = meta.get("boot_params", {}).get("MC_INDI_POS_EN") == 1
-        if not a.sched:  # with --sched the mode_offboard row of the schedule file switches the mode
+        if a.stick_mode:  # MAV_CMD_DO_SET_MODE, base mode custom, PX4 main mode, no sub mode
+            sim.cmd(176, 1, STICK_MAIN_MODE[a.stick_mode], 0)
+        elif not a.sched:  # with --sched the mode_offboard row of the schedule file switches the mode
             sim.cmd(176, 1, 6)
-        sim.run(None, sp=pos_sp, until=lambda: sim.main_mode == 6 or (indip and sim.main_mode == 4 and (sim.sub_mode or 0) >= 11),
+        sim.run(None, sp=pos_sp, until=lambda: (sim.main_mode == STICK_MAIN_MODE[a.stick_mode]) if a.stick_mode else (sim.main_mode == 6 or (indip and sim.main_mode == 4 and (sim.sub_mode or 0) >= 11)),
                 wall_timeout=30, what="offboard_engage")
         meta["t_offboard_us"] = int(sim.t * 1e6)
         meta["offboard_custom_mode"] = [sim.main_mode, sim.sub_mode]
@@ -854,7 +888,7 @@ def main():
                 if len(fmotors) > 1:
                     meta["motor_fault"]["applied_all"] = {str(m): v for m, v in new_all.items()}
             ev = {"name": name, "t_us": int(seg_now() * 1e6), "dur_s": dur, "mode": mode, "axis": axis,
-                  "value": val, "prev": prev, "step": name != "settle" and mode not in ("position", "trajectory")}
+                  "value": val, "prev": prev, "step": name != "settle" and mode not in ("position", "trajectory", "stick")}
             meta["events"].append(ev)
             r = val if axis in ("roll", "rollpitch") else 0.0
             p = val if axis in ("pitch", "rollpitch") else 0.0
@@ -869,6 +903,14 @@ def main():
                     sim.send_pva([hold_pos[i] + p[i] for i in range(3)], v, acc, hold_yaw)
             elif mode in ("position", "trajectory"):
                 sp = pos_sp
+            elif mode == "stick":  # S81: the stick sample of the profile at the segment time, neutral outside "stick"
+                if name == "stick":
+                    t_seg0, st = sim.t, sc["traj"]
+                    meta["stick"].update({"t0_us": int(t_seg0 * 1e6), "dur_s": dur, "traj": st})
+                    sp = (lambda t_seg0=t_seg0, st=st: sim.send_stick(stick_profile.stick_sample(
+                        lambda tt: traj_pva(st, tt), sim.t - t_seg0, a.stick_mode, hover_thr=thr0)))
+                else:
+                    sp = pos_sp
             elif mode == "attitude":
                 rr, pp = math.radians(r), math.radians(p)
                 tilt = max(0.3, math.cos(rr) * math.cos(pp))
@@ -893,7 +935,8 @@ def main():
         # ---- land ----
         sim.wd_on = False
         sim.cmd(21, 0, 0, 0, float("nan"), float("nan"), float("nan"), 0)
-        sim.run(None, until=lambda: not sim.armed, wall_timeout=120 + 120 / a.speed, what="land")
+        sim.run(None, sp=pos_sp if a.stick_mode else None, until=lambda: not sim.armed,
+                wall_timeout=120 + 120 / a.speed, what="land")
         sim.run(2.0, what="post_disarm")
         ok = True
     except Exception as e:  # noqa: BLE001
@@ -913,6 +956,9 @@ def main():
         else:
             ok = False
             meta["error"] = (meta["error"] or "") + " | no ulog"
+        if sim.sticks:
+            sim.write_sticks()
+            meta["sticks_csv"] = "sticks.csv"
         meta["wall_time_s"] = round(time.time() - t_wall0, 1)
         meta["exit_status"] = "ok" if ok else "failed"
         json.dump(meta, open(os.path.join(a.out, "run.json"), "w"), indent=1)

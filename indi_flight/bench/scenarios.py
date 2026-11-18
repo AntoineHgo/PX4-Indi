@@ -155,6 +155,11 @@ _V_PLANT = {
 for _k, _plant in _V_PLANT.items():
     SCENARIOS[f"v2_{_k}_att"] = {**_ATT, **_plant}
     SCENARIOS[f"v2_{_k}_rate"] = {**_RATE, **_plant}
+# S81 manual-mode stick scenarios (run_scenario.py --stick-mode): the throttle stick follows the vertical velocity of
+# ZSINE_O6 (altctl / posctl: vertical-velocity demand; stabilized / acro: thrust about hover), then a hold segment.
+# Segment times are from the observed main mode. No --sched (runner streams MANUAL_CONTROL).
+SCENARIOS["stick_zsine_o6"] = dict(mode="stick", axis=None, traj=ZSINE_O6,
+                                   segments=[("settle", 3.0, 0.0), ("stick", _traj_dur(ZSINE_O6), 0.0), ("hold", 3.0, 0.0)])
 SCENARIOS["v2_drop_att"]["erpm_loss"] = dict(motor=0, start="up", end="zero1")              # 3 s on motor 0
 SCENARIOS["v2_drop_rate"]["erpm_loss"] = dict(motor=0, start="pulse1_up", end="pulse1_down")  # 2.25 s
 _VIB3 = dict(sim_params=dict(SIM_GZ_VIB_ACC=3.0, SIM_GZ_VIB_GYR=0.15))           # V5 vibration x3
