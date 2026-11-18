@@ -223,3 +223,36 @@ S83 (also DLY 20, NP 5) fit, check `meta` before the flight or use NP 4.
    a shared uORB definition; confirm it is acceptable under O-11 (msg is not in the frozen module list).
 7. Amplitude default depends on `MC_*RATE_MAX` and the real airframe saturation margins; confirm in the pre-test with the
    fraction of saturated motors in `actuator_motors`.
+
+## 8. S90 amendments (T185)
+
+Resolves review `attitude_break_s86_review.md`. Implementation: `src/modules/mc_indi_rate_control/IndiInjectionStep.{hpp,cpp}`
+(the step `runIndiRateControl` runs: law call + injection), tests `IndiInjectionStepTest.cpp`, check `bench/attitude_break_check.py`.
+
+- MAJOR 1 (call-site test), accepted. The application of d and the `_indi.update` call were extracted into
+  `runIndiInjectionStep()`; `runIndiRateControl` calls only that, so the test runs the module's code with the real
+  `IndiRateControl`. `RateSetpointBreakFeedsLawTheInjectedSetpoint` compares, cycle by cycle and bit-exact, the law output and
+  its lead state `rate_sp_dot` against a second law fed `y + d` by hand, and requires that a law fed `y` would differ (test can
+  tell). Replaces the tautological "lib-level" test of section 6 (dropped). Break-it-once results in `t190_impl_log.md`.
+- MAJOR 2 (independent check), accepted. Replaces the circular `x - y - d` check (kept as an informative line only):
+  `attitude_break_check.py` (a) one-step prediction of the logged `rate_sp_dot` from the logged x with the library filter,
+  alpha = dt/(Tc+dt), Tc = `kSetpointLeadTc` = 0.01 s, clamp `kMaxRateSpDot` = 1000 rad/s^2 (constants read in
+  `indi_rate_control.hpp:279,283`, `.cpp:399-404`), relative rms error <= 2 %; (b) power of `torque_sp_pre_inject` at the excited
+  bins k/Tp >= 4x the median power at the unexcited integer bins of the band. Yaw: (a) is SKIPPED (the law differentiates
+  the yaw-LPF'd setpoint); use (b) and a yaw-specific check later.
+- MINOR accepted: gate d = 0 unless `flag_control_attitude_enabled` (so not in ACRO) and `!rate_sp_stale`, and while the law
+  reports `fault` from the previous cycle (d is needed before the update, so the same-cycle fault cannot be used).
+- MINOR accepted: with PT = 1 `MC_INDI_INJ_AMP` is ignored (amplitude = `MC_INDI_INJ_RAMP`); the amplitude actually used is
+  visible in the logged `rates_sp_inject`. Torque injection is off at PT = 1 (u == c).
+- MINOR accepted: the three new fields are zero unless PT = 1 and AX != 0 (AX = 0 logs unchanged apart from three zero fields).
+- MINOR accepted: scenario `hover_xlong` (150 s, `scenarios.py:67`) instead of `hover_long`. Window arithmetic: DLY 20 s +
+  NP x Tp must fit in 150 s minus a tail: NP 5 x Tp 10 = 50 s ends at 70 s, leaving 80 s; the earlier "70 s vs 60 s" overrun
+  was against the 60 s scenario and does not apply. The window arrives after take-off settling, which is part of the 150 s
+  scenario (UNVERIFIED how long the scenario spends in take-off before `hold`: read `meta` of the first flight).
+- MINOR accepted (wording): the y check against `vehicle_rates_setpoint` is flagged by the non-finite substitution case
+  (`rates(i)` stored instead of NaN); document in the validity list, and state the profile interval of the second source.
+- MINOR accepted (wording): section 5 factor A is not L/(1+L); it carries (K + lead) Pn.
+- MINOR not acted on here (out of scope for this change, no code): ZOH staircase of y in the lead (model item for section 5);
+  PID reference through the stock autotune hook (model-only cell stays); outer-loop closure and gate wording (open question 2);
+  msg size/drop check, which is a first-flight item.
+- Pre-test fix: use `--scenario hover_xlong` and the params of section 6 with `MC_INDI_INJ_PT 1`.
