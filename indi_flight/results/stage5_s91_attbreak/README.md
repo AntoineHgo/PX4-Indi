@@ -19,3 +19,20 @@ bins (0.2, 0.3 Hz; |L| 14-20 dB, far from crossover): up to 2.0 dB / 12.9 deg, c
 (low SNR against hover disturbances; 0.97 at RAMP 0.06). Pre-test verdict: PASS for RAMP 0.06 (cells use 0.06);
 the 0.2-0.3 Hz bins do not affect PM/GM.
 Delay margin (PM / (360 f_c)): 0.119 s. Unverified: gate restart on a PT change in flight (M3 of T191).
+
+## Cells (batch.sh, serial, RAMP 0.06, seed 1)
+
+| axis | rate Hz | PM deg | GM dB | f_c Hz | delay margin s | min coh (decade of f_c, bins >= 0.2 Hz) | check | holes |
+|---|---|---|---|---|---|---|---|---|
+| roll | 400 | 56.6 | 22.0 | 1.318 | 0.119 | 0.966 | PASS | PASS |
+| pitch | 400 | 56.8 | 22.1 | 1.332 | 0.119 | 0.902 | PASS | PASS |
+| yaw | 400 | 73.4 | 34.3 | 0.455 | 0.448 | 1.000 | PASS (rate_sp_dot SKIP on yaw) | PASS |
+| roll | 800 | 57.3 | 21.9 | 1.319 | 0.121 | 0.880 | PASS | PASS |
+| pitch | 800 | 58.1 | 21.9 | 1.311 | 0.123 | 0.931 | PASS | PASS |
+| yaw | 800 | 73.8 | 33.9 | 0.454 | 0.452 | 1.000 | PASS (rate_sp_dot SKIP on yaw) | PASS |
+
+All six cells are above the G2 thresholds (GM >= 6 dB, PM >= 45 deg, delay margin >= 2 periods + telemetry latency,
+i.e. a few ms). All windows are 50.0 s and max |x-y-d| is 3e-8. Limits: the attitude loop is measured with the
+outer loops closed (open question 2 of design/attitude_break_s86.md); there is no linear-model cross-check yet
+(note sec 5); no PID reference at this break (note sec 4); 250 Hz not flown; one seed. Roll at 800 Hz has
+coherence 0.88 < 0.9 at the lowest bins of the decade, which are far from crossover.
