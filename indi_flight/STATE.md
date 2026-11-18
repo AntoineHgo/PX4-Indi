@@ -55,7 +55,11 @@ Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a inject
 |---|---|---|---|---|
 | S124 | DONE fit pos0/pos1: G1_R 1748 (-0.5 %), F ~4600 (bf16a6b2f0, 8d79294d24) | sonnet | results/ident_m3a_s123/fit_s124.md | - |
 | S124 | DONE flights G1 x0.5/x2 + fit: 1742/1756 (bde2b92983) | bash bg | fit_s124.md sec "start independence" | - |
-| S124 | K124 key of ident_fit.py | sonnet | design/key_k124_ident_fit.md | re-brief |
+| S124 | K124 key DONE: 3 BLOCKING 6 MAJOR (b06711379f) | sonnet | design/key_k124_ident_fit.md | - |
+| S124 | DONE fix K124 BLOCKING 1-3 + MAJOR 5,6 (10 tests, broken-checked) | sonnet | design/fix_k124_s124.md | - |
+S124 re-fit after fix (gated, all PASS): roll 1768/1767 (x1), 1755 (x0.5), 1765 (x2); pitch 1649; within 0.6 % of
+  derived, spread 0.8 %. FIX UNKEYED: S125 re-key (fix file vs key file). Open: J/df ~15 on real logs unexplained
+  (J gate weak), MAJOR 7-9 + MINORs open, esc_status valid flag unused.
 S124 RESULT (roll only, UNKEYED until K124): D-IDENT (i) spread 0.8 %, all within 0.8 % of 1757; (ii) F 902-27091,
   CI +-0.1 %. Trend 1742->1756 with start > CI (J significant): CI not the whole error budget. Flights NOT at halved
   gains (ident config says halved). Pitch x1: 1634 (-0.4 %, 1ed8d935ed). Yaw 103 vs 205 INVALID: fit omits G2_Y du/dt.
