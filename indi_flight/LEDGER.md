@@ -69,3 +69,6 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | T167 | S78 | sonnet | second key of the lead model: no BLOCKING, 2 MINOR (test Tc fixed), 4 calls, ~$0.15 | results/stage3_s78_a34/second_key.md |
 | 79 | T168 | sonnet | route check 79 | done, 5 calls, ~$0.2, acted on (default committed, A-34/A-35 parked) |
 | T170 | S82 | sonnet | outer-loop break injector (38 tool calls, ~97k tokens, ~$0.4) | results/stage5_s82_velbreak/NOTES.md | done, committed |
+| T171 | S83 | sonnet | injector second key, AGREE WITH MINOR, 13 calls | results/stage5_s82_velbreak/second_key.md |
+| T172 | S83 | haiku | stick stub second key, DISAGREE (valid), 13 calls | results/stage5_s81_stick/second_key.md |
+| T173 | S83 | sonnet | injector minors + pinj_csv self-test, 24 calls, ~$0.25 | results/stage5_s83_velbreak/minors_fix.md |

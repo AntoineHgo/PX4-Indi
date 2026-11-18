@@ -707,3 +707,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S80 (2026-11-18): pending run metrics committed (194109b460); RC/manual stick-path stub briefed (design/brief_rc_stub_s80.md), not launched (cap $1.05).
 - S82 (2026-11-18): T169 stick-path stub finished by orchestrator: expo inverted, 50 Hz grid pacing; altctl/posctl flown PID and INDI (results/stage5_s81_stick/README.md). T170 outer-loop accel-break injector launched (design/brief_velbreak_s82.md).
 - S82: T170 outer-loop break injector (D-G2-PINJ) committed; z pre-test PM 54.4 deg at 0.60 Hz (results/stage5_s82_velbreak/README.md).
+- S83 (20261118-043259): T171 injector second key AGREE WITH MINOR; T173 minors fixed (a38533428f, 907f57510d); velbreak re-fly DLY 20 NP 5: z PM 57.3 deg tb 1.0, 59.1 deg tb 0.33, D-GAP velocity-break overturn not met (cdc5f03713); T172 stick second key DISAGREE (3 rows at 33 Hz before grid pacing, README overclaim), 4 rows re-flown in results/stage5_s83_stick.

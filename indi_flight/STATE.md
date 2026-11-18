@@ -53,6 +53,11 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    NEXT S83 (cheap first): (1) haiku second keys: stick stub (to brief_rc_stub_s80.md) and injector (to
    brief_velbreak_s82.md); (2) re-fly velbreak with DLY >= 15 s / NP 5 at tb 1.0 and tb/3 (D-GAP overturn test);
    (3) G5 stick metric vs vehicle_local_position_setpoint; then (e) or PVA slice.
+   S83 (launch 20261118-043259, cap $3): injector second key AGREE WITH MINOR, minors fixed (a38533428f fw,
+   907f57510d pinj_csv self-test); velbreak re-fly z PM 57.3 (tb 1.0) / 59.1 deg (tb 0.33): D-GAP PM overturn NOT
+   met (cdc5f03713); stick second key DISAGREE (33 Hz rows pre-grid, README overclaim) -> 4 rows re-flown (B83b).
+   NEXT S84: route check 84 (due); then the stage-OUTPUT accel-loop break (G2 + D-GAP HF-mode half), G5 stick metric
+   vs vehicle_local_position_setpoint, then (e) combined opus review.
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
 | id | task | agent | output | resume |
