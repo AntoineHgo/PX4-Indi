@@ -1,0 +1,149 @@
+{
+ "scenario": "hover",
+ "controller": "pid_default",
+ "seed": 1,
+ "speed": 4.0,
+ "warnings": [],
+ "window": {
+  "start_s": 55.015,
+  "end_s": 85.015,
+  "duration_s": 30.0,
+  "offboard_span_s": [
+   52.015,
+   102.55499999999999
+  ],
+  "start_source": "ulog_nav_state+3.0",
+  "runjson_start_s": 55.738,
+  "ulog_anchor_s": 52.015
+ },
+ "stamps": {
+  "vehicle_angular_velocity": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_rates_setpoint": {
+   "stamp": "timestamp",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "actuator_motors": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "sim_ground_truth": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_attitude": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_attitude_setpoint": {
+   "stamp": "timestamp",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  }
+ },
+ "rate_tracking": {
+  "roll_rms_rad_s": 0.0006839203476192099,
+  "pitch_rms_rad_s": 0.0007979957230851895,
+  "yaw_rms_rad_s": 0.00017501458825509112,
+  "source": "sim_ground_truth"
+ },
+ "rate_tracking_estimate": {
+  "roll_rms_rad_s": 0.0008419650833908778,
+  "pitch_rms_rad_s": 0.0009477060473583674,
+  "yaw_rms_rad_s": 0.0003356721206580404,
+  "source": "vehicle_angular_velocity"
+ },
+ "attitude_tracking": {
+  "rotation_angle_rms_deg": 0.6735137042980809,
+  "roll_rms_deg": 0.04352293935979686,
+  "pitch_rms_deg": 0.04471176686923289,
+  "yaw_rms_deg": 0.7542712959413137,
+  "source": "sim_ground_truth"
+ },
+ "attitude_tracking_estimate": {
+  "rotation_angle_rms_deg": 0.04972730825774084,
+  "roll_rms_deg": 0.03943223184672846,
+  "pitch_rms_deg": 0.04099610297087476,
+  "yaw_rms_deg": 0.014074418917060374,
+  "source": "vehicle_attitude"
+ },
+ "rate_estimator_error": {
+  "roll_rms_rad_s": 0.0003376571803738593,
+  "pitch_rms_rad_s": 0.00033458784593106593,
+  "yaw_rms_rad_s": 0.00030777710781928905,
+  "roll_mean_rad_s": 5.953447013221214e-06,
+  "pitch_mean_rad_s": 5.452007454466018e-05,
+  "yaw_mean_rad_s": 6.202083651455907e-05,
+  "n": 23996,
+  "definition": "truth - vehicle_angular_velocity, FRD [rad/s]"
+ },
+ "attitude_estimator_error": {
+  "rotation_angle_rms_deg": 0.7560731663154915,
+  "n": 8001,
+  "roll_rms_deg": 0.011682602803519813,
+  "roll_mean_deg": -0.001843492951137278,
+  "pitch_rms_deg": 0.010809921129245757,
+  "pitch_mean_deg": -0.0050870616755427965,
+  "yaw_rms_deg": 0.7564402600317848,
+  "yaw_mean_deg": -0.7548175876791987,
+  "definition": "truth - vehicle_attitude, euler diff [deg], rotation angle [deg]"
+ },
+ "steps": [],
+ "position": {
+  "ref_ned": [
+   0.016951479017734528,
+   -1.2101497304684017e-05,
+   -5.076904296875
+  ],
+  "rms_3d_m": 0.026917264944988313,
+  "rms_horizontal_m": 0.025785759144195532,
+  "rms_vertical_m": 0.00772229096039123,
+  "max_dev_3d_m": 0.046598076820373535,
+  "max_dev_horizontal_m": 0.04649399220943451,
+  "max_dev_vertical_m": 0.022491455078125
+ },
+ "truth_source": "sim_ground_truth",
+ "effort": {
+  "n_motors": 4,
+  "motor_rate_rms_per_s": 0.0036161493666600694,
+  "motor_rate_rms_per_s_raw": 0.007987980206163921,
+  "motor_rate_rms_per_s_per_motor": [
+   0.0036552931957080444,
+   0.0036458145006654672,
+   0.0035425309913927373,
+   0.0036209587788740287
+  ],
+  "motor_rate_bandwidth": {
+   "status": "ok",
+   "grid_hz": 400.0,
+   "lowpass_hz": 50.0,
+   "rms_per_s": 0.0036161493666600694,
+   "per_motor_rms_per_s": [
+    0.0036552931957080444,
+    0.0036458145006654672,
+    0.0035425309913927373,
+    0.0036209587788740287
+   ],
+   "logged_rate_hz": 799.8333333333334,
+   "gap_time_frac": 0.0,
+   "n_grid": 12000
+  },
+  "motor_spread_mean_abs": 2.4931194275268354e-05,
+  "motor_mean": 0.1366632580757141,
+  "saturation_frac_motors": 0.0,
+  "saturation_frac_high": 0.0,
+  "saturation_frac_low": 0.0
+ },
+ "allocator": {
+  "n_samples": 5996,
+  "frac_any_actuator_saturation": 0.0,
+  "frac_torque_not_achieved": 0.0
+ }
+}

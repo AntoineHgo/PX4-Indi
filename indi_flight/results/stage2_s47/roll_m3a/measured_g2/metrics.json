@@ -1,0 +1,149 @@
+{
+ "scenario": "hover_long",
+ "controller": "indi_m3a",
+ "seed": 1,
+ "speed": 4.0,
+ "warnings": [],
+ "window": {
+  "start_s": 55.0325,
+  "end_s": 115.0325,
+  "duration_s": 60.0,
+  "offboard_span_s": [
+   52.0325,
+   131.915
+  ],
+  "start_source": "ulog_nav_state+3.0",
+  "runjson_start_s": 55.120999999999995,
+  "ulog_anchor_s": 52.0325
+ },
+ "stamps": {
+  "vehicle_angular_velocity": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_rates_setpoint": {
+   "stamp": "timestamp",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "actuator_motors": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "sim_ground_truth": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_attitude": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_attitude_setpoint": {
+   "stamp": "timestamp",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  }
+ },
+ "rate_tracking": {
+  "roll_rms_rad_s": 0.00364922417100395,
+  "pitch_rms_rad_s": 0.0037750022845761326,
+  "yaw_rms_rad_s": 0.0507455573761369,
+  "source": "sim_ground_truth"
+ },
+ "rate_tracking_estimate": {
+  "roll_rms_rad_s": 0.0038155298496380776,
+  "pitch_rms_rad_s": 0.00394559584178736,
+  "yaw_rms_rad_s": 0.050826692569845844,
+  "source": "vehicle_angular_velocity"
+ },
+ "attitude_tracking": {
+  "rotation_angle_rms_deg": 1.0108707784591175,
+  "roll_rms_deg": 0.05683887885587892,
+  "pitch_rms_deg": 0.054383339576420275,
+  "yaw_rms_deg": 1.0076193632271957,
+  "source": "sim_ground_truth"
+ },
+ "attitude_tracking_estimate": {
+  "rotation_angle_rms_deg": 0.9282766365830691,
+  "roll_rms_deg": 0.051817138651627834,
+  "pitch_rms_deg": 0.04766586621801074,
+  "yaw_rms_deg": 0.9256110091465958,
+  "source": "vehicle_attitude"
+ },
+ "rate_estimator_error": {
+  "roll_rms_rad_s": 0.00041386700017563923,
+  "pitch_rms_rad_s": 0.0004206578974927452,
+  "yaw_rms_rad_s": 0.00034686651608381564,
+  "roll_mean_rad_s": 2.025180405054174e-07,
+  "pitch_mean_rad_s": 4.990100889328687e-05,
+  "yaw_mean_rad_s": 3.595698975642399e-05,
+  "n": 47951,
+  "definition": "truth - vehicle_angular_velocity, FRD [rad/s]"
+ },
+ "attitude_estimator_error": {
+  "rotation_angle_rms_deg": 0.2852474065735546,
+  "n": 15996,
+  "roll_rms_deg": 0.015451918382892863,
+  "roll_mean_deg": -0.009422786315383763,
+  "pitch_rms_deg": 0.020303135872042112,
+  "pitch_mean_deg": -0.017088221246494503,
+  "yaw_rms_deg": 0.2841097722458894,
+  "yaw_mean_deg": -0.23883631042143702,
+  "definition": "truth - vehicle_attitude, euler diff [deg], rotation angle [deg]"
+ },
+ "steps": [],
+ "position": {
+  "ref_ned": [
+   -0.02270837500691414,
+   0.002707574050873518,
+   -4.957122802734375
+  ],
+  "rms_3d_m": 0.020983213238047124,
+  "rms_horizontal_m": 0.019500811406940478,
+  "rms_vertical_m": 0.007746843988590332,
+  "max_dev_3d_m": 0.051407624036073685,
+  "max_dev_horizontal_m": 0.05139947310090065,
+  "max_dev_vertical_m": 0.020904541015625
+ },
+ "truth_source": "sim_ground_truth",
+ "effort": {
+  "n_motors": 4,
+  "motor_rate_rms_per_s": 0.0033125798240146924,
+  "motor_rate_rms_per_s_raw": 0.005681494548671122,
+  "motor_rate_rms_per_s_per_motor": [
+   0.0032383244062022206,
+   0.003251446269928805,
+   0.0033850702820006897,
+   0.0033754783379270543
+  ],
+  "motor_rate_bandwidth": {
+   "status": "ok",
+   "grid_hz": 400.0,
+   "lowpass_hz": 50.0,
+   "rms_per_s": 0.0033125798240146924,
+   "per_motor_rms_per_s": [
+    0.0032383244062022206,
+    0.003251446269928805,
+    0.0033850702820006897,
+    0.0033754783379270543
+   ],
+   "logged_rate_hz": 799.25,
+   "gap_time_frac": 0.0,
+   "n_grid": 24000
+  },
+  "motor_spread_mean_abs": 0.00011847908172057942,
+  "motor_mean": 0.13667064905166626,
+  "saturation_frac_motors": 0.0,
+  "saturation_frac_high": 0.0,
+  "saturation_frac_low": 0.0
+ },
+ "allocator": {
+  "n_samples": 11707,
+  "frac_any_actuator_saturation": 0.0,
+  "frac_torque_not_achieved": 0.0
+ }
+}

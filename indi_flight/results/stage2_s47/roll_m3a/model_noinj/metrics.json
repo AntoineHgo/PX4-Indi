@@ -1,0 +1,149 @@
+{
+ "scenario": "hover_long",
+ "controller": "indi_m3a",
+ "seed": 1,
+ "speed": 4.0,
+ "warnings": [],
+ "window": {
+  "start_s": 55.0225,
+  "end_s": 115.0315,
+  "duration_s": 60.009,
+  "offboard_span_s": [
+   52.0225,
+   133.84375
+  ],
+  "start_source": "ulog_nav_state+3.0",
+  "runjson_start_s": 55.916,
+  "ulog_anchor_s": 52.0225
+ },
+ "stamps": {
+  "vehicle_angular_velocity": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_rates_setpoint": {
+   "stamp": "timestamp",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "actuator_motors": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "sim_ground_truth": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_attitude": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_attitude_setpoint": {
+   "stamp": "timestamp",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  }
+ },
+ "rate_tracking": {
+  "roll_rms_rad_s": 0.026436606961874963,
+  "pitch_rms_rad_s": 0.02449708080808435,
+  "yaw_rms_rad_s": 0.5143722653628824,
+  "source": "sim_ground_truth"
+ },
+ "rate_tracking_estimate": {
+  "roll_rms_rad_s": 0.027025607353345478,
+  "pitch_rms_rad_s": 0.025107763764933108,
+  "yaw_rms_rad_s": 0.356527420743023,
+  "source": "vehicle_angular_velocity"
+ },
+ "attitude_tracking": {
+  "rotation_angle_rms_deg": 0.9938436629839119,
+  "roll_rms_deg": 0.05578246691533556,
+  "pitch_rms_deg": 0.048000253865758874,
+  "yaw_rms_deg": 0.9906085738016689,
+  "source": "sim_ground_truth"
+ },
+ "attitude_tracking_estimate": {
+  "rotation_angle_rms_deg": 0.20568928753862642,
+  "roll_rms_deg": 0.05205239072801028,
+  "pitch_rms_deg": 0.044759189333597266,
+  "yaw_rms_deg": 0.19389475318569102,
+  "source": "vehicle_attitude"
+ },
+ "rate_estimator_error": {
+  "roll_rms_rad_s": 0.015908662574161035,
+  "pitch_rms_rad_s": 0.014817123035428486,
+  "yaw_rms_rad_s": 0.6393659379885788,
+  "roll_mean_rad_s": -2.992610064352388e-06,
+  "pitch_mean_rad_s": 5.204572275792717e-05,
+  "yaw_mean_rad_s": 5.69538755447182e-05,
+  "n": 48001,
+  "definition": "truth - vehicle_angular_velocity, FRD [rad/s]"
+ },
+ "attitude_estimator_error": {
+  "rotation_angle_rms_deg": 0.9631001135476562,
+  "n": 16003,
+  "roll_rms_deg": 0.013069777289883918,
+  "roll_mean_deg": -0.004586589803801156,
+  "pitch_rms_deg": 0.011255472599184657,
+  "pitch_mean_deg": 0.00272897080479782,
+  "yaw_rms_deg": 0.962954509647767,
+  "yaw_mean_deg": -0.9553757882003077,
+  "definition": "truth - vehicle_attitude, euler diff [deg], rotation angle [deg]"
+ },
+ "steps": [],
+ "position": {
+  "ref_ned": [
+   -0.021171197295188904,
+   -0.009773394092917442,
+   -5.150909423828125
+  ],
+  "rms_3d_m": 0.10663644911857721,
+  "rms_horizontal_m": 0.02076581404995422,
+  "rms_vertical_m": 0.10459499689581472,
+  "max_dev_3d_m": 0.3718755543231964,
+  "max_dev_horizontal_m": 0.045408945530653,
+  "max_dev_vertical_m": 0.37127685546875
+ },
+ "truth_source": "sim_ground_truth",
+ "effort": {
+  "n_motors": 4,
+  "motor_rate_rms_per_s": 26.62550335601788,
+  "motor_rate_rms_per_s_raw": 43.07662893407283,
+  "motor_rate_rms_per_s_per_motor": [
+   26.624006209900024,
+   26.627246523173394,
+   26.624717625580235,
+   26.62604306541788
+  ],
+  "motor_rate_bandwidth": {
+   "status": "ok",
+   "grid_hz": 400.0,
+   "lowpass_hz": 50.0,
+   "rms_per_s": 26.62550335601788,
+   "per_motor_rms_per_s": [
+    26.624006209900024,
+    26.627246523173394,
+    26.624717625580235,
+    26.62604306541788
+   ],
+   "logged_rate_hz": 799.8666861082759,
+   "gap_time_frac": 4.166041760304093e-06,
+   "n_grid": 24004
+  },
+  "motor_spread_mean_abs": 0.13558296859264374,
+  "motor_mean": 0.1892605721950531,
+  "saturation_frac_motors": 0.4854375,
+  "saturation_frac_high": 0.0,
+  "saturation_frac_low": 0.4854375
+ },
+ "allocator": {
+  "n_samples": 11751,
+  "frac_any_actuator_saturation": 0.4514509403455025,
+  "frac_torque_not_achieved": 0.44898306527104076
+ }
+}
