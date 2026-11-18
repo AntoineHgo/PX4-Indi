@@ -11,9 +11,15 @@ Classes (a gap = interval between consecutive samples > 1.5 x the topic's own me
               outer-loop topic (vehicle_local_position_setpoint) that no sim hole overlaps.
 Nominal rate = the topic's median period (no hardcoded 800 Hz). Missing samples per gap = round(dt / median) - 1 minus the duplicate stamps (publish jitter) next to it, one per period; fraction =
 missing / (missing + logged samples) over the analysed span. Max single hole = largest gap dt in ms.
-Limits (G1.1): missing fraction sim <= 0.05 %, controller and logger <= 0.1 %; single hole <= 10 ms.
+Limits (G1.1): missing fraction sim <= 0.05 %, controller and logger <= 0.1 %; single hole excess over the topic's nominal period <= 10 ms (S88, see below).
 Logger fraction = sum(dropout durations) / analysed span. The sim fraction uses the primary sim topic (first present of
 sim_ground_truth, sensor_gyro); the class verdict is the worst over its topics.
+S88 max-hole rule (T186): the single-hole check runs on the RAW timestamp gaps of each topic, before any duplicate-stamp
+cancelling or merging, so a gap whose missing count a duplicate absorbed (e.g. k = 2 next to a dup) is still seen. It is per
+topic and an EXCESS over that topic's nominal period (median of raw dt): a gap is a hole if (dt - median) > 10 ms
+(LIM_HOLE_MS, the former flat limit, now applied as the excess limit). Reported max hole = largest raw dt (max_hole_ms) and
+largest excess (max_excess_ms); the verdict uses the excess. Raw gaps are still excluded when a logger dropout explains them.
+The count check (missing fraction, count cross-check) is unchanged.
 Duplicate stamps (dt == 0 within 8 samples of a one-sample gap) are publisher jitter and cancel that gap. *_groundtruth
 topics logged below the step rate are reported as class sim-info and excluded from the verdict when sim_ground_truth exists.
 """
@@ -65,6 +71,17 @@ def find_gaps(ts, t_min):
     return keep, med, int(ts.size)
 
 
+def raw_gaps(ts, t_min):
+    """Raw gaps (t_start, dt) with dt > GAP_FACTOR x median, from the sorted timestamps with NO duplicate cancelling."""
+    ts = np.sort(np.asarray(ts, dtype=np.int64))
+    ts = ts[ts >= t_min]
+    if ts.size < 3:
+        return []
+    dt = np.diff(ts)
+    med = float(np.median(dt))
+    return [(int(ts[i]), int(dt[i])) for i in np.flatnonzero(dt > GAP_FACTOR * med).tolist()]
+
+
 def count_missing(ts, t_min):
     """Count-based missing samples: round(span / median) + 1 - n (all samples >= t_min, duplicate stamps counted as samples,
     because a publisher-jitter duplicate replaces a stamp without losing a sample). Independent of the gap/dup-cancel logic."""
@@ -80,15 +97,16 @@ def _overlaps(t, dt, intervals, pad):
     return any(t - pad <= hi and t + dt + pad >= lo for lo, hi in intervals)
 
 
-def _stats(gaps, med, n, span_us, cls, hold_gaps=None):
-    """hold_gaps: gaps whose max dt is held to the 10 ms limit (default = gaps). Controller passes every non-logger gap here
-    so a controller hole attributed to a sim hole still has to meet the limit."""
+def _stats(gaps, med, n, span_us, cls, raw):
+    """raw: raw (t, dt) gaps held to the limit (not logger-explained; controller keeps those a sim hole explains too).
+    A hole = (dt - median) > LIM_HOLE_MS, independent of the duplicate-cancelled `gaps` used for the count."""
     missing = sum(m for _, _, m in gaps)
     frac = missing / (missing + n) if n else float("nan")
-    mx = max((dt for _, dt, _ in (gaps if hold_gaps is None else hold_gaps)), default=0.0) / 1000.0
-    ok = cls == "sim-info" or (frac <= LIM_FRAC[cls] and mx <= LIM_HOLE_MS)
+    mx = max((dt for _, dt in raw), default=0.0) / 1000.0
+    exc = max((dt - med for _, dt in raw), default=0.0) / 1000.0
+    ok = cls == "sim-info" or (frac <= LIM_FRAC[cls] and exc <= LIM_HOLE_MS)
     return {"class": cls, "count": len(gaps), "missing": missing, "samples": n, "median_ms": med / 1000.0,
-            "rate_hz": 1e6 / med, "missing_frac": frac, "max_hole_ms": mx, "pass": bool(ok)}
+            "rate_hz": 1e6 / med, "missing_frac": frac, "max_hole_ms": mx, "max_excess_ms": max(exc, 0.0), "pass": bool(ok)}
 
 
 def analyse(topics, t_start, t_end, dropouts=()):
@@ -108,7 +126,8 @@ def analyse(topics, t_start, t_end, dropouts=()):
                 continue
             pad = med
             s = [g for g in gaps if not _overlaps(g[0], g[1], drop_iv, pad)]
-            r = _stats(s, med, n, span, "sim")
+            rw = [g for g in raw_gaps(topics[name], t_min) if not _overlaps(g[0], g[1], drop_iv, pad)]
+            r = _stats(s, med, n, span, "sim", rw)
             if info:
                 r["class"] = "sim-info"
             else:
@@ -125,7 +144,8 @@ def analyse(topics, t_start, t_end, dropouts=()):
             pad = max(med, 1250.0)
             nl = [g for g in gaps if not _overlaps(g[0], g[1], drop_iv, pad)]   # not logger-explained
             c = [g for g in nl if not _overlaps(g[0], g[1], sim_iv, pad)]
-            r = _stats(c, med, n, span, "controller", hold_gaps=nl)   # 10 ms limit holds even if a sim hole explains the gap
+            rw = [g for g in raw_gaps(topics[name], t_min) if not _overlaps(g[0], g[1], drop_iv, pad)]
+            r = _stats(c, med, n, span, "controller", rw)   # excess limit holds even if a sim hole explains the gap
             # count cross-check: gap-based missing (all non-logger gaps) vs round(span/median)+1-n; > tolerance (1 + DUP_NOISE x duplicate stamps) apart = not PASS
             gm = sum(m for _, _, m in nl)
             lg = [g for g in gaps if g not in nl]   # logger-explained gaps are not in gm, so remove them from the count basis
@@ -155,6 +175,7 @@ def analyse(topics, t_start, t_end, dropouts=()):
             "count": max((r["count"] for r in rs), default=0),   # a hole seen in several topics counts once
             "missing_frac": max((r["missing_frac"] for r in rs_frac), default=float("nan")),
             "max_hole_ms": max((r["max_hole_ms"] for r in rs), default=0.0),
+            "max_excess_ms": max((r["max_excess_ms"] for r in rs), default=0.0),
             "pass": all(r["pass"] for r in rs) if rs else None,
             "limit_frac": LIM_FRAC[cls], "present": bool(rs)}
     if sim_primary is None:   # decimated *_groundtruth topics cannot detect sim holes: refuse to pass silently
@@ -164,7 +185,7 @@ def analyse(topics, t_start, t_end, dropouts=()):
     mxd = max((d for t, d in dropouts if t >= t_min), default=0.0)
     lf = dur * 1000.0 / span
     out["classes"]["logger"] = {
-        "count": sum(1 for t, _ in dropouts if t >= t_min), "missing_frac": lf, "max_hole_ms": mxd,
+        "count": sum(1 for t, _ in dropouts if t >= t_min), "missing_frac": lf, "max_hole_ms": mxd, "max_excess_ms": mxd,
         "pass": bool(lf <= LIM_FRAC["logger"] and mxd <= LIM_HOLE_MS), "limit_frac": LIM_FRAC["logger"], "present": True}
     out["pass"] = all(c["pass"] for c in out["classes"].values() if c["pass"] is not None)
     out["limits"] = {"frac": LIM_FRAC, "single_hole_ms": LIM_HOLE_MS}
@@ -185,17 +206,17 @@ def load_ulog(path):
 
 def fmt(rep, label):
     L = [f"hole report: {label}  (span {rep['span_s']:.1f} s after the first second)"]
-    L.append(f"{"topic":38s}{'class':11s}{'rate Hz':>8s}{'holes':>6s}{'miss':>6s}{'miss %':>9s}{'max ms':>8s}  verdict")
+    L.append(f"{"topic":38s}{'class':11s}{'rate Hz':>8s}{'holes':>6s}{'miss':>6s}{'miss %':>9s}{'max ms':>8s}{'exc ms':>8s}  verdict")
     for r in rep["topics"]:
         L.append(f"{r['topic']:38s}{r['class']:11s}{r['rate_hz']:8.1f}{r['count']:6d}{r['missing']:6d}"
-                 f"{100 * r['missing_frac']:9.4f}{r['max_hole_ms']:8.2f}  {'info' if r['class'] == 'sim-info' else ('PASS' if r['pass'] else 'FAIL')}"
+                 f"{100 * r['missing_frac']:9.4f}{r['max_hole_ms']:8.2f}{r['max_excess_ms']:8.2f}  {'info' if r['class'] == 'sim-info' else ('PASS' if r['pass'] else 'FAIL')}"
                  + (f" (count-disagree: count-based missing {r['missing_count_based']})" if r.get("count_disagree") else ""))
     for k, c in rep["classes"].items():
         v = "n/a (topics absent)" if c["pass"] is None else ("PASS" if c["pass"] else "FAIL")
         if c.get("assessable") is False:
             v = "FAIL " + c["verdict"]
         L.append(f"CLASS {k:10s} holes {c['count']:4d}  missing {100 * c['missing_frac']:.4f} % (limit "
-                 f"{100 * c['limit_frac']:.2f} %)  max {c['max_hole_ms']:.2f} ms (limit 10)  {v}")
+                 f"{100 * c['limit_frac']:.2f} %)  max {c['max_hole_ms']:.2f} ms, excess {c['max_excess_ms']:.2f} ms (limit 10 excess)  {v}")
     L.append("OVERALL " + ("PASS" if rep["pass"] else "FAIL"))
     return "\n".join(L)
 

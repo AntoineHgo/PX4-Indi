@@ -193,5 +193,50 @@ check("S87 2 unpaired dups among ~1200: within tolerance", row["pass"] and not r
 row = motors_row(jittery(6))
 check("S87 6 unpaired dups among ~1200: FAIL", row["count_disagree"] and not row["pass"])
 
+# ---- S88 (T186): max hole from RAW gaps, per-topic excess over the nominal period
+def with_gap(period, gap_us, t_gap=T0 + 30_000_000):
+    """Regular grid, then one gap of exactly gap_us and the grid continues from there (median unchanged)."""
+    a = np.arange(T0, t_gap, period, dtype=np.int64)
+    return np.concatenate([a, np.arange(a[-1] + gap_us, END, period, dtype=np.int64)])
+
+
+def row_of(j, name):
+    return [x for x in hr.analyse(j, T0, END)["topics"] if x["topic"] == name][0]
+
+
+# (a) k=2 gap with a duplicate stamp next to it: count absorbed, but the raw gap must still be reported
+j = topics(1250)
+m = j["actuator_motors"]
+q = 20000
+m[q + 1] = m[q]            # dup stamp ...
+m[q + 2] = m[q] + 2 * 1250   # ... followed by a 2-period gap
+j["actuator_motors"] = np.sort(m)
+row = row_of(j, "actuator_motors")
+check("S88a k=2 gap next to a dup is reported in max_hole_ms (raw dt 2.5 ms)", abs(row["max_hole_ms"] - 2.5) < 1e-6
+      and row["missing"] == 0)
+# a 10 ms-excess-class k=2 case at a slow topic: 100 Hz topic (nominal 10 ms), dup + 21 ms gap must fail (excess 11 ms)
+j = topics(1250)
+o = with_gap(10000, 21000)
+k = int(np.flatnonzero(np.diff(o) == 21000)[0])
+o[k + 1:] = o[k + 1:]
+o = np.sort(np.insert(o, k, o[k]))   # dup stamp right before the gap
+j["vehicle_local_position_setpoint"] = o
+row = row_of(j, "vehicle_local_position_setpoint")
+check("S88a 100 Hz topic, dup + 21 ms gap: FAIL on excess 11 ms", not row["pass"] and row["max_excess_ms"] > 10.0)
+
+# (b) 89 Hz outer topic (nominal 11.236 ms): 18.75 ms gap passes, 25 ms gap fails
+j = topics(1250); j["vehicle_local_position_setpoint"] = with_gap(11236, 18750)
+row = row_of(j, "vehicle_local_position_setpoint")
+check("S88b 89 Hz topic, one 18.75 ms gap: PASS (excess 7.5 ms)", row["pass"] and abs(row["max_excess_ms"] - 7.514) < 0.01
+      and not row["count_disagree"])
+j = topics(1250); j["vehicle_local_position_setpoint"] = with_gap(11236, 25000)
+row = row_of(j, "vehicle_local_position_setpoint")
+check("S88b 89 Hz topic, one 25 ms gap: FAIL (excess 13.8 ms)", not row["pass"] and row["max_excess_ms"] > 10.0)
+
+# (c) 250 Hz controller topic (nominal 4 ms), one 15 ms gap: excess 11 ms -> FAIL
+j = topics(1250); j["actuator_motors"] = with_gap(4000, 15000)
+row = row_of(j, "actuator_motors")
+check("S88c 250 Hz topic, one 15 ms gap: FAIL (excess 11 ms)", not row["pass"] and abs(row["max_excess_ms"] - 11.0) < 1e-6)
+
 print("ALL PASS" if not fails else f"{len(fails)} FAILED: {fails}")
 sys.exit(1 if fails else 0)
