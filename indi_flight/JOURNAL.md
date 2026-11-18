@@ -889,3 +889,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
   H116 DONE dce771f1e6 (K115 fixes, 9+3 tests pass, mutations checked; slew-lag m3 not addressed, accepted:
     probes only). Key of a bench-only meta fix not required (no safety path).
 - S121: G3 'indi' runs S110-S118 flew the stock rate loop (no MC_RATE_CTL_TYPE 1 in base params); runner fixed and guarded; P117/T118/ladder INDI verdicts void.
+- S119 (moved S122 from STATE): T118 PASSED (31c9869179) but its INDI half VOID (S121: stock rate loop). Stage 4 opened: design/ident_concept.md, D-IDENT, Q6. I119 ident_iv killed by OOM (n x n projection; use Zf @ (pinv(Zf) @ X)).
+- S120 (moved): K120 key of ident_iv (design/key_k120_ident_iv.md, 20/20 pass; latency_by_xcorr unkeyed, J threshold needs flight data). H120 M3a signal survey (design/h120_m3a_signals.md): 1-axis Schroeder multisine on torque via MC_INDI_INJ_*, starts at first armed non-landed cycle, c/d/u in indi_rate_status at 800 Hz.
+- S117 (moved): P117 probe results/g3_probe_s117 (60/60 flown, INDI half VOID per S121). Resume pattern `fly.sh <P> <idx...>`; g3_run.py skips runs with g3_done.json.
+- S122: re-fly idx 21 with real INDI ok (a85d58f5ef): z ~5 m under stick z-sine, landed; esc_status 750 Hz in log; actuator_torque_measured absent.

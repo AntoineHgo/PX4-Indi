@@ -36,39 +36,18 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
    stage 7. M3 PT-change UNVERIFIED. Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36, A-39. PID M1 hook deferred (RC103).
    Flights no longer need MC_INDI_ACT_BLD 1.0 (default). Check script bench/attitude_break_check.py; ratesp_csv.py keyed.
    Guard note: a long inline `git commit -m` was blocked; use `git commit -F <scratch file>`.
-S121 FINDING: every "indi" G3 run S110-S118 (~94: pretest s112, single s113, stick s114/s116, ladder s116, probe
-  s117, pilot s118) flew the STOCK rate loop: base quad5in_indi_g1.params lacks MC_RATE_CTL_TYPE 1, so run.json has
-  no boot_params, MC_INDI_EN=0, no indi_rate_status (hence INDI==PID within cm in T118). G2 s107 unaffected. Fixed:
-  g3_run.py adds MC_RATE_CTL_TYPE 1; run_scenario.py refuses --controller indi without it (tests 20/20). Those
-  INDI verdicts (P117, T118, ladder) are VOID: re-fly T118 idx 0/21/49 with INDI before stage-4 flights. TODO test
-  in test_g3_run.py asserting the flag. RUNNING (S121, setsid): INDI re-fly idx 21 -> results/g3_refly_s121/
-  (stream_21.txt; check run.json boot_params MC_INDI_EN=1 and indi_rate_status in the ulog, then idx 0/49). esc_status logs at 800 Hz (pilot run_000), actuator_torque_measured not yet seen.
+S121 FINDING: every "indi" G3 run S110-S118 flew the STOCK rate loop (base params lacked MC_RATE_CTL_TYPE 1).
+  Fixed in g3_run.py + run_scenario.py guard; P117/T118/ladder INDI verdicts VOID. TODO test in test_g3_run.py
+  asserting the flag. S122: idx 21 re-flown with real INDI: ok (z ~5 m, landed; results/g3_refly_s121/README.md).
+  esc_status logged 750 Hz; actuator_torque_measured NOT in log (check why before ident).
+Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a injection on quad5in (roll, AMP ~0.01,
+  NP >= 6, settle delay, halved gains; design/h120_m3a_signals.md), estimator bench/ident_iv.py offline (K120 keyed;
+  size arrays, ulimit -v 4000000), compare to derived G1; then G2 cells at G1 x0.5/x2 (ident config).
+  Runner open: pilot sticks kept after LAND -> RC override to POSCTL (K118 MINORs). margins_of hangs if ts_true=0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-S119: T118 PASSED (31c9869179): INDI+PID idx 0/21/49 hold ~5 m, acro levelled, vz follows demand (corr 0.99);
-  D-G3-STICK-PILOT decided. Open: runner keeps pilot sticks after LAND -> RC override to POSCTL (README; fix in runner
-  when next touched, K118 MINORs). STAGE 4 OPENED: design/ident_concept.md + D-IDENT (PROPOSED) + Q6 to owner.
-  I119 (sonnet): IV estimator bench/ident_iv.py + self-tests incl. closed loop -> design/i119_ident_iv.md.
-  I119 KILLED (owner): ident_iv.py:149 Pz = Zf @ pinv(Zf) is n x n (19 GB at n~48k), OOM took the supervisor
-  down 20:56. Use Zf @ (pinv(Zf) @ X). Size every array before running; files unkeyed, uncommitted.
-  S120 DONE: K120 key (design/key_k120_ident_iv.md): 2SLS agrees; J mismatch flag, HAC se, rcond added; 20/20 pass
-  (Docker: `indi_project/docker/run.sh -n x -t 300 -- bash -c "ulimit -v 4000000; cd indi_flight/bench && python3 -m
-  pytest -q -p no:cacheprovider tests/test_ident_iv*.py"`). Open: latency_by_xcorr unkeyed, J threshold needs flight data.
-  H120 DONE (design/h120_m3a_signals.md): M3a = 1-axis Schroeder multisine on torque (MC_INDI_INJ_*), starts at first
-  armed non-landed cycle (needs a settle delay for ident), c/d/u in indi_rate_status at 800 Hz. FIRST next session:
-  verify esc_status / actuator_torque_measured publication rate on a quad5in log with MC_INDI_W_MAX>0 (note claims
-  100 Hz, UNVERIFIED); then the ident pretest hover (roll, AMP ~0.01, NP >= 6, halved gains), estimator offline.
-  NEXT: flight data (brief from h120 note): hover with M3a injection on quad5in, compare to
-  derived G1; G2 cells at G1 x0.5/x2 with halved gains (ident config).
-S117 sampler rule DONE 981e94f79e (D-G3-STICK-FACTORS). g3_run.py got --stop.
-P117 G3 probe seed 117 n=60 (45 pos/10 stab/5 acro): results/g3_probe_s117/ (fly.sh, progress.txt, run_NNN/g3_done.json).
-  Pretest idx 0,1,16: 1 pos + 16 stab ok; 0 ACRO watchdog trip (sank 3.5 m at 59.8 s; collective 0.1 = HTE
-  lower bound, mass 0.76; acro held 11 deg tilt, no levelling). PID control on same draw: ctl_pid_run000/.
-  P117 DONE: 60/60 flown; pos 45/45, stab 8/10, acro 3/5 no-abort ("ok" = no abort only; nothing scored).
-  Non-ok 0,21,25,49 = open-loop stick collective (PID controls 0,21,49 in README; 25 uncontrolled). Resume: `setsid nohup bash indi_flight/results/g3_probe_s117/fly.sh 3 <idx...>`
-  (runs with g3_done.json are skipped by g3_run.py; delete a partial run_NNN without it before re-running).
-(Done rows up to H116: JOURNAL.md S100-S116 + S120 move; ledger LEDGER.md. Yaw model tool defect open: margins_of hangs if ts_true=0.)
+| R122 | INDI re-fly T118 idx 0, 49 (setsid) | - | results/g3_refly_s121/run_000, run_049, progress.txt | `setsid nohup bash indi_flight/results/g3_refly_s121/fly.sh 2 0 49` |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
