@@ -39,15 +39,6 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 (S72-S78 rows done, details in JOURNAL.md; A-34/A-35 rows and S76 D-RATE-BLD line are recorded.)
-| B83 | velbreak re-fly TB 1.0/0.33 | host | results/stage5_s83_velbreak/README.md | DONE cdc5f03713, PM 57.3/59.1 deg |
-| T173 | injector minors + pinj_csv self-test | sonnet | results/stage5_s83_velbreak/minors_fix.md | DONE a38533428f, 907f57510d |
-| B83b | stick re-fly x4, grid pacing | host | results/stage5_s83_stick/README.md | DONE: all 50 Hz, gain 0.86 both stacks; open: sched anchor for stick mode (G5) |
-| RC84 | S84 route check | sonnet | design/route_check_84.md | DONE: G1 bookkeeping (done), G2 cell table (done), then T174 |
-| T174 | accel-loop break at stage output (MC_INDI_PINJ_PT) | sonnet | results/stage5_s84_accbreak/README.md | DONE 20b1c9c48b fw, 292b71c333 tool; z pre-test PM 58.7 deg 0.62 Hz; HF bins incoherent |
-| T175 | second key of T174, code vs brief | sonnet | results/stage5_s84_accbreak/second_key.md | DONE AGREE WITH MINOR; param texts fixed, rest accepted (README) |
-| T176 | S85 HF FRF second key + pinj_csv no-crossover fix | sonnet | results/stage5_s84_accbreak/hf_second_key.md | DONE AGREE, 5444196ab4 |
-| T177 | S85 per-run hole reporter + self-test | sonnet | bench/hole_report.py, results/stage5_s85_holes/README.md | DONE 35024c732e |
-| T178 | S85 second key of hole_report | sonnet | results/stage5_s85_holes/second_key.md | DONE AGREE WITH MINOR, recount exact; fixes queued S86 |
 | T179 | S86 hole_report fixes (findings 1-3) + break tests | sonnet | results/stage5_s85_holes/fixes_s86.md | DONE 98e977a9f0; S83/S84 single flights still PASS |
 | T180 | attitude-break note | sonnet | design/attitude_break_s86.md | DONE edc562526a, unreviewed |
 | T181 | xy no-crossover diagnosis | sonnet | results/stage5_s86_g2outer/t181_xy_diagnosis.md | DONE: top_db misread; UNKEYED |

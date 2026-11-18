@@ -733,3 +733,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
   (5444196ab4): velbreak margins unchanged, S84 pt1 re-scored PM 61.3 deg/0.64 Hz (was 58.7, 7/16 bins);
   pinj_csv reports no-crossover; bench/hole_report.py (evidence limit 1) built, hf + posctl PASS, second key T178;
   AX=0 identity flights: no change beyond same-seed spread (results/stage5_s85_identity/README.md).
+- S87: STATE trimmed; S83-S85 task rows (B83 velbreak PM 57.3/59.1, T173, B83b stick 50 Hz, RC84, T174 accel break pt1 z PM 58.7, T175-T178 keys and hole reporter) are DONE, details in their result READMEs.
