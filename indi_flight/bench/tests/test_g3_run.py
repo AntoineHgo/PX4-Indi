@@ -20,6 +20,36 @@ def draws(seed=21, n=200):
     return _cache[(seed, n)]
 
 
+def _status_dir(rj):
+    import json
+    import tempfile
+    d = tempfile.mkdtemp(prefix="g3fin_")
+    if rj is not None:
+        json.dump(rj, open(os.path.join(d, "run.json"), "w"))
+    return d
+
+
+def test_aborted_run_gets_done_marker_and_outcome():
+    import json
+    d = _status_dir({"exit_status": "failed", "error": "WatchdogTrip: height", "watchdog": {"h": 0.2},
+                     "metrics_status": "ok"})
+    assert r.finalize(d, {"returncode": 1}) == "aborted"
+    done = json.load(open(os.path.join(d, "g3_done.json")))
+    assert done["outcome"] == "aborted" and done["returncode"] == 1 and "WatchdogTrip" in done["error"]
+    assert not os.path.exists(os.path.join(d, "g3_failed.json"))
+    assert json.load(open(os.path.join(d, "run.json")))["g3_outcome"] == "aborted"
+
+
+def test_ok_and_incomplete_outcomes():
+    import json
+    d = _status_dir({"exit_status": "ok"})
+    assert r.finalize(d, {"returncode": 0}) == "ok" and os.path.exists(os.path.join(d, "g3_done.json"))
+    d = _status_dir(None)    # timeout / runner died: no verdict, retried
+    assert r.finalize(d, {"returncode": None, "timeout_s": 1.0}) == "incomplete"
+    assert os.path.exists(os.path.join(d, "g3_failed.json")) and not os.path.exists(os.path.join(d, "g3_done.json"))
+    assert json.load(open(os.path.join(d, "g3_failed.json")))["outcome"] == "incomplete"
+
+
 def argval(argv, flag):
     return argv[argv.index(flag) + 1] if flag in argv else None
 

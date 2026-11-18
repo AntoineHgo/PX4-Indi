@@ -127,9 +127,6 @@ def test_lhs_stratification():
         ([r["factors"]["g1_err"]["yaw"] for r in rr], 0.5, 2.0, True),
         ([r["factors"]["tau_scale"]["value"] for r in rr], 0.5, 3.0, True),
         ([r["factors"]["mass_scale"]["value"] for r in rr], 0.7, 1.3, False),
-        ([r["factors"]["inertia_scale"]["ixx"] for r in rr], 0.7, 1.3, False),
-        ([r["factors"]["inertia_scale"]["iyy"] for r in rr], 0.7, 1.3, False),
-        ([r["factors"]["inertia_scale"]["izz"] for r in rr], 0.7, 1.3, False),
         ([r["factors"]["vibration"]["mult"] for r in rr], 1.0, 5.0, True),
         ([r["factors"]["wind"]["gust_peak_total_ms"] for r in rr], 3.0, 9.0, False),
         ([r["factors"]["wind"]["steady_ms"] / min(5.0, r["factors"]["wind"]["gust_peak_total_ms"] - 1.0) for r in rr],
@@ -142,6 +139,32 @@ def test_lhs_stratification():
     for key, k, levels in (("loop_delay", "steps", 9), ("tel_latency", "frames", 4)):
         cnt = [sum(r["factors"][key][k] == i for r in rr) for i in range(levels)]
         assert max(cnt) - min(cnt) <= 2, (key, cnt)   # 240/9 = 26.7 per level
+
+
+def test_inertia_always_physical_and_covers_range():
+    """gz rejects a model whose diag inertia violates the triangle inequality; independent +-30 % draws did so for ~1/3
+    of the points. Every draw must be valid (nominal 1.022, 1.122, 1.944 e-3), still reach the +-30 % ends and be
+    spread over the range per axis (rejection resampling replaces the exact LHS strata for these three axes)."""
+    for seed in (1, 2, 3):
+        rr = camp(seed)
+        for r in rr:
+            i = r["factors"]["inertia_scale"]
+            assert g.inertia_valid(i["ixx"], i["iyy"], i["izz"]), (seed, r["run_index"], i)
+            a, b, c = (n * i[k] for n, k in zip(g.INERTIA_NOMINAL, ("ixx", "iyy", "izz")))
+            assert c < a + b and a < b + c and b < a + c
+        for k in ("ixx", "iyy", "izz"):
+            v = [r["factors"]["inertia_scale"][k] for r in rr]
+            assert min(v) < 0.72 and max(v) > 1.28, (seed, k, min(v), max(v))
+            assert len({min(9, int((x - 0.7) / 0.6 * 10)) for x in v}) == 10, (seed, k)
+
+
+def test_inertia_validity_check_rejects_old_failure():
+    assert not g.inertia_valid(1.0, 0.7, 1.3)      # 1.3*1.944 > 0.7*1.022 + 1.0*1.122
+    assert g.inertia_valid(1.0, 1.0, 1.0) and g.inertia_valid(1.3, 1.3, 1.3)
+    u = {k: 0.5 for k in g.DIMS}
+    u.update(ix=0.5, iy=0.0, iz=1.0)               # raw map is invalid -> must be redrawn, deterministically
+    s1, s2 = g.inertia_scales(u), g.inertia_scales(dict(u))
+    assert s1 == s2 and g.inertia_valid(*s1)
 
 
 def _frac(rr, pred):

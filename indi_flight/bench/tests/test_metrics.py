@@ -400,8 +400,25 @@ def test_quat_angle_small_and_scaled():
     print(f"ok quat angle: {math.degrees(a):.5f} deg (0.03)")
 
 
+def test_aborted_run_reports_status_not_crash():
+    """Aborted run: run.json has a window start but no end (t_window_end_us never written). Used to raise
+    TypeError (NoneType * float); must now return status 'aborted' with no metric blocks."""
+    ulog = _fake_ulog({})
+    run = {"t_window_start_us": 50_000_000, "exit_status": "failed", "error": "WatchdogTrip: height < 0.3 m"}
+    out = M.compute(ulog, run)
+    assert out["status"] == "aborted" and out["aborted"]["error"].startswith("WatchdogTrip")
+    assert "window" not in out and "rate_tracking" not in out and out["warnings"]
+    out = M.compute(ulog, {"exit_status": "failed"})   # no window at all
+    assert out["status"] == "aborted"
+    try:
+        M.compute(ulog, {})                            # not marked failed: the old refusal stays
+        raise AssertionError("expected SystemExit")
+    except SystemExit:
+        pass
+
+
 def main():
-    for f in (test_window_anchor_from_ulog, test_trajectory_functions, test_exact_and_lag, test_zoh_defect_and_fix, test_compute_end_to_end,
+    for f in (test_aborted_run_reports_status_not_crash, test_window_anchor_from_ulog, test_trajectory_functions, test_exact_and_lag, test_zoh_defect_and_fix, test_compute_end_to_end,
               test_sample_stamp_over_publish_stamp,
               test_step_metrics_analytic, test_rate_tracking_analytic, test_attitude_tracking_analytic,
               test_truth_rate_attitude_tracking, test_effort_bandwidth, test_quat_angle_small_and_scaled):

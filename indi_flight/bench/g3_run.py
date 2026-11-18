@@ -228,6 +228,44 @@ def command(argv):
     return [sys.executable, RUN_SCENARIO] + argv
 
 
+def classify(out, status):
+    """Outcome of a finished runner call. 'ok'; 'aborted' = the flight ran and ended early (watchdog trip, crash, no
+    ulog: run.json exit_status 'failed'); 'incomplete' = no verdict (timeout, runner died before writing run.json)."""
+    if status.get("returncode") == 0:
+        return "ok", None
+    try:
+        with open(os.path.join(out, "run.json")) as fh:
+            rj = json.load(fh)
+    except (OSError, ValueError):
+        return "incomplete", None
+    if rj.get("exit_status") == "failed":
+        return "aborted", rj
+    return "incomplete", rj
+
+
+def finalize(out, status):
+    """Record the outcome in g3_done.json (and in run.json as g3_outcome). An aborted run is a finished FAILURE: it gets
+    the done marker (outcome 'aborted', not retried, counted as a failure by the campaign). Only an incomplete run
+    (timeout, no run.json) gets g3_failed.json and no done marker, so it is retried on the next invocation."""
+    outcome, rj = classify(out, status)
+    status["outcome"] = outcome
+    if outcome == "aborted":
+        status["error"] = rj.get("error")
+        status["watchdog"] = rj.get("watchdog")
+        status["metrics_status"] = rj.get("metrics_status")
+    if rj is not None:
+        rj["g3_outcome"] = outcome
+        with open(os.path.join(out, "run.json"), "w") as fh:
+            json.dump(rj, fh, indent=1)
+    if outcome in ("ok", "aborted"):
+        with open(os.path.join(out, "g3_done.json"), "w") as fh:
+            fh.write(json.dumps(status) + "\n")
+    else:  # no finished marker: the run is retried on the next invocation
+        with open(os.path.join(out, "g3_failed.json"), "w") as fh:
+            fh.write(json.dumps(status) + "\n")
+    return outcome
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--seed", type=int, required=True, help="G3 master seed")
@@ -267,12 +305,7 @@ def main():
             status = {"returncode": p.returncode}
         except subprocess.TimeoutExpired:
             status = {"returncode": None, "timeout_s": a.timeout_s}
-        if status["returncode"] == 0:
-            with open(done, "w") as fh:
-                fh.write(json.dumps(status) + "\n")
-        else:  # no finished marker: the run is retried on the next invocation
-            with open(os.path.join(out, "g3_failed.json"), "w") as fh:
-                fh.write(json.dumps(status) + "\n")
+        finalize(out, status)
         print(f"run_{d['run_index']:03d}: {status}", flush=True)
 
 

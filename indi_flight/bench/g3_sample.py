@@ -33,6 +33,10 @@ ASYM_INV_FRAC = 0.10         # widening
 DELAY_STEP_MS, DELAY_STEPS = 1.25, 9          # 0 .. 10 ms
 MASS = (0.7, 1.3)
 INERTIA = (0.7, 1.3)
+# nominal base_link diag inertia of sim/models/quad5in_base/model.sdf [kg m^2]; gz rejects a model that violates the
+# triangle inequality (each moment <= sum of the other two), which independent +-30 % draws do for ~1/3 of the points.
+INERTIA_NOMINAL = (1.022e-3, 1.122e-3, 1.944e-3)
+INERTIA_MARGIN = 1e-3        # relative slack so r6 rounding / gz tolerances cannot flip a valid draw
 SAG_FRAC, SAG = 0.40, (0.7, 1.0)
 SAG_RAMP_S = 10.0
 WEAK_FRAC, WEAK = 0.30, (0.7, 1.0)
@@ -110,6 +114,26 @@ def _nominal_u():
 
 
 # ---------------------------------------------------------------------------------------------------------------
+def inertia_valid(sx, sy, sz):
+    a, b, c = (n * k for n, k in zip(INERTIA_NOMINAL, (sx, sy, sz)))
+    m = 1.0 - INERTIA_MARGIN
+    return c <= (a + b) * m and a <= (b + c) * m and b <= (a + c) * m
+
+
+def inertia_scales(u):
+    """(sx, sy, sz): the linear map of the ix/iy/iz coordinates; if that violates the triangle inequality the triple is
+    redrawn (rejection) uniformly over [0.7, 1.3]^3 from a stream seeded by the original coordinates, so the result is
+    a pure function of u (deterministic per seed) and is uniform on the valid set (no mass piled on the boundary)."""
+    s = tuple(lin(u[k], *INERTIA) for k in ("ix", "iy", "iz"))
+    if inertia_valid(*s):
+        return s
+    rng = random.Random(digest_int("g3", "inertia", *(repr(u[k]) for k in ("ix", "iy", "iz"))))
+    while True:
+        s = tuple(rng.uniform(*INERTIA) for _ in range(3))
+        if inertia_valid(*s):
+            return s
+
+
 def lin(u, lo, hi):
     return lo if u <= 0 else hi if u >= 1 else lo + u * (hi - lo)
 
@@ -136,7 +160,8 @@ def decode(u, no_wind=False, no_gnss=False):
     f = {}
     # M4 (D-G3-SAMPLER-K108): the drawn e is the realised controller/plant G1 ratio. The plant rate-loop G1 scales as
     # 1/I_scale per axis, so the controller G1 multiplier written to the run is k = e / I_scale (k * I_scale = e).
-    isc = {"roll": r6(lin(u["ix"], *INERTIA)), "pitch": r6(lin(u["iy"], *INERTIA)), "yaw": r6(lin(u["iz"], *INERTIA))}
+    sx, sy, sz = inertia_scales(u)
+    isc = {"roll": r6(sx), "pitch": r6(sy), "yaw": r6(sz)}
     e = {"roll": r6(logu(u["g1_r"], *G1_ERR)), "pitch": r6(logu(u["g1_p"], *G1_ERR)), "yaw": r6(logu(u["g1_y"], *G1_ERR))}
     f["g1_err"] = {**e, "nominal": 1.0, "unit": "e = realised controller G1 / plant G1 (alias of g1_ratio)"}
     f["g1_ratio"] = {**e, "nominal": 1.0, "unit": "e, log-uniform [0.5, 2], controller G1 / plant G1"}
@@ -154,8 +179,7 @@ def decode(u, no_wind=False, no_gnss=False):
     f["loop_delay"] = {"total_ms": r6(d), "act_ms": r6(d / 2), "imu_ms": r6(d / 2), "steps": k, "nominal": 0.0,
                        "unit": "ms, 1.25 ms steps, 50 % actuator path / 50 % IMU path"}
     f["mass_scale"] = {"value": r6(lin(u["mass"], *MASS)), "nominal": 1.0, "unit": "x nominal mass"}
-    f["inertia_scale"] = {"ixx": r6(lin(u["ix"], *INERTIA)), "iyy": r6(lin(u["iy"], *INERTIA)),
-                          "izz": r6(lin(u["iz"], *INERTIA)), "nominal": 1.0, "unit": "x nominal diag inertia"}
+    f["inertia_scale"] = {"ixx": r6(sx), "iyy": r6(sy), "izz": r6(sz), "nominal": 1.0, "unit": "x nominal diag inertia"}
     mass = f["mass_scale"]["value"]
     sat = u["sat_on"] <= 0.0          # only the C3 pin (and the pretest extreme) sets it
     sag_on = u["sag_on"] < SAG_FRAC

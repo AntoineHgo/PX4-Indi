@@ -504,12 +504,22 @@ def trajectory_error_zoh(t_us, pos_ned, sp_t_us, sp_pos):
 
 def compute(ulog, run):
     out = {"scenario": run.get("scenario"), "controller": run.get("controller"), "seed": run.get("seed"),
-           "speed": run.get("speed"), "warnings": []}
+           "speed": run.get("speed"), "status": "ok", "warnings": []}
     ob = offboard_span(ulog)
     w0, w1 = run.get("t_window_start_us"), run.get("t_window_end_us")
     rj_start = w0
     anchor = offboard_anchor_us(ulog)
     src = "runjson"
+    # aborted run (watchdog, crash, timeout): run.json never got t_window_end_us (and possibly no start). No window, no
+    # metrics: report it instead of computing on None.
+    failed = run.get("exit_status") == "failed"
+    if (w0 is not None and w1 is None) or (w0 is None and ob is None and failed):
+        out["status"] = "aborted"
+        out["aborted"] = {"reason": "no complete scenario window in run.json (run did not reach the end of the scenario window)",
+                          "exit_status": run.get("exit_status"), "error": run.get("error"), "watchdog": run.get("watchdog"),
+                          "t_window_start_us": w0, "t_window_end_us": w1}
+        out["warnings"].append("aborted run: no metrics computed (window missing)")
+        return out
     if w0 is None and ob is None:
         raise SystemExit("no scenario window (no run.json window and no offboard span in log)")
     if w0 is None:

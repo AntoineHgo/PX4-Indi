@@ -247,6 +247,10 @@ def main():
     from gz.msgs10.entity_factory_pb2 import EntityFactory  # noqa: F401  (ensures msgs are importable)
     from gz.msgs10.entity_wrench_pb2 import EntityWrench
     from gz.msgs10.stringmsg_pb2 import StringMsg  # noqa: F401
+    # import (and so register) the pose messages up front, before any Node/subscribe: a late import of Pose_V left
+    # 'gz.msgs.Pose' unregistered in the callback (TypeError on msg.pose, 100 % vel_none, S112 pre-test)
+    from gz.msgs10.pose_pb2 import Pose  # noqa: F401
+    from gz.msgs10.pose_v_pb2 import Pose_V
     from gz.transport13 import Node
 
     log = open(os.path.join(a.out, "disturbance.log"), "w", buffering=1)
@@ -364,7 +368,7 @@ def main():
             write_summary()
         else:
             if a.profile == "gust_x":  # air-relative drag: feed the vehicle ground-truth velocity (None until 2 pose samples)
-                wr = fn(tp, af, pv.vel)
+                wr = fn(tp, af, vel=pv.vel)
                 state["vel_none"] += pv.vel is None
                 if pv.vel is not None and state["vel_first_t"] is None:
                     state["vel_first_t"] = t
@@ -375,7 +379,6 @@ def main():
         state["n"] += 1
         csv.write(f"{t:.4f},{t - CLOCK_OFFSET_S:.4f}," + ",".join(f"{x:.5f}" for x in wr) + "\n")
 
-    from gz.msgs10.pose_v_pb2 import Pose_V
     if not node.subscribe(Pose_V, f"{w}/pose/info", on_pose):
         say("subscribe to pose/info failed")
         return 3
