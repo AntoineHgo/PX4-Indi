@@ -37,9 +37,10 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    b41dd6ec81 + fix 2bed1ae95a (T191 key: 3 MAJOR resolved, design/attitude_break_s90_key.md); 7/7 Indi suites pass,
    SITL builds. Check script bench/attitude_break_check.py (self-test 6/6, never run on a real ULog).
    S91 (launch 20261118-082350, cap $1.98): attitude-break pre-test PASS (RAMP 0.06; roll 400 Hz PM 56.6 GM 22.0
-   f_c 1.32, delay margin 0.119 s); extractor bbb52f0982 keyed; cells batch B91c started.
-   NEXT S92: (1) if B91c done: table in stage5_s91_attbreak/README.md (yaw: check SKIPs rate_sp_dot), holes per cell,
-   commit; PID reference at the same break (note sec 4) if not yet flown; M3 PT-change still UNVERIFIED.
+   f_c 1.32, delay margin 0.119 s); extractor bbb52f0982 keyed; B91c 6 cells DONE 9d28ea5b0a: PM 56.6-73.8,
+   GM 21.9-34.3 dB, all checks/holes PASS (table in stage5_s91_attbreak/README.md).
+   NEXT S92: (1) attitude break: linear-model cross-check (note sec 5, sonnet), PID reference at the same break
+   (note sec 4), 250 Hz reported cell; M3 PT-change still UNVERIFIED.
    (2) G2 report section (outer z+xy+attitude) + G5 text;
    (3) combined opus review. Deferred anomalies: A-4, A-6, A-30, A-32, A-34, A-35. Next route check S94.
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
@@ -55,7 +56,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T191 | second key of b41dd6ec81 vs note | sonnet | design/attitude_break_s90_key.md | DONE: 0 BLOCKING, 3 MAJOR fixed 2bed1ae95a |
 | B91 | S91 attitude-break pre-test, roll 400 Hz, RAMP 0.03/0.06 | host | results/stage5_s91_attbreak/README.md | DONE 5da12a76d8: PASS for RAMP 0.06, PM 56.6 GM 22.0 f_c 1.32 |
 | T192/T193 | ratesp_csv.py extractor + key | sonnet | design/t193_ratesp_key.md | DONE bbb52f0982, AGREE WITH MINOR (interior d==0 gaps not counted) |
-| B91c | attitude cells ax2/3 r400, ax1-3 r800, RAMP 0.06, serial | host | results/stage5_s91_attbreak/batch.log | `batch.sh` (re-fly missing cells only); then add table to README, commit |
+| B91c | attitude cells ax2/3 r400, ax1-3 r800, RAMP 0.06, serial | host | results/stage5_s91_attbreak/README.md | DONE 9d28ea5b0a |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
