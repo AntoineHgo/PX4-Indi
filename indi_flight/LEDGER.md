@@ -109,3 +109,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S97 | T204 | sonnet | D-ALTCTL-Z implementation + 6 tests | 16 calls, ~60k tok, ~$0.25 | DONE 52beee60e5, 1d827d62be |
 | S97 | T205 | sonnet | second key on 52beee60e5, de7c598e1e | 16 calls, ~69k tok, ~$0.3 | DONE no BLOCKING, 2 MAJOR coverage, MINORs |
 | S98 | RC98 | sonnet | route check 98 | 10 calls, ~39k tok, ~$0.1 | DONE (one wrong claim: G3-G8 text already in GATES.md) |
+| S98 | T206 | sonnet | lib mutation tests + module gate | 18 calls, ~63k tok, ~$0.35 | DONE b6e95f88c4 c32d022f9e |

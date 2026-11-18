@@ -54,8 +54,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T200 | S96 (launch 20261118-094323): T199 BLOCKING CONFIRMED by orchestrator (_coll_meas = vehicle_thrust_setpoint, commanded, passed as mean_u). Fix findings 1,2,4,5 + 3 (integrator reset only when INDI ran) in indi_accel_control + mc_indi_pos_control, tests first with break-checks | sonnet | design/t200_dgap_fixes_log.md | DONE bf44ece093 (diff read; 5 new tests fail-before/pass-after; module side F3-F5 compile-only; residue: stock integral in a_ref on the 1st active cycle after bypass; ALTCTL not served by INDI: F-2 open item, note in log) |
 | T204 | S97: D-ALTCTL-Z implement | sonnet | design/t204_altctl_z_log.md | DONE 52beee60e5 + tests 1d827d62be (diff read; 5/6 fail-before, break-check 3 fail; module compile-only; closed-loop test is regression-only) |
 | T205 | S97: second key on 52beee60e5 + de7c598e1e | sonnet | design/t205_altctl_key.md | DONE: no BLOCKING; double poll removed + DESCEND scope noted (S97); OPEN: 2 MAJOR coverage (no module harness for T203 gate / z_only derivation / want_indi; lib mutations at tilt, guard order, 0.1 threshold, min-collective in z-only), MINOR NaN f_b/q with fresh stamp zeroes integrator |
-| RC98 | S98 (launch 20261118-100433): route check 98 | sonnet | design/route_check_98.md | running |
-| T206 | S98: lib tests for T205 (f) mutations 1-5 + pre-gate finite f_b/q, |q|>=0.5 (T205 e2) | sonnet | design/t206_lib_mutation_tests_log.md | running |
+| T206 | S98: lib tests T205 (f) 1-5 + pre-gate finite f_b/q | sonnet | design/t206_lib_mutation_tests_log.md | DONE b6e95f88c4 c32d022f9e (diff read; 4/5 break-checked, #5 partly not a bug; module compile-only) |
+| P98 | S98: G5 pre-test: s5_gap085 POSCTL regression + new stick ALTCTL gap scenario | sonnet | results/stage5_s98/README.md | running |
 | T202 | S96: second key on bf44ece093 vs review findings 1-5 | sonnet | design/t202_dgap_fix_key.md | DONE: no BLOCKING, 2 MAJOR fixed 25e420b155 dff2b7a805 |
 
 ## Open problems
