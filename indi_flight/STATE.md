@@ -39,6 +39,8 @@ Notes: pretest_gate only on stationary scenarios, or end its window at the fault
 | X105 | S105: G2 model-vs-measured cross-check, offline | sonnet | design/g2_crosscheck_s105.md | DONE: 16 roll/pitch cells within tol (dPM<=4.7, dGM<=1.86); yaw unmodelled; filters verified; A-21 n/a to v2 |
 | RC103 | S103: route check | sonnet | design/route_check_103.md | DONE: A-37 time-box $0.5 then park; then G5 pre-tests, G2 verdict note, hook B; defer PID M1 |
 | S103 | S103: scope POSCTL stick gap scenario (read-only) | haiku | design/posctl_gap_scope_s103.md | DONE: scenario + --stick-mode posctl, flown |
+| H106 | S106: hook B GNSS delay (SIM_GZ_GPS_DLY) impl+build+1 flight | sonnet | design/gnss_delay_impl_s106.md | DONE d52576b02a (fw) bd0aa768f4 (pretest: age 200000 us x110, 1 Hz log) |
+| K106 | S106: second key of H106 + L=250 matched/mismatched flights | sonnet | design/gnss_delay_key_s106.md, results/gnss_delay_key_s106/ | in flight; resume: read the note, finish flights |
 | A103 | S103: A-37 test (a9e5066a55), hover d5/d10 | host bg | results/a37_actlag_s103/README.md | DONE: A-37 closed |
 S102 finding: (ii) PID M1 has NO recipe: the gyro-break hook (`sim_inject`, design/stage2_margins_s35.md l.21) was never built.
   PID reference is F-5 reference only -> deferred behind (iv); build the M1 hook later in gz_bridge IMU callback beside A2.
