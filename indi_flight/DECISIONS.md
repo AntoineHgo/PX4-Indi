@@ -639,3 +639,17 @@ gain 2.0-2.2, same INDI/PID), so the pilot does not cancel the input (K118 MAJOR
   instrument = failed ident; (iii) regressor and regressand through the same filter and delay, deliberate-mismatch
   self-test must fail; (iv) four independent excitation directions, regression conditioning reported; (v) once in
   SITL, same estimator on a PID-flown manoeuvre agrees within tolerance. SITL validates the estimator only.
+
+## D-IDENT-J (S125): Hansen J is a reported diagnostic, not an acceptance gate of the ident fit
+- Fact (K125, design/key_k125_fix_k124.md): the J/df <= 20 gate passes every real log (J/df 14.8-15) and cannot
+  reject; J/df ~15 means the static model alpha = G1 u + c is rejected across instrument lags on every SITL log,
+  while G1 lands within 0.6 % of the derived value from x0.5/x1/x2 starts and at halved gains (fit_s124.md).
+- Choice: keep J and the min-J latency shift in the output and the evidence tables, drop "J/df <= 20" from the
+  pass list wording (it stays as a printed flag). Acceptance rests on robust F, CI, interior latency shift, filter
+  chain match, excluded fraction, and D-IDENT (i) start independence against truth.
+- Alternatives: tighten J to a chi2 critical value (fails every correct real log: not a usable gate); keep the 20
+  threshold (a gate that cannot fail, K125 says so).
+- Likely cause of the misfit (open, K124 MAJOR 7): regressor is a zero-order hold of actuator_torque_measured
+  (new value every ~2.4 samples), plus unmodelled actuator lag in u_meas. Overturn if: a held-regressor-free fit
+  (interpolated or rpm-rate regressor) drops J/df below ~3 and moves G1 by more than its CI, or a G1 x0.5/x2 plant
+  variant (true G1 changed, not the start) is identified outside 10 %.
