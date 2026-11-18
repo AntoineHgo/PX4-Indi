@@ -135,13 +135,22 @@ gate is decided on the frozen final pair in stage 6 with the same tests.
   status column tracks preliminary (pre-freeze) evidence only. Rates: 800 / 400 pass, 267 reported. Paths: INDI
   measured (v2) and model-only; PID reference.
 
-  | loop | break point | INDI injector | status (S84) |
+  Status updated S108 from existing results only (verdict note `design/g2_verdict_s108.md`; S84 status in git
+  history). "keyed" = margins recomputed by independent code; "x-check" = linear model within 10 deg / 3 dB.
+
+  | loop | break point | INDI injector | status (S108, preliminary, pre-freeze) |
   |---|---|---|---|
-  | rate roll/pitch/yaw | M3a torque setpoint (PID: M1 gyro) | MC_INDI_INJ_* (D-G2-INJ) | prelim results 800/400 (stage 2-3, JOURNAL; per-axis table to compile) |
-  | attitude | attitude-loop output (rate setpoint) | to specify (design note + second key) | open |
-  | INDI acceleration z, xy | stage output t_c (MC_INDI_PINJ_PT 1) | T174 S84 | in work |
-  | velocity/position z, xy | stage input a_ref (MC_INDI_PINJ_PT 0, D-G2-PINJ) | done S82 | z prelim PM 57.3 deg (S83); xy open |
-  | hole reporter | evidence limit 1 per run | `bench/a15_gaps.py` to extend | open |
+  | rate roll/pitch (16 cells, 800/400, v2 + model-only) | M3a torque setpoint (PID: M1 gyro) | MC_INDI_INJ_* (D-G2-INJ) | all PASS, 2 seeds, keyed (K100/K101); x-check YES, worst dPM 4.7 deg, dGM 1.86 dB (S105) |
+  | rate yaw (8 cells) | M3a | MC_INDI_INJ_* | all PASS, worst GM 15.5 dB (meas. 400 Hz); x-check model-only 4/4 YES, measured-torque 1/4 (A-39: 400 Hz dGM -9.1/-9.7 dB) |
+  | attitude roll/pitch/yaw (6 cells, 800/400) | attitude-loop output (rate setpoint) | MC_INDI_INJ_PT 1 | all PASS at HEAD (S107), PM >= 56.8 deg, GM >= 22.0 dB; ONE seed (gate asks 2); x-check PM YES (T195), GM model 3.4/4.6 dB low at 400/267 (A-36); yaw unmodelled |
+  | INDI acceleration z, xy | stage output t_c (MC_INDI_PINJ_PT 1) | T174 S84 | z 4 cells PM 58.3-63.7 (S86/S88); xy 8 cells PM 60.9-64.8, GM 18.6-19.3 dB (S87); 2 seeds; margins NOT keyed (T183 keyed the xy FRF of 1 cell); no x-check |
+  | velocity/position z, xy | stage input a_ref (MC_INDI_PINJ_PT 0, D-G2-PINJ) | done S82 | z 4 cells PM 57.3-66.1 (S83/S86); xy 8 cells PM 49.7-61.8, GM 18.2-18.8 dB (S87), seed spread up to 7 deg; margins NOT keyed beyond T183 (1 cell); no x-check |
+  | 267 Hz (reported) | all | - | not measured at HEAD (S91 attitude roll cell failed hole check) |
+  | PID reference | M1 gyro | not built (S102) | none, deferred (RC103) |
+  | hole reporter | evidence limit 1 per run | `bench/hole_report.py` | DONE, frozen S89 (D-HOLE-FREEZE) |
+
+  Before the stage-6 gate run: margin second key for the outer cells, linear outer-loop model, A-36 and A-39
+  explained or bounded, 2 seeds everywhere, 267 Hz rows, serial flights only (S86 finding 1). No G2 closure claimed.
 
 ## G2-STEP Inner-loop attitude step criterion (written S61 2026-11-17, owner note N1 B.2, before its first test)
 - Test: step_roll, step_pitch (15 deg), step_yaw (45 deg) on quad5in, sim v2 (eRPM), 800 Hz (400 Hz reported), speed 4,
