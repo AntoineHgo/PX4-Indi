@@ -87,3 +87,11 @@ rotor spin-up reaction torque (G2_Y du/dt, opposite sign, comparable size at inj
 omitted and biases G1_Y down, and the CI is 15 %. Yaw needs a two-regressor IV (u, du/dt) with two instrument sets
 (decision 5, D-YAW). Yaw ident = open item for S125. Yaw flight first attempt left an empty output dir (container
 did not start in the parallel launch, cause not investigated); re-flown alone, ok.
+
+## S125 halved-gain ident config (D-IDENT: ident flies at halved gains)
+Params `inj_half_ax1.params` (= inj_pos1 + MC_INDI_K_R/P 10, K_Y 5, MC_ROLL_P/PITCH_P 4, MC_YAW_P 1.5), script
+`fly_half.sh`, out `half_ax1` (status ok). Fit (post-K124-fix ident_fit.py, same window 22.6-76.4):
+`python3 bench/ident_fit.py results/ident_m3a_s123/half_ax1/flight.ulg --axis roll --t0 22.6 --t1 76.4`
+-> G1_R 1757.9 (CI +-0.1 %), OLS 1755.1, robust F 1765, J/df 14.8, shift 0, IDENT PASS. Derived 1757 (+0.05 %);
+full-gain x1 gave 1767-1768 (+0.6 %). Halved gains do not degrade the estimate; F lower (1765 vs ~4600) but far
+above 10. Yaw half_ax3: first launch left an empty dir (as S124), re-flown alone.
