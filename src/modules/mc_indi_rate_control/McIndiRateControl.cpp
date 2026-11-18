@@ -369,7 +369,7 @@ McIndiRateControl::Run()
 			_rates_setpoint(1) = PX4_ISFINITE(vehicle_rates_setpoint.pitch) ? vehicle_rates_setpoint.pitch : rates(1);
 			_rates_setpoint(2) = PX4_ISFINITE(vehicle_rates_setpoint.yaw)   ? vehicle_rates_setpoint.yaw   : rates(2);
 			_thrust_setpoint = Vector3f(vehicle_rates_setpoint.thrust_body);
-			_last_rates_sp_time = vehicle_rates_setpoint.timestamp;
+			_last_rates_sp_time = hrt_absolute_time(); // receipt time, not the publisher's stamp
 		}
 
 		// rate setpoint timeout (MC_INDI_SP_TO): zero rates, thrust held
