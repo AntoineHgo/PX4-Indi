@@ -713,3 +713,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S84: T175 second key AGREE WITH MINOR; param texts fixed, PT 1 bench limits recorded in results/stage5_s84_accbreak/README.md.
 - S84: HF output-break re-fly 1.5-10 Hz: abs(L) <= -10 dB, no -180 crossing (unkeyed); pinj_csv --margins crashes without crossover in band (to fix). Session end ~$2.6.
 - S85 (launch 20261118-045636): HF FRF second key AGREE; margins_est DC-term defect fixed, S84 pt1 re-scored 61.3 deg; hole_report.py built (evidence limit 1); injector AX=0 identity flights within same-seed spread.
+- S86 (2026-11-18): hole_report fixes T179 (98e977a9f0); G2 outer runner + z cells PM 62.8-63.7 deg serial; parallel flights break evidence (holes); xy no-crossover = top_db misread (T181); attitude-break note T180; count check defect at 800 Hz queued (edc562526a).

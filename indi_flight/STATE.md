@@ -40,11 +40,15 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    (5444196ab4): velbreak margins unchanged, S84 pt1 re-scored PM 61.3 deg/0.64 Hz (was 58.7, 7/16 bins);
    pinj_csv reports no-crossover; bench/hole_report.py (evidence limit 1) built, hf + posctl PASS, second key T178;
    AX=0 identity flights: no change beyond same-seed spread (results/stage5_s85_identity/README.md).
-   NEXT S86: (1) T178 second key AGREE WITH MINOR (results/stage5_s85_holes/second_key.md): fix finding 2 (hold max
-   controller dt to 10 ms regardless of sim attribution) and 3 (fail "sim not assessable" without sim_ground_truth/
-   sensor_gyro), add count cross-check (finding 1), tests that fail when broken; then run hole_report on every G2 run; (2) fly remaining G2 outer cells
-   with one runner (xy velbreak, accel break z/xy at 800/400, two seeds); (3) attitude-break design note;
-   then G2 report + G5 text; then (e) combined opus review. Deferred anomalies: A-4, A-6, A-30, A-32, A-34, A-35. Next route check S89.
+   S86 (launch 20261118-050243, cap $3): T179 hole_report fixes DONE 98e977a9f0; G2 outer runner
+   results/stage5_s86_g2outer/fly.sh (README: findings 1-3); z cells PM 62.8-63.7 deg; G2 cells fly ONE AT A TIME
+   (parallel -> holes); xy no-crossover = top_db misread (T181 UNKEYED); attitude-break note design/attitude_break_s86.md
+   (T180, unreviewed; check its L_att identity: L_att = A L_rate/(1+L_rate) expected).
+   NEXT S87: (1) hole_report count check: disagreement of 1 flagged FAIL (spec > 1) and actuator_motors differs by 3 at
+   800 Hz on healthy runs -> fix + test (sonnet), re-run on all s86 cells; (2) summarise seed-2 z cells (zbatch.log);
+   (3) second key of T181 (haiku: recompute xy FRF from the CSVs), rename top_db, re-fly xy cells serially with
+   AMP 0.08 TP 20 (pt0/pt1 x ax1,2 x 400/800 x 2 seeds); (4) review attitude-break note (sonnet, one interface: note vs
+   code), then implement; then G2 report + G5 text; then (e) combined opus review. Deferred anomalies: A-4, A-6, A-30, A-32, A-34, A-35. Next route check S89.
    Guard note: a long inline `git commit -m` with this kind of text was blocked; use `git commit -F <scratch file>`.
 ## Tasks in flight
 | id | task | agent | output | resume |
@@ -60,9 +64,9 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T177 | S85 per-run hole reporter + self-test | sonnet | bench/hole_report.py, results/stage5_s85_holes/README.md | DONE 35024c732e |
 | T178 | S85 second key of hole_report | sonnet | results/stage5_s85_holes/second_key.md | DONE AGREE WITH MINOR, recount exact; fixes queued S86 |
 | T179 | S86 hole_report fixes (findings 1-3) + break tests | sonnet | results/stage5_s85_holes/fixes_s86.md | DONE 98e977a9f0; S83/S84 single flights still PASS |
-| T181 | xy break |L| <= -37 dB, no crossover: diagnosis from logs | sonnet | results/stage5_s86_g2outer/t181_xy_diagnosis.md | in flight |
-| B86z | z cells serial (3 parallel flights FAILED hole_report: load -> sim+ctrl holes 12-21 ms; G2 cells fly ONE at a time) | host | results/stage5_s86_g2outer/zbatch.log | in flight; resume: bash fly.sh per missing cell |
-| T180 | attitude-break design note (no code) | sonnet | design/attitude_break_s86.md | in flight; orchestrator commits |
+| T180 | attitude-break note | sonnet | design/attitude_break_s86.md | DONE edc562526a, unreviewed |
+| T181 | xy no-crossover diagnosis | sonnet | results/stage5_s86_g2outer/t181_xy_diagnosis.md | DONE: top_db misread; UNKEYED |
+| B86z | z cells serial: s1 done; s2 + pt0_ax3_r400_s2 may still run at session end | host | results/stage5_s86_g2outer/zbatch.log | resume: `bash fly.sh PT 3 RATE 2` for any cell without _holes.txt; commit metrics |
 | B86 | G2 outer cells: pre-test pt0ax1r400, pt1ax1r400, pt1ax3r800 seed 1 | host | results/stage5_s86_g2outer/ (fly.sh PT AX RATE SEED) | in flight; resume: re-run fly.sh per missing cell |
 
 ## Open problems
