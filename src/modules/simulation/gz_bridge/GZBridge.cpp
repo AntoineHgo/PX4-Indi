@@ -1097,7 +1097,7 @@ void GZBridge::navSatCallback(const gz::msgs::NavSat &msg, uint8_t instance_inde
 		return;
 	}
 
-	// SIM_GZ_GPS_DLY: hold the fully built fix, timestamp_sample stays the true measurement time.
+	// SIM_GZ_GPS_DLY: hold the fully built fix, keyed on its generation time (timestamp_sample until release).
 	std::lock_guard<std::mutex> lock(_gnss_delay_mutex);
 	GnssDelayRing &ring = _gnss_delay_ring[instance_index];
 
@@ -1105,6 +1105,7 @@ void GZBridge::navSatCallback(const gz::msgs::NavSat &msg, uint8_t instance_inde
 		// full: release the oldest entry early (through the normal path), never silently
 		sensor_gnss_s &o = ring.e[ring.head];
 		o.timestamp = hrt_absolute_time();
+		o.timestamp_sample = o.timestamp; // as in releaseDelayedGnss()
 		_failure_config.update();
 
 		if (failure_injection::process_gnss(_failure_config, instance_index, o, _gnss_stuck[instance_index])) {
@@ -1138,7 +1139,15 @@ void GZBridge::releaseDelayedGnss(uint8_t instance_index, uint64_t now)
 				 (unsigned)(now - o.timestamp_sample), (unsigned)_gnss_delay_us);
 		}
 
+		const uint64_t age_us = now - o.timestamp_sample;
+		ring.age_min_us = math::min(ring.age_min_us, age_us);
+		ring.age_max_us = math::max(ring.age_max_us, age_us);
+
+		// Same convention as the undelayed path: a receiver that does not report its latency
+		// (timestamp_sample == timestamp), so VehicleGPSPosition applies SENS_GNSS0_DELAY and
+		// matched (= SIM_GZ_GPS_DLY) and mismatched compensation can both be flown.
 		o.timestamp = now;
+		o.timestamp_sample = now;
 		_failure_config.update();
 
 		if (failure_injection::process_gnss(_failure_config, instance_index, o, _gnss_stuck[instance_index])) {
@@ -1369,11 +1378,12 @@ int GZBridge::print_status()
 	PX4_INFO_RAW("ESC outputs:\n");
 	_mixing_interface_esc.mixingOutput().printStatus();
 
-	PX4_INFO_RAW("Delay lines: DLY_ACT %u us (dropped %u, overflow %u), DLY_IMU %u us (overflow %u/%u/%u), GPS_DLY %u us (overflow %u/%u)\n",
+	PX4_INFO_RAW("Delay lines: DLY_ACT %u us (dropped %u, overflow %u), DLY_IMU %u us (overflow %u/%u/%u), GPS_DLY %u us (overflow %u/%u, age0 %u-%u us)\n",
 		     (unsigned)_mixing_interface_esc._act_delay_us, (unsigned)_mixing_interface_esc._act_dropped,
 		     (unsigned)_mixing_interface_esc._act_overflow, (unsigned)_imu_delay_us,
 		     (unsigned)_imu_delay_ring[0].overflow, (unsigned)_imu_delay_ring[1].overflow, (unsigned)_imu_delay_ring[2].overflow,
-		     (unsigned)_gnss_delay_us, (unsigned)_gnss_delay_ring[0].overflow, (unsigned)_gnss_delay_ring[1].overflow);
+		     (unsigned)_gnss_delay_us, (unsigned)_gnss_delay_ring[0].overflow, (unsigned)_gnss_delay_ring[1].overflow,
+		     (unsigned)(_gnss_delay_ring[0].age_max_us ? _gnss_delay_ring[0].age_min_us : 0), (unsigned)_gnss_delay_ring[0].age_max_us);
 
 	PX4_INFO_RAW("Servo outputs:\n");
 	_mixing_interface_servo.mixingOutput().printStatus();

@@ -200,6 +200,8 @@ private:
 		int n{0};
 		uint32_t overflow{0};
 		bool first_logged{false};
+		uint64_t age_min_us{UINT64_MAX}; // true age (release - generation) over the run
+		uint64_t age_max_us{0};
 	};
 	std::mutex _gnss_delay_mutex;
 	GnssDelayRing _gnss_delay_ring[_MAX_GNSS_SENSORS] {};
