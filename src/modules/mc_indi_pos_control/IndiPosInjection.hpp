@@ -74,6 +74,9 @@ public:
 	 */
 	float update(uint64_t timestamp_sample_us, bool armed, bool landed);
 
+	/** Restart the time origin: the next armed, airborne cycle starts a new window. Called on the disarm edge. */
+	void reset() { _started = false; }
+
 	/** Multisine at time t (s) after the origin, no gating */
 	double waveform(double t) const;
 

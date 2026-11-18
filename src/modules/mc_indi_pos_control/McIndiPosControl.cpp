@@ -579,6 +579,10 @@ void McIndiPosControl::Run()
 			const vehicle_control_mode_s previous = _vehicle_control_mode;
 
 			if (_vehicle_control_mode_sub.copy(&_vehicle_control_mode)) {
+				if (previous.flag_armed && !_vehicle_control_mode.flag_armed) {
+					_injection.reset(); // the stage does not run disarmed: the disarm edge restarts the bench window for the next arm
+				}
+
 				if (!previous.flag_multicopter_position_control_enabled && _vehicle_control_mode.flag_multicopter_position_control_enabled) {
 					_time_position_control_enabled = _vehicle_control_mode.timestamp;
 

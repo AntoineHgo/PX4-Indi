@@ -111,7 +111,7 @@ float IndiPosInjection::update(uint64_t timestamp_sample_us, bool armed, bool la
 	}
 
 	if (!armed) {
-		_started = false; // a new flight restarts the excitation
+		reset(); // a new flight restarts the excitation
 		return 0.f;
 	}
 

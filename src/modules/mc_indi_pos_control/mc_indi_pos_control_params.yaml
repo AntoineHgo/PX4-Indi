@@ -42,10 +42,7 @@ parameters:
     MC_INDI_PINJ_AX:
       description:
         short: INDI outer-loop bench excitation axis
-        long: |-
-          Bench and system identification only. Adds a multisine excitation d to the commanded acceleration of one
-          NED axis (u = c + d, also fed back to the INDI stage states) while armed and not landed, for
-          MC_INDI_PINJ_NP periods from the first such cycle. Set to 0 to disable, the acceleration is then unchanged.
+        long: "Bench and system identification only. Adds a multisine to the commanded acceleration of the selected axis (north, east or down) and also feeds it back to the INDI stage. It runs while armed and not landed, for MC_INDI_PINJ_NP periods after MC_INDI_PINJ_DLY, and starts again at each arm. Set to 0 to disable."
       type: enum
       values:
         0: Off
@@ -103,7 +100,7 @@ parameters:
     MC_INDI_PINJ_DLY:
       description:
         short: Excitation start delay
-        long: Delay after the first armed and airborne cycle, so that the excitation starts in established flight.
+        long: Counted from the first armed and airborne cycle. Only used when MC_INDI_PINJ_AX is not 0.
       type: float
       unit: s
       min: 0

@@ -94,6 +94,26 @@ TEST(IndiPosInjectionTest, Gating)
 	EXPECT_EQ(inj.update(t0 + 30000000, true, false), 0.f);
 }
 
+TEST(IndiPosInjectionTest, RearmRestartsWindow)
+{
+	// the module cannot call update() while disarmed, it calls reset() instead: a second arm in the same boot starts a new window
+	IndiPosInjection inj;
+	inj.setParameters(3, 0.02f, 10.f, 1.f, 60.f, 1, 2.f);
+
+	const uint64_t t0 = 1000000;
+	EXPECT_EQ(inj.update(t0, true, false), 0.f); // origin t0 + 2 s (delay)
+	EXPECT_NEAR(inj.update(t0 + 2000000 + 3700000, true, false), 0.11957619297037093, 1e-6);
+	EXPECT_EQ(inj.update(t0 + 20000000, true, false), 0.f); // window over (1 period)
+
+	inj.reset(); // disarmed
+
+	const uint64_t t1 = 100000000;
+	EXPECT_EQ(inj.update(t1, true, false), 0.f); // new origin t1 + 2 s
+	EXPECT_EQ(inj.update(t1 + 1000000, true, false), 0.f); // still in the delay
+	EXPECT_NEAR(inj.update(t1 + 2000000 + 3700000, true, false), 0.11957619297037093, 1e-6);
+	EXPECT_EQ(inj.update(t1 + 20000000, true, false), 0.f);
+}
+
 TEST(IndiPosInjectionTest, ComponentLimit)
 {
 	IndiPosInjection inj;
