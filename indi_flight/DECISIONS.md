@@ -546,3 +546,14 @@ to build), G4 limits fixed from sources before any G4 measurement, G6 full G3 on
 Alternatives: 95 % quota on accuracy items (rejected: weakens "within stated limits"); freeze thresholds after the
 pre-test (rejected: fits the test to the result); full G3 per wrong start (10 x 300 runs, cost). Overturn: owner
 answer on G6 sample size, or a G3 pre-test spread > 1/3 of a limit (then owner question, no silent change).
+
+## D-ALTCTL-Z (S97): INDI serves climb-rate-only modes (ALTCTL) on the vertical axis only
+F-2 requires ALTCTL on the INDI stack; today want_indi needs position or velocity control, so ALTCTL bypasses INDI.
+Decision: want_indi also accepts flag_control_climb_rate_enabled; when neither position nor velocity is controlled the
+stage runs z-only: the thrust direction is the stock one (stick tilt, unchanged pilot feel), the collective comes from
+the INDI vertical increment t_cz = t_fz + (a_cz - a_fz), collective = t_cz / dir_z, limits as usual; omega_ff = 0.
+Alternatives: full 3-axis stage with a_ref xy = stick acceleration (rejected: INDI cancels measured drag in xy, so with
+centred sticks the vehicle keeps its ground speed indefinitely instead of slowing, a change of ALTCTL semantics);
+leave ALTCTL on the stock integrator (rejected: F-2, and lesson 9 gap then handled only by PID I).
+Overturn: a G5 ALTCTL flight with a z transient or oscillation at the mode switch, or the owner asking for INDI xy in
+ALTCTL.
