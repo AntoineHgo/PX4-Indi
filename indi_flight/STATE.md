@@ -43,6 +43,8 @@ S119: T118 PASSED (31c9869179): INDI+PID idx 0/21/49 hold ~5 m, acro levelled, v
   D-G3-STICK-PILOT decided. Open: runner keeps pilot sticks after LAND -> RC override to POSCTL (README; fix in runner
   when next touched, K118 MINORs). STAGE 4 OPENED: design/ident_concept.md + D-IDENT (PROPOSED) + Q6 to owner.
   I119 (sonnet): IV estimator bench/ident_iv.py + self-tests incl. closed loop -> design/i119_ident_iv.md.
+  I119 KILLED (owner): ident_iv.py:149 Pz = Zf @ pinv(Zf) is n x n (19 GB at n~48k), OOM took the supervisor
+  down 20:56. Use Zf @ (pinv(Zf) @ X). Size every array before running; files unkeyed, uncommitted.
   NEXT: key I119 (second sonnet, re-implement), then flight data: hover with M3a injection on quad5in, compare to
   derived G1; G2 cells at G1 x0.5/x2 with halved gains (ident config).
 S117 sampler rule DONE 981e94f79e (D-G3-STICK-FACTORS). g3_run.py got --stop.
