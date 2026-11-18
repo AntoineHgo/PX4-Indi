@@ -28,7 +28,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
    (parallel -> holes); xy no-crossover = top_db misread (T181 UNKEYED); attitude-break note design/attitude_break_s86.md
    (T180, unreviewed; check its L_att identity: L_att = A L_rate/(1+L_rate) expected).
    NEXT S87: (1) hole_report count check: disagreement of 1 flagged FAIL (spec > 1) and actuator_motors differs by 3 at
-   800 Hz on healthy runs -> fix + test (sonnet), re-run on all s86 cells; (2) summarise seed-2 z cells (zbatch.log);
+   800 Hz on healthy runs -> fix + test (sonnet), re-run on all s86 cells; (2) seed-2 z cells done (README);
    (3) second key of T181 (haiku: recompute xy FRF from the CSVs), rename top_db, re-fly xy cells serially with
    AMP 0.08 TP 20 (pt0/pt1 x ax1,2 x 400/800 x 2 seeds); (4) review attitude-break note (sonnet, one interface: note vs
    code), then implement; then G2 report + G5 text; then (e) combined opus review. Deferred anomalies: A-4, A-6, A-30, A-32, A-34, A-35. Next route check S89.
@@ -49,7 +49,7 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T179 | S86 hole_report fixes (findings 1-3) + break tests | sonnet | results/stage5_s85_holes/fixes_s86.md | DONE 98e977a9f0; S83/S84 single flights still PASS |
 | T180 | attitude-break note | sonnet | design/attitude_break_s86.md | DONE edc562526a, unreviewed |
 | T181 | xy no-crossover diagnosis | sonnet | results/stage5_s86_g2outer/t181_xy_diagnosis.md | DONE: top_db misread; UNKEYED |
-| B86z | z cells serial: s1 done; s2 + pt0_ax3_r400_s2 may still run at session end | host | results/stage5_s86_g2outer/zbatch.log | resume: `bash fly.sh PT 3 RATE 2` for any cell without _holes.txt; commit metrics |
+| B86z | z cells serial, 8 cells | host | results/stage5_s86_g2outer/README.md | DONE: PM 58.3-66.1 deg; 800 Hz cells fail only the count check |
 | B86 | G2 outer cells: pre-test pt0ax1r400, pt1ax1r400, pt1ax3r800 seed 1 | host | results/stage5_s86_g2outer/ (fly.sh PT AX RATE SEED) | in flight; resume: re-run fly.sh per missing cell |
 
 ## Open problems

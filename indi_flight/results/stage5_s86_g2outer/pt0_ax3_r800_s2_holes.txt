@@ -1,0 +1,15 @@
+hole report: indi_flight/results/stage5_s86_g2outer/pt0_ax3_r800_s2/flight.ulg  (span 109.8 s after the first second)
+topic                                 class       rate Hz holes  miss   miss %  max ms  verdict
+sim_ground_truth                      sim           800.0    17    17   0.0193    2.50  PASS
+vehicle_attitude_groundtruth          sim-info      800.0 10131 10136  11.5342    3.75  info
+vehicle_angular_velocity_groundtruth  sim-info      800.0 10298 10303  11.7242    3.75  info
+vehicle_local_position_groundtruth    sim-info      800.0 10260 10265  11.6810    3.75  info
+sensor_gyro                           sim           800.0    17    17   0.0193    2.50  PASS
+vehicle_angular_velocity              controller    800.0    22    22   0.0250    2.50  PASS
+vehicle_torque_setpoint               controller    800.0    22    22   0.0250    2.50  PASS
+actuator_motors                       controller    800.0    21    21   0.0239    2.50  PASS
+vehicle_local_position_setpoint       controller     88.9     1     1   0.0102   18.75  FAIL
+CLASS sim        holes   17  missing 0.0193 % (limit 0.05 %)  max 2.50 ms (limit 10)  PASS
+CLASS controller holes   22  missing 0.0250 % (limit 0.10 %)  max 18.75 ms (limit 10)  FAIL
+CLASS logger     holes    0  missing 0.0000 % (limit 0.10 %)  max 0.00 ms (limit 10)  PASS
+OVERALL FAIL
