@@ -45,12 +45,14 @@ S119: T118 PASSED (31c9869179): INDI+PID idx 0/21/49 hold ~5 m, acro levelled, v
   I119 (sonnet): IV estimator bench/ident_iv.py + self-tests incl. closed loop -> design/i119_ident_iv.md.
   I119 KILLED (owner): ident_iv.py:149 Pz = Zf @ pinv(Zf) is n x n (19 GB at n~48k), OOM took the supervisor
   down 20:56. Use Zf @ (pinv(Zf) @ X). Size every array before running; files unkeyed, uncommitted.
-  S120: projector fixed (proj(A)=Zf@(pinv(Zf)@A), ident_iv.py), tests run in Docker pytest (host has none):
-  9/10 pass, test_c_intercept beta err 7.7 % > 5 % (closed loop + intercept): open, for the key.
-  K120 (sonnet, in flight): independent re-impl + review of ident_iv.py vs owner conditions (ii)(iii) ->
-  design/key_k120_ident_iv.md, bench/tests/test_ident_iv_k120.py. Run tests: `indi_project/docker/run.sh -n x -t 300
-  -- bash -c "ulimit -v 4000000; cd indi_flight/bench && python3 -m pytest -q -p no:cacheprovider tests/test_ident_iv*.py"`.
-  NEXT after key: flight data: hover with M3a injection on quad5in, compare to
+  S120 DONE: K120 key (design/key_k120_ident_iv.md): 2SLS agrees; J mismatch flag, HAC se, rcond added; 20/20 pass
+  (Docker: `indi_project/docker/run.sh -n x -t 300 -- bash -c "ulimit -v 4000000; cd indi_flight/bench && python3 -m
+  pytest -q -p no:cacheprovider tests/test_ident_iv*.py"`). Open: latency_by_xcorr unkeyed, J threshold needs flight data.
+  H120 DONE (design/h120_m3a_signals.md): M3a = 1-axis Schroeder multisine on torque (MC_INDI_INJ_*), starts at first
+  armed non-landed cycle (needs a settle delay for ident), c/d/u in indi_rate_status at 800 Hz. FIRST next session:
+  verify esc_status / actuator_torque_measured publication rate on a quad5in log with MC_INDI_W_MAX>0 (note claims
+  100 Hz, UNVERIFIED); then the ident pretest hover (roll, AMP ~0.01, NP >= 6, halved gains), estimator offline.
+  NEXT: flight data (brief from h120 note): hover with M3a injection on quad5in, compare to
   derived G1; G2 cells at G1 x0.5/x2 with halved gains (ident config).
 S117 sampler rule DONE 981e94f79e (D-G3-STICK-FACTORS). g3_run.py got --stop.
 P117 G3 probe seed 117 n=60 (45 pos/10 stab/5 acro): results/g3_probe_s117/ (fly.sh, progress.txt, run_NNN/g3_done.json).
@@ -59,21 +61,7 @@ P117 G3 probe seed 117 n=60 (45 pos/10 stab/5 acro): results/g3_probe_s117/ (fly
   P117 DONE: 60/60 flown; pos 45/45, stab 8/10, acro 3/5 no-abort ("ok" = no abort only; nothing scored).
   Non-ok 0,21,25,49 = open-loop stick collective (PID controls 0,21,49 in README; 25 uncontrolled). Resume: `setsid nohup bash indi_flight/results/g3_probe_s117/fly.sh 3 <idx...>`
   (runs with g3_done.json are skipped by g3_run.py; delete a partial run_NNN without it before re-running).
-K115 DONE (design/key_k115_hte.md, 0 BLOCKING): fix AFTER L116 ends (same runner file): clamp [0.05,0.9] only on
-  valid HTE (mc_att_control_main.cpp:241), meta hover_thr_used + hover_thr_source for every run (not stick only),
-  tests that catch the 4 surviving mutations (run.json fields x2, stick_profile guard, main() thr0).
-L116 DONE e97d826b27 (results/g3_ladder_s116/README.md): nominal, mass13, inert13, erpmloss, gnssmis fly; wind5
-  flies with 4.6 m horiz RMS (stabilized has no position hold: expected); sag07, weak08, sat(one motor x0.35)
-  trip height watchdog 60-63 s. Hypothesis: open-loop stabilized collective, not controller.
-L116b DONE a7ac9375c0: PID trips the same watchdog (sag07 63.10 s, weak08 63.30 s) -> scenario property: stick
-  stabilized is for attitude/rate factors only; thrust/wind factors go on position-hold scenarios. INDI on
-  o1_lemniscate --sched holds altitude with sag/weak/sat/wind (vert RMS 0.03-0.18 m). A-41 opened (horiz 2.8 m).
-A116 DONE ca6825db51: stick_zsine_o6 flies in altctl, posctl, posctl+sag07 (INDI). metrics.py has no stick-mode
-  reference/window for altctl/posctl (vertical = commanded climb): add one before these enter the batch.
-N116 DONE 4e25b1aa00: nominal horiz RMS INDI 2.805 / PID 2.800 m = faulted rows; A-41 closed.
-H116 DONE dce771f1e6 (K115 fixes, 9+3 tests pass, mutations checked; slew-lag m3 not addressed, accepted:
-  probes only). Key of a bench-only meta fix not required (no safety path).
-(Done rows up to K114/F114: JOURNAL.md S100-S115; ledger LEDGER.md. Yaw model tool defect open: margins_of hangs if ts_true=0.)
+(Done rows up to H116: JOURNAL.md S100-S116 + S120 move; ledger LEDGER.md. Yaw model tool defect open: margins_of hangs if ts_true=0.)
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging

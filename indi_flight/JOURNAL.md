@@ -873,3 +873,18 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
   SITL validates the estimator only; unmodelled effects (prop wash, frame flex, ESC non-linearity) stay in G4/G6
   scope.
 - S120: Q6 closed (B), D-IDENT decided; ident_iv.py O(n) projection; K120 key: point estimate agrees with independent 2SLS, J mismatch detector + HAC se + rcond added, test_c fixed (seed lottery), 20/20 pass, mutations checked.
+- S120 STATE trim, done rows moved verbatim:
+  K115 DONE (design/key_k115_hte.md, 0 BLOCKING): fix AFTER L116 ends (same runner file): clamp [0.05,0.9] only on
+    valid HTE (mc_att_control_main.cpp:241), meta hover_thr_used + hover_thr_source for every run (not stick only),
+    tests that catch the 4 surviving mutations (run.json fields x2, stick_profile guard, main() thr0).
+  L116 DONE e97d826b27 (results/g3_ladder_s116/README.md): nominal, mass13, inert13, erpmloss, gnssmis fly; wind5
+    flies with 4.6 m horiz RMS (stabilized has no position hold: expected); sag07, weak08, sat(one motor x0.35)
+    trip height watchdog 60-63 s. Hypothesis: open-loop stabilized collective, not controller.
+  L116b DONE a7ac9375c0: PID trips the same watchdog (sag07 63.10 s, weak08 63.30 s) -> scenario property: stick
+    stabilized is for attitude/rate factors only; thrust/wind factors go on position-hold scenarios. INDI on
+    o1_lemniscate --sched holds altitude with sag/weak/sat/wind (vert RMS 0.03-0.18 m). A-41 opened (horiz 2.8 m).
+  A116 DONE ca6825db51: stick_zsine_o6 flies in altctl, posctl, posctl+sag07 (INDI). metrics.py has no stick-mode
+    reference/window for altctl/posctl (vertical = commanded climb): add one before these enter the batch.
+  N116 DONE 4e25b1aa00: nominal horiz RMS INDI 2.805 / PID 2.800 m = faulted rows; A-41 closed.
+  H116 DONE dce771f1e6 (K115 fixes, 9+3 tests pass, mutations checked; slew-lag m3 not addressed, accepted:
+    probes only). Key of a bench-only meta fix not required (no safety path).
