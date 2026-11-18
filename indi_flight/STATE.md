@@ -44,7 +44,8 @@ NEXT (S65), per route check 64 (inner loop time-boxed: 1 session per law change 
 | T185 | review attitude-break note vs code | sonnet | design/attitude_break_s86_review.md | DONE: 0 BLOCKING, 2 MAJOR (add call-site test at McIndiRateControl.cpp:231; replace circular x-y-d check by logged rate_sp_dot vs derivative of logged x), 10 MINOR (gate off in ACRO; use hover_xlong; outer loop closed below ~0.3 Hz). Amend note, then implement |
 | T189 | S89 hole_report re-run | haiku | results/stage5_s85_holes/rerun_s89.md | DONE: serial cells all PASS |
 | RC89 | route check 89 | sonnet | design/route_check_89.md | DONE |
-| T190 | S90 (launch 20261118-081145, cap $3): amend attitude-break note per T185 + implement injector, call-site test, rate_sp_dot check script | sonnet | design/attitude_break_s86.md (sec 8 amendments), design/t190_impl_log.md | check log; uncommitted diff = agent work, review before commit |
+| T190 | S90: amend attitude-break note (sec 8) + implement PT=1 rate-sp break | sonnet | design/t190_impl_log.md | DONE b41dd6ec81 fw, d7bb0e7bd9 check script, 947d510823 note; 7/7 Indi test suites pass (Docker, re-run by orchestrator). UNVERIFIED: check script on real ULog, AX=0 real-log bit-identity |
+| T191 | second key of b41dd6ec81 vs note | sonnet | design/attitude_break_s90_key.md | if not DONE, re-launch same brief (see LEDGER) |
 
 ## Open problems
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
