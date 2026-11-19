@@ -31,7 +31,7 @@ parameters:
         short: INDI roll control effectiveness
         long: Roll angular acceleration in rad/s^2 per unit of normalised torque.
       type: float
-      default: 320.0
+      default: 1757.0
       min: 0.001
       max: 5000
       decimal: 1
@@ -41,7 +41,7 @@ parameters:
         short: INDI pitch control effectiveness
         long: Pitch angular acceleration in rad/s^2 per unit of normalised torque.
       type: float
-      default: 210.0
+      default: 1640.0
       min: 0.001
       max: 5000
       decimal: 1
@@ -49,9 +49,9 @@ parameters:
     MC_INDI_G1_Y:
       description:
         short: INDI yaw control effectiveness
-        long: Yaw angular acceleration in rad/s^2 per unit of normalised torque. The default is not identified for any airframe.
+        long: Yaw angular acceleration in rad/s^2 per unit of normalised torque. The default is the reference 5-inch quadcopter value.
       type: float
-      default: 30.0
+      default: 205.0
       min: 0.001
       max: 5000
       decimal: 1
@@ -61,11 +61,21 @@ parameters:
         short: INDI yaw rotor spin-up term
         long: Yaw rotor spin-up term, the yaw angular acceleration from the rotor inertia reaction per unit of normalised torque rate (rad/s^2 per 1/s). G2 / MC_INDI_G1_Y is a time in seconds that is not the motor time constant (reference 5-inch quadcopter 27 / 205 = 0.13 s). It sets a first order low pass of time constant G2 / G1 on the yaw torque increment, with unchanged steady state gain. Set to 0 to disable. Under-estimating G2 is benign, over-estimating it is the weak side of the margin.
       type: float
-      default: 0.0
+      default: 27.0
       min: 0.0
       max: 1000
       decimal: 2
       increment: 0.1
+    MC_INDI_ID_OK:
+      description:
+        short: INDI physical parameters identified
+        long: |-
+          0: Not identified yet, the rate bandwidth gains MC_INDI_K_R, MC_INDI_K_P and MC_INDI_K_Y are applied at 0.5x (conservative identification configuration).
+          1: Identified, the gains are applied as set.
+      type: int32
+      default: 0
+      min: 0
+      max: 1
     MC_INDI_K_R:
       description:
         short: INDI roll rate bandwidth

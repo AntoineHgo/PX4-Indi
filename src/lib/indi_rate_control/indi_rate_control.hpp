@@ -384,3 +384,12 @@ private:
 	matrix::Vector3f _rate_sp_dot;
 	bool _fault{false};
 };
+
+/**
+ * Rate bandwidth gains K applied by the loop: the set gains while the physical parameters are identified,
+ * half of them before (conservative identification configuration, D-DEFAULTS-FW).
+ */
+inline matrix::Vector3f indiEffectiveGainK(const matrix::Vector3f &k_set, bool identified)
+{
+	return identified ? k_set : k_set * 0.5f;
+}

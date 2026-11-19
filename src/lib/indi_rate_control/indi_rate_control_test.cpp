@@ -2252,3 +2252,15 @@ TEST(IndiRateControlSetpointLeadTest, YawFilterToggleGivesNoDerivativeImpulse)
 	ctrl.update(zero, sp, zero, zero, kDt, false);
 	EXPECT_EQ(ctrl.getRateSpDot()(2), 0.f);
 }
+
+TEST(IndiRateControlTest, EffectiveGainKIdentStatus)
+{
+	const Vector3f k(20.f, 16.f, 10.f);
+	const Vector3f halved = indiEffectiveGainK(k, false);
+	const Vector3f full = indiEffectiveGainK(k, true);
+
+	for (int i = 0; i < 3; i++) {
+		EXPECT_FLOAT_EQ(halved(i), 0.5f * k(i));
+		EXPECT_FLOAT_EQ(full(i), k(i));
+	}
+}

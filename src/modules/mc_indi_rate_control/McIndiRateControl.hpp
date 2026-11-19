@@ -204,6 +204,7 @@ private:
 		(ParamFloat<px4::params::MC_INDI_K_R>) _param_mc_indi_k_r,
 		(ParamFloat<px4::params::MC_INDI_K_P>) _param_mc_indi_k_p,
 		(ParamFloat<px4::params::MC_INDI_K_Y>) _param_mc_indi_k_y,
+		(ParamInt<px4::params::MC_INDI_ID_OK>) _param_mc_indi_id_ok,
 		(ParamFloat<px4::params::MC_INDI_ACT_TC>) _param_mc_indi_act_tc,
 		(ParamFloat<px4::params::MC_INDI_ACT_BLD>) _param_mc_indi_act_bld,
 		(ParamFloat<px4::params::MC_INDI_LEAD>) _param_mc_indi_lead,

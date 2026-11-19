@@ -95,7 +95,8 @@ McIndiRateControl::parameters_updated()
 				  radians(_param_mc_acro_y_max.get()));
 
 	// INDI rate law
-	_indi.setGainK(Vector3f(_param_mc_indi_k_r.get(), _param_mc_indi_k_p.get(), _param_mc_indi_k_y.get()));
+	_indi.setGainK(indiEffectiveGainK(Vector3f(_param_mc_indi_k_r.get(), _param_mc_indi_k_p.get(), _param_mc_indi_k_y.get()),
+					  _param_mc_indi_id_ok.get() == 1));
 	_indi.setG1(Vector3f(_param_mc_indi_g1_r.get(), _param_mc_indi_g1_p.get(), _param_mc_indi_g1_y.get()));
 	_indi.setG2Yaw(_param_mc_indi_g2_y.get());
 	_indi.setActuatorTimeConstant(_param_mc_indi_act_tc.get());
