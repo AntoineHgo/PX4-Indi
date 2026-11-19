@@ -50,6 +50,8 @@ S130 DONE (0adaaa490f, keyed K130 + K130b, 0 BLOCKING): D-STAGE-STALE in firmwar
   `make format` not run on S130 files. Smoke S130 (before lib fix): stage_mode 1 throughout, hover = S128; POSCTL
   z std 0.114 vs 0.050 m (1 seed; re-fly once in S131 with T2-T6 smokes); NAV_LAND 16 s early in S128-S130 = runner.
 S131 = T2-T6 (AUTO smoke harness, takeoff handover, land, failsafes, return/mission/loiter), then RC129 plan.
+S131 in flight: A131 sonnet runner AUTO harness T2/T3/T4/T6 -> design/impl_s131_auto_harness.md; B131 sonnet
+  firmware T5 failsafe pure fn + T10 reset reaction -> design/impl_s131_failsafe_reset.md. Resume: read those files.
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
   MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit untested, DESCEND failsafe tests.

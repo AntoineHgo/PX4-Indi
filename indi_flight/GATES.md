@@ -369,6 +369,11 @@ Row G5.6 justification: 50 ms is about 5 x the 10 ms Commander period, one lost 
 bounded at 2 Commander periods). The 0.8 m/s touchdown limit is the usual soft-touchdown figure for a 0.6 kg craft
 (PROPOSED). Injectors for kill, reset, maybe_landed, RC / link / offboard loss, position-mode sag, are MISSING and each needs
 its G1.5 check first. Scripts: `bench/g5_events.py` (to build, second key). Command: `bench/gate_g5.sh row seed`.
+S131 addition to G5.4 (written before its first test; S131 AUTO smokes are probes, RC113): take-off handover, at the
+`takeoff_status` rampup -> flight edge, |thrust command step| (`indi_pos_status.thrust`, mean 0.1 s after minus mean
+0.1 s before) <= 10 % of the hover thrust, and truth altitude dip <= 0.3 m within 1 s after the edge. Land: mean truth
+vz over the final descent within +-20 % of MPC_LAND_SPEED; disarm <= COM_DISARM_LAND + 1 s after ground contact. The
+10 % is half the G5.7 mode-switch limit, since the handover is a scheduled, not pilot-commanded, edge (PROPOSED).
 
 ### 6. G6 Defaults and identification from a wrong start
 
