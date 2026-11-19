@@ -193,3 +193,5 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S130 | smoke hover+POSCTL | haiku | results/smoke_s130_stage/README.md | done, 15 calls ~$0.1 |
 | S130 | lib fix f_b_valid | sonnet | design/impl_s130b_model_fb.md | done, 12 calls ~$0.3 |
 | S130 | K130b key | sonnet | design/key_k130b_model_fb.md | done, 4 calls ~$0.17 |
+| S131 | impl T5 failsafe fn + T10 reset | sonnet | design/impl_s131_failsafe_reset.md | done, 20 calls ~$0.4 |
+| S131 | K131 key | sonnet | design/key_k131_failsafe_reset.md | done, 9 calls ~$0.18, 0 BLOCKING/MAJOR |
