@@ -44,7 +44,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice before any fr
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | S130 | DONE impl D-STAGE-STALE + T1 helper (IndiStageMode.hpp, 7 gtests, break-checked); UNCOMMITTED until key | sonnet | design/impl_s130_stage_stale.md | - |
-| S130 | K130 key of the diff vs D-STAGE-STALE | sonnet | design/key_k130_stage_stale.md | re-run key on `git diff` of src/modules/mc_indi_pos_control msg/IndiPosStatus.msg |
+| S130 | DONE K130: 0 B; MAJ M1 model f_b undelayed vs delayed t_f path (recursion, scaling G vs g_t*k_cmd), MAJ M2 filter step entry/exit, no hysteresis; MINORs NaN yaw in hold-no-held, injection in mode (a), no runIndiStage test | sonnet | design/key_k130_stage_stale.md | NEXT: library fix = Input flag f_b invalid -> library substitutes the SAME delayed modelled thrust as t_f (exact cancellation, t_c = a_ref - g), lib test with delay >= 2 break-checked, 20 ms fresh hysteresis to leave mode (a), MINORs; then key, then commit firmware |
 | S130 | smoke offboard hover + POSCTL with new stage | haiku | results/smoke_s130_stage/README.md | re-run S128/S129 smoke commands |
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
