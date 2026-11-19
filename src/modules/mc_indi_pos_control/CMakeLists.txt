@@ -66,3 +66,4 @@ target_link_libraries(modules__mc_indi_pos_control PRIVATE GotoControl PositionC
 target_include_directories(modules__mc_indi_pos_control PRIVATE ${PX4_SOURCE_DIR}/src/modules/mc_pos_control)
 
 px4_add_unit_gtest(SRC IndiPosInjectionTest.cpp LINKLIBS IndiPosInjection)
+px4_add_unit_gtest(SRC IndiStageModeTest.cpp)

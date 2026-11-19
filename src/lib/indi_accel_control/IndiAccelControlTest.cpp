@@ -371,6 +371,61 @@ TEST_F(IndiAccelControlTest, InvalidMeanUUsesPreviousThrustCommand)
 	EXPECT_NEAR(-out.t_f(2), kGt * thrust_prev * 1.2f, 1e-4f);
 }
 
+TEST_F(IndiAccelControlTest, InvalidFbConvergesToModelInversionWithDelay)
+{
+	// D-STAGE-STALE (a): f_b replaced by the delayed modelled specific force: t_c = a_ref - g, no recursion
+	for (int delay = 2; delay <= 3; delay++) {
+		_ctrl.setFilter(100.f, 10.f);
+		_ctrl.setMeasurementDelay(delay);
+		_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
+		IndiAccelControl::Input in = hoverInput();
+		in.a_ref = Vector3f(0.5f, 0.f, -1.f);
+		in.f_b = Vector3f(kNaN, kNaN, kNaN); // not read while f_b_valid is false
+		in.f_b_valid = false;
+		in.mean_u_valid = false;
+		IndiAccelControl::Output out;
+		float max_err = 0.f;
+
+		for (int i = 0; i < 300; i++) {
+			ASSERT_TRUE(_ctrl.update(in, out)) << "delay " << delay << " i " << i;
+			const Vector3f expected(0.5f, 0.f, -1.f - kG);
+			max_err = fmaxf(max_err, (out.t_c - expected).norm());
+			ASSERT_TRUE(out.t_c.isAllFinite());
+		}
+
+		EXPECT_LT(max_err, 0.05f) << "delay " << delay;
+		EXPECT_NEAR(out.t_c(0), 0.5f, 1e-3f) << "delay " << delay;
+		EXPECT_NEAR(out.t_c(2), -1.f - kG, 1e-3f) << "delay " << delay;
+	}
+}
+
+TEST_F(IndiAccelControlTest, InvalidFbStepInARefIsBounded)
+{
+	_ctrl.setFilter(100.f, 10.f);
+	_ctrl.setMeasurementDelay(2);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
+	IndiAccelControl::Input in = hoverInput();
+	in.f_b = Vector3f(kNaN, kNaN, kNaN);
+	in.f_b_valid = false;
+	in.mean_u_valid = false;
+	IndiAccelControl::Output out;
+
+	for (int i = 0; i < 100; i++) {
+		ASSERT_TRUE(_ctrl.update(in, out));
+	}
+
+	in.a_ref = Vector3f(0.f, 0.f, -3.f); // step: expected t_c(2) = -3 - g
+	float peak = 0.f;
+
+	for (int i = 0; i < 300; i++) {
+		ASSERT_TRUE(_ctrl.update(in, out));
+		peak = fmaxf(peak, fabsf(out.t_c(2)));
+	}
+
+	EXPECT_LT(peak, kG + 3.f + 1.f);
+	EXPECT_NEAR(out.t_c(2), -3.f - kG, 1e-3f);
+}
+
 TEST_F(IndiAccelControlTest, AppliedThrustSetsModelPath)
 {
 	// stage-output loop break: with invalid telemetry the model path must follow the applied collective, not t_c

@@ -234,7 +234,7 @@ void IndiAccelControl::setAppliedThrust(float c_applied)
 bool IndiAccelControl::update(const Input &in, Output &out)
 {
 	// 9. required inputs, checked before any state is touched
-	if ((!in.accel_only && (!allFinite(in.p) || !allFinite(in.v))) || !allFinite(in.f_b) || !PX4_ISFINITE(in.q(0)) || !PX4_ISFINITE(in.q(1))
+	if ((!in.accel_only && (!allFinite(in.p) || !allFinite(in.v))) || (in.f_b_valid && !allFinite(in.f_b)) || !PX4_ISFINITE(in.q(0)) || !PX4_ISFINITE(in.q(1))
 	    || !PX4_ISFINITE(in.q(2)) || !PX4_ISFINITE(in.q(3)) || !PX4_ISFINITE(in.dt)
 	    || (in.mean_u_valid && !PX4_ISFINITE(in.mean_u))) {
 		return false;
@@ -307,15 +307,12 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 		a_c(i) = in.accel_only ? a_ref(i) : (_k_vel(i) * (v_sp(i) - in.v(i)) + a_ref(i));
 	}
 
-	// 3. measured acceleration
-	const Vector3f f_bf = _lpf_f.apply(in.f_b);
-	_last_f_b = f_bf;
-	const Vector3f a_f = R * f_bf + Vector3f(0.f, 0.f, kGravity);
-
-	// 4. measured thrust
+	// 4. measured thrust (the delay line runs first: a substituted f_b needs the delayed signal, see 3.)
+	// f_b_valid == false (D-STAGE-STALE a) also makes mean_u unusable: the stage runs on the model alone
+	const bool u_valid = in.mean_u_valid && in.f_b_valid;
 	const float u_model = _thrust_prev * _k_cmd;
 	// invalid telemetry: feed u_model - b so that u_meas_f + b stays continuous (no step at loss or recovery)
-	const float u_in = in.mean_u_valid ? in.mean_u : (u_model - _b);
+	const float u_in = u_valid ? in.mean_u : (u_model - _b);
 	_u_idx = (_u_idx + 1) % (kMaxDelaySamples + 1);
 	_u_buf[_u_idx] = u_in;
 	_um_buf[_u_idx] = u_model;
@@ -325,11 +322,20 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 	_last_u = u_meas_f;
 	_last_um = u_model_f;
 
+	// 3. measured acceleration. Invalid f_b: the body specific force of the SAME delayed actuator signal that
+	// feeds t_f below (_u_buf[i_d] plus the held blend, scale _g_t, body (0,0,-_g_t*u)), through the same f_b filter.
+	// Measured and modelled paths are then identical signals through identical filters and cancel: t_c = a_c - g.
+	const float u_sub = _u_buf[i_d] + ((_tb > 0.f) ? _b : 0.f);
+	const Vector3f f_in = in.f_b_valid ? in.f_b : Vector3f(0.f, 0.f, -_g_t * u_sub);
+	const Vector3f f_bf = _lpf_f.apply(f_in);
+	_last_f_b = f_bf;
+	const Vector3f a_f = R * f_bf + Vector3f(0.f, 0.f, kGravity);
+
 	// D-GAP blend: b = LP_tb(u_model - u_meas), held (never reset) on the ground, at bypass edges (hold flag),
 	// while the telemetry is invalid and while the collective is clamped (anti-windup)
 	// anti-windup also on the measured mean_u at its physical limit and on the allocator saturation report
-	const bool u_at_limit = in.mean_u_valid && (in.mean_u >= kMeanUSatLimit);
-	const bool blend_frozen = _blend_hold || !in.mean_u_valid || _coll_clamped || u_at_limit || in.alloc_saturated;
+	const bool u_at_limit = u_valid && (in.mean_u >= kMeanUSatLimit);
+	const bool blend_frozen = _blend_hold || !u_valid || _coll_clamped || u_at_limit || in.alloc_saturated;
 
 	if ((_tb > 0.f) && !blend_frozen) {
 		_b += (in.dt / (_tb + in.dt)) * ((u_model_f - u_meas_f) - _b);

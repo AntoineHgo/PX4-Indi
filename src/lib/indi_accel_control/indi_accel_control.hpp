@@ -92,6 +92,7 @@ public:
 		matrix::Vector3f f_b{};    ///< accelerometer specific force, body frame (m/s^2)
 		float mean_u{NAN};         ///< mean normalised rotor thrust (only used if mean_u_valid)
 		bool mean_u_valid{false};
+		bool f_b_valid{true};      ///< false: f_b ignored (may be non-finite), replaced by the delayed modelled specific force; mean_u treated as invalid, blend held
 		bool alloc_saturated{false}; ///< allocator reports saturation (motors or unallocated thrust): b is frozen
 		matrix::Vector3f p_ref{NAN, NAN, NAN};  ///< NaN component: no position term on that axis
 		matrix::Vector3f v_ref{NAN, NAN, NAN};  ///< NaN component: 0 feedforward on that axis

@@ -40,6 +40,7 @@
 #include "PositionControl/PositionControl.hpp"
 #include "Takeoff/Takeoff.hpp"
 #include "GotoControl/GotoControl.hpp"
+#include "IndiStageMode.hpp"
 #include <lib/indi_accel_control/indi_accel_control.hpp>
 #include <lib/indi_rate_control/indi_rate_control.hpp>
 #include <uORB/topics/control_allocator_status.h>
@@ -107,14 +108,18 @@ private:
 	/** Poll the attitude and specific-force inputs of the INDI stage. */
 	void pollStageInputs();
 
-	/** True if the attitude and specific force are recent enough for the INDI stage to run. */
-	bool stageInputsFresh(hrt_abstime now) const;
 
 	static constexpr hrt_abstime kStageMaxAge{20_ms};
 
 	/** INDI stage after PositionControl::update (architecture A). Modifies att_sp / local_pos_sp when active. */
 	void runIndiStage(float dt, hrt_abstime now, bool want_active, float tilt_limit_rad, float ht,
 			  vehicle_local_position_setpoint_s &local_pos_sp, vehicle_attitude_setpoint_s &att_sp);
+
+	/** Remember the attitude setpoint and thrust for the hold mode (D-STAGE-STALE b). */
+	void storeHeld(const vehicle_attitude_setpoint_s &att_sp, const vehicle_local_position_setpoint_s &local_pos_sp);
+
+	/** Warn once per episode when a degraded stage mode lasts > 0.5 s. */
+	void trackDegraded(StageMode mode, hrt_abstime now);
 
 	IndiAccelControl _indi;
 	IndiPosInjection _injection; ///< bench loop-break excitation of the commanded acceleration (MC_INDI_PINJ_*), off by default
@@ -129,10 +134,19 @@ private:
 	bool _mean_u_valid{false};
 	hrt_abstime _q_time{0}, _acc_time{0}, _esc_time{0}, _thr_time{0};
 	float _coll_meas{NAN};		///< latest vehicle_thrust_setpoint collective
+	hrt_abstime _acc_fresh_since{0};	///< start of the current continuous fresh-acceleration run
+	bool _acc_stale_latched{false};	///< D-STAGE-STALE hysteresis: modelled acceleration until fresh for kAccRecoverTime
+	static constexpr hrt_abstime kAccRecoverTime{20_ms};
 	float _last_thrust{0.f};	///< last published collective
 	float _hte{NAN};
 	bool _hte_valid{false};
 	bool _indi_active{false};
+	float _held_q_d[4] {};		///< hold mode: last published attitude setpoint
+	float _held_thrust_body[3] {};
+	float _held_thrust_ned[3] {};
+	bool _held_valid{false};
+	hrt_abstime _degraded_since{0};
+	bool _degraded_warned{false};
 	int _stage_reason{-1};		///< last reported stage condition bitmask (instrument)
 	int _stage_reports{0};		///< number of stage reports printed (capped)
 	float _filter_hz{0.f};

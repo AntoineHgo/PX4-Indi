@@ -25,3 +25,9 @@ uint8 jerk_source		# [@enum JERK_SOURCE] origin of the jerk reference
 
 uint8 hold_cycles		# consecutive cycles in which the last setpoint was held (library rejected or stale input), 0 = normal
 bool failure			# hold limit exceeded: a level attitude is commanded, the mode is failing
+
+uint8 STAGE_MODE_BYPASS = 0
+uint8 STAGE_MODE_INDI = 1
+uint8 STAGE_MODE_INDI_MODEL_ACCEL = 2
+uint8 STAGE_MODE_HOLD = 3
+uint8 stage_mode		# [@enum STAGE_MODE] D-STAGE-STALE: 1 indi, 2 indi on modelled acceleration, 3 hold (0 never published)
