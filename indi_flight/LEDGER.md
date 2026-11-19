@@ -188,3 +188,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S128 | ACT_TC pretest 4 flights | haiku | results/act_tc_s128/README.md | done, 11 calls ~$0.15 |
 | S128 | RC129 route check | sonnet | design/route_check_129.md | done, 7 calls ~$0.15 |
 | S129 | sonnet | G5 build list | design/g5_build_list.md | 22 calls, done |
+| S130 | impl D-STAGE-STALE + IndiStageMode helper/gtests | sonnet | design/impl_s130_stage_stale.md | done, 14 calls ~$0.35 |

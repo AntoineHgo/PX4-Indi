@@ -43,6 +43,9 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice before any fr
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S130 | DONE impl D-STAGE-STALE + T1 helper (IndiStageMode.hpp, 7 gtests, break-checked); UNCOMMITTED until key | sonnet | design/impl_s130_stage_stale.md | - |
+| S130 | K130 key of the diff vs D-STAGE-STALE | sonnet | design/key_k130_stage_stale.md | re-run key on `git diff` of src/modules/mc_indi_pos_control msg/IndiPosStatus.msg |
+| S130 | smoke offboard hover + POSCTL with new stage | haiku | results/smoke_s130_stage/README.md | re-run S128/S129 smoke commands |
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
   MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit untested, DESCEND failsafe tests.
