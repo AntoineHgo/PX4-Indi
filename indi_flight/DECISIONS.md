@@ -682,3 +682,24 @@ for complete identification before stage 5.
   ID_OK 1 (hover indistinguishable; step motor-command activity 20-25 % lower at 0.033; one seed). quad5in params
   file takes 0.033 (model tau, ref_airframe_model.md). Firmware default stays 0.05: an assumed actuator faster than
   the plant is the aggressive side (lesson 8, H5), so the slower value is kept for unidentified, larger airframes.
+
+## D-STAGE-STALE (S130, F-1, closes the in-flight bypass of g5_build_list.md section 0)
+- Context: in flight with the stage requested (`want_indi`), stale attitude/acceleration, non-finite a_ref, rate
+  < 5 Hz or `IndiAccelControl::update` false made IPC publish the stock attitude setpoint and re-engage the stock
+  velocity integrator (IPC:287-295, 851): a PID fallback, against F-1. The start-up `|| mc_pos_control start` is
+  removed (D-start-fallback, S12, had decided it but rc.mc_apps still carried it).
+- Decision: once `want_indi` is true the stock thrust is never published and the stock integral stays reset.
+  (a) Acceleration stale or non-finite: the stage runs on the MODELLED specific force f_b = (0, 0, -G c_prev) with
+  mean_u invalid and the blend held. With measured = modelled the increment reduces to the model inversion
+  t_c = a_ref - g of the same a_ref (the O-5 modelled-fallback rule applied to the acceleration channel).
+  (b) Attitude stale/invalid, a_ref non-finite, rate < 5 Hz or update false: hold the last INDI attitude setpoint
+  and thrust (zero-order hold); the attitude controller is equally blind in these cases.
+  Each degraded cycle is flagged in `indi_pos_status`; a degraded state lasting > 0.5 s is reported (instrument).
+  `want_indi` false (disarmed, landed/ground contact, takeoff state < flight, manual modes) keeps the stock path:
+  ground handling and the takeoff ramp, where the measured acceleration contains the ground reaction and INDI cannot
+  act. T3/T4 measure the edges.
+- Alternatives: hold-last for every case (rejected: open loop in thrust during a long accel outage, the P/D loop
+  could not act); refuse to fly / force failsafe (rejected as sole remedy: the estimator failsafe already handles the
+  loss of attitude; the stage must still output something until it acts); keep the stock bypass (rejected, F-1).
+- Overturn: a G3/G5 run where (a) diverges while the stock mapping would not, or the owner classing the takeoff
+  ramp as a PID fallback. UNVERIFIED: arming is not refused when the INDI module fails to start (commander zero diff).
