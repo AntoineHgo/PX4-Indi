@@ -59,6 +59,9 @@ S132 A-45 CLOSED (D-HANDOVER, HandoverBlend tau 0.5 s, keyed K132): handover ste
   the stock value without the offset (ident windows within 2 s of a handover). Logger misses the first ~0.2 s of
   indi_pos_status (late subscription): never read a missing sample as bypass.
 S133 = T7-T12 (OFFBOARD rows, pass-through modes, T9 hover-thrust port, first G5 probe, T12 owner Q).
+S133 T9 DONE 7770538b55 (syncHoverThrust: updateHoverThrust on ht change, bypass only; gtest break-checked, 152/152;
+  SITL assertion pending; key folded into the pre-freeze combined opus review). A133 sonnet T7+T8 smokes in flight ->
+  design/impl_s133_offboard_passthrough.md (resume: read its last section, commit README/metrics).
 S131 done: A131 sonnet runner AUTO harness T2/T3/T4/T6 -> design/impl_s131_auto_harness.md; B131 sonnet
   firmware T5 failsafe pure fn + T10 reset reaction DONE 3d6066de89 (gtests pass, reset reaction unflown, module-side
   call untested); K131 key 0 BLOCKING/MAJOR (MINORs: reset collective from measured thrust = small step, wiring
