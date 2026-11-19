@@ -54,9 +54,11 @@ S131 AUTO smoke (166bb5a258, probe, 1 seed): auto_tour + auto_land10 fly with IN
   README time-base error (window is 55-85 s), not runner. PID ref (results/auto_smoke_s131_pid): step 0.0075, land
   same -> handover step is INDI-specific = A-45 (fix first in S132: align checker 50 ms -> 0.1 s, log indi_pos_status
   in bypass, find first-cycle collective cause; 1 session max per RC64 rule).
-A-45 search done (design/a45_cause_s131.md): step is in the BYPASS path (stock PositionControl acc_sp z -3.28 in IPC
-  vs -1.15 in MPC at the edge); next: diff IPC rampup/takeoff/acc-ff handling vs MPC (IPC:753-755, 810, 836-840).
-S132 = A-45, then T7-T12 (OFFBOARD rows, pass-through modes, T9 hover-thrust port, first G5 probe, T12 owner Q).
+S132 A-45 CLOSED (D-HANDOVER, HandoverBlend tau 0.5 s, keyed K132): handover step 0.035 -> <=0.0067 (3 seeds,
+  results/auto_smoke_s132). K132 MINORs open: caller wiring untested (stage-7 harness); status.a_c_pre_inject logs
+  the stock value without the offset (ident windows within 2 s of a handover). Logger misses the first ~0.2 s of
+  indi_pos_status (late subscription): never read a missing sample as bypass.
+S133 = T7-T12 (OFFBOARD rows, pass-through modes, T9 hover-thrust port, first G5 probe, T12 owner Q).
 S131 done: A131 sonnet runner AUTO harness T2/T3/T4/T6 -> design/impl_s131_auto_harness.md; B131 sonnet
   firmware T5 failsafe pure fn + T10 reset reaction DONE 3d6066de89 (gtests pass, reset reaction unflown, module-side
   call untested); K131 key 0 BLOCKING/MAJOR (MINORs: reset collective from measured thrust = small step, wiring

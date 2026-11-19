@@ -703,3 +703,17 @@ for complete identification before stage 5.
   loss of attitude; the stage must still output something until it acts); keep the stock bypass (rejected, F-1).
 - Overturn: a G3/G5 run where (a) diverges while the stock mapping would not, or the owner classing the takeoff
   ramp as a PID fallback. UNVERIFIED: arming is not refused when the INDI module fails to start (commander zero diff).
+
+## D-HANDOVER (S132, closes the cause of A-45): bumpless transfer of a_ref at bypass -> INDI
+- Cause (design/a45_cause_s131.md, S132 section): on the first stage cycle `want_indi` zeroes the stock velocity
+  integrator, which during the takeoff ramp held +2.67 m/s^2 (z, down). a_ref steps -0.61 -> -3.28 m/s^2 and INDI
+  delivers it: 2.67/g x hover 0.137 = 0.037 predicted vs 0.035 measured. The 180 ms without `indi_pos_status` is the
+  logger subscribing late (first publication), not a bypass.
+- Decision: on the first stage cycle after bypass, add o = a_bypass_last - a_ref to a_ref and decay it as
+  exp(-t/tau), tau = 0.5 s (2/MPC_Z_VEL_P_ACC at the default 4; slower than the vertical velocity loop so the
+  0.1 s handover step is < 10 % hover). All three axes. Not an integrator (fixed decay, no error input): F-1/D-GAP
+  unchanged. Pure class `HandoverBlend.hpp`, unit tested.
+- Alternatives: keep the stock integrator and let it unwind (rejected: D-STAGE-STALE A2, two gap removers); slew-limit
+  the collective (rejected: acts on the output, hides any later real step, axis-blind); start INDI already in rampup
+  (rejected: ground reaction in the measured acceleration).
+- Overturn: G5 take-off/mode-switch transient still > limit, or a G3 run where the decaying offset delays recovery.

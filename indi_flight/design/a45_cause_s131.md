@@ -15,3 +15,15 @@ Next step (not done): diff MulticopterPositionControl.cpp vs McIndiPosControl.cp
 
 Proposed minimal fix: none justified until the acc_sp difference (-3.28 vs -1.15) is traced; if the cause is a stock-vs-module setpoint divergence in bypass, make the bypass feed PositionControl exactly as stock (remove the divergence).
 Test that would fail: SITL replay asserting |dthrust_z| at takeoff_status 4->5 differs by < 0.015 between MC_INDI_POS_EN=1 and 0 (now 0.037 vs 0.0075); extend indi_flight/bench/auto_smoke_check.py.
+
+## S132: cause found
+- The S131 conclusion "the step precedes the first INDI cycle" was wrong: `computeWantIndi` inputs are all true at
+  the edge (armed, pos/vel/climb flags, takeoff flight, ground_contact 0), and the only non-publishing branch of
+  runIndiStage is Bypass. The missing `indi_pos_status` samples are the logger subscribing to the topic after its
+  first advertisement (topic first published at the edge).
+- At the edge `want_indi` zeroes the stock integrator before `_control.update()` (McIndiPosControl.cpp ~968). The
+  bypass acceleration -0.61 contained +2.67 m/s^2 of integrator wound during the ramp (ramp starts from a positive
+  vz limit); the first stage a_ref is -3.28 and INDI delivers it: 2.67/9.81 x 0.137 = 0.037 vs 0.035 measured.
+  The stock MPC keeps the integrator, hence its 0.0075.
+- Fix D-HANDOVER (HandoverBlend.hpp): decaying offset continues the bypass acceleration. Result
+  results/auto_smoke_s132: steps 0.0067 / 0.0004 / 0.0008 on seeds 1-3.

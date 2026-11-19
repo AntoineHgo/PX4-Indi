@@ -198,3 +198,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S131 | AUTO harness T2-T6 + 2 smokes | sonnet | design/impl_s131_auto_harness.md | done, 32 calls ~$0.6 |
 | S131 | PID ref auto_land10 | haiku | results/auto_smoke_s131_pid/README.md | done, 9 calls ~$0.05 |
 | S131 | A-45 cause search | sonnet | design/a45_cause_s131.md | done, 12 calls ~$0.22, partial (bypass path) |
+| S132 | K132 key review D-HANDOVER diff | sonnet | design/review_k132_handover.md | done, 9 calls ~$0.25, 0 BLOCKING, 1 MAJOR fixed |
