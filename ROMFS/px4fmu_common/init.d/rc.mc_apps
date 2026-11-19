@@ -56,7 +56,8 @@ flight_mode_manager start
 
 if param compare -s MC_INDI_POS_EN 1
 then
-	mc_indi_pos_control start || mc_pos_control start
+	# D-start-fallback (F-1): no stock fallback; if the INDI module fails to start there is no position controller
+	mc_indi_pos_control start
 else
 	mc_pos_control start
 fi
