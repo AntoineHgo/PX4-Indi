@@ -183,3 +183,5 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S127 | defaults draft from derived values | sonnet | design/defaults_s127.md | done, 7 calls ~$0.17, unkeyed, 8 UNVERIFIED |
 | S127 | K127 key of defaults params | sonnet | design/key_k127_defaults.md | done, 0 B 3 MAJ, 5 calls ~$0.13 |
 | S128 | impl D-DEFAULTS-FW (ID_OK gate, defaults) | sonnet | design/impl_s128_id_ok.md | done, 10 calls ~$0.28, 2.3 min |
+| S128 | K128 key of ID_OK diff | sonnet | design/key_k128_id_ok.md | done, 0 B 1 MAJ 3 MIN, 4 calls ~$0.1 |
+| S128 | smoke hover ID_OK 0 | haiku | results/smoke_s128_idok0/README.md | done, ok after runner MC_RATE_CTL_TYPE retry, 17 calls ~$0.15 |

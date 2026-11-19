@@ -43,7 +43,8 @@ RC122 (design/route_check_122.md, ACCEPTED): S123 = M3a ident hover (POS_EN 0 an
 Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a injection on quad5in (roll, AMP ~0.01,
   NP >= 6, settle delay, halved gains; design/h120_m3a_signals.md), estimator bench/ident_iv.py offline (K120 keyed;
   size arrays, ulimit -v 4000000), compare to derived G1; then G2 cells at G1 x0.5/x2 (ident config).
-  Runner open: pilot sticks kept after LAND -> RC override to POSCTL (K118 MINORs). margins_of hangs if ts_true=0.
+  Runner open: MC_INDI_EN 1 in a params file does not start the module, only MC_RATE_CTL_TYPE 1 does (S128 smoke; accept
+  MC_INDI_EN as alias, keyed). Pilot sticks kept after LAND -> RC override to POSCTL (K118 MINORs). margins_of hangs if ts_true=0.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
@@ -53,8 +54,9 @@ Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a inject
 | S126 | DONE A-42 closed (a0fb12317f) | bash | results/a42_s126/README.md | - |
 | S127 | K127 key (design/key_k127_defaults.md): 0 BLOCKING; MAJ1 G1_Y 205 = D-IDENT-STOP stance (fit is the biased one), no action; MAJ2 ACT_TC 0.033 unflown -> 1-flight pretest before adopting; MAJ3 = gate gap below. |
 | S128 | DONE impl D-DEFAULTS-FW (MC_INDI_ID_OK halves K, G1 fw defaults quad5in, airframe W_MAX 2700, bench ID_OK 1); 70 lib tests pass, break-check ok, SITL builds | sonnet | design/impl_s128_id_ok.md | - |
-| S128 | K128 key of the diff | sonnet | design/key_k128_id_ok.md | relaunch brief = code vs D-DEFAULTS-FW |
-| S128 | smoke hover ID_OK 0 with defaults file | haiku | results/smoke_s128_idok0/README.md | rerun cmd in that README |
+| S128 | DONE K128: 0 B, 1 MAJ (call site untested -> stage-7 harness), MINOR comment fixed | sonnet | design/key_k128_id_ok.md | - |
+| S128 | DONE smoke hover ID_OK 0 (fw halving, defaults file): ok, z std 0.015 m, xy 0.05 m, p max 0.028 rad/s | haiku | results/smoke_s128_idok0/README.md | - |
+Next S129: route check RC129 (due); ACT_TC 0.033 1-flight pretest (K127 MAJ2); then stage-5 build list (RC126).
 | S127 | DONE defaults draft (keyed K127). Gaps: no ident-status param / halving in firmware; W_MAX fw default 0 (measured path off), G1 fw defaults 5-8x low; ACT_TC 0.033 proposed | sonnet | design/defaults_s127.md, bench/params/quad5in_indi_defaults.params | S128: key it, then firmware: ident-status param + halved gains + defaults |
 S124/S125 ident results (roll 1755-1768, pitch 1649, halved-gain 1757.9 PASS): JOURNAL S124-S125, fit_s124.md.
   RC126 (design/route_check_126.md, ACCEPTED): ident frozen as is (D-IDENT-STOP). S127: conditions (iv)/(v) OFFLINE
