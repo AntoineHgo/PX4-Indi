@@ -89,3 +89,4 @@ Moved out of STATE.md on 2026-11-17 (token economy, owner).
   error). Cost: sonnet source-chain check ~$0.2 (19 calls); sonnet key of a 200-line fit script ~$0.25 (16 calls,
   13 min); sonnet 5-variant fit probe ~$0.2 (9 calls).
 - S131 cost: sonnet runner feature + checker + self-test + 2 SITL flights ~$0.6 (32 calls, 10 min); sonnet firmware refactor + helper + 2 gtests + break-checks ~$0.4 (20 calls); sonnet key of a 60-line firmware diff ~$0.18 (9 calls).
+- S132: a topic first published mid-flight is missing from the log for its first ~0.1-0.3 s (logger subscribes late). S131 read that gap as 'stage in bypass' and searched the wrong path for a session. Absence of samples is not evidence of a state; check the code's publish conditions first. Cost: S132 cause+fix+3 smokes+sonnet key ~$2.3.

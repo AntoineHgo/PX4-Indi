@@ -46,7 +46,7 @@ S130 DONE (0adaaa490f, keyed K130 + K130b, 0 BLOCKING): D-STAGE-STALE in firmwar
   T1 + F-1 gap. Open from keys (S131): K130b MAJOR step test too weak (tighten, assert transient); no test of
   valid->invalid->valid switch nor of runIndiStage (Hold on update false, no stock thrust) -> stage-7 harness or
   TestPeer; entry transient of f_b filter history unquantified; mode (a) never flown (no stale-accel hook);
-  `make format` not run on S130 files. Smoke S130 (before lib fix): stage_mode 1 throughout, hover = S128; POSCTL
+  astyle run on all INDI module/lib files S132 (one fix committed). Smoke S130 (before lib fix): stage_mode 1 throughout, hover = S128; POSCTL
   z std 0.114 vs 0.050 m (1 seed; re-fly once in S131 with T2-T6 smokes); NAV_LAND 16 s early in S128-S130 = runner.
 S131 AUTO smoke (166bb5a258, probe, 1 seed): auto_tour + auto_land10 fly with INDI pos, stage_mode 1, land vz 0.71 vs
   0.70, disarm 2.7 s, mission xy 0.49 m RMS. Handover: vehicle_thrust_setpoint step 0.035 = 25 % of hover 0.137 >
