@@ -180,3 +180,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S126 | A-43 source chain G1_Y from SDF/plugin/CA | sonnet | design/a43_closing_s126.md | done, 205.3, roll/pitch reproduced, 19 calls ~$0.2 |
 | S126 | K126 key of ident_fit_yaw.py | sonnet | design/key_k126_ident_fit_yaw.md | done, 0 B 4 MAJ 6 MIN, 16 calls ~$0.25, 13 min (self-test 244 s) |
 | S126 | A-43 probe: interp / rate regressor / synthetic | sonnet | results/ident_m3a_s123/a43_probe/README.md | done, cause = omitted D r, 9 calls ~$0.2 |
+| S127 | defaults draft from derived values | sonnet | design/defaults_s127.md | done, 7 calls ~$0.17, unkeyed, 8 UNVERIFIED |
