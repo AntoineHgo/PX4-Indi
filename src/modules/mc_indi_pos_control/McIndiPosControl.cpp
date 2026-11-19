@@ -237,7 +237,9 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 		// difference are all computed from u, so every feedback path closes through u
 		// MC_INDI_PINJ_PT = 1 moves d to the stage output instead (acceleration-loop break): a_ref = c
 		const bool inject_output = (_param_indi_pinj_pt.get() == 1) && (inject_axis >= 0);
-		const Vector3f a_ref = inject_output ? a_c_pre_inject : (a_c_pre_inject + inject);
+		// D-HANDOVER: the first cycle after a bypass continues the bypass acceleration (stock integrator included), decaying
+		const Vector3f a_c_hand = _handover.apply(a_c_pre_inject, dt);
+		const Vector3f a_ref = inject_output ? a_c_hand : (a_c_hand + inject);
 
 		if (_indi_reset_pending) {
 			// T10: estimator reset while the stage runs: restart the differencing from the current state (same call as the
@@ -317,6 +319,8 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 	}
 
 	if (mode == StageMode::Hold) {
+		_handover.decay(dt); // D-HANDOVER: the offset decays in time, not only on INDI cycles
+
 		// zero-order hold of the last attitude setpoint and thrust published by an INDI cycle. Edge: if no INDI cycle
 		// has run yet, the held values are those of the last bypass cycle (the ground/rampup handover value, stored
 		// there); with no cycle at all, a level attitude at hover thrust. The stock thrust is never published.
@@ -351,6 +355,7 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 
 	trackDegraded(StageMode::Bypass, now);
 	_indi_reset_pending = false; // the bypass branch below resets the stage every cycle
+	_handover.bypass(a_c_pre_inject);
 
 	// bypass: stock attitude setpoint is published, the stage tracks the thrust actually commanded (A3)
 	_indi.setBlendHold(true); // D-GAP: reset() below keeps b; model path from the commanded collective, measured path from the ESC mean u
@@ -1025,6 +1030,7 @@ void McIndiPosControl::Run()
 			_takeoff.updateTakeoffState(_vehicle_control_mode.flag_armed, _vehicle_land_detected.landed, false, 10.f, true,
 						    vehicle_local_position.timestamp_sample);
 			_control.resetIntegral();
+			_handover.clear(); // D-HANDOVER: no offset survives a period without the stage
 		}
 
 		// Publish takeoff status

@@ -43,6 +43,7 @@
 #include "IndiStageMode.hpp"
 #include "FailsafeSetpoint.hpp"
 #include "EkfResetDetect.hpp"
+#include "HandoverBlend.hpp"
 #include <lib/indi_accel_control/indi_accel_control.hpp>
 #include <lib/indi_rate_control/indi_rate_control.hpp>
 #include <uORB/topics/control_allocator_status.h>
@@ -143,6 +144,7 @@ private:
 	float _hte{NAN};
 	bool _hte_valid{false};
 	bool _indi_active{false};
+	HandoverBlend _handover{};	///< D-HANDOVER: bumpless a_ref at bypass -> stage (A-45)
 	float _held_q_d[4] {};		///< hold mode: last published attitude setpoint
 	float _held_thrust_body[3] {};
 	float _held_thrust_ned[3] {};
