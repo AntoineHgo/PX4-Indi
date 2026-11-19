@@ -91,6 +91,46 @@ def chain_mismatch(ntaps_y, ntaps_x, fmax=60.0, fs=800.0):
     return float(np.max(np.abs(hx / hy - 1.0)))
 
 
+def _regressand_chain(w, dt, taps):
+    """The regressand path actually applied in _prepare: y = F[ np.gradient(w) ]."""
+    return iv.apply_taps(np.gradient(w, dt), taps)
+
+
+def _regressor_chain(xg, taps_x):
+    """The regressor path actually applied in _prepare: x = F_x[ C u ]."""
+    return iv.apply_taps(iv.apply_taps(xg, CENTRAL_DIFF_MATCH), taps_x)
+
+
+def _instrument_chain(zg, taps):
+    """The instrument path actually applied in _prepare: z = F[ C z ]."""
+    return iv.apply_taps(iv.apply_taps(zg, CENTRAL_DIFF_MATCH), taps)
+
+
+def chain_mismatch_measured(ntaps_y, ntaps_x, fmax=60.0, fs=800.0, n=4096):
+    """Same criterion as chain_mismatch, but MEASURED: unit sinusoids 1..fmax Hz are passed through the very functions
+    _prepare applies to the data (_regressand_chain on a sine w, _regressor_chain / _instrument_chain on a sine u,z).
+    Gain = amplitude of the fundamental in the interior (edges trimmed). Returns the max relative gain difference of
+    the regressor and of the instrument path against the regressand path (a stage dropped on one path only shows up)."""
+    dt = 1.0 / fs
+    t = np.arange(n) * dt
+    taps, taps_x = iv.smooth_taps(ntaps_y), iv.smooth_taps(ntaps_x)
+    sl = slice(n // 4, 3 * n // 4)
+
+    def amp(v, th):
+        v, tt = v[sl], t[sl]
+        return float(np.hypot(2 * np.mean(v * np.sin(th * tt)), 2 * np.mean(v * np.cos(th * tt))))
+    worst = 0.0
+    df = fs / (n // 2)  # whole periods in the analysis window: no leakage
+    for f in df * np.unique(np.round(np.linspace(1.0, fmax, 40) / df)):
+        th = 2 * np.pi * f
+        s = np.sin(th * t)
+        gy = amp(_regressand_chain(s / th, dt, taps), th)  # d/dt of s/th is cos: unit amplitude input derivative
+        gx = amp(_regressor_chain(s, taps_x), th)
+        gz = amp(_instrument_chain(s, taps), th)
+        worst = max(worst, abs(gx / gy - 1.0), abs(gz / gy - 1.0))
+    return float(worst)
+
+
 def _lead(a, k):
     """b[t] = a[t+k] (any integer k), NaN where undefined."""
     b = np.full(a.shape, np.nan)
@@ -116,14 +156,14 @@ def _prepare(t_gyro, omega, t_u, u, t_z, z, t0, t1, sat, t_sat, ntaps, fs, ntaps
     taps = iv.smooth_taps(ntaps)
     taps_x = iv.smooth_taps(ntaps if ntaps_x is None else ntaps_x)
     w = iv.resample_to_grid(t_gyro, omega, t_grid)
-    y = iv.apply_taps(np.gradient(w, dt), taps)
+    y = _regressand_chain(w, dt, taps)
     t_u = np.asarray(t_u, float)
     u = np.asarray(u, float)
     chg = np.concatenate([[True], np.diff(u) != 0])
     xg = np.interp(t_grid, t_u[chg], u[chg])
     xg[(t_grid < t_u[0]) | (t_grid > t_u[-1])] = np.nan
-    x = iv.apply_taps(iv.apply_taps(xg, CENTRAL_DIFF_MATCH), taps_x)
-    zz = iv.apply_taps(iv.apply_taps(iv.resample_to_grid(t_z, z, t_grid), CENTRAL_DIFF_MATCH), taps)
+    x = _regressor_chain(xg, taps_x)
+    zz = _instrument_chain(iv.resample_to_grid(t_z, z, t_grid), taps)
     excl = np.zeros(len(t_grid), bool)
     if sat is not None:
         ts = np.asarray(t_sat, float)
@@ -173,7 +213,7 @@ def fit_axis(t_gyro, omega, t_u, u, t_z, z, t0, t1, sat=None, t_sat=None, ntaps=
     if 0 in cand:
         r0 = curve[cand.index(0)][1]
         r.update(g1_nocomp=r0["g1"], ols_nocomp=r0["ols"], j_nocomp=r0["j"])
-    cm = chain_mismatch(ntaps, ntaps if ntaps_x is None else ntaps_x, fs=fs)
+    cm = chain_mismatch_measured(ntaps, ntaps if ntaps_x is None else ntaps_x, fs=fs)
     jr = r["j"] / max(r["j_df"], 1)
     crit = [("robust first-stage F >= %g" % g["f_min"], r["f"], r["f"] >= g["f_min"]),
             ("Hansen J/df <= %g" % g["j_ratio_max"], jr, jr <= g["j_ratio_max"]),

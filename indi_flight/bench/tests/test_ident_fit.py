@@ -152,3 +152,42 @@ def test_held_regressor_refused_and_short_hold_decimated():
     held2 = np.repeat(um[::2], 2)[: len(um)]
     r = ident_fit.fit_axis(t, w, t, held2, t, d, 4.0, 56.0)
     assert r["decim"] == 2 and abs(r["g1"] - 1700.0) / 1700.0 < 0.08, (r["decim"], r["g1"])
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# S125 K125 gaps: driver gate must use the robust F (finding 3); chain gate must measure the applied data path (new defect)
+
+def test_driver_gate_uses_robust_not_classical_f():
+    """Persistent (AR 0.999) drift on the measured actuator and an independent persistent instrument: the classical
+    first-stage F is spuriously large (>= 10), the HAC effective F is < 10. The F criterion of the verdict must FAIL.
+    Swapping r['f'] for the classical F in the driver makes this criterion pass and the test fail."""
+    t, w, um, d = _closed_loop(1700.0, 1700.0, seed=3)
+    a = 0.999
+    r2 = np.random.default_rng(51)
+    sc = np.sqrt(1 / (1 - a * a))
+    um2 = um + 0.5 * _ar(r2, len(t), a) / sc
+    z = _ar(r2, len(t), a) * 0.003 / sc * 3
+    r = ident_fit.fit_axis(t, w, t, um2, t, z, 4.0, 56.0)
+    assert r["f_classic"] >= 10 > r["f"], (r["f_classic"], r["f"])
+    name, val, ok = r["verdict"]["criteria"][0]
+    assert name.startswith("robust first-stage F") and val == r["f"] and not ok
+    assert not r["verdict"]["passed"]
+
+
+def test_chain_gate_measures_applied_data_path():
+    """The gain-match gate is computed from the functions _prepare applies. Dropping the [1,4,1]/6 stage from the
+    regressor path only (or the instrument path only) must raise the measured mismatch and FAIL the verdict."""
+    assert ident_fit.chain_mismatch_measured(15, 15) < ident_fit.GATE["chain_tol"]
+    orig_x, orig_z = ident_fit._regressor_chain, ident_fit._instrument_chain
+    try:
+        ident_fit._regressor_chain = lambda xg, taps_x: ident_fit.iv.apply_taps(xg, taps_x)  # stage removed, x only
+        assert ident_fit.chain_mismatch_measured(15, 15) > 3 * ident_fit.GATE["chain_tol"]
+        t, w, um, d = _closed_loop(1700.0, 1700.0, seed=3)
+        r = ident_fit.fit_axis(t, w, t, um, t, d, 4.0, 56.0)
+        name, val, ok = r["verdict"]["criteria"][4]
+        assert name.startswith("filter-chain") and not ok and not r["verdict"]["passed"], (name, val)
+        ident_fit._regressor_chain = orig_x
+        ident_fit._instrument_chain = lambda zg, taps: ident_fit.iv.apply_taps(zg, taps)  # instrument only
+        assert ident_fit.chain_mismatch_measured(15, 15) > 3 * ident_fit.GATE["chain_tol"]
+    finally:
+        ident_fit._regressor_chain, ident_fit._instrument_chain = orig_x, orig_z
