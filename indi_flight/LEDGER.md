@@ -189,3 +189,7 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S128 | RC129 route check | sonnet | design/route_check_129.md | done, 7 calls ~$0.15 |
 | S129 | sonnet | G5 build list | design/g5_build_list.md | 22 calls, done |
 | S130 | impl D-STAGE-STALE + IndiStageMode helper/gtests | sonnet | design/impl_s130_stage_stale.md | done, 14 calls ~$0.35 |
+| S130 | K130 key | sonnet | design/key_k130_stage_stale.md | done, 9 calls ~$0.15 |
+| S130 | smoke hover+POSCTL | haiku | results/smoke_s130_stage/README.md | done, 15 calls ~$0.1 |
+| S130 | lib fix f_b_valid | sonnet | design/impl_s130b_model_fb.md | done, 12 calls ~$0.3 |
+| S130 | K130b key | sonnet | design/key_k130b_model_fb.md | done, 4 calls ~$0.17 |

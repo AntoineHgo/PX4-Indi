@@ -43,9 +43,13 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice before any fr
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S130 | DONE impl D-STAGE-STALE + T1 helper (IndiStageMode.hpp, 7 gtests, break-checked); UNCOMMITTED until key | sonnet | design/impl_s130_stage_stale.md | - |
-| S130 | DONE K130: 0 B; MAJ M1 model f_b undelayed vs delayed t_f path (recursion, scaling G vs g_t*k_cmd), MAJ M2 filter step entry/exit, no hysteresis; MINORs NaN yaw in hold-no-held, injection in mode (a), no runIndiStage test | sonnet | design/key_k130_stage_stale.md | NEXT: library fix = Input flag f_b invalid -> library substitutes the SAME delayed modelled thrust as t_f (exact cancellation, t_c = a_ref - g), lib test with delay >= 2 break-checked, 20 ms fresh hysteresis to leave mode (a), MINORs; then key, then commit firmware |
-| S130 | smoke offboard hover + POSCTL with new stage | haiku | results/smoke_s130_stage/README.md | re-run S128/S129 smoke commands |
+S130 DONE (0adaaa490f, keyed K130 + K130b, 0 BLOCKING): D-STAGE-STALE in firmware, rc.mc_apps `||` removed = build list
+  T1 + F-1 gap. Open from keys (S131): K130b MAJOR step test too weak (tighten, assert transient); no test of
+  valid->invalid->valid switch nor of runIndiStage (Hold on update false, no stock thrust) -> stage-7 harness or
+  TestPeer; entry transient of f_b filter history unquantified; mode (a) never flown (no stale-accel hook);
+  `make format` not run on S130 files. Smoke S130 (before lib fix): stage_mode 1 throughout, hover = S128; POSCTL
+  z std 0.114 vs 0.050 m (1 seed; re-fly once in S131 with T2-T6 smokes); NAV_LAND 16 s early in S128-S130 = runner.
+S131 = T2-T6 (AUTO smoke harness, takeoff handover, land, failsafes, return/mission/loiter), then RC129 plan.
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
   MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit untested, DESCEND failsafe tests.
