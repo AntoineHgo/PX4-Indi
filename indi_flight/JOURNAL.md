@@ -904,3 +904,7 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
   W_MAX all ok + valid (results/g3_refly_s122, 8cfbc36d85). K122 key 3 BLOCKING (W_MAX alias, check_validity
   exception, missing g3_params.txt) fixed S123.
 - S125: STATE trimmed; K125 key of K124 fix (usable w/ caveats) + gap fix (robust-F test, chain gate on data path); D-IDENT-J (J diagnostic only); halved-gain roll ident 1757.9 PASS; yaw two-regressor IV: G2_Y 27.5 ok, G1_Y 165 vs 205 derived (A-43); A-42 empty-dir second launch.
+- S126: A-42 closed (sequential run.sh launches with distinct --out both complete, results/a42_s126). A-43: source chain
+  SDF/plugin/CA gives G1_Y 205.3 (design/a43_closing_s126.md); K126 key of ident_fit_yaw.py 0 B / 4 MAJ / 6 MIN;
+  probe (a43_probe) finds the cause = omitted rotor-drag yaw damping (synthetic 165.8 without r, 204.4 with r; real
+  logs 212/220 with r + matched grid). A-43 closed, residual opened as A-44. Yaw ident model needs the D r term.

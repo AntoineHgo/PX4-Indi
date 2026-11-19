@@ -84,3 +84,7 @@ Moved out of STATE.md on 2026-11-17 (token economy, owner).
 - S121 (proposed): a run's controller is checked in the log (MC_INDI_EN in ulog params, indi_rate_status present), never trusted from its label. Nine sessions of G3 'INDI' probes flew the stock rate loop; INDI==PID within cm was the unread signal.
 - S122: a run is valid only if the log proves the configuration: compare every requested parameter with the ulog's initial parameters and require the status topic of each module and path the label claims (indi_rate_status, measured_torque_in_use, indi_pos_status). Two missing parameters (MC_RATE_CTL_TYPE S121, MC_INDI_W_MAX S122) voided ~100 G3 runs that looked fine.
 - S122 cost: sonnet route check ~$0.12 (5 calls); sonnet log+source cause search ~$0.07 (6 calls); sonnet bench module + wiring + 12 tests + mutation check ~$0.2 (13 calls).
+- S126: an identification model for an axis with small control effectiveness (yaw) must include the passive damping
+  term; an omitted -D r biased G1_Y by -20 % with tight CIs and stable robustness checks (CIs measure noise, not model
+  error). Cost: sonnet source-chain check ~$0.2 (19 calls); sonnet key of a 200-line fit script ~$0.25 (16 calls,
+  13 min); sonnet 5-variant fit probe ~$0.2 (9 calls).

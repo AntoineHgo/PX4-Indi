@@ -47,28 +47,15 @@ Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a inject
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S124 | DONE fit pos0/pos1: G1_R 1748 (-0.5 %), F ~4600 (bf16a6b2f0, 8d79294d24) | sonnet | results/ident_m3a_s123/fit_s124.md | - |
-| S124 | DONE flights G1 x0.5/x2 + fit: 1742/1756 (bde2b92983) | bash bg | fit_s124.md sec "start independence" | - |
-| S124 | K124 key DONE: 3 BLOCKING 6 MAJOR (b06711379f) | sonnet | design/key_k124_ident_fit.md | - |
-| S124 | DONE fix K124 BLOCKING 1-3 + MAJOR 5,6 (10 tests, broken-checked) | sonnet | design/fix_k124_s124.md | - |
-| S125 | K125 key DONE: usable w/ caveats; F-swap + chain-gate tests missing, J gate powerless (D-IDENT-J) | sonnet | design/key_k125_fix_k124.md | - |
-| S125 | DONE fix K125 gaps A+B, 12 tests ok, real log unchanged (0046b38fe0); fix key = K125 author check only | sonnet | design/fix_k125_s125.md | - |
-| S125 | DONE halved-gain re-fly: roll 1757.9 PASS (b7a501db1b); yaw half_ax3 flown (1-regressor fit invalid, A-42 empty-dir) | bash | fit_s124.md sec S125 | - |
-| S125 | DONE yaw IV (u, du/dt): G1_Y 163-166 vs 205 (A-43), G2_Y 27.5 ok; UNKEYED | sonnet | results/ident_m3a_s123/fit_yaw_s125.md | - |
 | S126 | DONE A-43 source chain: G1_Y 205.3 (roll 1756 check), derived value stands, fit suspect | sonnet | design/a43_closing_s126.md | - |
 | S126 | DONE K126 key: 0 BLOCKING 4 MAJOR (J df/calib, u 400->800 interp gain loss, gate tests) 6 MINOR | sonnet | design/key_k126_ident_fit_yaw.md | - |
-| S126 | A-43 probe: refit axyaw on 400 Hz grid / + rate regressor / synthetic gz-like | sonnet | results/ident_m3a_s123/a43_probe/README.md | re-launch brief |
+| S126 | DONE A-43 closed: cause omitted yaw damping D r; with r + matched grid G1_Y 212/220, residual = A-44 | sonnet | results/ident_m3a_s123/a43_probe/README.md | - |
 | S126 | DONE A-42 closed (a0fb12317f) | bash | results/a42_s126/README.md | - |
-S124 re-fit after fix (gated, all PASS): roll 1768/1767 (x1), 1755 (x0.5), 1765 (x2); pitch 1649; within 0.6 % of
-  derived, spread 0.8 %. FIX UNKEYED: S125 re-key (fix file vs key file). Open: J/df ~15 on real logs unexplained
-  (J gate weak), MAJOR 7-9 + MINORs open, esc_status valid flag unused.
-S124 RESULT (roll only, UNKEYED until K124): D-IDENT (i) spread 0.8 %, all within 0.8 % of 1757; (ii) F 902-27091,
-  CI +-0.1 %. Trend 1742->1756 with start > CI (J significant): CI not the whole error budget. Flights NOT at halved
-  gains (ident config says halved). Pitch x1: 1634 (-0.4 %, 1ed8d935ed). Yaw 103 vs 205 INVALID: fit omits G2_Y du/dt.
-  S125: K124 closed (K125 + fix 0046b38fe0); J = diagnostic (D-IDENT-J); halved-gain roll 1757.9 PASS.
-  NEXT S126: A-43 closing test (G1_Y from gz SDF, haiku/sonnet ~$0.15); key ident_fit_yaw.py (K126, sonnet);
-  cond (iv) conditioning, cond (v) PID-flown manoeuvre; plant-variant G1 x0.5/x2 (true G1) ident;
-  then defaults file draft + G5 list. Route check due S127. A-42: launch runs one at a time.
+S124/S125 ident results (roll 1755-1768, pitch 1649, halved-gain 1757.9 PASS): JOURNAL S124-S125, fit_s124.md.
+  NEXT S127: ROUTE CHECK first (due). Then fix ident_fit_yaw.py (sonnet): add yaw-rate regressor r and matched
+  u grid (probe V3, a43_probe/probe.py), K126 MAJOR 1-4 (J df, max(df,1), interp, gate-fail tests), then key it
+  (K127) and close A-44. Then cond (iv) conditioning, cond (v) PID-flown manoeuvre, plant-variant G1 x0.5/x2 ident,
+  defaults file draft + G5 list. A-42 closed: one -n and one --out dir per run.
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
