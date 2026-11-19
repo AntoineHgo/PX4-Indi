@@ -65,7 +65,7 @@ S133 T9 DONE 7770538b55 (syncHoverThrust: updateHoverThrust on ht change, bypass
   publisher id), offboard vel-only pass (vx step RMS 0.62, last 3 s 0.092 m/s, z 0.04 m). T9 SITL: flight-edge step
   1.0 % (vel) / 6.1 % (acro) of hover = A-46 (fold into T11). Not flown: accel-only offboard (runner send_pva always
   has position), takeoff on offboard setpoint alone, MANUAL/STABILIZED. New checkers have no self-test yet.
-  T12: no owner question (T12a done S130; board enable = G7). S134 = route check (due), G5 section of GATES.md,
+  T12: no owner question (T12a done S130; board enable = G7). S134 = G5 section of GATES.md (RC133 action 1),
   then T11 first G5 probe incl. A-46 3-seed check and the unflown rows above.
 S131 done: A131 sonnet runner AUTO harness T2/T3/T4/T6 -> design/impl_s131_auto_harness.md; B131 sonnet
   firmware T5 failsafe pure fn + T10 reset reaction DONE 3d6066de89 (gtests pass, reset reaction unflown, module-side
