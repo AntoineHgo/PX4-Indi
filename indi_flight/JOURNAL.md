@@ -912,3 +912,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S127 (budget $1): defaults draft design/defaults_s127.md + bench/params/quad5in_indi_defaults.params (unkeyed). Found
   firmware gaps for D-IDENT: no ident-status parameter or halved-gain gating; MC_INDI_W_MAX default 0 disables the
   measured path; G1 firmware defaults 320/210/30 vs derived 1757/1640/205. Conditions (iv)/(v) not done (budget).
+  K127 key: 0 BLOCKING, ACT_TC 0.033 needs a pretest flight; G1_Y 205 kept per D-IDENT-STOP.

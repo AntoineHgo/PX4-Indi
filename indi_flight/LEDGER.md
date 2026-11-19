@@ -181,3 +181,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S126 | K126 key of ident_fit_yaw.py | sonnet | design/key_k126_ident_fit_yaw.md | done, 0 B 4 MAJ 6 MIN, 16 calls ~$0.25, 13 min (self-test 244 s) |
 | S126 | A-43 probe: interp / rate regressor / synthetic | sonnet | results/ident_m3a_s123/a43_probe/README.md | done, cause = omitted D r, 9 calls ~$0.2 |
 | S127 | defaults draft from derived values | sonnet | design/defaults_s127.md | done, 7 calls ~$0.17, unkeyed, 8 UNVERIFIED |
+| S127 | K127 key of defaults params | sonnet | design/key_k127_defaults.md | done, 0 B 3 MAJ, 5 calls ~$0.13 |

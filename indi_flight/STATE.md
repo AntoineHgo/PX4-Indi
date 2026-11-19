@@ -51,7 +51,8 @@ Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a inject
 | S126 | DONE K126 key: 0 BLOCKING 4 MAJOR (J df/calib, u 400->800 interp gain loss, gate tests) 6 MINOR | sonnet | design/key_k126_ident_fit_yaw.md | - |
 | S126 | DONE A-43 closed: cause omitted yaw damping D r; with r + matched grid G1_Y 212/220, residual = A-44 | sonnet | results/ident_m3a_s123/a43_probe/README.md | - |
 | S126 | DONE A-42 closed (a0fb12317f) | bash | results/a42_s126/README.md | - |
-| S127 | DONE defaults draft (UNKEYED: key before use). Gaps: no ident-status param / halving in firmware; W_MAX fw default 0 (measured path off), G1 fw defaults 5-8x low; ACT_TC 0.033 proposed | sonnet | design/defaults_s127.md, bench/params/quad5in_indi_defaults.params | S128: key it, then firmware: ident-status param + halved gains + defaults |
+| S127 | K127 key (design/key_k127_defaults.md): 0 BLOCKING; MAJ1 G1_Y 205 = D-IDENT-STOP stance (fit is the biased one), no action; MAJ2 ACT_TC 0.033 unflown -> 1-flight pretest before adopting; MAJ3 = gate gap below. |
+| S127 | DONE defaults draft (keyed K127). Gaps: no ident-status param / halving in firmware; W_MAX fw default 0 (measured path off), G1 fw defaults 5-8x low; ACT_TC 0.033 proposed | sonnet | design/defaults_s127.md, bench/params/quad5in_indi_defaults.params | S128: key it, then firmware: ident-status param + halved gains + defaults |
 S124/S125 ident results (roll 1755-1768, pitch 1649, halved-gain 1757.9 PASS): JOURNAL S124-S125, fit_s124.md.
   RC126 (design/route_check_126.md, ACCEPTED): ident frozen as is (D-IDENT-STOP). S127: conditions (iv)/(v) OFFLINE
   on existing logs, defaults file from derived values (ident checks it), module reads it. S128-S129: stage-5 build
