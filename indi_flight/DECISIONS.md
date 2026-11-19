@@ -664,3 +664,17 @@ beyond CI): J did detect a model error; re-decide J's role in the same pre-G6 fi
 Alternatives: fix the yaw fit now (1 session, delays stage 5 again); drop yaw identification and derive it (breaks
 D-IDENT (i) for yaw). Overturn if: G5/G3 probes show the yaw loop sensitive to a 20 % G1_Y error, or the owner asks
 for complete identification before stage 5.
+
+## D-DEFAULTS-FW (S128): firmware defaults and ident-status gate (implements D-IDENT "full gains gated by an ident-status parameter")
+- Choice: new int param MC_INDI_ID_OK (default 0). 0 = not identified: the module scales the rate bandwidth gains
+  MC_INDI_K_R/K_P/K_Y by 0.5 (pure lib function, unit-tested); 1 = identified, gains as set. Firmware G1_R/P/Y/G2_Y
+  defaults move to the quad5in derived values (1757/1640/205/27, defaults_s127.md): a G1 above the true value lowers
+  the effective loop gain (gain x G1_true/G1_set), so the reference values are the conservative side for every
+  larger airframe, while the old 320/210/30 would multiply the loop gain 5-8x on quad5in. W_MAX stays 0 in firmware
+  (pure airframe quantity, 0 = modelled path) and is set to 2700 in the quad5in airframe file. ACT_TC stays 0.05
+  until the 1-flight pretest of 0.033 (K127 MAJ2). Bench runs that intend full gains set MC_INDI_ID_OK 1.
+- Alternatives: (a) keep generic low G1 defaults (rejected: aggressive side); (b) refuse to arm until ID_OK=1
+  (rejected by D-IDENT B: INDI must fly its own ident); (c) scale gains inside the lib config struct by a
+  user-visible multiplier param (rejected: one more tunable, not a status).
+- Overturn: G2 cells at ID_OK 0 below 6 dB/45 deg on quad5in at G1 x0.5 start; or G6 outlook airframe whose true G1
+  exceeds 1757 (then defaults are no longer the conservative side for it).

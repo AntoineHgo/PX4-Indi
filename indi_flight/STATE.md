@@ -52,6 +52,9 @@ Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a inject
 | S126 | DONE A-43 closed: cause omitted yaw damping D r; with r + matched grid G1_Y 212/220, residual = A-44 | sonnet | results/ident_m3a_s123/a43_probe/README.md | - |
 | S126 | DONE A-42 closed (a0fb12317f) | bash | results/a42_s126/README.md | - |
 | S127 | K127 key (design/key_k127_defaults.md): 0 BLOCKING; MAJ1 G1_Y 205 = D-IDENT-STOP stance (fit is the biased one), no action; MAJ2 ACT_TC 0.033 unflown -> 1-flight pretest before adopting; MAJ3 = gate gap below. |
+| S128 | DONE impl D-DEFAULTS-FW (MC_INDI_ID_OK halves K, G1 fw defaults quad5in, airframe W_MAX 2700, bench ID_OK 1); 70 lib tests pass, break-check ok, SITL builds | sonnet | design/impl_s128_id_ok.md | - |
+| S128 | K128 key of the diff | sonnet | design/key_k128_id_ok.md | relaunch brief = code vs D-DEFAULTS-FW |
+| S128 | smoke hover ID_OK 0 with defaults file | haiku | results/smoke_s128_idok0/README.md | rerun cmd in that README |
 | S127 | DONE defaults draft (keyed K127). Gaps: no ident-status param / halving in firmware; W_MAX fw default 0 (measured path off), G1 fw defaults 5-8x low; ACT_TC 0.033 proposed | sonnet | design/defaults_s127.md, bench/params/quad5in_indi_defaults.params | S128: key it, then firmware: ident-status param + halved gains + defaults |
 S124/S125 ident results (roll 1755-1768, pitch 1649, halved-gain 1757.9 PASS): JOURNAL S124-S125, fit_s124.md.
   RC126 (design/route_check_126.md, ACCEPTED): ident frozen as is (D-IDENT-STOP). S127: conditions (iv)/(v) OFFLINE
@@ -61,7 +64,7 @@ S124/S125 ident results (roll 1755-1768, pitch 1649, halved-gain 1757.9 PASS): J
   multi-mode code by then). A-42 closed: one -n and one --out dir per run.
 
 ## Open problems
-- Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
+- Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR), MINORs frozen-b on saturated motor, lagging
   mean_u at reset, lower mean_u limit untested, DESCEND failsafe tests (T202/T205 rows in JOURNAL S98).
 - Review notes folder (`indi_project/review/external_review_s59_notes/`) not read in full at stage 0 (budget);
   open per item: `sim_review.md` for simulator work, `module_parity.md` for stage 3/5, `test_review.md` for stage 3,
