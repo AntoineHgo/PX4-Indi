@@ -51,6 +51,10 @@ Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a inject
 | S124 | DONE flights G1 x0.5/x2 + fit: 1742/1756 (bde2b92983) | bash bg | fit_s124.md sec "start independence" | - |
 | S124 | K124 key DONE: 3 BLOCKING 6 MAJOR (b06711379f) | sonnet | design/key_k124_ident_fit.md | - |
 | S124 | DONE fix K124 BLOCKING 1-3 + MAJOR 5,6 (10 tests, broken-checked) | sonnet | design/fix_k124_s124.md | - |
+| S125 | K125 key DONE: usable w/ caveats; F-swap + chain-gate tests missing, J gate powerless (D-IDENT-J) | sonnet | design/key_k125_fix_k124.md | - |
+| S125 | DONE fix K125 gaps A+B, 12 tests ok, real log unchanged (0046b38fe0); fix key = K125 author check only | sonnet | design/fix_k125_s125.md | - |
+| S125 | DONE halved-gain re-fly: roll 1757.9 PASS (b7a501db1b); yaw half_ax3 flown (1-regressor fit invalid, A-42 empty-dir) | bash | fit_s124.md sec S125 | - |
+| S125 | yaw two-regressor IV (u, du/dt), new file | sonnet | bench/ident_fit_yaw.py, results/ident_m3a_s123/fit_yaw_s125.md | relaunch |
 S124 re-fit after fix (gated, all PASS): roll 1768/1767 (x1), 1755 (x0.5), 1765 (x2); pitch 1649; within 0.6 % of
   derived, spread 0.8 %. FIX UNKEYED: S125 re-key (fix file vs key file). Open: J/df ~15 on real logs unexplained
   (J gate weak), MAJOR 7-9 + MINORs open, esc_status valid flag unused.
