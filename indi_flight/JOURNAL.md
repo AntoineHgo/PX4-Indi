@@ -921,3 +921,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S130: STATE trimmed: moved to JOURNAL the plans RC113/RC118/RC122/RC126 (all executed or superseded by RC129), the S116-S118 and S124-S128 status lines, the S127/S128 task rows (all done, outputs in design/ and results/).
 - S130: rc.mc_apps start-up PID fallback removed (4016a03ec8); D-STAGE-STALE: no in-flight stock bypass, modelled-accel mode via library f_b_valid with delayed model signal, hold otherwise (0adaaa490f); keys K130/K130b 0 BLOCKING; smoke hover/POSCTL ok.
 - S131: T5 failsafe pure fn + T10 stage reset on EKF reset (3d6066de89, K131 0 BLOCKING/MAJOR); AUTO harness (auto_tour, auto_land10) flown with INDI pos (166bb5a258): handover thrust step 25 % of hover > PROPOSED 10 %; S130 early-NAV_LAND was a README time-base error.
+- S131: PID reference auto_land10 handover step 0.0075 vs INDI 0.035 -> A-45 opened.

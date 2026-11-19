@@ -11,9 +11,8 @@ Route checks in design/; next: S134 (RC129 filed, ACCEPTED).
 RC129 plan: S130 = T1-T6 of design/g5_build_list.md (start with F-1 fallback removal: McIndiPosControl.cpp:287-295
   bypass and rc.mc_apps:59 `||`), AUTO modes; S131 OFFBOARD, pass-through modes, first G5 probe. Owner question at the
   end of S131 if there is no multi-mode code. Write the G5 section of GATES.md before the first G5 test.
-G5 build gaps (S129 list): no reset of INDI stage on estimator reset; hover-thrust shift not ported; no module tests.
-POSCTL smoke S129 open: 2 m alt excursion 36-52 s (unanalysed); runner NAV_LAND at 63 s mid-sweep with status "ok"
-  -> check runner before G5 probes.
+G5 build gaps (S129 list): hover-thrust shift not ported (T9); no module tests. Estimator reset done S131.
+POSCTL smoke S129 open: 2 m alt excursion 36-52 s (unanalysed). Runner NAV_LAND: not a defect (S131).
 Rule (RC64/RC74): 1 session per inner-loop law change; no new anomaly chase unless a gate test fails.
 G3/G5 batches before the stage-6 freeze are PROBES (RC113), not gate evidence. G3 evidence for the INDI outer loop
   needs MC_INDI_POS_EN=1 in the base params (S118 probes ran stock mc_pos_control).
@@ -49,12 +48,13 @@ S130 DONE (0adaaa490f, keyed K130 + K130b, 0 BLOCKING): D-STAGE-STALE in firmwar
   TestPeer; entry transient of f_b filter history unquantified; mode (a) never flown (no stale-accel hook);
   `make format` not run on S130 files. Smoke S130 (before lib fix): stage_mode 1 throughout, hover = S128; POSCTL
   z std 0.114 vs 0.050 m (1 seed; re-fly once in S131 with T2-T6 smokes); NAV_LAND 16 s early in S128-S130 = runner.
-S131 = T2-T6 (AUTO smoke harness, takeoff handover, land, failsafes, return/mission/loiter), then RC129 plan.
 S131 AUTO smoke (166bb5a258, probe, 1 seed): auto_tour + auto_land10 fly with INDI pos, stage_mode 1, land vz 0.71 vs
   0.70, disarm 2.7 s, mission xy 0.49 m RMS. Handover: vehicle_thrust_setpoint step 0.035 = 25 % of hover 0.137 >
   PROPOSED 10 % (dip 0 m); indi_pos_status has no sample before the edge (log it in bypass). S130 "NAV_LAND early" =
-  README time-base error (window is 55-85 s), not runner. In flight: PID reference auto_land10 (haiku) ->
-  results/auto_smoke_s131_pid/README.md (decides: INDI-specific step or stock rampup behaviour).
+  README time-base error (window is 55-85 s), not runner. PID ref (results/auto_smoke_s131_pid): step 0.0075, land
+  same -> handover step is INDI-specific = A-45 (fix first in S132: align checker 50 ms -> 0.1 s, log indi_pos_status
+  in bypass, find first-cycle collective cause; 1 session max per RC64 rule).
+S132 = A-45, then T7-T12 (OFFBOARD rows, pass-through modes, T9 hover-thrust port, first G5 probe, T12 owner Q).
 S131 done: A131 sonnet runner AUTO harness T2/T3/T4/T6 -> design/impl_s131_auto_harness.md; B131 sonnet
   firmware T5 failsafe pure fn + T10 reset reaction DONE 3d6066de89 (gtests pass, reset reaction unflown, module-side
   call untested); K131 key 0 BLOCKING/MAJOR (MINORs: reset collective from measured thrust = small step, wiring
