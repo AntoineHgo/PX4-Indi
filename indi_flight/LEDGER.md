@@ -174,3 +174,6 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S124 | IV fit driver + fit pos0/pos1 | sonnet | results/ident_m3a_s123/fit_s124.md | done, G1_R 1748, 34 calls ~$0.55 |
 | S124 | K124 key of ident_fit.py | sonnet | design/key_k124_ident_fit.md | done, 3 BLOCKING 6 MAJOR 4 MINOR, 14 calls ~$0.30 |
 | S124 | fix K124 BLOCKING + re-fit | sonnet | design/fix_k124_s124.md | done, 10 tests, 25 calls ~$0.75 |
+| S125 | K125 re-key of K124 fix | sonnet | design/key_k125_fix_k124.md | done, 13 calls ~$0.2 |
+| S125 | yaw two-regressor IV fit | sonnet | results/ident_m3a_s123/fit_yaw_s125.md | done, 21 calls ~$0.45, 25 min |
+| S125 | fix K125 gaps A+B | sonnet | design/fix_k125_s125.md | done, 18 calls ~$0.25 |
