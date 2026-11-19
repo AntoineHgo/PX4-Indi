@@ -88,3 +88,4 @@ Moved out of STATE.md on 2026-11-17 (token economy, owner).
   term; an omitted -D r biased G1_Y by -20 % with tight CIs and stable robustness checks (CIs measure noise, not model
   error). Cost: sonnet source-chain check ~$0.2 (19 calls); sonnet key of a 200-line fit script ~$0.25 (16 calls,
   13 min); sonnet 5-variant fit probe ~$0.2 (9 calls).
+- S131 cost: sonnet runner feature + checker + self-test + 2 SITL flights ~$0.6 (32 calls, 10 min); sonnet firmware refactor + helper + 2 gtests + break-checks ~$0.4 (20 calls); sonnet key of a 60-line firmware diff ~$0.18 (9 calls).

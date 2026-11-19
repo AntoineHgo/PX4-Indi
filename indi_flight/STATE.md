@@ -50,8 +50,15 @@ S130 DONE (0adaaa490f, keyed K130 + K130b, 0 BLOCKING): D-STAGE-STALE in firmwar
   `make format` not run on S130 files. Smoke S130 (before lib fix): stage_mode 1 throughout, hover = S128; POSCTL
   z std 0.114 vs 0.050 m (1 seed; re-fly once in S131 with T2-T6 smokes); NAV_LAND 16 s early in S128-S130 = runner.
 S131 = T2-T6 (AUTO smoke harness, takeoff handover, land, failsafes, return/mission/loiter), then RC129 plan.
-S131 in flight: A131 sonnet runner AUTO harness T2/T3/T4/T6 -> design/impl_s131_auto_harness.md; B131 sonnet
-  firmware T5 failsafe pure fn + T10 reset reaction -> design/impl_s131_failsafe_reset.md. Resume: read those files.
+S131 AUTO smoke (166bb5a258, probe, 1 seed): auto_tour + auto_land10 fly with INDI pos, stage_mode 1, land vz 0.71 vs
+  0.70, disarm 2.7 s, mission xy 0.49 m RMS. Handover: vehicle_thrust_setpoint step 0.035 = 25 % of hover 0.137 >
+  PROPOSED 10 % (dip 0 m); indi_pos_status has no sample before the edge (log it in bypass). S130 "NAV_LAND early" =
+  README time-base error (window is 55-85 s), not runner. In flight: PID reference auto_land10 (haiku) ->
+  results/auto_smoke_s131_pid/README.md (decides: INDI-specific step or stock rampup behaviour).
+S131 done: A131 sonnet runner AUTO harness T2/T3/T4/T6 -> design/impl_s131_auto_harness.md; B131 sonnet
+  firmware T5 failsafe pure fn + T10 reset reaction DONE 3d6066de89 (gtests pass, reset reaction unflown, module-side
+  call untested); K131 key 0 BLOCKING/MAJOR (MINORs: reset collective from measured thrust = small step, wiring
+  untested -> stage-7 harness; G5.11 probe measures the step).
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
   MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit untested, DESCEND failsafe tests.
