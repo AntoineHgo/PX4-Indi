@@ -53,7 +53,7 @@ Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a inject
 | S128 | DONE K128: 0 B, 1 MAJ (call site untested -> stage-7 harness), MINOR comment fixed | sonnet | design/key_k128_id_ok.md | - |
 | S128 | DONE smoke hover ID_OK 0 (fw halving, defaults file): ok, z std 0.015 m, xy 0.05 m, p max 0.028 rad/s | haiku | results/smoke_s128_idok0/README.md | - |
 | S128 | DONE ACT_TC pretest: 0.033 adopted in quad5in file, fw stays 0.05 (D-DEFAULTS-FW amendment) | haiku | results/act_tc_s128/README.md | - |
-| S129 | G5 build list (mode -> setpoint source -> base-A path, gaps) | sonnet | design/g5_build_list.md | re-launch brief if file missing |
+| S129 | DONE G5 build list (unkeyed): module = fork of mc_pos_control + INDI stage (McIndiPosControl.cpp:858-888); all modes routed by code, only offboard flown. Gaps: PID fallback x2 (McIndiPosControl.cpp:287-295 bypass, rc.mc_apps:59 `||`) violates F-1 -> REMOVE (no owner question, F-1 decided); no reset of INDI stage on estimator reset; hover-thrust shift not ported; no module tests; G5 section missing in GATES.md (write before first G5 test). S130 = T1-T6 of the file, start with F-1 fallback removal | sonnet | design/g5_build_list.md | - |
 | S129 | POSCTL smoke, MC_INDI_POS_EN 1, quad5in | haiku | results/smoke_s129_posctl/README.md | re-run from README cmd |
 RC129 (design/route_check_129.md, ACCEPTED, filed S128): stage 5 has had no new code for 7 sessions. S129 = design/g5_build_list.md
   (mode table: mode -> setpoint source -> base-A path) + POSCTL smoke flight with MC_INDI_POS_EN 1; S130 AUTO modes;

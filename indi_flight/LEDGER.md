@@ -187,3 +187,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S128 | smoke hover ID_OK 0 | haiku | results/smoke_s128_idok0/README.md | done, ok after runner MC_RATE_CTL_TYPE retry, 17 calls ~$0.15 |
 | S128 | ACT_TC pretest 4 flights | haiku | results/act_tc_s128/README.md | done, 11 calls ~$0.15 |
 | S128 | RC129 route check | sonnet | design/route_check_129.md | done, 7 calls ~$0.15 |
+| S129 | sonnet | G5 build list | design/g5_build_list.md | 22 calls, done |
