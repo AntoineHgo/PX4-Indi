@@ -37,6 +37,7 @@
 
 #pragma once
 
+#include "HoverThrustSync.hpp"
 #include "PositionControl/PositionControl.hpp"
 #include "Takeoff/Takeoff.hpp"
 #include "GotoControl/GotoControl.hpp"
@@ -297,6 +298,7 @@ private:
 	hrt_abstime _last_warn{0}; /**< timer when the last warn message was sent out */
 
 	bool _hover_thrust_initialized{false};
+	float _control_ht{NAN}; // hover thrust last given to _control (T9)
 
 	/** Timeout in us for trajectory data to get considered invalid */
 	static constexpr uint64_t TRAJECTORY_STREAM_TIMEOUT_US = 500_ms;

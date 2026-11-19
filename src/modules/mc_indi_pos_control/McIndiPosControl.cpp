@@ -635,6 +635,7 @@ void McIndiPosControl::parameters_update(bool force)
 
 		if (!_hover_thrust_initialized) {
 			_control.setHoverThrust(_param_mpc_thr_hover.get());
+			_control_ht = _param_mpc_thr_hover.get();
 			_hover_thrust_initialized = true;
 		}
 
@@ -873,7 +874,8 @@ void McIndiPosControl::Run()
 			_control.decoupleHorizontalAndVecticalAcceleration(_param_mpc_acc_decouple.get() || not_taken_off || flying_but_ground_contact);
 
 			const float ht = (flying && _hte_valid) ? _hte : _param_mpc_thr_hover.get();
-			_control.setHoverThrust(ht);
+			// T9: as stock (MPC:423-431) a change of ht shifts the vertical integrator so the bypass thrust does not step
+			syncHoverThrust(_control, _control_ht, ht);
 
 			// make sure takeoff ramp is not amended by acceleration feed-forward
 			if (_takeoff.getTakeoffState() == TakeoffState::rampup && PX4_ISFINITE(_setpoint.velocity[2])) {
