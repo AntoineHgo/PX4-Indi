@@ -924,3 +924,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S131: PID reference auto_land10 handover step 0.0075 vs INDI 0.035 -> A-45 opened.
 - S132: A-45 closed: integrator zeroed at handover; D-HANDOVER bumpless a_ref (HandoverBlend, 9 gtests, break-checked); AUTO land10 step 0.035 -> <= 0.0067 on 3 seeds; key K132 MAJOR (frozen offset) fixed.
 - S133: T9 hover-thrust sync in IPC bypass (7770538b55), gtest break-checked; SITL assertion pending.
+- S133: T7 offboard vel-only + T8 ACRO pass-through probes pass (1 seed); A-46 flight-edge thrust step 6.1 % in ACRO run.

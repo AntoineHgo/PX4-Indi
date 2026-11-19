@@ -7,7 +7,7 @@
 - Blocker: none. No open question. Outer-loop architecture = base A (`design/flatness_r2.md`: flatness = optional increment).
 ## Next actions (in order)
 History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrations: read before sizing a brief).
-Route checks in design/; next: S134 (RC129 filed, ACCEPTED).
+Route checks in design/; next: S134 (due now) (RC129 filed, ACCEPTED).
 RC129 plan: S130 = T1-T6 of design/g5_build_list.md (start with F-1 fallback removal: McIndiPosControl.cpp:287-295
   bypass and rc.mc_apps:59 `||`), AUTO modes; S131 OFFBOARD, pass-through modes, first G5 probe. Owner question at the
   end of S131 if there is no multi-mode code. Write the G5 section of GATES.md before the first G5 test.
@@ -60,8 +60,13 @@ S132 A-45 CLOSED (D-HANDOVER, HandoverBlend tau 0.5 s, keyed K132): handover ste
   indi_pos_status (late subscription): never read a missing sample as bypass.
 S133 = T7-T12 (OFFBOARD rows, pass-through modes, T9 hover-thrust port, first G5 probe, T12 owner Q).
 S133 T9 DONE 7770538b55 (syncHoverThrust: updateHoverThrust on ht change, bypass only; gtest break-checked, 152/152;
-  SITL assertion pending; key folded into the pre-freeze combined opus review). A133 sonnet T7+T8 smokes in flight ->
-  design/impl_s133_offboard_passthrough.md (resume: read its last section, commit README/metrics).
+  key folded into the pre-freeze combined opus review). A133 (a95f3121a5, notes design/impl_s133_offboard_passthrough.md,
+  results/s133_passthrough): ACRO pass (no IPC output while PC flags off; method = flag-gated sample count, no
+  publisher id), offboard vel-only pass (vx step RMS 0.62, last 3 s 0.092 m/s, z 0.04 m). T9 SITL: flight-edge step
+  1.0 % (vel) / 6.1 % (acro) of hover = A-46 (fold into T11). Not flown: accel-only offboard (runner send_pva always
+  has position), takeoff on offboard setpoint alone, MANUAL/STABILIZED. New checkers have no self-test yet.
+  T12: no owner question (T12a done S130; board enable = G7). S134 = route check (due), G5 section of GATES.md,
+  then T11 first G5 probe incl. A-46 3-seed check and the unflown rows above.
 S131 done: A131 sonnet runner AUTO harness T2/T3/T4/T6 -> design/impl_s131_auto_harness.md; B131 sonnet
   firmware T5 failsafe pure fn + T10 reset reaction DONE 3d6066de89 (gtests pass, reset reaction unflown, module-side
   call untested); K131 key 0 BLOCKING/MAJOR (MINORs: reset collective from measured thrust = small step, wiring
