@@ -234,7 +234,8 @@ void IndiAccelControl::setAppliedThrust(float c_applied)
 bool IndiAccelControl::update(const Input &in, Output &out)
 {
 	// 9. required inputs, checked before any state is touched
-	if ((!in.accel_only && (!allFinite(in.p) || !allFinite(in.v))) || (in.f_b_valid && !allFinite(in.f_b)) || !PX4_ISFINITE(in.q(0)) || !PX4_ISFINITE(in.q(1))
+	if ((!in.accel_only && (!allFinite(in.p) || !allFinite(in.v))) || (in.f_b_valid && !allFinite(in.f_b)) || !PX4_ISFINITE(in.q(0))
+	    || !PX4_ISFINITE(in.q(1))
 	    || !PX4_ISFINITE(in.q(2)) || !PX4_ISFINITE(in.q(3)) || !PX4_ISFINITE(in.dt)
 	    || (in.mean_u_valid && !PX4_ISFINITE(in.mean_u))) {
 		return false;
