@@ -914,3 +914,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
   measured path; G1 firmware defaults 320/210/30 vs derived 1757/1640/205. Conditions (iv)/(v) not done (budget).
   K127 key: 0 BLOCKING, ACT_TC 0.033 needs a pretest flight; G1_Y 205 kept per D-IDENT-STOP.
 - S128: D-DEFAULTS-FW: MC_INDI_ID_OK gate (0 halves K), G1/G2_Y fw defaults = quad5in, W_MAX 2700 in airframe, bench ID_OK 1 (5b70c50748..); K128 0 B; smoke hover ID_OK 0 ok.
+- S128: ACT_TC pretest 0.033 vs 0.05 (hover, step_roll): both fly, 0.033 adopted in quad5in params, firmware 0.05 kept.

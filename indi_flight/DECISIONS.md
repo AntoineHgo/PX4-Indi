@@ -678,3 +678,7 @@ for complete identification before stage 5.
   user-visible multiplier param (rejected: one more tunable, not a status).
 - Overturn: G2 cells at ID_OK 0 below 6 dB/45 deg on quad5in at G1 x0.5 start; or G6 outlook airframe whose true G1
   exceeds 1757 (then defaults are no longer the conservative side for it).
+- S128 amendment (pretest results/act_tc_s128): ACT_TC 0.033 and 0.05 both fly hover and step_roll on quad5in at
+  ID_OK 1 (hover indistinguishable; step motor-command activity 20-25 % lower at 0.033; one seed). quad5in params
+  file takes 0.033 (model tau, ref_airframe_model.md). Firmware default stays 0.05: an assumed actuator faster than
+  the plant is the aggressive side (lesson 8, H5), so the slower value is kept for unidentified, larger airframes.
