@@ -201,3 +201,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S132 | K132 key review D-HANDOVER diff | sonnet | design/review_k132_handover.md | done, 9 calls ~$0.25, 0 BLOCKING, 1 MAJOR fixed |
 | S133 | B133 T9 hover-thrust port | sonnet | design/impl_s133_t9_hover_thrust.md | done, 24 calls ~$0.32, gtest break-checked |
 | S133 | A133 T7/T8 smokes | sonnet | design/impl_s133_offboard_passthrough.md | done, 18 calls ~$0.38, 2 SITL flights |
+| S133 | RC133 route check | sonnet | design/route_check_133.md | done, 7 calls ~$0.16 |

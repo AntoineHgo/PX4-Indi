@@ -7,7 +7,7 @@
 - Blocker: none. No open question. Outer-loop architecture = base A (`design/flatness_r2.md`: flatness = optional increment).
 ## Next actions (in order)
 History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrations: read before sizing a brief).
-Route checks in design/; next: S134 (due now) (RC129 filed, ACCEPTED).
+Route checks in design/; RC133 filed (accepted except PID pass line, F-5); next: S138 (RC129 filed, ACCEPTED).
 RC129 plan: S130 = T1-T6 of design/g5_build_list.md (start with F-1 fallback removal: McIndiPosControl.cpp:287-295
   bypass and rc.mc_apps:59 `||`), AUTO modes; S131 OFFBOARD, pass-through modes, first G5 probe. Owner question at the
   end of S131 if there is no multi-mode code. Write the G5 section of GATES.md before the first G5 test.
