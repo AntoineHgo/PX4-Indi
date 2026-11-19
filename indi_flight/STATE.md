@@ -7,7 +7,7 @@
   (`design/flatness_r2.md`: flatness = optional increment after base A).
 ## Next actions (in order)
 History: JOURNAL.md (S100-S115 entries hold the recent moves). Agent ledger: LEDGER.md. Lessons proposed:
-LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S129 (RC126 filed).
+LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S134 (RC129 filed).
 Rule (RC64/RC74): inner loop time-boxed, 1 session per law change; no new anomaly chase unless a gate test fails.
 Plan RC108 (design/route_check_108.md) + RC113 (design/route_check_113.md, accepted):
    G3/G5 batches before the stage-6 freeze are PROBES of the current stack (find failures early), not gate evidence.
@@ -53,7 +53,9 @@ Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a inject
 | S128 | DONE K128: 0 B, 1 MAJ (call site untested -> stage-7 harness), MINOR comment fixed | sonnet | design/key_k128_id_ok.md | - |
 | S128 | DONE smoke hover ID_OK 0 (fw halving, defaults file): ok, z std 0.015 m, xy 0.05 m, p max 0.028 rad/s | haiku | results/smoke_s128_idok0/README.md | - |
 | S128 | DONE ACT_TC pretest: 0.033 adopted in quad5in file, fw stays 0.05 (D-DEFAULTS-FW amendment) | haiku | results/act_tc_s128/README.md | - |
-Next S129: route check RC129 (due); then stage-5 build list (RC126).
+RC129 (design/route_check_129.md, ACCEPTED, filed S128): stage 5 has had no new code for 7 sessions. S129 = design/g5_build_list.md
+  (mode table: mode -> setpoint source -> base-A path) + POSCTL smoke flight with MC_INDI_POS_EN 1; S130 AUTO modes;
+  S131 OFFBOARD, pass-through modes, first G5 probe. Owner question at the end of S131 if there is no multi-mode code. Next route check S134.
 | S127 | DONE defaults draft (keyed K127). Gaps: no ident-status param / halving in firmware; W_MAX fw default 0 (measured path off), G1 fw defaults 5-8x low; ACT_TC 0.033 proposed | sonnet | design/defaults_s127.md, bench/params/quad5in_indi_defaults.params | S128: key it, then firmware: ident-status param + halved gains + defaults |
 S124/S125 ident results (roll 1755-1768, pitch 1649, halved-gain 1757.9 PASS): JOURNAL S124-S125, fit_s124.md.
   RC126 (design/route_check_126.md, ACCEPTED): ident frozen as is (D-IDENT-STOP). S127: conditions (iv)/(v) OFFLINE
