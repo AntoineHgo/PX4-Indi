@@ -916,3 +916,6 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S128: D-DEFAULTS-FW: MC_INDI_ID_OK gate (0 halves K), G1/G2_Y fw defaults = quad5in, W_MAX 2700 in airframe, bench ID_OK 1 (5b70c50748..); K128 0 B; smoke hover ID_OK 0 ok.
 - S128: ACT_TC pretest 0.033 vs 0.05 (hover, step_roll): both fly, 0.033 adopted in quad5in params, firmware 0.05 kept.
 - S128: RC129 filed and accepted: stage 5 next (S129 build list + POSCTL smoke, S130 AUTO, S131 OFFBOARD + G5 probe).
+- S129: G5 build list (design/g5_build_list.md, unkeyed): module = fork of mc_pos_control + INDI stage; all modes routed by code, only offboard flown; gaps: PID fallback x2 (F-1), no INDI reset on estimator reset, hover-thrust shift not ported, no module tests, no G5 section in GATES.md.
+- S129: POSCTL smoke with MC_INDI_POS_EN 1 (results/smoke_s129_posctl): xy hold 0.02 m, tilt 0.26 deg; open: 2 m alt excursion 36-52 s, runner NAV_LAND at 63 s mid-sweep with status ok.
+- S130: STATE trimmed: moved to JOURNAL the plans RC113/RC118/RC122/RC126 (all executed or superseded by RC129), the S116-S118 and S124-S128 status lines, the S127/S128 task rows (all done, outputs in design/ and results/).
