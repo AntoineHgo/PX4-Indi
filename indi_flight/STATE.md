@@ -7,7 +7,7 @@
   (`design/flatness_r2.md`: flatness = optional increment after base A).
 ## Next actions (in order)
 History: JOURNAL.md (S100-S115 entries hold the recent moves). Agent ledger: LEDGER.md. Lessons proposed:
-LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S122 (RC118 filed).
+LESSONS_PROPOSED.md (agent cost calibrations: read before sizing a brief). Route checks in design/; next: S129 (RC126 filed).
 Rule (RC64/RC74): inner loop time-boxed, 1 session per law change; no new anomaly chase unless a gate test fails.
 Plan RC108 (design/route_check_108.md) + RC113 (design/route_check_113.md, accepted):
    G3/G5 batches before the stage-6 freeze are PROBES of the current stack (find failures early), not gate evidence.
@@ -52,10 +52,11 @@ Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a inject
 | S126 | DONE A-43 closed: cause omitted yaw damping D r; with r + matched grid G1_Y 212/220, residual = A-44 | sonnet | results/ident_m3a_s123/a43_probe/README.md | - |
 | S126 | DONE A-42 closed (a0fb12317f) | bash | results/a42_s126/README.md | - |
 S124/S125 ident results (roll 1755-1768, pitch 1649, halved-gain 1757.9 PASS): JOURNAL S124-S125, fit_s124.md.
-  NEXT S127: ROUTE CHECK first (due). Then fix ident_fit_yaw.py (sonnet): add yaw-rate regressor r and matched
-  u grid (probe V3, a43_probe/probe.py), K126 MAJOR 1-4 (J df, max(df,1), interp, gate-fail tests), then key it
-  (K127) and close A-44. Then cond (iv) conditioning, cond (v) PID-flown manoeuvre, plant-variant G1 x0.5/x2 ident,
-  defaults file draft + G5 list. A-42 closed: one -n and one --out dir per run.
+  RC126 (design/route_check_126.md, ACCEPTED): ident frozen as is (D-IDENT-STOP). S127: conditions (iv)/(v) OFFLINE
+  on existing logs, defaults file from derived values (ident checks it), module reads it. S128-S129: stage-5 build
+  list, base-A outer loop for every mode, one smoke flight per mode, first G5 probe. Deferred to before G6: yaw fit
+  fix (r regressor + matched grid = probe V3, K126 MAJORs, A-44). Next route check S129 (owner question if no
+  multi-mode code by then). A-42 closed: one -n and one --out dir per run.
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging

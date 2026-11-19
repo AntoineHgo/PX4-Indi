@@ -908,3 +908,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
   SDF/plugin/CA gives G1_Y 205.3 (design/a43_closing_s126.md); K126 key of ident_fit_yaw.py 0 B / 4 MAJ / 6 MIN;
   probe (a43_probe) finds the cause = omitted rotor-drag yaw damping (synthetic 165.8 without r, 204.4 with r; real
   logs 212/220 with r + matched grid). A-43 closed, residual opened as A-44. Yaw ident model needs the D r term.
+- S126: RC126 accepted (design/route_check_126.md): D-IDENT-STOP, S127 defaults file, S128-S129 stage 5 every mode.

@@ -653,3 +653,14 @@ gain 2.0-2.2, same INDI/PID), so the pilot does not cancel the input (K118 MAJOR
   (new value every ~2.4 samples), plus unmodelled actuator lag in u_meas. Overturn if: a held-regressor-free fit
   (interpolated or rpm-rate regressor) drops J/df below ~3 and moves G1 by more than its CI, or a G1 x0.5/x2 plant
   variant (true G1 changed, not the start) is identified outside 10 %.
+
+## D-IDENT-STOP (S126, from RC126): identification frozen until stage 5 has multi-mode code
+Decision: no further estimator work before the stage-5 build. Roll/pitch ident stands (within 0.8 % of derived).
+Yaw: firmware keeps the derived G1_Y 205.3 (source chain design/a43_closing_s126.md); the production yaw fit is
+known biased -20 % by the omitted damping term (A-43 closed) and is fixed before G6 (probe V3: rate regressor +
+matched grid, K126 MAJORs; A-44 tracks the +3/+7 % residual). Stopping rule for that fix: G1_Y within 5 % of the
+source value on two logs, then stop. Note: probe V3 met D-IDENT-J's overturn trigger on yaw (J/df 2.6, G1 moved
+beyond CI): J did detect a model error; re-decide J's role in the same pre-G6 fix.
+Alternatives: fix the yaw fit now (1 session, delays stage 5 again); drop yaw identification and derive it (breaks
+D-IDENT (i) for yaw). Overturn if: G5/G3 probes show the yaw loop sensitive to a 20 % G1_Y error, or the owner asks
+for complete identification before stage 5.
