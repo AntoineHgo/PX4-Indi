@@ -1,0 +1,20 @@
+scenario auto_land10 exit ok error None
+phases (sim s): armed=31.8, takeoff_cmd=31.8, takeoff_done=43.5, hold_end=53.6, land_cmd=53.6, disarmed=69.8
+
+== tracking vs trajectory_setpoint (ground truth; rows with finite position setpoint only)
+takeoff  [31.8,43.5] n=590 xy rms 0.051 max 0.078 m | z rms 0.135 max 0.216 m
+hold     [43.5,53.6] n=500 xy rms 0.045 max 0.078 m | z rms 0.040 max 0.049 m
+land     [53.6,69.8] n=810 xy rms 0.049 max 0.074 m | z rms 0.151 max 0.615 m
+
+== take-off handover (takeoff_status rampup(4) -> flight(5))
+edge at 34.790 s: indi_pos_status.thrust step nan (nan = no sample before the edge; first sample 34.947 s), altitude dip within 1 s 0.000 m
+vehicle_thrust_setpoint (-xyz[2]) step at the edge: 0.0008
+
+== landing
+ground_contact 66.55 s, landed 67.22 s, disarm 69.23 s -> contact->disarm 2.68 s (landed->disarm 2.01 s)
+mean vz (down+) between 1 and 4 m height: 0.700 m/s over 380 samples; MPC_LAND_SPEED 0.699999988079071
+
+== stage_mode / nav_state transitions
+indi_pos_status stage_mode: first 1 at 34.95 s, n=2810, values [1], transitions []
+vehicle_status nav_state: [(31.77, 'loiter', 'takeoff'), (41.76, 'takeoff', 'loiter'), (53.57, 'loiter', 'land'), (69.23, 'land', 'loiter')]
+heartbeat mode_log [t, main, sub, armed]: [[31.761, 4, 3, True], [32.758, 4, 2, True], [41.757, 4, 3, True], [53.757, 4, 6, True], [69.758, 4, 3, False]]
