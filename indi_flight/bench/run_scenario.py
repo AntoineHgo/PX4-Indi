@@ -823,6 +823,7 @@ def main():
             if overlay.pop("MC_RATE_CTL_TYPE", "0").strip() == "1":
                 sim.env["PX4_PARAM_MC_INDI_EN"] = "1"
                 meta["boot_params"] = {"MC_INDI_EN": 1}
+            overlay.setdefault("MC_INDI_ID_OK", "1")  # S128: bench keeps full K gains (firmware default 0 halves them)
             if "CA_R_W_MAX" in overlay:
                 overlay["MC_INDI_W_MAX"] = overlay.pop("CA_R_W_MAX")
             if overlay.pop("MC_INDI_POS_EN", "0").strip() == "1":  # stage 8: outer-loop INDI module, started at boot

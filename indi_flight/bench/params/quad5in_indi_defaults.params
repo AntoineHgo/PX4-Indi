@@ -11,7 +11,9 @@ MC_INDI_G1_P 1640
 MC_INDI_G1_Y 205
 # D-G2Y-DERIVE: 205*5e-6/(2*1.9e-8*999)=27, bench/params/quad5in_indi_g1.params:9; J_r 5e-6 ASSUMED; yaml default 0
 MC_INDI_G2_Y 27
-# bandwidth gains, yaml defaults, flown by bench unchanged
+# S128 pre-identification set: firmware applies K_R/K_P/K_Y at 0.5x while 0 (MC_INDI_ID_OK 1 = gains as set)
+MC_INDI_ID_OK 0
+# bandwidth gains, yaml defaults; firmware applies 0.5x while MC_INDI_ID_OK 0 (D-DEFAULTS-FW), bench runs set ID_OK 1
 MC_INDI_K_R 20
 MC_INDI_K_P 20
 MC_INDI_K_Y 10
