@@ -903,3 +903,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
   -> measured path OFF, s121 re-flies MODEL-ONLY (fixed 0a49572149, run_validity.py). S122 re-fly idx 0/21/49 with
   W_MAX all ok + valid (results/g3_refly_s122, 8cfbc36d85). K122 key 3 BLOCKING (W_MAX alias, check_validity
   exception, missing g3_params.txt) fixed S123.
+- S125: STATE trimmed; K125 key of K124 fix (usable w/ caveats) + gap fix (robust-F test, chain gate on data path); D-IDENT-J (J diagnostic only); halved-gain roll ident 1757.9 PASS; yaw two-regressor IV: G2_Y 27.5 ok, G1_Y 165 vs 205 derived (A-43); A-42 empty-dir second launch.

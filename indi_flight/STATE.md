@@ -54,15 +54,17 @@ Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a inject
 | S125 | K125 key DONE: usable w/ caveats; F-swap + chain-gate tests missing, J gate powerless (D-IDENT-J) | sonnet | design/key_k125_fix_k124.md | - |
 | S125 | DONE fix K125 gaps A+B, 12 tests ok, real log unchanged (0046b38fe0); fix key = K125 author check only | sonnet | design/fix_k125_s125.md | - |
 | S125 | DONE halved-gain re-fly: roll 1757.9 PASS (b7a501db1b); yaw half_ax3 flown (1-regressor fit invalid, A-42 empty-dir) | bash | fit_s124.md sec S125 | - |
-| S125 | yaw two-regressor IV (u, du/dt), new file | sonnet | bench/ident_fit_yaw.py, results/ident_m3a_s123/fit_yaw_s125.md | relaunch |
+| S125 | DONE yaw IV (u, du/dt): G1_Y 163-166 vs 205 (A-43), G2_Y 27.5 ok; UNKEYED | sonnet | results/ident_m3a_s123/fit_yaw_s125.md | - |
 S124 re-fit after fix (gated, all PASS): roll 1768/1767 (x1), 1755 (x0.5), 1765 (x2); pitch 1649; within 0.6 % of
   derived, spread 0.8 %. FIX UNKEYED: S125 re-key (fix file vs key file). Open: J/df ~15 on real logs unexplained
   (J gate weak), MAJOR 7-9 + MINORs open, esc_status valid flag unused.
 S124 RESULT (roll only, UNKEYED until K124): D-IDENT (i) spread 0.8 %, all within 0.8 % of 1757; (ii) F 902-27091,
   CI +-0.1 %. Trend 1742->1756 with start > CI (J significant): CI not the whole error budget. Flights NOT at halved
   gains (ident config says halved). Pitch x1: 1634 (-0.4 %, 1ed8d935ed). Yaw 103 vs 205 INVALID: fit omits G2_Y du/dt.
-  NEXT S125: close K124; yaw two-regressor IV (u, du/dt; D-YAW), cond (iv) conditioning, cond (v) PID-flown
-  manoeuvre, halved-gain re-fly once; then defaults file draft + G5 list.
+  S125: K124 closed (K125 + fix 0046b38fe0); J = diagnostic (D-IDENT-J); halved-gain roll 1757.9 PASS.
+  NEXT S126: A-43 closing test (G1_Y from gz SDF, haiku/sonnet ~$0.15); key ident_fit_yaw.py (K126, sonnet);
+  cond (iv) conditioning, cond (v) PID-flown manoeuvre; plant-variant G1 x0.5/x2 (true G1) ident;
+  then defaults file draft + G5 list. Route check due S127. A-42: launch runs one at a time.
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS), MINORs frozen-b on saturated motor, lagging
