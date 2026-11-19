@@ -1,0 +1,44 @@
+# quad5in INDI default set, S127 draft (design/defaults_s127.md). Full-gain values; the ident gate halves K_* until identified.
+# yaml: mc_indi_rate_control_params.yaml (default 0), master switch
+MC_INDI_EN 1
+# yaml default 0; derived (design/ref_airframe_model.md: 4040_gz_quad5in SIM_GZ_EC_MAX 2700)
+MC_INDI_W_MAX 2700
+# derived G1_R, bench/params/quad5in_indi_g1.params:5 (fit_s124 within 0.8 %); yaml default 320
+MC_INDI_G1_R 1757
+# derived G1_P, bench/params/quad5in_indi_g1.params:6 (fit_s124 within 0.8 %); yaml default 210
+MC_INDI_G1_P 1640
+# derived G1_Y 205.3, design/a43_closing_s126.md:50; IV fit 163-166 unresolved (A-43/A-44); yaml default 30
+MC_INDI_G1_Y 205
+# D-G2Y-DERIVE: 205*5e-6/(2*1.9e-8*999)=27, bench/params/quad5in_indi_g1.params:9; J_r 5e-6 ASSUMED; yaml default 0
+MC_INDI_G2_Y 27
+# S128 pre-identification set: firmware applies K_R/K_P/K_Y at 0.5x while 0 (MC_INDI_ID_OK 1 = gains as set)
+MC_INDI_ID_OK 0
+# bandwidth gains, yaml defaults, flown by bench unchanged
+MC_INDI_K_R 20
+MC_INDI_K_P 20
+MC_INDI_K_Y 10
+# model timeConstantUp/Down 33 ms (ref_airframe_model.md:22); yaml default 0.05; bench flew 0.02 and 0.05. UNVERIFIED mapping tau->ACT_TC
+MC_INDI_ACT_TC 0.033
+# yaml default 1, bench 1
+MC_INDI_LEAD 1
+# computed from filter config (D-IDENT), not identified; yaml 0, bench 0. UNVERIFIED for non-bench filters
+MC_INDI_DELAY 0
+# yaml default 1, bench 1 (identified by correlation lag in M3)
+MC_INDI_ERPM_DLY 1
+# yaml defaults, flown unchanged
+MC_INDI_ERPM_TO 0.02
+MC_INDI_ACT_BLD 1.0
+MC_INDI_DT_MAX 1.0
+MC_INDI_LND_SLEW 5.0
+MC_INDI_ERPM_FRZ 0.5
+MC_INDI_SP_TO 0.5
+MC_INDI_YAW_CUT 0
+# injection: switches, off by default
+MC_INDI_INJ_AX 0
+MC_INDI_POS_EN 1
+MC_INDI_POS_LPF 10.0
+MC_INDI_POS_DLY 1
+MC_INDI_POS_TB 1.0
+MC_INDI_PINJ_AX 0
+
+MC_RATE_CTL_TYPE 1
