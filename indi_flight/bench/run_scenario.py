@@ -87,6 +87,7 @@ LOG_TOPICS = [
     "vehicle_attitude_groundtruth", "vehicle_angular_velocity_groundtruth",  # A-12 s18: were 100 Hz (profile rate)
     "sim_ground_truth",  # A-15 s21: sim-only truth, uORB queue 16, one sample per sim step
     "indi_rate_status", "actuator_torque_measured",  # D-G2-INJ s39: c, d, u per cycle and the measured rotor torque
+    "takeoff_status",  # S131 AUTO smoke: rampup -> flight edge of the navigator take-off
     "sim_schedule_applied",  # D-SCHED s24: row applied by sim_scenario_player (queue 8), only published with --sched
 ]
 TAKEOFF_ALT = 5.0
@@ -407,9 +408,20 @@ class Sim:
             self.armed = bool(m.base_mode & 128)
             self.main_mode = (m.custom_mode >> 16) & 0xFF
             self.sub_mode = (m.custom_mode >> 24) & 0xFF
+            key = (self.main_mode, self.sub_mode, self.armed)
+            if key != self.mode_log_last:  # S131: every (main, sub, armed) change with its sim time, for AUTO phases
+                self.mode_log_last = key
+                self.mode_log.append([round(self.t, 3), *key])
+        elif ty == "GLOBAL_POSITION_INT":
+            self.gpos = (m.lat, m.lon)
+            self.gpos_alt = m.alt * 1e-3  # AMSL m
+        elif ty == "MISSION_ITEM_REACHED":
+            self.reached = m.seq
         elif ty == "EXTENDED_SYS_STATE":
             self.landed_state = m.landed_state
         return False
+
+    mode_log, mode_log_last, gpos, gpos_alt, reached = [], None, None, 0.0, -1  # S131 (mode_log is reset per Sim in run_auto)
 
     def wd_start(self):
         self.wd_on = self.a.watchdog == "on"
@@ -688,6 +700,98 @@ def make_pilot_sp(sim, a, thr0, meta):
     return neutral, stick
 
 
+def mission_upload(sim, wps, alt_m):
+    """MAVLink mission protocol (mission_count, then one MISSION_ITEM_INT per request). wps: (north_m, east_m) of home."""
+    if sim.gpos is None:
+        sim.run(3.0, what="wait_gpos")
+    if sim.gpos is None:
+        raise RunError("no GLOBAL_POSITION_INT: cannot place the mission")
+    lat0, lon0 = sim.gpos[0] * 1e-7, sim.gpos[1] * 1e-7
+    items = [(int((lat0 + n / 111320.0) * 1e7), int((lon0 + e / (111320.0 * math.cos(math.radians(lat0)))) * 1e7))
+             for n, e in wps]
+    sim.mav.mav.mission_count_send(sim.sysid, 1, len(items), 0)
+    t0 = time.time()
+    while time.time() - t0 < 30:
+        m = sim.mav.recv_match(type=["MISSION_REQUEST_INT", "MISSION_REQUEST", "MISSION_ACK"], blocking=True, timeout=1)
+        if m is None:
+            continue
+        if m.get_type() == "MISSION_ACK":
+            if m.type != 0:
+                raise RunError(f"mission rejected, MISSION_ACK type {m.type}")
+            return {"home_lat": lat0, "home_lon": lon0, "n": len(items)}
+        la, lo = items[m.seq]
+        sim.mav.mav.mission_item_int_send(sim.sysid, 1, m.seq, 6, 16, 1 if m.seq == 0 else 0, 1, 0.0, 0.0, 0.0,
+                                          float("nan"), la, lo, float(alt_m))
+    raise RunError("mission upload timeout")
+
+
+def run_auto(sim, a, sc, meta):
+    """S131: navigator-driven AUTO flight after arm: takeoff -> hold (loiter) [-> mission] -> RTL | land -> disarm.
+    Phase sim times go to meta['auto_phases'] (same time base as the ULog) and the heartbeat mode changes to meta['mode_log']."""
+    sim.mode_log, sim.mode_log_last = [], None
+    try:
+        _run_auto(sim, a, sc, meta)
+    finally:
+        meta["mode_log"] = sim.mode_log  # [t_s, main, sub, armed], also when the flight failed
+
+
+def _run_auto(sim, a, sc, meta):
+    cfg = sc["auto"]
+    ph = meta["auto_phases"] = []
+
+    def mark(name):
+        ph.append({"name": name, "t_us": int(sim.t * 1e6), "main": sim.main_mode, "sub": sim.sub_mode})
+
+    for k, v in cfg["params"].items():
+        sim.set_param(k, v)
+        meta["params_applied"][k] = v
+    sim.run(1.0, what="auto_settle")
+    mark("armed")
+    alt = cfg["takeoff_alt"]
+    if sim.gpos is None:
+        sim.run(3.0, what="wait_gpos")
+    # explicit AMSL altitude (home altitude on the ground + takeoff_alt): the MIS_TAKEOFF_ALT set above did not reach the
+    # navigator in the first S131 try ("Using default takeoff altitude: 5.0 m" for a 10 m scenario)
+    alt_amsl = (sim.gpos_alt + alt) if sim.gpos is not None else float("nan")
+    meta["takeoff_alt_amsl_m"] = alt_amsl
+    if not sim.cmd(22, float("nan"), 0, 0, float("nan"), float("nan"), float("nan"), alt_amsl):
+        raise RunError("takeoff rejected")
+    mark("takeoff_cmd")
+    sim.run(None, until=lambda: sim.pos and sim.pos[2] <= -(alt - 0.3), wall_timeout=120 + 120 / a.speed, what="auto_climb")
+    mark("takeoff_done")
+    sim.wd_start()  # watchdog only once airborne (its height floor would trip on the ground)
+    sim.run(cfg["hold_s"], what="auto_hold")
+    mark("hold_end")
+    if cfg.get("mission"):
+        wps = cfg["mission"]
+        meta["mission"] = {**mission_upload(sim, wps, alt), "wps_ne_m": wps, "alt_m": alt}
+        mark("mission_uploaded")
+        for tries in range(5):  # the navigator validates the new mission asynchronously: "Mission start denied! No valid mission"
+            sim.run(2.0, what="auto_mission_valid")
+            if sim.cmd(300, 0, len(wps) - 1):  # MAV_CMD_MISSION_START (first item 0, last item n-1)
+                break
+        else:
+            raise RunError("MISSION_START rejected 5 times")
+        meta["mission_start_tries"] = tries + 1
+        sim.reached = -1
+        mark("mission_start")
+        sim.run(None, until=lambda: sim.reached >= len(wps) - 1, wall_timeout=60 + cfg["mission_max_s"] / a.speed,
+                what="auto_mission")
+        mark("mission_end")
+        sim.run(cfg["post_mission_s"], what="auto_post_mission")
+    sim.wd_on = False
+    if cfg["end"] == "rtl":
+        ok = sim.cmd(20)  # NAV_RETURN_TO_LAUNCH
+    else:
+        ok = sim.cmd(21, 0, 0, 0, float("nan"), float("nan"), float("nan"), 0)  # NAV_LAND == `commander land`
+    mark(cfg["end"] + "_cmd")
+    if not ok:
+        raise RunError(f"{cfg['end']} rejected")
+    sim.run(None, until=lambda: not sim.armed, wall_timeout=120 + 240 / a.speed, what="auto_end")
+    mark("disarmed")
+    sim.run(2.0, what="post_disarm")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--scenario", required=True, choices=sorted(SCENARIOS))
@@ -802,6 +906,9 @@ def main():
     if a.gate and provenance.refusal(meta["provenance"]):
         raise SystemExit("G1.7 refuses this gate-bearing run: " + provenance.refusal(meta["provenance"]))
     overlay = read_params(a.params) if a.params else {}
+    if overlay.get("MC_INDI_EN", "0").strip() == "1" and overlay.get("MC_RATE_CTL_TYPE", "0").strip() != "1":
+        overlay["MC_RATE_CTL_TYPE"] = "1"  # S131: MC_INDI_EN 1 in a params file is an alias of MC_RATE_CTL_TYPE 1
+        meta["alias_MC_INDI_EN"] = True
     if a.controller == "indi" and overlay.get("MC_RATE_CTL_TYPE", "0").strip() != "1":
         # S121: without it the INDI module is not started and the run silently flies the stock rate loop
         raise SystemExit("--controller indi needs MC_RATE_CTL_TYPE 1 in the params file (starts mc_indi_rate_control)")
@@ -920,6 +1027,10 @@ def main():
             meta["arm_late_s"] = round(sim.t - T_ARM_S, 3)
         sim.run(None, until=lambda: sim.armed, wall_timeout=30, what="armed")
         meta["t_arm_us"] = int(sim.t * 1e6)
+        if sc["mode"] == "auto":  # S131: navigator-driven flight, no offboard / stick phase
+            run_auto(sim, a, sc, meta)
+            ok = True
+            return 0
         if not sim.cmd(22, float("nan"), 0, 0, float("nan"), float("nan"), float("nan"), float("nan")):
             raise RunError("takeoff rejected")
         sim.run(None, until=lambda: (sim.pos and sim.pos[2] <= -(TAKEOFF_ALT - 0.3)) or sim.t > T_HOLD_S - HOVER_MIN_S,
@@ -1099,6 +1210,7 @@ def main():
 
         # ---- land ----
         sim.wd_on = False
+        meta["t_land_cmd_us"] = int(sim.t * 1e6)  # sim time (= ULog absolute timestamp) of the NAV_LAND; NOT ulog-start relative
         sim.cmd(21, 0, 0, 0, float("nan"), float("nan"), float("nan"), 0)
         sim.run(None, sp=pos_sp if a.stick_mode else None, until=lambda: not sim.armed,
                 wall_timeout=120 + 120 / a.speed, what="land")

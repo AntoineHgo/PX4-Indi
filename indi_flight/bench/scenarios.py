@@ -188,3 +188,13 @@ SCENARIOS["s5_gap085_altctl"] = dict(mode="stick", axis=None, traj=ZSINE_O6,
                                      motor_fault=dict(segment="up", motors=[0, 1, 2, 3], thrust_scale=0.85))
 # S103: same in manual POSCTL (fly with --stick-mode posctl), G5 pre-test of the position-mode thrust gap.
 SCENARIOS["s5_gap085_posctl"] = {**SCENARIOS["s5_gap085_altctl"]}
+
+
+# S131 AUTO smoke (mode "auto": navigator-driven, run_scenario.run_auto). `commander takeoff` to takeoff_alt, hold in loiter,
+# optional mission (square, (north_m, east_m) from home), then RTL or land; the run ends at auto-disarm.
+_AUTO_P = {"NAV_ACC_RAD": 2.0, "RTL_RETURN_ALT": 10.0, "RTL_DESCEND_ALT": 5.0, "RTL_LAND_DELAY": 0}
+SCENARIOS["auto_tour"] = dict(mode="auto", axis=None, segments=[], auto=dict(
+    takeoff_alt=5.0, hold_s=10.0, end="rtl", mission_max_s=120.0, post_mission_s=3.0,
+    mission=[(20.0, 0.0), (20.0, 20.0), (0.0, 20.0), (0.0, 0.0)], params={**_AUTO_P, "MIS_TAKEOFF_ALT": 5.0}))
+SCENARIOS["auto_land10"] = dict(mode="auto", axis=None, segments=[], auto=dict(
+    takeoff_alt=10.0, hold_s=10.0, end="land", params={**_AUTO_P, "MIS_TAKEOFF_ALT": 10.0}))
