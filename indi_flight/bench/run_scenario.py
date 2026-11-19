@@ -487,6 +487,13 @@ class Sim:
             int(self.t * 1e3), self.sysid, 1, 1, 0b100000000000, pos[0], pos[1], pos[2],
             vel[0], vel[1], vel[2], acc[0], acc[1], acc[2], yaw, 0)
 
+    def send_vel(self, vel, yaw):
+        """S133 T7: velocity-only setpoint (position and acceleration ignored, yaw used, yaw rate ignored)."""
+        self.log_send("send_vel", f"vx={vel[0]:.5g};vy={vel[1]:.5g};vz={vel[2]:.5g};yaw={yaw:.5g}")
+        self.mav.mav.set_position_target_local_ned_send(
+            int(self.t * 1e3), self.sysid, 1, 1, 0b100111000111, 0, 0, 0,
+            vel[0], vel[1], vel[2], 0, 0, 0, yaw, 0)
+
     @staticmethod
     def quat(roll, pitch, yaw):
         cr, sr = math.cos(roll / 2), math.sin(roll / 2)
@@ -1149,7 +1156,7 @@ def main():
                 if len(fmotors) > 1:
                     meta["motor_fault"]["applied_all"] = {str(m): v for m, v in new_all.items()}
             ev = {"name": name, "t_us": int(seg_now() * 1e6), "dur_s": dur, "mode": mode, "axis": axis,
-                  "value": val, "prev": prev, "step": name != "settle" and mode not in ("position", "trajectory", "stick")}
+                  "value": val, "prev": prev, "step": name != "settle" and mode not in ("position", "trajectory", "stick", "velocity")}
             meta["events"].append(ev)
             r = val if axis in ("roll", "rollpitch") else 0.0
             p = val if axis in ("pitch", "rollpitch") else 0.0
@@ -1162,6 +1169,8 @@ def main():
                 def sp(t_seg0=t_seg0, traj=traj):
                     p, v, acc = traj_pva(traj, sim.t - t_seg0)
                     sim.send_pva([hold_pos[i] + p[i] for i in range(3)], v, acc, hold_yaw)
+            elif mode == "velocity":  # S133 T7: vx = val [m/s] for the whole segment, vy = vz = 0, no position setpoint
+                sp = (lambda vx=val: sim.send_vel([vx, 0.0, 0.0], hold_yaw))
             elif mode in ("position", "trajectory"):
                 sp = pos_sp
             elif mode == "stick":  # S81: the stick sample of the profile at the segment time, neutral outside "stick"

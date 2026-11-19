@@ -198,3 +198,8 @@ SCENARIOS["auto_tour"] = dict(mode="auto", axis=None, segments=[], auto=dict(
     mission=[(20.0, 0.0), (20.0, 20.0), (0.0, 20.0), (0.0, 0.0)], params={**_AUTO_P, "MIS_TAKEOFF_ALT": 5.0}))
 SCENARIOS["auto_land10"] = dict(mode="auto", axis=None, segments=[], auto=dict(
     takeoff_alt=10.0, hold_s=10.0, end="land", params={**_AUTO_P, "MIS_TAKEOFF_ALT": 10.0}))
+
+# S133 T7: offboard WITHOUT position setpoint. mode "velocity": the segment value is vx [m/s] sent as a velocity-only
+# SET_POSITION_TARGET_LOCAL_NED (run_scenario.Sim.send_vel; position and acceleration ignored, yaw held, vy = vz = 0).
+SCENARIOS["offb_vel_step"] = dict(mode="velocity", axis=None,
+                                  segments=[("settle", 3.0, 0.0), ("vstep", 5.0, 2.0), ("vhold", 4.0, 0.0)])
