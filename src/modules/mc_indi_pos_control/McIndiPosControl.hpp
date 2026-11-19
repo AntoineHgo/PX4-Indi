@@ -41,6 +41,8 @@
 #include "Takeoff/Takeoff.hpp"
 #include "GotoControl/GotoControl.hpp"
 #include "IndiStageMode.hpp"
+#include "FailsafeSetpoint.hpp"
+#include "EkfResetDetect.hpp"
 #include <lib/indi_accel_control/indi_accel_control.hpp>
 #include <lib/indi_rate_control/indi_rate_control.hpp>
 #include <uORB/topics/control_allocator_status.h>
@@ -309,6 +311,8 @@ private:
 	uint8_t _xy_reset_counter{0};
 	uint8_t _z_reset_counter{0};
 	uint8_t _heading_reset_counter{0};
+	EkfResetDetector _indi_reset_detector{}; /**< T10: estimator reset seen by the INDI stage */
+	bool _indi_reset_pending{false};
 
 	perf_counter_t _cycle_perf{perf_alloc(PC_ELAPSED, MODULE_NAME": cycle time")};
 

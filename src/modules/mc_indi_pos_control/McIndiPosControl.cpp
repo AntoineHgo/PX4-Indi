@@ -239,6 +239,15 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 		const bool inject_output = (_param_indi_pinj_pt.get() == 1) && (inject_axis >= 0);
 		const Vector3f a_ref = inject_output ? a_c_pre_inject : (a_c_pre_inject + inject);
 
+		if (_indi_reset_pending) {
+			// T10: estimator reset while the stage runs: restart the differencing from the current state (same call as the
+			// bypass branch below; the blend is kept by reset(), so no collective step)
+			const float coll_rs = fresh_thr ? _coll_meas : _last_thrust;
+			const float c_rs = PX4_ISFINITE(coll_rs) ? math::max(coll_rs, 0.f) : 0.f;
+			_indi.reset(fresh_acc ? _f_b : Vector3f(0.f, 0.f, -c_rs * G), c_rs, fresh_esc ? _mean_u : NAN);
+			_indi_reset_pending = false;
+		}
+
 		IndiAccelControl::Input in;
 		in.accel_only = true;
 		// D-ALTCTL-Z: climb rate only (no position, no velocity control): INDI collective, stock thrust direction
@@ -341,6 +350,7 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 	}
 
 	trackDegraded(StageMode::Bypass, now);
+	_indi_reset_pending = false; // the bypass branch below resets the stage every cycle
 
 	// bypass: stock attitude setpoint is published, the stage tracks the thrust actually commanded (A3)
 	_indi.setBlendHold(true); // D-GAP: reset() below keeps b; model path from the commanded collective, measured path from the ESC mean u
@@ -780,6 +790,18 @@ void McIndiPosControl::Run()
 
 		adjustSetpointForEKFResets(vehicle_local_position, _setpoint, _last_valid_setpoint);
 
+		// T10: any estimator reset is a step for the stage's acceleration/jerk differencing: reset it once (runIndiStage)
+		EkfResetCounters reset_counters;
+		reset_counters.xy = vehicle_local_position.xy_reset_counter;
+		reset_counters.z = vehicle_local_position.z_reset_counter;
+		reset_counters.vxy = vehicle_local_position.vxy_reset_counter;
+		reset_counters.vz = vehicle_local_position.vz_reset_counter;
+		reset_counters.heading = vehicle_local_position.heading_reset_counter;
+
+		if (_indi_reset_detector.update(reset_counters)) {
+			_indi_reset_pending = true;
+		}
+
 		if (_vehicle_control_mode.flag_multicopter_position_control_enabled) {
 			// set failsafe setpoint if there hasn't been a new
 			// trajectory setpoint since position control started
@@ -1031,41 +1053,16 @@ trajectory_setpoint_s McIndiPosControl::generateFailsafeSetpoint(const hrt_absti
 		_last_warn = now;
 	}
 
-	trajectory_setpoint_s failsafe_setpoint = PositionControl::empty_trajectory_setpoint;
-	failsafe_setpoint.timestamp = now;
+	FailsafeInfo info;
+	const trajectory_setpoint_s failsafe_setpoint = computeFailsafeSetpoint(now, Vector3f(states.velocity),
+			_param_mpc_land_speed.get(), &info);
 
-	if (Vector2f(states.velocity).isAllFinite()) {
-		// don't move along xy
-		failsafe_setpoint.velocity[0] = failsafe_setpoint.velocity[1] = 0.f;
+	if (warn) {
+		if (info.stop_and_wait) { PX4_WARN("Failsafe: stop and wait"); }
 
-		if (warn) {
-			PX4_WARN("Failsafe: stop and wait");
-		}
+		if (info.blind_land) { PX4_WARN("Failsafe: blind land"); }
 
-	} else {
-		// descend with land speed since we can't stop
-		failsafe_setpoint.acceleration[0] = failsafe_setpoint.acceleration[1] = 0.f;
-		failsafe_setpoint.velocity[2] = _param_mpc_land_speed.get();
-
-		if (warn) {
-			PX4_WARN("Failsafe: blind land");
-		}
-	}
-
-	if (PX4_ISFINITE(states.velocity(2))) {
-		// don't move along z if we can stop in all dimensions
-		if (!PX4_ISFINITE(failsafe_setpoint.velocity[2])) {
-			failsafe_setpoint.velocity[2] = 0.f;
-		}
-
-	} else {
-		// emergency descend with a bit below hover thrust
-		failsafe_setpoint.velocity[2] = NAN;
-		failsafe_setpoint.acceleration[2] = .3f;
-
-		if (warn) {
-			PX4_WARN("Failsafe: blind descent");
-		}
+		if (info.blind_descent) { PX4_WARN("Failsafe: blind descent"); }
 	}
 
 	return failsafe_setpoint;

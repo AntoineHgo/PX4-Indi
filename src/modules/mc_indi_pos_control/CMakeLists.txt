@@ -67,3 +67,5 @@ target_include_directories(modules__mc_indi_pos_control PRIVATE ${PX4_SOURCE_DIR
 
 px4_add_unit_gtest(SRC IndiPosInjectionTest.cpp LINKLIBS IndiPosInjection)
 px4_add_unit_gtest(SRC IndiStageModeTest.cpp)
+px4_add_unit_gtest(SRC FailsafeSetpointTest.cpp)
+px4_add_unit_gtest(SRC EkfResetDetectTest.cpp)
