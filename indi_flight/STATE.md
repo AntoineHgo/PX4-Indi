@@ -48,10 +48,6 @@ Stage 4 next (history S119-S120 in JOURNAL): ident pretest hover with M3a inject
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S126 | DONE A-43 source chain: G1_Y 205.3 (roll 1756 check), derived value stands, fit suspect | sonnet | design/a43_closing_s126.md | - |
-| S126 | DONE K126 key: 0 BLOCKING 4 MAJOR (J df/calib, u 400->800 interp gain loss, gate tests) 6 MINOR | sonnet | design/key_k126_ident_fit_yaw.md | - |
-| S126 | DONE A-43 closed: cause omitted yaw damping D r; with r + matched grid G1_Y 212/220, residual = A-44 | sonnet | results/ident_m3a_s123/a43_probe/README.md | - |
-| S126 | DONE A-42 closed (a0fb12317f) | bash | results/a42_s126/README.md | - |
 | S127 | K127 key (design/key_k127_defaults.md): 0 BLOCKING; MAJ1 G1_Y 205 = D-IDENT-STOP stance (fit is the biased one), no action; MAJ2 ACT_TC 0.033 unflown -> 1-flight pretest before adopting; MAJ3 = gate gap below. |
 | S128 | DONE impl D-DEFAULTS-FW (MC_INDI_ID_OK halves K, G1 fw defaults quad5in, airframe W_MAX 2700, bench ID_OK 1); 70 lib tests pass, break-check ok, SITL builds | sonnet | design/impl_s128_id_ok.md | - |
 | S128 | DONE K128: 0 B, 1 MAJ (call site untested -> stage-7 harness), MINOR comment fixed | sonnet | design/key_k128_id_ok.md | - |
