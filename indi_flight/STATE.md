@@ -28,10 +28,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    once with PID (MC_RATE_CTL_TYPE 0, MC_INDI_POS_EN 0), compare setpoints after H->P (setpoint re-init vs INDI state
    reset on mode change). Tools: g57_check.py, g57_lag_compare.py. G5.9/G5.11 probes are NOT flown before this closes.
 3c. G5.5 probe committed S140 (results/g5_g55_s139/README.md); G5.3 mission PASS 3/3. G5.3 complete as probe.
-4. G5.6/5.8/5.9/5.11 injector: OWNER ORDER 2026-11-20 = NEXT SESSION, before more A18/G5.7 work, as its own
-   sonnet task (firmware-free, parallel to the A18 code + key). ONE script bench/g5_events.py, ONE multi-event flight,
-   one G1.5 verdict line PER event (maybe_landed, kill, EKF reset, RC/link/offboard loss; applied time within 1 physics
-   step). Fly the rows after G5.7/A18 close. G5.10 uses G3 hooks. Keep G5.6 1 m / G5.8 offboard-loss variants (owner).
+4. G5.6/5.8/5.9/5.11 injector BUILT S142 (04f8c514ac, unkeyed; pre-test results/g5_events_s142/README.md): kill and
+   offboard-loss work; ekf_yaw no effect and rc_loss not detected (defects to fix); MAVLink events land 3-24 ms late
+   (G1.5 asks 1.25 ms); maybe_landed and EKF z not injectable firmware-free -> Q8 OPEN (not blocking). Second key
+   before rows fly. Fly the rows after G5.7/A18 close. G5.10 uses G3 hooks. Keep G5.6 1 m / G5.8 offboard-loss variants.
 4a. Flying: parallel docker streams ONLY for tolerance-insensitive probes (G5.5, G5.10 sat); G5.7 and event rows serial
    or max 2 streams with sim-hole figure recorded (LESSONS_PROPOSED S86); parallel runs are never gate evidence.
 4c. Pre-freeze review, standalone session (not beside flying), split into 2-3 single-interface reviews (stage-3 safety
@@ -74,8 +74,8 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | - | none (S141 A18 probe done) | - | results/g5_g55_s141_a18/README.md | run_batch.sh "<rows>" "<seeds>" |
-| A142b | G5.5 lag cause search (item 0c, analysis only) | sonnet | results/g5_g55_s141_a18/lag_cause_s142.md | re-brief from that file |
-| A142 | injector build g5_events.py (item 4) | sonnet | bench/g5_events.py + results/g5_events_s142/README.md | S142 launched; if cut: read README/NOTES there, relaunch from them |
+| A143a | route check 143 | sonnet | design/route_check_143.md | relaunch same brief |
+| A143b | G5.5 o1 lag chain split per stage (item 0c, D-A18-SOURCE evidence) | sonnet | results/g5_g55_s141_a18/lag_chain_s143.md | re-brief from that file |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
