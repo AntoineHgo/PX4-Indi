@@ -11,7 +11,7 @@
 History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrations: read before sizing a brief).
 1. G5.4 DONE as probe S135: 9/9 runs (auto_tour, auto_land10, auto_rtl20 x3 seeds) all limits PASS
    (results/g5_probe_s135/README.md; checker auto_smoke_check.py g54_*, keyed g54_key2.py). Re-fly at freeze.
-2. G5.1 probe: acro PASS 3/3 at K_Y 20 (S137); stabilized re-fly at K_Y 20 (see Tasks). Re-fly at freeze.
+2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
 3. G5.2, G5.3, G5.5, G5.7 3-seed probes with
    existing scenarios (GATES 5b row map); checkers offb_vel_check.py, passthrough_check.py (need self-tests, G1),
    auto_smoke_check.py for hold/mission.
@@ -53,9 +53,8 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 |---|---|---|---|---|
 S137 G5.1 acro yaw FIXED (D-KY, 5d1d828af7): cause = yaw lag 1/K_Y at K_Y 10 (no saturation). K_Y 20 default
   (firmware + bench). Probe: acro PASS 3/3 yaw 3.15-3.29 deg/s; G2 rate-yaw 800/400 GM 18.8/14.3 dB PM 78/82 (1 seed,
-  results/g2_yaw_ky20_s137). Stabilized re-fly at K_Y 20 in flight: results/g5_g51_ky20_s137 (resume: rerun
-  run_batch.sh; stab_s* added to g51_summary.txt) -> add row to its README, commit. Open: attitude-yaw cell at K_Y 20
-  unmeasured (freeze); D-KY second key folded into the pre-freeze opus review.
+  results/g2_yaw_ky20_s137). Stabilized at K_Y 20 PASS 3/3 -> G5.1 row PASS 6/6 (probe, results/g5_g51_ky20_s137).
+  Open: attitude-yaw cell at K_Y 20 unmeasured (freeze); D-KY second key folded into the pre-freeze opus review.
 S134 F-7 DONE b9fb83c4a0 (keyed K134: 0 BLOCKING, MAJORs floor 0 before flight + arm/disarm state reset FIXED; gtests
   8/8 suites, ArmEdges test break-checked; open MINORs: ground xy tilt, IndiAccelControl lib test not run after
   resetBlend, reset test checks the decision only -> stage-7 harness). Pre-fix smoke (1 seed): edge step 4.7 % hover,

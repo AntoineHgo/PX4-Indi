@@ -21,4 +21,5 @@ Probe: identical to the S136 batch (stick_steps, --stick-mode acro, --stick-pilo
 
 Limit 10 deg/s RMS; no LOC. Yaw authority cost (seed 1): lowest motor 0.044 on the -A reversal (0.083 at K_Y 10),
 yaw torque setpoint -0.092; no motor at a limit. G2 yaw cells at K_Y 20: results/g2_yaw_ky20_s137 (pass).
-Stabilized was not re-flown at K_Y 20 (passed at K_Y 10 with yaw rate <= 0.20 deg/s after release): re-fly at freeze.
+Stabilized re-flown at K_Y 20 (same batch, MODES default now acro + stab): PASS 3/3, residual tilt <= 0.14 deg
+(limit 3), yaw rate after release <= 0.15 deg/s (limit 10), tilt max 17.8 deg, no LOC. G5.1 row: PASS 6/6 (probe).

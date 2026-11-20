@@ -3,7 +3,7 @@
 # Skips runs whose flight.ulg exists (resume = rerun this script). Output: <mode-short>_s<seed>; then python3 indi_flight/bench/g51_check.py on each.
 cd "$(dirname "$0")/../../.."
 D=indi_flight/results/g5_g51_ky20_s137
-for s in ${SEEDS:-1 2 3}; do for m in acro:acro; do
+for s in ${SEEDS:-1 2 3}; do for m in ${MODES:-acro:acro stabilized:stab}; do
   mode=${m%%:*}; short=${m##*:}
   out=$D/${short}_s$s; [ -f $out/flight.ulg ] && continue
   docker ps -q --filter name=px4-indi-g5 | xargs -r docker stop >/dev/null
@@ -12,4 +12,4 @@ for s in ${SEEDS:-1 2 3}; do for m in acro:acro; do
   echo "$short s$s rc=$?" >> $D/batch_status.txt
 done; done
 echo DONE >> $D/batch_status.txt
-python3 indi_flight/bench/g51_check.py $D/acro_s? 2>&1 | tee $D/g51_summary.txt
+python3 indi_flight/bench/g51_check.py $D/acro_s? $D/stab_s? 2>&1 | tee $D/g51_summary.txt
