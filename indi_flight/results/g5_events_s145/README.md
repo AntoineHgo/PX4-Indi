@@ -32,3 +32,14 @@ torque_increment 6.6e-5 reported), 9c PASS 0.01 %, 9d PASS 4.5 %, 0 dip.
 9a FAIL: outputs 0 at 5.00 ms after the switch (last non-zero 3.75 ms), limit 1.25 ms. Attribution: actuator_armed.kill
 rises 5.00 ms after the switch (commander, stock, O-11), outputs 0 in the same sample as the kill flag (0.00 ms).
 The INDI stack adds nothing; the limit as written measures stock commander latency -> Q8 addendum 2.
+
+## S146 3-seed result with the fix (fix_s1, fix_s2, fix_s3; serial, one stream; key2 pending/see key2_rows.md)
+| seed | rc_loss (entry - timeout ref) | link_loss | offboard_loss | 9a switch->outputs 0 (kill flag share) | 9b | 9c | 9d step |
+|---|---|---|---|---|---|---|---|
+| fix_s1 | PASS 510 ms | PASS 9 ms | PASS 26 ms | FAIL 10.00 ms (10.00 commander, 0.00 output) | PASS | PASS 0.01 % | PASS 4.0 % |
+| fix_s2 | PASS 510 ms | PASS 2 ms | PASS 26 ms | FAIL 5.00 ms (5.00, 0.00) | PASS | PASS 0.01 % | PASS 4.5 % |
+| fix_s3 | PASS 510 ms | PASS 4 ms | PASS 24 ms | FAIL 3.75 ms (3.75, 0.00) | PASS | PASS 0.01 % | PASS 4.5 % |
+rc_loss 510 ms = COM_RC_LOSS_T 0.5 s counted from the timeout reference (flag rise - T) + 10 ms to failsafe entry.
+G5.8 hover PASS 3/3, G5.9 b/c/d PASS 3/3 (probe, RC113). G5.9a FAIL 3/3, entirely stock commander latency
+(switch -> actuator_armed.kill 3.75-10 ms); outputs reach 0 in the sample of the kill flag. Q8 addendum 2 open.
+G5.8 3 m/s (moving loss): not flown.

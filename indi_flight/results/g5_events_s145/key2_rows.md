@@ -1,0 +1,13 @@
+# key2 rows for indi_flight/results/g5_events_s145/fix_s2: indi_rate_status logged rate 799.6 Hz -> command period 1.251 ms (IMU_GYRO_RATEMAX=800)
+G5.8 rc_loss: COM_RC_LOSS_T=0.5 NAV_RCL_ACT=1; ref=flag rise 64.0712 - T = 63.5712 s; vehicle_status.failsafe rise 64.0812 (period 0.5 s log) -> entry-ref 0.510 s; nav_state before=4, nav_state change next=93.64999999999999; action hold=nav 4 (already loiter, no change observable) -> PASS
+G5.8 link_loss: COM_DL_LOSS_T=3 NAV_DLL_ACT=1; last heartbeat_type_gcs (telemetry_status, any instance) 77.6000; ref 80.6000; gcs_connection_lost rise 80.6025 (flag log 2 Hz) -> rise-ref 0.002 s; at t_ev nav_state=4 failsafe=1; next nav_state change 93.64999999999999; entry on vehicle_status NOT observable if failsafe already 1 (rise found after event: 101.66) -> PASS(flag only, state already hold)
+G5.8 offboard_loss: COM_OF_LOSS_T=4.0 COM_OBL_RC_ACT=5; last offboard_control_mode 97.6337; ref 101.6337; flag rise 101.6500; nav_state leaves offboard 101.6600 -> 4 (expect 4 hold) failsafe rise 101.6600; entry-ref 0.026 s -> PASS
+G5.9 kill: switch change 112.6650; actuator_armed.kill rise 112.6700 (+5.0 ms); outputs all 4 == 0 until disarm(117.680) from 112.67000 (+0.00 ms after kill rise, +5.00 ms after switch); pre-kill outputs [998.  998.5 998.1 998. ]; actuator_outputs period 1.25 ms, command period 1.25 ms -> FAIL (limit one command period from switch)
+G5.9 rearm at 122.2400 (actuator_armed); indi_pos_status samples between disarm and arm: 0 (last at 117.672)
+  blend: pre-kill last sample (t=112.655) maxabs 0.0001394; first sample after arm (t=122.2412) maxabs 0; max over first 0.2 s 0
+  hold_cycles: pre-kill last sample (t=112.655) maxabs 0; first sample after arm (t=122.2412) maxabs 0; max over first 0.2 s 0
+  torque_filtered: pre-kill last sample (t=112.664) maxabs 0.0002175; first sample after arm (t=122.2400) maxabs 0; max over first 0.2 s 0
+  rate_sp_dot: pre-kill last sample (t=112.664) maxabs 0.07226; first sample after arm (t=122.2400) maxabs 0; max over first 0.2 s 0
+G5.9 rearm first-second motor command change (actuator_outputs, same units): units max 1221.7; ctrl-at-arm [86.2 84.6 86.  84.7]; end [102.7  99.1  99.5 102.3]; range per motor [17.8 16.8 17.1 18. ] -> max 18.0 units = 0.67 % of full scale W=2700 (MC_INDI_W_MAX; output is rotor speed, hover ~ W*sqrt(MPC_THR_HOVER))
+  takeoff_state edges after rearm: [(122.241, 2), (123.241, 3), (124.266, 4), (127.269, 5)] (4 rampup -> 5 flight at 127.2687)
+G5.9 take-off handover: thrust before 0.1438 after 0.1500 step +0.0062 vs MPC_THR_HOVER 0.1370 -> 4.5 % of hover (PASS, limit 10 %); truth altitude dip within 1 s 0.000 m (alt at edge 0.417) -> PASS (limit 0.3 m)
