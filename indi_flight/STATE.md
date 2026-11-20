@@ -17,7 +17,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    G5.8 3 m/s pre-test S146 (results/g5_events_s146_move): entry PASS, excursion metric undefined at 3 m/s and
    link_loss receiver window 2.25 s -> Q8 addendum 3 (not blocking). Key2 B1/M1 FIXED S147 (6b623d589e, fc8a16f58d;
    the 1-line fc8a fix is unflown, self-test OK), re-fly s1 valid (results/g5_events_s147_move): entry 510/1/21 ms PASS,
-   excursion FAIL by definition. 3 m/s 3 seeds once Q8 add. 3 (i) answered; meanwhile G5.10 (A147a), G5.6/G5.11 probes.
+   excursion FAIL by definition. 3 m/s 3 seeds once Q8 add. 3 (i) answered; meanwhile G5.6/G5.11 probes.
+0d. G5.10 probe S147 (results/g5_g510_s147, 0f41810f90): INDI s1 alt 2.15 m FAIL, tilt 48.9 FAIL, back 4.3 s PASS;
+   PID 3.22 m/44.7 deg. Q9 open (20 deg unreachable with the row's step; full-scale part). Next: SAT part s2/s3
+   (INDI), A-48 closing test (tilt sp vs truth at REC edge). Key2 of g510_check + seg_pos/reset before gate use.
 1. G5.4 probe PASS 9/9 S135 (g5_probe_s135; auto_smoke_check.py, g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
 3. G5.2 DONE as probe S138: 6/6 PASS altctl/posctl (results/g5_g52_s138, g52_check keyed AGREE). Re-fly at freeze.
@@ -70,7 +73,6 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| A147a | G5.10 sat probe: scenario + g510_check + self-test + 1 flight | sonnet | results/g5_g510_s147/README.md | re-brief if cut |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),

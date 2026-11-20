@@ -51,3 +51,15 @@ which itself stays set about 2.25 s after the last GCS message (fix_s2: last mes
 mavlink/commander, O-11). Options: A [recommended] timeout reference = firmware's own flag (as now, S144 note), the
 receiver window reported; B: reference = last message sent, row FAIL in both stacks (stock limit).
 Meanwhile: G5.8 hover counted on the S144 definition with the 2.25 s window reported; 3 m/s rows not counted.
+
+## Q9 (S147, 2026-11-21): G5.10 row after its first probe. NOT blocking.
+Context (results/g5_g510_s147/README.md): scenario sat_sustained = 5 s at thrust scale 0.274 (2x hover) with the
+row's 3 m position step, then a "full-scale aggressive manoeuvre". Seed 1: INDI alt loss 2.15 m (<= 2.0 FAIL), tilt
+48.9 deg (<= 20 FAIL), back 4.3 s PASS; PID same flight 3.22 m, 44.7 deg, 5.9 s. (a) The 3 m step makes the stock
+position loop command up to MPC_TILTMAX_AIR 45 deg, so "tilt <= 20 deg" fails for any controller: defect of the test.
+(b) No position-mode manoeuvre saturates at full scale: 20-37 m steps peaked at 0.49 command (velocity/tilt limits).
+Options (a): A [recommended] tilt limit = MPC_TILTMAX_AIR + 5 deg (no tilt beyond what the stack commands, overshoot
+bounded); alt loss 2.0 m and recovery 5 s unchanged. B: keep 20 deg, drop the position step (saturation in hover only).
+Options (b): A [recommended] full-scale part flown in stabilized: full throttle + full roll stick 1 s (inner loop at
+full-scale saturation), limits as the row; B: drop the full-scale part.
+Meanwhile: 3 seeds of the SAT part as is (counts against the current text), A-48 closing test. Not blocked.
