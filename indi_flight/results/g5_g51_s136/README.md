@@ -46,3 +46,15 @@ Values in effect (ULog initial_parameters): MC_ACRO_R/P/Y_MAX 100, EXPO 0, SUPEX
   0.4/0.4/0.9 s windows = 13.7 / 12.9 deg/s vs checker 13.6 / 13.0: AGREE. Stabilized tilt 0.25/0.20 deg: AGREE.
 - First pilot pre-test (failed_s136/): both runs ended "TypeError: 'NoneType' object is not subscriptable" before the
   stick segment (353 neutral rows, pilot never active). Runner now records the traceback in run.json; re-fly pending.
+
+## S136 probe batch (3 seeds x 2 modes, fixed runner, ID_OK 1, --stick-pilot throttle only) -- PROBE, RC113
+| run | verdict | numbers |
+|---|---|---|
+| acro s1-s3 | FAIL (yaw) | roll RMS 1.48-1.55, pitch 1.52-6.44 (s2, off-axis 1.8), yaw 15.0-16.0 deg/s (limit 10); max tilt 48-51 deg, no LOC |
+| stab s1-s3 | PASS | residual tilt <= 0.12 deg, yaw rate <= 0.20 deg/s after release (limits 3 deg, 10 deg/s); no LOC |
+Full lines: g51_summary.txt. G5.1 acro yaw is a gate-test failure: one session of cause search (yaw bandwidth K_Y vs
+measured yaw t90, yaw saturation/allocation priority), then re-open decision 5 (yaw) if not explained.
+Cause lead (arithmetic, not yet checked on the log): MC_INDI_K_Y 10 rad/s -> first-order tau 0.1 s -> plateau RMS
+over the gate windows about 13 deg/s from the bandwidth alone (same arithmetic gave 13.6 vs 13.6 measured for roll at
+0.5 x 20). So the yaw miss is the yaw bandwidth default, not a fault. Options for next session: raise K_Y if yaw
+authority and G2 yaw margins allow (decision 4/5), or a justified yaw-specific limit (gate change -> owner question).

@@ -11,7 +11,7 @@
 History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrations: read before sizing a brief).
 1. G5.4 DONE as probe S135: 9/9 runs (auto_tour, auto_land10, auto_rtl20 x3 seeds) all limits PASS
    (results/g5_probe_s135/README.md; checker auto_smoke_check.py g54_*, keyed g54_key2.py). Re-fly at freeze.
-2. G5.1 (stabilized/acro stick steps, 100 deg/s): find or add a stick-step segment (rate_step_* is offboard rate
+2. G5.1 acro yaw failure (see Tasks): cause search, then fix; stick_steps + g51_check.py exist (S136).
    mode, not a stick); fly 3 seeds each; acro rate error RMS + stabilized level-after-release checker (self-test).
    A-46 CLOSED S135 (acro edge 4.6-6.0 % < 10 %, stick_zsine_o6 x3). Then G5.2, G5.3, G5.5, G5.7 3-seed probes with
    existing scenarios (GATES 5b row map); checkers offb_vel_check.py, passthrough_check.py (need self-tests, G1),
@@ -52,7 +52,10 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S136a | G5.1 probe batch 3 seeds x acro/stab (stick_steps, --stick-pilot throttle only, ID_OK 1); metric keyed AGREE (key2/) | me | results/g5_g51_s136/ (dirty while running) | `bash indi_flight/results/g5_g51_s136/run_batch.sh` (skips done runs) then read g51_summary.txt, write README verdict, commit run.json/g51_check.json |
+S136 G5.1 probe DONE (results/g5_g51_s136/README.md): stabilized PASS 3/3; acro roll/pitch pass (<= 6.4 deg/s), acro
+  YAW FAIL 15-16 deg/s > 10 on 3/3. Lead: K_Y 10 rad/s alone gives ~13 deg/s (README). NEXT SESSION FIRST: one session
+  of cause search (log yaw t90 vs 1/K_Y, yaw saturation), then raise K_Y within G2 yaw margins or re-open decision 5;
+  a yaw-specific limit would be a gate change -> owner question.
 S134 F-7 DONE b9fb83c4a0 (keyed K134: 0 BLOCKING, MAJORs floor 0 before flight + arm/disarm state reset FIXED; gtests
   8/8 suites, ArmEdges test break-checked; open MINORs: ground xy tilt, IndiAccelControl lib test not run after
   resetBlend, reset test checks the decision only -> stage-7 harness). Pre-fix smoke (1 seed): edge step 4.7 % hover,
