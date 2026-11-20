@@ -206,3 +206,5 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S134 | K134 key F-7 vs D-F7-GROUND | sonnet | design/key_s134_f7.md | done, 15 calls ~$0.25, 0 BLOCKING, 2 MAJOR fixed |
 | S134 | P134 auto_tour smoke F-7 | haiku | results/f7_smoke_s134/README.md | done, 13 calls ~$0.08 |
 | S134 | P134b re-fly post-fix | haiku | results/f7_smoke_s134_fix/README.md | done, 9 calls ~$0.06 |
+| S135 | A135 G5.4 checker (edge/ramp, other limits, truth touchdown, rtl20 scenario, table), 3 rounds | sonnet | design/impl_s135_edge_check.md | done, 46 calls ~$0.45, break-checked |
+| S135 | K135 independent G5.4 key | haiku | results/g5_probe_s135/key2_s135.md | done, 5 calls ~$0.04, AGREE |
