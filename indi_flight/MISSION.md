@@ -67,6 +67,22 @@ weakening the test is a failure of the project.
   into `indi_flight/results/errata.md` and the new report.
 - **F-5 PID is a reference, never a pass condition.** PID flies the same tests so that a reader can compare. No gate
   is a ratio to PID.
+- **F-7 One controller from arming to disarming (owner, 2026-11-20).** The INDI position module runs its INDI law
+  from arming, through the take-off ramp, in flight and through landing. The stock `mc_pos_control` path inside the
+  module (stock thrust, stock velocity integrator, the `want_indi` false branch of D-STAGE-STALE) is removed. The
+  ground reaction in the measured acceleration while on the ground or in the ramp is a problem the INDI law handles
+  itself (for example: freeze the gap remover and use the modelled specific force while landed or in the ramp, and
+  give the ramp as an INDI thrust/acceleration reference). Pick the simplest scheme that works. Result to show: no
+  thrust step at the ramp -> flight edge beyond the G5 transient limit. Remove code that only served the old seam
+  (HandoverBlend, bypass hover-thrust sync) once nothing needs it. `mc_pos_control` itself stays at zero diff (O-11).
+- **F-8 G5 test rows dropped (owner, 2026-11-20).** Accel-only offboard and take-off on an offboard setpoint alone are
+  not flown or tested. The code path stays as it is; the G5 section of `GATES.md` lists them as "not tested, owner
+  decision F-8".
+- **F-9 Direct path, simple means (owner, 2026-11-20).** Take the most direct route to the gates. Reuse the existing
+  runner, scenarios and checkers; build a new scenario, harness, checker, hook or analysis only when a gate test
+  cannot run without it, and say why in one line. Choose the simplest mechanism that can be shown to work over a
+  general or elaborate one. Simplification never lowers a gate threshold or hides a failure (honesty still outranks
+  the goal).
 - Kept from the first project: actuator state from measured rotor speed with a modelled fallback when telemetry is
   missing (O-5); inversion on u = omega^2 (O-6); upstream-reviewable architecture, meaning separate modules behind
   Kconfig options, started from `rc.mc_apps` by parameter, with `mc_rate_control`, `mc_att_control`,
@@ -116,6 +132,22 @@ The first project went a long way down several wrong paths before anyone looked.
   result depends on, and re-open the most likely one. Reverting a design, a module or a week of work is a normal
   outcome and is recorded as such, not hidden. Only the owner decisions (F-, O-) are not yours to overturn: if one
   of them looks like the cause, ask the owner.
+- **Staying on the path (owner rule, 2026-11-20).** Progress is measured against the gates only.
+  - Gate criteria first: a stage's gate section in `GATES.md` is written and committed before any build item of
+    that stage. Work without a pass criterion to aim at has no stopping rule and is not started.
+  - Every item in the `STATE.md` next actions names the gate item it advances (e.g. "G5 take-off row"). An item that
+    advances none is dropped or deferred, unless it fixes a failed gate test.
+  - Every `JOURNAL.md` session line ends with `Gate progress: <gate item and what moved>` or
+    `Gate progress: none (<reason>)`. Two consecutive sessions with `none`: the next session starts by cutting scope
+    (drop or defer items, write the cut in `STATE.md`) before any other work.
+  - A problem seen in a probe that is not a gate test failure gets a bound and one line in `ANOMALIES.md`, not a
+    chase. A gate test failure gets at most one session of cause search before the decision it depends on is
+    re-opened.
+  - Probes are one flight, read on the log, written up in a few lines of a results README; no second key, no design
+    note. Second keys and independent reviews are for gate evidence and firmware changes. Gate evidence uses 3 seeds
+    unless the gate states otherwise. Design notes fit on one page; a `DECISIONS.md` entry fits in about 15 lines.
+  - The route check also answers: (5) which gate items moved since the last check, and (6) what to drop or simplify
+    to reach the next gate sooner. Act on (6) or say why not.
 - **Short pre-tests before every long run.** No batch of more than about ten flights starts before a pre-test of
   one to three flights has shown, on the logs, that the configuration flies, that the scenario does what it claims,
   that the signals needed are logged at the right rate, and that the metric script runs on the output. Obviously
