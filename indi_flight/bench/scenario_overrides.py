@@ -5,7 +5,7 @@ taken whole, never merged field by field); keys the scenario lacks are added. Th
 
 Allowed keys (anything else is rejected):
   thrust_sag   {scale}                              available thrust ramps 1 -> scale over the whole scenario window
-  motor_fault  {segment, motor | motors, thrust_scale} OR a list of them   step at the start of `segment`; several entries
+  motor_fault  {segment, motor | motors, thrust_scale[, reset]} OR a list of them (reset: true = cumulative scale back to 1 first, G5.10)   step at the start of `segment`; several entries
                                                     (e.g. weak motor + saturation) multiply per motor (fault_entries)
   erpm_loss    {motor, start, end}                  total eRPM loss of one motor from segment `start` to segment `end`
                {motor, start, start_offset_s, duration_s}  timed: loss from (start of segment `start` + offset) for duration
@@ -52,7 +52,7 @@ def _total(sc):
 
 
 def _check_fault(sc, f):
-    _dict_keys("motor_fault", f, ("segment", "motor", "motors", "thrust_scale"), ("segment", "thrust_scale"))
+    _dict_keys("motor_fault", f, ("segment", "motor", "motors", "thrust_scale", "reset"), ("segment", "thrust_scale"))
     if ("motor" in f) == ("motors" in f):
         raise ValueError("override motor_fault: give exactly one of motor / motors")
     if "motors" in f and (not isinstance(f["motors"], list) or not f["motors"] or len(set(f["motors"])) != len(f["motors"])):

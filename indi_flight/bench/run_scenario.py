@@ -534,6 +534,8 @@ def fault_apply(cum_scale, ents, nom_all):
     set per motor: nominal * sqrt(cumulative scale) (thrust ~ omega^2), rounded to int."""
     for f in ents:
         for fm in (f.get("motors") or [f["motor"]]):
+            if f.get("reset"):  # G5.10: the saturation window ends, available thrust back to nominal
+                cum_scale[fm] = 1.0
             cum_scale[fm] *= f["thrust_scale"]
     return {fm: {k: int(round(v * math.sqrt(cum_scale[fm]))) for k, v in nom_all[fm].items()} for fm in nom_all}
 
@@ -1193,6 +1195,8 @@ def main():
                     sim.send_pva([hold_pos[i] + p[i] for i in range(3)], v, acc, hold_yaw)
             elif mode == "velocity":  # S133 T7: vx = val [m/s] for the whole segment, vy = vz = 0, no position setpoint
                 sp = (lambda vx=val: sim.send_vel([vx, 0.0, 0.0], hold_yaw))
+            elif mode == "position" and name in (sc.get("seg_pos") or {}):  # G5.10: NED offset from the hold position
+                sp = (lambda o=sc["seg_pos"][name]: sim.send_pos([hold_pos[i] + o[i] for i in range(3)], hold_yaw))
             elif mode in ("position", "trajectory"):
                 sp = pos_sp
             elif mode == "stick" and sc.get("seg_sticks"):  # S139: sticks by segment name (stick_profile.seg_sample)

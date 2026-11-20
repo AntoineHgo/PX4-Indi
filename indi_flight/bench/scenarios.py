@@ -232,3 +232,13 @@ SCENARIOS["hold_wind"] = dict(
     segments=[("settle", 3.0, 0.0), ("hsettle", 2.0, 0.0), ("dist", 28.0, 0.0), ("tail", 1.0, 0.0)],
     seg_modes={"hsettle": "hold"},
     seg_sticks={"settle": ("posctl", False), "hsettle": ("hold", False), "dist": ("hold", False), "tail": ("hold", False)})
+
+# S147 G5.10 (GATES 5b): sustained saturation. Available thrust 2.0 x hover (0.274 of nominal, hover 0.137) for 5 s ("sat",
+# motor_fault all motors, `reset` returns the cumulative scale to 1 at "rec") with a 3 m x position step; then at full scale
+# a 37 m x / 15 m up step (first try 20 m / 4 m: no saturation, cmd max 0.49) ("agg") that saturates the motors. seg_pos = NED offset from the hold position per segment.
+SCENARIOS["sat_sustained"] = dict(
+    mode="position", axis=None,
+    segments=[("settle", 3.0, 0.0), ("sat", 5.0, 0.0), ("rec", 10.0, 0.0), ("agg", 8.0, 0.0), ("aghold", 12.0, 0.0)],
+    seg_pos={"sat": [3.0, 0.0, 0.0], "rec": [3.0, 0.0, 0.0], "agg": [40.0, 0.0, -15.0], "aghold": [40.0, 0.0, -15.0]},
+    motor_fault=[dict(segment="sat", motors=[0, 1, 2, 3], thrust_scale=0.274),
+                 dict(segment="rec", motors=[0, 1, 2, 3], thrust_scale=1.0, reset=True)])
