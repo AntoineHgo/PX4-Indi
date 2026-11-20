@@ -17,9 +17,12 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    jerk FF off (McIndiPosControl.cpp:57). G5.1-G5.4 re-fly at freeze with matched GNSS.
 0c. S141 A18 DONE (7e58bea57c, keyed t208_a18_key2: MAJOR gate-flip lead pulse fixed by me, unkeyed fix -> 4c
    review; MINORs in key2). Probe results/g5_g55_s141_a18: o1 0.590 m, o2 0.793 m, still FAIL (0.5); lag 160->140 ms.
-   NEXT (G5.5, 1 session of cause search left, then re-open): lag split (README) says att sp->att 60-90 ms with
-   omega_ff, and ~50 ms a_c->att sp. Check omega_ff size vs the analytic need (jerk-difference LPF and 43 Hz hold
-   delay; roll p95 only 0.31 rad/s) and the accel-loop filter delay. Then G5.7 x1 matched.
+   S142 cause search DONE (lag_cause_s142.md, sonnet, unkeyed): omega_ff SIZE ok (0.83-0.98 of jerk/g) but it LAGS
+   setpoint-accel derivative 75-110 ms (jerk = difference of 30 ms-stream accel, hold <=0.1 s, 10 Hz LPF explain
+   45-60 ms only); a_c->att sp filters 20-25 ms of ~50. Attitude lag likely = late FF. Cause search budget USED:
+   NEXT = re-open the A18 jerk-source choice in DECISIONS (one entry): use trajectory_setpoint.jerk when valid
+   (AUTO fills it), offboard difference path: find the unexplained 30-50 ms (hold logic, indi_accel_control.cpp:150-187)
+   and size a lead by the stream period. No stream-rate change in the runner to pass (honesty). Then G5.7 x1 matched.
 1. G5.4 DONE as probe S135: 9/9 runs (auto_tour, auto_land10, auto_rtl20 x3 seeds) all limits PASS
    (results/g5_probe_s135/README.md; checker auto_smoke_check.py g54_*, keyed g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
@@ -75,7 +78,8 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | - | none (S141 A18 probe done) | - | results/g5_g55_s141_a18/README.md | run_batch.sh "<rows>" "<seeds>" |
-| A142 | injector build g5_events.py (item 4) | sonnet | bench/g5_events.py + G1.5 README | not started: owner order |
+| A142b | G5.5 lag cause search (item 0c, analysis only) | sonnet | results/g5_g55_s141_a18/lag_cause_s142.md | re-brief from that file |
+| A142 | injector build g5_events.py (item 4) | sonnet | bench/g5_events.py + results/g5_events_s142/README.md | S142 launched; if cut: read README/NOTES there, relaunch from them |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
