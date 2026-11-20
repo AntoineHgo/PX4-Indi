@@ -872,6 +872,8 @@ def main():
     ap.add_argument("--unpause-after", default="Startup script returned successfully",
                     help="px4.log pattern after which --paused-start unpauses gz")
     ap.add_argument("--log-poll", default="actuator_motors", help="topic the logger wakes on (logger -p)")
+    ap.add_argument("--probe-ff-drag", type=float, default=0.0,
+                    help="PROBE ONLY (D-A18-SOURCE): add D*v_ref to the sent acceleration x,y [1/s]; recorded in run.json")
     ap.add_argument("--gate", action="store_true",
                     help="gate-bearing run (G1.7): refuse on a dirty tree or a binary not built from HEAD")
     a = ap.parse_args()
@@ -908,6 +910,7 @@ def main():
             "physics_step_s": world_step_s(), "world": os.path.join(WORLDS_DIR, "default.sdf"),
             "imu_rate": a.imu_rate, "rate_hz": a.rate_hz,
             "imu_filter_hz": {"IMU_GYRO_CUTOFF": IMU_GYRO_CUTOFF_HZ, "IMU_DGYRO_CUTOFF": IMU_DGYRO_CUTOFF_HZ}}
+    meta["probe_ff_drag"] = a.probe_ff_drag  # probe-only (D-A18-SOURCE), 0 = off
     if ov is not None:
         meta["scenario_overrides"] = {"file": os.path.abspath(a.scenario_overrides), "overrides": ov, "merged_keys": sorted(ov),
                                       "merged_hooks": {k: sc[k] for k in ("disturbance", "dist_segment", "wind", "thrust_sag",
@@ -1186,6 +1189,7 @@ def main():
 
                 def sp(t_seg0=t_seg0, traj=traj):
                     p, v, acc = traj_pva(traj, sim.t - t_seg0)
+                    acc = [acc[0] + a.probe_ff_drag * v[0], acc[1] + a.probe_ff_drag * v[1], acc[2]]  # probe-only (D-A18-SOURCE)
                     sim.send_pva([hold_pos[i] + p[i] for i in range(3)], v, acc, hold_yaw)
             elif mode == "velocity":  # S133 T7: vx = val [m/s] for the whole segment, vy = vz = 0, no position setpoint
                 sp = (lambda vx=val: sim.send_vel([vx, 0.0, 0.0], hold_yaw))
