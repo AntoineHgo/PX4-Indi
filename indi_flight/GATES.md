@@ -424,6 +424,32 @@ vz over the final descent within +-20 % of MPC_LAND_SPEED; disarm <= COM_DISARM_
   (self-test, second key). Clarification S138 after the first test (no threshold change): |truth - final| is taken
   on the step axis (z, or the horizontal step direction for x), as "off-axis reported, not gated" implies; the x
   step follows the vehicle heading, so x means the horizontal step direction, not NED north.
+- G5.3 exact test (S139, before its first test; the row did not state wind profile, reference or window).
+  Hold: stick-mode posctl, after 3 s settle the runner switches to HOLD (AUTO_LOITER, MAV_CMD_DO_SET_MODE) with
+  sticks centred; 2 s later wind override steady 5 m/s, peak 8 m/s total, along +x (gust_x profile: 2 s ramp, 10 s
+  hold, 1 s gust, 15 s tail). Reference = mean truth position over the 1.0 s before the wind starts. Hold RMS = RMS
+  of the 3-D truth distance to the reference over [wind start, wind start + 28 s]; pass <= 0.3 m; nav_state 4 over
+  the whole window, else invalid. Mission: `auto_tour` (S135 logs reused, no new flight): every mission waypoint
+  reached = min truth horizontal distance to it <= 1.0 m (NAV_ACC_RAD acceptance 1.0 m); max truth horizontal
+  speed over the mission legs <= 1.1 x the configured cruise speed (MPC_XY_CRUISE, or the item speed if set).
+- G5.5 exact test (S139; "G2 trajectory limits" points at no G2 table, the stated trajectory limit is G3 section 3
+  item 4). `o1`-`o7` offboard as defined in `bench/scenarios.py`, 3 seeds: truth vs the analytic reference
+  (no held reference, lesson 1), horizontal RMS <= 0.5 m and vertical RMS <= 0.3 m over the trajectory segments.
+  `offb_vel_step` (vx 2 m/s for 5 s, then 0): RMS(truth vx - 2) over the last 3 s of the step <= 0.2 m/s (10 %),
+  |truth vx| at the end of the 4 s hold <= 0.1 m/s, truth max |dz| <= 0.3 m (G3 item 3 height scale). No LOC.
+- G5.7 exact test (S139, before its first test; the row did not state stick state, switch order or the attitude
+  measure). Scenario `mode_switch10`, stick-mode posctl, runner switches by MAV_CMD_DO_SET_MODE at fixed sim times.
+  After 3 s settle, posctl with pitch stick for 3 m/s (as G5.2) for 4 s, then 10 switches, 2.0 s apart, in the
+  order P->A, A->P, P->S, S->P, P->H, H->P, P->A, A->S, S->H, H->P (P posctl, A altctl, S stabilized, H hold);
+  pitch stick for 3 m/s held in P segments, all sticks centred (throttle at centre) in A, S, H segments; 3 s posctl
+  centred at the end. Edges = logged nav_state changes (G1.6 rule); 10 edges with the commanded states, and truth
+  horizontal speed >= 1.5 m/s at >= 8 of them, else the run is invalid (speed per edge reported). Per edge:
+  thrust step = |mean `vehicle_thrust_setpoint` collective over [edge, edge + 0.1 s] - mean over
+  [edge - 0.1 s, edge]| <= 20 % of hover thrust (as G5.4); attitude jump = max truth tilt error (angle between truth
+  body z axis and the `vehicle_attitude_setpoint` body z axis) over [edge + 0.3 s, edge + 1.0 s] <= 5 deg. The
+  setpoint itself legitimately changes at a mode switch (e.g. hold brakes from 3 m/s); the first 0.3 s (about two
+  attitude time constants, 1 / MC_ROLL_P 6.5 = 0.15 s) is the rise, reported (setpoint step, peak error), not
+  gated, as in G5.1. No LOC as G5.1. 3 seeds. Checker `bench/g57_check.py` (self-test; second key at the freeze).
 
 ### 6. G6 Defaults and identification from a wrong start
 
