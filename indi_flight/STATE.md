@@ -9,10 +9,9 @@
   D-STAGE-STALE (stock branch) and D-HANDOVER superseded.
 ## Next actions (in order; each names its gate item)
 History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrations: read before sizing a brief).
-1. G5.4 take-off row: implement F-7 per D-F7-GROUND in mc_indi_pos_control (S134 agent A134, see tasks); then read
-   the diff, run gtests, second key (sonnet, code vs D-F7-GROUND), commit firmware.
-2. G5.4: one-flight smoke of `auto_tour` with F-7 firmware; check edge step (GATES 5b) on `vehicle_thrust_setpoint`.
-   If > 10 % hover: decaying offset at the edge (D-F7-GROUND alternative 1), 1 session max.
+1. G5.4: read results/f7_smoke_s134_fix (post-fix smoke); edge step limit 10 % hover (GATES 5b). If > limit:
+   decaying offset at the edge (D-F7-GROUND alternative 1), 1 session max. Run the IndiAccelControl lib gtest.
+2. G5 checker: fold the edge/ramp metric of f7_smoke_s134_fix/extra_metrics.py into auto_smoke_check.py (self-test).
 3. G5.1-G5.5, G5.7 first 3-seed batch with existing scenarios (GATES 5b row map); checker per row reused
    (auto_smoke_check.py, offb_vel_check.py, passthrough_check.py); write results/g5_probe_s13x/README.md.
    A-46 closed by this batch or superseded by F-7.
@@ -52,9 +51,11 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| A134 | F-7 impl DONE (uncommitted if session cut: 10 files +59/-309, gtests 8/8 suites, SITL built, break-checked) | sonnet | design/impl_s134_f7.md | `git diff --stat src/ msg/`; commit after key |
-| K134 | second key of F-7 diff vs D-F7-GROUND | sonnet | design/key_s134_f7.md | re-launch if file missing |
-| P134 | 1-seed auto_tour smoke, F-7 firmware (G5.4 probe) | haiku | results/f7_smoke_s134/README.md | re-fly per s132 README |
+| P134b | re-fly auto_tour smoke on fixed F-7 build | haiku | results/f7_smoke_s134_fix/README.md | re-fly per f7_smoke_s134 README |
+S134 F-7 DONE b9fb83c4a0 (keyed K134: 0 BLOCKING, MAJORs floor 0 before flight + arm/disarm state reset FIXED; gtests
+  8/8 suites, ArmEdges test break-checked; open MINORs: ground xy tilt, IndiAccelControl lib test not run after
+  resetBlend, reset test checks the decision only -> stage-7 harness). Pre-fix smoke (1 seed): edge step 4.7 % hover,
+  dip 0 m, ramp max 0.1 s change 7.4 % hover, stage_mode 2 ground/ramp -> 1 flight -> 2 landing.
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
   MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit untested, DESCEND failsafe tests.
