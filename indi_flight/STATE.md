@@ -53,7 +53,8 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | S135 | G5.4 batch auto_tour+auto_land10 s1-3 | bash bg | results/g5_probe_s135/ | rerun run_batch.sh (skips done) |
-| S135 | A135 fold edge/ramp metric into auto_smoke_check.py + self-test | sonnet | design/impl_s135_edge_check.md | relaunch |
+| S135 | auto_rtl20 s1-3 (after batch) | bash bg | results/g5_probe_s135/ | run_rtl20.sh |
+| S135 | A135 checker: edge/ramp + all G5.4 limits (g54_takeoff, g54_other), auto_rtl20 scenario; touchdown re-anchored on truth (ground_contact flags late); table | sonnet | design/impl_s135_edge_check.md, results/g5_probe_s135/g54_table.md | rerun checker per run |
 S135: IndiAccelControl lib gtest after resetBlend PASSED (make tests TESTFILTER=IndiAccel).
 S134 F-7 DONE b9fb83c4a0 (keyed K134: 0 BLOCKING, MAJORs floor 0 before flight + arm/disarm state reset FIXED; gtests
   8/8 suites, ArmEdges test break-checked; open MINORs: ground xy tilt, IndiAccelControl lib test not run after
