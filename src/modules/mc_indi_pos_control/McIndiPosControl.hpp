@@ -37,14 +37,12 @@
 
 #pragma once
 
-#include "HoverThrustSync.hpp"
 #include "PositionControl/PositionControl.hpp"
 #include "Takeoff/Takeoff.hpp"
 #include "GotoControl/GotoControl.hpp"
 #include "IndiStageMode.hpp"
 #include "FailsafeSetpoint.hpp"
 #include "EkfResetDetect.hpp"
-#include "HandoverBlend.hpp"
 #include <lib/indi_accel_control/indi_accel_control.hpp>
 #include <lib/indi_rate_control/indi_rate_control.hpp>
 #include <uORB/topics/control_allocator_status.h>
@@ -116,8 +114,11 @@ private:
 	static constexpr hrt_abstime kStageMaxAge{20_ms};
 
 	/** INDI stage after PositionControl::update (architecture A). Modifies att_sp / local_pos_sp when active. */
-	void runIndiStage(float dt, hrt_abstime now, bool want_active, float tilt_limit_rad, float ht,
+	void runIndiStage(float dt, hrt_abstime now, bool want_active, bool model_force, bool flying, float tilt_limit_rad, float ht,
 			  vehicle_local_position_setpoint_s &local_pos_sp, vehicle_attitude_setpoint_s &att_sp);
+
+	/** Arm/disarm edge: clear blend b, held setpoint, stale latch and request a filter/differencing reset. */
+	void resetStageState();
 
 	/** Remember the attitude setpoint and thrust for the hold mode (D-STAGE-STALE b). */
 	void storeHeld(const vehicle_attitude_setpoint_s &att_sp, const vehicle_local_position_setpoint_s &local_pos_sp);
@@ -145,7 +146,6 @@ private:
 	float _hte{NAN};
 	bool _hte_valid{false};
 	bool _indi_active{false};
-	HandoverBlend _handover{};	///< D-HANDOVER: bumpless a_ref at bypass -> stage (A-45)
 	float _held_q_d[4] {};		///< hold mode: last published attitude setpoint
 	float _held_thrust_body[3] {};
 	float _held_thrust_ned[3] {};
@@ -298,7 +298,6 @@ private:
 	hrt_abstime _last_warn{0}; /**< timer when the last warn message was sent out */
 
 	bool _hover_thrust_initialized{false};
-	float _control_ht{NAN}; // hover thrust last given to _control (T9)
 
 	/** Timeout in us for trajectory data to get considered invalid */
 	static constexpr uint64_t TRAJECTORY_STREAM_TIMEOUT_US = 500_ms;

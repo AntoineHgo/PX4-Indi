@@ -92,7 +92,8 @@ void McIndiPosControl::pollStageInputs()
 	}
 }
 
-void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active, float tilt_limit_rad, float ht,
+void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active, bool model_force, bool flying, float tilt_limit_rad,
+				    float ht,
 				    vehicle_local_position_setpoint_s &local_pos_sp, vehicle_attitude_setpoint_s &att_sp)
 {
 	constexpr hrt_abstime kMaxAge = kStageMaxAge;
@@ -179,7 +180,7 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 	const float G = IndiAccelControl::kGravity / math::max(ht, 0.05f);
 	_indi.setThrustModel(G, 1.f);
 	_indi.setLimits(_param_mpc_xy_vel_max.get(), _param_mpc_z_vel_max_up.get(), _param_mpc_z_vel_max_dn.get(),
-			tilt_limit_rad, _param_mpc_thr_min.get(), _param_mpc_thr_max.get());
+			tilt_limit_rad, flying ? _param_mpc_thr_min.get() : 0.f, _param_mpc_thr_max.get()); // as stock: ramp from zero
 
 	// a sample newer than this cycle's 'now' (published after it was taken) has age 0, not stale
 	auto age = [now](hrt_abstime t) { return (now > t) ? (now - t) : hrt_abstime{0}; };
@@ -209,7 +210,7 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 
 	const bool acc_ok = acc_fresh_now && !_acc_stale_latched;
 	const bool aref_ok = a_c_pre_inject.isAllFinite();
-	StageMode mode = selectStageMode(want_active, att_ok, acc_ok, aref_ok, rate > 5.f);
+	StageMode mode = selectStageMode(want_active, att_ok, acc_ok, aref_ok, rate > 5.f, model_force);
 	const bool can_run = (mode == StageMode::Indi) || (mode == StageMode::IndiModelAccel);
 
 	// instrument: report each change of the stage conditions (bit set = condition met), capped
@@ -237,16 +238,14 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 		// difference are all computed from u, so every feedback path closes through u
 		// MC_INDI_PINJ_PT = 1 moves d to the stage output instead (acceleration-loop break): a_ref = c
 		const bool inject_output = (_param_indi_pinj_pt.get() == 1) && (inject_axis >= 0);
-		// D-HANDOVER: the first cycle after a bypass continues the bypass acceleration (stock integrator included), decaying
-		const Vector3f a_c_hand = _handover.apply(a_c_pre_inject, dt);
-		const Vector3f a_ref = inject_output ? a_c_hand : (a_c_hand + inject);
+		const Vector3f a_ref = inject_output ? a_c_pre_inject : (a_c_pre_inject + inject);
 
 		if (_indi_reset_pending) {
 			// T10: estimator reset while the stage runs: restart the differencing from the current state (same call as the
 			// bypass branch below; the blend is kept by reset(), so no collective step)
 			const float coll_rs = fresh_thr ? _coll_meas : _last_thrust;
 			const float c_rs = PX4_ISFINITE(coll_rs) ? math::max(coll_rs, 0.f) : 0.f;
-			_indi.reset(fresh_acc ? _f_b : Vector3f(0.f, 0.f, -c_rs * G), c_rs, fresh_esc ? _mean_u : NAN);
+			_indi.reset((fresh_acc && !model_force) ? _f_b : Vector3f(0.f, 0.f, -c_rs * G), c_rs, fresh_esc ? _mean_u : NAN);
 			_indi_reset_pending = false;
 		}
 
@@ -310,7 +309,7 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 			_last_thrust = out.thrust;
 			_indi_active = true;
 			storeHeld(att_sp, local_pos_sp);
-			trackDegraded(mode, now);
+			trackDegraded(model_force ? StageMode::Indi : mode, now); // planned modelled force (ground/ramp) is not degraded
 			return;
 		}
 
@@ -319,8 +318,6 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 	}
 
 	if (mode == StageMode::Hold) {
-		_handover.decay(dt); // D-HANDOVER: the offset decays in time, not only on INDI cycles
-
 		// zero-order hold of the last attitude setpoint and thrust published by an INDI cycle. Edge: if no INDI cycle
 		// has run yet, the held values are those of the last bypass cycle (the ground/rampup handover value, stored
 		// there); with no cycle at all, a level attitude at hover thrust. The stock thrust is never published.
@@ -355,7 +352,6 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 
 	trackDegraded(StageMode::Bypass, now);
 	_indi_reset_pending = false; // the bypass branch below resets the stage every cycle
-	_handover.bypass(a_c_pre_inject);
 
 	// bypass: stock attitude setpoint is published, the stage tracks the thrust actually commanded (A3)
 	_indi.setBlendHold(true); // D-GAP: reset() below keeps b; model path from the commanded collective, measured path from the ESC mean u
@@ -367,6 +363,17 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 	_last_thrust = PX4_ISFINITE(coll_stock) ? coll_stock : c;
 	_indi_active = false;
 	storeHeld(att_sp, local_pos_sp); // handover value for a hold before any INDI cycle
+}
+
+void McIndiPosControl::resetStageState()
+{
+	_indi.resetBlend();
+	_acc_stale_latched = false;
+	_acc_fresh_since = 0;
+	_held_valid = false;
+	_last_thrust = 0.f;
+	_indi_active = false;
+	_indi_reset_pending = true; // filters and differencing restart on the next cycle
 }
 
 void McIndiPosControl::storeHeld(const vehicle_attitude_setpoint_s &att_sp, const vehicle_local_position_setpoint_s &local_pos_sp)
@@ -635,7 +642,6 @@ void McIndiPosControl::parameters_update(bool force)
 
 		if (!_hover_thrust_initialized) {
 			_control.setHoverThrust(_param_mpc_thr_hover.get());
-			_control_ht = _param_mpc_thr_hover.get();
 			_hover_thrust_initialized = true;
 		}
 
@@ -744,6 +750,10 @@ void McIndiPosControl::Run()
 			const vehicle_control_mode_s previous = _vehicle_control_mode;
 
 			if (_vehicle_control_mode_sub.copy(&_vehicle_control_mode)) {
+				if (shouldResetStageState(previous.flag_armed, _vehicle_control_mode.flag_armed)) {
+					resetStageState();
+				}
+
 				if (previous.flag_armed && !_vehicle_control_mode.flag_armed) {
 					_injection.reset(); // the stage does not run disarmed: the disarm edge restarts the bench window for the next arm
 				}
@@ -874,8 +884,8 @@ void McIndiPosControl::Run()
 			_control.decoupleHorizontalAndVecticalAcceleration(_param_mpc_acc_decouple.get() || not_taken_off || flying_but_ground_contact);
 
 			const float ht = (flying && _hte_valid) ? _hte : _param_mpc_thr_hover.get();
-			// T9: as stock (MPC:423-431) a change of ht shifts the vertical integrator so the bypass thrust does not step
-			syncHoverThrust(_control, _control_ht, ht);
+			// D-F7-GROUND: the stock integrator never integrates while armed here, so no integrator shift (T9, removed)
+			_control.setHoverThrust(ht);
 
 			// make sure takeoff ramp is not amended by acceleration feed-forward
 			if (_takeoff.getTakeoffState() == TakeoffState::rampup && PX4_ISFINITE(_setpoint.velocity[2])) {
@@ -964,15 +974,16 @@ void McIndiPosControl::Run()
 			const bool want_indi = computeWantIndi(_vehicle_control_mode.flag_armed,
 							       _vehicle_control_mode.flag_control_position_enabled,
 							       _vehicle_control_mode.flag_control_velocity_enabled,
-							       _vehicle_control_mode.flag_control_climb_rate_enabled,
-							       _takeoff.getTakeoffState() == TakeoffState::flight, flying_but_ground_contact);
+							       _vehicle_control_mode.flag_control_climb_rate_enabled);
+			// D-F7-GROUND: modelled specific force on ground and during the ramp, measured from flight without contact
+			const bool model_force = useModelledForce(_takeoff.getTakeoffState() >= TakeoffState::flight,
+						 _vehicle_land_detected.ground_contact, _vehicle_land_detected.maybe_landed);
 
 			const hrt_abstime now = hrt_absolute_time();
 			pollStageInputs();
 
-			// A2 / D-STAGE-STALE: a_ref = feed-forward + P/D only whenever the INDI stage is requested, whatever the
-			// freshness of its inputs (stale inputs hold or run the modelled path, never the stock integrator). Only
-			// in bypass (takeoff rampup, ground contact) the stock integrator is the thrust-gap compensation and runs.
+			// A2 / D-STAGE-STALE / D-F7-GROUND: a_ref = feed-forward + P/D whenever armed in these modes, whatever the
+			// freshness of its inputs and the takeoff state: the stock integrator never integrates (no PID fallback).
 			if (want_indi) {
 				_control.resetIntegral();
 			}
@@ -1010,7 +1021,7 @@ void McIndiPosControl::Run()
 			vehicle_attitude_setpoint_s attitude_setpoint{};
 			_control.getAttitudeSetpoint(attitude_setpoint);
 
-			runIndiStage(dt, now, want_indi, _tilt_limit_slew_rate.getState(), ht, local_pos_sp, attitude_setpoint);
+			runIndiStage(dt, now, want_indi, model_force, flying, _tilt_limit_slew_rate.getState(), ht, local_pos_sp, attitude_setpoint);
 
 			// zero the stock integrator only on cycles where the INDI stage actually ran (this cycle)
 			if (_indi_active) {
@@ -1032,7 +1043,6 @@ void McIndiPosControl::Run()
 			_takeoff.updateTakeoffState(_vehicle_control_mode.flag_armed, _vehicle_land_detected.landed, false, 10.f, true,
 						    vehicle_local_position.timestamp_sample);
 			_control.resetIntegral();
-			_handover.clear(); // D-HANDOVER: no offset survives a period without the stage
 		}
 
 		// Publish takeoff status

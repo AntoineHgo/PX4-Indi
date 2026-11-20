@@ -37,13 +37,32 @@ TEST(IndiStageModeTest, OtherFailuresHold)
 
 TEST(IndiStageModeTest, ComputeWantIndi)
 {
-	EXPECT_TRUE(computeWantIndi(true, true, false, false, true, false));
-	EXPECT_TRUE(computeWantIndi(true, false, true, false, true, false));
-	EXPECT_TRUE(computeWantIndi(true, false, false, true, true, false));
-	EXPECT_FALSE(computeWantIndi(false, true, true, true, true, false));  // disarmed
-	EXPECT_FALSE(computeWantIndi(true, true, true, true, false, false));  // takeoff state not flight
-	EXPECT_FALSE(computeWantIndi(true, true, true, true, true, true));    // ground contact
-	EXPECT_FALSE(computeWantIndi(true, false, false, false, true, false)); // manual
+	EXPECT_TRUE(computeWantIndi(true, true, false, false));
+	EXPECT_TRUE(computeWantIndi(true, false, true, false));
+	EXPECT_TRUE(computeWantIndi(true, false, false, true));
+	EXPECT_FALSE(computeWantIndi(false, true, true, true));  // disarmed
+	EXPECT_FALSE(computeWantIndi(true, false, false, false)); // manual / stabilized / acro: pass-through
+}
+
+// D-F7-GROUND: the landed / ramp case must use the modelled specific force, never the measured one
+TEST(IndiStageModeTest, GroundAndRampUseModelledForce)
+{
+	EXPECT_TRUE(useModelledForce(false, false, false)); // takeoff state < flight (ground, rampup)
+	EXPECT_TRUE(useModelledForce(true, true, false));   // flight with ground contact
+	EXPECT_TRUE(useModelledForce(true, false, true));   // flight, maybe landed
+	EXPECT_FALSE(useModelledForce(true, false, false)); // free flight: measured
+}
+
+TEST(IndiStageModeTest, ModelForceSelectsModelAccelEvenWithFreshAccel)
+{
+	for (int m = 0; m < 2; m++) {
+		const bool model = useModelledForce(false, false, false);
+		EXPECT_EQ(selectStageMode(true, true, true, true, true, model), StageMode::IndiModelAccel);
+		EXPECT_EQ(selectStageMode(true, true, m, true, true, true), StageMode::IndiModelAccel);
+	}
+
+	EXPECT_EQ(selectStageMode(true, true, true, true, true, useModelledForce(true, false, false)), StageMode::Indi);
+	EXPECT_EQ(selectStageMode(true, false, true, true, true, true), StageMode::Hold); // failures still hold
 }
 
 TEST(IndiStageModeTest, DeriveZOnly)
@@ -52,4 +71,12 @@ TEST(IndiStageModeTest, DeriveZOnly)
 	EXPECT_FALSE(deriveZOnly(true, false));  // POSCTL
 	EXPECT_FALSE(deriveZOnly(true, true));
 	EXPECT_FALSE(deriveZOnly(false, true));  // velocity only
+}
+
+TEST(IndiStageModeTest, ArmEdgesResetStageState)
+{
+	EXPECT_TRUE(shouldResetStageState(true, false));  // disarm
+	EXPECT_TRUE(shouldResetStageState(false, true));  // arm
+	EXPECT_FALSE(shouldResetStageState(true, true));
+	EXPECT_FALSE(shouldResetStageState(false, false));
 }

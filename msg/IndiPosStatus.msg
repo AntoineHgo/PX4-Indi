@@ -30,4 +30,4 @@ uint8 STAGE_MODE_BYPASS = 0
 uint8 STAGE_MODE_INDI = 1
 uint8 STAGE_MODE_INDI_MODEL_ACCEL = 2
 uint8 STAGE_MODE_HOLD = 3
-uint8 stage_mode		# [@enum STAGE_MODE] D-STAGE-STALE: 1 indi, 2 indi on modelled acceleration, 3 hold (0 never published)
+uint8 stage_mode		# [@enum STAGE_MODE] 1 indi (measured specific force), 2 indi on modelled specific force (ground/takeoff ramp D-F7-GROUND, or stale acceleration D-STAGE-STALE), 3 hold (0 never published)

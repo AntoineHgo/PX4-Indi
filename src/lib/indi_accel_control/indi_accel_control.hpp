@@ -164,6 +164,9 @@ public:
 	/// Freeze b (landed, bypass, edges). Takes effect on the next update(); b is held, never reset.
 	void setBlendHold(bool hold) { _blend_hold = hold; }
 
+	/// Clear b (arm/disarm edge: a blend learned in the previous flight must not seed the next one).
+	void resetBlend() { _b = 0.f; }
+
 	/**
 	 * Bench loop break at the stage output: the vehicle receives a thrust-acceleration magnitude c_applied (m/s^2)
 	 * other than the one update() returned. Sets the previous thrust command to the clamped normalised value of it
