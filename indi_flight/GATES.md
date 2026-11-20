@@ -374,6 +374,12 @@ reference is the firmware's own time, not the runner's: link loss = last telemet
 COM_DL_LOSS_T (stock commander re-stamps the heartbeat up to 2.5 s after the last one); RC loss = flag rise of
 manual_control_signal_lost minus COM_RC_LOSS_T 0.5 s; failsafe entry read from vehicle_status nav_state (published on
 change), not from failsafe_flags (logged at 2 Hz). The 1 s limit is unchanged.
+S145 test-defect fixes (first scoring S145, results/g5_events_s145/README.md; limits unchanged): G5.9 "INDI states"
+= quantities carrying memory from the previous flight that are not re-derived from current measurements (increments,
+integrators, gap remover, held commands); filtered measurements must track their input and are reported, not zeroed.
+G5.9 "motors 0" is read on actuator_outputs (output stage), referenced to manual_control_switches.kill_switch. Event
+timing topics (vehicle_status, failsafe_flags, telemetry_status, actuator_outputs) must be logged at every publication;
+a verdict whose margin is below the logged period is not counted.
 S131 addition to G5.4 (written before its first test; S131 AUTO smokes are probes, RC113): take-off handover, at the
 `takeoff_status` rampup -> flight edge, |thrust command step| (`indi_pos_status.thrust`, mean 0.1 s after minus mean
 0.1 s before) <= 10 % of the hover thrust, and truth altitude dip <= 0.3 m within 1 s after the edge. Land: mean truth
