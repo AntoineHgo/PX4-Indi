@@ -9,13 +9,10 @@
   D-STAGE-STALE (stock branch) and D-HANDOVER superseded.
 ## Next actions (in order; each names its gate item)
 History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrations: read before sizing a brief).
-1. G5.4 + G5.1-5.5/5.7: post-fix smoke OK (results/f7_smoke_s134_fix: edge 4.7 % hover, dip 0 m, ground collective
-   0.001, xy RMS 0.486, land vz 0.70). Next: run the IndiAccelControl lib gtest (resetBlend), then the first 3-seed
-   G5 batch (item 3). Edge > 10 % on any seed -> D-F7-GROUND alternative 1, 1 session max.
-2. G5 checker: fold the edge/ramp metric of f7_smoke_s134_fix/extra_metrics.py into auto_smoke_check.py (self-test).
-3. G5.1-G5.5, G5.7 first 3-seed batch with existing scenarios (GATES 5b row map); checker per row reused
-   (auto_smoke_check.py, offb_vel_check.py, passthrough_check.py); write results/g5_probe_s13x/README.md.
-   A-46 closed by this batch or superseded by F-7.
+1. G5.4 DONE as probe S135: 9/9 runs (auto_tour, auto_land10, auto_rtl20 x3 seeds) all limits PASS
+   (results/g5_probe_s135/README.md; checker auto_smoke_check.py g54_*, keyed g54_key2.py). Re-fly at freeze.
+2. G5.1 acro probe 3 seeds incl. A-46 closing test (t9_step_check.py), then G5.1-G5.3, G5.5, G5.7 3-seed probes with existing scenarios (GATES 5b row map); checkers offb_vel_check.py,
+   passthrough_check.py (need self-tests, G1), auto_smoke_check.py for hold/mission.
 4. G5.6/5.8/5.9/5.10/5.11: build the missing injectors one at a time (G1.5 check each), then fly the rows.
 5. G7 (deferred, stage 7): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site (K128 MAJOR), checker
    self-tests for passthrough_check/offb_vel_check.
@@ -52,10 +49,6 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S135 | G5.4 batch auto_tour+auto_land10 s1-3 | bash bg | results/g5_probe_s135/ | rerun run_batch.sh (skips done) |
-| S135 | auto_rtl20 s1-3 (after batch) | bash bg | results/g5_probe_s135/ | run_rtl20.sh |
-| S135 | A135 checker: edge/ramp + all G5.4 limits (g54_takeoff, g54_other), auto_rtl20 scenario; touchdown re-anchored on truth (ground_contact flags late); table | sonnet | design/impl_s135_edge_check.md, results/g5_probe_s135/g54_table.md | rerun checker per run |
-S135: IndiAccelControl lib gtest after resetBlend PASSED (make tests TESTFILTER=IndiAccel).
 S134 F-7 DONE b9fb83c4a0 (keyed K134: 0 BLOCKING, MAJORs floor 0 before flight + arm/disarm state reset FIXED; gtests
   8/8 suites, ArmEdges test break-checked; open MINORs: ground xy tilt, IndiAccelControl lib test not run after
   resetBlend, reset test checks the decision only -> stage-7 harness). Pre-fix smoke (1 seed): edge step 4.7 % hover,
