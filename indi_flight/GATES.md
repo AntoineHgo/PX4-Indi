@@ -404,6 +404,11 @@ vz over the final descent within +-20 % of MPC_LAND_SPEED; disarm <= COM_DISARM_
   gated. Stabilized pass: truth tilt <= 3 deg over [release + 1.0 s, release + 2.5 s] after each roll/pitch doublet
   and after the yaw doublet; truth |yaw rate| <= 10 deg/s over the same window after the yaw doublet. Both: no LOC
   (no ground contact, truth tilt < 80 deg). Checker `bench/g51_check.py` (self-test, second key).
+  Test defect fixed S136 (pre-test, no valid result yet): a throttle held at hover sank the craft to the ground in
+  both modes (no altitude loop in acro/stabilized). The throttle now comes from the runner pilot (`--stick-pilot`,
+  altitude hold on the throttle only; roll/pitch/yaw sticks are the step table alone). Configuration: identified
+  gains (`MC_INDI_ID_OK 1`). Recorded: with `MC_INDI_ID_OK 0` (pre-identification, 0.5 x K) the acro roll/pitch
+  RMS was 13.6/13.0 deg/s, explained by the halved bandwidth (t90 208 ms = 2.3/(0.5 x 20 rad/s)).
 
 ### 6. G6 Defaults and identification from a wrong start
 
