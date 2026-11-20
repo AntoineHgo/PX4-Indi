@@ -369,6 +369,11 @@ Row G5.6 justification: 50 ms is about 5 x the 10 ms Commander period, one lost 
 bounded at 2 Commander periods). The 0.8 m/s touchdown limit is the usual soft-touchdown figure for a 0.6 kg craft
 (PROPOSED). Injectors for kill, reset, maybe_landed, RC / link / offboard loss, position-mode sag, are MISSING and each needs
 its G1.5 check first. Scripts: `bench/g5_events.py` (to build, second key). Command: `bench/gate_g5.sh row seed`.
+S144 G5.8 measurement definition (written before the row's first test, A-47, results/g5_events_s144/a47.md): the timeout
+reference is the firmware's own time, not the runner's: link loss = last telemetry_status with heartbeat_type_gcs=1 +
+COM_DL_LOSS_T (stock commander re-stamps the heartbeat up to 2.5 s after the last one); RC loss = flag rise of
+manual_control_signal_lost minus COM_RC_LOSS_T 0.5 s; failsafe entry read from vehicle_status nav_state (published on
+change), not from failsafe_flags (logged at 2 Hz). The 1 s limit is unchanged.
 S131 addition to G5.4 (written before its first test; S131 AUTO smokes are probes, RC113): take-off handover, at the
 `takeoff_status` rampup -> flight edge, |thrust command step| (`indi_pos_status.thrust`, mean 0.1 s after minus mean
 0.1 s before) <= 10 % of the hover thrust, and truth altitude dip <= 0.3 m within 1 s after the edge. Land: mean truth

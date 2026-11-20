@@ -12,7 +12,7 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
 0c. G5.5 o1 0.59 / o2 0.79 m FAIL after A18 (S141). S143: lag builds in a_c (lag_chain_s143.md); drag-FF probe
    REJECTED (o1 1.11 m, g5_g55_s143_drag; D-A18-SOURCE outcome). Lag chase STOPPED (RC143): o1-o4/o7 FAIL recorded,
    cause = stock PositionControl feedback producing a_c (D-outer-arch base A). Re-fly at freeze; if still FAIL, owner Q.
-   S144: injector defects fixed + keyed (results/g5_events_s144). NEXT: A-47 closing test (G5.8 link-loss), then
+   S144: injector defects fixed + keyed (results/g5_events_s144). NEXT:
    fly event rows G5.9 kill/re-arm and G5.8 rc/offboard loss (3 seeds, serial) with bench/g5_events.py.
 1. G5.4 probe PASS 9/9 S135 (g5_probe_s135; auto_smoke_check.py, g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
@@ -24,7 +24,7 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (fixes fee02b59b2, 3944e8e367; key2 results/g5_events_s144/key2.md):
    all events take effect; applied time from firmware log; command events 1.75-4.25 ms late (G1.5 1.25 ms) and
    stream-stop G1.5 lines FAIL by construction -> Q8 + addendum OPEN (not blocking). maybe_landed / EKF z not
-   injectable firmware-free (Q8 b). A-47 link-loss onset 2.27 s past timeout (G5.8). G5.10 uses G3 hooks.
+   injectable firmware-free (Q8 b). A-47 closed: G5.8 timeout from firmware time (GATES S144 note). G5.10 uses G3 hooks.
 4a. Flying: parallel docker streams ONLY for tolerance-insensitive probes (G5.5, G5.10 sat); G5.7 and event rows serial
    or max 2 streams with sim-hole figure recorded (LESSONS_PROPOSED S86); parallel runs are never gate evidence.
 4c. Pre-freeze review, standalone session (not beside flying), split into 2-3 single-interface reviews (stage-3 safety
