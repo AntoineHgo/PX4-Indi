@@ -47,3 +47,8 @@ the link_loss reference "last telemetry_status GCS heartbeat" lags the last mess
 (hover fix_s2: run.json last_msg 75.346 s, flag-reference 77.600 s; mavlink receiver presence window, source not
 read), so entry is about 5.26 s after the last GCS message for COM_DL_LOSS_T 3 s. Stock behaviour (O-11), same for
 PID. Q8 addendum 3. bench/g5_events.py --moving: no second key yet (hover path claimed unchanged, re-indented).
+Key2 (key2_moving.md, S146): hover path unchanged (pure re-indent) CONFIRMED. BLOCKING: under --moving the event
+records keep the hover TIMES as t_cmd_us (rc_loss t_cmd 63.1 s vs applied 54.1 s); the checker searches from t_cmd,
+so the s1 G5.8 lines above are not valid scores even as a probe. MAJOR: st["vel"] not cleared after rc/link resume
+(old 3 m/s setpoint streamed 5-7 s). Speed at loss was verified on ground truth by the author (2.99-3.00 m/s).
+Fix both, re-fly s1 before any 3 m/s seed set.
