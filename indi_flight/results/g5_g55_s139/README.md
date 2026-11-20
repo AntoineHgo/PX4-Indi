@@ -24,8 +24,18 @@ not a disturbance effect (gust, payload, tau x2 change nothing). Runner `metrics
 o1 truth 0.58 m against estimate 0.34 m, o2 truth 1.19 m against estimate 0.80 m: about 40 % of the truth error is
 estimate-vs-truth lag during motion (pre-t0 static offset 2-3 cm).
 
-O-13 check: these scenarios had never been flown with the reference (PID) stack on quad5in. PID reference flight:
-`pid_ref/` (see section below).
+O-13 check: these scenarios had never been flown with the reference (PID) stack on quad5in. PID reference flight
+`pid_ref/o1_lemniscate_s1` (stock PID, no params file): horizontal RMS 1.04 m, vertical 0.085 m, no LOC (checker
+marks it INVALID only for the missing `indi_pos_status`, expected for PID). Scenario flyable; PID also misses 0.5 m.
+
+## Cause (S140, scratch lag script on the o1 s1 logs)
+
+SET-UP FAULT: the batch ran without `--gps-dly/--gnss-delay`, i.e. simulator GNSS latency 0 (`SIM_GZ_GPS_DLY 0`) with
+the stock EKF compensation `SENS_GNSS0_DELAY 110` (known, D-s8-gnss-delay in run_scenario.py help). The estimate
+then LEADS truth by ~110 ms: truth-minus-estimate x error correlates -0.92 with vx, 0.35 m RMS per axis, est vs truth
+0.53 m horizontal RMS (INDI), 0.45 m (PID). Setpoint vs estimate: INDI 0.41 m, PID 0.78 m. This is a mismatched-
+compensation plant (a G3 robustness draw), not the nominal plant. Re-fly with matched 110 ms: `../g5_g55_s140_gnss`.
+The same mismatch is in every G5 probe flown so far (G5.1-G5.4, G5.7).
 
 Failed attempts kept as metadata: `o1_killed_attempt1` (container prefix collision, renamed x55), `o2_failed_attempt1_s3x`.
 

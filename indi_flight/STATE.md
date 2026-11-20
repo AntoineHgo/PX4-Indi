@@ -5,22 +5,34 @@
   Stage 3 inner loop time-boxed (RC64/RC74). Stage 1 frozen S36. Started S1 (2026-11-15).
 - Gates: G1 PASSED S84 | G2 open (cell table in GATES.md) | G3 open | G4 open | G5 open, FINAL text S134 (GATES 5b) |
   G6 open | G7 open | G8 open.
-- Blocker: none. No open question. Owner directive 2026-11-20 (F-7/F-8/F-9) acted on S134: D-F7-GROUND written,
+- Blocker: none. Q7 answered (rule A), see item 0. Owner directive 2026-11-20 (F-7/F-8/F-9) acted on S134: D-F7-GROUND written,
   D-STAGE-STALE (stock branch) and D-HANDOVER superseded.
 ## Next actions (in order; each names its gate item)
 History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrations: read before sizing a brief).
+0. S140: Q7 closed (rule A in GATES 5b G5.7 AMENDED S140; g5_g57_s139 official probe verdict FAIL 2/3).
+0b. S140 SET-UP FAULT in every G5 probe: sim GNSS latency 0 with EKF SENS_GNSS0_DELAY 110 (estimate leads truth
+   ~110 ms, 0.35 m/axis at 3-4 m/s). G5.5 S139: o5/o6/offb_vel_step PASS, o1-o4/o7 FAIL horiz 0.66-1.36 m (limit 0.5;
+   PID o1 1.04 m). Nominal plant from now on: --gps-dly 110 --gnss-delay 110 (matched). Re-fly batch
+   results/g5_g55_s140_gnss/run_batch.sh (pre-test o1+o2 s1, then all failing rows x3). Then G5.7 x1 matched (item 3b
+   cause candidate: H->P tilt 5.2 deg). G5.1-G5.4 re-fly at freeze with matched GNSS.
 1. G5.4 DONE as probe S135: 9/9 runs (auto_tour, auto_land10, auto_rtl20 x3 seeds) all limits PASS
    (results/g5_probe_s135/README.md; checker auto_smoke_check.py g54_*, keyed g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
 3. G5.2 DONE as probe S138: 6/6 PASS altctl/posctl (results/g5_g52_s138, g52_check keyed AGREE). Re-fly at freeze.
-3b. S139: G5.3 hold PASS 3/3 (RMS <= 0.052 m, results/g5_g57_s139). G5.7: runs INVALID under the written
-   validity rule (hold brakes, Q7 asked, rec. A = leaveP). Under leaveP: s1 PASS, s2/s3 FAIL tilt err 5.17-5.25 deg
-   at H->P edges (limit 5); thrust step <= 3.1 %. Same stick step w/o switch (G5.2) leaves ~1 deg: switch-specific.
-   NEXT (G5.7 failure, 1 session of cause search max): fly mode_switch10 once with PID (MC_RATE_CTL_TYPE 0,
-   MC_INDI_POS_EN 0) as reference; compare vehicle_local_position_setpoint / attitude sp after H->P (setpoint
-   re-init vs INDI law state reset on mode change). Tools: g57_check.py --validity leaveP, g57_lag_compare.py.
-4. G5.6/5.8/5.9/5.11: ONE shared event injector (maybe_landed, kill, EKF reset, RC/link loss), one G1.5 check
-   (RC138). G5.10 flown with the existing G3 thrust-limit/motor_fault hooks (no new injector).
+3b. S139: G5.3 hold PASS 3/3 (RMS <= 0.052 m). G5.7 under leaveP: s1 PASS, s2/s3 FAIL tilt err 5.17-5.25 deg at H->P
+   edges (limit 5); thrust step <= 3.1 %; switch-specific (G5.2 leaves ~1 deg). NEXT, max 1 session: fly mode_switch10
+   once with PID (MC_RATE_CTL_TYPE 0, MC_INDI_POS_EN 0), compare setpoints after H->P (setpoint re-init vs INDI state
+   reset on mode change). Tools: g57_check.py, g57_lag_compare.py. G5.9/G5.11 probes are NOT flown before this closes.
+3c. G5.5 probe committed S140 (results/g5_g55_s139/README.md); G5.3 mission PASS 3/3. G5.3 complete as probe.
+4. G5.6/5.8/5.9/5.11 injector (RC138, owner plan 2026-11-20): build NOW, in parallel with item 3b (firmware-free):
+   ONE script bench/g5_events.py, ONE multi-event flight, one G1.5 verdict line PER event (maybe_landed, kill, EKF reset,
+   RC/link/offboard loss differ in layer; applied time within 1 physics step). Then fly the rows after 3b closes.
+   G5.10 via existing G3 thrust-limit/motor_fault hooks, G5.8 and G5.10 get their own probe rows. Second key for
+   g5_events/g53/g55/g57 checkers at the freeze (RC113). Do NOT drop G5.6 1 m / G5.8 offboard-loss variants (owner).
+4a. Flying: parallel docker streams ONLY for tolerance-insensitive probes (G5.5, G5.10 sat); G5.7 and event rows serial
+   or max 2 streams with sim-hole figure recorded (LESSONS_PROPOSED S86); parallel runs are never gate evidence.
+4c. Pre-freeze review, standalone session (not beside flying), split into 2-3 single-interface reviews (stage-3 safety
+   diff, stage-5 slice + D-KY, module_parity.md): after the probes close, before the freeze.
 4b. Audit DONE S138 (design/defaults_audit_s138.md): no G2 cell at the current pair. Rate roll 800 Hz probe DONE S138 (GM 18.8 dB, PM 56 deg). Next: rate roll
    pitch/400 Hz at freeze; attitude yaw (g2_attbreak_s107 ax3 r800).
    Freeze G2 set must add the firmware-default cell (ID_OK 0, W_MAX 0, ACT_TC 0.05; D-DEFAULTS-FW overturn test)
@@ -60,17 +72,9 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S139A | G5.7 + G5.3 hold: runner per-segment mode, scenarios, g57/g53 checkers, 3 seeds | sonnet | results/g5_g57_s139/README.md | re-launch brief from README status |
-| S139B | G5.5 o1-o7 + offb_vel_step x3; G5.3 mission from S135 logs | sonnet | results/g5_g55_s139/README.md | same |
+| S140 | G5.5 matched-GNSS re-fly (bash, no agent) | - | results/g5_g55_s140_gnss/batch_status.txt | run_batch.sh "<rows>" "<seeds>" (skips done) |
 S139: G5.3/G5.5/G5.7 exact tests committed dc4028652c (GATES 5b).
-S137 G5.1 acro yaw FIXED (D-KY, 5d1d828af7): cause = yaw lag 1/K_Y at K_Y 10 (no saturation). K_Y 20 default
-  (firmware + bench). Probe: acro PASS 3/3 yaw 3.15-3.29 deg/s; G2 rate-yaw 800/400 GM 18.8/14.3 dB PM 78/82 (1 seed,
-  results/g2_yaw_ky20_s137). Stabilized at K_Y 20 PASS 3/3 -> G5.1 row PASS 6/6 (probe, results/g5_g51_ky20_s137).
-  Open: attitude-yaw cell at K_Y 20 unmeasured (freeze); D-KY second key folded into the pre-freeze opus review.
-S134 F-7 DONE b9fb83c4a0 (keyed K134: 0 BLOCKING, MAJORs floor 0 before flight + arm/disarm state reset FIXED; gtests
-  8/8 suites, ArmEdges test break-checked; open MINORs: ground xy tilt, IndiAccelControl lib test not run after
-  resetBlend, reset test checks the decision only -> stage-7 harness). Pre-fix smoke (1 seed): edge step 4.7 % hover,
-  dip 0 m, ramp max 0.1 s change 7.4 % hover, stage_mode 2 ground/ramp -> 1 flight -> 2 landing.
+
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
   MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit untested, DESCEND failsafe tests.
