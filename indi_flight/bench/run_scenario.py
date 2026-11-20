@@ -676,7 +676,7 @@ def git_info():
     return {"commit": g("rev-parse", "HEAD"), "dirty": bool(g("status", "--porcelain", "--untracked-files=no"))}
 
 
-def make_pilot_sp(sim, a, thr0, meta):
+def make_pilot_sp(sim, a, thr0, meta, sc_steps=False):
     """S118 / F118 --stick-pilot: (neutral_sp, stick_sp(t_seg0, st)); ONE Pilot for the whole stick-mode period (design/i118_stick_pilot.md).
 
     Active from the first sample sent after the manual mode is observed (neutral samples included); before that the plain sample
@@ -694,16 +694,22 @@ def make_pilot_sp(sim, a, thr0, meta):
         c = pilot.track(sim.t, -sim.pos[2], -sim.vz, sim.roll, sim.pitch, smp["vz_up_demand"], base)
         if pilot.active:
             z = stick_profile.stick_to_raw(stick_profile.thrust_to_stick(base + c.thr, a.stick_mode, thr0))
-            smp = dict(smp, z=z, throttle=stick_profile.raw_to_stick(z), x=int(round(c.pitch_stick * 1000)),
-                       y=int(round(c.roll_stick * 1000)))
+            if steps:  # S136 G5.1: the pilot holds altitude with the throttle only; x / y / r stay the step table
+                smp = dict(smp, z=z, throttle=stick_profile.raw_to_stick(z))
+            else:
+                smp = dict(smp, z=z, throttle=stick_profile.raw_to_stick(z), x=int(round(c.pitch_stick * 1000)),
+                           y=int(round(c.roll_stick * 1000)))
         smp.update(pilot_thr=c.thr, pilot_roll=c.roll_stick, pilot_pitch=c.pitch_stick)
         sim.send_stick(smp)
 
     def neutral():
         send(stick_profile.neutral_sample(a.stick_mode, thr0))
 
+    steps = bool(sc_steps)
+
     def stick(t_seg0, st):
-        return lambda: send(stick_profile.stick_sample(lambda x: traj_pva(st, x), sim.t - t_seg0, a.stick_mode, hover_thr=thr0))
+        return lambda: send(stick_profile.stick_sample(lambda x: traj_pva(st, x), sim.t - t_seg0, a.stick_mode, hover_thr=thr0,
+                                                       steps=steps))
     return neutral, stick
 
 
@@ -1070,7 +1076,7 @@ def main():
             meta["stick"] = {"mode": a.stick_mode, "main_mode": STICK_MAIN_MODE[a.stick_mode], "params": STICK_PARAMS,
                              "hover_thr_used": thr0}
             if a.stick_pilot:  # F118: the pilot starts at the first neutral sample after the mode is observed
-                pos_sp, pilot_stick_sp = make_pilot_sp(sim, a, thr0, meta)
+                pos_sp, pilot_stick_sp = make_pilot_sp(sim, a, thr0, meta, sc_steps=sc.get("steps"))
         sim.run(None, sp=pos_sp, until=lambda: sim.t >= T_OFFBOARD_S, wall_timeout=60 + 2 * PRESTREAM_S / a.speed,
                 what="pre_offboard_stream")
         meta["t_offboard_sent_s"] = sim.t
@@ -1180,8 +1186,12 @@ def main():
                     if a.stick_pilot:
                         sp = pilot_stick_sp(t_seg0, st)
                     else:
-                        sp = (lambda t_seg0=t_seg0, st=st: sim.send_stick(stick_profile.stick_sample(
-                            lambda tt: traj_pva(st, tt), sim.t - t_seg0, a.stick_mode, hover_thr=thr0)))
+                        if sc.get("steps"):  # S136 G5.1: roll / pitch / yaw stick steps, throttle at hover
+                            sp = (lambda t_seg0=t_seg0: sim.send_stick(stick_profile.stick_sample(
+                                lambda tt: ([0, 0, 0], [0, 0, 0], [0, 0, 0]), sim.t - t_seg0, a.stick_mode, hover_thr=thr0, steps=True)))
+                        else:
+                            sp = (lambda t_seg0=t_seg0, st=st: sim.send_stick(stick_profile.stick_sample(
+                                lambda tt: traj_pva(st, tt), sim.t - t_seg0, a.stick_mode, hover_thr=thr0)))
                 else:
                     sp = pos_sp
             elif mode == "attitude":

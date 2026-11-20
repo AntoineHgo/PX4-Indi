@@ -161,6 +161,10 @@ for _k, _plant in _V_PLANT.items():
 # Segment times are from the observed main mode. No --sched (runner streams MANUAL_CONTROL).
 SCENARIOS["stick_zsine_o6"] = dict(mode="stick", axis=None, traj=ZSINE_O6,
                                    segments=[("settle", 3.0, 0.0), ("stick", _traj_dur(ZSINE_O6), 0.0), ("hold", 3.0, 0.0)])
+# S136 G5.1 flight-mode stick steps (GATES 5b): throttle at hover, roll / pitch / yaw doublets from stick_profile.step_sticks
+# (fly with --stick-mode acro or stabilized). The "stick" segment is 3 axes x 3.5 s.
+SCENARIOS["stick_steps"] = dict(mode="stick", axis=None, traj=None, steps=True,
+                                segments=[("settle", 3.0, 0.0), ("stick", 10.5, 0.0), ("hold", 3.0, 0.0)])
 SCENARIOS["v2_drop_att"]["erpm_loss"] = dict(motor=0, start="up", end="zero1")              # 3 s on motor 0
 SCENARIOS["v2_drop_rate"]["erpm_loss"] = dict(motor=0, start="pulse1_up", end="pulse1_down")  # 2.25 s
 _VIB3 = dict(sim_params=dict(SIM_GZ_VIB_ACC=3.0, SIM_GZ_VIB_GYR=0.15))           # V5 vibration x3

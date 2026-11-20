@@ -46,7 +46,31 @@ def inv_expo(d, e=STICK_EXPO):
     return 0.5 * (lo + hi)
 
 
-def stick_sample(pva, t, mode, vz_max=VZ_MAX_UP, hover_thr=0.5):
+# S136 G5.1 stick steps (GATES 5b): per axis in turn +A for HI_S, -A for LO_S, 0 for ZERO_S; MANUAL_CONTROL x pitch, y roll, r yaw.
+STEP_AXES = (("roll", "y"), ("pitch", "x"), ("yaw", "r"))
+STEP_HI_S, STEP_LO_S, STEP_ZERO_S = 0.5, 0.5, 2.5
+STEP_AMP = {"acro": 1.0, "stabilized": 0.5}   # fraction of full stick (acro 100 deg/s; stabilized 0.5 x tilt / yaw-rate max)
+
+
+def steps_duration():
+    return len(STEP_AXES) * (STEP_HI_S + STEP_LO_S + STEP_ZERO_S)
+
+
+def step_sticks(t, mode):
+    """(x, y, r) ints at profile time t [s] of the G5.1 step sequence (zero outside it). Zero-order, edges at exact multiples."""
+    out = {"x": 0, "y": 0, "r": 0}
+    amp = int(round(STEP_AMP[mode] * 1000))
+    t0 = 0.0
+    for _, f in STEP_AXES:
+        if t0 <= t < t0 + STEP_HI_S:
+            out[f] = amp
+        elif t0 + STEP_HI_S <= t < t0 + STEP_HI_S + STEP_LO_S:
+            out[f] = -amp
+        t0 += STEP_HI_S + STEP_LO_S + STEP_ZERO_S
+    return out["x"], out["y"], out["r"]
+
+
+def stick_sample(pva, t, mode, vz_max=VZ_MAX_UP, hover_thr=0.5, steps=False):
     """One sample at profile time t [s]: dict(x, y, z, r, throttle, vz_up_demand).
 
     pva(t) -> (pos, vel, acc) NED lists (run_scenario.traj_pva with the trajectory bound). The demand is the upward
@@ -55,6 +79,10 @@ def stick_sample(pva, t, mode, vz_max=VZ_MAX_UP, hover_thr=0.5):
     """
     _, vel, _ = pva(t)
     vz_up = -vel[2]
+    if steps:   # G5.1: throttle at the hover thrust stick (vz demand 0, pva zero), x / y / r from the step table
+        smp = neutral_sample(mode, hover_thr)
+        smp["x"], smp["y"], smp["r"] = step_sticks(t, mode)
+        return smp
     if mode in VELOCITY_MODES:
         stick = inv_expo(vz_up / vz_max)  # PX4 applies expo 0.6 to the stick before scaling by MPC_Z_VEL_MAX_UP / _DN
     elif mode in ("stabilized", "acro"):

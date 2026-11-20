@@ -68,3 +68,16 @@ if __name__ == "__main__":
         if name.startswith("test_"):
             fn()
             print("PASS", name)
+
+
+def test_g51_steps():
+    """S136: step table in profile time, per axis +A 0.5 s, -A 0.5 s, 0 for 2.5 s; throttle stays at hover."""
+    for mode, a in (("acro", 1000), ("stabilized", 500)):
+        assert sp.steps_duration() == 10.5
+        for t, want in ((0.0, (0, a, 0)), (0.49, (0, a, 0)), (0.5, (0, -a, 0)), (0.99, (0, -a, 0)), (1.0, (0, 0, 0)), (3.49, (0, 0, 0)),
+                        (3.5, (a, 0, 0)), (4.0, (-a, 0, 0)), (4.5, (0, 0, 0)), (7.0, (0, 0, a)), (7.5, (0, 0, -a)), (8.0, (0, 0, 0)), (10.5, (0, 0, 0))):
+            assert sp.step_sticks(t, mode) == want, (mode, t)
+        s = sp.stick_sample(lambda t: ([0] * 3, [0] * 3, [0] * 3), 0.2, mode, hover_thr=0.5, steps=True)
+        assert (s["x"], s["y"], s["r"]) == (0, a, 0) and s["z"] == sp.neutral_sample(mode, 0.5)["z"]
+    # default behaviour unchanged: x / y / r stay 0 without steps
+    assert sp.stick_sample(_pva_sine, 0.3, "acro")["y"] == 0
