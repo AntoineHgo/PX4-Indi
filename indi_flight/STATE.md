@@ -56,6 +56,9 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S139A | G5.7 + G5.3 hold: runner per-segment mode, scenarios, g57/g53 checkers, 3 seeds | sonnet | results/g5_g57_s139/README.md | re-launch brief from README status |
+| S139B | G5.5 o1-o7 + offb_vel_step x3; G5.3 mission from S135 logs | sonnet | results/g5_g55_s139/README.md | same |
+S139: G5.3/G5.5/G5.7 exact tests committed dc4028652c (GATES 5b).
 S137 G5.1 acro yaw FIXED (D-KY, 5d1d828af7): cause = yaw lag 1/K_Y at K_Y 10 (no saturation). K_Y 20 default
   (firmware + bench). Probe: acro PASS 3/3 yaw 3.15-3.29 deg/s; G2 rate-yaw 800/400 GM 18.8/14.3 dB PM 78/82 (1 seed,
   results/g2_yaw_ky20_s137). Stabilized at K_Y 20 PASS 3/3 -> G5.1 row PASS 6/6 (probe, results/g5_g51_ky20_s137).
