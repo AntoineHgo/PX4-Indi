@@ -211,5 +211,6 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S136 | A136 G5.1 stick_steps scenario, g51_check.py + self-test, 1-seed acro/stab pre-test | sonnet | results/g5_g51_s136/README.md | done, 26 calls ~$0.50; found sink + half-gain config |
 | S136 | K136 blind second key of G5.1 metric | haiku | results/g5_g51_s136/key2/key2.md | done, 7 calls ~$0.04, AGREE |
 | S138 | RC138 route check | sonnet | design/route_check_138.md | done, 7 calls ~$0.10 |
-| S138 | A138 G5.2 stick_pos_steps + g52_check + pre-test + 3-seed probe | sonnet | results/g5_g52_s138/README.md | running |
+| S138 | A138 G5.2 stick_pos_steps + g52_check + pre-test + 3-seed probe | sonnet | results/g5_g52_s138/README.md | done, 22 calls ~$0.55, 6/6 PASS |
+| S138 | K138 blind G5.2 key | haiku | results/g5_g52_s138/key2/key2.md | done, 7 calls ~$0.05, AGREE 9/9 |
 | S138 | A138b defaults vs G2 audit (offline) | sonnet | design/defaults_audit_s138.md | done, 12 calls ~$0.30 |

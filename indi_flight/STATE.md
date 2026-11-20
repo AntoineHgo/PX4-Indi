@@ -12,9 +12,9 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
 1. G5.4 DONE as probe S135: 9/9 runs (auto_tour, auto_land10, auto_rtl20 x3 seeds) all limits PASS
    (results/g5_probe_s135/README.md; checker auto_smoke_check.py g54_*, keyed g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
-3. G5.2 exact test written S138 (GATES 5b); A138 builds stick_pos_steps + g52_check.py, pre-test, 3-seed probe
-   (output results/g5_g52_s138/README.md). Then G5.3, G5.5, G5.7 merged into one 3-seed probe session (RC138);
-   self-tests for offb_vel_check.py / passthrough_check.py written for these rows now (RC138, not G7).
+3. G5.2 DONE as probe S138: 6/6 PASS altctl/posctl (results/g5_g52_s138, g52_check keyed AGREE). Re-fly at freeze.
+   NEXT: G5.3, G5.5, G5.7 merged into one 3-seed probe session (RC138); self-tests for offb_vel_check.py /
+   passthrough_check.py written for these rows now (RC138, not G7). G5.7 needs its exact test in GATES first.
 4. G5.6/5.8/5.9/5.11: ONE shared event injector (maybe_landed, kill, EKF reset, RC/link loss), one G1.5 check
    (RC138). G5.10 flown with the existing G3 thrust-limit/motor_fault hooks (no new injector).
 4b. Audit DONE S138 (design/defaults_audit_s138.md): no G2 cell at the current pair. Next probe (G2): rate roll
@@ -56,7 +56,6 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| A138 | G5.2 build + pre-test + 3-seed probe | sonnet | results/g5_g52_s138/README.md | bash results/g5_g52_s138/batch.sh (skips done runs) |
 S137 G5.1 acro yaw FIXED (D-KY, 5d1d828af7): cause = yaw lag 1/K_Y at K_Y 10 (no saturation). K_Y 20 default
   (firmware + bench). Probe: acro PASS 3/3 yaw 3.15-3.29 deg/s; G2 rate-yaw 800/400 GM 18.8/14.3 dB PM 78/82 (1 seed,
   results/g2_yaw_ky20_s137). Stabilized at K_Y 20 PASS 3/3 -> G5.1 row PASS 6/6 (probe, results/g5_g51_ky20_s137).
