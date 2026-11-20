@@ -43,3 +43,8 @@ Failed attempts kept as metadata: `o1_killed_attempt1` (container prefix collisi
 
 `bench/g53_mission_check.py` (self-test OK) on `results/g5_probe_s135/auto_tour_s{1,2,3}` -> `g53_mission_s*.json`:
 all 4 waypoints within 1.0 m (min 0.03-0.80 m), max speed 4.92 m/s <= 5.5 (1.1 x cruise 5): PASS 3/3.
+
+## S140 follow-up (matched GNSS, `../g5_g55_s140_gnss`)
+Matched 110 ms: estimate vs truth 0.05 m (fault confirmed and removed), but o1 s1 horiz RMS 0.78 m, o2 s1 0.93 m:
+FAIL. The truth now lags the setpoint by 160 ms; the leading estimate had been hiding part of it. Cause: jerk
+feed-forward disabled in the module (A18 not implemented). Re-opened: DECISIONS D-A18-REOPEN.

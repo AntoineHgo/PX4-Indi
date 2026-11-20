@@ -437,6 +437,9 @@ vz over the final descent within +-20 % of MPC_LAND_SPEED; disarm <= COM_DISARM_
   (no held reference, lesson 1), horizontal RMS <= 0.5 m and vertical RMS <= 0.3 m over the trajectory segments.
   `offb_vel_step` (vx 2 m/s for 5 s, then 0): RMS(truth vx - 2) over the last 3 s of the step <= 0.2 m/s (10 %),
   |truth vx| at the end of the 4 s hold <= 0.1 m/s, truth max |dz| <= 0.3 m (G3 item 3 height scale). No LOC.
+  SET-UP FIX S140 (all G5 rows, no threshold change): nominal plant = GNSS latency 110 ms with matched EKF
+  compensation (runner `--gps-dly 110 --gnss-delay 110`). Probes up to S139 flew latency 0 against SENS_GNSS0_DELAY
+  110 (estimate leads truth ~110 ms), a G3 mismatch draw, not the nominal plant; they are re-flown at the freeze.
 - G5.7 exact test (S139, before its first test; the row did not state stick state, switch order or the attitude
   measure). Scenario `mode_switch10`, stick-mode posctl, runner switches by MAV_CMD_DO_SET_MODE at fixed sim times.
   After 3 s settle, posctl with pitch stick for 3 m/s (as G5.2) for 4 s, then 10 switches, 2.0 s apart, in the

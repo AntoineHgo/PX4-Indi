@@ -12,9 +12,12 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
 0. S140: Q7 closed (rule A in GATES 5b G5.7 AMENDED S140; g5_g57_s139 official probe verdict FAIL 2/3).
 0b. S140 SET-UP FAULT in every G5 probe: sim GNSS latency 0 with EKF SENS_GNSS0_DELAY 110 (estimate leads truth
    ~110 ms, 0.35 m/axis at 3-4 m/s). G5.5 S139: o5/o6/offb_vel_step PASS, o1-o4/o7 FAIL horiz 0.66-1.36 m (limit 0.5;
-   PID o1 1.04 m). Nominal plant from now on: --gps-dly 110 --gnss-delay 110 (matched). Re-fly batch
-   results/g5_g55_s140_gnss/run_batch.sh (pre-test o1+o2 s1, then all failing rows x3). Then G5.7 x1 matched (item 3b
-   cause candidate: H->P tilt 5.2 deg). G5.1-G5.4 re-fly at freeze with matched GNSS.
+   PID o1 1.04 m). Nominal plant from now on: --gps-dly 110 --gnss-delay 110 (matched). Matched pre-test
+   (results/g5_g55_s140_gnss): estimator fixed (0.05 m) but o1 0.78 m, o2 0.93 m FAIL: truth lags setpoint 160 ms,
+   jerk FF off (McIndiPosControl.cpp:57). G5.1-G5.4 re-fly at freeze with matched GNSS.
+0c. NEXT (G5.5 rows o1-o4/o7): D-A18-REOPEN: one-page design note (jerk -> omega_ff side channel to the INDI rate
+   module, jerk from a_ref difference when the offboard field is 0/NaN), then code + tests + second key, then fly
+   o1/o2 s1 matched. Then G5.7 x1 matched (item 3b cause candidate: H->P tilt 5.2 deg).
 1. G5.4 DONE as probe S135: 9/9 runs (auto_tour, auto_land10, auto_rtl20 x3 seeds) all limits PASS
    (results/g5_probe_s135/README.md; checker auto_smoke_check.py g54_*, keyed g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.

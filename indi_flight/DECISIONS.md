@@ -746,3 +746,15 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Cost: yaw torque peak doubles on a 200 deg/s reversal (lowest motor 0.044 at hover 0.137 vs 0.083 at K_Y 10).
 - Overturn: a G2 rate-yaw or attitude-yaw cell below GM 6 dB / PM 45 deg at K_Y 20; yaw saturation (motor at the
   lower limit) in G3/G5 runs that K_Y 10 did not saturate.
+
+## D-A18-REOPEN (S140, 2026-11-20): G5.5 trajectory failure re-opens A18 (flatness jerk feed-forward)
+- Evidence: G5.5 o1 s1 with matched GNSS (results/g5_g55_s140_gnss): estimate vs truth 0.05 m, but truth lags the
+  setpoint by 160 ms (horiz RMS 0.78 m at zero shift, 0.47 m at best shift; limit 0.5); o2 0.93 m. Module runs
+  `setFeedforward(false)` (McIndiPosControl.cpp:57): omega_ff = 0, so commanded acceleration is realised through the
+  attitude loop (1/MC_ROLL_P 8 = 125 ms) plus rate/motor lag. Offboard jerk arrives finite 0, so the a_ref
+  difference path is never used either. PID o1: 1.04 m (S139, mismatched GNSS), 185 ms lag.
+- Decision: implement A18 as planned in D-outer-arch (jerk -> omega_ff side channel to the INDI rate module), with
+  the jerk from the a_ref difference when the field is 0 or NaN in offboard; one-page design note first, two keys.
+- Alternatives: raise MC_ROLL_P (shortens, does not remove the lag; stock tuning); lower the trajectory (weakens
+  the test, rejected); accept the G5.5 fail (only if A18 shows no gain).
+- Overturn: A18 on o1 gives < 0.1 m RMS gain (above the same-seed spread) or breaks a G5 mode edge.
