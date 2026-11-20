@@ -52,6 +52,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S136a | G5.1 stick_steps scenario + g51_check.py + self-test + 1-seed pre-test acro/stab (GATES 5b G5.1) | sonnet | results/g5_g51_s136/README.md | relaunch brief from LEDGER S136a |
 S134 F-7 DONE b9fb83c4a0 (keyed K134: 0 BLOCKING, MAJORs floor 0 before flight + arm/disarm state reset FIXED; gtests
   8/8 suites, ArmEdges test break-checked; open MINORs: ground xy tilt, IndiAccelControl lib test not run after
   resetBlend, reset test checks the decision only -> stage-7 harness). Pre-fix smoke (1 seed): edge step 4.7 % hover,

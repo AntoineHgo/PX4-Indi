@@ -208,3 +208,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S134 | P134b re-fly post-fix | haiku | results/f7_smoke_s134_fix/README.md | done, 9 calls ~$0.06 |
 | S135 | A135 G5.4 checker (edge/ramp, other limits, truth touchdown, rtl20 scenario, table), 3 rounds | sonnet | design/impl_s135_edge_check.md | done, 46 calls ~$0.45, break-checked |
 | S135 | K135 independent G5.4 key | haiku | results/g5_probe_s135/key2_s135.md | done, 5 calls ~$0.04, AGREE |
+| S136 | A136 G5.1 stick_steps scenario, g51_check.py + self-test, 1-seed acro/stab pre-test | sonnet | results/g5_g51_s136/README.md | running |
