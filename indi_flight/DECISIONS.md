@@ -735,3 +735,14 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Alternatives: keep a decaying offset at the edge (only if the measured edge step exceeds the limit); blend f_b
   modelled -> measured over tau (same, second step); estimate the ground reaction (rejected: complex, F-9).
 - Overturn: G5.4 edge step > 10 % hover or dip > 0.3 m on any seed; landed/ramp windup seen in a log.
+
+## D-KY (S137, decision 4, fixes the G5.1 acro yaw failure): default MC_INDI_K_Y 10 -> 20 rad/s
+- Cause (log, results/g5_g51_s136 + g5_g51_ky20_s137 README): yaw t90 0.23 s = first-order lag 1/K_Y at K_Y 10;
+  no motor saturation (0.08-0.19), YAW_CUT 0. First-order arithmetic over the G5.1 windows: 15.5 deg/s predicted,
+  15.0-16.0 measured. K_Y 10 was inherited from the archive defaults, never justified; roll/pitch use 20.
+- Decision: K_Y 20 (same bandwidth as roll/pitch, D-DEFAULTS bandwidth transfer). Predicted RMS 4 deg/s.
+- Alternatives: K_Y 15 (predicted 7.7, too close to 10); yaw-specific G5.1 limit (gate change, owner question,
+  rejected: the airframe has the authority); yaw setpoint shaping (more code, F-9).
+- Cost: yaw torque peak doubles on a 200 deg/s reversal (lowest motor 0.044 at hover 0.137 vs 0.083 at K_Y 10).
+- Overturn: a G2 rate-yaw or attitude-yaw cell below GM 6 dB / PM 45 deg at K_Y 20; yaw saturation (motor at the
+  lower limit) in G3/G5 runs that K_Y 10 did not saturate.
