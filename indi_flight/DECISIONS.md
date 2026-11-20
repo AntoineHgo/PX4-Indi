@@ -684,6 +684,8 @@ for complete identification before stage 5.
   the plant is the aggressive side (lesson 8, H5), so the slower value is kept for unidentified, larger airframes.
 
 ## D-STAGE-STALE (S130, F-1, closes the in-flight bypass of g5_build_list.md section 0)
+SUPERSEDED in part S134 by F-7 / D-F7-GROUND: the `want_indi` false stock path for landed/ramp is removed; (a) and (b)
+stand.
 - Context: in flight with the stage requested (`want_indi`), stale attitude/acceleration, non-finite a_ref, rate
   < 5 Hz or `IndiAccelControl::update` false made IPC publish the stock attitude setpoint and re-engage the stock
   velocity integrator (IPC:287-295, 851): a PID fallback, against F-1. The start-up `|| mc_pos_control start` is
@@ -717,3 +719,19 @@ for complete identification before stage 5.
   the collective (rejected: acts on the output, hides any later real step, axis-blind); start INDI already in rampup
   (rejected: ground reaction in the measured acceleration).
 - Overturn: G5 take-off/mode-switch transient still > limit, or a G3 run where the decaying offset delays recovery.
+SUPERSEDED S134 by F-7 / D-F7-GROUND (overturn condition met: owner classes the ramp stock path as a fallback). With
+no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed once nothing uses it.
+
+## D-F7-GROUND (S134, F-7): INDI law from arming; ground and ramp handled by the modelled specific force
+- Decision: the stage runs whenever armed in a position-controlled mode. While on ground (takeoff state < rampup, or
+  flight with `ground_contact`/`maybe_landed`) and during rampup, the stage uses the MODELLED specific force
+  (existing D-STAGE-STALE (a) path: f_b = (0,0,-G c_prev), gap remover frozen, mean_u invalid). a_ref comes from the
+  same stock setpoint chain: on ground the stock +100 m/s^2 down setpoint gives minimum thrust; in rampup the stock
+  vz ramp from -g/MPC_Z_VEL_P_ACC gives a collective rising from 0 by model inversion. From flight without ground
+  contact: measured f_b, gap remover runs. Stock velocity integrator reset from arming; stock thrust never published.
+  Removed: HandoverBlend, bypass hover-thrust sync, the `want_indi` false stock branch.
+- Edge step predicted = thrust-model error at the edge (measured - modelled specific force), a few % of hover with the
+  identified model (S128 defaults).
+- Alternatives: keep a decaying offset at the edge (only if the measured edge step exceeds the limit); blend f_b
+  modelled -> measured over tau (same, second step); estimate the ground reaction (rejected: complex, F-9).
+- Overturn: G5.4 edge step > 10 % hover or dip > 0.3 m on any seed; landed/ramp windup seen in a log.

@@ -375,6 +375,24 @@ S131 addition to G5.4 (written before its first test; S131 AUTO smokes are probe
 vz over the final descent within +-20 % of MPC_LAND_SPEED; disarm <= COM_DISARM_LAND + 1 s after ground contact. The
 10 % is half the G5.7 mode-switch limit, since the handover is a scheduled, not pilot-commanded, edge (PROPOSED).
 
+#### 5b. G5 FINAL (S134 2026-11-20, owner directive F-7/F-8/F-9; before the first G5 test; overrides 5 where they differ)
+- Stack: quad5in, `MC_RATE_CTL_TYPE 1` + `MC_INDI_POS_EN 1`; a run is valid only if `indi_pos_status` exists and no
+  `mc_pos_control` task runs. 3 seeds per row. Limits of section 5 become FINAL as written (absolute, truth); PROPOSED
+  tags on them are removed. Noise: sim default until the G4 typical profile exists; the stage-6 freeze re-flies all
+  rows with it (G5 batches before the freeze are probes, RC113).
+- G5.4 take-off (F-7, one controller from arming): over the whole ramp and at the rampup -> flight edge,
+  |mean `vehicle_thrust_setpoint` collective 0.1 s after - 0.1 s before| <= 10 % of hover, checked at the edge and at
+  every 0.1 s step of the ramp after the first 0.5 s (the ramp itself climbs from 0 to hover in that time by design);
+  truth dip <= 0.3 m within 1 s after the edge. Thrust signal is `vehicle_thrust_setpoint`, not `indi_pos_status`
+  (logger misses its first ~0.2 s, S132).
+- Not tested, owner decision F-8: accel-only offboard; take-off on an offboard setpoint alone (code path unchanged).
+- Row -> scenario (F-9: existing first; a new injector only where the row cannot run without it, reason given):
+  G5.1 attitude/rate steps in stabilized/acro (exist); G5.2 altctl/posctl stick steps (runner modes exist; a stick
+  step segment only if missing); G5.3 `auto_tour`, `gust_x` in hold; G5.4 `auto_tour` take-off, `auto_land10`, RTL
+  (runner AUTO harness S131); G5.5 `offb_vel_step`, `o1`-`o7`; G5.7 RC override mode switches (runner); G5.6, G5.8,
+  G5.9, G5.10, G5.11: injector to build (maybe_landed, link/RC loss, kill, sat, EKF reset do not exist), each
+  G1.5-checked before use. First batch = rows with existing scenarios.
+
 ### 6. G6 Defaults and identification from a wrong start
 
 Procedure (fixed before the first test): start from physical parameters wrong by x2 and x0.5 each on mass, inertia, motor

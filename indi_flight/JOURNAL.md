@@ -926,3 +926,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S133: T9 hover-thrust sync in IPC bypass (7770538b55), gtest break-checked; SITL assertion pending.
 - S133: T7 offboard vel-only + T8 ACRO pass-through probes pass (1 seed); A-46 flight-edge thrust step 6.1 % in ACRO run.
 - S133: RC133 route check filed (accepted except PID-relative pass line, F-5).
+- S134: owner directive 2026-11-20 acted on: D-STAGE-STALE stock branch + D-HANDOVER superseded, D-F7-GROUND written, G5 FINAL text (GATES 5b, F-8 rows not tested), STATE next actions gate-tagged; A134 F-7 implementation launched. Gate progress: G5 criteria FINAL (5b) committed before first G5 test.
