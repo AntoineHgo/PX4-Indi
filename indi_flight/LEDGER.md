@@ -226,4 +226,6 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S144 | A144b key2 injector fix | sonnet | results/g5_events_s144/key2.md | done, 13 calls, AGREE fixes, MAJOR timing ref |
 | S144 | A144c checker applied time from firmware log | sonnet | bench/g5_events.py 3944e8e367 | done, 9 calls, MAJOR closed |
 | S145 | A145a G5.8/G5.9 row checker (hover), brief: score rows from g5_events logs, self-test | sonnet | bench/g5_rows_check.py | done, 12 calls, 6 self-tests, 3 test defects found |
-| S145 | A145b fix logging rates + 9b state set + 1 pre-test | sonnet | results/g5_events_s145/fix.md | running |
+| S145 | A145b fix logging rates + 9b state set + 1 pre-test | sonnet | results/g5_events_s145/fix.md | cut at session end: code + fix_s2 flown, fix.md not written; finished S146 (2 checker defects fixed by orchestrator) |
+| S146 | A146a key2 of g5_rows_check G5.8/G5.9 on fix_s2 (no access to checker) | sonnet | bench/g5_rows_key2.py, results/g5_events_s145/key2_rows.md | done, 10 calls, AGREE all rows, 9b weak-evidence caveat |
+| S146 | A146b G5.8 3 m/s variant (--moving) + 1 pre-test | sonnet | results/g5_events_s146_move/README.md | running |

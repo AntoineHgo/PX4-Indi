@@ -12,10 +12,9 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
 0c. G5.5 o1 0.59 / o2 0.79 m FAIL after A18 (S141). S143: lag builds in a_c (lag_chain_s143.md); drag-FF probe
    REJECTED (o1 1.11 m, g5_g55_s143_drag; D-A18-SOURCE outcome). Lag chase STOPPED (RC143): o1-o4/o7 FAIL recorded,
    cause = stock PositionControl feedback producing a_c (D-outer-arch base A). Re-fly at freeze; if still FAIL, owner Q.
-   S145: G5.8/G5.9 hover 3 seeds flown + bench/g5_rows_check.py (results/g5_events_s145/README.md): rc/offb loss,
-   9c, 9d PASS 3/3; link_loss/9a/9b = test defects (2 Hz/10 Hz logging, 9b state set) -> A145b fix + pre-test.
-   NEXT: key2 of g5_rows_check.py (G5.8/G5.9 verdicts decide gate), re-fly 3 seeds with fix; then G5.8 3 m/s
-   variant (moving loss, needed by the row text).
+   S146 (results/g5_events_s145/README.md, fix_s1-3, key2 AGREES): G5.8 hover PASS 3/3; G5.9 b/c/d PASS 3/3;
+   G5.9a FAIL 3/3 = stock commander latency switch->actuator_armed.kill 3.75-10 ms, outputs 0 at the flag (Q8 add. 2).
+   NEXT: G5.8 3 m/s variant (agent in flight; then 3 seeds + key2 if checker changed). Then G5.6/G5.10/G5.11 probes.
 1. G5.4 probe PASS 9/9 S135 (g5_probe_s135; auto_smoke_check.py, g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
 3. G5.2 DONE as probe S138: 6/6 PASS altctl/posctl (results/g5_g52_s138, g52_check keyed AGREE). Re-fly at freeze.
@@ -68,8 +67,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S146 | G5.8/G5.9 re-fly seeds 1, 3 (s2 = pre-test fix_s2, same config) | bash bg | results/g5_events_s145/fix_s{1,3} | README s144 command, --params results/g5_events_s145/params.params, --out .../fix_sN |
-| S146 | key2 of g5_rows_check on fix_s2 (independent re-impl) | sonnet | bench/g5_rows_key2.py, results/g5_events_s145/key2_rows.md | re-brief: GATES G5.8/G5.9 text, no access to g5_rows_check.py |
+| S146 | G5.8 3 m/s variant (--moving in g5_events.py) + 1 pre-test flight | sonnet | results/g5_events_s146_move/README.md | if absent/partial: check git diff bench/g5_events.py, re-brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
