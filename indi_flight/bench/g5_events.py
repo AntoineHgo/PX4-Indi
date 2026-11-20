@@ -62,6 +62,7 @@ def g5_flight(sim, a, sc, meta):
         while st["pend"] and t >= st["pend"][0][0]:
             st["t_cmd"], fn = st["pend"].pop(0)
             fn()
+            del st["t_cmd"]  # events sent outside the schedule (unkill, rearm, takeoff2) keep their own time
 
     def at(t_rel, fn):
         st["pend"].append((T0 + t_rel, fn))
