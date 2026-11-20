@@ -196,6 +196,8 @@ _AUTO_P = {"NAV_ACC_RAD": 2.0, "RTL_RETURN_ALT": 10.0, "RTL_DESCEND_ALT": 5.0, "
 SCENARIOS["auto_tour"] = dict(mode="auto", axis=None, segments=[], auto=dict(
     takeoff_alt=5.0, hold_s=10.0, end="rtl", mission_max_s=120.0, post_mission_s=3.0,
     mission=[(20.0, 0.0), (20.0, 20.0), (0.0, 20.0), (0.0, 0.0)], params={**_AUTO_P, "MIS_TAKEOFF_ALT": 5.0}))
+# G5.4 RTL-from-20 m row: same as auto_tour but the mission ends at (20, 20), so RTL starts about 28 m from home.
+SCENARIOS["auto_rtl20"] = dict(SCENARIOS["auto_tour"], auto=dict(SCENARIOS["auto_tour"]["auto"], mission=[(20.0, 0.0), (20.0, 20.0)]))
 SCENARIOS["auto_land10"] = dict(mode="auto", axis=None, segments=[], auto=dict(
     takeoff_alt=10.0, hold_s=10.0, end="land", params={**_AUTO_P, "MIS_TAKEOFF_ALT": 10.0}))
 
