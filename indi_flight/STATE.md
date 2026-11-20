@@ -53,6 +53,8 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| A138 | G5.2 build + pre-test + 3-seed probe | sonnet | results/g5_g52_s138/README.md | bash results/g5_g52_s138/batch.sh (skips done runs) |
+| A138b | defaults vs G2 audit, offline | sonnet | design/defaults_audit_s138.md | relaunch brief (LEDGER S138) |
 S137 G5.1 acro yaw FIXED (D-KY, 5d1d828af7): cause = yaw lag 1/K_Y at K_Y 10 (no saturation). K_Y 20 default
   (firmware + bench). Probe: acro PASS 3/3 yaw 3.15-3.29 deg/s; G2 rate-yaw 800/400 GM 18.8/14.3 dB PM 78/82 (1 seed,
   results/g2_yaw_ky20_s137). Stabilized at K_Y 20 PASS 3/3 -> G5.1 row PASS 6/6 (probe, results/g5_g51_ky20_s137).
