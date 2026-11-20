@@ -216,3 +216,8 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S138 | A138b defaults vs G2 audit (offline) | sonnet | design/defaults_audit_s138.md | done, 12 calls ~$0.30 |
 | S141 | I141 A18 implementation (lib a_ff difference + hold, msg, gate, tests) | sonnet | design/t208_a18_impl_log.md | done, 30 calls ~$0.67 |
 | S141 | K141 A18 second key (code vs note) | sonnet | design/t208_a18_key2.md | done, 13 calls ~$0.25, DISAGREE 1 MAJOR fixed |
+| S142 | A142 G5 events injector (g5_events.py, 2 pre-test flights) | sonnet | results/g5_events_s142/ | cut before README; README written S143 |
+| S142 | A142b G5.5 lag cause search | sonnet | results/g5_g55_s141_a18/lag_cause_s142.md | done, weak xcorr |
+| S143 | A143a route check 143 | sonnet | design/route_check_143.md | done, 7 calls |
+| S143 | A143b G5.5 lag chain split (phase fit) | sonnet | results/g5_g55_s141_a18/lag_chain_s143.md | done, 13 calls, drag cause |
+| S143 | A143c G5.5 o1 drag-FF probe | sonnet | results/g5_g55_s143_drag/README.md | launched |

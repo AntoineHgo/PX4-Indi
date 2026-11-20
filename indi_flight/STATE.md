@@ -8,18 +8,12 @@
 - Blocker: none. Q7 closed S140 (rule A, GATES 5b G5.7). F-7/F-8/F-9 acted on S134 (D-F7-GROUND).
 ## Next actions (in order; each names its gate item)
 History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrations: read before sizing a brief).
-0b. S140 SET-UP FAULT in every G5 probe: sim GNSS latency 0 with EKF SENS_GNSS0_DELAY 110 (estimate leads truth
-   ~110 ms, 0.35 m/axis at 3-4 m/s). G5.5 S139: o5/o6/offb_vel_step PASS, o1-o4/o7 FAIL horiz 0.66-1.36 m (limit 0.5;
-   PID o1 1.04 m). Nominal plant from now on: --gps-dly 110 --gnss-delay 110 (matched). Matched pre-test
-   (results/g5_g55_s140_gnss): estimator fixed (0.05 m) but o1 0.78 m, o2 0.93 m FAIL: truth lags setpoint 160 ms,
-   jerk FF off (McIndiPosControl.cpp:57). G5.1-G5.4 re-fly at freeze with matched GNSS.
-0c. S141 A18 (7e58bea57c; unkeyed gate-flip fix -> 4c review). Probe g5_g55_s141_a18: o1 0.59, o2 0.79 m FAIL.
-   S142 cause search DONE (lag_cause_s142.md, sonnet, unkeyed): omega_ff SIZE ok (0.83-0.98 of jerk/g) but it LAGS
-   setpoint-accel derivative 75-110 ms (jerk = difference of 30 ms-stream accel, hold <=0.1 s, 10 Hz LPF explain
-   45-60 ms only); a_c->att sp filters 20-25 ms of ~50. Attitude lag likely = late FF. Cause search budget USED:
-   NEXT = re-open the A18 jerk-source choice in DECISIONS (one entry): use trajectory_setpoint.jerk when valid
-   (AUTO fills it), offboard difference path: find the unexplained 30-50 ms (hold logic, indi_accel_control.cpp:150-187)
-   and size a lead by the stream period. No stream-rate change in the runner to pass (honesty). Then G5.7 x1 matched.
+0b. Nominal plant: matched GNSS --gps-dly 110 --gnss-delay 110 (S140 set-up fault fixed). G5.1-G5.4 re-fly at freeze.
+0c. G5.5 o1 0.59 / o2 0.79 m FAIL after A18 (S141). S143 lag chain (lag_chain_s143.md): lag builds in a_c (97/129 ms),
+   downstream only 20-40 ms; sim linear rotor drag 0.514/s not in FF. D-A18-SOURCE: probe A143c (runner adds D v_ref
+   to sent accel, probe only). If gain > 0.1 m: firmware drag term in module FF (a_ff + D v_ref, omega_ff from
+   j + D a_ref), D identified from cruise data (stage-4 ident addition), default 0; two keys; then o1-o4/o7 x1.
+   If no gain: record FAIL with data, stop the lag chase (route check 143). Then G5.7 x1 matched.
 1. G5.4 probe PASS 9/9 S135 (g5_probe_s135; auto_smoke_check.py, g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
 3. G5.2 DONE as probe S138: 6/6 PASS altctl/posctl (results/g5_g52_s138, g52_check keyed AGREE). Re-fly at freeze.
@@ -42,7 +36,7 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    or align firmware ACT_TC/W_MAX with bench (G7 lesson 12). Guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
 5. G7 (deferred, stage 7): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site (K128 MAJOR), checker
    self-tests for passthrough_check/offb_vel_check.
-Route check next: S143 (RC138 filed, cuts accepted: items 3, 4, 4b).
+Route check next: S148 (RC143 filed: design/route_check_143.md; cuts: 3b G5.7 PID compare deferred behind event rows, 4b/4c/5 stay deferred).
 Rule (RC64/RC74): 1 session per inner-loop law change; no anomaly chase unless a gate test fails.
 G3/G5 batches before the stage-6 freeze are PROBES (RC113). G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1.
 Offline G2 todo before stage 6: outer-cell margin key, linear outer-loop model, A-36/A-39 bound, 267 Hz rows
