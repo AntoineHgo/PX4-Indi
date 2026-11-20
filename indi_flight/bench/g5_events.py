@@ -40,6 +40,8 @@ def g5_flight(sim, a, sc, meta):
         ph.append({"name": n, "t_us": int(sim.t * 1e6)})
 
     def ev(name, t_cmd, **kw):
+        # commanded time = the schedule time of the event being dispatched (key2 S146 B1: --moving reused hover times)
+        t_cmd = st.get("t_cmd", t_cmd)
         evs.append({"name": name, "t_cmd_us": int(round(t_cmd * 1e6)), "t_applied_us": int(sim.t * 1e6), **kw})
 
     def tick():
@@ -58,7 +60,7 @@ def g5_flight(sim, a, sc, meta):
             else:
                 sim.send_pos(sim.pos, sim.yaw) if "hold_ned" not in st else sim.send_pos(st["hold_ned"], st["hold_yaw"])
         while st["pend"] and t >= st["pend"][0][0]:
-            _, fn = st["pend"].pop(0)
+            st["t_cmd"], fn = st["pend"].pop(0)
             fn()
 
     def at(t_rel, fn):
@@ -131,6 +133,7 @@ def g5_flight(sim, a, sc, meta):
 
     def f_ob_stop():
         st["ob"] = False
+        st.pop("vel", None)  # key2 S146 M1: no stale velocity setpoint if the stream is ever restarted
         ev("offboard_loss", T0 + TIMES["ob_stop"])
 
     def f_ob_hold():
