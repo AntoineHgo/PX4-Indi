@@ -49,6 +49,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S135 | G5.1 acro probe stick_zsine_o6 s1-3 + t9_step_check (A-46) | bash bg | results/g5_probe_s135/stick_zsine_o6_s* | run_acro.sh (skips done), then t9_step_check.py per ulg |
 S134 F-7 DONE b9fb83c4a0 (keyed K134: 0 BLOCKING, MAJORs floor 0 before flight + arm/disarm state reset FIXED; gtests
   8/8 suites, ArmEdges test break-checked; open MINORs: ground xy tilt, IndiAccelControl lib test not run after
   resetBlend, reset test checks the decision only -> stage-7 harness). Pre-fix smoke (1 seed): edge step 4.7 % hover,
