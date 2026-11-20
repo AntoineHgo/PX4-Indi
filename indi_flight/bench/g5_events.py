@@ -7,7 +7,7 @@ Fly (inside docker, same args as run_scenario.py, scenario is forced):
 Check (host, pyulog):  python3 indi_flight/bench/g5_events.py --check <dir>
 
 Events (sim time relative to the hold start T0, in one AUTO-hold flight at 3 m):
-  ekf_yaw (MAV_CMD_EXTERNAL_ATTITUDE_ESTIMATE +5 deg), ekf_xy (MAV_CMD_EXTERNAL_POSITION_ESTIMATE 1 m),
+  ekf_yaw (MAV_CMD_EXTERNAL_ATTITUDE_ESTIMATE = 620, +5 deg), ekf_xy (MAV_CMD_EXTERNAL_POSITION_ESTIMATE 1 m),
   rc_loss (stop RC_CHANNELS_OVERRIDE), link_loss (stop GCS HEARTBEAT), offboard_loss (stop setpoints),
   kill (RC kill switch ch7) -> disarm -> unkill -> re-arm -> take-off -> land.
 NOT INJECTABLE without firmware: maybe_landed, ekf z reset (see README).
@@ -22,7 +22,7 @@ STEP_US = 1250  # physics step 1.25 ms (run.json physics_step_s)
 TIMES = dict(yaw=3.0, xy=12.0, rc=21.0, rc_len=3.5, hb=33.0, hb_len=7.0, ob_pre=48.0, ob=51.0, ob_stop=55.0,
              ob_hold=61.0, kill=70.0)
 FS_PARAMS = {"COM_RC_IN_MODE": 0, "COM_RCL_EXCEPT": 0, "COM_DLL_EXCEPT": 0, "NAV_RCL_ACT": 1, "NAV_DLL_ACT": 1,
-             "COM_OBL_RC_ACT": 5, "COM_RC_OVERRIDE": 0, "COM_DL_LOSS_T": 3, "RC_MAP_ROLL": 1, "RC_MAP_PITCH": 2,
+             "COM_OBL_RC_ACT": 5, "COM_RC_OVERRIDE": 0, "COM_RC_LOSS_T": 0.5, "COM_DL_LOSS_T": 3, "RC_MAP_ROLL": 1, "RC_MAP_PITCH": 2,
              "RC_MAP_THROTTLE": 3, "RC_MAP_YAW": 4, "RC_MAP_KILL_SW": 7, "RC_CHAN_CNT": 8, "MIS_TAKEOFF_ALT": ALT}
 
 
@@ -86,7 +86,7 @@ def g5_flight(sim, a, sc, meta):
     meta["g5_T0_us"] = int(T0 * 1e6)
 
     def f_yaw():
-        sim.cmd(43002, 0, 0, math.degrees(sim.yaw) + 5.0, 0, 0, 0, 0.001, wait_ack=False)
+        sim.cmd(620, 0, 0, math.degrees(sim.yaw) + 5.0, 0, 0, 0, 1.0, wait_ack=False)
         ev("ekf_yaw", T0 + TIMES["yaw"], cmd_deg=5.0)
 
     def f_xy():
