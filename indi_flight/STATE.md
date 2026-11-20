@@ -66,7 +66,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none in flight (S143 drag probe done) | - | results/g5_g55_s143_drag/README.md | run_batch.sh "<rows>" "<seeds>" |
+| A143d | G5.7 mode_switch10 x1 matched GNSS (seed 2) | sonnet | results/g5_g57_s143_gnss/README.md | if cut: README/NOTES there, re-brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
