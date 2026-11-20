@@ -1,10 +1,10 @@
-logged rates: actuator_armed: 264 samples, 2 Hz; actuator_motors: 98512 samples, 800 Hz; actuator_outputs: 1233 samples, 10 Hz; failsafe_flags: 217 samples, 2 Hz; vehicle_attitude: 32845 samples, 267 Hz; vehicle_land_detected: 133 samples, 1 Hz; vehicle_local_position: 10950 samples, 89 Hz; vehicle_status: 264 samples, 2 Hz
+logged rates: actuator_armed: 264 samples, 2 Hz; actuator_motors: 98512 samples, 800 Hz; actuator_outputs: 1233 samples, 10 Hz; failsafe_flags: 217 samples, 2 Hz; vehicle_attitude: 32845 samples, 267 Hz; vehicle_command: 13 samples, 0 Hz; vehicle_land_detected: 133 samples, 1 Hz; vehicle_local_position: 10950 samples, 89 Hz; vehicle_status: 264 samples, 2 Hz
 G1.5 maybe_landed: NOT INJECTABLE firmware-free (land detector needs min thrust + ground_contact + commanded descent)
 G1.5 ekf_z (0.5 m): NOT INJECTABLE firmware-free (external position hard reset is horizontal only)
-G1.5 ekf_yaw: PASS applied_dt=1.00ms mag=5.016/5 effect_after_applied=5.8ms (yaw fusion step, no reset counter)
-G1.5 ekf_xy: FAIL applied_dt=3.00ms mag=0.9877/1 effect_after_applied=11.2ms [applied-commanded 3.00 ms > 1.25 ms step]
-G1.5 rc_loss: FAIL applied_dt=3.00ms effect_after_applied=553.8ms [applied-commanded 3.00 ms > 1.25 ms step] (stream-stop applied; failsafe onset below) | onset (not G1.5): flag 0.56s after last msg, timeout 0.5s
-G1.5 link_loss: FAIL applied_dt=3.00ms effect_after_applied=4810.0ms [applied-commanded 3.00 ms > 1.25 ms step] (stream-stop applied; failsafe onset below) | onset (not G1.5): flag 5.27s after last msg, timeout 3.0s
-G1.5 offboard_loss: PASS applied_dt=0.00ms effect_after_applied=4023.0ms (stream-stop applied; failsafe onset below) | onset (not G1.5): flag 4.02s after last msg, timeout 1.0s
-G1.5 kill: PASS applied_dt=0.00ms effect_after_applied=53.0ms (kill flag) | motors 0 91.25ms after flag (G5.9)
+G1.5 ekf_yaw: FAIL applied_dt=3.00ms mag=5.016/5 effect_after_applied=3.8ms [applied-commanded 3.00 ms > 1.25 ms step] (applied=vehicle_command 620, effect=quat_reset_counter step)
+G1.5 ekf_xy: FAIL applied_dt=4.25ms mag=0.9877/1 effect_after_applied=10.0ms [applied-commanded 4.25 ms > 1.25 ms step]
+G1.5 rc_loss: FAIL applied_dt=556.75ms effect_after_applied=0.0ms [applied-commanded 556.75 ms > 1.25 ms step] (applied=failsafe flag rise; failsafe onset below) | onset (not G1.5): flag 0.56s after last msg, timeout 0.5s
+G1.5 link_loss: FAIL applied_dt=4813.00ms effect_after_applied=0.0ms [applied-commanded 4813.00 ms > 1.25 ms step] (applied=failsafe flag rise; failsafe onset below) | onset (not G1.5): flag 5.27s after last msg, timeout 3.0s
+G1.5 offboard_loss: FAIL applied_dt=4023.00ms effect_after_applied=0.0ms [applied-commanded 4023.00 ms > 1.25 ms step] (applied=failsafe flag rise; failsafe onset below) | onset (not G1.5): flag 4.02s after last msg, timeout 1.0s
+G1.5 kill: FAIL applied_dt=53.00ms effect_after_applied=0.0ms [applied-commanded 53.00 ms > 1.25 ms step] (applied=kill flag) | motors 0 91.25ms after flag (G5.9)
 maybe_landed during hold (T0..kill): any true = False (70 samples)

@@ -17,9 +17,11 @@ flight1 (same, ekf_yaw still 43002 + COM_RC_LOSS_T fix only): rc_loss detected (
 (ack DENIED, led to the id finding). flight2 is the reference (verdicts.txt, metrics.json, run.json in each flight dir).
 
 Verdicts flight2 (applied-commanded in ms; G1.5 limit 1.25 ms):
-- ekf_yaw: effect PASS, yaw step 5.016 deg of 5 deg, 5.8 ms after applied; applied-commanded 1.0 ms.
-- rc_loss: detected, manual_control_signal_lost rose 0.55 s after the last override (timeout 0.5 s); applied-commanded 3.0 ms (FAIL G1.5 timing).
-- ekf_xy 3.0 ms (mag 0.988 of 1), link_loss 3.0 ms, offboard_loss 0.0, kill 0.0 (unchanged from S142).
-Unverified: G1.5 1-step applied time for MAVLink events remains the S142 Q8 limit (runner tick); ekf_yaw reported as
-"no reset counter" in the checker text although resetYawByFusion increments quat_reset_counter (not re-checked on the log);
+- ekf_yaw: effect PASS, yaw step 5.016 deg of 5 deg,; applied-commanded 3.00 ms (firmware vehicle_command time; FAIL G1.5 1.25 ms), effect 3.8 ms after applied (quat_reset_counter 1->2).
+- rc_loss: detected, manual_control_signal_lost rose 0.55 s after the last override (timeout 0.5 s); applied time = failsafe flag rise (2 Hz log, 556.75 ms after runner stop; timing not a 1-step check).
+- ekf_xy 4.25 ms (mag 0.988 of 1); link_loss, offboard_loss, kill: applied = flag rise (see verdicts.txt).
+Unverified: G1.5 1-step applied time for MAVLink events remains the S142 Q8 limit (runner tick); ekf_yaw effect now read from quat_reset_counter (checked on the log);
 one seed, one flight; link_loss onset 5.27 s vs 3 s timeout and failsafe_flags 2 Hz logging not investigated.
+
+Timing (firmware log, flight2): ekf_yaw 3.00 ms, ekf_xy 4.25 ms applied-commanded (both FAIL G1.5 1.25 ms).
+key2 MAJOR closed: applied time from firmware log (commit 3944e8e367)
