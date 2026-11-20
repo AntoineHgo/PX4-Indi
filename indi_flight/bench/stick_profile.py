@@ -77,12 +77,12 @@ def stick_sample(pva, t, mode, vz_max=VZ_MAX_UP, hover_thr=0.5, steps=False):
     velocity of the profile; `throttle` is the decoded stick value actually sent (after int rounding), so the log is
     the applied value.
     """
-    _, vel, _ = pva(t)
-    vz_up = -vel[2]
     if steps:   # G5.1: throttle at the hover thrust stick (vz demand 0, pva zero), x / y / r from the step table
         smp = neutral_sample(mode, hover_thr)
         smp["x"], smp["y"], smp["r"] = step_sticks(t, mode)
         return smp
+    _, vel, _ = pva(t)
+    vz_up = -vel[2]
     if mode in VELOCITY_MODES:
         stick = inv_expo(vz_up / vz_max)  # PX4 applies expo 0.6 to the stick before scaling by MPC_Z_VEL_MAX_UP / _DN
     elif mode in ("stabilized", "acro"):

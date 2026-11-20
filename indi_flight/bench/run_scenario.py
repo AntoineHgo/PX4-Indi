@@ -1237,6 +1237,7 @@ def main():
         ok = True
     except Exception as e:  # noqa: BLE001
         meta["error"] = f"{type(e).__name__}: {e}"
+        meta["traceback"] = __import__("traceback").format_exc()[-1500:]
         if isinstance(e, WatchdogTrip):
             meta["watchdog"] = e.info
         print("RUN FAILED:", meta["error"], file=sys.stderr)
