@@ -214,3 +214,21 @@ SCENARIOS["auto_land10"] = dict(mode="auto", axis=None, segments=[], auto=dict(
 # SET_POSITION_TARGET_LOCAL_NED (run_scenario.Sim.send_vel; position and acceleration ignored, yaw held, vy = vz = 0).
 SCENARIOS["offb_vel_step"] = dict(mode="velocity", axis=None,
                                   segments=[("settle", 3.0, 0.0), ("vstep", 5.0, 2.0), ("vhold", 4.0, 0.0)])
+
+# S139 G5.7 (GATES 5b "G5.7 exact test"): 3 s settle, posctl pitch stick (3 m/s) 4 s, then 10 mode switches 2.0 s apart
+# (P posctl, A altctl, S stabilized, H hold), pitch stick in P segments, centred in A / S / H, 3 s posctl centred.
+# seg_modes: segment -> mode sent by MAV_CMD_DO_SET_MODE at the segment start; seg_sticks: segment -> (mode, pitch stick).
+_MS10 = [("p0", "posctl"), ("e1", "altctl"), ("e2", "posctl"), ("e3", "stabilized"), ("e4", "posctl"), ("e5", "hold"),
+         ("e6", "posctl"), ("e7", "altctl"), ("e8", "stabilized"), ("e9", "hold"), ("e10", "posctl")]
+_MS10_SEGS = [("settle", 3.0, 0.0), ("p0", 4.0, 0.0)] + [(n, 2.0, 0.0) for n, _ in _MS10[1:]] + [("end", 3.0, 0.0)]
+SCENARIOS["mode_switch10"] = dict(
+    mode="stick", axis=None, traj=None, segments=_MS10_SEGS,
+    seg_modes={n: m for n, m in _MS10[1:]},
+    seg_sticks={"settle": ("posctl", False), "end": ("posctl", False),
+                **{n: (m, m == "posctl") for n, m in _MS10}})
+# S139 G5.3 hold: posctl settle 3 s, switch to HOLD (AUTO_LOITER) with centred sticks, wind (override json) 2 s later, 28 s window.
+SCENARIOS["hold_wind"] = dict(
+    mode="stick", axis=None, traj=None, disturbance="gust_x", dist_segment="dist",
+    segments=[("settle", 3.0, 0.0), ("hsettle", 2.0, 0.0), ("dist", 28.0, 0.0), ("tail", 1.0, 0.0)],
+    seg_modes={"hsettle": "hold"},
+    seg_sticks={"settle": ("posctl", False), "hsettle": ("hold", False), "dist": ("hold", False), "tail": ("hold", False)})

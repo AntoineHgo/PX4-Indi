@@ -141,3 +141,16 @@ def pos_step_sample(seg):
     elif seg == "xstep":
         x = int(round(inv_expo(POS_X_V / MPC_VEL_MANUAL) * 1000))
     return dict(x=x, y=0, z=z, r=0, throttle=raw_to_stick(z), vz_up_demand=0.0)
+
+
+POS_PITCH_3MS = int(round(inv_expo(3.0 / MPC_VEL_MANUAL) * 1000))   # pitch stick for 3 m/s in posctl (as G5.2)
+
+
+def seg_sample(spec, hover_thr=0.5):
+    """S139 G5.7 / G5.3 segment sticks. spec = (mode, pitch): pitch True = pitch stick for 3 m/s, else all centred.
+    Centred = throttle centre (raw 500 in altctl / posctl / hold, the stabilized curve centre = neutral_sample)."""
+    mode, pitch = spec
+    smp = neutral_sample("stabilized" if mode == "stabilized" else "posctl", hover_thr)
+    if pitch:
+        smp["x"] = POS_PITCH_3MS
+    return smp

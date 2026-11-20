@@ -93,6 +93,8 @@ LOG_TOPICS = [
 TAKEOFF_ALT = 5.0
 # S81 --stick-mode: PX4 custom main modes of the HEARTBEAT (px4_custom_mode.h) and the run's stick parameters
 STICK_MAIN_MODE = {"altctl": 2, "posctl": 3, "acro": 5, "stabilized": 7}
+# S139: (main, sub) of MAV_CMD_DO_SET_MODE for the per-segment modes; hold = AUTO_LOITER (main 4, sub 3)
+SEG_MODE_CUSTOM = {"altctl": (2, 0), "posctl": (3, 0), "stabilized": (7, 0), "hold": (4, 3)}
 STICK_PARAMS = {"MPC_VEL_MANUAL": stick_profile.MPC_VEL_MANUAL, "COM_RC_IN_MODE": 1, "COM_RCL_EXCEPT": 7, "MPC_Z_VEL_MAX_UP": stick_profile.VZ_MAX_UP,
                 "MPC_Z_VEL_MAX_DN": stick_profile.VZ_MAX_UP, "MAN_DEADZONE": 0,
                 "MPC_THR_CURVE": 0, "MPC_MANTHR_MIN": stick_profile.MANTHR_MIN,
@@ -1164,6 +1166,13 @@ def main():
                                             "applied": new_all[fmotors[0]], "omega_ratio": k_om})
                 if len(fmotors) > 1:
                     meta["motor_fault"]["applied_all"] = {str(m): v for m, v in new_all.items()}
+            segm = (sc.get("seg_modes") or {}).get(name) if a.stick_mode else None
+            if segm:  # S139 G5.7 / G5.3: per-segment mode switch (MAV_CMD_DO_SET_MODE), logged with sim time
+                mm, ms = SEG_MODE_CUSTOM[segm]
+                t_req = sim.t
+                ack = sim.cmd(176, 1, mm, ms)
+                meta.setdefault("mode_switches", []).append({"segment": name, "mode": segm, "main": mm, "sub": ms,
+                                                             "t_cmd_us": int(t_req * 1e6), "t_done_us": int(sim.t * 1e6), "ack": bool(ack)})
             ev = {"name": name, "t_us": int(seg_now() * 1e6), "dur_s": dur, "mode": mode, "axis": axis,
                   "value": val, "prev": prev, "step": name != "settle" and mode not in ("position", "trajectory", "stick", "velocity")}
             meta["events"].append(ev)
@@ -1182,6 +1191,8 @@ def main():
                 sp = (lambda vx=val: sim.send_vel([vx, 0.0, 0.0], hold_yaw))
             elif mode in ("position", "trajectory"):
                 sp = pos_sp
+            elif mode == "stick" and sc.get("seg_sticks"):  # S139: sticks by segment name (stick_profile.seg_sample)
+                sp = (lambda n=name: sim.send_stick(stick_profile.seg_sample(sc["seg_sticks"][n], thr0)))
             elif mode == "stick" and sc.get("pos_steps"):  # S138 G5.2: sticks by segment name; x step ends at 3 m of travel
                 sp = (lambda n=name: sim.send_stick(stick_profile.pos_step_sample(n)))
                 if name == "xstep":
