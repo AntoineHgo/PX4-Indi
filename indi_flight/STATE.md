@@ -52,7 +52,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S136a | G5.1 stick_steps + g51_check.py built (A136); pre-test seed 1 with --stick-pilot (throttle only) + ID_OK 1 | me | results/g5_g51_s136/ | `bash indi_flight/results/g5_g51_s136/run_batch.sh` (skips done runs; SEEDS=1 for pre-test) |
+| S136a | G5.1 probe batch 3 seeds x acro/stab (stick_steps, --stick-pilot throttle only, ID_OK 1); metric keyed AGREE (key2/) | me | results/g5_g51_s136/ (dirty while running) | `bash indi_flight/results/g5_g51_s136/run_batch.sh` (skips done runs) then read g51_summary.txt, write README verdict, commit run.json/g51_check.json |
 S134 F-7 DONE b9fb83c4a0 (keyed K134: 0 BLOCKING, MAJORs floor 0 before flight + arm/disarm state reset FIXED; gtests
   8/8 suites, ArmEdges test break-checked; open MINORs: ground xy tilt, IndiAccelControl lib test not run after
   resetBlend, reset test checks the decision only -> stage-7 harness). Pre-fix smoke (1 seed): edge step 4.7 % hover,
