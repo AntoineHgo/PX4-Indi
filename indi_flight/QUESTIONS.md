@@ -31,3 +31,8 @@ Options (b): A [recommended] SITL-only test parameter in the two INDI modules (n
 forces maybe_landed into their own land input for 0.5 s; z reset: try an EKF2_HGT_REF switch in flight (param, no
 firmware), else row "not tested" with this reason. B: mark G5.6 false maybe_landed and G5.11 z as not tested.
 Meanwhile: fix the ekf_yaw and rc_loss injector defects and continue G5.5 (A18); event rows fly after G5.7/A18.
+Q8 addendum (S144): yaw-reset and RC-loss injector defects fixed and keyed (results/g5_events_s144). With applied time
+taken from the firmware log, command events are 1.75-4.25 ms after send (ekf_yaw 3.0 ms). For stream-stop events
+(rc/link/offboard loss) the firmware has no "applied" instant other than the failsafe flag, which includes the
+timeout; the G1.5 1-step check cannot apply there and those G1.5 FAIL lines are by construction, not evidence. The
+G5.8 limit (failsafe <= 1 s after timeout) is checked as written. Option (a) A covers this; still not blocking.

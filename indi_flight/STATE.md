@@ -12,7 +12,8 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
 0c. G5.5 o1 0.59 / o2 0.79 m FAIL after A18 (S141). S143: lag builds in a_c (lag_chain_s143.md); drag-FF probe
    REJECTED (o1 1.11 m, g5_g55_s143_drag; D-A18-SOURCE outcome). Lag chase STOPPED (RC143): o1-o4/o7 FAIL recorded,
    cause = stock PositionControl feedback producing a_c (D-outer-arch base A). Re-fly at freeze; if still FAIL, owner Q.
-   NEXT session: fix ekf_yaw/rc_loss injector defects + second key (item 4), then fly event rows G5.8/G5.9 (item 4).
+   S144: injector defects fixed + keyed (results/g5_events_s144). NEXT: A-47 closing test (G5.8 link-loss), then
+   fly event rows G5.9 kill/re-arm and G5.8 rc/offboard loss (3 seeds, serial) with bench/g5_events.py.
 1. G5.4 probe PASS 9/9 S135 (g5_probe_s135; auto_smoke_check.py, g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
 3. G5.2 DONE as probe S138: 6/6 PASS altctl/posctl (results/g5_g52_s138, g52_check keyed AGREE). Re-fly at freeze.
@@ -20,10 +21,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    re-fly s2 3.62, s3 3.55 deg PASS, thrust step 3.0 % (results/g5_g57_s143_gnss); s1 PASS S139. G5.7 PASS 3/3 as probe;
    PID compare DROPPED (cause found). Re-fly at freeze. G5.9/G5.11 event probes now unblocked (after item 4 fixes).
 3c. G5.5 probe committed S140 (results/g5_g55_s139/README.md); G5.3 mission PASS 3/3. G5.3 complete as probe.
-4. G5.6/5.8/5.9/5.11 injector BUILT S142 (04f8c514ac, unkeyed; pre-test results/g5_events_s142/README.md): kill and
-   offboard-loss work; ekf_yaw no effect and rc_loss not detected (defects to fix); MAVLink events land 3-24 ms late
-   (G1.5 asks 1.25 ms); maybe_landed and EKF z not injectable firmware-free -> Q8 OPEN (not blocking). Second key
-   before rows fly. Fly the rows after G5.7/A18 close. G5.10 uses G3 hooks. Keep G5.6 1 m / G5.8 offboard-loss variants.
+4. G5.6/5.8/5.9/5.11 injector KEYED S144 (fixes fee02b59b2, 3944e8e367; key2 results/g5_events_s144/key2.md):
+   all events take effect; applied time from firmware log; command events 1.75-4.25 ms late (G1.5 1.25 ms) and
+   stream-stop G1.5 lines FAIL by construction -> Q8 + addendum OPEN (not blocking). maybe_landed / EKF z not
+   injectable firmware-free (Q8 b). A-47 link-loss onset 2.27 s past timeout (G5.8). G5.10 uses G3 hooks.
 4a. Flying: parallel docker streams ONLY for tolerance-insensitive probes (G5.5, G5.10 sat); G5.7 and event rows serial
    or max 2 streams with sim-hole figure recorded (LESSONS_PROPOSED S86); parallel runs are never gate evidence.
 4c. Pre-freeze review, standalone session (not beside flying), split into 2-3 single-interface reviews (stage-3 safety
@@ -65,7 +66,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none in flight | - | results/g5_g57_s143_gnss/README.md | run_batch.sh "<rows>" "<seeds>" |
+| - | none in flight | - | results/g5_events_s144/README.md | python3 bench/g5_events.py (see README) |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
