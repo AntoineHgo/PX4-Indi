@@ -21,6 +21,8 @@ ALT = 3.0
 STEP_US = 1250  # physics step 1.25 ms (run.json physics_step_s)
 TIMES = dict(yaw=3.0, xy=12.0, rc=21.0, rc_len=3.5, hb=33.0, hb_len=7.0, ob_pre=48.0, ob=51.0, ob_stop=55.0,
              ob_hold=61.0, kill=70.0)
+MOVING = False  # --moving: the three losses at 3 m/s (offboard velocity setpoint) instead of hover (S146)
+MV = dict(vel=3.0, leg=18.0, ob_pre=2.0, loss=9.0, t0=3.0)  # leg k starts at t0 + k*leg (rel. T0); loss at start+loss
 FS_PARAMS = {"COM_RC_IN_MODE": 0, "COM_RCL_EXCEPT": 0, "COM_DLL_EXCEPT": 0, "NAV_RCL_ACT": 1, "NAV_DLL_ACT": 1,
              "COM_OBL_RC_ACT": 5, "COM_RC_OVERRIDE": 0, "COM_RC_LOSS_T": 0.5, "COM_DL_LOSS_T": 3, "RC_MAP_ROLL": 1, "RC_MAP_PITCH": 2,
              "RC_MAP_THROTTLE": 3, "RC_MAP_YAW": 4, "RC_MAP_KILL_SW": 7, "RC_CHAN_CNT": 8, "MIS_TAKEOFF_ALT": ALT}
@@ -51,7 +53,10 @@ def g5_flight(sim, a, sc, meta):
             sim.mav.mav.heartbeat_send(6, 8, 0, 0, 4)  # MAV_TYPE_GCS
             st["hb_t"] = t
         if st["ob"] and sim.pos:
-            sim.send_pos(sim.pos, sim.yaw) if "hold_ned" not in st else sim.send_pos(st["hold_ned"], st["hold_yaw"])
+            if "vel" in st:
+                sim.send_vel(st["vel"], st["hold_yaw"])
+            else:
+                sim.send_pos(sim.pos, sim.yaw) if "hold_ned" not in st else sim.send_pos(st["hold_ned"], st["hold_yaw"])
         while st["pend"] and t >= st["pend"][0][0]:
             _, fn = st["pend"].pop(0)
             fn()
@@ -136,17 +141,39 @@ def g5_flight(sim, a, sc, meta):
         st["kill"] = True
         ev("kill", T0 + TIMES["kill"])
 
-    at(TIMES["yaw"], f_yaw)
-    at(TIMES["xy"], f_xy)
-    at(TIMES["rc"], f_rc_off)
-    at(TIMES["rc"] + TIMES["rc_len"], f_rc_on)
-    at(TIMES["hb"], f_hb_off)
-    at(TIMES["hb"] + TIMES["hb_len"], f_hb_on)
-    at(TIMES["ob_pre"], f_ob_pre)
-    at(TIMES["ob"], f_ob_mode)
-    at(TIMES["ob_stop"], f_ob_stop)
-    at(TIMES["ob_hold"], f_ob_hold)
-    at(TIMES["kill"], f_kill)
+    def mv_leg(k, loss_fn, name):
+        s0 = MV["t0"] + k * MV["leg"]
+        sgn = 1.0 if k % 2 == 0 else -1.0  # out and back along north
+
+        def on():
+            st["hold_yaw"], st["vel"], st["ob"] = sim.yaw, (sgn * MV["vel"], 0.0, 0.0), True
+            ev("offboard_stream_on", T0 + s0)
+
+        at(s0, on)
+        at(s0 + MV["ob_pre"], f_ob_mode)
+        at(s0 + MV["loss"], loss_fn)
+        return s0 + MV["loss"]
+
+    if MOVING:
+        mv_leg(0, f_rc_off, "rc")
+        at(MV["t0"] + MV["loss"] + TIMES["rc_len"], f_rc_on)
+        mv_leg(1, f_hb_off, "hb")
+        at(MV["t0"] + MV["leg"] + MV["loss"] + TIMES["hb_len"], f_hb_on)
+        t3 = mv_leg(2, f_ob_stop, "ob")
+        at(t3 + 6.0, f_ob_hold)
+        at(t3 + 12.0, f_kill)
+    else:
+        at(TIMES["yaw"], f_yaw)
+        at(TIMES["xy"], f_xy)
+        at(TIMES["rc"], f_rc_off)
+        at(TIMES["rc"] + TIMES["rc_len"], f_rc_on)
+        at(TIMES["hb"], f_hb_off)
+        at(TIMES["hb"] + TIMES["hb_len"], f_hb_on)
+        at(TIMES["ob_pre"], f_ob_pre)
+        at(TIMES["ob"], f_ob_mode)
+        at(TIMES["ob_stop"], f_ob_stop)
+        at(TIMES["ob_hold"], f_ob_hold)
+        at(TIMES["kill"], f_kill)
     sim.run(None, until=lambda: not st["pend"], sp=tick, wall_timeout=120 + 150 / a.speed, what="g5_events")
     mark("kill_sent")
     sim.run(None, until=lambda: not sim.armed, sp=tick, wall_timeout=120 + 60 / a.speed, what="g5_disarm")
@@ -328,6 +355,10 @@ def check(out_dir):
 def main():
     if "--check" in sys.argv:
         return check(sys.argv[sys.argv.index("--check") + 1])
+    global MOVING
+    MOVING = "--moving" in sys.argv
+    if MOVING:
+        sys.argv.remove("--moving")
     import run_scenario as rs
     # S145 fix: event topics at every publication (interval 0) via the runner's logger_topics.txt, this flight only.
     # The runner writes "<entry> 0 0" per entry; telemetry_status is multi (mavlink instances 0..3): the newline
