@@ -137,44 +137,48 @@ void IndiAccelControl::reset(const Vector3f &f_b, float coll_cmd, float mean_u)
 	_thrust_prev = c;
 
 	_time = 0.f;
-	_a_ref_prev.zero();
+	_a_ff_prev.zero();
 	_j_diff.zero();
 	_lpf_j.reset(_j_diff);
 
 	for (int i = 0; i < 3; i++) {
-		_t_a_ref_prev[i] = 0.f;
-		_a_ref_prev_valid[i] = false;
+		_t_a_ff_prev[i] = 0.f;
+		_a_ff_prev_valid[i] = false;
 	}
 }
 
-void IndiAccelControl::updateJerkDifference(const Vector3f &a_ref, const bool a_valid[3], float dt)
+void IndiAccelControl::updateJerkDifference(const Vector3f &a_ff, const bool a_valid[3], float dt)
 {
 	_time += dt;
 
 	for (int i = 0; i < 3; i++) {
 		if (!a_valid[i]) {
 			// no reference: no jerk, forget the history so that the return does not create a spike
-			_a_ref_prev_valid[i] = false;
+			_a_ff_prev_valid[i] = false;
 			_j_diff(i) = 0.f;
 			continue;
 		}
 
-		if (!_a_ref_prev_valid[i]) {
-			_a_ref_prev(i) = a_ref(i);
-			_t_a_ref_prev[i] = _time;
-			_a_ref_prev_valid[i] = true;
+		if (!_a_ff_prev_valid[i]) {
+			_a_ff_prev(i) = a_ff(i);
+			_t_a_ff_prev[i] = _time;
+			_a_ff_prev_valid[i] = true;
 			_j_diff(i) = 0.f;
 			continue;
 		}
 
-		if (fabsf(a_ref(i) - _a_ref_prev(i)) > 0.f) {
-			const float dt_change = math::max(_time - _t_a_ref_prev[i], kMinDt);
-			_j_diff(i) = math::constrain((a_ref(i) - _a_ref_prev(i)) / dt_change, -kMaxJerk, kMaxJerk);
-			_a_ref_prev(i) = a_ref(i);
-			_t_a_ref_prev[i] = _time;
+		if (fabsf(a_ff(i) - _a_ff_prev(i)) > 0.f) {
+			const float dt_change = math::max(_time - _t_a_ff_prev[i], kMinDt);
+			_j_diff(i) = math::constrain((a_ff(i) - _a_ff_prev(i)) / dt_change, -kMaxJerk, kMaxJerk);
+			_a_ff_prev(i) = a_ff(i);
+			_t_a_ff_prev[i] = _time;
+
+		} else if ((_time - _t_a_ff_prev[i]) > kJerkHold) {
+			// unchanged for longer than the hold: the stream is constant (or has no jerk), not a step in progress
+			_j_diff(i) = 0.f;
 		}
 
-		// else: a_ref unchanged, hold the last difference
+		// else: a_ff unchanged for less than the hold, hold the last difference
 	}
 
 	// A setpoint stream slower than the loop makes the held difference a staircase: smooth it with the
@@ -266,16 +270,18 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 	Vector3f p_term{};
 	Vector3f v_ff{};
 	Vector3f a_ref{};
+	Vector3f a_ff{};
 	bool a_valid[3] {};
 
 	for (int i = 0; i < 3; i++) {
 		p_term(i) = (!in.accel_only && PX4_ISFINITE(in.p_ref(i))) ? _k_pos(i) * (in.p_ref(i) - in.p(i)) : 0.f;
 		v_ff(i) = (!in.accel_only && PX4_ISFINITE(in.v_ref(i))) ? in.v_ref(i) : 0.f;
-		a_valid[i] = PX4_ISFINITE(in.a_ref(i));
-		a_ref(i) = a_valid[i] ? in.a_ref(i) : 0.f;
+		a_ref(i) = PX4_ISFINITE(in.a_ref(i)) ? in.a_ref(i) : 0.f;
+		a_valid[i] = PX4_ISFINITE(in.a_ff(i));
+		a_ff(i) = a_valid[i] ? in.a_ff(i) : 0.f;
 	}
 
-	updateJerkDifference(a_ref, a_valid, in.dt);
+	updateJerkDifference(a_ff, a_valid, in.dt);
 
 	Vector3f j_used{};
 	bool from_diff = false;

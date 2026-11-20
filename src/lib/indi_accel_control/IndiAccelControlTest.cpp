@@ -641,7 +641,7 @@ TEST_F(IndiAccelControlTest, JerkBackwardDifferenceAndHold)
 	const float j_x[] = {0.f, 10.f, 10.f, 10.f, 7.f, 7.f, 7.f};
 
 	for (int i = 0; i < 7; i++) {
-		in.a_ref = Vector3f(a_x[i], 0.f, 0.f);
+		in.a_ff = Vector3f(a_x[i], 0.f, 0.f);
 		ASSERT_TRUE(_ctrl.update(in, out));
 		EXPECT_NEAR(out.j_used(0), j_x[i], 1e-3f) << "i " << i;
 		EXPECT_TRUE(out.jerk_from_difference);
@@ -649,13 +649,13 @@ TEST_F(IndiAccelControlTest, JerkBackwardDifferenceAndHold)
 	}
 
 	// clamp
-	in.a_ref = Vector3f(10.f, 0.f, 0.f);
+	in.a_ff = Vector3f(10.f, 0.f, 0.f);
 	ASSERT_TRUE(_ctrl.update(in, out));
 	EXPECT_NEAR(out.j_used(0), 50.f, 1e-6f);
 
 	// a provided j_ref has priority and is not flagged as difference
 	in.j_ref = Vector3f(1.f, 2.f, 3.f);
-	in.a_ref = Vector3f(11.f, 0.f, 0.f);
+	in.a_ff = Vector3f(11.f, 0.f, 0.f);
 	ASSERT_TRUE(_ctrl.update(in, out));
 	EXPECT_FALSE(out.jerk_from_difference);
 	EXPECT_NEAR(out.j_used(1), 2.f, 1e-6f);
@@ -663,15 +663,15 @@ TEST_F(IndiAccelControlTest, JerkBackwardDifferenceAndHold)
 	// reset clears the held difference, first cycle after has no history
 	in.j_ref = Vector3f(kNaN, kNaN, kNaN);
 	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
-	in.a_ref = Vector3f(20.f, 0.f, 0.f);
+	in.a_ff = Vector3f(20.f, 0.f, 0.f);
 	ASSERT_TRUE(_ctrl.update(in, out));
 	EXPECT_EQ(out.j_used(0), 0.f);
 
 	// NaN a_ref: zero jerk and no spike when it returns
-	in.a_ref = Vector3f(kNaN, kNaN, kNaN);
+	in.a_ff = Vector3f(kNaN, kNaN, kNaN);
 	ASSERT_TRUE(_ctrl.update(in, out));
 	EXPECT_EQ(out.j_used(0), 0.f);
-	in.a_ref = Vector3f(5.f, 0.f, 0.f);
+	in.a_ff = Vector3f(5.f, 0.f, 0.f);
 	ASSERT_TRUE(_ctrl.update(in, out));
 	EXPECT_EQ(out.j_used(0), 0.f);
 }
@@ -691,7 +691,7 @@ TEST_F(IndiAccelControlTest, JerkDifferenceFiltered)
 			a = 5.f * in.dt * i;
 		}
 
-		in.a_ref = Vector3f(a, 0.f, 0.f);
+		in.a_ff = Vector3f(a, 0.f, 0.f);
 		ASSERT_TRUE(_ctrl.update(in, out));
 
 		// the filter smooths the onset: the raw difference jumps to 5 at the first change
@@ -1310,4 +1310,103 @@ TEST_F(IndiAccelZOnlyTest, VerticalDemandNotLimitedByThreeAxisTiltLimit)
 	ASSERT_TRUE(_ctrl.update(in, out_3));
 	EXPECT_NEAR(tilt(out_3.t_c), 0.7f, 1e-4f); // the 3-axis path is tilt limited here
 	EXPECT_NEAR(out_z.t_c(2), out_3.t_c(2), 1e-4f);
+}
+
+// ---- A18: jerk feed-forward from the feed-forward acceleration only ----
+
+TEST_F(IndiAccelControlTest, A18CircleAnalyticBodyRates)
+{
+	// constant-speed circle, R = 3 m, w = 1 rad/s: a = -A (cos, sin), j = A w (sin, -cos), A = w^2 R = 3
+	// Reference: body rates from a finite difference of the desired z axis (flat vehicle, constant |t|):
+	// z_b' = w_b x z_b gives p = -z_b'.y_b, q = z_b'.x_b, independent of the library's j.y_b / c formula.
+	const float A = 3.f;
+	const float yaw = 0.4f;
+	auto z_b = [&](float th) {
+		const Vector3f t(-A * cosf(th), -A * sinf(th), -kG);
+		return Vector3f(-t / t.norm());
+	};
+
+	for (const float th : {0.f, 0.7f, 2.0f, 4.0f}) {
+		const Vector3f a(-A * cosf(th), -A * sinf(th), 0.f);
+		const Vector3f j(A * sinf(th), -A * cosf(th), 0.f);
+		IndiAccelControl::Input in = hoverInput();
+		in.a_ref = a;
+		in.a_ff = a;
+		in.j_ref = j;
+		in.yaw_ref = yaw;
+		IndiAccelControl::Output out;
+		_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
+		ASSERT_TRUE(_ctrl.update(in, out));
+
+		const float d = 1e-3f;
+		const Vector3f zdot = (z_b(th + d) - z_b(th - d)) / (2.f * d); // w = 1 rad/s
+		const Dcmf R(IndiAccelControl::bodyzToAttitude(-Vector3f(-A * cosf(th), -A * sinf(th), -kG), yaw));
+		const float p = -zdot.dot(R.col(1));
+		const float q = zdot.dot(R.col(0));
+		EXPECT_NEAR(out.omega_ff(0), p, 2e-3f) << "th " << th;
+		EXPECT_NEAR(out.omega_ff(1), q, 2e-3f) << "th " << th;
+		EXPECT_GT(fabsf(p) + fabsf(q), 0.1f); // the case is not trivially zero
+		EXPECT_EQ(out.omega_ff(2), 0.f);
+	}
+}
+
+TEST_F(IndiAccelControlTest, A18StepThenHoldGivesZeroJerk)
+{
+	_ctrl.setFilter(100.f, 10.f);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
+	IndiAccelControl::Input in = hoverInput();
+	in.j_ref = Vector3f(kNaN, kNaN, kNaN);
+	in.a_ff = Vector3f(0.f, 0.f, 0.f);
+	IndiAccelControl::Output out;
+	ASSERT_TRUE(_ctrl.update(in, out));
+
+	in.a_ff = Vector3f(1.f, 0.f, 0.f); // step: held difference
+	float pitch_during = 0.f;
+
+	for (int i = 0; i < 60; i++) {
+		ASSERT_TRUE(_ctrl.update(in, out));
+
+		if (i == 5) { pitch_during = out.omega_ff(1); }
+	}
+
+	EXPECT_LT(pitch_during, -0.1f);               // inside the hold: the pulse is there
+	EXPECT_NEAR(out.omega_ff(1), 0.f, 1e-3f);     // 0.6 s later: back to zero
+	EXPECT_NEAR(out.j_used(0), 0.f, 1e-3f);
+}
+
+TEST_F(IndiAccelControlTest, A18FeedbackOnlyChangeGivesNoJerk)
+{
+	IndiAccelControl::Input in = hoverInput();
+	in.j_ref = Vector3f(kNaN, kNaN, kNaN);
+	in.a_ff = Vector3f(0.5f, 0.f, 0.f);
+	IndiAccelControl::Output out;
+
+	for (int i = 0; i < 20; i++) {
+		in.a_ref = Vector3f(0.5f + 0.1f * static_cast<float>(i), 0.f, 0.f); // P/D part moves, a_ff does not
+		ASSERT_TRUE(_ctrl.update(in, out));
+		EXPECT_EQ(out.omega_ff(1), 0.f) << "i " << i;
+		EXPECT_EQ(out.j_used(0), 0.f);
+	}
+}
+
+TEST_F(IndiAccelControlTest, A18ResetMidRampGivesNoPulse)
+{
+	IndiAccelControl::Input in = hoverInput();
+	in.j_ref = Vector3f(kNaN, kNaN, kNaN);
+	IndiAccelControl::Output out;
+	float a = 0.f;
+
+	for (int i = 0; i < 20; i++) {
+		a = 0.05f * static_cast<float>(i); // 5 m/s^3 at 100 Hz
+		in.a_ff = Vector3f(a, 0.f, 0.f);
+		ASSERT_TRUE(_ctrl.update(in, out));
+	}
+
+	EXPECT_GT(fabsf(out.j_used(0)), 1.f); // ramp running
+
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
+	in.a_ff = Vector3f(a + 0.05f, 0.f, 0.f); // the ramp continues, but the history is gone
+	ASSERT_TRUE(_ctrl.update(in, out));
+	EXPECT_EQ(out.j_used(0), 0.f);
+	EXPECT_EQ(out.omega_ff(1), 0.f);
 }

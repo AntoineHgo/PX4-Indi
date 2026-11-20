@@ -71,6 +71,7 @@
 #include <uORB/SubscriptionCallback.hpp>
 #include <uORB/topics/hover_thrust_estimate.h>
 #include <uORB/topics/indi_pos_status.h>
+#include <uORB/topics/indi_rate_feedforward.h>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/trajectory_setpoint.h>
 #include <uORB/topics/vehicle_attitude_setpoint.h>
@@ -167,6 +168,7 @@ private:
 	orb_advert_t _mavlink_log_pub{nullptr};
 
 	uORB::PublicationData<takeoff_status_s>              _takeoff_status_pub{ORB_ID(takeoff_status)};
+	uORB::Publication<indi_rate_feedforward_s>           _indi_rate_ff_pub{ORB_ID(indi_rate_feedforward)};
 	uORB::Publication<indi_pos_status_s>                 _indi_pos_status_pub{ORB_ID(indi_pos_status)};
 	uORB::Publication<vehicle_attitude_setpoint_s>	     _vehicle_attitude_setpoint_pub{ORB_ID(vehicle_attitude_setpoint)};
 	uORB::Publication<vehicle_local_position_setpoint_s> _local_pos_sp_pub{ORB_ID(vehicle_local_position_setpoint)};	/**< vehicle local position setpoint publication */
@@ -316,6 +318,13 @@ private:
 	uint8_t _heading_reset_counter{0};
 	EkfResetDetector _indi_reset_detector{}; /**< T10: estimator reset seen by the INDI stage */
 	bool _indi_reset_pending{false};
+
+	// A18: feed-forward acceleration and jerk of the trajectory setpoint of this cycle (inputs of the jerk feed-forward),
+	// and the omega_ff the stage produced (valid only on an active INDI cycle), published every cycle
+	matrix::Vector3f _a_ff{NAN, NAN, NAN};
+	matrix::Vector3f _j_ff{NAN, NAN, NAN};
+	matrix::Vector3f _omega_ff_out{};
+	bool _omega_ff_valid{false};
 
 	perf_counter_t _cycle_perf{perf_alloc(PC_ELAPSED, MODULE_NAME": cycle time")};
 

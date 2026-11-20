@@ -48,6 +48,7 @@
 #include <uORB/topics/actuator_motors.h>
 #include <uORB/topics/actuator_torque_measured.h>
 #include <uORB/topics/control_allocator_status.h>
+#include <uORB/topics/indi_rate_feedforward.h>
 #include <uORB/topics/esc_status.h>
 #include <uORB/topics/indi_rate_status.h>
 #include <uORB/topics/manual_control_setpoint.h>
@@ -64,6 +65,7 @@
 
 #include "IndiInjection.hpp"
 #include "IndiMeasuredTorque.hpp"
+#include "IndiRateFeedforwardGate.hpp"
 #include "RateSetpointWatchdog.hpp"
 #include "TorqueStampTracker.hpp"
 
@@ -134,6 +136,7 @@ private:
 	uORB::Subscription _manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)};
 	uORB::Subscription _vehicle_control_mode_sub{ORB_ID(vehicle_control_mode)};
 	uORB::Subscription _vehicle_land_detected_sub{ORB_ID(vehicle_land_detected)};
+	uORB::Subscription _indi_rate_feedforward_sub{ORB_ID(indi_rate_feedforward)};
 	uORB::Subscription _vehicle_rates_setpoint_sub{ORB_ID(vehicle_rates_setpoint)};
 	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
 	uORB::Subscription _vehicle_torque_setpoint_sub{ORB_ID(vehicle_torque_setpoint)};
@@ -151,6 +154,9 @@ private:
 
 	vehicle_control_mode_s	_vehicle_control_mode{};
 	vehicle_status_s	_vehicle_status{};
+
+	indi_rate_feedforward_s _omega_ff_msg{}; ///< last indi_rate_feedforward from the outer loop (A18)
+	matrix::Vector3f _omega_ff_applied{};    ///< gated omega_ff added to the rate setpoint this cycle, zero when gated off
 
 	RateSetpointWatchdog _rate_sp_watchdog;
 	hrt_abstime _last_rates_sp_time{0}; ///< timestamp of the last received vehicle_rates_setpoint

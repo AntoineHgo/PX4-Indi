@@ -87,6 +87,7 @@ void LoggedTopics::add_default_topics()
 	add_topic("home_position");
 	add_topic("hover_thrust_estimate", 100);
 	add_optional_topic("indi_pos_status");
+	add_optional_topic("indi_rate_feedforward");
 	add_optional_topic("indi_rate_status");
 	add_topic("input_rc", 500);
 	add_optional_topic("internal_combustion_engine_control", 10);

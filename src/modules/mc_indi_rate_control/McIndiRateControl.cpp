@@ -247,7 +247,8 @@ McIndiRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f &ang
 	step_in.timestamp_sample = timestamp_sample;
 	step_in.dt = dt;
 	IndiInjectionStepOut step{};
-	runIndiInjectionStep(_indi, _injection, step_in, rates, _rates_setpoint, angular_accel, torque_allocated_prev, step);
+	runIndiInjectionStep(_indi, _injection, step_in, rates, _rates_setpoint + _omega_ff_applied, angular_accel, torque_allocated_prev,
+			     step);
 
 	// u = c + d: the published setpoint and the stored previous setpoint, so every feedback path closes through u
 	const Vector3f torque_setpoint_pre_inject = step.torque_pre_inject;
@@ -380,12 +381,27 @@ McIndiRateControl::Run()
 							_vehicle_control_mode.flag_armed, !acro_branch && _vehicle_control_mode.flag_control_rates_enabled);
 		_rate_sp_stale = wd.stale;
 
+		// A18: outer-loop jerk feed-forward (roll, pitch), added to the setpoint at use, never stored in it.
+		// Evaluated before the source check: a gate flip steps the effective setpoint, so it restarts the lead too
+		_indi_rate_feedforward_sub.update(&_omega_ff_msg);
+		_omega_ff_applied.zero();
+
+		const bool omega_ff_on = IndiRateFeedforwardGate::allow(_omega_ff_msg.valid, _omega_ff_msg.timestamp,
+					 hrt_absolute_time(), _landed, acro_branch, wd.stale)
+					 && PX4_ISFINITE(_omega_ff_msg.omega_ff[0]) && PX4_ISFINITE(_omega_ff_msg.omega_ff[1]);
+
+		if (omega_ff_on) {
+			_omega_ff_applied(0) = _omega_ff_msg.omega_ff[0];
+			_omega_ff_applied(1) = _omega_ff_msg.omega_ff[1];
+		}
+
 		// the rate setpoint source changed (control mode flags, setpoint timeout or recovery): restart its derivative
 		const uint8_t sp_source = (uint8_t)(_vehicle_control_mode.flag_control_attitude_enabled << 0)
 					  | (_vehicle_control_mode.flag_control_rates_enabled << 1)
 					  | (_vehicle_control_mode.flag_control_manual_enabled << 2)
 					  | (_vehicle_control_mode.flag_control_offboard_enabled << 3)
-					  | (wd.stale << 4);
+					  | (wd.stale << 4)
+					  | (omega_ff_on << 5);
 
 		if (sp_source != _sp_source_prev) {
 			_indi.resetSetpointLead();
@@ -395,6 +411,7 @@ McIndiRateControl::Run()
 		if (wd.zero_rates) {
 			_rates_setpoint.zero();
 		}
+
 
 		if (wd.warn) {
 			PX4_WARN("rate setpoint timeout, rates zeroed, thrust held");

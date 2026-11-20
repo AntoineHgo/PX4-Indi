@@ -54,7 +54,7 @@ McIndiPosControl::McIndiPosControl(bool vtol) :
 	_tilt_limit_slew_rate.setSlewRate(.2f);
 	_takeoff_status_pub.advertise();
 	_w_max_handle = param_find("MC_INDI_W_MAX");
-	_indi.setFeedforward(false); // A6
+	_indi.setFeedforward(true); // A18: jerk -> body rate feed-forward, consumed by mc_indi_rate_control
 }
 
 McIndiPosControl::~McIndiPosControl()
@@ -100,6 +100,8 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 	constexpr hrt_abstime kEscMaxAge = 100_ms;
 	constexpr hrt_abstime kAllocMaxAge = 200_ms;
 	using matrix::Vector3f;
+
+	_omega_ff_valid = false; // set by an active INDI cycle below
 
 	// attitude and specific force were polled before PositionControl::update (pollStageInputs): the stage uses the
 	// samples its freshness gate saw, so the integrator reset and can_run agree within a cycle
@@ -264,6 +266,8 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 		in.mean_u_valid = fresh_esc && !model_acc;
 		in.alloc_saturated = _alloc_saturated && (_alloc_time != 0) && (age(_alloc_time) <= kAllocMaxAge);
 		in.a_ref = a_ref;
+		in.a_ff = _a_ff; // feed-forward only: the jerk difference must not see the P/D feedback or the injection
+		in.j_ref = _j_ff;
 		in.yaw_ref = yaw_sp;
 		in.dt = dt;
 		IndiAccelControl::Output out;
@@ -292,6 +296,10 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 			out.t_c.copyTo(status.t_c);
 			t_c_applied.copyTo(status.t_c_applied);
 			out.omega_ff.copyTo(status.omega_ff);
+			_omega_ff_out = out.omega_ff;
+			// A18: only the full INDI stage on the measured force in flight (not ramp/ground, landed, z only)
+			_omega_ff_valid = (mode == StageMode::Indi) && !model_force && flying && !_vehicle_land_detected.landed
+					  && !in.z_only && out.omega_ff.isAllFinite();
 			status.mean_u = _mean_u;
 			status.mean_u_valid = in.mean_u_valid;
 			status.stage_mode = static_cast<uint8_t>(mode);
@@ -1021,6 +1029,15 @@ void McIndiPosControl::Run()
 			vehicle_attitude_setpoint_s attitude_setpoint{};
 			_control.getAttitudeSetpoint(attitude_setpoint);
 
+			// A18 inputs: the trajectory setpoint the position controller used as feed-forward (after the takeoff and
+			// failsafe edits above). Jerk: finite and not all zero, else NaN (MAVLink offboard has no jerk: finite 0).
+			_a_ff = matrix::Vector3f(_setpoint.acceleration);
+			_j_ff = matrix::Vector3f(_setpoint.jerk);
+
+			if (!_j_ff.isAllFinite() || (_j_ff.norm_squared() <= 0.f)) {
+				_j_ff = matrix::Vector3f(NAN, NAN, NAN);
+			}
+
 			runIndiStage(dt, now, want_indi, model_force, flying, _tilt_limit_slew_rate.getState(), ht, local_pos_sp, attitude_setpoint);
 
 			// zero the stock integrator only on cycles where the INDI stage actually ran (this cycle)
@@ -1037,6 +1054,17 @@ void McIndiPosControl::Run()
 			// Publish attitude setpoint output
 			attitude_setpoint.timestamp = hrt_absolute_time();
 			_vehicle_attitude_setpoint_pub.publish(attitude_setpoint);
+
+			// A18: rate feed-forward belonging to this attitude setpoint (invalid unless the INDI stage ran)
+			indi_rate_feedforward_s rate_ff{};
+			rate_ff.timestamp = attitude_setpoint.timestamp;
+			rate_ff.valid = _omega_ff_valid;
+
+			if (_omega_ff_valid) {
+				_omega_ff_out.copyTo(rate_ff.omega_ff);
+			}
+
+			_indi_rate_ff_pub.publish(rate_ff);
 
 		} else {
 			// an update is necessary here because otherwise the takeoff state doesn't get skipped with non-altitude-controlled modes

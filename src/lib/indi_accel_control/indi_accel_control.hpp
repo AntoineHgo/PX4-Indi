@@ -71,6 +71,8 @@ public:
 	static constexpr float kMaxJerk = 50.f;
 	/// Clamp of the rate feedforward per axis in rad/s
 	static constexpr float kMaxOmegaFf = 3.f;
+	/// A feed-forward acceleration unchanged for longer than this (s) has a zero jerk difference
+	static constexpr float kJerkHold = 0.1f;
 	/// Below this thrust magnitude (m/s^2) the rate feedforward is zero
 	static constexpr float kMinThrustForFf = 1.f;
 	/// Smallest accepted upward vertical component of the commanded specific thrust (m/s^2)
@@ -97,7 +99,9 @@ public:
 		matrix::Vector3f p_ref{NAN, NAN, NAN};  ///< NaN component: no position term on that axis
 		matrix::Vector3f v_ref{NAN, NAN, NAN};  ///< NaN component: 0 feedforward on that axis
 		matrix::Vector3f a_ref{NAN, NAN, NAN};  ///< NaN component: 0
-		matrix::Vector3f j_ref{NAN, NAN, NAN};  ///< NaN component: backward difference of a_ref
+		matrix::Vector3f j_ref{NAN, NAN, NAN};  ///< NaN component: backward difference of a_ff
+		/// feed-forward acceleration only (no feedback), source of the jerk difference. NaN component: no jerk, history forgotten
+		matrix::Vector3f a_ff{NAN, NAN, NAN};
 		float yaw_ref{NAN};        ///< NaN: keep the yaw of q
 		float yawspeed_ref{NAN};   ///< NaN: 0
 		float dt{0.f};             ///< time since the previous call (s), [kMinDt, kMaxDt]
@@ -118,7 +122,7 @@ public:
 		matrix::Vector3f t_f{};               ///< measured (filtered) specific thrust vector
 		matrix::Vector3f t_c{};               ///< commanded specific thrust vector after saturation
 		matrix::Vector3f j_used{};            ///< jerk reference used for the feedforward
-		bool jerk_from_difference{false};     ///< true if any axis of j_used came from the a_ref difference
+		bool jerk_from_difference{false};     ///< true if any axis of j_used came from the a_ff difference
 		float blend{0.f};                     ///< collective blend state b (u units)
 		bool blend_frozen{false};             ///< b was held this cycle (hold flag, invalid telemetry, clamp)
 	};
@@ -207,8 +211,8 @@ private:
 		return PX4_ISFINITE(v(0)) && PX4_ISFINITE(v(1)) && PX4_ISFINITE(v(2));
 	}
 
-	/// jerk reference from the a_ref difference, per axis, holds between changes of a_ref, then low-pass filtered
-	void updateJerkDifference(const matrix::Vector3f &a_ref, const bool a_valid[3], float dt);
+	/// jerk reference from the a_ff difference, per axis, holds between changes of a_ff (at most kJerkHold), then low-pass filtered
+	void updateJerkDifference(const matrix::Vector3f &a_ff, const bool a_valid[3], float dt);
 
 	// configuration
 	matrix::Vector3f _k_pos{0.95f, 0.95f, 1.f};
@@ -244,9 +248,9 @@ private:
 
 	// jerk backward difference state
 	float _time{0.f};
-	matrix::Vector3f _a_ref_prev{};
-	float _t_a_ref_prev[3] {};
-	bool _a_ref_prev_valid[3] {};
+	matrix::Vector3f _a_ff_prev{};
+	float _t_a_ff_prev[3] {};
+	bool _a_ff_prev_valid[3] {};
 	matrix::Vector3f _j_diff{};
 	math::LowPassFilter2p<matrix::Vector3f> _lpf_j{};
 	matrix::Vector3f _j_diff_f{};	///< _j_diff low-pass filtered, used as the jerk reference

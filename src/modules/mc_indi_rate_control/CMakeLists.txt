@@ -47,6 +47,8 @@ target_include_directories(IndiInjectionStep PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(IndiInjectionStep PUBLIC IndiInjection IndiRateControl)
 
 px4_add_library(IndiSafety
+	IndiRateFeedforwardGate.cpp
+	IndiRateFeedforwardGate.hpp
 	RateSetpointWatchdog.cpp
 	RateSetpointWatchdog.hpp
 	TorqueStampTracker.cpp
@@ -87,5 +89,6 @@ px4_add_module(
 px4_add_unit_gtest(SRC IndiInjectionTest.cpp LINKLIBS IndiInjection)
 px4_add_functional_gtest(SRC IndiMeasuredTorqueTest.cpp LINKLIBS IndiMeasuredTorque VehicleActuatorEffectiveness)
 px4_add_unit_gtest(SRC IndiRateSetpointWatchdogTest.cpp LINKLIBS IndiSafety)
+px4_add_unit_gtest(SRC IndiRateFeedforwardGateTest.cpp LINKLIBS IndiSafety)
 px4_add_unit_gtest(SRC IndiTorqueStampTrackerTest.cpp LINKLIBS IndiSafety)
 px4_add_unit_gtest(SRC IndiInjectionStepTest.cpp LINKLIBS IndiInjectionStep)
