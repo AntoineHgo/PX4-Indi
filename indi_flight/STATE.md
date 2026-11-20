@@ -11,8 +11,11 @@
 History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrations: read before sizing a brief).
 1. G5.4 DONE as probe S135: 9/9 runs (auto_tour, auto_land10, auto_rtl20 x3 seeds) all limits PASS
    (results/g5_probe_s135/README.md; checker auto_smoke_check.py g54_*, keyed g54_key2.py). Re-fly at freeze.
-2. G5.1 acro probe 3 seeds incl. A-46 closing test (t9_step_check.py), then G5.1-G5.3, G5.5, G5.7 3-seed probes with existing scenarios (GATES 5b row map); checkers offb_vel_check.py,
-   passthrough_check.py (need self-tests, G1), auto_smoke_check.py for hold/mission.
+2. G5.1 (stabilized/acro stick steps, 100 deg/s): find or add a stick-step segment (rate_step_* is offboard rate
+   mode, not a stick); fly 3 seeds each; acro rate error RMS + stabilized level-after-release checker (self-test).
+   A-46 CLOSED S135 (acro edge 4.6-6.0 % < 10 %, stick_zsine_o6 x3). Then G5.2, G5.3, G5.5, G5.7 3-seed probes with
+   existing scenarios (GATES 5b row map); checkers offb_vel_check.py, passthrough_check.py (need self-tests, G1),
+   auto_smoke_check.py for hold/mission.
 4. G5.6/5.8/5.9/5.10/5.11: build the missing injectors one at a time (G1.5 check each), then fly the rows.
 5. G7 (deferred, stage 7): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site (K128 MAJOR), checker
    self-tests for passthrough_check/offb_vel_check.
@@ -34,7 +37,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Notes
 - pretest_gate only on stationary scenarios, or end its window at the fault (S98). SIM_GZ_SEED + SIM_GZ_IMU_NSC hooks
   (accel scale UNVERIFIED, full-rate accel log before G4). D-G7-HARNESS decided, impl stage 7. M3 PT-change UNVERIFIED.
-- Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36, A-39. A-46 (flight-edge thrust step) -> next action 3.
+- Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36, A-39.
 - Stabilized stick centre = HTE; runner thr0 honours HTE valid flag, fallback MPC_THR_HOVER.
 - Check script bench/attitude_break_check.py; ratesp_csv.py keyed; run_validity.py (W_MAX check) over cited sets.
 - Runner open: MC_INDI_EN 1 in a params file does not start the module, only MC_RATE_CTL_TYPE 1 does (accept
@@ -49,7 +52,6 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S135 | G5.1 acro probe stick_zsine_o6 s1-3 + t9_step_check (A-46) | bash bg | results/g5_probe_s135/stick_zsine_o6_s* | run_acro.sh (skips done), then t9_step_check.py per ulg |
 S134 F-7 DONE b9fb83c4a0 (keyed K134: 0 BLOCKING, MAJORs floor 0 before flight + arm/disarm state reset FIXED; gtests
   8/8 suites, ArmEdges test break-checked; open MINORs: ground xy tilt, IndiAccelControl lib test not run after
   resetBlend, reset test checks the decision only -> stage-7 harness). Pre-fix smoke (1 seed): edge step 4.7 % hover,

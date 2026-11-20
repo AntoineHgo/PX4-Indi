@@ -23,3 +23,10 @@ Result: 9/9 runs, every GATES 5/5b G5.4 limit PASS, all runs exit ok (per-run ta
 Notes: bounce reads 0.200 m by construction (entry band), the test is "no fall > 0.3 m below target", passes. Re-lift reads
 0.05 m = touchdown anchor height, no re-lift. ground_contact flags ~0.43 s after truth touchdown, hence the truth anchor.
 Not covered here: noise = typical profile (G4, re-fly at freeze); A-46 (ACRO edge) goes with the G5.1 acro probe.
+
+## A-46 closing test: ACRO take-off edge (stick_zsine_o6 --stick-mode acro, s133_passthrough params, seeds 1-3, run_acro.sh)
+`bench/t9_step_check.py` (max consecutive-sample vehicle_thrust_setpoint step around takeoff_state 4->5): 4.60 %, 5.96 %,
+5.65 % of hover (S133 pre-F-7: 6.1 %), all < 10 % (G5.4 limit, stricter per-sample form). The removed seam (HandoverBlend,
+hover-thrust sync) was not the cause; the step is the ramp-end reference change of the INDI law, bounded. Landing-side
+5->3 / 3->1 steps (35 %, 99 % hover) are on the ground after touchdown (landed, motors to idle), outside G5.4.
+This scenario is a z-sine, NOT the G5.1 acro 100 deg/s rate steps: G5.1 is still unflown.
