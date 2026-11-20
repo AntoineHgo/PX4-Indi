@@ -409,6 +409,19 @@ vz over the final descent within +-20 % of MPC_LAND_SPEED; disarm <= COM_DISARM_
   altitude hold on the throttle only; roll/pitch/yaw sticks are the step table alone). Configuration: identified
   gains (`MC_INDI_ID_OK 1`). Recorded: with `MC_INDI_ID_OK 0` (pre-identification, 0.5 x K) the acro roll/pitch
   RMS was 13.6/13.0 deg/s, explained by the halved bandwidth (t90 208 ms = 2.3/(0.5 x 20 rad/s)).
+- G5.2 exact test (S138, before its first test; the row did not state stick timing, reference or settle band).
+  Scenario `stick_pos_steps` (new segment table: no stick z/xy step existed; `stick_zsine_o6` is a sine), stack and
+  config as G5.1 (identified gains), stick model as G5.1, no `--stick-pilot` (the throttle stick is the z demand).
+  After 3 s settle: z step = throttle stick at the value giving vz 1.0 m/s up (`MPC_Z_VEL_MAX_UP` 3, expo inverted by
+  `stick_profile`) for 2.0 s, then centred for 6.0 s. posctl only, then x step = pitch stick at the value giving
+  3.0 m/s forward (`MPC_VEL_MANUAL`) held until 3.0 m of truth travel from the step start or 2.5 s, then centred for
+  6.0 s. Flown with `--stick-mode altctl` (z step only) and `--stick-mode posctl` (z and x), 3 seeds each.
+  Per step: start = truth position at the stick edge; final = mean truth position over the last 1.0 s of the centred
+  window; step size d = |final - start| (reported; d < 1.0 m z or < 2.0 m x is a scenario fault, run invalid).
+  Overshoot = max truth excursion beyond final in the step direction after the release edge; pass z <= 0.3 m,
+  x <= 0.5 m. Settle = time from release to the last exit of |truth - final| <= 2 % of d; pass <= 4.0 s. Off-axis
+  (y, and z during the x step) truth excursion reported, not gated. No LOC as G5.1. Checker `bench/g52_check.py`
+  (self-test, second key).
 
 ### 6. G6 Defaults and identification from a wrong start
 

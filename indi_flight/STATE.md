@@ -12,13 +12,15 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
 1. G5.4 DONE as probe S135: 9/9 runs (auto_tour, auto_land10, auto_rtl20 x3 seeds) all limits PASS
    (results/g5_probe_s135/README.md; checker auto_smoke_check.py g54_*, keyed g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
-3. G5.2, G5.3, G5.5, G5.7 3-seed probes with
-   existing scenarios (GATES 5b row map); checkers offb_vel_check.py, passthrough_check.py (need self-tests, G1),
-   auto_smoke_check.py for hold/mission.
-4. G5.6/5.8/5.9/5.10/5.11: build the missing injectors one at a time (G1.5 check each), then fly the rows.
+3. G5.2 exact test written S138 (GATES 5b); A138 builds stick_pos_steps + g52_check.py, pre-test, 3-seed probe
+   (output results/g5_g52_s138/README.md). Then G5.3, G5.5, G5.7 merged into one 3-seed probe session (RC138);
+   self-tests for offb_vel_check.py / passthrough_check.py written for these rows now (RC138, not G7).
+4. G5.6/5.8/5.9/5.11: ONE shared event injector (maybe_landed, kill, EKF reset, RC/link loss), one G1.5 check
+   (RC138). G5.10 flown with the existing G3 thrust-limit/motor_fault hooks (no new injector).
+4b. Audit (no flights, one cheap agent): every inherited archive default vs its G2 cell (RC138, D-KY lesson).
 5. G7 (deferred, stage 7): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site (K128 MAJOR), checker
    self-tests for passthrough_check/offb_vel_check.
-Route check next: S138 (RC133 filed, accepted except PID pass line, F-5).
+Route check next: S143 (RC138 filed, cuts accepted: items 3, 4, 4b).
 Rule (RC64/RC74): 1 session per inner-loop law change; no anomaly chase unless a gate test fails.
 G3/G5 batches before the stage-6 freeze are PROBES (RC113). G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1.
 Offline G2 todo before stage 6: outer-cell margin key, linear outer-loop model, A-36/A-39 bound, 267 Hz rows
