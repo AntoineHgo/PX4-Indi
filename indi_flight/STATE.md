@@ -66,7 +66,8 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none in flight | - | results/g5_events_s144/README.md | python3 bench/g5_events.py (see README) |
+| S145 | G5.8/G5.9 hover rows, seeds 1-3 serial | bash bg | results/g5_events_s145/s{1,2,3} | cmd in results/g5_events_s144/README.md, --out .../g5_events_s145/sN |
+| S145 | G5.8/G5.9 row checker (hover) | sonnet | bench/g5_rows_check.py + tests | rerun brief from LEDGER S145 |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),

@@ -225,3 +225,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S144 | A144a fix ekf_yaw/rc_loss injector defects + pre-test | sonnet | results/g5_events_s144/README.md | done, 60 calls (brief said 20), 2 flights |
 | S144 | A144b key2 injector fix | sonnet | results/g5_events_s144/key2.md | done, 13 calls, AGREE fixes, MAJOR timing ref |
 | S144 | A144c checker applied time from firmware log | sonnet | bench/g5_events.py 3944e8e367 | done, 9 calls, MAJOR closed |
+| S145 | A145a G5.8/G5.9 row checker (hover), brief: score rows from g5_events logs, self-test | sonnet | bench/g5_rows_check.py | running |
