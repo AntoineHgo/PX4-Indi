@@ -75,7 +75,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S140 | G5.5 matched-GNSS re-fly (bash, no agent) | - | results/g5_g55_s140_gnss/batch_status.txt | run_batch.sh "<rows>" "<seeds>" (skips done) |
+| - | none (S140 re-fly s1 done; seeds 2-3 and o3/o4/o7 wait for A18) | - | results/g5_g55_s140_gnss/README.md | run_batch.sh "<rows>" "<seeds>" (skips done) |
 S139: G5.3/G5.5/G5.7 exact tests committed dc4028652c (GATES 5b).
 
 ## Open problems
