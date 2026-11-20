@@ -74,8 +74,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | - | none (S141 A18 probe done) | - | results/g5_g55_s141_a18/README.md | run_batch.sh "<rows>" "<seeds>" |
-| A143a | route check 143 | sonnet | design/route_check_143.md | relaunch same brief |
-| A143b | G5.5 o1 lag chain split per stage (item 0c, D-A18-SOURCE evidence) | sonnet | results/g5_g55_s141_a18/lag_chain_s143.md | re-brief from that file |
+| A143c | G5.5 o1 drag-FF probe (D-A18-SOURCE test, runner flag, 1 flight) | sonnet | results/g5_g55_s143_drag/README.md | re-brief from that README |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),

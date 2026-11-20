@@ -760,3 +760,18 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Overturn: A18 on o1 gives < 0.1 m RMS gain (above the same-seed spread) or breaks a G5 mode edge.
 - S141 outcome: A18 implemented (7e58bea57c). o1 s1 0.776 -> 0.590 m, o2 0.933 -> 0.793 m: gain > 0.1 m, kept. Rows still
   FAIL; residual lag 140 ms. Overturn of the G5.5 o1-o4/o7 limits is NOT considered; next: split the lag.
+
+## D-A18-SOURCE (S143, 2026-11-20): G5.5 residual lag re-opens the A18 feed-forward model (drag), not the jerk source
+- Evidence: results/g5_g55_s141_a18/lag_chain_s143.md (phase fit at w, self-test 100.1 ms on 100 ms): setpoint
+  arrives undelayed (3 ms); a_c already lags the analytic accel 97/129 ms (large/small axis); attitude+thrust+plant
+  add only ~20-40 ms. Truth fit a = 1.015 tilt_accel - 0.514 v (sim rotorDragCoefficient): the drag term is ~0.6 of
+  the accel amplitude at w 0.85 and 90 deg out of phase. The flatness FF (a_ff, omega_ff = j/g) has no drag, so the
+  stock vel/pos feedback carries it -> lag. omega_ff also misses d(drag)/dt = D*a (explains its misalignment).
+- Route check 143 suggestion "runner sends trajectory jerk": not possible, MAVLink offboard has no jerk field.
+- Decision: test the hypothesis first with one probe flight, firmware-free: runner adds D*v_ref to the sent accel
+  (probe-only flag, never gate evidence). If o1 RMS drops by > 0.1 m: add a linear rotor-drag term to the module FF
+  (a_ff + D v_ref, omega_ff from j + D a_ref; Faessler 2018), D a physical parameter identified from cruise data
+  (body-xy specific force vs body velocity), default 0 = today's behaviour; INDI increment absorbs the residual.
+- Alternatives: raise stock xy vel/pos gains (shortens, does not remove; tuning); trajectory jerk via uXRCE-DDS
+  (does not fix the drag gap); accept FAIL with data.
+- Overturn: probe gain < 0.1 m, or D identified from data differs from the truth fit by > 30 %.
