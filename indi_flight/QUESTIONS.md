@@ -36,3 +36,8 @@ taken from the firmware log, command events are 1.75-4.25 ms after send (ekf_yaw
 (rc/link/offboard loss) the firmware has no "applied" instant other than the failsafe flag, which includes the
 timeout; the G1.5 1-step check cannot apply there and those G1.5 FAIL lines are by construction, not evidence. The
 G5.8 limit (failsafe <= 1 s after timeout) is checked as written. Option (a) A covers this; still not blocking.
+Q8 addendum 2 (S146): G5.9 "motors 0 within one command period" referenced to manual_control_switches.kill_switch
+measures 5.00 ms (FAIL vs 1.25 ms, fix_s2), all of it stock commander latency switch -> actuator_armed.kill; outputs
+are 0 in the same sample as the kill flag (0.00 ms). Options: A [recommended] reference = actuator_armed.kill rise
+(the instant the control stack is told; commander latency reported, O-11 forbids changing it); B keep the switch
+reference: G5.9a FAIL recorded as a stock limit. Meanwhile: both numbers reported, row counted FAIL. Not blocking.

@@ -68,7 +68,8 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S145 | A145b test-defect fix (full-rate log of vehicle_status/failsafe_flags/telemetry_status/actuator_outputs; 9b state set) + 1 pre-test | sonnet | results/g5_events_s145/fix.md | if absent: re-brief from README "Test defects" |
+| S146 | G5.8/G5.9 re-fly seeds 1, 3 (s2 = pre-test fix_s2, same config) | bash bg | results/g5_events_s145/fix_s{1,3} | README s144 command, --params results/g5_events_s145/params.params, --out .../fix_sN |
+| S146 | key2 of g5_rows_check on fix_s2 (independent re-impl) | sonnet | bench/g5_rows_key2.py, results/g5_events_s145/key2_rows.md | re-brief: GATES G5.8/G5.9 text, no access to g5_rows_check.py |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
