@@ -228,4 +228,5 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S145 | A145a G5.8/G5.9 row checker (hover), brief: score rows from g5_events logs, self-test | sonnet | bench/g5_rows_check.py | done, 12 calls, 6 self-tests, 3 test defects found |
 | S145 | A145b fix logging rates + 9b state set + 1 pre-test | sonnet | results/g5_events_s145/fix.md | cut at session end: code + fix_s2 flown, fix.md not written; finished S146 (2 checker defects fixed by orchestrator) |
 | S146 | A146a key2 of g5_rows_check G5.8/G5.9 on fix_s2 (no access to checker) | sonnet | bench/g5_rows_key2.py, results/g5_events_s145/key2_rows.md | done, 10 calls, AGREE all rows, 9b weak-evidence caveat |
-| S146 | A146b G5.8 3 m/s variant (--moving) + 1 pre-test | sonnet | results/g5_events_s146_move/README.md | running |
+| S146 | A146b G5.8 3 m/s variant (--moving) + 1 pre-test | sonnet | results/g5_events_s146_move/README.md | done, 14 calls, entry PASS, excursion def + link window findings -> Q8 add. 3 |
+| S146 | A146c key2 review of --moving diff | sonnet | results/g5_events_s146_move/key2_moving.md | running |

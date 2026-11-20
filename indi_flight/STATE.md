@@ -14,7 +14,9 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    cause = stock PositionControl feedback producing a_c (D-outer-arch base A). Re-fly at freeze; if still FAIL, owner Q.
    S146 (results/g5_events_s145/README.md, fix_s1-3, key2 AGREES): G5.8 hover PASS 3/3; G5.9 b/c/d PASS 3/3;
    G5.9a FAIL 3/3 = stock commander latency switch->actuator_armed.kill 3.75-10 ms, outputs 0 at the flag (Q8 add. 2).
-   NEXT: G5.8 3 m/s variant (agent in flight; then 3 seeds + key2 if checker changed). Then G5.6/G5.10/G5.11 probes.
+   G5.8 3 m/s pre-test S146 (results/g5_events_s146_move): entry PASS, excursion metric undefined at 3 m/s and
+   link_loss receiver window 2.25 s -> Q8 addendum 3 (not blocking). NEXT: act on Q8 answers (3 m/s 3 seeds once
+   the excursion definition is answered); meanwhile G5.6/G5.10/G5.11 probes.
 1. G5.4 probe PASS 9/9 S135 (g5_probe_s135; auto_smoke_check.py, g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
 3. G5.2 DONE as probe S138: 6/6 PASS altctl/posctl (results/g5_g52_s138, g52_check keyed AGREE). Re-fly at freeze.
@@ -67,7 +69,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S146 | G5.8 3 m/s variant (--moving in g5_events.py) + 1 pre-test flight | sonnet | results/g5_events_s146_move/README.md | if absent/partial: check git diff bench/g5_events.py, re-brief |
+| S146 | key2 review of --moving diff (71f4be9ece) | sonnet | results/g5_events_s146_move/key2_moving.md | if absent: re-brief (hover path unchanged? 3 m/s at loss?) |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
