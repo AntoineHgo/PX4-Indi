@@ -955,3 +955,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
   Q7 ANSWER (owner, 2026-11-20): A. G5.7 validity = truth speed >= 1.5 m/s at the 4 edges that leave posctl; all 10 edges
   stay gated with unchanged limits. Next session: write into GATES 5b, re-score results/g5_g57_s139, close Q7.
 - S140 (2026-11-20): Q7 closed (rule A in GATES 5b). G5.5 S139 probe scored + committed (o5/o6/offb PASS, o1-o4/o7 horiz FAIL 0.66-1.36 m, PID o1 1.04 m); G5.3 mission PASS 3/3. Cause: GNSS delay mismatch (sim 0 ms vs EKF 110 ms) in all G5 probes; matched re-fly started. Gate progress: G5.3 complete (probe), G5.5 scored and cause found, G5.7 verdict official (FAIL 2/3).
+- S140 cont.: matched-GNSS re-fly s1 (results/g5_g55_s140_gnss): estimator fixed, o5/o6/offb PASS, o1 0.78 m / o2 0.93 m FAIL on 160 ms controller lag (jerk FF off); D-A18-REOPEN written; GATES 5b nominal GNSS set-up fix. Gate progress: G5.5 cause isolated to A18 (next: design note + implementation).
