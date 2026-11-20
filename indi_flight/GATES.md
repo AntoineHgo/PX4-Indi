@@ -450,6 +450,10 @@ vz over the final descent within +-20 % of MPC_LAND_SPEED; disarm <= COM_DISARM_
   setpoint itself legitimately changes at a mode switch (e.g. hold brakes from 3 m/s); the first 0.3 s (about two
   attitude time constants, 1 / MC_ROLL_P 6.5 = 0.15 s) is the rise, reported (setpoint step, peak error), not
   gated, as in G5.1. No LOC as G5.1. 3 seeds. Checker `bench/g57_check.py` (self-test; second key at the freeze).
+  AMENDED S140 (Q7, owner answer A, 2026-11-20, after the first test; defect in the test, not a threshold change):
+  HOLD brakes by design, so the speed rule above cannot be met. Validity = truth horizontal speed >= 1.5 m/s at each
+  of the 4 edges that leave posctl (P->A, P->S, P->H, P->A); all 10 edges stay gated with unchanged limits
+  (`g57_check.py --validity leaveP`).
 
 ### 6. G6 Defaults and identification from a wrong start
 

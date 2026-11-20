@@ -59,7 +59,7 @@ Summaries: `g57_summary.txt`, `g53_hold_summary.txt`; per-run json in each run d
 
 ## S139 re-score and lag comparison
 Tool: `bench/g57_check.py --validity leaveP` (default rule unchanged; json `g57_check_leaveP.json` per run; self-test `test_validity_leaveP`, all tests pass). Validity = states ok and truth speed >= 1.5 m/s at the 4 edges leaving posctl (e1 P>A, e3 P>S, e5 P>H, e7 P>A: 2.4, 2.3, ... m/s); thrust (20 % hover) and tilt (5 deg over [e+0.3, e+1.0]) stay gated on all 10 edges.
-Verdicts under leaveP: s1 PASS (max H>P tilt 4.97), s2 FAIL (tilt 5.24 at e10), s3 FAIL (tilt 5.17 e6, 5.25 e10). Thrust step <= 3.1 % everywhere; no LOC. This re-score is pending owner acceptance of the amended rule.
+Verdicts under leaveP: s1 PASS (max H>P tilt 4.97), s2 FAIL (tilt 5.24 at e10), s3 FAIL (tilt 5.17 e6, 5.25 e10). Thrust step <= 3.1 % everywhere; no LOC. Rule leaveP accepted by the owner (Q7 answer A, 2026-11-20; GATES 5b G5.7 AMENDED S140): these are the official probe verdicts, G5.7 FAIL 2/3 seeds.
 
 Lag comparison, same measure (`bench/g57_lag_compare.py`; err = max angle truth body z vs attitude setpoint over [e+0.3, e+1.0], peak = max over [e, e+0.3), rate = max attitude-setpoint tilt rate over [e, e+1.0]):
 | edge | err deg | peak0.3 deg | sp rate deg/s |

@@ -938,3 +938,19 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S138 (2026-11-20): RC138 filed (cuts: merged G5 probes, one shared event injector, G5.10 on G3 hooks, defaults audit). Defaults audit: no G2 cell at the current pair nor at the firmware-default config (design/defaults_audit_s138.md). G5.2 exact test written, stick_pos_steps + g52_check (self-test), probe altctl/posctl x3 PASS 6/6 (z os <= 0.026 m, x os <= 0.063 m, settle <= 2.98 s), blind key AGREE. Gate progress: G5.2 row PASS 6/6 as probe.
 - S138: G2 rate-roll 800 Hz probe at the current pair (ACT_TC 0.033, K_Y 20): GM 18.8 dB, PM 56.2 deg, DM 47.7 ms (1 seed, results/g2_roll_ky20_s138). Gate progress: G2 rate-roll cell measured at the current defaults (probe).
 - S139 (2026-11-20): G5.3/G5.5/G5.7 exact tests written (dc4028652c). Runner per-segment mode switch, mode_switch10, hold_wind, g53_hold/g57 checkers (self-tests, break-checked). G5.3 hold PASS 3/3 (RMS 0.036-0.052 m). G5.7 INVALID as written (hold brakes, speed rule unmeetable) -> Q7; under leaveP s1 PASS, s2/s3 FAIL tilt err 5.2 deg at H->P, switch-specific (G5.2 same stick step 1 deg). Gate progress: G5.3 hold row PASS (probe); G5.7 first test flown, failure localised to H->P.
+
+- S140: Q7 closed (answer A), full text:
+  ## Q7 (S139, 2026-11-20): G5.7 validity rule, change after first test. Not blocking.
+  Context: G5.7 exact test (GATES 5b, S139) flown x3 (results/g5_g57_s139). All 10 switches happen as commanded,
+  thrust step <= 3.1 % of hover (limit 20 %), no LOC. Runs are INVALID: the rule "truth speed >= 1.5 m/s at >= 8 of 10
+  edges" cannot be met, because HOLD brakes by design (speed at H->P edges 0.0-0.1 m/s; A/S coast to ~1 m/s in 2 s).
+  Under any validity rule that admits the runs, tilt error over [edge+0.3, edge+1.0] s is 4.4-5.25 deg at the two H->P
+  edges (limit 5 deg): FAIL in 2 of 3 seeds. Being compared with the same measure on G5.2 posctl stick steps from rest
+  (no switch) to tell switch transient from normal attitude lag to a stick acceleration.
+  Options: (A, recommended) validity = speed >= 1.5 m/s at the 4 edges that leave posctl; all 10 edges stay gated with
+  unchanged limits (stricter than dropping edges). (B) re-design the sequence (shorter hold dwell) and re-fly.
+  (C) keep as written: G5.7 cannot produce a valid run.
+  Meanwhile: runs re-scored under A, marked "pending Q7"; no G5.7 verdict is claimed.
+  
+  Q7 ANSWER (owner, 2026-11-20): A. G5.7 validity = truth speed >= 1.5 m/s at the 4 edges that leave posctl; all 10 edges
+  stay gated with unchanged limits. Next session: write into GATES 5b, re-score results/g5_g57_s139, close Q7.
