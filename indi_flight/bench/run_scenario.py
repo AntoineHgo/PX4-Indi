@@ -93,7 +93,7 @@ LOG_TOPICS = [
 TAKEOFF_ALT = 5.0
 # S81 --stick-mode: PX4 custom main modes of the HEARTBEAT (px4_custom_mode.h) and the run's stick parameters
 STICK_MAIN_MODE = {"altctl": 2, "posctl": 3, "acro": 5, "stabilized": 7}
-STICK_PARAMS = {"COM_RC_IN_MODE": 1, "COM_RCL_EXCEPT": 7, "MPC_Z_VEL_MAX_UP": stick_profile.VZ_MAX_UP,
+STICK_PARAMS = {"MPC_VEL_MANUAL": stick_profile.MPC_VEL_MANUAL, "COM_RC_IN_MODE": 1, "COM_RCL_EXCEPT": 7, "MPC_Z_VEL_MAX_UP": stick_profile.VZ_MAX_UP,
                 "MPC_Z_VEL_MAX_DN": stick_profile.VZ_MAX_UP, "MAN_DEADZONE": 0,
                 "MPC_THR_CURVE": 0, "MPC_MANTHR_MIN": stick_profile.MANTHR_MIN,
                 "MPC_THR_MAX": stick_profile.THR_MAX}  # 1 = MAVLink only; no deadzone; stick expo 0.6 is hard-coded and inverted in stick_profile (it gave gain 0.3)
@@ -1144,7 +1144,10 @@ def main():
                     sag_state["steps"].append((int(sim.t * 1e6), v))
                     sag_state["next"] += 0.5
         prev = 0.0
-        for name, dur, val in sc["segments"]:
+        segs = sc["segments"]
+        if sc.get("pos_steps") and a.stick_mode == "altctl":  # G5.2: the x step is posctl only
+            segs = [x for x in segs if x[0] not in ("xstep", "xhold")]
+        for name, dur, val in segs:
             if loss and "end" in loss and name in (loss["start"], loss["end"]):
                 on = name == loss["start"]
                 sim.set_param("SIM_GZ_ERPM_LOSS", (1 << loss["motor"]) if on else 0)
@@ -1179,6 +1182,12 @@ def main():
                 sp = (lambda vx=val: sim.send_vel([vx, 0.0, 0.0], hold_yaw))
             elif mode in ("position", "trajectory"):
                 sp = pos_sp
+            elif mode == "stick" and sc.get("pos_steps"):  # S138 G5.2: sticks by segment name; x step ends at 3 m of travel
+                sp = (lambda n=name: sim.send_stick(stick_profile.pos_step_sample(n)))
+                if name == "xstep":
+                    p0 = sim.pos
+                    meta["pos_steps"] = {"x_start_est_ned": list(p0), "t_xstep_us": int(sim.t * 1e6)}
+                    xuntil = lambda: math.hypot(sim.pos[0] - p0[0], sim.pos[1] - p0[1]) >= stick_profile.POS_X_TRAVEL_M  # noqa: E731
             elif mode == "stick":  # S81: the stick sample of the profile at the segment time, neutral outside "stick"
                 if name == "stick":
                     t_seg0, st = sim.t, sc["traj"]
@@ -1217,7 +1226,10 @@ def main():
                         sim.set_param("SIM_GZ_ERPM_LOSS", 0)
                         meta["erpm_loss"]["off_us"] = int(sim.t * 1e6)
             else:
-                sim.run(dur, sp=sp, what=f"scenario:{name}")
+                sim.run(dur, sp=sp, until=xuntil if (sc.get("pos_steps") and name == "xstep") else None, what=f"scenario:{name}")
+                if sc.get("pos_steps") and name == "xstep":
+                    meta["pos_steps"]["x_dur_s"] = sim.t - meta["pos_steps"]["t_xstep_us"] * 1e-6
+                    dur = sim.t - meta["pos_steps"]["t_xstep_us"] * 1e-6
             prev = val
             seg_elapsed += dur
         meta["t_window_end_us"] = int(seg_now() * 1e6)

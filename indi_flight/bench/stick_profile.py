@@ -122,3 +122,22 @@ def neutral_sample(mode, hover_thr=0.5):
     """Centred sticks: zero climb rate in altctl / posctl, hover thrust in stabilized / acro."""
     z = 500 if mode in VELOCITY_MODES else stick_to_raw(thrust_to_stick(hover_thr, mode, hover_thr))
     return dict(x=0, y=0, z=z, r=0, throttle=raw_to_stick(z), vz_up_demand=0.0)
+
+
+# S138 G5.2 position-mode stick steps (GATES 5b "G5.2 exact test"): z step = throttle stick giving vz POS_Z_VZ up for POS_Z_HI_S then centred
+# POS_REL_S; posctl only, x step = pitch stick giving POS_X_V forward (MPC_VEL_MANUAL, same expo 0.6, MAN_DEADZONE 0) for at most POS_X_MAX_S
+# (the runner ends it early at POS_X_TRAVEL_M of travel), then centred POS_REL_S.
+MPC_VEL_MANUAL = 10.0   # m/s, PX4 default, set explicitly in the run
+POS_Z_VZ, POS_Z_HI_S, POS_REL_S = 1.0, 2.0, 6.0
+POS_X_V, POS_X_MAX_S, POS_X_TRAVEL_M = 3.0, 2.5, 3.0
+
+
+def pos_step_sample(seg):
+    """Applied sample for G5.2 segment name seg: 'zstep' (throttle up), 'xstep' (pitch forward), anything else centred."""
+    z = 500
+    x = 0
+    if seg == "zstep":
+        z = stick_to_raw(inv_expo(POS_Z_VZ / VZ_MAX_UP))
+    elif seg == "xstep":
+        x = int(round(inv_expo(POS_X_V / MPC_VEL_MANUAL) * 1000))
+    return dict(x=x, y=0, z=z, r=0, throttle=raw_to_stick(z), vz_up_demand=0.0)

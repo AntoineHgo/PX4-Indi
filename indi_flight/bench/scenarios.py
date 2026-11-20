@@ -165,6 +165,11 @@ SCENARIOS["stick_zsine_o6"] = dict(mode="stick", axis=None, traj=ZSINE_O6,
 # (fly with --stick-mode acro or stabilized). The "stick" segment is 3 axes x 3.5 s.
 SCENARIOS["stick_steps"] = dict(mode="stick", axis=None, traj=None, steps=True,
                                 segments=[("settle", 3.0, 0.0), ("stick", 10.5, 0.0), ("hold", 3.0, 0.0)])
+# S138 G5.2 position-mode stick steps (GATES 5b): z step (2 s) + 6 s centred, posctl only x step (up to 2.5 s, ended by the runner at
+# 3 m of travel) + 6 s centred. altctl runs drop the x segments (runner). Sticks from stick_profile.pos_step_sample by segment name.
+SCENARIOS["stick_pos_steps"] = dict(mode="stick", axis=None, traj=None, pos_steps=True,
+                                    segments=[("settle", 3.0, 0.0), ("zstep", 2.0, 0.0), ("zhold", 6.0, 0.0),
+                                              ("xstep", 2.5, 0.0), ("xhold", 6.0, 0.0), ("hold", 3.0, 0.0)])
 SCENARIOS["v2_drop_att"]["erpm_loss"] = dict(motor=0, start="up", end="zero1")              # 3 s on motor 0
 SCENARIOS["v2_drop_rate"]["erpm_loss"] = dict(motor=0, start="pulse1_up", end="pulse1_down")  # 2.25 s
 _VIB3 = dict(sim_params=dict(SIM_GZ_VIB_ACC=3.0, SIM_GZ_VIB_GYR=0.15))           # V5 vibration x3
