@@ -41,3 +41,13 @@ measures 5.00 ms (FAIL vs 1.25 ms, fix_s2), all of it stock commander latency sw
 are 0 in the same sample as the kill flag (0.00 ms). Options: A [recommended] reference = actuator_armed.kill rise
 (the instant the control stack is told; commander latency reported, O-11 forbids changing it); B keep the switch
 reference: G5.9a FAIL recorded as a stock limit. Meanwhile: both numbers reported, row counted FAIL. Not blocking.
+Q8 addendum 3 (S146): G5.8 definitions, two items, not blocking (results/g5_events_s146_move/README.md).
+(i) "excursion <= 1 m" at 3 m/s: measured from the position at loss it includes the flight during the timeout
+(4 s offboard timeout = 12 m) and the braking (3.4-3.5 m from 3 m/s, stock hold). Options: A [recommended] excursion
+at 3 m/s = max horizontal deviation of ground truth from the position setpoint/trajectory the failsafe action
+commands (what the controller controls), <= 1 m; hover keeps the current definition. B: drop the 3 m/s excursion.
+(ii) link_loss "timeout": the firmware flags GCS loss COM_DL_LOSS_T after the last telemetry_status heartbeat flag,
+which itself stays set about 2.25 s after the last GCS message (fix_s2: last message 75.35 s, entry 80.60 s; stock
+mavlink/commander, O-11). Options: A [recommended] timeout reference = firmware's own flag (as now, S144 note), the
+receiver window reported; B: reference = last message sent, row FAIL in both stacks (stock limit).
+Meanwhile: G5.8 hover counted on the S144 definition with the 2.25 s window reported; 3 m/s rows not counted.
