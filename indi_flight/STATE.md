@@ -17,7 +17,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    self-tests for offb_vel_check.py / passthrough_check.py written for these rows now (RC138, not G7).
 4. G5.6/5.8/5.9/5.11: ONE shared event injector (maybe_landed, kill, EKF reset, RC/link loss), one G1.5 check
    (RC138). G5.10 flown with the existing G3 thrust-limit/motor_fault hooks (no new injector).
-4b. Audit (no flights, one cheap agent): every inherited archive default vs its G2 cell (RC138, D-KY lesson).
+4b. Audit DONE S138 (design/defaults_audit_s138.md): no G2 cell at the current pair. Next probe (G2): rate roll
+   800 Hz (S99 cell) on the G5 params (ACT_TC 0.033, ID_OK 1, K_Y 20); attitude yaw (g2_attbreak_s107 ax3 r800).
+   Freeze G2 set must add the firmware-default cell (ID_OK 0, W_MAX 0, ACT_TC 0.05; D-DEFAULTS-FW overturn test)
+   or align firmware ACT_TC/W_MAX with bench (G7 lesson 12). Guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
 5. G7 (deferred, stage 7): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site (K128 MAJOR), checker
    self-tests for passthrough_check/offb_vel_check.
 Route check next: S143 (RC138 filed, cuts accepted: items 3, 4, 4b).
@@ -54,7 +57,6 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | A138 | G5.2 build + pre-test + 3-seed probe | sonnet | results/g5_g52_s138/README.md | bash results/g5_g52_s138/batch.sh (skips done runs) |
-| A138b | defaults vs G2 audit, offline | sonnet | design/defaults_audit_s138.md | relaunch brief (LEDGER S138) |
 S137 G5.1 acro yaw FIXED (D-KY, 5d1d828af7): cause = yaw lag 1/K_Y at K_Y 10 (no saturation). K_Y 20 default
   (firmware + bench). Probe: acro PASS 3/3 yaw 3.15-3.29 deg/s; G2 rate-yaw 800/400 GM 18.8/14.3 dB PM 78/82 (1 seed,
   results/g2_yaw_ky20_s137). Stabilized at K_Y 20 PASS 3/3 -> G5.1 row PASS 6/6 (probe, results/g5_g51_ky20_s137).
