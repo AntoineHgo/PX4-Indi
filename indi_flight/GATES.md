@@ -421,7 +421,9 @@ vz over the final descent within +-20 % of MPC_LAND_SPEED; disarm <= COM_DISARM_
   Overshoot = max truth excursion beyond final in the step direction after the release edge; pass z <= 0.3 m,
   x <= 0.5 m. Settle = time from release to the last exit of |truth - final| <= 2 % of d; pass <= 4.0 s. Off-axis
   (y, and z during the x step) truth excursion reported, not gated. No LOC as G5.1. Checker `bench/g52_check.py`
-  (self-test, second key).
+  (self-test, second key). Clarification S138 after the first test (no threshold change): |truth - final| is taken
+  on the step axis (z, or the horizontal step direction for x), as "off-axis reported, not gated" implies; the x
+  step follows the vehicle heading, so x means the horizontal step direction, not NED north.
 
 ### 6. G6 Defaults and identification from a wrong start
 
