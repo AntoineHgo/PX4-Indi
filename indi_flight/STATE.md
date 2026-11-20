@@ -13,8 +13,12 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    (results/g5_probe_s135/README.md; checker auto_smoke_check.py g54_*, keyed g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
 3. G5.2 DONE as probe S138: 6/6 PASS altctl/posctl (results/g5_g52_s138, g52_check keyed AGREE). Re-fly at freeze.
-   NEXT: G5.3, G5.5, G5.7 merged into one 3-seed probe session (RC138); self-tests for offb_vel_check.py /
-   passthrough_check.py written for these rows now (RC138, not G7). G5.7 needs its exact test in GATES first.
+3b. S139: G5.3 hold PASS 3/3 (RMS <= 0.052 m, results/g5_g57_s139). G5.7: runs INVALID under the written
+   validity rule (hold brakes, Q7 asked, rec. A = leaveP). Under leaveP: s1 PASS, s2/s3 FAIL tilt err 5.17-5.25 deg
+   at H->P edges (limit 5); thrust step <= 3.1 %. Same stick step w/o switch (G5.2) leaves ~1 deg: switch-specific.
+   NEXT (G5.7 failure, 1 session of cause search max): fly mode_switch10 once with PID (MC_RATE_CTL_TYPE 0,
+   MC_INDI_POS_EN 0) as reference; compare vehicle_local_position_setpoint / attitude sp after H->P (setpoint
+   re-init vs INDI law state reset on mode change). Tools: g57_check.py --validity leaveP, g57_lag_compare.py.
 4. G5.6/5.8/5.9/5.11: ONE shared event injector (maybe_landed, kill, EKF reset, RC/link loss), one G1.5 check
    (RC138). G5.10 flown with the existing G3 thrust-limit/motor_fault hooks (no new injector).
 4b. Audit DONE S138 (design/defaults_audit_s138.md): no G2 cell at the current pair. Rate roll 800 Hz probe DONE S138 (GM 18.8 dB, PM 56 deg). Next: rate roll
