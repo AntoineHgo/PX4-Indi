@@ -5,26 +5,22 @@
   Stage 3 inner loop time-boxed (RC64/RC74). Stage 1 frozen S36. Started S1 (2026-11-15).
 - Gates: G1 PASSED S84 | G2 open (cell table in GATES.md) | G3 open | G4 open | G5 open, FINAL text S134 (GATES 5b) |
   G6 open | G7 open | G8 open.
-- Blocker: none. Q7 answered (rule A), see item 0. Owner directive 2026-11-20 (F-7/F-8/F-9) acted on S134: D-F7-GROUND written,
-  D-STAGE-STALE (stock branch) and D-HANDOVER superseded.
+- Blocker: none. Q7 closed S140 (rule A, GATES 5b G5.7). F-7/F-8/F-9 acted on S134 (D-F7-GROUND).
 ## Next actions (in order; each names its gate item)
 History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrations: read before sizing a brief).
-0. S140: Q7 closed (rule A in GATES 5b G5.7 AMENDED S140; g5_g57_s139 official probe verdict FAIL 2/3).
 0b. S140 SET-UP FAULT in every G5 probe: sim GNSS latency 0 with EKF SENS_GNSS0_DELAY 110 (estimate leads truth
    ~110 ms, 0.35 m/axis at 3-4 m/s). G5.5 S139: o5/o6/offb_vel_step PASS, o1-o4/o7 FAIL horiz 0.66-1.36 m (limit 0.5;
    PID o1 1.04 m). Nominal plant from now on: --gps-dly 110 --gnss-delay 110 (matched). Matched pre-test
    (results/g5_g55_s140_gnss): estimator fixed (0.05 m) but o1 0.78 m, o2 0.93 m FAIL: truth lags setpoint 160 ms,
    jerk FF off (McIndiPosControl.cpp:57). G5.1-G5.4 re-fly at freeze with matched GNSS.
-0c. S141 A18 DONE (7e58bea57c, keyed t208_a18_key2: MAJOR gate-flip lead pulse fixed by me, unkeyed fix -> 4c
-   review; MINORs in key2). Probe results/g5_g55_s141_a18: o1 0.590 m, o2 0.793 m, still FAIL (0.5); lag 160->140 ms.
+0c. S141 A18 (7e58bea57c; unkeyed gate-flip fix -> 4c review). Probe g5_g55_s141_a18: o1 0.59, o2 0.79 m FAIL.
    S142 cause search DONE (lag_cause_s142.md, sonnet, unkeyed): omega_ff SIZE ok (0.83-0.98 of jerk/g) but it LAGS
    setpoint-accel derivative 75-110 ms (jerk = difference of 30 ms-stream accel, hold <=0.1 s, 10 Hz LPF explain
    45-60 ms only); a_c->att sp filters 20-25 ms of ~50. Attitude lag likely = late FF. Cause search budget USED:
    NEXT = re-open the A18 jerk-source choice in DECISIONS (one entry): use trajectory_setpoint.jerk when valid
    (AUTO fills it), offboard difference path: find the unexplained 30-50 ms (hold logic, indi_accel_control.cpp:150-187)
    and size a lead by the stream period. No stream-rate change in the runner to pass (honesty). Then G5.7 x1 matched.
-1. G5.4 DONE as probe S135: 9/9 runs (auto_tour, auto_land10, auto_rtl20 x3 seeds) all limits PASS
-   (results/g5_probe_s135/README.md; checker auto_smoke_check.py g54_*, keyed g54_key2.py). Re-fly at freeze.
+1. G5.4 probe PASS 9/9 S135 (g5_probe_s135; auto_smoke_check.py, g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
 3. G5.2 DONE as probe S138: 6/6 PASS altctl/posctl (results/g5_g52_s138, g52_check keyed AGREE). Re-fly at freeze.
 3b. S139: G5.3 hold PASS 3/3 (RMS <= 0.052 m). G5.7 under leaveP: s1 PASS, s2/s3 FAIL tilt err 5.17-5.25 deg at H->P
