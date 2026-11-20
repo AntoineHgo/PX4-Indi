@@ -20,9 +20,10 @@ def synth(reset_dt_us=12000, dxy=(0.6, 0.8), dyaw_deg=5.0, kill_flag_dt=3000, ou
           "gcs_connection_lost": [0] * n, "offboard_control_signal_lost": [0] * n}
     h = g.math.radians(dyaw_deg) / 2
     va = {"timestamp": ts, "q[0]": [1.0 if tt < t_app + reset_dt_us else g.math.cos(h) for tt in ts],
-          "q[1]": [0.0] * n, "q[2]": [0.0] * n,
+          "q[1]": [0.0] * n, "quat_reset_counter": cnt, "q[2]": [0.0] * n,
           "q[3]": [0.0 if tt < t_app + reset_dt_us else g.math.sin(h) for tt in ts]}
-    return {"vehicle_attitude": va, "vehicle_local_position": lp, "actuator_armed": aa, "actuator_outputs": ao, "failsafe_flags": fl}, t_app
+    vc = {"timestamp": [t_app + 1000, t_app + 1000], "command": [620, 43003]}
+    return {"vehicle_command": vc, "vehicle_attitude": va, "vehicle_local_position": lp, "actuator_armed": aa, "actuator_outputs": ao, "failsafe_flags": fl}, t_app
 
 
 def events(t_app, dt_app=0):
@@ -37,11 +38,16 @@ class T(unittest.TestCase):
     def test_pass(self):
         log, t = synth()
         L = g.analyse(log, events(t, 1000))
-        for n in ("ekf_yaw", "ekf_xy", "rc_loss", "kill"):
+        for n in ("ekf_yaw", "ekf_xy"):  # stream-stop/kill applied = flag rise, not a 1-step check
             self.assertIn(": PASS", self.line(L, n), self.line(L, n))
         self.assertIn("mag=1/1", self.line(L, "ekf_xy"))
         self.assertIn("onset", self.line(L, "rc_loss"))
         self.assertIn("NOT INJECTABLE", self.line(L, "maybe_landed"))
+
+    def test_applied_from_firmware_log(self):
+        log, t = synth()  # runner says applied at t+0, firmware logged receipt at t+1 ms
+        self.assertIn("applied_dt=1.00ms", self.line(g.analyse(log, events(t, 0)), "ekf_yaw"))
+        self.assertIn("applied_dt=1.00ms", self.line(g.analyse(log, events(t, 0)), "ekf_xy"))
 
     def test_fail_magnitude(self):
         log, t = synth(dxy=(0.6, 0.85))  # 1.04 m = 4 % off
@@ -51,7 +57,8 @@ class T(unittest.TestCase):
 
     def test_fail_timing(self):
         log, t = synth()
-        l = self.line(g.analyse(log, events(t, 5000)), "ekf_xy")  # applied 5 ms late > 1.25 ms
+        log["vehicle_command"]["timestamp"] = [t + 5000, t + 5000]  # firmware receipt 5 ms after send
+        l = self.line(g.analyse(log, events(t)), "ekf_xy")  # applied 5 ms late > 1.25 ms
         self.assertIn(": FAIL", l)
         self.assertIn("applied-commanded", l)
 

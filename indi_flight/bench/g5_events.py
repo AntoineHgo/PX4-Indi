@@ -197,6 +197,15 @@ def first_counter_step(t, cnt, t_from_us):
     return None, None
 
 
+def cmd_applied(log, e, cid):
+    """firmware receipt time: first vehicle_command row with this command id at/after the runner send time (fallback: runner time)."""
+    vc = log.get("vehicle_command", {})
+    for t, c in zip(vc.get("timestamp", []), vc.get("command", [])):
+        if c == cid and t >= e["t_cmd_us"]:
+            return int(t)
+    return e["t_applied_us"]
+
+
 def mk_verdict(name, t_cmd_us, t_app_us, t_eff_us, mag=None, mag_exp=None, tol=0.02, step_us=STEP_US, note=""):
     """one G1.5 line: effect visible, magnitude within tol (relative), applied time within one physics step."""
     why = []
@@ -233,34 +242,39 @@ def analyse(log, events, step_us=STEP_US):
     va = log.get("vehicle_attitude", {})
     if e is None or not va:
         out.append("G1.5 ekf_yaw: FAIL not flown or vehicle_attitude missing")
-    else:  # yaw fusion with tiny variance (counter not incremented): largest one-sample yaw step after the command
+    else:  # largest one-sample yaw step after the firmware received the command; effect time = quat_reset_counter step
+        ta = cmd_applied(log, e, 620)
         yaw = [yaw_of(va["q[0]"][i], va["q[1]"][i], va["q[2]"][i], va["q[3]"][i]) for i in range(len(va["timestamp"]))]
         best, tb = 0.0, None
         for i in range(1, len(yaw)):
-            if e["t_applied_us"] - 20000 <= va["timestamp"][i] <= e["t_applied_us"] + 300000:
+            if ta - 20000 <= va["timestamp"][i] <= ta + 300000:
                 d = math.degrees(math.atan2(math.sin(yaw[i] - yaw[i - 1]), math.cos(yaw[i] - yaw[i - 1])))
                 if abs(d) > abs(best):
                     best, tb = d, int(va["timestamp"][i])
-        out.append(mk_verdict("ekf_yaw", e["t_cmd_us"], e["t_applied_us"], tb if abs(best) > 1.0 else None, abs(best), 5.0,
-                              step_us=step_us, note="yaw fusion step, no reset counter"))
+        if "quat_reset_counter" in va:
+            tb, _ = first_counter_step(va["timestamp"], va["quat_reset_counter"], ta - 100000)
+        out.append(mk_verdict("ekf_yaw", e["t_cmd_us"], ta, tb if abs(best) > 1.0 else None, abs(best), 5.0,
+                              step_us=step_us, note="applied=vehicle_command 620, effect=quat_reset_counter step"))
     for nm, cnt, dkeys, key, exp in (("ekf_xy", "xy_reset_counter", ["delta_xy[0]", "delta_xy[1]"], "cmd_m", 1.0),):
         e = byname.get(nm)
         if e is None or not lp:
             out.append(f"G1.5 {nm}: FAIL not flown or topic missing")
             continue
-        t_eff, i = first_counter_step(lp["timestamp"], lp[cnt], e["t_applied_us"] - 100000)
+        ta = cmd_applied(log, e, 43003)
+        t_eff, i = first_counter_step(lp["timestamp"], lp[cnt], ta - 100000)
         mag = None
         if i is not None:
             mag = math.hypot(*[lp[k][i] for k in dkeys])
-        out.append(mk_verdict(nm, e["t_cmd_us"], e["t_applied_us"], t_eff, mag, exp, step_us=step_us))
+        out.append(mk_verdict(nm, e["t_cmd_us"], ta, t_eff, mag, exp, step_us=step_us))
     for nm, flag, tout in (("rc_loss", "manual_control_signal_lost", 0.5), ("link_loss", "gcs_connection_lost", 3.0),
                            ("offboard_loss", "offboard_control_signal_lost", 1.0)):
         e = byname.get(nm)
         if e is None or not fs or flag not in fs:
             out.append(f"G1.5 {nm}: FAIL not flown or {flag} not logged")
             continue
-        t_eff = first_rise(fs["timestamp"], fs[flag], e["t_applied_us"] - 100000)
-        line = mk_verdict(nm, e["t_cmd_us"], e["t_applied_us"], t_eff, note="stream-stop applied; failsafe onset below")
+        t_eff = first_rise(fs["timestamp"], fs[flag], e["t_cmd_us"] - 100000)  # applied = failsafe flag rise
+        line = mk_verdict(nm, e["t_cmd_us"], t_eff if t_eff is not None else e["t_applied_us"], t_eff,
+                          note="applied=failsafe flag rise; failsafe onset below")
         if t_eff is not None:
             onset = (t_eff - e.get("last_msg_us", e["t_applied_us"])) / 1e6
             line += f" | onset (not G1.5): flag {onset:.2f}s after last msg, timeout {tout}s"
@@ -269,7 +283,7 @@ def analyse(log, events, step_us=STEP_US):
     if e is None or not aa:
         out.append("G1.5 kill: FAIL not flown or actuator_armed missing")
     else:
-        t_k = first_rise(aa["timestamp"], aa["kill"], e["t_applied_us"] - 100000)
+        t_k = first_rise(aa["timestamp"], aa["kill"], e["t_cmd_us"] - 100000)
         t_z = None
         if t_k is not None and ao:
             n = len(ao["timestamp"])
@@ -277,7 +291,7 @@ def analyse(log, events, step_us=STEP_US):
                 if ao["timestamp"][j] >= t_k and all(ao.get(f"output[{m}]", [1] * n)[j] <= 0 for m in range(4)):
                     t_z = int(ao["timestamp"][j])
                     break
-        line = mk_verdict("kill", e["t_cmd_us"], e["t_applied_us"], t_k, note="kill flag")
+        line = mk_verdict("kill", e["t_cmd_us"], t_k if t_k is not None else e["t_applied_us"], t_k, note="applied=kill flag")
         line += f" | motors 0 {'never' if t_z is None else f'{(t_z - t_k) / 1e3:.2f}ms after flag'} (G5.9)"
         if t_z is None:
             line = line.replace(": PASS", ": FAIL")
@@ -292,7 +306,7 @@ def load_ulog(path):
     dur = (ul.last_timestamp - ul.start_timestamp) / 1e6
     for d in ul.data_list:
         if d.name in ("vehicle_local_position", "vehicle_attitude", "failsafe_flags", "actuator_armed", "actuator_outputs",
-                      "actuator_motors", "vehicle_land_detected", "vehicle_status") and d.multi_id == 0:
+                      "actuator_motors", "vehicle_land_detected", "vehicle_status", "vehicle_command") and d.multi_id == 0:
             log[d.name] = {k: list(v) for k, v in d.data.items()}
             rates.append(f"{d.name}: {len(d.data['timestamp'])} samples, {len(d.data['timestamp']) / dur:.0f} Hz")
     return log, rates
