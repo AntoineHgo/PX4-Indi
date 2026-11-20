@@ -13,3 +13,13 @@ o1 lag split (`../g5_g55_s140_gnss/lag_split.py`): est vs truth 0.05 m; setpoint
 (S140: 160 ms), RMS at best shift 0.29 m. omega_ff valid 75 % of samples, |omega_ff| p95 roll 0.31 / pitch
 1.08 rad/s. Gain 0.19 m (o1) and 0.14 m (o2) > 0.1 m: D-A18-REOPEN overturn test not met, A18 kept.
 Remaining error is still mostly a 140 ms lag: cause not yet split (setpoint transport vs attitude/rate lag).
+
+## First lag split, o1 s1 (inline pyulog script, probe only, no self-test)
+Best-shift lag, RMS at that shift, RMS at zero shift:
+- trajectory_setpoint x -> estimate x: 130 ms, 0.116 / 0.207 m. The setpoint carries v and a feed-forward (finite
+  85 % of samples: NaN outside the trajectory segment), jerk all zero (difference path used), 43 Hz.
+- attitude setpoint -> attitude: roll 90 ms, pitch 60 ms, even with omega_ff applied.
+- rate setpoint -> rate: no measurable lag at 5 ms resolution.
+So roughly half the lag is in the attitude stage and the rest is between the commanded acceleration and the
+attitude setpoint (acceleration-loop filters, held 43 Hz a_ff, low-pass on the jerk difference). Not a transport
+delay in the runner: setpoint->truth (lag_split) and setpoint->estimate agree.

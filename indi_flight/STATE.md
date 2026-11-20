@@ -17,8 +17,9 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    jerk FF off (McIndiPosControl.cpp:57). G5.1-G5.4 re-fly at freeze with matched GNSS.
 0c. S141 A18 DONE (7e58bea57c, keyed t208_a18_key2: MAJOR gate-flip lead pulse fixed by me, unkeyed fix -> 4c
    review; MINORs in key2). Probe results/g5_g55_s141_a18: o1 0.590 m, o2 0.793 m, still FAIL (0.5); lag 160->140 ms.
-   NEXT (G5.5, max 1 session cause search, then re-open): split the 140 ms on o1 log: runner setpoint transport
-   (trajectory_setpoint stamp vs analytic ref) vs att sp -> attitude lag vs rate/motor lag. Then G5.7 x1 matched.
+   NEXT (G5.5, 1 session of cause search left, then re-open): lag split (README) says att sp->att 60-90 ms with
+   omega_ff, and ~50 ms a_c->att sp. Check omega_ff size vs the analytic need (jerk-difference LPF and 43 Hz hold
+   delay; roll p95 only 0.31 rad/s) and the accel-loop filter delay. Then G5.7 x1 matched.
 1. G5.4 DONE as probe S135: 9/9 runs (auto_tour, auto_land10, auto_rtl20 x3 seeds) all limits PASS
    (results/g5_probe_s135/README.md; checker auto_smoke_check.py g54_*, keyed g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
@@ -28,11 +29,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    once with PID (MC_RATE_CTL_TYPE 0, MC_INDI_POS_EN 0), compare setpoints after H->P (setpoint re-init vs INDI state
    reset on mode change). Tools: g57_check.py, g57_lag_compare.py. G5.9/G5.11 probes are NOT flown before this closes.
 3c. G5.5 probe committed S140 (results/g5_g55_s139/README.md); G5.3 mission PASS 3/3. G5.3 complete as probe.
-4. G5.6/5.8/5.9/5.11 injector (RC138, owner plan 2026-11-20): build NOW, in parallel with item 3b (firmware-free):
-   ONE script bench/g5_events.py, ONE multi-event flight, one G1.5 verdict line PER event (maybe_landed, kill, EKF reset,
-   RC/link/offboard loss differ in layer; applied time within 1 physics step). Then fly the rows after 3b closes.
-   G5.10 via existing G3 thrust-limit/motor_fault hooks, G5.8 and G5.10 get their own probe rows. Second key for
-   g5_events/g53/g55/g57 checkers at the freeze (RC113). Do NOT drop G5.6 1 m / G5.8 offboard-loss variants (owner).
+4. G5.6/5.8/5.9/5.11 injector: OWNER ORDER 2026-11-20 = NEXT SESSION, before more A18/G5.7 work, as its own
+   sonnet task (firmware-free, parallel to the A18 code + key). ONE script bench/g5_events.py, ONE multi-event flight,
+   one G1.5 verdict line PER event (maybe_landed, kill, EKF reset, RC/link/offboard loss; applied time within 1 physics
+   step). Fly the rows after G5.7/A18 close. G5.10 uses G3 hooks. Keep G5.6 1 m / G5.8 offboard-loss variants (owner).
 4a. Flying: parallel docker streams ONLY for tolerance-insensitive probes (G5.5, G5.10 sat); G5.7 and event rows serial
    or max 2 streams with sim-hole figure recorded (LESSONS_PROPOSED S86); parallel runs are never gate evidence.
 4c. Pre-freeze review, standalone session (not beside flying), split into 2-3 single-interface reviews (stage-3 safety
@@ -75,6 +75,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | - | none (S141 A18 probe done) | - | results/g5_g55_s141_a18/README.md | run_batch.sh "<rows>" "<seeds>" |
+| A142 | injector build g5_events.py (item 4) | sonnet | bench/g5_events.py + G1.5 README | not started: owner order |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
