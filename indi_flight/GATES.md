@@ -392,6 +392,18 @@ vz over the final descent within +-20 % of MPC_LAND_SPEED; disarm <= COM_DISARM_
   (runner AUTO harness S131); G5.5 `offb_vel_step`, `o1`-`o7`; G5.7 RC override mode switches (runner); G5.6, G5.8,
   G5.9, G5.10, G5.11: injector to build (maybe_landed, link/RC loss, kill, sat, EKF reset do not exist), each
   G1.5-checked before use. First batch = rows with existing scenarios.
+- G5.1 exact test (S136, before its first test; the row did not state step amplitude, timing or the RMS window).
+  Scenario `stick_steps` (new: no roll/pitch/yaw stick segment existed, `rate_step_*` is offboard rate mode), flown with
+  `--stick-mode acro` and `--stick-mode stabilized`, 3 seeds each, throttle stick held at hover, sticks over MAVLink
+  MANUAL_CONTROL (int +-1000, about 11 bit, ~33 Hz: the G4 stick quantisation). After 3 s settle, per axis roll, pitch,
+  yaw in turn: stick +A for 0.5 s, -A for 0.5 s, 0 for 2.5 s. Acro: A = 1 = 100 deg/s (MC_ACRO_*_MAX 100, expo and
+  superexpo 0, firmware defaults). Stabilized: A = 0.5 (roll/pitch 0.5 x MPC_MAN_TILT_MAX, yaw 0.5 x MPC_MAN_Y_MAX).
+  Acro pass: on the stepped axis, RMS of (commanded rate from the applied sticks - truth body rate) over the plateaus
+  [edge + 0.1 s, next edge] of the three edges (+A, -A, 0, the 0 plateau limited to 1.0 s) <= 10 deg/s; the first
+  0.1 s after an edge is the rise transient (about 3 inner-loop time constants), reported (rise time, overshoot), not
+  gated. Stabilized pass: truth tilt <= 3 deg over [release + 1.0 s, release + 2.5 s] after each roll/pitch doublet
+  and after the yaw doublet; truth |yaw rate| <= 10 deg/s over the same window after the yaw doublet. Both: no LOC
+  (no ground contact, truth tilt < 80 deg). Checker `bench/g51_check.py` (self-test, second key).
 
 ### 6. G6 Defaults and identification from a wrong start
 
