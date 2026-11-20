@@ -15,9 +15,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    PID o1 1.04 m). Nominal plant from now on: --gps-dly 110 --gnss-delay 110 (matched). Matched pre-test
    (results/g5_g55_s140_gnss): estimator fixed (0.05 m) but o1 0.78 m, o2 0.93 m FAIL: truth lags setpoint 160 ms,
    jerk FF off (McIndiPosControl.cpp:57). G5.1-G5.4 re-fly at freeze with matched GNSS.
-0c. NEXT (G5.5 rows o1-o4/o7): D-A18-REOPEN: design note DONE S141 (design/a18_jerk_ff_s141.md) (jerk -> omega_ff side channel to the INDI rate
-   module, jerk from a_ref difference when the offboard field is 0/NaN), then code + tests + second key, then fly
-   o1/o2 s1 matched. Then G5.7 x1 matched (item 3b cause candidate: H->P tilt 5.2 deg).
+0c. S141 A18 DONE (7e58bea57c, keyed t208_a18_key2: MAJOR gate-flip lead pulse fixed by me, unkeyed fix -> 4c
+   review; MINORs in key2). Probe results/g5_g55_s141_a18: o1 0.590 m, o2 0.793 m, still FAIL (0.5); lag 160->140 ms.
+   NEXT (G5.5, max 1 session cause search, then re-open): split the 140 ms on o1 log: runner setpoint transport
+   (trajectory_setpoint stamp vs analytic ref) vs att sp -> attitude lag vs rate/motor lag. Then G5.7 x1 matched.
 1. G5.4 DONE as probe S135: 9/9 runs (auto_tour, auto_land10, auto_rtl20 x3 seeds) all limits PASS
    (results/g5_probe_s135/README.md; checker auto_smoke_check.py g54_*, keyed g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
@@ -70,14 +71,10 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
   halves K.
 - Guard: a long inline `git commit -m` is blocked; use `git commit -F <scratch file>`.
 - Logger misses the first ~0.2 s of indi_pos_status (late subscription): never read a missing sample as bypass.
-- S133 results: ACRO pass-through and offboard vel-only probes pass (results/s133_passthrough); MANUAL/STABILIZED
-  unflown; A133 checkers have no self-test yet.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| I141 | A18 implementation per design/a18_jerk_ff_s141.md (G5.5 o1-o4/o7) | sonnet | design/t208_a18_impl_log.md | re-brief from the note + log; uncommitted diff in tree |
-| - | G5.5 seeds 2-3 and o3/o4/o7 wait for A18 | - | results/g5_g55_s140_gnss/README.md | run_batch.sh "<rows>" "<seeds>" (skips done) |
-S139: G5.3/G5.5/G5.7 exact tests committed dc4028652c (GATES 5b).
+| - | none (S141 A18 probe done) | - | results/g5_g55_s141_a18/README.md | run_batch.sh "<rows>" "<seeds>" |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),

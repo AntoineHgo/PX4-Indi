@@ -758,3 +758,5 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Alternatives: raise MC_ROLL_P (shortens, does not remove the lag; stock tuning); lower the trajectory (weakens
   the test, rejected); accept the G5.5 fail (only if A18 shows no gain).
 - Overturn: A18 on o1 gives < 0.1 m RMS gain (above the same-seed spread) or breaks a G5 mode edge.
+- S141 outcome: A18 implemented (7e58bea57c). o1 s1 0.776 -> 0.590 m, o2 0.933 -> 0.793 m: gain > 0.1 m, kept. Rows still
+  FAIL; residual lag 140 ms. Overturn of the G5.5 o1-o4/o7 limits is NOT considered; next: split the lag.

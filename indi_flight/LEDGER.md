@@ -214,3 +214,5 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S138 | A138 G5.2 stick_pos_steps + g52_check + pre-test + 3-seed probe | sonnet | results/g5_g52_s138/README.md | done, 22 calls ~$0.55, 6/6 PASS |
 | S138 | K138 blind G5.2 key | haiku | results/g5_g52_s138/key2/key2.md | done, 7 calls ~$0.05, AGREE 9/9 |
 | S138 | A138b defaults vs G2 audit (offline) | sonnet | design/defaults_audit_s138.md | done, 12 calls ~$0.30 |
+| S141 | I141 A18 implementation (lib a_ff difference + hold, msg, gate, tests) | sonnet | design/t208_a18_impl_log.md | done, 30 calls ~$0.67 |
+| S141 | K141 A18 second key (code vs note) | sonnet | design/t208_a18_key2.md | done, 13 calls ~$0.25, DISAGREE 1 MAJOR fixed |
