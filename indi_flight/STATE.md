@@ -15,9 +15,9 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    S146 (results/g5_events_s145/README.md, fix_s1-3, key2 AGREES): G5.8 hover PASS 3/3; G5.9 b/c/d PASS 3/3;
    G5.9a FAIL 3/3 = stock commander latency switch->actuator_armed.kill 3.75-10 ms, outputs 0 at the flag (Q8 add. 2).
    G5.8 3 m/s pre-test S146 (results/g5_events_s146_move): entry PASS, excursion metric undefined at 3 m/s and
-   link_loss receiver window 2.25 s -> Q8 addendum 3 (not blocking). Key2 BLOCKING: --moving records hover t_cmd_us,
-   st["vel"] not cleared on resume (key2_moving.md) -> fix + re-fly s1 FIRST. Then act on Q8 answers (3 m/s 3 seeds once
-   the excursion definition is answered); meanwhile G5.6/G5.10/G5.11 probes.
+   link_loss receiver window 2.25 s -> Q8 addendum 3 (not blocking). Key2 B1/M1 FIXED S147 (6b623d589e, fc8a16f58d;
+   the 1-line fc8a fix is unflown, self-test OK), re-fly s1 valid (results/g5_events_s147_move): entry 510/1/21 ms PASS,
+   excursion FAIL by definition. 3 m/s 3 seeds once Q8 add. 3 (i) answered; meanwhile G5.10 (A147a), G5.6/G5.11 probes.
 1. G5.4 probe PASS 9/9 S135 (g5_probe_s135; auto_smoke_check.py, g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
 3. G5.2 DONE as probe S138: 6/6 PASS altctl/posctl (results/g5_g52_s138, g52_check keyed AGREE). Re-fly at freeze.
@@ -70,6 +70,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| A147a | G5.10 sat probe: scenario + g510_check + self-test + 1 flight | sonnet | results/g5_g510_s147/README.md | re-brief if cut |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
