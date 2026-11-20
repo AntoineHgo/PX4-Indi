@@ -775,3 +775,9 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Alternatives: raise stock xy vel/pos gains (shortens, does not remove; tuning); trajectory jerk via uXRCE-DDS
   (does not fix the drag gap); accept FAIL with data.
 - Overturn: probe gain < 0.1 m, or D identified from data differs from the truth fit by > 30 %.
+- S143 outcome: probe results/g5_g55_s143_drag (o1 s1, D 0.514): horiz RMS 0.590 -> 1.111 m, overshoot (truth amplitude
+  1.27/1.20): drag FF REJECTED (overturn met). Reading: the INDI increment already removes drag through the measured
+  specific force; the drag-corrected stage delays of lag_chain_s143.md are therefore not trustworthy beyond "a_c lags".
+  Per route check 143: lag chase STOPPED. G5.5 o1-o4/o7 recorded FAIL (probe) with data; the residual lag sits in the
+  stock-PositionControl feedback that produces a_c (D-outer-arch base A, accel_only). Re-opening that is an
+  architecture change: owner question only if G5.5 is still FAIL at the freeze re-fly.

@@ -220,4 +220,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S142 | A142b G5.5 lag cause search | sonnet | results/g5_g55_s141_a18/lag_cause_s142.md | done, weak xcorr |
 | S143 | A143a route check 143 | sonnet | design/route_check_143.md | done, 7 calls |
 | S143 | A143b G5.5 lag chain split (phase fit) | sonnet | results/g5_g55_s141_a18/lag_chain_s143.md | done, 13 calls, drag cause |
-| S143 | A143c G5.5 o1 drag-FF probe | sonnet | results/g5_g55_s143_drag/README.md | launched |
+| S143 | A143c G5.5 o1 drag-FF probe | sonnet | results/g5_g55_s143_drag/README.md | done, 6 calls, hypothesis rejected |

@@ -9,11 +9,10 @@
 ## Next actions (in order; each names its gate item)
 History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrations: read before sizing a brief).
 0b. Nominal plant: matched GNSS --gps-dly 110 --gnss-delay 110 (S140 set-up fault fixed). G5.1-G5.4 re-fly at freeze.
-0c. G5.5 o1 0.59 / o2 0.79 m FAIL after A18 (S141). S143 lag chain (lag_chain_s143.md): lag builds in a_c (97/129 ms),
-   downstream only 20-40 ms; sim linear rotor drag 0.514/s not in FF. D-A18-SOURCE: probe A143c (runner adds D v_ref
-   to sent accel, probe only). If gain > 0.1 m: firmware drag term in module FF (a_ff + D v_ref, omega_ff from
-   j + D a_ref), D identified from cruise data (stage-4 ident addition), default 0; two keys; then o1-o4/o7 x1.
-   If no gain: record FAIL with data, stop the lag chase (route check 143). Then G5.7 x1 matched.
+0c. G5.5 o1 0.59 / o2 0.79 m FAIL after A18 (S141). S143: lag builds in a_c (lag_chain_s143.md); drag-FF probe
+   REJECTED (o1 1.11 m, g5_g55_s143_drag; D-A18-SOURCE outcome). Lag chase STOPPED (RC143): o1-o4/o7 FAIL recorded,
+   cause = stock PositionControl feedback producing a_c (D-outer-arch base A). Re-fly at freeze; if still FAIL, owner Q.
+   NEXT session: G5.7 x1 matched (item 3b PID compare deferred), then fix ekf_yaw/rc_loss injector defects + key (item 4).
 1. G5.4 probe PASS 9/9 S135 (g5_probe_s135; auto_smoke_check.py, g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
 3. G5.2 DONE as probe S138: 6/6 PASS altctl/posctl (results/g5_g52_s138, g52_check keyed AGREE). Re-fly at freeze.
@@ -67,8 +66,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none (S141 A18 probe done) | - | results/g5_g55_s141_a18/README.md | run_batch.sh "<rows>" "<seeds>" |
-| A143c | G5.5 o1 drag-FF probe (D-A18-SOURCE test, runner flag, 1 flight) | sonnet | results/g5_g55_s143_drag/README.md | re-brief from that README |
+| - | none in flight (S143 drag probe done) | - | results/g5_g55_s143_drag/README.md | run_batch.sh "<rows>" "<seeds>" |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
