@@ -205,4 +205,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S134 | A134 F-7 implementation + key fixes | sonnet | design/impl_s134_f7.md | done, 25 calls ~$0.55, firmware b9fb83c4a0 |
 | S134 | K134 key F-7 vs D-F7-GROUND | sonnet | design/key_s134_f7.md | done, 15 calls ~$0.25, 0 BLOCKING, 2 MAJOR fixed |
 | S134 | P134 auto_tour smoke F-7 | haiku | results/f7_smoke_s134/README.md | done, 13 calls ~$0.08 |
-| S134 | P134b re-fly post-fix | haiku | results/f7_smoke_s134_fix/README.md | launched |
+| S134 | P134b re-fly post-fix | haiku | results/f7_smoke_s134_fix/README.md | done, 9 calls ~$0.06 |

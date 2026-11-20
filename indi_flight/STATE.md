@@ -9,8 +9,9 @@
   D-STAGE-STALE (stock branch) and D-HANDOVER superseded.
 ## Next actions (in order; each names its gate item)
 History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrations: read before sizing a brief).
-1. G5.4: read results/f7_smoke_s134_fix (post-fix smoke); edge step limit 10 % hover (GATES 5b). If > limit:
-   decaying offset at the edge (D-F7-GROUND alternative 1), 1 session max. Run the IndiAccelControl lib gtest.
+1. G5.4 + G5.1-5.5/5.7: post-fix smoke OK (results/f7_smoke_s134_fix: edge 4.7 % hover, dip 0 m, ground collective
+   0.001, xy RMS 0.486, land vz 0.70). Next: run the IndiAccelControl lib gtest (resetBlend), then the first 3-seed
+   G5 batch (item 3). Edge > 10 % on any seed -> D-F7-GROUND alternative 1, 1 session max.
 2. G5 checker: fold the edge/ramp metric of f7_smoke_s134_fix/extra_metrics.py into auto_smoke_check.py (self-test).
 3. G5.1-G5.5, G5.7 first 3-seed batch with existing scenarios (GATES 5b row map); checker per row reused
    (auto_smoke_check.py, offb_vel_check.py, passthrough_check.py); write results/g5_probe_s13x/README.md.
@@ -51,7 +52,6 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| P134b | re-fly auto_tour smoke on fixed F-7 build | haiku | results/f7_smoke_s134_fix/README.md | re-fly per f7_smoke_s134 README |
 S134 F-7 DONE b9fb83c4a0 (keyed K134: 0 BLOCKING, MAJORs floor 0 before flight + arm/disarm state reset FIXED; gtests
   8/8 suites, ArmEdges test break-checked; open MINORs: ground xy tilt, IndiAccelControl lib test not run after
   resetBlend, reset test checks the decision only -> stage-7 harness). Pre-fix smoke (1 seed): edge step 4.7 % hover,

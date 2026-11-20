@@ -928,3 +928,4 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S133: RC133 route check filed (accepted except PID-relative pass line, F-5).
 - S134: owner directive 2026-11-20 acted on: D-STAGE-STALE stock branch + D-HANDOVER superseded, D-F7-GROUND written, G5 FINAL text (GATES 5b, F-8 rows not tested), STATE next actions gate-tagged; A134 F-7 implementation launched. Gate progress: G5 criteria FINAL (5b) committed before first G5 test.
 - S134: F-7 firmware b9fb83c4a0 (INDI from arming, modelled force on ground/ramp, HandoverBlend/HoverThrustSync removed), keyed K134 (2 MAJOR fixed). Pre-fix smoke: take-off edge step 4.7 % hover, dip 0 m. Gate progress: G5.4 take-off edge 4.7 % < 10 % (probe, 1 seed).
+- S134: post-fix smoke (f7_smoke_s134_fix): edge 4.7 % hover, dip 0 m, ground collective 0.0011 (was 0.0145). Gate progress: G5.4 take-off edge confirmed on fixed firmware (probe, 1 seed).
