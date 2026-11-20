@@ -52,7 +52,9 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| A134 | F-7 implementation in mc_indi_pos_control (D-F7-GROUND) | sonnet | design/impl_s134_f7.md + uncommitted diff in src/modules/mc_indi_pos_control | read notes file, `git diff --stat src/`, run module gtests |
+| A134 | F-7 impl DONE (uncommitted if session cut: 10 files +59/-309, gtests 8/8 suites, SITL built, break-checked) | sonnet | design/impl_s134_f7.md | `git diff --stat src/ msg/`; commit after key |
+| K134 | second key of F-7 diff vs D-F7-GROUND | sonnet | design/key_s134_f7.md | re-launch if file missing |
+| P134 | 1-seed auto_tour smoke, F-7 firmware (G5.4 probe) | haiku | results/f7_smoke_s134/README.md | re-fly per s132 README |
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
   MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit untested, DESCEND failsafe tests.
