@@ -19,8 +19,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    the 1-line fc8a fix is unflown, self-test OK), re-fly s1 valid (results/g5_events_s147_move): entry 510/1/21 ms PASS,
    excursion FAIL by definition. 3 m/s 3 seeds once Q8 add. 3 (i) answered; meanwhile G5.6/G5.11 probes.
 0d. G5.10 probe S147 (results/g5_g510_s147, 0f41810f90): INDI s1 alt 2.15 m FAIL, tilt 48.9 FAIL, back 4.3 s PASS;
-   PID 3.22 m/44.7 deg. Q9 open (20 deg unreachable with the row's step; full-scale part). Next: SAT part s2/s3
-   (INDI), A-48 closing test (tilt sp vs truth at REC edge). Key2 of g510_check + seg_pos/reset before gate use.
+   PID 3.22 m/44.7 deg. Q9 open (20 deg unreachable with the row's step; full-scale part). s2/s3: tilt 65 deg
+   0.3 s after thrust returns (PID 33), LOC by checker, alt 2.21 m. FIRST NEXT: A-48 cause search, 1 session max
+   (tilt sp vs truth, indi_pos_status a_c/gap states at the REC edge, sonnet on s2 log), then re-open the decision
+   (saturation handling of the outer law). Key2 of g510_check + seg_pos/reset before gate use.
 1. G5.4 probe PASS 9/9 S135 (g5_probe_s135; auto_smoke_check.py, g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
 3. G5.2 DONE as probe S138: 6/6 PASS altctl/posctl (results/g5_g52_s138, g52_check keyed AGREE). Re-fly at freeze.

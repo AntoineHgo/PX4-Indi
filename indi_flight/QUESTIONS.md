@@ -63,3 +63,5 @@ bounded); alt loss 2.0 m and recovery 5 s unchanged. B: keep 20 deg, drop the po
 Options (b): A [recommended] full-scale part flown in stabilized: full throttle + full roll stick 1 s (inner loop at
 full-scale saturation), limits as the row; B: drop the full-scale part.
 Meanwhile: 3 seeds of the SAT part as is (counts against the current text), A-48 closing test. Not blocked.
+Q9 note (S147, later): seeds 2/3 show the real G5.10 failure is INDI's tilt spike at the saturation EXIT (65 deg,
+PID 33 deg), not the 20 deg text; (a) still applies to the SAT part. Cause search first (A-48), no answer needed for it.

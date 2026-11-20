@@ -26,3 +26,9 @@ Reading: the 20 deg tilt limit cannot be met by any controller following the gat
 MPC_TILTMAX_AIR 45 deg is what the position step commands) -> test defect, owner Q9 (first test of the gate). Alt loss
 2.15 m > 2.0 m is a real INDI result on this seed (PID 3.22 m). INDI 48.9 deg > 45 deg: A-48. AGG part needs a
 driver that can saturate at full scale (position modes are rate- and tilt-limited by design) -> Q9.
+
+## Seeds 2/3 (S147 orchestrator, 2 parallel streams, probe)
+s2: alt 2.21 m, tilt 65.0, back 4.42 s; s3: alt 2.21 m, tilt 65.1, back 4.61 s; checker LOC (tilt >= 60) on both.
+Max tilt per phase (truth): SAT 34.1/40.3/39.6 (PID 30.3); REC edge, +0.3 s after thrust returns, 48.9/65.0/65.1
+(PID 33.4); AGG 45.3-45.4 (PID 44.7). The failure is the saturation-exit transient of INDI, not the gate's tilt
+text (Q9 (a) stays for the SAT part). A-48 = gate test failure, cause search next session.
