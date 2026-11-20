@@ -12,14 +12,13 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
 0c. G5.5 o1 0.59 / o2 0.79 m FAIL after A18 (S141). S143: lag builds in a_c (lag_chain_s143.md); drag-FF probe
    REJECTED (o1 1.11 m, g5_g55_s143_drag; D-A18-SOURCE outcome). Lag chase STOPPED (RC143): o1-o4/o7 FAIL recorded,
    cause = stock PositionControl feedback producing a_c (D-outer-arch base A). Re-fly at freeze; if still FAIL, owner Q.
-   NEXT session: G5.7 x1 matched (item 3b PID compare deferred), then fix ekf_yaw/rc_loss injector defects + key (item 4).
+   NEXT session: fix ekf_yaw/rc_loss injector defects + second key (item 4), then fly event rows G5.8/G5.9 (item 4).
 1. G5.4 probe PASS 9/9 S135 (g5_probe_s135; auto_smoke_check.py, g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
 3. G5.2 DONE as probe S138: 6/6 PASS altctl/posctl (results/g5_g52_s138, g52_check keyed AGREE). Re-fly at freeze.
-3b. S139: G5.3 hold PASS 3/3 (RMS <= 0.052 m). G5.7 under leaveP: s1 PASS, s2/s3 FAIL tilt err 5.17-5.25 deg at H->P
-   edges (limit 5); thrust step <= 3.1 %; switch-specific (G5.2 leaves ~1 deg). NEXT, max 1 session: fly mode_switch10
-   once with PID (MC_RATE_CTL_TYPE 0, MC_INDI_POS_EN 0), compare setpoints after H->P (setpoint re-init vs INDI state
-   reset on mode change). Tools: g57_check.py, g57_lag_compare.py. G5.9/G5.11 probes are NOT flown before this closes.
+3b. G5.3 hold PASS 3/3 (S139). G5.7 leaveP: S139 s2/s3 FAIL (5.17-5.25 deg) were the GNSS set-up fault: S143 matched
+   re-fly s2 3.62, s3 3.55 deg PASS, thrust step 3.0 % (results/g5_g57_s143_gnss); s1 PASS S139. G5.7 PASS 3/3 as probe;
+   PID compare DROPPED (cause found). Re-fly at freeze. G5.9/G5.11 event probes now unblocked (after item 4 fixes).
 3c. G5.5 probe committed S140 (results/g5_g55_s139/README.md); G5.3 mission PASS 3/3. G5.3 complete as probe.
 4. G5.6/5.8/5.9/5.11 injector BUILT S142 (04f8c514ac, unkeyed; pre-test results/g5_events_s142/README.md): kill and
    offboard-loss work; ekf_yaw no effect and rc_loss not detected (defects to fix); MAVLink events land 3-24 ms late
@@ -66,7 +65,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| A143d | G5.7 mode_switch10 x1 matched GNSS (seed 2) | sonnet | results/g5_g57_s143_gnss/README.md | if cut: README/NOTES there, re-brief |
+| - | none in flight | - | results/g5_g57_s143_gnss/README.md | run_batch.sh "<rows>" "<seeds>" |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),

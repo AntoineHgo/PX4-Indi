@@ -17,3 +17,4 @@ Tilt error deg over [e+0.3, e+1.0] (limit 5), thrust step % of hover (limit 20);
 | e10 H>P | 0.1 | 5.24 FAIL / 2.30 | 0.3 / 0.2 |
 Verdict (leaveP): S143 seed 2 PASS (max tilt 3.62 at e9, max thrust 3.0 %); S139 seed 2 FAIL. Validity: 10 edges, 4 leaving-P edges >= 1.5 m/s, no LOC, hover 0.137, rc=0.
 One seed only: seeds 1 and 3 were not re-flown, so G5.7 is not re-scored as a gate (S139 s1 PASS, s3 FAIL under delay 0).
+Seed 3 (same command, seed 3, rc=0, valid: 4 fast edges, no LOC): PASS, max tilt 3.55 deg at e9 S>H (S139 s3 FAIL: 5.17 e6, 5.25 e10; S143 e6 2.41, e10 2.11), worst thrust step 3.0 % at e4 (S139 3.1 %). Summary: g57_summary_s3.txt.
