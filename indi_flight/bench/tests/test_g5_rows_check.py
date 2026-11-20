@@ -69,14 +69,28 @@ def motors_log(zero_after_ms, end_s=20, kill_s=10):
     return d
 
 
+def outputs_log(zero_after_ms, spacing_us=1250, end_s=20, kill_s=10):
+    t = np.arange(0, end_s * S, spacing_us)
+    O = np.full((len(t), 4), 1500.0)
+    if zero_after_ms is not None:
+        O[t >= kill_s * S + zero_after_ms * 1000] = 0.0
+    d = {"timestamp": t}
+    for i in range(4): d[f"output[{i}]"] = O[:, i]
+    return d
+
+
 def test_g59a():
     ev = [{"name": "kill", "t_applied_us": 10 * S}]
     sw = {"timestamp": np.array([0, 10 * S + 500]), "kill_switch": np.array([3, 1])}
-    for zms, st in ((0.0, "PASS"), (50.0, "FAIL"), (None, "FAIL")):
-        L = {"manual_control_switches": sw, "actuator_motors": motors_log(zms), "vehicle_status": vs_log(end=20),
+    # (output zero after ms, output spacing us, expected verdict of "G5.9a kill motors")
+    for zms, sp, st in ((0.0, 1250, "PASS"), (50.0, 1250, "FAIL"), (None, 1250, "FAIL"), (5.0, 10_000, "NOT-COMPUTED")):
+        L = {"manual_control_switches": sw, "actuator_motors": motors_log(None), "vehicle_status": vs_log(end=20),
+             "actuator_outputs": outputs_log(zms, sp),
              "actuator_armed": {"timestamp": np.array([0]), "kill": np.array([0])}}
         L["vehicle_status"]["arming_state"][:] = 2
-        assert g.g59a(L, ev, 1250)[0]["status"] == st, zms
+        r = {x["name"]: x for x in g.g59a(L, ev, 1250)}
+        assert r["G5.9a kill motors"]["status"] == st, (zms, sp, r["G5.9a kill motors"])
+        assert r["G5.9a kill command (info)"]["status"] == "INFO"  # actuator_motors never decides the row
 
 
 def indi_logs(t_arm, pos_nonzero, first_dt_ms=10):
@@ -84,8 +98,10 @@ def indi_logs(t_arm, pos_nonzero, first_dt_ms=10):
     tp = t_arm + first_dt_ms * 1000 + np.arange(n) * 10_000
     pos = {"timestamp": tp}
     for k in g.POS_STATES: pos[k] = np.full(n, 1.0 if pos_nonzero else 0.0)
+    for k in g.POS_MEAS: pos[k] = np.full(n, 9.74)  # filtered measurements track their input: non-zero at rest, not a state
     rate = {"timestamp": tp}
     for k in g.RATE_STATES: rate[k] = np.zeros(n)
+    for k in g.RATE_MEAS: rate[k] = np.full(n, 0.3)
     return {"indi_pos_status": pos, "indi_rate_status": rate}
 
 

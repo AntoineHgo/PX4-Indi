@@ -329,6 +329,11 @@ def main():
     if "--check" in sys.argv:
         return check(sys.argv[sys.argv.index("--check") + 1])
     import run_scenario as rs
+    # S145 fix: event topics at every publication (interval 0) via the runner's logger_topics.txt, this flight only.
+    # The runner writes "<entry> 0 0" per entry; telemetry_status is multi (mavlink instances 0..3): the newline
+    # entries add instances 1..3 and the last line is completed by the runner into instance 0.
+    rs.LOG_TOPICS += ["failsafe_flags", "actuator_outputs", "actuator_armed", "manual_control_switches",
+                      "telemetry_status 0 1\ntelemetry_status 0 2\ntelemetry_status 0 3\ntelemetry_status"]
     rs.SCENARIOS["g5_events"] = {"mode": "auto", "auto": {}}
     rs.run_auto = g5_flight
     sys.argv += ["--scenario", "g5_events"]

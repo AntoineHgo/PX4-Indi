@@ -7,7 +7,7 @@ Writes <flight_dir>/g5_rows.json and g5_rows.txt; one PASS / FAIL / NOT-COMPUTED
 G5.8 (hover case only; "3 m/s: not flown"), per loss rc_loss / link_loss / offboard_loss:
   timeout reference (firmware time, GATES S144 note), parameters read at the event time from the ulog
   (initial params + changed_parameters, so runtime param sets are respected):
-    rc: rise of failsafe_flags.manual_control_signal_lost - COM_RC_LOSS_T (flag logged at 2 Hz: resolution 0.5 s)
+    rc: rise of failsafe_flags.manual_control_signal_lost - COM_RC_LOSS_T (failsafe_flags is published on change and every 500 ms: logged sample = firmware publish instant)
     link: last telemetry_status (any instance) with heartbeat_type_gcs=1 before the failsafe entry + COM_DL_LOSS_T
     offboard: last offboard_control_mode sample before the failsafe entry + COM_OF_LOSS_T
   entry = first vehicle_status.nav_state change after the event; if the vehicle was already in the configured
@@ -17,7 +17,7 @@ G5.8 (hover case only; "3 m/s: not flown"), per loss rc_loss / link_loss / offbo
   at onset (event applied time) until entry + 5 s; limit <= 1 m. max tilt from vehicle_attitude over the same window
   is reported only; the G5.3/G5.4 sub-check is NOT computed.
 G5.9: (a) motors all 0 after kill: reference = first manual_control_switches.kill_switch change (else
-  actuator_armed.kill rise, logged 2 Hz); delay = first actuator_motors sample at/after reference that is 0 on all
+  actuator_armed.kill rise, published on change + 500 ms); delay = first actuator_motors sample at/after reference that is 0 on all
   channels and stays 0 until disarm; PASS if delay <= one command period (run.json physics_step_s, 1.25 ms).
   (b) INDI states zero at re-arm: first indi_pos_status / indi_rate_status sample at/after the re-arm time, fields
   listed zero/non-zero; the state set is POS_STATES / RATE_STATES; sample later than MAX_FIRST_S -> NOT-COMPUTED
@@ -37,10 +37,17 @@ from g5_events import load_ulog, first_rise  # noqa: E402  (reuse, not duplicate
 NAV = {"hold": 4, "return": 5, "land": 18}
 ACT_NAME = {1: "hold", 2: "return", 3: "land"}      # NAV_RCL_ACT / NAV_DLL_ACT
 OBL_NAME = {3: "return", 4: "land", 5: "hold"}      # COM_OBL_RC_ACT
-POS_STATES = ["a_f[0]", "a_f[1]", "a_f[2]", "t_f[0]", "t_f[1]", "t_f[2]", "t_c[0]", "t_c[1]", "t_c[2]"]
-RATE_STATES = ["angular_accel_filtered[0]", "angular_accel_filtered[1]", "angular_accel_filtered[2]",
-               "torque_filtered[0]", "torque_filtered[1]", "torque_filtered[2]",
-               "torque_increment[0]", "torque_increment[1]", "torque_increment[2]"]
+# STATES = fields carrying memory from the previous flight, not re-derived from current measurements (see
+# results/g5_events_s145/fix.md); they must be at their reset value (0) in the first sample after arming.
+# Measurements (a_f, t_f, angular_accel_filtered, mean_u ...), setpoints and outputs are reported only.
+POS_STATES = ["blend", "hold_cycles"]
+# torque_increment is algebraic (G1^-1 (nu - a_f) of the current cycle, indi_rate_control.cpp step 8); its only memory,
+# the yaw back-calculation term _yaw_inc_prev, is zeroed by the law while landed and is not logged: reported only.
+RATE_STATES = ["torque_filtered[0]", "torque_filtered[1]", "torque_filtered[2]",
+               "rate_sp_dot[0]", "rate_sp_dot[1]", "rate_sp_dot[2]"]
+POS_MEAS = ["a_f[0]", "a_f[1]", "a_f[2]", "t_f[0]", "t_f[1]", "t_f[2]", "mean_u"]
+RATE_MEAS = ["angular_accel_filtered[0]", "angular_accel_filtered[1]", "angular_accel_filtered[2]",
+             "torque_increment[0]", "torque_increment[1]", "torque_increment[2]"]
 MAX_FIRST_S = 0.2
 ZERO_EPS = 0.002  # disarmed idle command in the sim is about 0.001
 LOSS_WIN_S = 5.0
@@ -123,7 +130,7 @@ def g58(L, ev, params, changes):
             r = first_rise(_a(ff, "timestamp"), _a(ff, "manual_control_signal_lost"), tap)
             if r is None:
                 out.append(res(row, "NOT-COMPUTED", "no manual_control_signal_lost rise")); continue
-            timeout, ref, onset = r - tmo * 1e6, f"flag rise {r/1e6:.3f} s (2 Hz log, res 0.5 s) - {tmo} s", tap
+            timeout, ref, onset = r - tmo * 1e6, f"flag rise {r/1e6:.3f} s (publication instant, on change) - {tmo} s", tap
         else:
             if name == "link_loss":
                 act, tmo, nm = P("NAV_DLL_ACT"), P("COM_DL_LOSS_T"), ACT_NAME.get(P("NAV_DLL_ACT"))
@@ -188,11 +195,11 @@ def g59a(L, ev, step_us):
         if idx:
             ref, rtxt = int(t[idx[0]]), "manual_control_switches.kill_switch change"
             resol = float(np.median(np.diff(t)) / 1e3) if len(t) > 1 else None
-            rtxt += f" (event-driven topic, median sample spacing {resol:.1f} ms)"
+            rtxt += f" (published on change plus a {resol:.0f} ms heartbeat, logged at every publication)"
     if ref is None:
         aa = L["actuator_armed"]
         ref = first_rise(_a(aa, "timestamp"), _a(aa, "kill"), tk - 1e6)
-        rtxt = "actuator_armed.kill rise (logged at 2 Hz: resolution about 500 ms)"
+        rtxt = "actuator_armed.kill rise (published on change, logged at every publication)"
         if ref is None:
             return [res("G5.9a kill", "NOT-COMPUTED", "no firmware-side kill record")]
     vs = L["vehicle_status"]
@@ -209,29 +216,44 @@ def g59a(L, ev, step_us):
     last_nz = float(ts[Ms.any(1)].max()) if Ms.any() else None
     i = all_zero_after(ts, np.where(Ms, 1.0, 0.0), ref)
     out = []
+    # actuator_motors is the controller command: informational only (the output stage zeroes actuator_outputs, not this topic)
     if i is None:
-        txt = (f"actuator_motors (800 Hz) NOT 0 after kill: still up to {nzmax:.3f} until disarm "
-               f"{(t_end-ref)/1e6:.2f} s after the switch (zero = |u| <= {ZERO_EPS}); reference {rtxt} at {ref/1e6:.4f} s; "
-               f"command period {per:.2f} ms")
-        out.append(res("G5.9a kill motors", "FAIL", txt, delay_ms=None, period_ms=per, ref_us=ref))
+        out.append(res("G5.9a kill command (info)", "INFO",
+                       f"actuator_motors (controller command) NOT 0 after kill: up to {nzmax:.3f} until disarm "
+                       f"{(t_end-ref)/1e6:.2f} s after the switch; reference {rtxt} at {ref/1e6:.4f} s"))
     else:
-        d = (ts[i] - ref) / 1e3
-        out.append(res("G5.9a kill motors", "PASS" if d <= per else "FAIL",
-                       f"actuator_motors 0 at {d:.2f} ms after switch; command period {per:.2f} ms; reference {rtxt}",
-                       delay_ms=d, period_ms=per, ref_us=ref))
+        out.append(res("G5.9a kill command (info)", "INFO",
+                       f"actuator_motors 0 at {(ts[i]-ref)/1e3:.2f} ms after switch; reference {rtxt}"))
     ao = L.get("actuator_outputs")
-    if ao is not None and "output[0]" in ao:
-        to = _a(ao, "timestamp")
-        O = np.stack([_a(ao, k) for k in sorted(ao) if k.startswith("output[")][:4], 1)
-        j = np.where((to >= ref) & (np.abs(O).sum(1) == 0))[0]
-        prev = np.where((to < ref) & (np.abs(O).sum(1) > 0))[0]
-        if len(j):
-            lo = (to[prev[-1]] - ref) / 1e3 if len(prev) else None
-            hi = (to[j[0]] - ref) / 1e3
-            out.append(res("G5.9a kill outputs", "NOT-COMPUTED",
-                           f"actuator_outputs (logged 10 Hz): last non-zero sample {lo} ms, first all-0 sample {hi:.1f} ms relative to the switch "
-                           f"=> zeroed within (0..{hi:.0f}] ms, resolution {float(np.median(np.diff(to))/1e3):.0f} ms; one-command-period ({per:.2f} ms) bound NOT verifiable at this log rate"))
-    return out
+    if ao is None or "output[0]" not in ao:
+        return out + [res("G5.9a kill motors", "NOT-COMPUTED", "actuator_outputs not logged")]
+    to = _a(ao, "timestamp")
+    # outputs 0..3 by numeric index (a lexicographic sort put output[10..12] before output[2]); window ends at disarm,
+    # since the flight re-arms and takes off again after the kill
+    O = np.nan_to_num(np.stack([_a(ao, f"output[{i}]") for i in range(4)], 1))
+    sp = float(np.median(np.diff(to)) / 1e3)
+    wo = to <= t_end
+    to, O = to[wo], O[wo]
+    k = all_zero_after(to, O, ref)  # first sample from which all 4 outputs stay 0 until disarm
+    rres = "reference = first publication carrying the change (on-change topic)"
+    if k is None:
+        return out + [res("G5.9a kill motors", "FAIL", f"actuator_outputs (full rate, spacing {sp:.2f} ms) not 0 until the end after kill; "
+                          f"{rtxt} at {ref/1e6:.4f} s; {rres}", delay_ms=None, period_ms=per, ref_us=ref)]
+    # attribution (info): commander latency switch -> actuator_armed.kill, output-stage latency kill -> outputs 0
+    aa = L.get("actuator_armed")
+    tkr = first_rise(_a(aa, "timestamp"), _a(aa, "kill"), ref - 1e6) if aa is not None and "kill" in aa else None
+    if tkr is not None:
+        out.append(res("G5.9a kill chain (info)", "INFO",
+                       f"actuator_armed.kill rise {(tkr-ref)/1e3:.2f} ms after the switch; outputs 0 "
+                       f"{(to[k]-tkr)/1e3:.2f} ms after the kill flag", armed_kill_ms=(tkr - ref) / 1e3,
+                       out_after_flag_ms=(to[k] - tkr) / 1e3))
+    hi = (to[k] - ref) / 1e3
+    lo = (to[k - 1] - ref) / 1e3 if k > 0 and to[k - 1] >= ref else 0.0  # last non-zero sample (or the reference)
+    st = "PASS" if hi <= per else ("FAIL" if lo > per else "NOT-COMPUTED")
+    return out + [res("G5.9a kill motors", st,
+                      f"actuator_outputs all 0 at {hi:.2f} ms after the switch (last non-zero {lo:.2f} ms), command period {per:.2f} ms, "
+                      f"output sample spacing {sp:.2f} ms; {rtxt} at {ref/1e6:.4f} s; {rres}",
+                      delay_ms=hi, last_nonzero_ms=lo, period_ms=per, ref_us=ref)]
 
 
 def arm_time(L, ev):
@@ -243,7 +265,7 @@ def arm_time(L, ev):
 
 def g59b(L, t_arm):
     lines, bad, stat, miss = [], [], "PASS", []
-    for topic, states in (("indi_pos_status", POS_STATES), ("indi_rate_status", RATE_STATES)):
+    for topic, states, meas in (("indi_pos_status", POS_STATES, POS_MEAS), ("indi_rate_status", RATE_STATES, RATE_MEAS)):
         d = L.get(topic)
         if d is None:
             miss.append(topic); continue
@@ -255,7 +277,8 @@ def g59b(L, t_arm):
         nz = [f"{k}={d[k][i]:.3g}" for k in states if k in d and d[k][i] != 0]
         zr = [k for k in states if k in d and d[k][i] == 0]
         allnz = [k for k in d if k != "timestamp" and d[k][i] != 0]
-        lines.append(f"{topic} +{(t[i]-t_arm)/1e3:.1f} ms: states non-zero {nz or 'none'}; other non-zero fields {[k for k in allnz if k not in states][:12]}")
+        ms = ", ".join(f"{k}={d[k][i]:.3g}" for k in meas if k in d)
+        lines.append(f"{topic} +{(t[i]-t_arm)/1e3:.1f} ms: states non-zero {nz or 'none'} (of {len(states)}); measurements (reported only) {ms}")
         bad += [x.split('=')[0] for x in nz]
     if miss and not lines:
         return res("G5.9b rearm states", "NOT-COMPUTED", "; ".join(miss))
