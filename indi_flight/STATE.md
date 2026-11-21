@@ -57,7 +57,9 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | Q7 | freeze-7 serial queue G5.5 24 + G4 18 + G5.3/5.4 (detached) | sonnet | results/freeze7_s177/ (queue_status.tsv) | re-run queue.sh (idempotent), see its README |
-| M7 | G2 outer models -> MC_INDI_XY_* | sonnet | results/g2_outer_model_s177.md | re-brief from STATE action 4 |
+| G2Q | G2 outer 24 cells re-fly, waits for Q7 QUEUE_END (model predicts xy PM 46 deg, GM 7.8 dB) | sonnet | results/g2_outer_freeze7_s177/ | queue2.sh (idempotent), README scoring cmd |
+| SC7 | S178: score Q7 flights (G5.5 now; G4 + chatter, G5.3/5.4 after QUEUE_END) | sonnet | results/freeze7_s177/SCORES.md | re-brief: existing keyed checkers only |
+| SG2 | S178: score G2 outer 24 cells after queue2 ends | sonnet | results/g2_outer_freeze7_s177/SCORES.md | re-brief from its README scoring cmd |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
