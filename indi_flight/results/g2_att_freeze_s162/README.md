@@ -23,4 +23,5 @@ attitude-break window has max gap 0 periods and u = c + d error 3e-8 in every ru
 "result unchanged with hole windows left out" holds trivially. Versus S107 (preliminary pair, sim-default noise):
 roll/pitch PM 56.8+ -> 53.4-54.9 deg, GM 22.0+ -> 19.2-20.9 dB; yaw PM 73 -> 81 deg (D-T10/freeze param changes and
 typical noise; not chased, all far from limits). Linear-model x-check: attitude roll/pitch model = S93 T195 (A-36,
-GM model low), yaw unmodelled: not re-run here. Second key: key2_att_margins.{py,txt} (S162, pending).
+GM model low), yaw unmodelled: not re-run here. Second key: key2_att_margins.{py,txt} (S162, sonnet, raw indi_rate_status rates_sp_pre_inject/applied/inject, NUDFT,
+own self-test): agrees on 12/12 cells, max |dPM| 0.1 deg, |dGM| 0.22 dB (limit 1 dB / 3 deg): KEYED.

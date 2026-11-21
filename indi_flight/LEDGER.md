@@ -260,3 +260,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S161 | sonnet | G5.11 yaw-reset spike cause search | results/g5_freeze_s157/g511_yaw_cause.md | done, 13 calls, ~$0.35, cause T10 raw re-seed |
 | S161 | sonnet | key2 review fix vs D-T10-RESET | design/review_s161_t10.md | done, 5 calls, 2 MAJOR (flag sharing, missing jerk test) closed d1b65d0f09 |
 | S162 | sonnet | key2 G5.11 re-fly (independent, from GATES text) | results/g511_fix_s161/key2_g511.{py,txt} | done, 3 calls, agrees 6/6 to 3 digits |
+| S162 | sonnet | key2 attitude margins from raw (12 cells) | results/g2_att_freeze_s162/key2_att_margins.{py,txt} | done, 4 calls, agrees dPM 0.1 dGM 0.22 dB |
