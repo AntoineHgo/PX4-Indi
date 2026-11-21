@@ -267,3 +267,6 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S164 | sonnet | G2 outer analytic linear model x-check (8 loop rows) | bench/g2_outer_model_s164.py, results/g2_outer_freeze_s163/xcheck.md | done, 13 calls, ~$0.6, PM 8/8 within 10 deg, xy GM model -5 dB (A-50) |
 | S165 | sonnet | G2 rate + att yaw linear-model x-check at freeze | bench/g2_rate_model_s165.py, results/g2_freeze_s160/xcheck_rate.md | done, 11 calls, ~$0.35, 12/15 agree, A-51 |
 | S166 | sonnet | G4 metric script + self-test + pre-look | results/g4_prelook_s166 | ~$0.28, 11 calls |
+| S168 | sonnet | key2 of true-rpm hook 10c741af4b (code vs spec) | results/g4_truth_s168/key2_hook.md | done, 10 calls, no BLOCKING, item 6 verified on log by orchestrator |
+| S168 | sonnet | route check 168 | design/route_check_168.md | done, 7 calls, on path, cuts acted on in STATE |
+| S168 | sonnet | key2 re-implementation of G4 metrics | bench/g4_metrics_key2.py, results/g4_pretest_s168/key2_metrics.md | done, 10 calls, agree <=2 % except harsh C20 7 % (A-52) |
