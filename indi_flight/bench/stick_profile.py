@@ -149,8 +149,11 @@ POS_PITCH_3MS = int(round(inv_expo(3.0 / MPC_VEL_MANUAL) * 1000))   # pitch stic
 def seg_sample(spec, hover_thr=0.5):
     """S139 G5.7 / G5.3 segment sticks. spec = (mode, pitch): pitch True = pitch stick for 3 m/s, else all centred.
     Centred = throttle centre (raw 500 in altctl / posctl / hold, the stabilized curve centre = neutral_sample)."""
-    mode, pitch = spec
+    mode, pitch = spec[0], spec[1]
     smp = neutral_sample("stabilized" if mode == "stabilized" else "posctl", hover_thr)
     if pitch:
         smp["x"] = POS_PITCH_3MS
+    if len(spec) > 2:  # S178 G5.10: optional third item = raw stick overrides, e.g. {"y": 1000, "z": 1000}
+        smp.update(spec[2])
+        smp["throttle"] = raw_to_stick(smp["z"])
     return smp

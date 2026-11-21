@@ -244,3 +244,12 @@ SCENARIOS["sat_sustained"] = dict(
     seg_pos={"sat": [3.0, 0.0, 0.0], "rec": [3.0, 0.0, 0.0], "agg": [40.0, 0.0, -15.0], "aghold": [40.0, 0.0, -15.0]},
     motor_fault=[dict(segment="sat", motors=[0, 1, 2, 3], thrust_scale=0.274),
                  dict(segment="rec", motors=[0, 1, 2, 3], thrust_scale=1.0, reset=True)])
+
+# S178 G5.10 redefined full-scale part (GATES owner amendment S175, Q9 b): stabilized, full throttle + full roll stick for 1 s
+# (raw z 1000, y 1000), then centred sticks. Fly with --stick-mode stabilized. No existing scenario can command it
+# (seg_sticks had centred / pitch-3 m/s only; stick_steps uses 0.5 of the stick).
+SCENARIOS["g510_stab_full"] = dict(
+    mode="stick", axis=None, traj=None,
+    segments=[("settle", 3.0, 0.0), ("full", 1.0, 0.0), ("rec", 9.0, 0.0)],
+    seg_sticks={"settle": ("stabilized", False), "full": ("stabilized", False, {"y": 1000, "z": 1000}),
+                "rec": ("stabilized", False)})
