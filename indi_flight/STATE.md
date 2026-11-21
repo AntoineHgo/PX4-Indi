@@ -74,6 +74,7 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S173a | A-56 probe: harsh hover x3, pos0 (stock pos ctl) + lpf4 (accel LPF 4 Hz); no truth-accel hook exists | bash bg | results/a56_probe_s173 (status.txt, FLY_DONE) | `sh indi_flight/results/a56_probe_s173/fly.sh` (skips done), then analyse.sh in Docker |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),

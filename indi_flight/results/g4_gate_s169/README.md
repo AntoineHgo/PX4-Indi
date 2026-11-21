@@ -18,5 +18,12 @@ Additional clause (harsh hover, `bench/g3_checks.py`, UNKEYED, g3_checks.json pe
   stock params, harsh hover s1): same 70.00 Hz line, peak/median 78, RMS 9.8e-5 -> not INDI-specific (A-54).
 S171 (D-G3-SPAN, item 2 over the whole flight incl. descent): item 2 FAIL 1/3 harsh (harsh_s2 sustained 2 Hz q in the
 AUTO_LAND descent, both keys; A-56: INDI descent rate RMS 3-6 deg/s harsh vs PID 0.3).
-G4 verdict: NOT YET. Metric rows PASS; chatter clause FAIL pending A-54 (suspected simulator alias of the 1P/2P
-vibration line) and key2 of g3_checks.py.
+G4 verdict (S173, superseding "NOT YET"): metric rows PASS 18/18 (>= 10x margin, also 9/9 at D-JFF-SOURCE and 3/3
+harsh at D-JFF-OFFB, results/g4_jff_s172, g4_jffoffb_s172). Additional clause:
+- item 2 (whole flight, D-G3-SPAN): open FAIL 1/3 harsh (A-56, ~2 Hz p/q, no LOC, tilt < 11 deg); persists with
+  rate FF removed in land (aa4fd2654a), so FF is not the cause. Cause search continues on the outer-loop
+  measured-acceleration path (RC173).
+- chatter: as written FAIL 9/9 runs in every profile, quiet included, both keys (a55_key1_all.md, g3_key2.md); PID
+  carries the same 70 Hz line. Under Q14 option A (absolute floor of one DShot step) PASS: largest line RMS 2.5e-4
+  < 5e-4. Owner answer pending (Q14); counted FAIL until then.
+G4 is therefore NOT PASSED: A-56 (INDI-specific) and the chatter clause (stack-independent, Q14) both open.
