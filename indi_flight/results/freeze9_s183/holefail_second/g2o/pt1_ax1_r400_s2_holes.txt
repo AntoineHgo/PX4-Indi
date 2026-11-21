@@ -1,0 +1,15 @@
+hole report: indi_flight/results/freeze9_s183/g2o/pt1_ax1_r400_s2/flight.ulg  (span 199.4 s after the first second)
+topic                                 class       rate Hz holes  miss   miss %  max ms  exc ms  verdict
+sim_ground_truth                      sim           400.0    14    19   0.0238   12.50   10.00  PASS
+vehicle_attitude_groundtruth          sim-info      400.0    14    19   0.0238   12.50   10.00  info
+vehicle_angular_velocity_groundtruth  sim-info      400.0    14    19   0.0238   12.50   10.00  info
+vehicle_local_position_groundtruth    sim-info      400.0    14    19   0.0238   12.50   10.00  info
+sensor_gyro                           sim           400.0     4     8   0.0100   11.25    8.75  PASS
+vehicle_angular_velocity              controller    400.0     2     2   0.0025   11.25    8.75  PASS
+vehicle_torque_setpoint               controller    400.0     2     2   0.0025   11.25    8.75  PASS
+actuator_motors                       controller    400.0     2     2   0.0025   11.25    8.75  PASS
+vehicle_local_position_setpoint       controller     88.9     3     3   0.0169   23.75   12.50  FAIL (count-disagree: count-based missing -4)
+CLASS sim        holes   14  missing 0.0238 % (limit 0.05 %)  max 12.50 ms, excess 10.00 ms (limit 10 excess)  PASS
+CLASS controller holes    3  missing 0.0169 % (limit 0.10 %)  max 23.75 ms, excess 12.50 ms (limit 10 excess)  FAIL
+CLASS logger     holes    0  missing 0.0000 % (limit 0.10 %)  max 0.00 ms, excess 0.00 ms (limit 10 excess)  PASS
+OVERALL FAIL

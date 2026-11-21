@@ -1,0 +1,13 @@
+set -u
+sh indi_flight/bench/gate_g4.sh score indi_flight/results/freeze9_s183/g4 > indi_flight/results/freeze9_s183/g4/score_g4_table.log 2>&1
+sed 's#results/g4_gate_s169#results/freeze9_s183/g4#' indi_flight/results/g4_gate_s169/rescore_s175.py | python3 - > indi_flight/results/freeze9_s183/g4/key1_stdout.txt 2> indi_flight/results/freeze9_s183/g4/key1_stderr.txt
+sed 's#results/g4_gate_s169#results/freeze9_s183/g4#' indi_flight/results/g4_gate_s169/rescore_key2_s175.py | python3 - > indi_flight/results/freeze9_s183/g4/key2_stdout.txt 2> indi_flight/results/freeze9_s183/g4/key2_stderr.txt
+RAW=indi_flight/results/freeze9_s183/g4/chatter_cruise_raw.txt python3 indi_flight/results/g4_gate_s169/chatter_cruise_s176.py indi_flight/results/freeze9_s183/g4/cruise_{quiet,typ,harsh}_s{1,2,3} > indi_flight/results/freeze9_s183/g4/chatter_stdout.txt 2>&1
+{ python3 indi_flight/bench/tests/test_g4_chatter_skip_key1.py; python3 indi_flight/bench/tests/test_g4_chatter_skip_key2.py; } > indi_flight/results/freeze9_s183/g4/q18/selftests.txt 2>&1
+python3 indi_flight/bench/g4_chatter_skip_key1.py indi_flight/results/freeze9_s183/g4/q18/key1_indi_18_gate.md indi_flight/results/freeze9_s183/g4/{hover,cruise}_{quiet,typ,harsh}_s{1,2,3} > indi_flight/results/freeze9_s183/g4/q18/key1_gate_stdout.txt 2>&1
+python3 indi_flight/bench/g4_chatter_skip_key1.py --extend indi_flight/results/freeze9_s183/g4/q18/key1_indi_18_ext.md indi_flight/results/freeze9_s183/g4/{hover,cruise}_{quiet,typ,harsh}_s{1,2,3} > indi_flight/results/freeze9_s183/g4/q18/key1_ext_stdout.txt 2>&1
+for d in indi_flight/results/freeze9_s183/g4/{hover,cruise}_{quiet,typ,harsh}_s{1,2,3}; do python3 indi_flight/bench/g4_chatter_skip_key2.py $d; done > indi_flight/results/freeze9_s183/g4/q18/key2_stdout.txt 2>&1
+sed 's#results/g4_gate_s169#results/freeze9_s183/g4#; s#rescore_s175_runs#rescore_key1_q19_runs#' indi_flight/results/freeze9_s183/g4/rescore_key1_q19.py | python3 - > indi_flight/results/freeze9_s183/g4/key1_q19_stdout.txt 2> indi_flight/results/freeze9_s183/g4/key1_q19_stderr.txt
+sed 's#results/g4_gate_s169#results/freeze9_s183/g4#' indi_flight/results/freeze9_s183/g4/rescore_key2_q19.py | python3 - > indi_flight/results/freeze9_s183/g4/key2_q19_stdout.txt 2> indi_flight/results/freeze9_s183/g4/key2_q19_stderr.txt
+python3 indi_flight/results/freeze9_s183/g4/guard_q19.py indi_flight/results/freeze9_s183/g4/{hover,cruise}_{quiet,typ,harsh}_s{1,2,3} > indi_flight/results/freeze9_s183/g4/guard_indi.jsonl 2> indi_flight/results/freeze9_s183/g4/guard_indi.err
+echo ALL_DONE > indi_flight/results/freeze9_s183/g4/score_all.done
