@@ -1,0 +1,29 @@
+run: indi_flight/results/g5_freeze_s157/sat_sustained_s1
+scenario: sat_sustained
+seed: 1
+truth_source: sim_ground_truth
+events_s: {'settle': 55.160999999999994, 'sat': 58.160999999999994, 'rec': 63.163, 'agg': 73.172, 'aghold': 81.182, 'end': 93.182}
+MPC_TILTMAX_AIR: 45.0
+tilt_limit_deg: 50.0
+tilt_ok_legacy_20deg: False
+z_pre_m: 4.972271919250488
+alt_loss_m: 1.7566885948181152
+tilt_max_deg: 45.30523681640625
+sat_frac_sat_part: 0.9480259870064968
+sat_frac_rec_part: 0.0
+sat_frac_agg_part: 0.0
+last_sat_agg_s: None
+back_s_sat: 1.9482500000000016
+back_s_agg: None
+overshoot_x_sat_m: 0.08314641565084457
+overshoot_x_agg_m: 1.875099502503872
+loc: False
+verdict: {'no_loc': True, 'alt_loss': True, 'tilt': True, 'back_sat': True, 'back_agg': False}
+invalid: ['no saturation in AGG part']
+pass: False
+PASS no_loc
+PASS alt_loss
+PASS tilt
+PASS back_sat
+FAIL back_agg
+RESULT INVALID
