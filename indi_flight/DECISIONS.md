@@ -1101,3 +1101,14 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   the margin of the offboard configuration would be unmeasured; that would pass G2 by test choice.
 - Overturn / escalate: no pair passes both -> owner question (G2 margin vs G5.5 tracking limit on this airframe),
   with the F4 revert as a second lever measured first.
+
+## D-XY-PICK (S183, 2026-11-21): MC_INDI_XY_VP default 3.6 -> 2.4 (XY_P 1.2 kept)
+- Fact (results/xy_sweep_s183, 1 seed per cell): VP 2.4 -> spot PM rate/att 47.2/48.1, holes PASS/PASS, G5.5
+  o1/o3/o7 0.443/0.453/0.440 m. VP 2.8 -> PM 45.5/46.4, rate hole check FAIL, G5.5 0.375-0.399 m.
+- Choice: 2.4. Relative margin is balanced (PM +2.2/+3.1 deg, ~5 %; G5.5 ~0.05 m, ~10 %); 2.8 leaves 0.5 deg PM,
+  inside an unmeasured seed spread.
+- Alternatives: 2.8 (rejected above); 2.6 midpoint (one more sweep session, no gate gain over 2.4 shown);
+  F4 revert (inner change, untested, kept as second lever).
+- Next: firmware default (two keys), FREEZE-9, re-fly the D-FREEZE-8 list (3 seeds decide).
+- Overturn: any freeze-9 seed with spot PM < 45 or G5.5 > 0.5 m -> owner question (G2 margin vs G5.5 limit on this
+  airframe), F4 revert probe measured first.
