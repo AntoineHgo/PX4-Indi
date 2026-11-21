@@ -1478,3 +1478,6 @@ tau box (test definition).
   3/3 both keys (attitude jump 5.8-10.7 deg at hold edges; freeze-6 PASS). G3 pre-test on Q22 draws: 10/20 FAIL item 2
   both keys (ANALYSIS_S188.md). PID refs of both failures queued detached (T9, T10). Gate progress: G5.10 scored
   PASS; G5.1/G5.2 re-scored PASS at freeze-9; G5.7 and G3 pre-test scored FAIL (PID refs pending).
+- S188 (cont.): PID refs flown. G5.7 PID attitude jump 4.50/4.54/7.50 deg (INDI 5.8/9.3/10.7): mostly INDI-specific.
+  G3 pre-test PID key 1 fails 03/08/13 (shared); INDI-only 00/02/05/09/10/16/17. Next: one cause-search session for
+  both. Gate progress: G3 and G5.7 failures classified INDI-specific vs shared (reference rule).

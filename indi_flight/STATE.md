@@ -5,8 +5,8 @@
   D-XY-PICK), config g5_freeze_s157 params (XY gains at firmware defaults 1.2/2.4). D-FREEZE-8 list re-flies in
   queue results/freeze9_s183 (G4 cruise_harsh_s2 excluded until Q19).
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
-- Blocker: none. Q20-Q22 closed S187. G5.7 FAIL at freeze-9 (PID ref T10 queued); G3 pre-test 10/20 FAIL (PID
-  refs T9 queued). Both batches run detached; next session reads their scores first.
+- Blocker: none. G5.7 FAIL 3/3 at freeze-9 and G3 pre-test 7 INDI-only item-2 fails (PID refs flown S188):
+  next session = one cause-search session for both (freeze rule: fix only with a fix probe on a log).
 ## Next actions (owner order; each names its gate item)
 1. G2 PASSED at freeze-9 (S184, GATES "G2 verdict at freeze-9"). Any firmware change re-opens it.
 2. G4 PASSED at freeze-9 under Q20 (S187, both guard keys 0 checked / 0 FAIL). Any firmware change re-opens it.
@@ -14,16 +14,19 @@
    chase). G5.10 (SAT dropped Q21) stabilized part PASS 3/3 both keys (freeze9_s183/g510_stab, S188).
    D-FREEZE-9-GAP re-fly (S188, freeze9_s183/g5_modes): G5.1 6/6 and G5.2 6/6 PASS both keys; G5.7 FAIL 3/3 both
    keys on attitude jump (5.8/9.3/10.7 deg > 5; hold edges P>H, S>H, H>P; freeze-6 2.5-3.1 deg PASS) = regression
-   from freeze-8/9 XY gains (or F2). T10 PID refs mode_switch10 x3 chained after T9. Next: if PID also > 5 deg ->
-   owner question (BLOCKING G5.7). If INDI-only -> one session cause search on the log (setpoint rate at hold entry
-   vs attitude tracking; XY_VP 2.4 vs G5.5 0.499 m trade), then re-open D-XY-PICK; a firmware change re-opens
-   G2/G4/G5 rows per freeze rule.
+   from freeze-8/9 XY gains (or F2). PID ref (S188): 4.50 / 4.54 / 7.50 deg (s3 FAIL) -> mostly INDI-specific,
+   PID thin too. Next (one session, joint with G3 below): cause search on the s1/s2 logs, INDI vs PID at the hold
+   edges (attitude setpoint rate vs tracking lag; attitude-loop damping). Then re-open the decision it points to
+   (D-XY-PICK or attitude loop; attitude P change was rejected in Q22 -> owner question if that is the lever).
 4. G3: pre-test re-flown on Q22 draws (S188, results/g3_pretest_s187, ANALYSIS_S188.md): NOT clean, both keys
    10/20 FAIL item 2 (p/q osc 2.5-7.3 Hz; 00/05/10/16/17 before trajectory, 02/03/08/09/13 at trajectory/fault;
    items 1 all pass, item 3 fails 02/05). New vs S186: 00, 10, 16 (16 = stab, no fault, no wind). Model predicts
-   all 20 stable (PM 45-78). T9 PID refs of the 10 runs chained after T8 (pid_refs/). Next: read PID scores. If PID
-   shows the same item-2 fails -> owner question (detector/test defect?), BLOCKING G3. If INDI-only -> one session
-   cause search (start with 16/10: stab, no faults), then re-open the decision. Run 17 old draw: report only.
+   all 20 stable (PM 45-78). PID refs (pid_refs/, S188): key 1 PID fails 03/08/13 (shared), so INDI-only fails
+   00/02/05/09/10/16/17. Key 2 PID table differs from key 1 on 03 and 16: reconcile first (sonnet, existing
+   scripts). Next: one session cause search with G5.7 (common suspect: attitude loop damping, osc 2.5-7.3 Hz; start
+   with 16/10: stab, no fault, no wind; which loop oscillates, why margins_models misses it: attitude loop and
+   tau asymmetry unmodelled). Then re-open the decision. Shared 03/08/13 -> owner question with G3 verdict data.
+   Run 17 old draw: report only.
 5. G7 (stage 7, not before G2/G4/G5 verdicts): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site
    (K128 MAJOR), D-JFF-SOURCE case, D-OFFB-POSVEL wiring test, omega_ff step on offboard entry (key2_jffoffb MINOR),
    checker self-tests passthrough_check/offb_vel_check, g511 yaw p95 subtraction test (g511_check.py:184), g510
@@ -49,16 +52,11 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 - Guard blocks long `git commit -m`: use `-F <file>`.
 - chatter_cruise_s176.py without RAW= overwrites tracked results/g4_gate_s169/chatter_cruise_s176_raw.txt: brief
   agents to set RAW to their own folder; `git checkout` it if dirty.
-- Detached chains: list every waiter pid in Tasks in flight; an unlisted S187 chain flew g3_pid_ref_s187 in S188.
-  Dirty while flying (allowed): results/g3_pretest_s187/pid_refs, results/freeze9_s183/g5_modes/pid_*.
-- Logger misses the first ~0.2 s of indi_pos_status (late subscription): never read a missing sample as bypass.
+- Detached chains: list every waiter pid in Tasks in flight; an unlisted S187 chain flew g3_pid_ref_s187 in S188.- Logger misses the first ~0.2 s of indi_pos_status (late subscription): never read a missing sample as bypass.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T1 | G4 guard Q20 key 1: DONE (0 checked, 0 FAIL; max 4.84e-4) | sonnet | results/freeze9_s183/g4/GUARD_Q20_KEY1.md | - |
-| T4 | G5.10 SAT Q21 feasibility: DONE, invalid both stacks -> SAT dropped (C) | sonnet | results/g510_q21_s187/README.md | - |
-| T10 | G5.7 PID refs mode_switch10 s1-3, both keys, chained after T9 (S188) | sonnet | results/freeze9_s183/g5_modes/pid_mode_switch10_s*.key*.txt (PID_G57_DONE) | README "PID reference (S188)" |
-| T9 | G3 PID refs of the 10 failing pre-test runs, both keys, chained after T8 (S188) | sonnet | results/g3_pretest_s187/pid_refs/README.md (DONE marker) | README resume section |
+(none in flight; T1-T10 done and committed by S188)
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
