@@ -1482,3 +1482,99 @@ TEST_F(IndiAccelControlTest, A18ResetMidRampGivesNoPulse)
 	EXPECT_EQ(out.j_used(0), 0.f);
 	EXPECT_EQ(out.omega_ff(1), 0.f);
 }
+
+namespace
+{
+
+constexpr float kNativeHz = 267.f;
+constexpr int kDecim = 3; // 267 Hz force, stage at 89 Hz
+constexpr float kStageHz = kNativeHz / kDecim;
+constexpr float kVibHz = 95.73f;
+constexpr float kAliasHz = kVibHz - kStageHz; // 6.73 Hz
+
+} // namespace
+
+/// D-AF-ALIAS: a vibration line above the stage rate must be removed at the force rate, not fold into the control band
+TEST_F(IndiAccelControlTest, NativeRateFilterRejectsAliasedVibration)
+{
+	_ctrl.setFilter(kStageHz, 10.f);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
+	IndiAccelControl::Input in = hoverInput();
+	in.dt = 1.f / kStageHz;
+	IndiAccelControl::Output out;
+	double re = 0., im = 0.;
+	int n = 0;
+
+	for (int k = 0; k < 1500; k++) {
+		const float t = (float)k / kNativeHz;
+		const Vector3f f(sinf(2.f * M_PI_F * kVibHz * t), 0.f, -kG);
+		_ctrl.sampleSpecificForce(f, 1.f / kNativeHz);
+
+		if (k % kDecim == kDecim - 1) {
+			in.f_b = f; // the module hands the latest sample to the stage
+			ASSERT_TRUE(_ctrl.update(in, out));
+
+			if (k > 600) {
+				const double ts = (double)k / (double)kNativeHz;
+				re += (double)out.a_f(0) * cos(2. * M_PI * (double)kAliasHz * ts);
+				im += (double)out.a_f(0) * sin(2. * M_PI * (double)kAliasHz * ts);
+				n++;
+			}
+		}
+	}
+
+	const double amp = 2. * sqrt(re * re + im * im) / n;
+	EXPECT_LT(amp, 0.03); // native 2nd-order 10 Hz at 95.73 Hz: ~0.011; decimated form: ~0.9
+}
+
+TEST_F(IndiAccelControlTest, NativeRateFilterResetReseedsWithoutStep)
+{
+	_ctrl.setFilter(kStageHz, 10.f);
+
+	for (int k = 0; k < 50; k++) {
+		_ctrl.sampleSpecificForce(Vector3f(1.f, 0.f, -kG), 1.f / kNativeHz);
+	}
+
+	const Vector3f f_new(0.f, 2.f, -kG);
+	_ctrl.reset(f_new, kG / kGt, kG / kGt);
+	IndiAccelControl::Input in = hoverInput();
+	in.f_b = f_new;
+	in.dt = 1.f / kStageHz;
+	IndiAccelControl::Output out;
+	ASSERT_TRUE(_ctrl.update(in, out));
+	EXPECT_NEAR(out.a_f(0), 0.f, 1e-4f);
+	EXPECT_NEAR(out.a_f(1), 2.f, 1e-4f);
+	// the next native sample keeps the filtered value at f_new
+	_ctrl.sampleSpecificForce(f_new, 1.f / kNativeHz);
+	ASSERT_TRUE(_ctrl.update(in, out));
+	EXPECT_NEAR(out.a_f(1), 2.f, 1e-4f);
+}
+
+TEST_F(IndiAccelControlTest, NativeRateFilterValidToInvalidSwitchHasNoStep)
+{
+	_ctrl.setFilter(kStageHz, 10.f);
+	IndiAccelControl::Input in = hoverInput();
+	in.dt = 1.f / kStageHz;
+	IndiAccelControl::Output out;
+	// non finite samples are ignored
+	_ctrl.sampleSpecificForce(Vector3f(NAN, 0.f, -kG), 1.f / kNativeHz);
+
+	for (int k = 0; k < 300; k++) {
+		_ctrl.sampleSpecificForce(Vector3f(0.5f, 0.f, -kG), 1.f / kNativeHz);
+
+		if (k % kDecim == 0) {
+			in.f_b = Vector3f(0.5f, 0.f, -kG);
+			ASSERT_TRUE(_ctrl.update(in, out));
+		}
+	}
+
+	EXPECT_NEAR(out.a_f(0), 0.5f, 1e-3f);
+	in.f_b_valid = false;
+	in.f_b = Vector3f(NAN, NAN, NAN);
+	ASSERT_TRUE(_ctrl.update(in, out));
+	EXPECT_TRUE(out.a_f.isAllFinite());
+	// the modelled path (hover) is a_f ~ 0 at the first invalid cycle: the 0.5 m/s^2 offset is only the filtered
+	// force, so the bound is that offset, never a transient beyond it
+	EXPECT_LT(fabsf(out.a_f(0)), 0.6f);
+	EXPECT_LT(fabsf(out.a_f(1)), 0.1f);
+}

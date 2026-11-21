@@ -112,6 +112,9 @@ private:
 	/** Poll the attitude and specific-force inputs of the INDI stage. */
 	void pollStageInputs();
 
+	/** Read the latest vehicle_acceleration sample (called on every wakeup) and feed the native-rate force filter. */
+	void pollAcceleration();
+
 
 	static constexpr hrt_abstime kStageMaxAge{20_ms};
 
@@ -131,7 +134,7 @@ private:
 	IndiAccelControl _indi;
 	IndiPosInjection _injection; ///< bench loop-break excitation of the commanded acceleration (MC_INDI_PINJ_*), off by default
 	uORB::Subscription _attitude_sub{ORB_ID(vehicle_attitude)};
-	uORB::Subscription _acceleration_sub{ORB_ID(vehicle_acceleration)};
+	uORB::SubscriptionCallbackWorkItem _acceleration_sub{this, ORB_ID(vehicle_acceleration)}; ///< also schedules the module: every sample feeds the native-rate force filter
 	uORB::Subscription _esc_status_sub{ORB_ID(esc_status)};
 	uORB::Subscription _thrust_setpoint_sub{ORB_ID(vehicle_thrust_setpoint)};
 	uORB::Subscription _alloc_status_sub{ORB_ID(control_allocator_status)};
@@ -139,6 +142,7 @@ private:
 	matrix::Vector3f _f_b{};
 	float _mean_u{NAN};
 	bool _mean_u_valid{false};
+	hrt_abstime _acc_sample_time{0};
 	hrt_abstime _q_time{0}, _acc_time{0}, _esc_time{0}, _thr_time{0};
 	float _coll_meas{NAN};		///< latest vehicle_thrust_setpoint collective
 	hrt_abstime _acc_fresh_since{0};	///< start of the current continuous fresh-acceleration run

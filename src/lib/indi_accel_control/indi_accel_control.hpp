@@ -148,6 +148,15 @@ public:
 	void setFilter(float sample_freq_hz, float cutoff_hz);
 
 	/**
+	 * Feed EVERY specific-force sample (native rate, e.g. vehicle_acceleration ~267 Hz) through a low-pass of the same
+	 * cut-off as setFilter() but configured at the sample rate of the force itself (D-AF-ALIAS: a vibration line above
+	 * the stage rate must be removed before the stage decimates, else it folds into the control band).
+	 * update() then uses this output instead of filtering the decimated in.f_b. Non finite samples and dt <= 0 are ignored.
+	 * Until a sample was fed, update() keeps the legacy path (_lpf_f at stage rate).
+	 */
+	void sampleSpecificForce(const matrix::Vector3f &f_b, float dt_s);
+
+	/**
 	 * Thrust model: g_t > 0 specific thrust (m/s^2) per unit mean u, k_cmd > 0 mean u per unit thrust command.
 	 * Invalid values are ignored.
 	 */
@@ -238,6 +247,13 @@ private:
 
 	// state
 	math::LowPassFilter2p<matrix::Vector3f> _lpf_f{};
+	// native-rate specific-force filter (sampleSpecificForce): same cut-off, own sample rate
+	math::LowPassFilter2p<matrix::Vector3f> _lpf_f_native{};
+	matrix::Vector3f _native_f{0.f, 0.f, -kGravity};
+	float _native_cut{0.f};
+	float _native_hz{0.f};
+	int _native_dev_count{0};
+	bool _native_fed{false};
 	math::LowPassFilter2p<float> _lpf_u{};
 	float _u_buf[kMaxDelaySamples + 1] {};
 	int _u_idx{0};

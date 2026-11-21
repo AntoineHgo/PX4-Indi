@@ -64,7 +64,7 @@ McIndiPosControl::~McIndiPosControl()
 
 bool McIndiPosControl::init()
 {
-	if (!_local_pos_sub.registerCallback()) {
+	if (!_local_pos_sub.registerCallback() || !_acceleration_sub.registerCallback()) {
 		PX4_ERR("callback registration failed");
 		return false;
 	}
@@ -84,10 +84,27 @@ void McIndiPosControl::pollStageInputs()
 		_q_time = att.timestamp;
 	}
 
+	pollAcceleration();
+}
+
+void McIndiPosControl::pollAcceleration()
+{
 	vehicle_acceleration_s acc;
 
+	// vehicle_acceleration has queue length 1 and is published at ~267 Hz: every sample is drained here, and this is
+	// called on every wakeup (the module is also scheduled on vehicle_acceleration), so each sample reaches the
+	// native-rate force filter before the stage decimates (D-AF-ALIAS)
 	if (_acceleration_sub.update(&acc)) {
-		_f_b = matrix::Vector3f(acc.xyz);
+		const matrix::Vector3f f(acc.xyz);
+		const hrt_abstime t = (acc.timestamp_sample != 0) ? acc.timestamp_sample : acc.timestamp;
+
+		if (_acc_sample_time != 0 && t > _acc_sample_time) {
+			const float dt = math::constrain((t - _acc_sample_time) * 1e-6f, 1e-3f, 0.05f);
+			_indi.sampleSpecificForce(f, dt);
+		}
+
+		_acc_sample_time = t;
+		_f_b = f;
 		_acc_time = acc.timestamp;
 	}
 }
@@ -790,6 +807,7 @@ void McIndiPosControl::Run()
 {
 	if (should_exit()) {
 		_local_pos_sub.unregisterCallback();
+		_acceleration_sub.unregisterCallback();
 		exit_and_cleanup(desc);
 		return;
 	}
@@ -798,6 +816,8 @@ void McIndiPosControl::Run()
 	ScheduleDelayed(100_ms);
 
 	parameters_update(false);
+
+	pollAcceleration(); // every wakeup (vehicle_acceleration or local position): no force sample is skipped
 
 	perf_begin(_cycle_perf);
 	vehicle_local_position_s vehicle_local_position;

@@ -83,9 +83,47 @@ void IndiAccelControl::setFilter(float sample_freq_hz, float cutoff_hz)
 	// set_cutoff_frequency() zeroes the delay elements (output would fall to 0 and take the filter time to
 	// come back): re-seed every filter from its last output instead
 	_lpf_f.reset(_last_f_b);
+
+	// native-rate force filter: new cut-off, keeps its own sample rate (configured on the first sample)
+	_native_cut = cutoff_hz;
+
+	if (_native_hz > 0.f) {
+		_lpf_f_native.set_cutoff_frequency(_native_hz, _native_cut);
+		_lpf_f_native.reset(_native_f);
+	}
+
 	_lpf_u.reset(_last_u);
 	_lpf_um.reset(_last_um);
 	_lpf_j.reset(_j_diff_f);
+}
+
+void IndiAccelControl::sampleSpecificForce(const Vector3f &f_b, float dt_s)
+{
+	// a_f is built from _native_f only: reject anything that would poison the filter state
+	if (!allFinite(f_b) || !PX4_ISFINITE(dt_s) || dt_s <= 0.f) {
+		return;
+	}
+
+	// same hysteresis as the stage: a rate deviation of more than 20 % must persist for kNativeRateDevSamples samples
+	constexpr int kNativeRateDevSamples = 16;
+	const float rate = roundf(1.f / dt_s);
+	const bool rate_dev = (_native_hz > 0.f) && (fabsf(rate - _native_hz) > 0.2f * _native_hz);
+	_native_dev_count = rate_dev ? math::min(_native_dev_count + 1, kNativeRateDevSamples) : 0;
+
+	if (rate >= 5.f && (_native_hz <= 0.f || _native_dev_count >= kNativeRateDevSamples)) {
+		const bool first = !_native_fed;
+		_native_hz = rate;
+		_native_dev_count = 0;
+		_lpf_f_native.set_cutoff_frequency(_native_hz, _native_cut); // zeroes the delay elements: re-seed, never from zero
+		_lpf_f_native.reset(first ? f_b : _native_f);
+	}
+
+	if (!_native_fed) {
+		_lpf_f_native.reset(f_b); // start without a step
+	}
+
+	_native_f = _lpf_f_native.apply(f_b);
+	_native_fed = true;
 }
 
 void IndiAccelControl::setThrustModel(float g_t, float k_cmd)
@@ -123,6 +161,8 @@ void IndiAccelControl::reset(const Vector3f &f_b, float coll_cmd, float mean_u)
 	const float u = PX4_ISFINITE(mean_u) ? mean_u : (u_model - _b);
 
 	_lpf_f.reset(f);
+	_lpf_f_native.reset(f);
+	_native_f = f;
 	_lpf_u.reset(u);
 	_lpf_um.reset(u_model);
 	_last_f_b = f;
@@ -341,7 +381,18 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 	// Measured and modelled paths are then identical signals through identical filters and cancel: t_c = a_c - g.
 	const float u_sub = _u_buf[i_d] + ((_tb > 0.f) ? _b : 0.f);
 	const Vector3f f_in = in.f_b_valid ? in.f_b : Vector3f(0.f, 0.f, -_g_t * u_sub);
-	const Vector3f f_bf = _lpf_f.apply(f_in);
+	Vector3f f_bf;
+
+	if (in.f_b_valid && _native_fed) {
+		// D-AF-ALIAS: filtered at the force sample rate by sampleSpecificForce(); keep the stage-rate filter on the same
+		// value so a switch to the modelled path (invalid f_b) starts without a step
+		f_bf = _native_f;
+		_lpf_f.reset(f_bf);
+
+	} else {
+		f_bf = _lpf_f.apply(f_in);
+	}
+
 	_last_f_b = f_bf;
 	const Vector3f a_f = R * f_bf + Vector3f(0.f, 0.f, kGravity);
 
