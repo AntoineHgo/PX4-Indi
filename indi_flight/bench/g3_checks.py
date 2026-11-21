@@ -19,6 +19,8 @@ Item 2 sustained oscillation: truth p,q,r on the uniform grid (g4_metrics.unifor
   > 5 deg/s; sustained = flagged in >= 3 consecutive windows with peak frequency within +-10 %. Position limit cycle:
   linearly detrended truth x,y,z, peak-to-peak > 0.3 m in 3 consecutive 10 s windows. Command chatter (G4): the same
   window detector on actuator_motors control[0..3], band 20-100 Hz, peak > 20 x median, no RMS criterion.
+  Chatter is computed and reported (item2_oscillation.command_chatter, top-level g4_command_chatter_sustained) for G4
+  (GATES.md line ~361 and Q14 A, line ~553); it does NOT decide item 2 or the G3 verdict (item 2 = GATES.md line 304: p, q, r, position).
 Item 3 steady-state on [T0,T1]: horizontal RMS about the reference <= 0.15 m calm / 0.30 m with --wind; altitude |mean error|
   <= 0.10 m calm / 0.20 m with --sag; roll/pitch |mean| <= 1.0 deg in attitude mode.
 
@@ -191,6 +193,7 @@ def evaluate(tt, pos, q, w, tm, cmd, ref, t0, t1, wind=False, sag=False, mode="p
         res["airborne"] = None
         res["item1_loc"] = {"pass": False, "reason": "never airborne"}
         res["item2_oscillation"] = {"pass": False, "reason": "never airborne"}
+        res["g4_command_chatter_sustained"] = None
     else:
         ta, te = float(tt[up[0]]), float(tt[up[-1]])
         tl = min(te, t_land) if t_land is not None else te  # end of the span outside land/RTL (item-1 drop/contact/exc)
@@ -227,8 +230,9 @@ def evaluate(tt, pos, q, w, tm, cmd, ref, t0, t1, wind=False, sag=False, mode="p
         _, cg, fsc = uniform(tm[am][okm], cmd[am][okm][:, :4], ta, te)
         chat = [line_detector(cg[i], fsc, CMD_BAND, CMD_LINE_RMS, rms_hz=CMD_RMS_HZ) for i in range(4)]
         osc["command_chatter"] = {"motors": chat, "sustained": any(c["sustained"] for c in chat)}
-        osc["pass"] = not any(osc[k]["sustained"] for k in ("p", "q", "r", "position", "command_chatter"))
+        osc["pass"] = not any(osc[k]["sustained"] for k in ("p", "q", "r", "position"))  # GATES 304: chatter is G4, not item 2
         res["item2_oscillation"] = osc
+        res["g4_command_chatter_sustained"] = bool(osc["command_chatter"]["sustained"])
     # item 3
     m = (tt >= t0) & (tt <= t1) & np.isfinite(pos).all(axis=1)
     rr, pp = euler_rp(q[m])

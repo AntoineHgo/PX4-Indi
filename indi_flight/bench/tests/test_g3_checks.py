@@ -47,20 +47,21 @@ def main():
         "clean": (dict(), dict(p=True)),
         "osc30": (dict(osc_hz=30.0, osc_dps=8.0), dict(item2=False)),
         "osc30_4dps": (dict(osc_hz=30.0, osc_dps=4.0), dict(item2=True)),
-        "chatter60": (dict(line_hz=60.0), dict(item2=False)),
+        "chatter60": (dict(line_hz=60.0), dict(item2=True, p=True)),  # S186b: chatter is G4 (GATES 361), not item 2 (GATES 304)
+        "rate2hz": (dict(osc_hz=2.0, osc_dps=8.0), dict(item2=False)),
         "poslc": (dict(pos_lc=0.2), dict(item2=False)),
         "landing": (dict(land_at=70.0), dict(p=True)),
         "osc_in_land": (dict(land_at=70.0, land_rate=0.5, osc_hz=30.0, osc_dps=8.0, osc_from=70.0), dict(item2=False)),  # D-G3-SPAN
         # Q14 A: ratio > 20 in both; line RMS 0.0004 < 5e-4 -> not chatter, 0.001 -> chatter
         "chat_lowrms": (dict(line_hz=60.0, line_amp=0.0004 * np.sqrt(2), cmd_noise=2e-5), dict(item2=True)),
-        "chat_hirms": (dict(line_hz=60.0, line_amp=0.001 * np.sqrt(2), cmd_noise=2e-5), dict(item2=False)),
+        "chat_hirms": (dict(line_hz=60.0, line_amp=0.001 * np.sqrt(2), cmd_noise=2e-5), dict(item2=True)),
         # Q15 A: 3 s burst of 8 deg/s RMS at 30 Hz; nav_state change at 60 s
         "burst_in_nav": (dict(osc_hz=30.0, osc_dps=8.0, osc_from=60.0, osc_until=63.0, nav_changes=[60.0]), dict(item2=True)),
         "burst_later": (dict(osc_hz=30.0, osc_dps=8.0, osc_from=70.0, osc_until=73.0, nav_changes=[60.0]), dict(item2=False)),
         "alt_off": (dict(alt_off=0.2), dict(item3=False)),
         "loc": (dict(tilt_deg=80.0), dict(item1=False)),
     }
-    patches = {"burst_in_nav": None, "osc30": ("RMS_DEG_S", 1e9), "osc_in_land": ("RMS_DEG_S", 1e9), "chatter60": None, "poslc": ("POS_P2P_M", 9.0),
+    patches = {"burst_in_nav": None, "osc30": ("RMS_DEG_S", 1e9), "osc_in_land": ("RMS_DEG_S", 1e9), "chatter60": None, "rate2hz": ("RMS_DEG_S", 1e9), "chat_hirms_x": None, "poslc": ("POS_P2P_M", 9.0),
                "chat_hirms": ("CMD_LINE_RMS", 1e9),
                "alt_off": ("ALT_MEAN", (9.0, 9.0)), "loc": ("TILT_DEG", 179.0)}
     out, bad = {}, 0
@@ -89,7 +90,11 @@ def main():
         if name == "osc30_4dps":
             ok = ok and not r["item2_oscillation"]["q"]["sustained"]
         if name == "chatter60":
-            ok = ok and r["item2_oscillation"]["command_chatter"]["sustained"]
+            ok = ok and r["item2_oscillation"]["command_chatter"]["sustained"] and r["g4_command_chatter_sustained"] is True
+        if name == "chat_hirms":
+            ok = ok and r["g4_command_chatter_sustained"] is True
+        if name == "rate2hz":
+            ok = ok and r["item2_oscillation"]["p"]["sustained"] and r["g4_command_chatter_sustained"] is False
         if name == "chat_lowrms":
             c = r["item2_oscillation"]["command_chatter"]["motors"][0]
             ok = ok and c["max_ratio"] > 20 and c["rms_at_max_ratio"] < G.CMD_LINE_RMS and c["flagged_windows"] == 0

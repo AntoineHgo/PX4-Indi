@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Independent second implementation (key2) of GATES.md G3 items 1-3 + G4 command chatter."""
+"""Independent second implementation (key2) of GATES.md G3 items 1-3 + G4 command chatter.
+Item 2 = no sustained oscillation on p, q, r, position (GATES.md line 304). Command chatter is reported under "chatter" and as
+top-level "g4_command_chatter_sustained" for G4 (GATES.md line ~361, Q14 A line ~553); it does not decide item 2 or the G3 "pass"."""
 import sys, json, os, glob
 import numpy as np
 FS = 800.0
@@ -157,7 +159,8 @@ def analyse(t, q, w, pos, h, motors_t, motors, hold0, hold1, gc_t, wind=False, m
     mm = (motors_t >= a0) & (motors_t <= a1); ch = chatter(motors_t[mm], motors[mm])
     rc = {"motors": ch, "pass": not any(v["sustained"] for v in ch.values())}
     return {"item1_loc": r1, "item2_oscillation": r2, "item3_steady_state": r3, "chatter": rc,
-            "pass": bool(r1["pass"] and r2["pass"] and r3["pass"] and rc["pass"])}
+            "g4_command_chatter_sustained": not rc["pass"],
+            "pass": bool(r1["pass"] and r2["pass"] and r3["pass"])}
 
 def load_run(d):
     from pyulog import ULog
@@ -208,6 +211,12 @@ def self_test():
     chk("8 dps 30 Hz run fails", o["pass"], False)
     c = analyse(**synth(None, chat_hz=70))
     chk("70 Hz command line flagged", c["chatter"]["motors"]["m1"]["sustained"], True)
+    chk("chatter only: item2 passes", c["item2_oscillation"]["pass"], True)
+    chk("chatter only: g4 flag True", c["g4_command_chatter_sustained"], True)
+    chk("chatter only: G3 pass", c["pass"], True)
+    chk("clean: g4 flag False", base["g4_command_chatter_sustained"], False)
+    r2 = analyse(**synth(2, 15.0))
+    chk("2 Hz rate oscillation fails item2", r2["item2_oscillation"]["pass"], False)
     chk("70 Hz only m1 flagged", [v["sustained"] for v in c["chatter"]["motors"].values()], [False, True, False, False])
     return ok
 
