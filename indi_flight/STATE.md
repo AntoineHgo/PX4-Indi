@@ -28,9 +28,9 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    S173 DONE: G4 verdict written (NOT PASSED: A-56 + Q14 chatter). A-56 probe results/a56_probe_s173: oscillation
    persists with stock mc_pos_control and with accel LPF 4 Hz -> outer loop NOT the cause; inner rate loop remains.
    G2 freeze data at 1.5-3 Hz: no lightly damped mode (design/a56_g2_2hz_s173.md; no PID margins exist).
-   NEXT S174: (1) G4 item 2 / A-56: score PID harsh s2/s3 (results/a56_pid_s173, g3_checks as a56_probe_s173/analyse.sh;
-   only one PID harsh flight existed). PID flags 2 Hz too -> stack-independent, record with Q14; PID clean -> one INDI
-   rate-loop probe at harsh s3 -> re-open the inner-loop decision it names (RC64/74: 1 session per law change). (2) G3 pre-test idx 0-19 FLOWN 20/20 ok (results/g3_pretest_s173,
+   NEXT S174: (1) G4 item 2 / A-56: PID clean 3/3 harsh (results/a56_pid_s173) -> INDI rate loop is the cause. One
+   rate-loop probe at harsh s3 (candidates: measured/modelled blend, frozen-eRPM path, rate LPF) -> re-open the
+   inner-loop decision it names (RC64/74: 1 session per law change). (2) G3 pre-test idx 0-19 FLOWN 20/20 ok (results/g3_pretest_s173,
    README): score with g3_checks.py (per-scenario windows), check draws applied, check scenario mix (17/20 o1). Then fold G5.3/G5.4 re-fly (D-JFF-OFFB overturn
    check) and one offboard trajectory (FF still on in offboard, unverified) into the next chain. Deferred to G7: omega_ff step on offboard entry (key2_jffoffb MINOR,
    resetJerkHistory on rising edge). Dropped: typ/quiet G4 re-flights. Next RC: S178.
@@ -71,7 +71,6 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S173d | PID harsh hover s2/s3, starts after G3 FLY_DONE | bash bg | results/a56_pid_s173 (status.txt, FLY_DONE) | `sh indi_flight/results/a56_pid_s173/fly.sh` |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
