@@ -17,9 +17,11 @@
 3. G5 re-score DONE S176, key2 agrees (results/g5_rescore_s176). Open MINORs (fix with G7 checker self-tests):
    no test catches removal of the yaw p95 subtraction (g511_check.py:184); G5.10 MPC_TILTMAX_AIR log-read branch
    untested, silent 20 deg fallback (g510_check.py:115-119). Freeze-7 re-fly re-scores with these checkers.
-4. G5.5 (Q11 B): D-OFFB-POSVEL decided S176 (own MC_INDI_XY_P/XY_VP 1.9/3.6, all modes; probe o1 0.289 m). Next:
-   firmware (params yaml per instructions files, McIndiPosControl.cpp:599-601) + param test + key2; then G5.5
-   o1-o4/o7 x3 seeds at freeze-7. All bench scenarios start in offboard hold: G2 outer cells (g2_outer_freeze_s163)
+4. G5.5 (Q11 B): D-OFFB-POSVEL firmware committed 7dd352bae2 (MC_INDI_XY_P/XY_VP 1.9/3.6, all modes); default-param
+   o1 s1 0.297 m (results/g55_posvel_fw_s176). Key2 agrees (key2_review.md). Before the freeze-7 G2 outer x-check:
+   bench/g2_outer_model_s164.py and margins_models.py still use MPC_XY_P/VEL_P_ACC values -> switch to MC_INDI_XY_*.
+   No unit test covers the wiring (add with G7 module harness). Next: declare freeze-7 (Q11 B code done), then
+   re-fly G5.5 o1-o4/o7 x3 seeds, G2 outer cells, G4 18 runs (+cruise 89 Hz check), G5.3/G5.4. All bench scenarios start in offboard hold: G2 outer cells (g2_outer_freeze_s163)
    and all G4 runs re-fly at freeze-7; G2 rate/att cells spot-check 2.
 5. G5.10 re-definition flights (Q9 b/c): SAT part one-flight check motors >= 0.99, full-scale stabilized part.
 6. G3 set-up (owner step 4): (a)+(c) DONE S175 (bba6345575, results/g3_setup_s175: noise applied, accel HF x9.1,
@@ -54,7 +56,6 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S176g | D-OFFB-POSVEL firmware (uncommitted diff in src/modules/mc_indi_pos_control) + o1 s1 default-params flight | sonnet | results/g55_posvel_fw_s176/README.md | read README; if diff incomplete, re-brief from D-OFFB-POSVEL |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

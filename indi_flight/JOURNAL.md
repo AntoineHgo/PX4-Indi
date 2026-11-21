@@ -1232,3 +1232,5 @@ Also from the owner, 2026-11-21:
   re-score keyed (G5.2/G5.9a/G5.11 pass on evidence). G5.5: gain probe shows xy pos/vel bandwidth is the lever
   (o1 0.587 -> 0.289 m; o2-o4/o7 0.27-0.32 m at 2x); D-OFFB-POSVEL replaces the cascade+mask draft. Gate progress:
   G5 rows G5.2/G5.9a/G5.11 scored and keyed; G5.5 failure cause shown and fix probed; G4 cruise chatter localised.
+- S176 (cont.): D-OFFB-POSVEL firmware 7dd352bae2 + 08011e92d0 (MC_INDI_XY_P/XY_VP 1.9/3.6), key2 agrees; default
+  params o1 s1 0.297 m. Gate progress: G5.5 fix in firmware and keyed, freeze-7 code complete pending declaration.
