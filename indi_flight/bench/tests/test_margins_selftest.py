@@ -436,8 +436,27 @@ def test6_yaw_model():
     check(abs(m["pm_deg"] - 66.7) < 0.05 and abs(m["gm_db"] - 14.93) < 0.01, "T6c roll HEAD_FLIGHT changed: %s %s" % (m["pm_deg"], m["gm_db"]))
 
 
+def test7_pure_delay():
+    # A-51: lat_s (extra latency in seconds, default 0) multiplies every plant term of L_pid by z^-(lat_s fs): |L| unchanged, so
+    # f_c is unchanged and PM drops by exactly 360 f_c T deg (fractional samples allowed).
+    w = 2 * np.pi * np.geomspace(0.5, 100.0, 4000)
+    for fs in (800.0, 400.0):
+        L0 = MM.L_pid(w, fs)
+        check(np.allclose(L0, MM.L_pid(w, fs, lat_s=0.0)), "lat_s=0 must reproduce the default")
+        m0 = ME.margins(w, L0)
+        c0 = [x for x in m0["crossings"] if x["slope_down"]][0]
+        for Tl in (0.002, 0.0041):
+            m1 = ME.margins(w, MM.L_pid(w, fs, lat_s=Tl))
+            c1 = [x for x in m1["crossings"] if x["slope_down"]][0]
+            exp = 360.0 * c0["f_c"] * Tl
+            got = c0["pm_deg"] - c1["pm_deg"]
+            print("  T7 fs=%3.0f T=%.1f ms f_c %.3f Hz  PM drop %.3f deg, expected %.3f" % (fs, Tl * 1e3, c0["f_c"], got, exp))
+            check(abs(c1["f_c"] - c0["f_c"]) < 1e-3 * c0["f_c"], "f_c must not move with a pure delay")
+            check(abs(got - exp) < 0.3, "PM drop %.3f != 360 f_c T = %.3f" % (got, exp))
+
+
 def main():
-    tests = [test1_open_loop, test1b_multi_crossing, test2_closed_loop, test3_timebase, test4_models, test5_sp_lead, test6_yaw_model]
+    tests = [test1_open_loop, test1b_multi_crossing, test2_closed_loop, test3_timebase, test4_models, test5_sp_lead, test6_yaw_model, test7_pure_delay]
     for tfn in tests:
         print(tfn.__name__)
         try:

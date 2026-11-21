@@ -17,7 +17,7 @@ Sampled-data model (exact, the same recursions as src/lib/indi_rate_control and 
   PID       c = Kp (-F w) + I[k-1] - Kd a_f, I[k] = I[k-1] + Ki (-F w) T;  L = (Kp + Ki T z^-1/(1-z^-1)) F G1 Pn + Kd alpha F G1 Va.
 Parameters (all keyword): fs, eta (delivered/allocated torque), g (G1_true/G1_set), Tb (blend, <=0 = pure measurement),
 tau_r, tau_m, d_m (model delay samples), n (measurement delay samples), K, G1, gyro_fc, dgyro_fc, lat (extra command
-latency samples, default 0), meas (use the measured torque path, default False = MC_INDI_W_MAX unset), eta_m (gain of the
+latency samples, default 0; lat_s: the same in seconds, may be fractional, added to lat, A-51), meas (use the measured torque path, default False = MC_INDI_W_MAX unset), eta_m (gain of the
 model chain, 1 = the model does not know the fault; eta_m = eta makes model == measurement).
 
 CLI:  python3 margins_models.py <out_dir>   -> a1_prediction.md, margins_models_table.md
@@ -34,7 +34,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import margins_est as ME  # noqa: E402
 
 INDI_DEF = dict(eta=1.0, g=1.0, Tb=0.0, tau_r=0.033, tau_m=0.02, d_m=0, n=1, K=20.0, G1=320.0,
-                gyro_fc=40.0, dgyro_fc=20.0, lat=0, meas=False, eta_m=1.0,
+                gyro_fc=40.0, dgyro_fc=20.0, lat=0, lat_s=0.0, meas=False, eta_m=1.0,
                 fb_lead=0.0, att_p=0.0, sp_lead=False, att_lat=1)
 # Firmware time constant of the setpoint-path lead filter (indi_rate_control.hpp kSetpointLeadTc)
 SP_LEAD_TC = 0.01
@@ -43,7 +43,7 @@ SP_LEAD_TC = 0.01
 # (Plain L_indi keeps its legacy defaults: no lead, no attitude path, so the G2 tables and the self-test are unchanged.)
 HEAD_FLIGHT = dict(meas=True, Tb=0.0, n=1, tau_m=0.05, fb_lead=1.0, att_p=8.0, sp_lead=True, att_lat=1)
 PRE_DA64 = dict(HEAD_FLIGHT, sp_lead=False)
-PID_DEF = dict(eta=1.0, g=1.0, tau_r=0.033, Kp=0.03, Ki=0.06, Kd=0.0006, G1=320.0, gyro_fc=40.0, dgyro_fc=20.0, lat=0)
+PID_DEF = dict(eta=1.0, g=1.0, tau_r=0.033, Kp=0.03, Ki=0.06, Kd=0.0006, G1=320.0, gyro_fc=40.0, dgyro_fc=20.0, lat=0, lat_s=0.0)
 
 
 # ------------------------------------------------------------------------------------------ filters (PX4 coefficients)
@@ -88,7 +88,7 @@ def L_indi(w, fs=800.0, **kw):
     a = math.exp(-T / p["tau_r"])
     c1 = p["tau_r"] * (1 - a)
     c2 = T - c1
-    zl = zi ** p["lat"]
+    zl = zi ** (p["lat"] + p["lat_s"] * fs)
     Ar0 = (1 - a) * zi / (1 - a * zi)
     ge = p["g"] * p["eta"]
     Pn = ge * zl * (c1 * Ar0 + c2) * zi / (1 - zi)  # 1/(z-1) = z^-1/(1-z^-1)
@@ -121,7 +121,7 @@ def L_indi(w, fs=800.0, **kw):
 # quad5in_indi_g1.params), ACT_TC 0.05, lead 1 -> c = min(1 x 10 x 0.05, kMaxLeadGain 2) = 0.5, MC_YAW_P 3 (4040_gz_quad5in; the
 # AttitudeControl yaw weight cancels in the small-angle gain), YAW_CUT 0, MC_INDI_INJ_AX 3.  ts_fw = G2_Y/G1_Y, ts_true = J_r/(2 k_m w_h)
 # of the plant (D-G2Y-DERIVE; equal by construction, J_r 5e-6 ASSUMED).  Measured path: Tb 0 as in HEAD_FLIGHT (UNVERIFIED for yaw).
-YAW_FLIGHT = dict(K=10.0, G1=205.0, tau_r=0.033, tau_m=0.05, gyro_fc=40.0, dgyro_fc=20.0, n=1, d_m=0, lat=0, Tb=0.0, g=1.0, eta=1.0,
+YAW_FLIGHT = dict(K=10.0, G1=205.0, tau_r=0.033, tau_m=0.05, gyro_fc=40.0, dgyro_fc=20.0, n=1, d_m=0, lat=0, lat_s=0.0, Tb=0.0, g=1.0, eta=1.0,
                   eta_m=1.0, fb_lead=0.5, att_p=3.0, att_lat=1, sp_lead=True, ts_fw=27.0 / 205.0, ts_true=27.0 / 205.0)
 
 
@@ -139,7 +139,7 @@ def L_indi_yaw(w, fs=800.0, path="meas", **kw):
     a = math.exp(-T / p["tau_r"])
     c1 = p["tau_r"] * (1 - a)
     c2 = T - c1
-    zl = zi ** p["lat"]
+    zl = zi ** (p["lat"] + p["lat_s"] * fs)
     Ar0 = (1 - a) * zi / (1 - a * zi)
     ge = p["g"] * p["eta"]
     # w[k+1] - w[k] = G1 ge [c1 m + c2 u + ts (m[k+1] - m[k])], m[k+1] - m[k] = (1 - a)(u - m)
@@ -180,7 +180,7 @@ def L_pid(w, fs=800.0, **kw):
     a = math.exp(-T / p["tau_r"])
     c1 = p["tau_r"] * (1 - a)
     c2 = T - c1
-    zl = zi ** p["lat"]
+    zl = zi ** (p["lat"] + p["lat_s"] * fs)
     Ar0 = (1 - a) * zi / (1 - a * zi)
     ge = p["g"] * p["eta"]
     Pn = ge * zl * (c1 * Ar0 + c2) * zi / (1 - zi)

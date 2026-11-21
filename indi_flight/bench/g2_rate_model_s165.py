@@ -32,14 +32,17 @@ GYRO_FC, DGYRO_FC = 40.0, 20.0                             # as in margins_model
 TAU_PLANT = 0.033                                          # sim rotor timeConstant 33 ms (ref_airframe_model.md)
 
 
-def cfg(axis, variant):
+LAT_S = {}   # fs -> extra command-to-rotor latency [s] (A-51); empty = old behaviour
+
+
+def cfg(axis, variant, fs=None):
     """Model kwargs for one cell variant: '' (measured torque path), 'mo' (W_MAX 0, model path), 'fwdef' (ID_OK 0: K x 0.5, ACT_TC 0.05, W_MAX 0)."""
     k, tc, meas = K, ACT_TC, variant == ""
     if variant == "fwdef":
         k, tc, meas = 0.5 * K, 0.05, False
     lead = min(LEAD * k * tc, 2.0)
     p = dict(K=k, tau_r=TAU_PLANT, tau_m=tc, gyro_fc=GYRO_FC, dgyro_fc=DGYRO_FC, fb_lead=lead, att_p=ATT_P[axis],
-             att_lat=1, sp_lead=True, n=1, d_m=0, lat=0, eta=1.0, g=1.0, eta_m=1.0, Tb=ACT_BLD if meas else 0.0, meas=meas)
+             att_lat=1, sp_lead=True, n=1, d_m=0, lat=0, lat_s=LAT_S.get(fs, 0.0), eta=1.0, g=1.0, eta_m=1.0, Tb=ACT_BLD if meas else 0.0, meas=meas)
     if axis == "yaw":
         p.update(ts_fw=G2Y / G1Y, ts_true=G2Y / G1Y)
         p["path"] = "meas" if meas else "model"
@@ -47,13 +50,13 @@ def cfg(axis, variant):
 
 
 def Lrate(w, fs, axis, variant):
-    p = cfg(axis, variant)
+    p = cfg(axis, variant, fs)
     return (MM.L_indi_yaw if axis == "yaw" else MM.L_indi)(w, fs, **p)
 
 
 def Latt_yaw(w, fs, variant=""):
     """Attitude yaw open loop, break at the rate setpoint: A_att * closed rate loop (setpoint -> rate)."""
-    p = cfg("yaw", variant)
+    p = cfg("yaw", variant, fs)
     zi = np.exp(-1j * np.asarray(w) * (1.0 / fs))
     L0 = MM.L_indi_yaw(w, fs, **dict(p, att_p=0.0))
     X = MM.L_indi_yaw(w, fs, **dict(p, att_p=1.0)) - L0       # (K + lead) A1 Pn / Dz
@@ -135,6 +138,11 @@ def selftest():
 def main():
     if "--selftest" in sys.argv:
         return selftest()
+    global OUT
+    for a in sys.argv[1:]:   # --lat-ms=800:2.1,400:4.1  -> A-51 run, writes xcheck_rate_a51_table.md instead of xcheck_rate.md
+        if a.startswith("--lat-ms="):
+            LAT_S.update({float(x.split(":")[0]): float(x.split(":")[1]) * 1e-3 for x in a[9:].split(",")})
+            OUT = os.path.join(R160, "xcheck_rate_a51_table.md")
     rate, att = load_rate(), load_att()
     rows, notes = [], []
     n_agree = n_tot = 0
