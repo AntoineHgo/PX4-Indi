@@ -22,8 +22,9 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    PID 3.22 m/44.7 deg. Q9 open (20 deg unreachable with the row's step; full-scale part). s2/s3: tilt 65 deg
    0.3 s after thrust returns (PID 33), LOC by checker, alt 2.21 m. S148: A-48 CLOSED = injector artefact (8 seq.
    per-motor EC sets); uniform faults now via atomic SIM_GZ_THR_SC (run_scenario.py, UNKEYED). Re-fly s148 s2: tilt
-   45.3 deg = MPC_TILTMAX_AIR, no LOC, alt 2.74 m FAIL (2.0). NEXT: read s1/s3/pid_s2 (results/g5_g510_s148), key2 of
-   the THR_SC change + g510_check; alt-loss in SAT is the open G5.10 item (Q9 a still open). S147 s1-s3 superseded.
+   45.3 deg = MPC_TILTMAX_AIR, no LOC; s1-s3 alt 2.67-2.74 m FAIL (2.0), back 3.3-3.5 s; PID s2 watchdog abort >3 m.
+   NEXT: key2 of THR_SC change + g510_check; why alt loss grew vs S147 (2.15-2.21); alt-loss = open G5.10 item
+   (1 session cause search, then re-open outer-law saturation handling). Q9 a/b still open. S147 s1-s3 superseded.
    Runner trap: --controller pid_default with a params file holding MC_INDI_EN 1 flies INDI (s148 indi_s2_rep).
 1. G5.4 probe PASS 9/9 S135 (g5_probe_s135; auto_smoke_check.py, g54_key2.py). Re-fly at freeze.
 2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
@@ -46,7 +47,7 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    or align firmware ACT_TC/W_MAX with bench (G7 lesson 12). Guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
 5. G7 (deferred, stage 7): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site (K128 MAJOR), checker
    self-tests for passthrough_check/offb_vel_check.
-Route check next: S148 (RC143 filed: design/route_check_143.md; cuts: 3b G5.7 PID compare deferred behind event rows, 4b/4c/5 stay deferred).
+Route check next: S149, first action (skipped S148 for budget; RC143 filed: design/route_check_143.md; cuts: 3b G5.7 PID compare deferred behind event rows, 4b/4c/5 stay deferred).
 Rule (RC64/RC74): 1 session per inner-loop law change; no anomaly chase unless a gate test fails.
 G3/G5 batches before the stage-6 freeze are PROBES (RC113). G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1.
 Offline G2 todo before stage 6: outer-cell margin key, linear outer-loop model, A-36/A-39 bound, 267 Hz rows
@@ -77,7 +78,6 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S148b | G5.10 re-fly, atomic THR_SC (s2 done) | docker | results/g5_g510_s148/{s1,s3,pid_s2} | README s147 command, --out s148 (pid: no --params) |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
