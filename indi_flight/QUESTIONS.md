@@ -94,6 +94,9 @@ also fails, record the row as FAIL with cause "estimator height error > settle b
 the est-truth trace; B (gate change after first test): settle band = max(2 % of d, 0.10 m) for z, justified by the
 EKF height accuracy under the typical profile; C: settle measured on the estimate, truth error reported separately.
 Meanwhile: the other rows continue; seeds 2-3 and one PID reference flight of this row are flown and scored as written.
+Update S158: PID reference of the same seed PASSES (z settle 3.39 s, os 0.004 m). Option A therefore records the INDI
+s1 FAIL as FAIL (1/6 runs), not as stack-independent. INDI holds the estimate on the setpoint; PID's slower z
+response lets the EKF height error decay inside its own travel. Still not blocking; B or C only on your call.
 
 ## Q11 (S158, 2026-11-21): G5.5 o1-o4/o7 still FAIL at the freeze. Re-open outer-loop base A? NOT blocking.
 Context (results/g5_freeze_s157/README.md, seed 1; seeds 2-3 flying): horizontal RMS vs the analytic trajectory
@@ -106,3 +109,5 @@ Options: A [recommended] record G5.5 o1-o4/o7 FAIL with data and cause, both sta
 B: re-open base A for offboard trajectories only: INDI module's own pos/vel feedback with full flatness FF (estimated
 2-3 sessions + re-freeze of G5); C: owner reviews the 0.5 m limit (gate change after first test, needs your call).
 Meanwhile: seeds 2-3 and a PID o1 reference at the freeze plant are flown and scored as written.
+Update S158: 3/3 seeds FAIL on each of o1-o4/o7 (0.57-0.81 m), o5/o6/offb_vel_step PASS 3/3; PID o1 s1 at the
+freeze plant 0.785 m (also FAIL).

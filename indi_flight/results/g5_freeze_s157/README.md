@@ -64,3 +64,24 @@ fwdef FAIL is a gate test failure: cause search S158. Rate-error spectrum (whole
 (peak 2.9-3.1 Hz, the stick content, same as the ID_OK 1 cell; whole-flight RMS 12/11/8 vs 8/7/6 deg/s), so the
 lead is slow tracking from the 0.5x K gate (D-DEFAULTS-FW) inside the 0.1 s-skip window. Probe queued
 (probes_s158.sh): same cell at ID_OK 1, then PID o1 s1 at the freeze plant for Q11.
+
+### Batch 2 seeds 2-3 and S158 probes (checks.sh SEEDS="2 3"; 54/54 flights rc=0, ID_OK as intended)
+| row | s2 | s3 | 3-seed verdict |
+|---|---|---|---|
+| G5.5 offb_vel_step | PASS 0.030 | PASS 0.026 | PASS 3/3 |
+| G5.5 o1/o2/o3/o4/o7 horiz RMS (<= 0.5 m) | 0.60/0.81/0.62/0.57/0.60 | 0.62/0.81/0.62/0.57/0.62 | FAIL 3/3 each (vert PASS) -> Q11 |
+| G5.5 o5/o6 | PASS | PASS | PASS 3/3 |
+| G5.7 mode_switch10 | PASS | PASS | PASS 3/3 |
+| G5.10 sat_sustained | INVALID (AGG not saturating), tilt FAIL | same | Q9 (a)/(c) |
+| G5.6/8/9/11 events | 7 PASS, 0 FAIL | 7 PASS, 0 FAIL | s1 G5.9a 3.75 ms FAIL (stock commander latency, Q8 add. 2); s2/s3 PASS |
+| fwdef cell acro (ID_OK 0) | 15.1/15.1/17.3 deg/s | 14.8/15.1/16.8 | above the 10 deg/s limit 3/3, no LOC 3/3 |
+Firmware-default cell, cause search CLOSED: probe `stick_steps_s1_fwdef_idok1_acro` (same file, only ID_OK 1; W_MAX 0
+and ACT_TC 0.05 kept, params_applied checked) PASSES 4.57/4.49/5.42 deg/s. The excess is the 0.5 x K pre-ident gate
+(D-DEFAULTS-FW) alone, as GATES G5.1 already records (S136: 13.6/13.0 deg/s at ID_OK 0, t90 = 2.3/(0.5 K)). G5.1 is
+defined at identified gains (GATES G5.1), so this is not a G5.1 FAIL; it is reported: the pre-identification
+default is safe (no LOC, tilt <= 43.6 deg, 3 seeds) but tracks at half bandwidth, by design.
+Q10 PID reference (`stick_pos_steps_s1_posctl_pid`, stock PID, same plant/noise/seed): G5.2 PASS, z settle 3.39 s,
+os 0.004 m; x settle 1.92 s. PID meets the row on this seed (margin 0.6 s), so the INDI s1 FAIL is not shown to be
+stack-independent; it stays FAIL (1/6 runs).
+Q11 PID reference (`o1_lemniscate_s1_pid`, INVALID only for missing indi_pos_status, expected for PID): horiz RMS
+0.785 m, vert 0.088 m: PID also misses 0.5 m on o1 (INDI 0.60-0.62 m).
