@@ -122,3 +122,10 @@ Options: A [recommended] record G5.11 xy as FAIL, stack-independent (stock EKF/p
 the controller-relevant number; B (gate change after first test): xy part judged on truth excursion and oscillation
 only, the 1 deg limit kept for yaw (and z if injectable); C: drop the xy part (injector cannot make a persistent reset).
 Meanwhile: yaw part (INDI-specific 1.8 deg spike, PID 0.48 deg) gets its cause search; xy counted FAIL as written.
+Q12 addendum (S161): INDI yaw spike cause found and fixed (D-T10-RESET, results/g511_fix_s161/README.md): estimator
+reset re-seeded a filter with one raw sample. After the fix the yaw event reads 1.08 deg on s1, inside INDI's own
+no-event range of the same metric (0.72-1.10 deg; PID 0.48-0.86): the 1 deg limit is at INDI's hover tilt-command
+noise floor under the typical profile. Option D [recommended, gate defect fix]: tilt jump measured as the event value
+minus the 95th percentile of the same metric at no-event instants of the same flight (the row then measures the reset,
+the noise is judged in G4). Meanwhile scored as written. Not blocking.
+

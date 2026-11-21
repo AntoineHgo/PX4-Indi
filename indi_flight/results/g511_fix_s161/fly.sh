@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# S161 G5.11 re-fly after D-T10-RESET (firmware 49568bcaa5): freeze plant/params, g5_events, seeds 1-3, serial. Repo root.
+# S161 G5.11 re-fly after D-T10-RESET (firmware: HEAD after D-T10-RESET flag split): freeze plant/params, g5_events, seeds 1-3, serial. Repo root.
 cd "$(dirname "$0")/../../.."
 D=indi_flight/results/g511_fix_s161
 timeout 1800 indi_project/docker/run.sh -n s161build "make px4_sitl_default" > $D/build.log 2>&1; echo "build rc=$?" >> $D/status.txt

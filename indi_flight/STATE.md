@@ -27,6 +27,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    G5.4/G5.8/G5.9 all agree (key2_g54_g58_g59.md); G5.5/G5.7 27/27 INDI verdicts agree (key2_g55_g57.md; partial
    LOC in key2 noted); G5.1/G5.2 17/17 agree (key2_g51_g52.md). ALL G5 freeze checkers KEYED. NEXT S160: G5 verdict table in GATES/README, then G2 freeze
    cells (rate roll/pitch 400+800, att yaw, outer cells, fwdef cell). Unverified: batch2 o5-o7 args.
+   S161: G5.11 yaw spike cause = T10 raw filter re-seed; fixed (D-T10-RESET, 49568bcaa5 + d1b65d0f09, key2 review
+   design/review_s161_t10.md MAJORs closed). Residual at s1 probe = INDI hover tilt noise floor (Q12 addendum, option D).
+   Post-freeze firmware change: also check other freeze rows had no in-flight reset edge (none should be affected).
+   NEXT: score re-fly, key2 g511 (sonnet, no access to g511_check.py), G2 att yaw/outer cells. Next RC: S164.
    S160: G5 verdict table in freeze README. G5.3 hold re-flown PASS 3/3 + key2. G5.11 exact test + g511_check.py:
    FAIL 6/6 tilt cmd jump, UNKEYED. PID ref: xy 7.82 deg FAIL too (stack-indep., Q12); yaw PID 0.48 PASS -> NEXT: INDI
    yaw-reset one-sample q_d spike cause search (1 session; compare heading-reset handling vs mc_pos_control), key2 g511
@@ -74,9 +78,7 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S161-a | DONE: cause = T10 raw re-seed; fix 49568bcaa5 (D-T10-RESET), unit test break-checked | sonnet | results/g5_freeze_s157/g511_yaw_cause.md | - |
-| S161-b | G5.11 re-fly s1-3 at 49568bcaa5 (bg) | shell | results/g511_fix_s161/status.txt | bash indi_flight/results/g511_fix_s161/fly.sh (skips done); then python3 indi_flight/bench/g511_check.py <run dirs> |
-| S161-c | key2 review of the fix vs D-T10-RESET | sonnet | design/review_s161_t10.md | re-brief |
+| S161-b | G5.11 re-fly s1-3 at d1b65d0f09 (D-T10-RESET + key2 flag split) | shell | results/g511_fix_s161/status.txt | bash indi_flight/results/g511_fix_s161/fly.sh (skips done; check build.log is d1b65d0f09+); then python3 indi_flight/bench/g511_check.py <run dirs> -> README |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),

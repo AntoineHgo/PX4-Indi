@@ -257,3 +257,5 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S159 | key2 G5.1+G5.2 | sonnet | 19 calls, ~$0.6 | 17/17 verdicts agree |
 | S160 | sonnet | G5.11 checker + osc detector (self-tests, break-check) | bench/g511_check.py, osc_detector.py | done, 12 calls, verdict FAIL 6/6 UNKEYED |
 | S160 | haiku | key2 G5.3 hold (independent) | key2_g53_hold.txt | done, 6 calls, agrees 3/3 |
+| S161 | sonnet | G5.11 yaw-reset spike cause search | results/g5_freeze_s157/g511_yaw_cause.md | done, 13 calls, ~$0.35, cause T10 raw re-seed |
+| S161 | sonnet | key2 review fix vs D-T10-RESET | design/review_s161_t10.md | done, 5 calls, 2 MAJOR (flag sharing, missing jerk test) closed d1b65d0f09 |
