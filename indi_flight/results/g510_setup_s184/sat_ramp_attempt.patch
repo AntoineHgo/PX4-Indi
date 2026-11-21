@@ -1,0 +1,21 @@
+diff --git a/indi_flight/bench/scenarios.py b/indi_flight/bench/scenarios.py
+index 7b681f83f9..a7ec2df3d9 100644
+--- a/indi_flight/bench/scenarios.py
++++ b/indi_flight/bench/scenarios.py
+@@ -240,9 +240,14 @@ SCENARIOS["hold_wind"] = dict(
+ # a 37 m x / 15 m up step (first try 20 m / 4 m: no saturation, cmd max 0.49) ("agg") that saturates the motors. seg_pos = NED offset from the hold position per segment.
+ SCENARIOS["sat_sustained"] = dict(
+     mode="position", axis=None,
+-    segments=[("settle", 3.0, 0.0), ("sat", 5.0, 0.0), ("rec", 10.0, 0.0), ("agg", 8.0, 0.0), ("aghold", 12.0, 0.0)],
++    segments=[("settle", 3.0, 0.0)] + [(f"ramp{i}", 1.0, 0.0) for i in range(1, 19)] + [
++              ("sat", 5.0, 0.0), ("rec", 10.0, 0.0), ("agg", 8.0, 0.0), ("aghold", 12.0, 0.0)],
+     seg_pos={"sat": [3.0, 0.0, 0.0], "rec": [3.0, 0.0, 0.0], "agg": [40.0, 0.0, -15.0], "aghold": [40.0, 0.0, -15.0]},
+-    motor_fault=[dict(segment="sat", motors=[0, 1, 2, 3], thrust_scale=0.274),
++    # S184 D-G510-SAT-SETUP: during hover the scale goes 1 -> 0.91 -> ... -> 0.136 in 18 x 1 s steps, each raising the hover command
++    # (0.137 / scale) by 0.05 (0.15 .. 0.95, last 1.007; 0.1 per step was not followed by the thrust loop, vehicle sank), slow enough for the thrust loop to follow, so "sat" starts pinned.
++    # thrust_scale is the cumulative-factor ratio between consecutive scales.
++    motor_fault=[dict(segment=f"ramp{i}", motors=[0, 1, 2, 3], thrust_scale=f) for i, f in enumerate(
++        [(0.137 / c) / (0.137 / (c - 0.05) if c > 0.16 else 1.0) for c in [0.15 + 0.05 * k for k in range(17)]] + [0.136 / (0.137 / 0.95)], 1)] + [
+                  dict(segment="rec", motors=[0, 1, 2, 3], thrust_scale=1.0, reset=True)])
+ 
+ # S178 G5.10 redefined full-scale part (GATES owner amendment S175, Q9 b): stabilized, full throttle + full roll stick for 1 s
