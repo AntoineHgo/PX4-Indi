@@ -77,13 +77,13 @@ def test_outer_factor():
 
 
 def test_outer_factor_uses_mc_indi_xy_gains():
-    """Since 7dd352bae2 the xy outer model default is MC_INDI_XY_P / MC_INDI_XY_VP (1.2 / 3.6 since freeze-8), not
+    """Since 7dd352bae2 the xy outer model default is MC_INDI_XY_P / MC_INDI_XY_VP (1.2 / 2.4 since D-XY-PICK), not
     MPC_XY_P / MPC_XY_VEL_P_ACC."""
-    assert M.xy_gains() == dict(Kp=1.2, Kv=3.6)
+    assert M.xy_gains() == dict(Kp=1.2, Kv=2.4)
     assert M.xy_gains({"MC_INDI_XY_P": 2.0, "MC_INDI_XY_VP": 4.0, "MPC_XY_P": 9.0}) == dict(Kp=2.0, Kv=4.0)
     assert M.xy_gains(legacy_mpc=True) == dict(Kp=0.95, Kv=1.8)
     s = 1j * 2 * math.pi * 1.3
-    O = 1 + 3.6 / s + 1.2 * 3.6 / s ** 2 + 0.4 / s ** 2 + 0.4 * 1.2 / s ** 3 + 0.2 / (1 + s / (2 * math.pi * 5.0))
+    O = 1 + 2.4 / s + 1.2 * 2.4 / s ** 2 + 0.4 / s ** 2 + 0.4 * 1.2 / s ** 3 + 0.2 / (1 + s / (2 * math.pi * 5.0))
     assert abs(M.outer_factor(np.array([s.imag]))[0] - O) < 1e-12
 
 

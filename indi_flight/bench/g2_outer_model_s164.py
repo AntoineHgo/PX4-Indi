@@ -182,7 +182,7 @@ def main(argv=None):
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("--legacy-mpc", action="store_true", help="evaluate the old MPC_XY_P / MPC_XY_VEL_P_ACC xy gains (s164 values)")
-    ap.add_argument("--params", default=None, help="params file with MC_INDI_XY_P / MC_INDI_XY_VP (firmware defaults 1.2 / 3.6 when absent)")
+    ap.add_argument("--params", default=None, help="params file with MC_INDI_XY_P / MC_INDI_XY_VP (firmware defaults 1.2 / 2.4 when absent)")
     ap.add_argument("--out", default=None)
     a = ap.parse_args(argv)
     g = MM.xy_gains(a.params, legacy_mpc=a.legacy_mpc)

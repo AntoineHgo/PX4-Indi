@@ -229,13 +229,13 @@ def L_att_indi(w, fs=800.0, **kw):
 
 # xy outer gains: since firmware 7dd352bae2 the INDI position module uses MC_INDI_XY_P / MC_INDI_XY_VP in every mode
 # (MPC_XY_VEL_I_ACC / MPC_XY_VEL_D_ACC are still used for xy).  MPC_XY_P / MPC_XY_VEL_P_ACC are the legacy values.
-XY_GAINS_INDI = dict(Kp=1.2, Kv=3.6)  # firmware defaults (freeze-8); tests/test_att_model.py checks the yaml
+XY_GAINS_INDI = dict(Kp=1.2, Kv=2.4)  # firmware defaults (freeze-8); tests/test_att_model.py checks the yaml
 XY_GAINS_MPC = dict(Kp=0.95, Kv=1.8)
 
 
 def xy_gains(params=None, legacy_mpc=False):
     """Return dict(Kp, Kv) for the xy outer model.  params: dict or path of a params file / log-params dump with
-    MC_INDI_XY_P / MC_INDI_XY_VP (firmware defaults 1.2 / 3.6 when absent).  legacy_mpc=True evaluates the old MPC_XY_P /
+    MC_INDI_XY_P / MC_INDI_XY_VP (firmware defaults 1.2 / 2.4 when absent).  legacy_mpc=True evaluates the old MPC_XY_P /
     MPC_XY_VEL_P_ACC (read from params when present, else 0.95 / 1.8)."""
     import re
     if isinstance(params, str):
