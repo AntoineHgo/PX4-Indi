@@ -899,3 +899,18 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   the filtered state (keeps an unneeded restart of all filters). Firmware change after D-FREEZE-6: affects only flights
   with an in-flight estimator reset (G5.11 rows); re-fly G5.11 x3 and check the other freeze rows had no reset edge.
 - Overturn: G5.11 yaw tilt jump still > 1 deg after the fix, or a jerk-FF spike at a reset.
+
+## D-G3-SPAN (S171, 2026-11-21): span of G3 item 2 "whole flight" (closes A-55)
+- Question: key1 `g3_checks.py` cut the airborne span at the first LAND/RTL nav_state for every item; key2 scored up
+  to the last truth sample above 0.3 m. harsh_s2 (G4 batch) has a sustained 2 Hz q oscillation that starts at the
+  offboard -> AUTO_LAND switch (119.06 s, q peak 38.6 deg/s) and lasts through the 5 m descent, before touchdown (127.2 s).
+- Choice: item 2 (p, q, r, position, command) and the item-1 tilt/NaN rules use the whole airborne span, commanded
+  descent included, ending at the last truth sample above the airborne height. "Outside land/RTL" (GATES 246) applies
+  only to the item-1 height-drop, ground-contact and excursion rules, where a commanded descent is not a fault.
+- Reason: the descent is flight; GATES 304 says "whole flight"; excluding it would hide an in-flight oscillation
+  (lesson: a gate is never passed by weakening the test). Touchdown and ground phase stay out (no flight).
+- Alternatives: end at the land command (key1 before S171: hides the descent); include the ground phase (contact
+  dynamics, not the controller's flight).
+- Check: new self-test case `osc_in_land` (oscillation only in the descent) FAILs item 2 on the fixed key1 and
+  passed it wrongly on the old one; break-check PASS. Re-score: keys agree, q flagged on harsh_s2 only (9 hover runs).
+- Overturn: owner reading of "whole flight" that excludes commanded descents.

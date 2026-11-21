@@ -16,5 +16,7 @@ Additional clause (harsh hover, `bench/g3_checks.py`, UNKEYED, g3_checks.json pe
 - Command chatter (20-100 Hz, peak > 20 x median): FAIL 3/3 as written. 70.00 Hz line, amplitude linear in vibration
   (typ 9.3e-5, harsh 2.5e-4 RMS = 0.18 % of hover command), absent in quiet. PID reference (results/a54_s169,
   stock params, harsh hover s1): same 70.00 Hz line, peak/median 78, RMS 9.8e-5 -> not INDI-specific (A-54).
+S171 (D-G3-SPAN, item 2 over the whole flight incl. descent): item 2 FAIL 1/3 harsh (harsh_s2 sustained 2 Hz q in the
+AUTO_LAND descent, both keys; A-56: INDI descent rate RMS 3-6 deg/s harsh vs PID 0.3).
 G4 verdict: NOT YET. Metric rows PASS; chatter clause FAIL pending A-54 (suspected simulator alias of the 1P/2P
 vibration line) and key2 of g3_checks.py.
