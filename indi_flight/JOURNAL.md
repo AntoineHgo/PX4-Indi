@@ -1234,3 +1234,24 @@ Also from the owner, 2026-11-21:
   G5 rows G5.2/G5.9a/G5.11 scored and keyed; G5.5 failure cause shown and fix probed; G4 cruise chatter localised.
 - S176 (cont.): D-OFFB-POSVEL firmware 7dd352bae2 + 08011e92d0 (MC_INDI_XY_P/XY_VP 1.9/3.6), key2 agrees; default
   params o1 s1 0.297 m. Gate progress: G5.5 fix in firmware and keyed, freeze-7 code complete pending declaration.
+- S178: Q16 closed. Full text:
+  ## Q16 (S175, 2026-11-21): G2 verdict with 3/15 rate model x-check groups unexplained. BLOCKING for G2.
+  Context: every G2 cell passes at the freeze, keyed: rate/att/outer 67/67 incl. the Q13 A plateau rule (key2 S175,
+  results/g2_plateau_s164_key2.md, max diff 0.22 dB); worst measured GM 10.7 dB (plateau, model-only roll/pitch 400),
+  PM 54.3 deg. G2 also says "measured and model PM within 10 deg and GM within 3 dB, or the difference explained in
+  ANOMALIES.md before the result is used". Rate x-check (A-51, results/g2_freeze_s160/xcheck_rate.md): 12/15 groups agree;
+  roll400 GM 14.2 vs model 17.9, yaw400 GM 15.3 vs 21.5, roll800 fwdef PM 54.3 vs 65.9. The closing test (S175,
+  xcheck_rate_a51.md) added the measured cmd->eRPM latency (2.1/4.1 ms): agreement fell to 5/15, hypothesis rejected.
+  The residuals are unexplained (likely yaw model structure and filter roll-off; not chased). In every group BOTH the
+  measured and the model margins pass (model min 7.9 dB/48 deg with latency), so no pass depends on which one is right.
+  Outer x-check: A-50, model conservative, explained.
+  Options: A [recommended] G2 PASSED on the keyed measured margins; the 3 unexplained groups are reported as an evidence
+  limit (model fidelity, A-51 open). The rule "a margin that passes only because it disagrees with the model is not a
+  pass" is met (the model passes too). B: one more session of model structure work (yaw reaction-torque path,
+  filter roll-off) before the verdict. C: G2 NOT PASSED on the x-check clause.
+  Meanwhile: no G2 work; G4/G5/G3 work continues.
+  **Owner answer (2026-11-21):** A. G2 PASSED on the keyed measured margins. Report the 3 unexplained rate x-check
+  groups (roll400 GM, yaw400 GM, roll800 fwdef PM) as an evidence limit on model fidelity. A-51 stays open, and no
+  further model-structure work is done for G2. D-FREEZE-7 re-flies the G2 outer cells (x-check models on
+  MC_INDI_XY_*) and spot-checks 2 rate/att cells. Write the verdict once those freeze-7 cells pass. If one fails,
+  re-open G2 under the D-FREEZE-7 overturn rule.
