@@ -36,3 +36,6 @@ Q17 and Q18 closed S180 (owner answers A; GATES "Owner amendments S180", D-OWNER
    One sonnet task, existing scripts.
 4. G4 item 3 in the XY_P 1.2 probe (altitude_mean 0.29 m, limit 0.1). Look up the freeze-7 value and fly the PID
    reference before any cause search (point 1 applies).
+
+S180: points 3 and 4 acted on (results/g55_gain_probe_s179/RECONCILE_S180.md: keys agree on 33.5 and 89.25 Hz;
+cruise item 3 offset equals PID, not a G4 row). Points 1-2 stand as rules (point 2 in STATE next action 4).

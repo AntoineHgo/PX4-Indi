@@ -4,24 +4,20 @@
 - Stage: 6 (validation). FREEZE-7 declared S177 (D-FREEZE-7): firmware 08011e92d0, config g5_freeze_s157 params.
   Rows listed in D-FREEZE-7 re-fly now (queue results/freeze7_s177); other freeze-6 evidence stands.
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
-- Blocker: Q17 (G5.10 stabilized part) and Q18 (G4 chatter land windows), each BLOCKING for its rows only.
+- Blocker: none (Q17, Q18 answered A, logged S180).
   G2 and G4 NOT PASSED at freeze-7; freeze-8 in preparation (XY_P 1.2 shown, F2 for L1 to implement).
 ## Next actions (owner order; each names its gate item)
-1. G2 NOT PASSED at freeze-7 (S179: xy PM 38-45, att spot 43.0; D-OFFB-POSVEL overturn met). Read gain probe GP
-   (XY_P 1.2/VP 3.6, results/g55_gain_probe_s179): if both G2 cells PM >= 45 with margin, G5.5 <= 0.5 m: change the
-   firmware default MC_INDI_XY_P (key2 + param test), together with F2 if shown, as freeze-8; re-fly G2 outer 24 +
-   2 spot cells, G4 18, G5.5 24, G5.3 hold+mission, G5.4. If not: try XY_P 1.2/VP 3.0, then ask owner (G5.5 vs G2).
-   Restore results/g4_gate_s169/chatter_cruise_s176_raw.txt (`git checkout`, overwritten by probe scoring) after the
-   probes end.
-2. G4 L1 (lemniscate, in scope): implement F2 (sonnet; firmware: extrapolate the offboard setpoint between samples,
-   D-G4-STEPBACK; unit test that fails without it), build, fly cruise_typ s1 with XY_P 1.2 params; read the 33 Hz
-   AND the 88.5 Hz line (F3/GP show 88.5 Hz 1.1e-3 when 33 Hz drops: second L1 source, freeze-6 line). If F2 shows
-   L1 below 5e-4: key2 of the diff, then freeze-8 = F2 + MC_INDI_XY_P default 1.2. L2 (touchdown, touchdown_s179.md)
-   waits Q18: do not chase or re-score land windows. F1 (POS_LPF 5) and F3 (VEL_LP 5) rejected (z offset item 3).
+1. G4 L1 + G2 freeze-8: F2 probe in flight (task D). If F2 meets its criterion (no 33.5/89 Hz line >= 5e-4 on
+   either key, lemniscate window): key2 of the firmware diff (sonnet, code-to-spec), I read the diff, then freeze-8 =
+   F2 + MC_INDI_XY_P default 1.2 (param test); re-fly G2 outer 24 + 2 spot, G4 18, G5.5 24, G5.3 hold+mission x3,
+   G5.4 6. If not: re-read lines (overturn rule D-G4-STEPBACK), G2 freeze-8 = XY_P 1.2 alone.
+2. G4 hover_harsh_s1 20 Hz (take-off/loiter, 9.7e-4, PID clean, 1/3 seeds): after F2 result; one session cause bound,
+   candidate decision (4) inner rate INDI -> owner question before re-opening (re-flies most gates).
+   Q18 re-score done (no verdict moved); cruise item 3 offset is not a G4 row (PID 0.295 m = INDI): closed.
 3. G5: freeze-7 G5.5 24/24, G5.3 mission 3/3, G5.4 6/6 PASS (SCORES.md). G5.3 hold (gust_x) IS in the D-FREEZE-7 list
    ("G5.3/G5.4 x3") and unflown: fly 3 seeds at the final freeze (deferred while F1/F2 may move the config). G5.10 pre-test queue4 (results/g5_10_freeze7_s178, after queue3): read
-   SAT motors >= 0.99 time (score_motors.py is NEW: key2 before gate use) and PID reference; stabilized part waits
-   Q17. Then G5.10 3 seeds, then G5 verdict.
+   SAT motors >= 0.99 time (score_motors.py is NEW: key2 before gate use) and PID reference; stabilized part per Q17 A
+   (GATES "Owner amendments S180"). Then G5.10 3 seeds, then G5 verdict.
 4. G3 set-up (owner step 4), after G2/G4/G5 queue: tel_frozen hook (gz_bridge bit-identical rpm injector, two keys;
    until then runs 03/11 abort); (b) excursion vs setpoint in g3_checks (key2 before gate use); run 17 LOC (tilt
    129 deg): PID reference only, one session max; osc runs 03/07/08/13 are re-flown after the set-up fix, not chased.
@@ -55,9 +51,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| A | Q18 chatter land-window skip, key 1 + re-score freeze-7 18 + PID land values + hover_harsh_s1 | sonnet | results/freeze7_s177/q18_rescore_s180/KEY1.md | re-brief |
-| B | Q18 skip, key 2 (independent) + re-score freeze-7 18 | sonnet | results/freeze7_s177/q18_rescore_s180/KEY2.md | re-brief |
-| C | owner note 3+4: key1 88.5 vs key2 33.5 on GP s1; item 3 alt_mean freeze-7 + PID ref | sonnet | results/g55_gain_probe_s179/RECONCILE_S180.md | re-brief |
+| D | F2 setpoint extrapolation: firmware + gtest + SITL build + cruise_typ_s1 (XY_P 1.2) + both chatter keys | sonnet | results/f2_probe_s180/README.md; uncommitted diff in src/modules/mc_indi_pos_control | re-brief from README |
 | - | G5.10 pre-test queue4 flown, 4 metrics committed, unscored | - | results/g5_10_freeze7_s178/ | - |
 
 ## Open problems

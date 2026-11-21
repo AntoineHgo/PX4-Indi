@@ -1308,3 +1308,4 @@ in GATES.md and DECISIONS.md as an approved test-definition fix, then re-score t
 scripts (no re-fly). Check that the hover_harsh_s1 20 Hz flag is the same touchdown event. L1 (lemniscate) stays
 in scope.
 
+- S180 (2026-11-21): owner answers Q17/Q18 logged (GATES 'Owner amendments S180'); Q18 skip in both chatter keys, freeze-7 G4 re-score: no window skipped, verdict NOT PASSED unchanged; hover_harsh_s1 flag is take-off/loiter not touchdown; keys reconciled on GP (33.5 + 89.25 Hz); cruise item 3 offset = PID (not a G4 row). F2 probe launched. Gate progress: G4 Q18 re-score row scored (verdict unchanged, evidence q18_rescore_s180).
