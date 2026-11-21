@@ -860,3 +860,15 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Frozen at: firmware 23acbdef67 (last commit under src/, S153); reviews r1-r3 dispositioned.
 - Overturn: a gate row FAIL whose cause is in the frozen firmware -> one session of cause search, then re-open the
   decision underneath (owner rule), with a new freeze line.
+
+## D-VIB-HOOK (S155, 2026-11-21, fixes A-49 before the G5 re-fly; implement S156, key2)
+- Defect: per-rotor tones with offsets i*pi/2 cancel for equal rotor speeds; the IMU amplitude is unset and unknown.
+- Choice (F-9 simplest calibrated): one tone pair referred to the IMU, as GATES 4 defines profiles: 1P at the mean
+  rotor speed and blade-pass at N_b x 1P, amplitudes SIM_GZ_VIB_ACC / SIM_GZ_VIB_GYR = amplitude AT THE IMU at
+  SIM_GZ_VIB_RPM (scaled by speed^2). N_b = 3 (design/ref_airframe_data.md:11, 3-blade 5.1 in prop), set by a SIM_GZ_ param
+  (default 2 keeps x500 behaviour).
+- Alternatives: seeded random per-rotor phases (amplitude still a beat, needs calibration per seed, rejected);
+  per-rotor tones with spin direction (most physical, needs calibration and more code, rejected for now).
+- Cost: no per-rotor beat / line width; one-line spectrum per harmonic. Overturn: a G4 metric or a G3 vibration
+  failure that depends on the beat structure (then per-rotor model with measured net amplitude).
+- Effect on the freeze: simulator change, not flight firmware; the G5 re-fly has not started, so no row is re-flown.

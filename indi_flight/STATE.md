@@ -20,9 +20,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    S155: review 3/3 DONE (design/prefreeze_r3_parity.md): 0 OPEN, 0 SAFETY, 8 PARTIAL MINOR (D-PREFREEZE-R3).
    STAGE-6 FREEZE DEFINED: D-FREEZE-6, firmware 23acbdef67, bench defaults + ID_OK 1 overlay, firmware-default cells
    (G5.1 acro yaw + G2 rate roll 800 at ID_OK 0). GATES 5b needs the G4 TYPICAL noise profile for the re-fly:
-   NEXT S156 (G4 profiles -> G5 re-fly): read design/noise_profiles.md, set the typical profile hook values, one
-   pre-test hover flight checking the IMU spectrum on the log (key2 of the hook mapping), then G5.1-G5.11 re-fly 3
-   seeds serial with that profile. RC154 cuts stand: no MINOR fixes, no re-probes, firmware change -> key2 only.
+   NEXT S156 (G4 typical profile -> G5 re-fly): (1) implement D-VIB-HOOK in GZBridge.cpp (sonnet, key2): vibration
+   tones cancel at equal rotor speeds today (A-49); (2) key2 of design/noise_profiles.md sources (harsh 27 m/s^2 is
+   second-hand [S6]; NSC 4.0 typical gives accel 81 % of target, record); (3) one hover pre-test with full-rate
+   sensor_accel: net 1P/BP amplitude within 10 % (closes A-49); (4) G5.1-G5.11 re-fly 3 seeds serial, typical. RC154 cuts stand: no MINOR fixes, no re-probes, firmware change -> key2 only.
 1-3. Probes PASS, re-fly at freeze: G5.4 9/9 (S135), G5.1 6/6 K_Y 20 (S137), G5.2 6/6 (S138, g52_check keyed).
 3b. G5.3 hold + mission PASS 3/3 (S139-S140). G5.7 PASS 3/3 as probe (S139/S143 matched GNSS, results/g5_g57_s143_gnss).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (fixes fee02b59b2, 3944e8e367; key2 results/g5_events_s144/key2.md):
@@ -70,7 +71,6 @@ Later: log a z-only active flag in indi_pos_status when next touching the module
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S155-2 | G4 noise profile source note (GATES 5b: freeze re-fly needs typical profile) | sonnet | design/noise_profiles.md | re-launch if incomplete |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
