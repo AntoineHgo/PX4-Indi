@@ -204,10 +204,11 @@ parameters:
           reboot_required: true
         SIM_GZ_VIB_ACC:
           description:
-            short: Simulated IMU vibration, accelerometer amplitude per rotor
-            long: Adds to the first IMU a sinusoidal vibration per rotor at its rotation frequency (in the rotor plane)
-              and at the blade-pass frequency of a two-blade propeller (along the thrust axis, half amplitude), scaled
-              with rotor speed squared. Needs SIM_GZ_ESC_FB 1 or 2 (rotor joint speeds). 0 disables.
+            short: Simulated IMU vibration, accelerometer amplitude at the IMU
+            long: Adds to the first IMU a sinusoidal vibration at the mean rotor rotation frequency (1P, rotating in
+              the rotor plane, this amplitude per axis) and at the blade-pass frequency SIM_GZ_VIB_NB x 1P (along the
+              thrust axis, half amplitude). Amplitudes apply at SIM_GZ_VIB_RPM and scale with rotor speed squared.
+              Needs SIM_GZ_ESC_FB 1 or 2 (rotor joint speeds). 0 disables.
           type: float
           unit: m/s^2
           min: 0.0
@@ -217,7 +218,7 @@ parameters:
           reboot_required: true
         SIM_GZ_VIB_GYR:
           description:
-            short: Simulated IMU vibration, gyroscope amplitude per rotor
+            short: Simulated IMU vibration, gyroscope amplitude at the IMU
             long: Gyroscope counterpart of SIM_GZ_VIB_ACC (roll and pitch at the rotation frequency, yaw at the
               blade-pass frequency at 0.2 of the amplitude). 0 disables.
           type: float
@@ -236,6 +237,16 @@ parameters:
           max: 100000.0
           decimal: 0
           default: 7000.0
+          reboot_required: true
+        SIM_GZ_VIB_NB:
+          description:
+            short: Propeller blade count for the simulated blade-pass vibration line
+            long: The blade-pass line of SIM_GZ_VIB_ACC and SIM_GZ_VIB_GYR is at this multiple of the mean rotor
+              rotation frequency.
+          type: int32
+          min: 1
+          max: 6
+          default: 2
           reboot_required: true
         SIM_GZ_EC_SIGNED:
           description:

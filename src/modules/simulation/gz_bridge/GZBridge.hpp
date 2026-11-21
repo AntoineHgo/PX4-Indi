@@ -167,7 +167,7 @@ private:
 	// Rotor-speed-tied IMU vibration (SIM_GZ_VIB_*), driven by the rotor joint speeds of the ESC interface
 	void addRotorVibration(uint64_t timestamp_sample, gz::math::Vector3d &accel_b, gz::math::Vector3d &gyro_b);
 	static constexpr int _MAX_VIB_ROTORS = 4;
-	float _vib_phase[_MAX_VIB_ROTORS] {}; // rotor angle [rad]
+	float _vib_phase{0.f}; // angle of the 1P line at the mean rotor speed [rad]
 	uint64_t _vib_timestamp_last{0};
 
 	// SIM_GZ_DLY_IMU delay line (hook A2), one ring per IMU instance, shared mutex (gz transport callbacks of
@@ -296,6 +296,7 @@ private:
 		(ParamFloat<px4::params::SIM_GZ_VIB_ACC>) _sim_gz_vib_acc,
 		(ParamFloat<px4::params::SIM_GZ_VIB_GYR>) _sim_gz_vib_gyr,
 		(ParamFloat<px4::params::SIM_GZ_VIB_RPM>) _sim_gz_vib_rpm,
+		(ParamInt<px4::params::SIM_GZ_VIB_NB>) _sim_gz_vib_nb,
 		(ParamInt<px4::params::SIM_GZ_SEED>) _sim_gz_seed,
 		(ParamFloat<px4::params::SIM_GZ_IMU_NSC>) _sim_gz_imu_nsc
 	)

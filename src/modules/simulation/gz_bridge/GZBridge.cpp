@@ -683,18 +683,26 @@ void GZBridge::addRotorVibration(uint64_t timestamp_sample, gz::math::Vector3d &
 	memcpy(rotor_rpm, _mixing_interface_esc._rotor_rpm, sizeof(rotor_rpm));
 	pthread_mutex_unlock(&_mixing_interface_esc._node_mutex);
 
-	for (int i = 0; i < _MAX_VIB_ROTORS; i++) {
-		// Mass imbalance: a force rotating in the rotor plane at the rotor frequency (1P), scaling with speed squared,
-		// plus a blade-pass (2P, two blades) component along the thrust axis. Amplitudes are per rotor at SIM_GZ_VIB_RPM.
-		const float omega = rotor_rpm[i] * 2.f * M_PI_F / 60.f; // [rad/s]
-		_vib_phase[i] = matrix::wrap_2pi(_vib_phase[i] + omega * dt);
-		const float scale = (rotor_rpm[i] / _sim_gz_vib_rpm.get()) * (rotor_rpm[i] / _sim_gz_vib_rpm.get());
-		const float phase = _vib_phase[i] + i * M_PI_2_F; // rotors not in phase with each other
-		const float s1 = sinf(phase), c1 = cosf(phase), s2 = sinf(2.f * phase);
+	// One tone pair referred to the IMU (D-VIB-HOOK): the net imbalance line at the mean rotor speed (1P, rotating in
+	// the rotor plane) and the blade-pass line at SIM_GZ_VIB_NB x 1P along the thrust axis at half amplitude. The
+	// amplitudes are those seen at the IMU at SIM_GZ_VIB_RPM and scale with rotor speed squared. Per-rotor tones with
+	// fixed phase offsets cancel at equal rotor speeds, so the net line is modelled directly.
+	float rpm_mean = 0.f;
 
-		accel_b += gz::math::Vector3d(c1, s1, 0.5f * s2) * (_sim_gz_vib_acc.get() * scale);
-		gyro_b += gz::math::Vector3d(s1, c1, 0.2f * s2) * (_sim_gz_vib_gyr.get() * scale);
+	for (int i = 0; i < _MAX_VIB_ROTORS; i++) {
+		rpm_mean += fabsf(rotor_rpm[i]);
 	}
+
+	rpm_mean /= _MAX_VIB_ROTORS;
+
+	const float omega = rpm_mean * 2.f * M_PI_F / 60.f; // [rad/s]
+	_vib_phase = matrix::wrap_2pi(_vib_phase + omega * dt);
+	const float scale = (rpm_mean / _sim_gz_vib_rpm.get()) * (rpm_mean / _sim_gz_vib_rpm.get());
+	const float s1 = sinf(_vib_phase), c1 = cosf(_vib_phase);
+	const float sbp = sinf(math::max(_sim_gz_vib_nb.get(), 1) * _vib_phase);
+
+	accel_b += gz::math::Vector3d(c1, s1, 0.5f * sbp) * (_sim_gz_vib_acc.get() * scale);
+	gyro_b += gz::math::Vector3d(s1, c1, 0.2f * sbp) * (_sim_gz_vib_gyr.get() * scale);
 }
 
 void GZBridge::imuCallback(const gz::msgs::IMU &msg, uint8_t instance_index)
