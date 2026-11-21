@@ -179,6 +179,8 @@ private:
 	gz::transport::Node::Publisher _actuators_pub;
 
 	uORB::Publication<esc_status_s> _esc_status_pub{ORB_ID(esc_status)};
+	// SIM_GZ_ESC_FB = 2 only: true rotor joint speed on esc_status instance 1 (truth for analysis, no consumer)
+	uORB::PublicationMulti<esc_status_s> _esc_truth_pub{ORB_ID(esc_status)};
 	failure_injection::Config _failure_config;
 
 };

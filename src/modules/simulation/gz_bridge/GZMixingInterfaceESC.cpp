@@ -67,6 +67,10 @@ bool GZMixingInterfaceESC::init(const std::string &world_name, const std::string
 
 	_esc_status_pub.advertise();
 
+	if (_esc_feedback == 2) {
+		_esc_truth_pub.advertise(); // after the telemetry instance: instance 1
+	}
+
 	PX4_INFO("SIM_GZ_DLY_ACT requested %u us (%s), applied = requested rounded up to the ESC output period (logged at first release)",
 		 (unsigned)_act_delay_us, _act_delay_us == 0 ? "bypassed" : "delay line active");
 
@@ -280,6 +284,18 @@ void GZMixingInterfaceESC::motorSpeedCallback(const gz::msgs::Actuators &actuato
 		esc_status.timestamp = hrt_absolute_time();
 		_failure_config.update();
 		_esc_status_pub.publish(failure_injection::process_esc(_failure_config, esc_status));
+
+		if (_esc_feedback == 2) {
+			// Same report with the true rotor speed at this output instant, no telemetry model or failure
+			esc_status_s truth = esc_status;
+
+			for (int i = 0; i < limited_escs; i++) {
+				truth.esc[i].esc_rpm = _rotor_rpm_valid ? (int32_t)roundf(_rotor_rpm[i]) : 0;
+				truth.esc[i].esc_errorcount = 0;
+			}
+
+			_esc_truth_pub.publish(truth);
+		}
 	}
 
 	pthread_mutex_unlock(&_node_mutex);
