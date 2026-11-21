@@ -26,12 +26,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    NEXT: key2 of THR_SC change + g510_check; why alt loss grew vs S147 (2.15-2.21); alt-loss = open G5.10 item
    (1 session cause search, then re-open outer-law saturation handling). Q9 a/b still open. S147 s1-s3 superseded.
    Runner trap: --controller pid_default with a params file holding MC_INDI_EN 1 flies INDI (s148 indi_s2_rep).
-1. G5.4 probe PASS 9/9 S135 (g5_probe_s135; auto_smoke_check.py, g54_key2.py). Re-fly at freeze.
-2. G5.1 DONE as probe S137: 6/6 PASS at K_Y 20 (acro + stabilized x3). Re-fly at freeze.
-3. G5.2 DONE as probe S138: 6/6 PASS altctl/posctl (results/g5_g52_s138, g52_check keyed AGREE). Re-fly at freeze.
+1-3. Probes PASS, re-fly at freeze: G5.4 9/9 (S135), G5.1 6/6 K_Y 20 (S137), G5.2 6/6 (S138, g52_check keyed).
 3b. G5.3 hold PASS 3/3 (S139). G5.7 leaveP: S139 s2/s3 FAIL (5.17-5.25 deg) were the GNSS set-up fault: S143 matched
    re-fly s2 3.62, s3 3.55 deg PASS, thrust step 3.0 % (results/g5_g57_s143_gnss); s1 PASS S139. G5.7 PASS 3/3 as probe;
-   PID compare DROPPED (cause found). Re-fly at freeze. G5.9/G5.11 event probes now unblocked (after item 4 fixes).
+   Re-fly at freeze.
 3c. G5.5 probe committed S140 (results/g5_g55_s139/README.md); G5.3 mission PASS 3/3. G5.3 complete as probe.
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (fixes fee02b59b2, 3944e8e367; key2 results/g5_events_s144/key2.md):
    all events take effect; applied time from firmware log; command events 1.75-4.25 ms late (G1.5 1.25 ms) and
