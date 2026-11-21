@@ -1,8 +1,8 @@
 # STATE (budget 8000 bytes: read at every launch, resume essentials only)
 
 ## Status
-- Stage: 6 (validation) on freeze-6 firmware 23acbdef67 + post-freeze commits kept (D-JFF-KEEP). Q11 B forces a
-  freeze-7 (offboard pos/vel feedback in the INDI module); rows invalidated by D-JFF-KEEP and Q11 B re-fly there.
+- Stage: 6 (validation). FREEZE-7 declared S177 (D-FREEZE-7): firmware 08011e92d0, config g5_freeze_s157 params.
+  Rows listed in D-FREEZE-7 re-fly now (queue results/freeze7_s177); other freeze-6 evidence stands.
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
 - Blocker: G2 verdict waits Q16 (BLOCKING for G2). G4 chatter: cruise 9/9 flagged, cause open (action 2).
 ## Next actions (owner order; each names its gate item)
@@ -56,6 +56,8 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| Q7 | freeze-7 serial queue G5.5 24 + G4 18 + G5.3/5.4 (detached) | sonnet | results/freeze7_s177/ (queue_status.tsv) | re-run queue.sh (idempotent), see its README |
+| M7 | G2 outer models -> MC_INDI_XY_* | sonnet | results/g2_outer_model_s177.md | re-brief from STATE action 4 |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

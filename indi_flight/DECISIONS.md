@@ -989,3 +989,14 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Overturn: o2-o4/o7 at gx2 > 0.5 m; G2 outer PT 0 cells < 6 dB / 45 deg at the new gains; G4 hover command RMS or
   G5.3/G5.4 worse beyond limits at freeze-7 -> fall back to (c) or lower gains. gx2 o2-o4/o7 s1: 0.27-0.32 m;
   weak 2.3-3.1 Hz rate lines on o4 (payload) and o7 (tau x2): watch G3 osc detector and G2 outer at freeze-7.
+
+## D-FREEZE-7 (S177, 2026-11-21): freeze-7 declared (Q11 B code complete)
+- Firmware: 08011e92d0 (last commit under src/; includes D-JFF-KEEP 20b4a41b22/aa4fd2654a and D-OFFB-POSVEL
+  7dd352bae2, key2 agrees: results/g55_posvel_fw_s176/key2_review.md). Rules of D-FREEZE-6 apply unchanged.
+- Configuration: results/g5_freeze_s157/params.params (identified set), MC_INDI_XY_P/XY_VP at firmware defaults
+  1.9/3.6; nominal plant matched GNSS 110 ms; G4 typical noise profile on every G5 row (GATES 5b).
+- Rows to re-fly (D-JFF-KEEP + D-OFFB-POSVEL): G5.5 o1-o7 + offb_vel_step x3; G4 18 runs; G2 outer cells
+  (g2_outer_freeze_s163 set, x-check with MC_INDI_XY_* in the models); G5.3/G5.4 x3; G5 event rows in hover (1 seed
+  confirm); G2 rate/att spot-check 2 cells; G3 pre-test. Freeze-6 evidence of the other rows stands.
+- Open anomalies touching it: A-50/A-51 (G2 model x-check, Q16), A-54/A-56 (G4), bounds unchanged.
+- Overturn: as D-FREEZE-6 (a row FAIL caused in frozen firmware -> one session cause search, then re-open).
