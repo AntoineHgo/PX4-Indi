@@ -56,7 +56,9 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-(none in flight; T1-T10 done and committed by S188)
+| S189-A | G3 osc cause search (runs 16/10 first) + <=2 param probes | sonnet | results/g3_pretest_s187/CAUSE_S189.md | re-brief from file |
+| S189-B | G5.7 attitude-jump cause search + <=3 param probes | sonnet | results/freeze9_s183/g5_modes/CAUSE_S189.md | re-brief from file |
+| S189-C | G3 PID key1/key2 reconcile on 03/16 | haiku | results/g3_pretest_s187/pid_refs/RECONCILE_S189.md | re-brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
