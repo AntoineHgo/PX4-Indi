@@ -5,7 +5,8 @@ Edges come from the applied sticks (sticks.csv, sim-time base of the ULog): z st
 x step (posctl only) = first pitch x != 0 and its return to 0. Truth = vehicle_local_position_groundtruth (NED).
 Per step: start = truth at the stick edge; final = mean truth over the last 1.0 s of the centred window (window = release + 6 s,
 cut at the next step edge); d = |final - start| (z: vertical, x: horizontal norm); valid needs d >= 1.0 m (z), >= 2.0 m (x).
-Overshoot = max excursion beyond final along the step direction after release; settle = release to last exit of |s - d| <= 2 % d.
+Overshoot = max excursion beyond final along the step direction after release; settle = release to last exit of |s - d| <= band,
+band = max(2 % d, 0.10 m) for z (S175 Q10 B), 2 % d for x; settle_s_2pct keeps the old 2 % z band.
 Off-axis (y and z during the x step; horizontal during the z step) = max |truth - start| in the off components over edge..window end, reported."""
 import json
 import os
@@ -16,6 +17,7 @@ import numpy as np
 NAV = {"altctl": 1, "posctl": 2}                    # vehicle_status nav_state NAVIGATION_STATE_ALTCTL / POSCTL
 LIM = {"z": dict(os=0.3, dmin=1.0), "x": dict(os=0.5, dmin=2.0)}   # m, GATES G5.2
 SETTLE_MAX, SETTLE_BAND, REL_WIN_S, FINAL_S = 4.0, 0.02, 6.0, 1.0
+Z_BAND_MIN_M = 0.10     # S175 Q10 B: z settle band = max(2 % of d, 0.10 m); x stays 2 % of d
 LOC_TILT = 80.0
 
 
@@ -54,8 +56,13 @@ def step_metrics(kind, pos, t_on, t_rel, t_end):
     ma = (tp >= t_rel) & (tp <= t_end)
     s = (p[ma][:, comp] - start[comp]) @ u
     r["overshoot_m"] = float(max(0.0, s.max() - d))
-    bad = np.flatnonzero(np.abs(s - d) > SETTLE_BAND * d)
-    r["settle_s"] = float(tp[ma][bad[-1]] - t_rel) if len(bad) else 0.0
+    def settle(band):
+        bad = np.flatnonzero(np.abs(s - d) > band)
+        return float(tp[ma][bad[-1]] - t_rel) if len(bad) else 0.0
+    band = max(SETTLE_BAND * d, Z_BAND_MIN_M) if kind == "z" else SETTLE_BAND * d
+    r["settle_band_m"] = float(band)
+    r["settle_s"] = settle(band)
+    r["settle_s_2pct"] = settle(SETTLE_BAND * d)     # pre-S175 definition, reported for comparison
     me = (tp >= t_on) & (tp <= t_end)
     r["off_axis_max_m"] = float(np.abs(p[me][:, off] - start[off]).max())
     if kind == "z":   # sign: up positive (NED z negative)
@@ -109,7 +116,7 @@ def evaluate(mode, st, pos, nav, att=None):
     return res
 
 
-def check(d):
+def check(d, out_dir=None):
     from pyulog import ULog
     meta = json.load(open(os.path.join(d, "run.json")))
     mode = meta["stick"]["mode"]
@@ -129,18 +136,26 @@ def check(d):
     res["truth_pos_hz"] = round(1 / float(np.median(np.diff(pos["t"]))), 1)
     res["pos_steps_meta"] = meta.get("pos_steps")
     res["params"] = {k: u.initial_parameters.get(k) for k in ("MPC_VEL_MANUAL", "MPC_POS_MODE", "MPC_Z_VEL_MAX_UP", "MPC_ACC_HOR", "MPC_JERK_MAX")}
-    json.dump(res, open(os.path.join(d, "g52_check.json"), "w"), indent=1)
+    od = out_dir or d
+    os.makedirs(od, exist_ok=True)
+    json.dump(res, open(os.path.join(od, (res["run"] + "." if out_dir else "") + "g52_check.json"), "w"), indent=1)
     return res
 
 
 def line(res):
     tag = "INVALID" if not res["valid"] else ("PASS" if res["passed"] else "FAIL")
-    parts = [f"{k} d {r['d_m']:.2f} os {r.get('overshoot_m', float('nan')):.3f} settle {r.get('settle_s', float('nan')):.2f} (hold {r['hold_s']:.2f} s, travel at release {r['travel_at_release_m']:.2f}) off {r.get('off_axis_max_m', float('nan')):.2f}"
+    parts = [f"{k} d {r['d_m']:.2f} os {r.get('overshoot_m', float('nan')):.3f} settle {r.get('settle_s', float('nan')):.2f} (2%-band {r.get('settle_s_2pct', float('nan')):.2f}, band {r.get('settle_band_m', float('nan')):.3f} m; hold {r['hold_s']:.2f} s, travel at release {r['travel_at_release_m']:.2f}) off {r.get('off_axis_max_m', float('nan')):.2f}"
              for k, r in res["steps"].items()]
     return f"{res.get('run', '?')} {res['mode']} G5.2 {tag}: " + "; ".join(parts) + f"; loc {res.get('loc')}" \
         + (f" reason {res['invalid_reason']}" if res["invalid_reason"] else "")
 
 
 if __name__ == "__main__":
-    for d in sys.argv[1:]:
-        print(line(check(d)))
+    a = sys.argv[1:]
+    od = None
+    if "--out" in a:      # write the json to this directory instead of into the run dirs
+        i = a.index("--out")
+        od = a[i + 1]
+        a = a[:i] + a[i + 2:]
+    for d in a:
+        print(line(check(d, od)))

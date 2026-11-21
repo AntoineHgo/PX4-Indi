@@ -5,7 +5,7 @@
 
 Parts: SAT = segment "sat" (available thrust 0.274 of nominal, 3 m x step), REC = "rec" (full thrust, setpoint kept), AGG = "agg"
 (20 m x, 4 m up step at full scale) + "aghold". Limits: no LOC (run ok, tilt < 60 deg, no disarm, nav_state offboard, z above 0.3 m),
-altitude loss <= 2.0 m (max drop of truth z below the mean of the 1 s before "sat", over sat start .. end), tilt <= 20 deg,
+altitude loss <= 2.0 m (max drop of truth z below the mean of the 1 s before "sat", over sat start .. end), tilt <= MPC_TILTMAX_AIR + 5 deg (S175; 20 deg if the param is absent),
 no windup: back within 0.3 m (3-D) of the setpoint and staying in <= 5 s after saturation ends (SAT: start of "rec"; AGG: last
 saturated sample, saturated = max motor command >= 0.98 x limit, limit 0.274 in SAT, 1.0 in AGG). Saturation fraction per part
 proves the saturation. Exit 0 pass, 1 fail, 2 invalid (no saturation / no truth / events missing).
@@ -15,6 +15,7 @@ import numpy as np
 
 LIM = dict(alt_loss=2.0, tilt_deg=20.0, back_m=0.3, back_s=5.0, loc_tilt_deg=60.0)
 SAT_SCALE, SAT_FRAC_MIN = 0.274, 0.05
+TILT_MARGIN_DEG = 5.0   # S175 Q9 a: tilt limit = MPC_TILTMAX_AIR + 5 deg (read from the log); LIM['tilt_deg'] is the legacy 20 deg
 
 
 def back_time(t, err, t_from, t_to):
@@ -40,14 +41,15 @@ def sat_stats(tm, cmd, lim, t0, t1):
     return float(s.mean()), last
 
 
-def analyse(t, pos, tilt_deg, tm, cmd, ev, sp, run_ok=True, nav_ok=True, armed_ok=True):
+def analyse(t, pos, tilt_deg, tm, cmd, ev, sp, run_ok=True, nav_ok=True, armed_ok=True, tilt_lim_deg=None):
     """t [s], pos (N,3) NED truth, tilt_deg (N,), tm [s] / cmd (M,4) motor commands, ev {name: t_start_s} for sat, rec, agg,
     aghold, end; sp {name: setpoint NED}."""
     z_up = -pos[:, 2]
     pre = (t >= ev["sat"] - 1.0) & (t < ev["sat"])
     z0 = float(z_up[pre].mean())
     w = (t >= ev["sat"]) & (t <= ev["end"])
-    out = {"z_pre_m": z0, "alt_loss_m": float(max(0.0, (z0 - z_up[w]).max())), "tilt_max_deg": float(tilt_deg[w].max())}
+    tl = LIM["tilt_deg"] if tilt_lim_deg is None else float(tilt_lim_deg)
+    out = {"tilt_limit_deg": tl, "tilt_ok_legacy_20deg": None, "z_pre_m": z0, "alt_loss_m": float(max(0.0, (z0 - z_up[w]).max())), "tilt_max_deg": float(tilt_deg[w].max())}
     f_sat, _ = sat_stats(tm, cmd, SAT_SCALE, ev["sat"], ev["rec"])
     f_rec, _ = sat_stats(tm, cmd, 1.0, ev["rec"], ev["agg"])
     f_agg, last_agg = sat_stats(tm, cmd, 1.0, ev["agg"], ev["end"])
@@ -61,9 +63,10 @@ def analyse(t, pos, tilt_deg, tm, cmd, ev, sp, run_ok=True, nav_ok=True, armed_o
     ix = t >= ev["agg"]
     out["overshoot_x_agg_m"] = float(max(0.0, (pos[ix, 0] - sp["agg"][0]).max()))
     out["loc"] = bool((not run_ok) or (not nav_ok) or (not armed_ok) or out["tilt_max_deg"] >= LIM["loc_tilt_deg"] or float(z_up[w].min()) < 0.3)
-    v = {"no_loc": not out["loc"], "alt_loss": out["alt_loss_m"] <= LIM["alt_loss"], "tilt": out["tilt_max_deg"] <= LIM["tilt_deg"],
+    v = {"no_loc": not out["loc"], "alt_loss": out["alt_loss_m"] <= LIM["alt_loss"], "tilt": out["tilt_max_deg"] <= tl,
          "back_sat": out["back_s_sat"] is not None and out["back_s_sat"] <= LIM["back_s"],
          "back_agg": out["back_s_agg"] is not None and out["back_s_agg"] <= LIM["back_s"]}
+    out["tilt_ok_legacy_20deg"] = bool(out["tilt_max_deg"] <= LIM["tilt_deg"])
     out["verdict"] = {k: bool(x) for k, x in v.items()}
     out["invalid"] = [s for s, bad in (("no saturation in SAT part", f_sat < SAT_FRAC_MIN),
                                        ("no saturation in AGG part", f_agg < SAT_FRAC_MIN)) if bad]
@@ -109,7 +112,13 @@ def main():
     nav_ok = bool(np.all(vs["nav_state"][w] == 14)) if w.any() else True
     armed_ok = bool(np.all(vs["arming_state"][w] == 2)) if w.any() else True
     out = {"run": a.run_dir, "scenario": run["scenario"], "seed": run.get("seed"), "truth_source": src, "events_s": ev}
-    out.update(analyse(t, pos, tilt_t, am["timestamp"] * 1e-6, cmd, ev, sp, run.get("exit_status") == "ok", nav_ok, armed_ok))
+    tmax = dict(u.initial_parameters).get("MPC_TILTMAX_AIR")
+    for ts_, n_, v_ in u.changed_parameters:
+        if n_ == "MPC_TILTMAX_AIR" and ts_ <= ev["sat"] * 1e6:
+            tmax = v_
+    tl = None if tmax is None else float(tmax) + TILT_MARGIN_DEG
+    out["MPC_TILTMAX_AIR"] = tmax
+    out.update(analyse(t, pos, tilt_t, am["timestamp"] * 1e-6, cmd, ev, sp, run.get("exit_status") == "ok", nav_ok, armed_ok, tl))
     for k, x in out.items():
         print(f"{k}: {x}")
     for k, x in out["verdict"].items():

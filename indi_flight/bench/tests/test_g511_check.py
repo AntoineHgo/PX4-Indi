@@ -42,6 +42,40 @@ def test_yaw():
     assert abs(g.sp_yaw_step_deg(T, yaw, 5.0) - 5.0) < 1e-6
 
 
+def test_excursion_h_and_verdict_s175():
+    pos = np.zeros((len(T), 3)); pos[T >= 5.0, 2] = 0.9; pos[T >= 5.0, 0] = 0.3      # z (vertical) 0.9 m, horizontal 0.3 m
+    assert abs(g.excursion_h_m(T, pos, 5.0) - 0.3) < 1e-9 and g.excursion_m(T, pos, 5.0) > 0.9
+    assert g.verdict_s175("ekf_xy", True, 9.0, 0.3, 0.95, False) == "PASS"          # tilt jump does not judge xy; vertical ignored
+    assert g.verdict_s175("ekf_xy", True, 0.0, 0.6, 0.6, False) == "FAIL"
+    assert g.verdict_s175("ekf_xy", True, 0.0, 0.1, 0.1, True) == "FAIL"             # oscillation
+    assert g.verdict_s175("ekf_yaw", True, 0.9, 0.0, 0.1, False) == "PASS"
+    assert g.verdict_s175("ekf_yaw", True, 1.1, 0.0, 0.1, False) == "FAIL"
+    assert g.verdict_s175("ekf_yaw", False, 0.0, 0.0, 0.0, False) == "INVALID"
+
+
+def test_noevent_p95_excess_s175():
+    """Setpoint tilt: 0.8 deg step every 4 s in 0..40 s (no-event steps), event step of 1.5 deg at 50 s. No-event metric =
+    0.8 deg everywhere a step lies in the window, 0 elsewhere -> p95 = 0.8; excess = 1.5 - 0.8 = 0.7 (PASS), a 2.0 deg event -> 1.2 (FAIL)."""
+    t = np.arange(0, 60, 0.01)
+    a = np.zeros_like(t)
+    for k in range(4, 40, 4):
+        a[t >= k] += np.radians(0.8) * (1 if (k // 4) % 2 else -1)
+    a[t >= 50.0] += np.radians(1.5)
+    zb = np.stack([np.zeros_like(a), -np.sin(a), np.cos(a)], 1)
+    nav_t = np.arange(0, 60, 0.1)
+    nav = np.full(len(nav_t), 4)
+    tt, v = g.noevent_tilt_jumps(t, zb, nav_t, nav, 4, [50.0])
+    assert len(v) > 20 and tt.max() < 50.0 - 2.0 + 1e-9                       # event window excluded
+    p95 = g.noevent_p95(v)
+    assert abs(p95 - 0.8) < 0.02, p95
+    ev = g.tilt_jump_deg(t, zb, 50.0)
+    assert abs((ev - p95) - 0.7) < 0.03 and g.verdict_s175("ekf_yaw", True, ev - p95, 0, 0, False) == "PASS"
+    assert g.verdict_s175("ekf_yaw", True, 2.0 - p95, 0, 0, False) == "FAIL"
+    nav2 = np.where(nav_t < 20, 14, 4)                                          # other nav_state before 20 s is skipped
+    tt2, _ = g.noevent_tilt_jumps(t, zb, nav_t, nav2, 4, [50.0])
+    assert tt2.min() >= 21.0 - 1e-9
+
+
 if __name__ == "__main__":
     for n, f in list(globals().items()):
         if n.startswith("test_"):

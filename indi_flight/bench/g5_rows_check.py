@@ -16,8 +16,8 @@ G5.8 (hover case only; "3 m/s: not flown"), per loss rc_loss / link_loss / offbo
   excursion = max 3-D distance of vehicle_local_position_groundtruth (else vehicle_local_position) from its value
   at onset (event applied time) until entry + 5 s; limit <= 1 m. max tilt from vehicle_attitude over the same window
   is reported only; the G5.3/G5.4 sub-check is NOT computed.
-G5.9: (a) motors all 0 after kill: reference = first manual_control_switches.kill_switch change (else
-  actuator_armed.kill rise, published on change + 500 ms); delay = first actuator_motors sample at/after reference that is 0 on all
+G5.9: (a) motors all 0 after kill: reference = actuator_armed.kill rise (S175, firmware applied flag; fallback the
+  first manual_control_switches.kill_switch change); the commander latency switch -> kill flag is reported as info; delay = first actuator_motors sample at/after reference that is 0 on all
   channels and stays 0 until disarm; PASS if delay <= one command period (run.json physics_step_s, 1.25 ms).
   (b) INDI states zero at re-arm: first indi_pos_status / indi_rate_status sample at/after the re-arm time, fields
   listed zero/non-zero; the state set is POS_STATES / RATE_STATES; sample later than MAX_FIRST_S -> NOT-COMPUTED
@@ -187,21 +187,34 @@ def g59a(L, ev, step_us):
     if "kill" not in evd:
         return [res("G5.9a kill", "NOT-COMPUTED", "no kill event")]
     tk = evd["kill"]["t_applied_us"]
-    ref, rtxt, resol = None, "", None
+    # S175 Q8 add.2 A / Q8 a A: reference = the firmware's own applied flag, actuator_armed.kill rise; the commander latency
+    # (MAVLink/RC kill switch change -> kill flag) is reported separately and is not part of the motors-0 delay.
+    sw_ref, sw_txt = None, ""
     sw = L.get("manual_control_switches")
     if sw is not None:
         t, k = _a(sw, "timestamp"), _a(sw, "kill_switch")
         idx = [i for i in range(1, len(t)) if t[i] >= tk - 1e6 and k[i] != k[i - 1]]
         if idx:
-            ref, rtxt = int(t[idx[0]]), "manual_control_switches.kill_switch change"
-            resol = float(np.median(np.diff(t)) / 1e3) if len(t) > 1 else None
-            rtxt += f" (published on change plus a {resol:.0f} ms heartbeat, logged at every publication)"
-    if ref is None:
-        aa = L["actuator_armed"]
-        ref = first_rise(_a(aa, "timestamp"), _a(aa, "kill"), tk - 1e6)
-        rtxt = "actuator_armed.kill rise (published on change, logged at every publication)"
-        if ref is None:
-            return [res("G5.9a kill", "NOT-COMPUTED", "no firmware-side kill record")]
+            sw_ref, sw_txt = int(t[idx[0]]), "manual_control_switches.kill_switch change"
+    aa0 = L.get("actuator_armed")
+    kill_ref = first_rise(_a(aa0, "timestamp"), _a(aa0, "kill"), tk - 1e6) if aa0 is not None and "kill" in aa0 else None
+    out = []
+    if kill_ref is not None:
+        ref = kill_ref
+        rtxt = "actuator_armed.kill rise (firmware applied flag, published on change, logged at every publication)"
+        if sw_ref is not None:
+            out.append(res("G5.9a commander latency (info)", "INFO",
+                           f"{sw_txt} -> actuator_armed.kill rise {(kill_ref-sw_ref)/1e3:.2f} ms; "
+                           f"event applied time -> kill rise {(kill_ref-tk)/1e3:.2f} ms",
+                           commander_latency_ms=(kill_ref - sw_ref) / 1e3, applied_to_kill_ms=(kill_ref - tk) / 1e3))
+        else:
+            out.append(res("G5.9a commander latency (info)", "INFO",
+                           f"no kill_switch change logged; event applied time -> kill rise {(kill_ref-tk)/1e3:.2f} ms",
+                           applied_to_kill_ms=(kill_ref - tk) / 1e3))
+    elif sw_ref is not None:
+        ref, rtxt = sw_ref, sw_txt + " (FALLBACK: no actuator_armed.kill rise logged)"
+    else:
+        return [res("G5.9a kill", "NOT-COMPUTED", "no firmware-side kill record")]
     vs = L["vehicle_status"]
     tv, ar = _a(vs, "timestamp"), _a(vs, "arming_state")
     dis = [tv[i] for i in range(len(tv)) if tv[i] > ref and ar[i] != 2]
@@ -215,15 +228,14 @@ def g59a(L, ev, step_us):
     nzmax = float(np.abs(np.nan_to_num(M[seg])).max()) if seg.any() else float("nan")
     last_nz = float(ts[Ms.any(1)].max()) if Ms.any() else None
     i = all_zero_after(ts, np.where(Ms, 1.0, 0.0), ref)
-    out = []
     # actuator_motors is the controller command: informational only (the output stage zeroes actuator_outputs, not this topic)
     if i is None:
         out.append(res("G5.9a kill command (info)", "INFO",
                        f"actuator_motors (controller command) NOT 0 after kill: up to {nzmax:.3f} until disarm "
-                       f"{(t_end-ref)/1e6:.2f} s after the switch; reference {rtxt} at {ref/1e6:.4f} s"))
+                       f"{(t_end-ref)/1e6:.2f} s after the reference; reference {rtxt} at {ref/1e6:.4f} s"))
     else:
         out.append(res("G5.9a kill command (info)", "INFO",
-                       f"actuator_motors 0 at {(ts[i]-ref)/1e3:.2f} ms after switch; reference {rtxt}"))
+                       f"actuator_motors 0 at {(ts[i]-ref)/1e3:.2f} ms after the reference; reference {rtxt}"))
     ao = L.get("actuator_outputs")
     if ao is None or "output[0]" not in ao:
         return out + [res("G5.9a kill motors", "NOT-COMPUTED", "actuator_outputs not logged")]
@@ -251,7 +263,7 @@ def g59a(L, ev, step_us):
     lo = (to[k - 1] - ref) / 1e3 if k > 0 and to[k - 1] >= ref else 0.0  # last non-zero sample (or the reference)
     st = "PASS" if hi <= per else ("FAIL" if lo > per else "NOT-COMPUTED")
     return out + [res("G5.9a kill motors", st,
-                      f"actuator_outputs all 0 at {hi:.2f} ms after the switch (last non-zero {lo:.2f} ms), command period {per:.2f} ms, "
+                      f"actuator_outputs all 0 at {hi:.2f} ms after the reference (last non-zero {lo:.2f} ms), command period {per:.2f} ms, "
                       f"output sample spacing {sp:.2f} ms; {rtxt} at {ref/1e6:.4f} s; {rres}",
                       delay_ms=hi, last_nonzero_ms=lo, period_ms=per, ref_us=ref)]
 
@@ -363,16 +375,24 @@ def load(d):
     return L, meta, dict(ul.initial_parameters), changes
 
 
-def main(dirs):
+def main(dirs, out_dir=None):
     for d in dirs:
         L, meta, params, changes = load(d)
         rows = analyse(L, meta.get("g5_events", []), params, changes, int(round(meta.get("physics_step_s", 0.00125) * 1e6)))
         lines = [f"{r['status']:13s} {r['name']}: {r['text']}" for r in rows]
         print(f"== {d}")
         print("\n".join(lines))
-        json.dump(rows, open(os.path.join(d, "g5_rows.json"), "w"), indent=1, default=float)
-        open(os.path.join(d, "g5_rows.txt"), "w").write("\n".join(lines) + "\n")
+        od, pre = (out_dir, os.path.basename(d.rstrip("/")) + ".") if out_dir else (d, "")
+        os.makedirs(od, exist_ok=True)
+        json.dump(rows, open(os.path.join(od, pre + "g5_rows.json"), "w"), indent=1, default=float)
+        open(os.path.join(od, pre + "g5_rows.txt"), "w").write("\n".join(lines) + "\n")
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    a = sys.argv[1:]
+    od = None
+    if "--out" in a:       # write results to this directory instead of into the run dirs
+        i = a.index("--out")
+        od = a[i + 1]
+        a = a[:i] + a[i + 2:]
+    main(a, od)

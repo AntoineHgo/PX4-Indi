@@ -50,4 +50,9 @@ assert len(g.analyse(t, pos4, tilt4, tm4, cmd4, ev, sp)["invalid"]) == 2
 assert g.analyse(t, pos, np.full(len(t), 70.0), tm, cmd, ev, sp)["loc"]
 # back_time: never back -> None
 assert g.back_time(t, np.full(len(t), 1.0), 15.0, 25.0) is None
+# S175 Q9 a: tilt limit = MPC_TILTMAX_AIR + 5 (45 + 5 = 50 deg): 48 deg passes, 52 fails; default (no param) stays 20 deg
+assert g.analyse(t, pos, np.full(len(t), 48.0), tm, cmd, ev, sp, tilt_lim_deg=50.0)["verdict"]["tilt"]
+assert not g.analyse(t, pos, np.full(len(t), 52.0), tm, cmd, ev, sp, tilt_lim_deg=50.0)["verdict"]["tilt"]
+assert not g.analyse(t, pos, np.full(len(t), 48.0), tm, cmd, ev, sp)["verdict"]["tilt"]
+assert g.analyse(t, pos, np.full(len(t), 48.0), tm, cmd, ev, sp, tilt_lim_deg=50.0)["tilt_limit_deg"] == 50.0
 print("test_g510_check: OK")

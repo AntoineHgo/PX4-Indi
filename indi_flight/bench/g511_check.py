@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""G5.11 estimator reset transients (GATES.md "G5.11 exact test (S160"). Usage: g511_check.py RUN_DIR...
+"""G5.11 estimator reset transients (GATES.md "G5.11 exact test (S160"). Usage: g511_check.py [--out DIR] RUN_DIR...
+S175 amendment (Q8 b, Q12 B + D): ekf_xy is judged on the ground-truth HORIZONTAL excursion <= 0.5 m and no sustained oscillation
+(tilt jump reported only); ekf_yaw keeps the 1 deg tilt limit with tilt jump = event value minus the 95th percentile of the same
+tilt metric at no-event instants of the same flight (excess), plus the unchanged excursion (3-D) and oscillation tests; the z reset
+part is not tested (owner decision Q8(b)). The pre-S175 verdict is kept as column "legacy".
 Truth only (sim_ground_truth pose + body rates, 800 Hz); setpoint tilt from vehicle_attitude_setpoint.
 Metric functions take arrays (times in s); ulog loading is separate."""
 import json, math, os, sys
@@ -46,6 +50,36 @@ def excursion_m(t, pos, ta):
     return float(np.linalg.norm(pos[post] - m, axis=1).max())
 
 
+def excursion_h_m(t, pos, ta):
+    """max HORIZONTAL (x, y) distance over [ta, ta+5] of pos (Nx3) from its mean over [ta-1, ta) (S175 xy criterion)."""
+    t = np.asarray(t, float)
+    m = np.mean(pos[(t >= ta - 1) & (t < ta)][:, :2], 0)
+    post = (t >= ta) & (t <= ta + 5)
+    return float(np.linalg.norm(pos[post][:, :2] - m, axis=1).max())
+
+
+def noevent_tilt_jumps(tsp, zb, nav_t, nav, navv, ev_times, step=0.25, excl_pre=1.0, excl_post=9.0):
+    """Tilt-jump metric (same function as the event value) at no-event instants of one flight: instants on a `step` grid with
+    >= 1 s of setpoint data on both sides, nav_state == navv over [t-1, t+1], and no event (times ev_times, s) with
+    t in [t_ev - excl_pre - 1, t_ev + excl_post + 1]. Returns (instants, values)."""
+    tsp = np.asarray(tsp, float)
+    out_t, out_v = [], []
+    for tt in np.arange(tsp[0] + 1.0, tsp[-1] - 1.0, step):
+        if any(te - excl_pre - 1.0 <= tt <= te + excl_post + 1.0 for te in ev_times):
+            continue
+        w = (nav_t >= tt - 1.0) & (nav_t <= tt + 1.0)
+        base = np.asarray(nav)[nav_t <= tt - 1.0]
+        if not w.any() or len(base) == 0 or np.any(np.asarray(nav)[w] != navv) or base[-1] != navv:
+            continue
+        out_t.append(tt)
+        out_v.append(tilt_jump_deg(tsp, zb, tt))
+    return np.array(out_t), np.array(out_v)
+
+
+def noevent_p95(v):
+    return float(np.percentile(v, 95)) if len(v) else float("nan")
+
+
 def yaw_change_deg(t, yaw, ta):
     """truth yaw at ta+1 s minus mean pre-yaw over [ta-1, ta) (wrapped), deg; and max |change| over [ta, ta+1]."""
     t = np.asarray(t, float)
@@ -75,6 +109,15 @@ def verdict(valid, tilt, exc, osc):
     if not valid:
         return "INVALID"
     return "PASS" if (tilt <= TILT_LIM_DEG and exc <= EXC_LIM_M and not osc) else "FAIL"
+
+
+def verdict_s175(kind, valid, tilt_excess, exc_h, exc_3d, osc):
+    """S175: xy = horizontal excursion + no oscillation; yaw = tilt excess (event - p95 no-event) <= 1 deg, 3-D excursion, no osc."""
+    if not valid:
+        return "INVALID"
+    if kind == "ekf_xy":
+        return "PASS" if (exc_h <= EXC_LIM_M and not osc) else "FAIL"
+    return "PASS" if (tilt_excess <= TILT_LIM_DEG and exc_3d <= EXC_LIM_M and not osc) else "FAIL"
 
 
 def validity(ta, cnt_t, cnt, nav_t, nav, events, name):
@@ -107,7 +150,7 @@ def load(run):
     return d
 
 
-def check_run(run):
+def check_run(run, out_dir=None):
     d = load(run)
     meta = json.load(open(os.path.join(run, "run.json")))
     evs = meta["g5_events"]
@@ -135,14 +178,24 @@ def check_run(run):
         ok, why, navv = validity(ta, tt, cnt, vs["timestamp"] / 1e6, vs["nav_state"], evs, name)
         tilt = tilt_jump_deg(tsp, zb, ta)
         exc = excursion_m(t, pos, ta)
+        exc_h = excursion_h_m(t, pos, ta)
+        _, nev = noevent_tilt_jumps(tsp, zb, vs["timestamp"] / 1e6, vs["nav_state"], navv, [e["t_applied_us"] / 1e6 for e in evs])
+        p95 = noevent_p95(nev)
+        excess = tilt - p95
         osc, wins = osc_sustained(t, pqr, ta)
         ychg, ymax = yaw_change_deg(t, yaw, ta)
         r.update(t_a=ta, valid=ok, why=why, nav_state=navv, tilt_jump_deg=tilt, truth_excursion_m=exc, osc_sustained=bool(osc),
                  osc_windows=[dict(t0=w["t0"], flagged=w["flagged"], f_hz=w["f_hz"], ratio=w["ratio"], rms_dps=w["rms_dps"]) for w in wins],
                  truth_yaw_change_deg=ychg, truth_yaw_max_dev_deg=ymax, sp_yaw_step_deg=sp_yaw_step_deg(tsp, yawsp, ta),
-                 verdict=verdict(ok, tilt, exc, osc))
+                 truth_excursion_h_m=exc_h, noevent_n=int(len(nev)), noevent_p95_deg=p95, noevent_max_deg=float(nev.max()) if len(nev) else float("nan"),
+                 tilt_excess_deg=excess, legacy=verdict(ok, tilt, exc, osc),
+                 verdict=verdict_s175(name, ok, excess, exc_h, exc, osc) if len(nev) else "INVALID")
+        if not len(nev):
+            r["why"] = r["why"] + ["no no-event instants for the tilt p95"]
         out.append(r)
-    json.dump(out, open(os.path.join(run, "g511_check.json"), "w"), indent=1)
+    od = out_dir or run
+    os.makedirs(od, exist_ok=True)
+    json.dump(out, open(os.path.join(od, (os.path.basename(run) + "." if out_dir else "") + "g511_check.json"), "w"), indent=1)
     return out
 
 
@@ -150,11 +203,18 @@ def line(r):
     if "t_a" not in r:
         return f"{r['verdict']:8s} {r['run']} {r['event']}: {r['why']}"
     return (f"{r['verdict']:8s} {r['run']} {r['event']}: t_a {r['t_a']:.3f} s, nav {r['nav_state']}, valid {r['valid']} {r['why']}, "
-            f"tilt jump {r['tilt_jump_deg']:.2f} deg (<=1), excursion {r['truth_excursion_m']:.3f} m (<=0.5), "
+            f"tilt jump {r['tilt_jump_deg']:.2f} deg, no-event p95 {r['noevent_p95_deg']:.2f} / max {r['noevent_max_deg']:.2f} deg (n {r['noevent_n']}), "
+            f"excess {r['tilt_excess_deg']:.2f} deg (yaw <=1), excursion 3-D {r['truth_excursion_m']:.3f} m / horizontal {r['truth_excursion_h_m']:.3f} m (<=0.5), legacy {r['legacy']}, "
             f"osc sustained {r['osc_sustained']}, truth yaw change {r['truth_yaw_change_deg']:.2f} deg, sp yaw step {r['sp_yaw_step_deg']:.2f} deg")
 
 
 if __name__ == "__main__":
-    for run in sys.argv[1:]:
-        for r in check_run(run.rstrip("/")):
+    a = sys.argv[1:]
+    od = None
+    if "--out" in a:
+        i = a.index("--out")
+        od = a[i + 1]
+        a = a[:i] + a[i + 2:]
+    for run in a:
+        for r in check_run(run.rstrip("/"), od):
             print(line(r))

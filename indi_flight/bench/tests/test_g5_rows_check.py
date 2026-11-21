@@ -93,6 +93,23 @@ def test_g59a():
         assert r["G5.9a kill command (info)"]["status"] == "INFO"  # actuator_motors never decides the row
 
 
+def test_g59a_kill_flag_reference_s175():
+    """Reference is the actuator_armed.kill rise (10 s + 8.75 ms), not the switch change (10 s + 0.5 ms): outputs 0 at
+    kill + 1.0 ms PASS (1.0 <= 1.25; relative to the switch it would be 9.25 ms), at kill + 3 ms FAIL; latency 8.25 ms reported."""
+    ev = [{"name": "kill", "t_applied_us": 10 * S}]
+    sw = {"timestamp": np.array([0, 10 * S + 500]), "kill_switch": np.array([3, 1])}
+    aa = {"timestamp": np.array([0, 10 * S + 8750]), "kill": np.array([0, 1])}
+    for after_kill_us, st in ((1000, "PASS"), (3000, "FAIL")):
+        zero_ms = 8.75 + after_kill_us / 1000
+        L = {"manual_control_switches": sw, "actuator_motors": motors_log(None), "vehicle_status": vs_log(end=20),
+             "actuator_outputs": outputs_log(zero_ms, 250), "actuator_armed": aa}
+        L["vehicle_status"]["arming_state"][:] = 2
+        r = {x["name"]: x for x in g.g59a(L, ev, 1250)}
+        assert r["G5.9a kill motors"]["status"] == st, (after_kill_us, r["G5.9a kill motors"])
+        assert abs(r["G5.9a commander latency (info)"]["commander_latency_ms"] - 8.25) < 1e-6
+        assert abs(r["G5.9a kill motors"]["delay_ms"] - after_kill_us / 1000) < 0.3
+
+
 def indi_logs(t_arm, pos_nonzero, first_dt_ms=10):
     n = 100
     tp = t_arm + first_dt_ms * 1000 + np.arange(n) * 10_000

@@ -53,7 +53,9 @@ def test_pass_known_values():
     z, x = r["steps"]["z"], r["steps"]["x"]
     assert abs(z["d_m"] - 1.8) < 0.02 and abs(x["d_m"] - 3.0) < 0.02, (z["d_m"], x["d_m"])
     assert abs(z["overshoot_m"] - 0.2) < 0.02 and abs(x["overshoot_m"] - 0.4) < 0.02, (z["overshoot_m"], x["overshoot_m"])
-    assert abs(z["settle_s"] - 2.0) < 0.05 and abs(x["settle_s"] - 3.0) < 0.05, (z["settle_s"], x["settle_s"])
+    # S175: z band = max(2 % d, 0.10 m) = 0.10 m: the 5 % (0.09 m) tail is inside it, only the 0.2 m bump (exits 0.10 m at 0.83 s) counts;
+    # the old 2 % band (settle_s_2pct) still gives 2.0 s. x keeps 2 % (3.0 s).
+    assert abs(z["settle_s"] - 0.83) < 0.05 and abs(z["settle_s_2pct"] - 2.0) < 0.05 and abs(x["settle_s"] - 3.0) < 0.05, (z["settle_s"], z["settle_s_2pct"], x["settle_s"])
     assert r["valid"] and r["passed"] and not r["loc"]
 
 
@@ -79,6 +81,28 @@ def test_wrong_nav_state_invalid():
     nav["v"][:] = 1
     r = g.evaluate("posctl", st, pos, nav)
     assert not r["valid"]
+
+
+def test_z_band_floor_s175():
+    """z d = 1.8 m: 2 % = 0.036 m, floor band 0.10 m. A 0.07 m tail lasting 3 s after release is inside the new band (settle ~ 0)
+    and outside the old one (settle ~ 3 s); x keeps 2 % (a 0.07 m x tail of d = 3 m is outside its 0.06 m band)."""
+    st, pos, nav = _run("posctl")
+    t, p = pos["t"], pos["p"]
+    m = (t >= 5.0) & (t < 8.0)
+    p[m, 2] -= 0.07                                  # z up by 0.07 m after the z release (5 s) for 3 s
+    r = g.evaluate("posctl", st, pos, nav)
+    z = r["steps"]["z"]
+    assert abs(z["settle_band_m"] - 0.10) < 1e-9
+    assert z["settle_s"] < 0.1 and abs(z["settle_s_2pct"] - 3.0) < 0.05, (z["settle_s"], z["settle_s_2pct"])
+    st, pos, nav = _run("posctl")
+    t, p = pos["t"], pos["p"]
+    m = (t >= 13.5) & (t < 16.5)
+    p[m, 0] += 0.07
+    x = g.evaluate("posctl", st, pos, nav)["steps"]["x"]
+    assert abs(x["settle_band_m"] - 0.06) < 1e-9 and abs(x["settle_s"] - 3.0) < 0.05, x["settle_s"]
+    # large step: 2 % of d above the floor (d = 8 m -> 0.16 m)
+    st, pos, nav = _run("altctl", zd=8.0)
+    assert abs(g.evaluate("altctl", st, pos, nav)["steps"]["z"]["settle_band_m"] - 0.16) < 1e-9
 
 
 if __name__ == "__main__":
