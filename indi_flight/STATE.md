@@ -5,16 +5,19 @@
   Rows listed in D-FREEZE-7 re-fly now (queue results/freeze7_s177); other freeze-6 evidence stands.
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
 - Blocker: none for G2/G4/G5.3-5.5. G5.10 stabilized-part scoring waits Q17 (BLOCKING for G5.10). G4 NOT PASSED
-  at freeze-7 (chatter); cause search S178 = the one session allowed (CC agent).
+  at freeze-7 (chatter); cause search done S178, no fix shown: step back (action 2).
 ## Next actions (owner order; each names its gate item)
 1. G2: when g2_outer_freeze7_s177 (24) and g2_spot_freeze7_s178 (2) are scored and all pass: write verdict PASSED
    (GATES G2 + GATE_STATUS) with the 3 rate x-check groups as evidence limit (A-51 open). A fail re-opens G2
    (D-FREEZE-7 overturn rule). No model-structure work.
-2. G4 NOT PASSED freeze-7 (GATES "G4 verdict at freeze-7", G4_SCORES.md): chatter hover 1/9 (20 Hz), cruise 9/9
-   (33 Hz lemniscate ~3x floor, 20-22 Hz AUTO_LAND 3.6-9.6x), PID clean. Cause search S178 (chatter_cause_s178.md)
-   was the one session. Next: run its single fix probe; if the probe removes the line on the log, firmware fix (two
-   keys), name invalidated rows, re-fly G4 18. If not, re-open the decision the line depends on (list them first:
-   D-FREEZE-7 outer law / land branch / inner filters), no further chase. Do NOT propose the 3 s skip for chatter.
+2. G4 NOT PASSED freeze-7 (GATES "G4 verdict at freeze-7"): chatter hover 1/9, cruise 9/9, PID clean. One-session
+   cause search DONE S178 (chatter_cause_s178.md; probes results/chatter_probe_s178: MPC_VEL_LP 8 and 10 ms sender
+   both still flagged; 33 Hz collective 2.3x lower with 10 ms sender but present; descent 18-22 Hz line varies
+   flight to flight). No fix shown -> STEP BACK first thing next session: list the decisions the lines depend on
+   (D-OFFB-POSVEL xy gains 1.9/3.6 = 2x stock, raised 4x a_c vs PID; a_c passed unfiltered to thrust,
+   indi_accel_control.cpp:364; D-FREEZE-7 outer law) in DECISIONS.md, re-open the most likely one with a one-page
+   note. A firmware change invalidates G4, G5.5, G2 outer rows (re-fly). Ask the owner if it discards > 3 sessions
+   or touches Q11 B. No further probing. Do NOT propose the 3 s skip for chatter.
 3. G5: G5.5 24/24 PASS freeze-7. G5.3/G5.4 + event rows (g5/, dirty while flying) in queue.sh: score with existing
    keyed checkers after QUEUE_END (SC7). G5.10 pre-test queue4 (results/g5_10_freeze7_s178, after queue3): read
    SAT motors >= 0.99 time (score_motors.py is NEW: key2 before gate use) and PID reference; stabilized part waits
@@ -53,7 +56,6 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 | Q7 | freeze-7 serial queue G5.5 24 + G4 18 + G5.3/5.4 (detached) | sonnet | results/freeze7_s177/ (queue_status.tsv) | re-run queue.sh (idempotent), see its README |
 | G2Q | G2 outer 24 cells re-fly, waits for Q7 QUEUE_END (model predicts xy PM 46 deg, GM 7.8 dB) | sonnet | results/g2_outer_freeze7_s177/ | queue2.sh (idempotent), README scoring cmd |
 | SC7 | G5.5 scored 24/24 PASS (SCORES.md); G5.3/5.4 + g5/ rows after QUEUE_END (g5/ dir dirty while flying) | sonnet | results/freeze7_s177/SCORES.md | re-brief: existing keyed checkers only |
-| CC | S178: G4 chatter chain localisation on logs (no flights) + probe proposal | sonnet | results/freeze7_s177/chatter_cause_s178.md, bench/chatter_chain_s178.py | re-brief |
 | Q4 | G5.10 pre-test 4 flights, queue4 detached after queue3 (4 h wait cap from 13:32) | - | results/g5_10_freeze7_s178/ (queue4.log) | rerun queue4.sh |
 | SP2 | G2 spot cells roll800_fwdef_s2 + att pitch400_s1, queue3 detached, waits on queue2 (max 3 h from 13:30: on WAIT_TIMEOUT in queue3.log rerun) | sonnet | results/g2_spot_freeze7_s178/ | README resume cmd |
 | SG2 | S178: score G2 outer 24 cells after queue2 ends | sonnet | results/g2_outer_freeze7_s177/SCORES.md | re-brief from its README scoring cmd |

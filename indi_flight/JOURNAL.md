@@ -1255,3 +1255,8 @@ Also from the owner, 2026-11-21:
   further model-structure work is done for G2. D-FREEZE-7 re-flies the G2 outer cells (x-check models on
   MC_INDI_XY_*) and spot-checks 2 rate/att cells. Write the verdict once those freeze-7 cells pass. If one fails,
   re-open G2 under the D-FREEZE-7 overturn rule.
+- S178: route check 178 (cuts applied in STATE); Q16 closed (A). Freeze-7 G4 18 runs scored both keys: metric rows
+  18/18, items PASS, chatter FAIL hover 1/9 + cruise 9/9 -> G4 NOT PASSED at freeze-7 (GATES). Cause search on logs:
+  33 Hz = bench 30 ms setpoint staircase passed 3x PID; 18.7 Hz descent line from EKF velocity via xy vel gain.
+  Probes P1 (MPC_VEL_LP 8) and P2 (10 ms sender) both still flagged: no fix, step back next session. G2 spot cells + G5.10 pre-test chained after queue2; Q17 (G5.10 stabilized criterion).
+  Gate progress: G4 verdict NOT PASSED (freeze-7, evidence complete); G5.5 24/24 PASS freeze-7; G2 spot cells queued.
