@@ -1022,3 +1022,12 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   (does not touch L1, and L2 is not gain-caused); MPC_VEL_LP (P1: within flight spread); pass/skip windows (refused).
 - Overturn: F1 leaves L2 flagged on >= 2/3 seeds -> re-open (4); F2 leaves a 33 Hz line >= 5e-4 -> the source is not
   the staircase, re-read. A config/firmware change invalidates G4 18, G5.5 24, G2 outer 24 (+ G5.3/5.4 if LPF moves).
+- S179 F1 result (results/g4_fix_probe_s179): LPF 5 leaves AUTO_LAND flagged 3/3 (20.0-20.3 Hz, 1.7-2.3e-3); a_f line
+  -4x but a_c unchanged, motors -20..35 % (inside flight spread); item 3 z offset 0.16-0.25 m FAIL 3/3. (3) is not
+  the L2 path: MC_INDI_POS_LPF stays 10. Before re-opening (4) (inner loop, would re-fly most gates: owner question),
+  F3 = MPC_VEL_LP 5 x3 seeds tests the velocity entry point (P1 single seed partial).
+- S179 G2 at freeze-7 (GATES "G2 verdict at freeze-7"): xy PM 38.4-44.8 deg on 13/16 outer cells, attitude spot 43.0:
+  the D-OFFB-POSVEL overturn rule is met. Remedy chosen over offboard-only gains (c) (margins must hold in the mode
+  that runs the gains): lower the position gain only, MC_INDI_XY_P 1.9 -> 1.2, VP 3.6 kept (lead at crossover
+  atan(3.6/1.2) = 72 deg vs 62 deg; drag-error estimate x1.4, about 0.35-0.40 m against G5.5 0.5 m). Params-only probe
+  results/g55_gain_probe_s179 before any default change; L1 amplitude scales with Kp too.

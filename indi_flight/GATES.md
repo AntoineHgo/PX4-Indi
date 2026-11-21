@@ -564,3 +564,12 @@ seed was clean (S176), so the failure is INDI-specific. Outside the gate scope, 
 p/q rate flags of 11-13 dps (item 2 applies to harsh hover only). Under the freeze discipline, one session of cause
 search (on logs) follows; a fix shown on a log changes firmware, invalidates the G4 rows and re-flies them, and this
 verdict is then re-opened.
+
+## G2 verdict at freeze-7 (S179, 2026-11-21): NOT PASSED
+Evidence: `results/g2_outer_freeze7_s177/SCORES.md` (24 outer cells, keyed scorer + key2.md),
+`results/g2_spot_freeze7_s178/SCORES.md` (2 spot cells, primary only). Outer xy: phase margin 38.4-44.8 deg on 13 of
+16 cells (limit 45; worst pt0_ax2_r400_s1 38.4), GM 11.3-12.9 dB, DM 190-280 ms. Outer z: PM 61-71 deg PASS
+(pt1_ax3_r800_s1 invalid, no coherent bins). Spot: attitude pitch400_s1 PM 43.0 (freeze-6 53.4) FAIL; rate
+roll800_fwdef_s2 PM 47.8 PASS (freeze-6 54.3). Cause: the freeze-7 xy gains MC_INDI_XY_P/VP 1.9/3.6 (D-OFFB-POSVEL,
+model predicted 46 deg); its overturn rule is met. Q16 A (PASSED once these cells pass) does not apply. The freeze-6
+67/67 evidence stands for the freeze-6 gains only. Next: gain probe (results/g55_gain_probe_s179), then freeze-8.
