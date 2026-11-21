@@ -55,4 +55,12 @@ assert g.analyse(t, pos, np.full(len(t), 48.0), tm, cmd, ev, sp, tilt_lim_deg=50
 assert not g.analyse(t, pos, np.full(len(t), 52.0), tm, cmd, ev, sp, tilt_lim_deg=50.0)["verdict"]["tilt"]
 assert not g.analyse(t, pos, np.full(len(t), 48.0), tm, cmd, ev, sp)["verdict"]["tilt"]
 assert g.analyse(t, pos, np.full(len(t), 48.0), tm, cmd, ev, sp, tilt_lim_deg=50.0)["tilt_limit_deg"] == 50.0
+# S177: MPC_TILTMAX_AIR read from the log params (non-default 45 -> limit 45 + margin), later change before SAT wins, missing -> warning
+tmax, tl, w = g.tilt_limit_from_params({"MPC_TILTMAX_AIR": 45.0}, [], 10.0)
+assert tmax == 45.0 and tl == 45.0 + g.TILT_MARGIN_DEG and w is None
+assert g.tilt_limit_from_params({"MPC_TILTMAX_AIR": 45.0}, [(5e6, "MPC_TILTMAX_AIR", 30.0), (12e6, "MPC_TILTMAX_AIR", 60.0)], 10.0)[:2] == (30.0, 30.0 + g.TILT_MARGIN_DEG)
+tmax, tl, w = g.tilt_limit_from_params({"MPC_TILTMAX_AIR": 45.0}, [], 10.0)
+assert g.analyse(t, pos, np.full(len(t), 48.0), tm, cmd, ev, sp, tilt_lim_deg=tl)["verdict"]["tilt"]      # used: 48 deg passes under 45 + margin
+tmax, tl, w = g.tilt_limit_from_params({}, [], 10.0)
+assert tmax is None and tl is None and "20 deg" in w and not g.analyse(t, pos, np.full(len(t), 48.0), tm, cmd, ev, sp, tilt_lim_deg=tl)["verdict"]["tilt"]
 print("test_g510_check: OK")

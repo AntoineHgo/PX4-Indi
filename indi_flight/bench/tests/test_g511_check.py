@@ -76,6 +76,45 @@ def test_noevent_p95_excess_s175():
     assert tt2.min() >= 21.0 - 1e-9
 
 
+def test_check_run_subtracts_p95(tmp_path=None):
+    """End to end through check_run (load patched): no-event setpoint steps of 0.8 deg (p95 0.8), ekf_yaw event step 1.5 deg at 50 s.
+    Reported jump 1.5 deg > 1 deg limit, but excess 0.7 deg -> PASS; without the p95 subtraction the verdict would be FAIL."""
+    import json, tempfile
+    d0 = tmp_path or tempfile.mkdtemp()
+    t = np.arange(0, 60, 0.01)
+    a = np.zeros_like(t)
+    for k in range(4, 40, 4):
+        a[t >= k] += np.radians(0.8) * (1 if (k // 4) % 2 else -1)
+    a[t >= 50.0] += np.radians(1.5)
+    qd = np.stack([np.cos(a / 2), np.sin(a / 2), 0 * a, 0 * a], 1)
+    n = len(t)
+    gt = {"timestamp": t * 1e6, "x": np.zeros(n), "y": np.zeros(n), "z": np.zeros(n)}
+    for i in range(3):
+        gt[f"angular_velocity[{i}]"] = np.zeros(n)
+    for i, v in enumerate((1.0, 0, 0, 0)):
+        gt[f"q[{i}]"] = np.full(n, v)
+    sp = {"timestamp": t * 1e6}
+    for i in range(4):
+        sp[f"q_d[{i}]"] = qd[:, i]
+    tv = np.arange(0, 60, 0.1)
+    cnt = lambda k: {"timestamp": tv * 1e6, k: (tv >= 50.0).astype(int)}
+    zero = {"timestamp": tv * 1e6, "xy_reset_counter": np.zeros(len(tv), int)}
+    d = {"sim_ground_truth": gt, "vehicle_attitude_setpoint": sp, "vehicle_status": {"timestamp": tv * 1e6, "nav_state": np.full(len(tv), 4)},
+         "vehicle_attitude": cnt("quat_reset_counter"), "vehicle_local_position": zero}
+    json.dump({"g5_events": [dict(name="ekf_yaw", t_cmd_us=49.9e6, t_applied_us=50.0e6), dict(name="ekf_xy", t_cmd_us=1e9, t_applied_us=1e9)]},
+              open(os.path.join(d0, "run.json"), "w"))
+    old = g.load
+    g.load = lambda run: d
+    try:
+        r = g.check_run(d0, d0)[0]
+    finally:
+        g.load = old
+    assert r["event"] == "ekf_yaw" and r["valid"], r
+    assert abs(r["tilt_jump_deg"] - 1.5) < 0.03 and abs(r["noevent_p95_deg"] - 0.8) < 0.02, r
+    assert abs(r["tilt_excess_deg"] - 0.7) < 0.04 and r["verdict"] == "PASS", r
+    assert r["legacy"] == "FAIL"                                              # raw jump alone fails: the subtraction decides
+
+
 if __name__ == "__main__":
     for n, f in list(globals().items()):
         if n.startswith("test_"):

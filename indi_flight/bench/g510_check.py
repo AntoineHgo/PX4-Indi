@@ -74,6 +74,18 @@ def analyse(t, pos, tilt_deg, tm, cmd, ev, sp, run_ok=True, nav_ok=True, armed_o
     return out
 
 
+def tilt_limit_from_params(initial, changed, t_sat_s):
+    """(MPC_TILTMAX_AIR, tilt limit or None, warning or None) from the log parameters; value at SAT start (initial, then changes
+    up to t_sat). Limit = MPC_TILTMAX_AIR + TILT_MARGIN_DEG; None -> analyse() uses its default, which is reported as a warning."""
+    tmax = dict(initial).get("MPC_TILTMAX_AIR")
+    for ts_, n_, v_ in changed:
+        if n_ == "MPC_TILTMAX_AIR" and ts_ <= t_sat_s * 1e6:
+            tmax = v_
+    if tmax is None:
+        return None, None, "MPC_TILTMAX_AIR not in the log parameters: tilt limit falls back to the analyse() default (20 deg)"
+    return tmax, float(tmax) + TILT_MARGIN_DEG, None
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("run_dir")
@@ -112,12 +124,11 @@ def main():
     nav_ok = bool(np.all(vs["nav_state"][w] == 14)) if w.any() else True
     armed_ok = bool(np.all(vs["arming_state"][w] == 2)) if w.any() else True
     out = {"run": a.run_dir, "scenario": run["scenario"], "seed": run.get("seed"), "truth_source": src, "events_s": ev}
-    tmax = dict(u.initial_parameters).get("MPC_TILTMAX_AIR")
-    for ts_, n_, v_ in u.changed_parameters:
-        if n_ == "MPC_TILTMAX_AIR" and ts_ <= ev["sat"] * 1e6:
-            tmax = v_
-    tl = None if tmax is None else float(tmax) + TILT_MARGIN_DEG
+    tmax, tl, tilt_warn = tilt_limit_from_params(u.initial_parameters, u.changed_parameters, ev["sat"])
     out["MPC_TILTMAX_AIR"] = tmax
+    out["tilt_limit_warning"] = tilt_warn
+    if tilt_warn:
+        print("WARNING:", tilt_warn)
     out.update(analyse(t, pos, tilt_t, am["timestamp"] * 1e-6, cmd, ev, sp, run.get("exit_status") == "ok", nav_ok, armed_ok, tl))
     for k, x in out.items():
         print(f"{k}: {x}")
