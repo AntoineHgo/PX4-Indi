@@ -54,6 +54,9 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T1 | G4 guard Q20 key 1 + freeze-9 re-score | sonnet | results/freeze9_s183/g4/GUARD_Q20_KEY1.md | re-brief from GATES S187 |
+| T2 | G4 guard Q20 key 2 (independent) | sonnet | results/freeze9_s183/g4/GUARD_Q20_KEY2.md | re-brief from GATES S187 |
+| T3 | G3 sampler box fix (Q22) + fast-motor model check | sonnet | results/g3_box_s187/README.md | re-brief from GATES S187 |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

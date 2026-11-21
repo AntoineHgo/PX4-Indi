@@ -1138,3 +1138,17 @@ rest value puts both in that frame. Raw truth carries the model's rest offset (+
 ALT_OFFSET_S186.md). Alternative: raw truth z (key 1 today), rejected: compares two frames with different origins.
 Effect: key 1 adds z_rest for item 3 (one change, self-test) before G3 scoring; run 07 then reads -0.097 m (pass at 0.10).
 Overturn: a log showing the estimator origin is not the rest position (e.g. arming in flight, origin reset before the window).
+
+## D-OWNER-Q20-Q22 (S187, 2026-11-21): owner answers to Q20, Q21, Q22 (test definitions, not re-opened)
+- Q20 (G4 guard): narrow-band (+-0.5 Hz) line in skipped windows; checked only where INDI is flagged (ratio > 20 and
+  >= 5e-4); FAIL on an INDI-only line or INDI > 1e-3; shared transients PASS with both values. Both keys, freeze-9
+  re-score, no re-fly; that is the G4 verdict.
+- Q21 (G5.10 SAT): one feasibility flight per stack at scale 0.30 with 3 m climb + 3 m step; valid only if all motors
+  >= 0.99 for >= 1 s in both; else SAT dropped (C), G5.10 = stabilized part (Q17 A). Stock hover-estimate clamp
+  (0.337) is a reported PX4 fact. B (per-row MPC_THR_HOVER) rejected as a hand tune.
+- Q22 (G3): no attitude-P change (P 4.7 breaks G2-STEP and outer xy PM), no freeze-10. G1 error box x[0.8, 1.2]
+  (identification acceptance 10 %, G6 covers x0.5/x2 starts); tau box fix (tau_up, tau_down both in x[0.5, 3]);
+  corners C1/C2/C4 re-stated. Run 17 (e 1.52) out of box, reported with PID values (PID item 2 FAIL too, gap ~25x).
+  Freeze-9 G2/G4/G5 evidence stands.
+- Overturn: a fail at the new box edges that the model does not predict re-opens the attitude-loop analysis
+  (results/g3_osc_margin_s186); a payload (e ~1.3) limit is a G8 statement, not a gate row.
