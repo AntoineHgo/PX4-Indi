@@ -75,3 +75,6 @@ drop kept as a G3-type side probe, not a G5.10 pass condition. B: keep as is (ro
 Q9 note 3 (S150): the 2.7 m loss is a controller limit, not a test defect: the D-GAP collective blend (TB 1.0 s,
 bound 0.3 < the 0.36 gap) absorbs the drop too slowly (DECISIONS D-GAP-G510). Being fixed on the INDI side whatever
 the answer to (c); (c) still decides whether the row also needs a truly saturating part.
+Q9 note 4 (S151): with TB 0.3 + bound 0.5 the SAT part passes alt loss (1.74-1.76 m) and recovery (1.9-2.0 s) on 3
+seeds (results/g5_g510_s151); only (a) tilt 45.3 deg = MPC_TILTMAX_AIR and (b)/(c) the non-saturating AGG/SAT
+definition keep the row from PASS. Still not blocking.

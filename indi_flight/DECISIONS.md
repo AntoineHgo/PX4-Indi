@@ -798,3 +798,4 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   the row is not failed by physics (PID loses > 3 m).
 - S150 result: (2) done, kMaxBlend 0.5 (003e25c6d4, key2 MINOR: no negative-side test, deferred G7). (1) TB 0.3 probe
   s1 1.95 m at the old bound. Open: G2 outer-break margin at TB 0.3, then G5.10 3 seeds at TB 0.3 + bound 0.5.
+- S151 outcome: ACCEPTED. Outer z accel-break PM 62.7 deg (r400) / 67.3 deg (r800), TB 1.0 ref 63.7 (results/g2_outer_tb03_s151, probe, unkeyed). G5.10 3 seeds alt loss 1.74-1.76 m, back 1.9-2.0 s (results/g5_g510_s151). Default MC_INDI_POS_TB 1.0 -> 0.3 (yaml + bench defaults). Overturn: a G5 re-fly at freeze that fails because of the faster blend (ramp/landing edge), or the keyed margin < 45 deg.
