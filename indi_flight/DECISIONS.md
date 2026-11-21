@@ -858,6 +858,8 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Open anomalies touching the frozen code (A-1, A-6 outer loop; A-34/A-35/A-39 margins) stay open rows with
   their bounds; each is closed or re-bounded by the gate run that measures it (G4 for A-6, G2 for A-34-A-39).
 - Frozen at: firmware 23acbdef67 (last commit under src/, S153); reviews r1-r3 dispositioned.
+- Change log: S156 0f56d56bf1 gz_bridge only (D-VIB-HOOK, simulator, no flight code; key2 design/vib_hook_key2.md);
+  before any re-fly row, so no row is re-flown. Flight-code freeze unchanged at 23acbdef67.
 - Overturn: a gate row FAIL whose cause is in the frozen firmware -> one session of cause search, then re-open the
   decision underneath (owner rule), with a new freeze line.
 

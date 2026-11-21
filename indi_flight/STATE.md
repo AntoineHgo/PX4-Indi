@@ -20,10 +20,11 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    S155: review 3/3 DONE (design/prefreeze_r3_parity.md): 0 OPEN, 0 SAFETY, 8 PARTIAL MINOR (D-PREFREEZE-R3).
    STAGE-6 FREEZE DEFINED: D-FREEZE-6, firmware 23acbdef67, bench defaults + ID_OK 1 overlay, firmware-default cells
    (G5.1 acro yaw + G2 rate roll 800 at ID_OK 0). GATES 5b needs the G4 TYPICAL noise profile for the re-fly:
-   NEXT S156 (G4 typical profile -> G5 re-fly): (1) implement D-VIB-HOOK in GZBridge.cpp (sonnet, key2): vibration
-   tones cancel at equal rotor speeds today (A-49); (2) key2 of design/noise_profiles.md sources (harsh 27 m/s^2 is
-   second-hand [S6]; NSC 4.0 typical gives accel 81 % of target, record); (3) one hover pre-test with full-rate
-   sensor_accel: net 1P/BP amplitude within 10 % (closes A-49); (4) G5.1-G5.11 re-fly 3 seeds serial, typical. RC154 cuts stand: no MINOR fixes, no re-probes, firmware change -> key2 only.
+   S156: D-VIB-HOOK implemented (0f56d56bf1, runner VIB_RPM 9540/NB 3 + full-rate sensor_accel 92788a6bb3); hover
+   pre-test typical 1P 9.70 / BP 4.80 vs 10 / 5 m/s^2 (results/g4_vib_s156, bench/vib_line_check.py) = A-49 closing
+   test PASS, key2 ACCEPT WITH FIXES, fixes 56ebc4e009/bd56c743aa, A-49 CLOSED. Key2 of sources -> design/noise_profiles_key2.md.
+   NEXT: act on noise_profiles_key2 (freeze typical values; fix "per rotor" wording in noise_profiles.md), then G5.1-G5.11 re-fly 3 seeds serial,
+   typical profile, FREEZE params (TB 0.3: the s153 params file carries POS_TB 1.0, do not reuse it). RC154 cuts stand.
 1-3. Probes PASS, re-fly at freeze: G5.4 9/9 (S135), G5.1 6/6 K_Y 20 (S137), G5.2 6/6 (S138, g52_check keyed).
 3b. G5.3 hold + mission PASS 3/3 (S139-S140). G5.7 PASS 3/3 as probe (S139/S143 matched GNSS, results/g5_g57_s143_gnss).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (fixes fee02b59b2, 3944e8e367; key2 results/g5_events_s144/key2.md):
@@ -71,6 +72,7 @@ Later: log a z-only active flag in indi_pos_status when next touching the module
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S156b | key2 noise profile sources | sonnet | design/noise_profiles_key2.md | re-brief if file missing |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
