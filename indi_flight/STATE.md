@@ -45,7 +45,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    or align firmware ACT_TC/W_MAX with bench (G7 lesson 12). Guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
 5. G7 (deferred, stage 7): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site (K128 MAJOR), checker
    self-tests for passthrough_check/offb_vel_check.
-Route check next: S149, first action (skipped S148 for budget; RC143 filed: design/route_check_143.md; cuts: 3b G5.7 PID compare deferred behind event rows, 4b/4c/5 stay deferred).
+RC149 filed (design/route_check_149.md): on path; G5.5/G5.10 trace to D-outer-arch base A. Acted: NEXT = G5.10
+  cause search, OFFLINE first on s148 logs (split alt loss: thrust deficit during SAT vs z-loop response after exit);
+  re-open saturation handling only if recoverable altitude was lost, else numbers to owner via Q9. Cuts: no more PID
+  G5.10 runs; no 3 m/s 3-seed flying before Q8 add.3(i); runner MC_INDI_EN alias deferred to stage 7. Next RC: S154.
 Rule (RC64/RC74): 1 session per inner-loop law change; no anomaly chase unless a gate test fails.
 G3/G5 batches before the stage-6 freeze are PROBES (RC113). G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1.
 Offline G2 todo before stage 6: outer-cell margin key, linear outer-loop model, A-36/A-39 bound, 267 Hz rows

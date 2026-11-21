@@ -232,3 +232,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S146 | A146c key2 review of --moving diff | sonnet | results/g5_events_s146_move/key2_moving.md | done, 5 calls, 1 BLOCKING (t_cmd_us), 2 MAJOR |
 | S147 | A147a G5.10 sat probe: scenario, g510_check + self-test, 1 pre-test flight | sonnet | results/g5_g510_s147/README.md | running |
 | S147 | A147a result | sonnet | results/g5_g510_s147/README.md | done, 22 calls, sat part FAIL alt 2.15 m tilt 48.9 deg; agg part never saturated (INVALID) |
+| S149 | RC149 route check | sonnet | design/route_check_149.md | done, 6 calls, ~32k tok |
