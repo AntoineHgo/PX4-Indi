@@ -23,7 +23,8 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    45.3 deg = MPC_TILTMAX_AIR, no LOC; s1-s3 alt 2.67-2.74 m FAIL (2.0), back 3.3-3.5 s; PID s2 watchdog abort >3 m.
    S149 split: SAT part never saturates (cmd max 0.71) -> Q9 note 2. S150 CAUSE (D-GAP-G510): THR_SC scales omega;
    blend b (TB 1.0, clamp kMaxBlend 0.3 < gap 0.36) too slow. Probe TB 0.3 s1 (results/g5_g510_s150): 1.95 m, back
-   1.44 s, b still clamped. kMaxBlend 0.5 DONE S150 (003e25c6d4, key2 MINOR). NEXT (G5.10 alt loss): (ii) G2 outer
+   1.44 s, b still clamped. kMaxBlend 0.5 DONE S150 (003e25c6d4, key2 MINOR); probe s1 TB 0.3+0.5: 1.77 m, back 1.87 s
+   (README_b05.md). NEXT (G5.10 alt loss): (ii) G2 outer
    acceleration-break margin at TB 0.3 (accept condition, D-GAP-G510), (iii) then 3 seeds TB 0.3 + bound 0.5
    (params results/g5_g510_s150/params_tb03.params; SITL rebuild). Truly saturating variant waits for Q9 (c).
 1-3. Probes PASS, re-fly at freeze: G5.4 9/9 (S135), G5.1 6/6 K_Y 20 (S137), G5.2 6/6 (S138, g52_check keyed).
