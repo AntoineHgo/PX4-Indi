@@ -322,10 +322,9 @@ private:
 	bool _indi_reset_pending{false};
 	bool _indi_jerk_reset_pending{false}; ///< estimator reset: clear the jerk history only (D-T10-RESET)
 
-	// A18: feed-forward acceleration and jerk of the trajectory setpoint of this cycle (inputs of the jerk feed-forward),
-	// and the omega_ff the stage produced (valid only on an active INDI cycle), published every cycle
+	// A18: feed-forward acceleration of the trajectory setpoint of this cycle (source of the jerk feed-forward,
+	// D-JFF-SOURCE), and the omega_ff the stage produced (valid only on an active INDI cycle), published every cycle
 	matrix::Vector3f _a_ff{NAN, NAN, NAN};
-	matrix::Vector3f _j_ff{NAN, NAN, NAN};
 	matrix::Vector3f _omega_ff_out{};
 	bool _omega_ff_valid{false};
 

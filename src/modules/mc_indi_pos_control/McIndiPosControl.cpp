@@ -314,7 +314,10 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 		in.alloc_saturated = _alloc_saturated && (_alloc_time != 0) && (age(_alloc_time) <= kAllocMaxAge);
 		in.a_ref = a_ref;
 		in.a_ff = _a_ff; // feed-forward only: the jerk difference must not see the P/D feedback or the injection
-		in.j_ref = _j_ff;
+		// D-JFF-SOURCE: the jerk feed-forward always comes from the library's difference of a_ff. The stock
+		// trajectory_setpoint.jerk is not used: in auto modes it is the generator's bang-bang jerk (+-MPC_JERK_AUTO),
+		// not the derivative of the published acceleration.
+		in.j_ref = matrix::Vector3f(NAN, NAN, NAN);
 		in.yaw_ref = yaw_sp;
 		in.dt = dt;
 		IndiAccelControl::Output out;
@@ -1080,13 +1083,8 @@ void McIndiPosControl::Run()
 			_control.getAttitudeSetpoint(attitude_setpoint);
 
 			// A18 inputs: the trajectory setpoint the position controller used as feed-forward (after the takeoff and
-			// failsafe edits above). Jerk: finite and not all zero, else NaN (MAVLink offboard has no jerk: finite 0).
+			// failsafe edits above). The jerk is differenced from it inside the stage (D-JFF-SOURCE).
 			_a_ff = matrix::Vector3f(_setpoint.acceleration);
-			_j_ff = matrix::Vector3f(_setpoint.jerk);
-
-			if (!_j_ff.isAllFinite() || (_j_ff.norm_squared() <= 0.f)) {
-				_j_ff = matrix::Vector3f(NAN, NAN, NAN);
-			}
 
 			runIndiStage(raw_dt, now, want_indi, model_force, flying, _tilt_limit_slew_rate.getState(), ht, local_pos_sp, attitude_setpoint);
 
