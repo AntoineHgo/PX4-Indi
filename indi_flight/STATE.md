@@ -10,16 +10,15 @@
 1. G2: when g2_outer_freeze7_s177 (24) and g2_spot_freeze7_s178 (2) are scored and all pass: write verdict PASSED
    (GATES G2 + GATE_STATUS) with the 3 rate x-check groups as evidence limit (A-51 open). A fail re-opens G2
    (D-FREEZE-7 overturn rule). No model-structure work.
-2. G4 NOT PASSED freeze-7 (GATES "G4 verdict at freeze-7"): chatter hover 1/9, cruise 9/9, PID clean. One-session
-   cause search DONE S178 (chatter_cause_s178.md; probes results/chatter_probe_s178: MPC_VEL_LP 8 and 10 ms sender
-   both still flagged; 33 Hz collective 2.3x lower with 10 ms sender but present; descent 18-22 Hz line varies
-   flight to flight). No fix shown -> STEP BACK first thing next session: list the decisions the lines depend on
-   (D-OFFB-POSVEL xy gains 1.9/3.6 = 2x stock, raised 4x a_c vs PID; a_c passed unfiltered to thrust,
-   indi_accel_control.cpp:364; D-FREEZE-7 outer law) in DECISIONS.md, re-open the most likely one with a one-page
-   note. A firmware change invalidates G4, G5.5, G2 outer rows (re-fly). Ask the owner if it discards > 3 sessions
-   or touches Q11 B. No further probing. Do NOT propose the 3 s skip for chatter.
-3. G5: freeze-7 G5.5 24/24, G5.3 mission 3/3, G5.4 6/6 PASS (SCORES.md). Check whether D-FREEZE-7 lists the G5.3
-   hold row (not flown in freeze7_s177); if listed, fly it 3 seeds. G5.10 pre-test queue4 (results/g5_10_freeze7_s178, after queue3): read
+2. G4 NOT PASSED freeze-7. Step back DONE S179: D-G4-STEPBACK re-opens (3) outer measured-force filter
+   MC_INDI_POS_LPF for L2 (20-22 Hz descent, predates the 2x gains: freeze-6 flagged it too) and (2) offboard
+   setpoint zero-order hold for L1 (33 Hz). Fix probes: F1 (LPF 5, cruise_typ s1-s3, in flight, task F1) then F2
+   (firmware: offboard setpoint extrapolation, cruise_typ s1; implement only after queues 2-4 end, no rebuild while
+   gate queues fly; firmware key2 + unit test before freeze-8). Act per the D-G4-STEPBACK overturn rule. A probe
+   that removes both lines -> freeze-8 (config/firmware), re-fly G4 18, G5.5 24, G2 outer 24, G5.3 (hold+mission)
+   and G5.4 if LPF moves. Do NOT propose the 3 s skip for chatter.
+3. G5: freeze-7 G5.5 24/24, G5.3 mission 3/3, G5.4 6/6 PASS (SCORES.md). G5.3 hold (gust_x) IS in the D-FREEZE-7 list
+   ("G5.3/G5.4 x3") and unflown: fly 3 seeds at the final freeze (deferred while F1/F2 may move the config). G5.10 pre-test queue4 (results/g5_10_freeze7_s178, after queue3): read
    SAT motors >= 0.99 time (score_motors.py is NEW: key2 before gate use) and PID reference; stabilized part waits
    Q17. Then G5.10 3 seeds, then G5 verdict.
 4. G3 set-up (owner step 4), after G2/G4/G5 queue: tel_frozen hook (gz_bridge bit-identical rpm injector, two keys;
@@ -57,7 +56,8 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 | G2Q | G2 outer 24 cells re-fly (flying since 13:30; dir dirty while flying) (model predicts xy PM 46 deg, GM 7.8 dB) | sonnet | results/g2_outer_freeze7_s177/ | queue2.sh (idempotent), README scoring cmd |
 | Q4 | G5.10 pre-test 4 flights, queue4 detached after queue3 (4 h wait cap from 13:32) | - | results/g5_10_freeze7_s178/ (queue4.log) | rerun queue4.sh |
 | SP2 | G2 spot cells roll800_fwdef_s2 + att pitch400_s1, queue3 detached, waits on queue2 (max 3 h from 13:30: on WAIT_TIMEOUT in queue3.log rerun) | sonnet | results/g2_spot_freeze7_s178/ | README resume cmd |
-| SG2 | S178: score G2 outer 24 cells after queue2 ends | sonnet | results/g2_outer_freeze7_s177/SCORES.md | re-brief from its README scoring cmd |
+| SG2 | S179: score G2 outer 24 cells after queue2 ends, then the 2 spot cells | sonnet | results/g2_outer_freeze7_s177/SCORES.md, results/g2_spot_freeze7_s178/SCORES.md | re-brief from its README scoring cmd |
+| F1 | S179 G4 fix probe F1 (D-G4-STEPBACK): MC_INDI_POS_LPF 5, cruise_typ s1-s3 | sonnet | results/g4_fix_probe_s179/README.md | re-brief from README |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

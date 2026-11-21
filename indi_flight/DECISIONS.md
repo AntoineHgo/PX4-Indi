@@ -1000,3 +1000,25 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   confirm); G2 rate/att spot-check 2 cells; G3 pre-test. Freeze-6 evidence of the other rows stands.
 - Open anomalies touching it: A-50/A-51 (G2 model x-check, Q16), A-54/A-56 (G4), bounds unchanged.
 - Overturn: as D-FREEZE-6 (a row FAIL caused in frozen firmware -> one session cause search, then re-open).
+
+## D-G4-STEPBACK (S179, 2026-11-21): G4 chatter at freeze-7, decisions under the two lines; re-open
+- Fact: L1 33.3 Hz (offboard lemniscate, collective) and L2 20-22 Hz (AUTO_LAND descent, also take-off/loiter;
+  diffB/C) flagged (results/freeze7_s177/chatter_cause_s178.md, results/chatter_probe_s178). Freeze-6 cruise, stock
+  xy gains, quiet profile included, already flagged L2 (20.0-22.3 Hz, 1.9-2.4e-3, results/g4_gate_s169/
+  chatter_cruise_s176.md) while PID with the same xy velocity gain 1.8 is clean.
+- Decisions the lines depend on: (1) D-OFFB-POSVEL xy gains 2x: explains L1 amplitude (a_c 4x PID = 2 x 2), NOT L2
+  (L2 predates it). (2) Setpoint consumption: the module holds each trajectory_setpoint (zero-order hold) between
+  sender samples; the 30 ms staircase of p/v enters P/D (L1 source, P2: 10 ms sender 2.3x lower, irregular grid
+  keeps a 33/22 Hz pattern). (3) Outer INDI measured-force path t_c = t_f + (a_c - a_f) with MC_INDI_POS_LPF 10 Hz
+  (2nd order, about -12 dB at 20 Hz): the only INDI-specific path from accelerometer content to attitude; a_f carries
+  the 18.7 Hz line (2.6e-2, larger than tilt x sensor_accel, unreconciled). (4) Inner rate INDI (gyro-to-torque 2-4x
+  PID at L2).
+- Re-opened: (3) for L2 (most likely: INDI-only, predates (1), noise-profile independent) and (2) for L1 (cause
+  shown by P2). (1) stays (G5.5 needs it; L1 goes with (2)). (4) only if (3) does not move L2.
+- Fix probes (freeze discipline: firmware changes only after a probe removes the failure): F1 params only,
+  MC_INDI_POS_LPF 5, cruise_typ s1-s3 (L2 needs seeds: it varies flight to flight). F2 firmware: extrapolate the
+  offboard setpoint between samples, p = p_sp + v_sp dt + a_sp dt^2/2, v = v_sp + a_sp dt, dt capped at the
+  setpoint timeout; cruise_typ s1. Alternatives: lower xy gains (fails G5.5 at stock: 0.587 m); offboard-only gains
+  (does not touch L1, and L2 is not gain-caused); MPC_VEL_LP (P1: within flight spread); pass/skip windows (refused).
+- Overturn: F1 leaves L2 flagged on >= 2/3 seeds -> re-open (4); F2 leaves a 33 Hz line >= 5e-4 -> the source is not
+  the staircase, re-read. A config/firmware change invalidates G4 18, G5.5 24, G2 outer 24 (+ G5.3/5.4 if LPF moves).
