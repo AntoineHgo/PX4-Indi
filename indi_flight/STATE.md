@@ -23,9 +23,9 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    45.3 deg = MPC_TILTMAX_AIR, no LOC; s1-s3 alt 2.67-2.74 m FAIL (2.0), back 3.3-3.5 s; PID s2 watchdog abort >3 m.
    S149 split: SAT part never saturates (cmd max 0.71) -> Q9 note 2. S150 CAUSE (D-GAP-G510): THR_SC scales omega;
    blend b (TB 1.0, clamp kMaxBlend 0.3 < gap 0.36) too slow. Probe TB 0.3 s1 (results/g5_g510_s150): 1.95 m, back
-   1.44 s, b still clamped. NEXT (G5.10 alt loss): (i) firmware kMaxBlend 0.3 -> 0.5 (sonnet impl + test that fails
-   at 0.3, key2), (ii) G2 outer acceleration-break margin at TB 0.3 (accept condition), (iii) then 3 seeds TB 0.3.
-   Truly saturating variant waits for Q9 (c).
+   1.44 s, b still clamped. kMaxBlend 0.5 DONE S150 (003e25c6d4, key2 MINOR). NEXT (G5.10 alt loss): (ii) G2 outer
+   acceleration-break margin at TB 0.3 (accept condition, D-GAP-G510), (iii) then 3 seeds TB 0.3 + bound 0.5
+   (params results/g5_g510_s150/params_tb03.params; SITL rebuild). Truly saturating variant waits for Q9 (c).
 1-3. Probes PASS, re-fly at freeze: G5.4 9/9 (S135), G5.1 6/6 K_Y 20 (S137), G5.2 6/6 (S138, g52_check keyed).
 3b. G5.3 hold PASS 3/3 (S139). G5.7 leaveP: S139 s2/s3 FAIL (5.17-5.25 deg) were the GNSS set-up fault: S143 matched
    re-fly s2 3.62, s3 3.55 deg PASS, thrust step 3.0 % (results/g5_g57_s143_gnss); s1 PASS S139. G5.7 PASS 3/3 as probe;

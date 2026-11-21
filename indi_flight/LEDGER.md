@@ -234,3 +234,6 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S147 | A147a result | sonnet | results/g5_g510_s147/README.md | done, 22 calls, sat part FAIL alt 2.15 m tilt 48.9 deg; agg part never saturated (INVALID) |
 | S149 | RC149 route check | sonnet | design/route_check_149.md | done, 6 calls, ~32k tok |
 | S149 | G5.10 alt-loss split (offline) | haiku | results/g5_g510_s148/altloss_split.md | done, 9 calls, ~67k tok, unkeyed |
+| S150 | G5.10 probe TB 0.3 seed 1 | haiku | results/g5_g510_s150/README.md | done, 11 calls, ~28k tok |
+| S150 | kMaxBlend 0.3->0.5 + test | sonnet | design/kmaxblend_s150.md | done, 12 calls, ~33k tok, commit 003e25c6d4 |
+| S150 | key2 of kMaxBlend change | sonnet | design/kmaxblend_s150_key2.md | done, 5 calls, ~30k tok, MINOR (no neg-side test) |

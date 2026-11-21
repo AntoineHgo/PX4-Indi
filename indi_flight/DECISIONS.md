@@ -796,3 +796,5 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Overturn: TB 0.3 s still loses > 2.0 m, or costs the outer-break PM below 45 deg -> candidate (3), or owner Q9 (c).
 - Physical floor: with a 0.033 s motor and ~0.1 s INDI response the ideal loss is ~0.1-0.3 m, so 2.0 m is reachable;
   the row is not failed by physics (PID loses > 3 m).
+- S150 result: (2) done, kMaxBlend 0.5 (003e25c6d4, key2 MINOR: no negative-side test, deferred G7). (1) TB 0.3 probe
+  s1 1.95 m at the old bound. Open: G2 outer-break margin at TB 0.3, then G5.10 3 seeds at TB 0.3 + bound 0.5.
