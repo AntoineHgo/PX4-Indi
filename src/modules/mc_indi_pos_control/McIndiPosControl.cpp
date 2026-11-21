@@ -318,6 +318,9 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 		// trajectory_setpoint.jerk is not used: in auto modes it is the generator's bang-bang jerk (+-MPC_JERK_AUTO),
 		// not the derivative of the published acceleration.
 		in.j_ref = matrix::Vector3f(NAN, NAN, NAN);
+		// D-JFF-OFFB: rate feed-forward only in offboard, where a_ff is an external open-loop trajectory. In auto modes
+		// a_ff is the stock smoother state, which follows the vehicle's motion. The difference history keeps running.
+		_indi.setFeedforward(_vehicle_control_mode.flag_control_offboard_enabled);
 		in.yaw_ref = yaw_sp;
 		in.dt = dt;
 		IndiAccelControl::Output out;
