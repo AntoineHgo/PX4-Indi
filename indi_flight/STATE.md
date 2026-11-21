@@ -23,9 +23,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    offb/o5/o6 3/3, G5.7 3/3, events s2/s3 PASS; G5.2 5/6 (Q10, PID ref PASSES -> INDI s1 stays FAIL); G5.5
    o1-o4/o7 FAIL 3/3 (Q11, PID o1 also FAIL); G5.10 INVALID/tilt (Q9); G5.9a s1 3.75 ms (Q8 add.2). fwdef cell
    above G5.1 limit 3/3 = 0.5x K gate (probe ID_OK 1 PASSES), no LOC: reported, G5.1 is at identified gains.
-   NEXT S159: route check 159 first (due). Then keyed second checker per D-FREEZE-6 on the freeze set (g54_key2.py,
-   g5_rows_key2.py exist; second key for g51/g52/g55/g57 per GATES) before the G5 verdicts count.
-   Unverified: batch2 o5-o7 args (batch2_notes.md).
+   S159: RC159 filed (+ design/route_check_159_response.md: next G2 freeze cells -> G4 -> G3). Key2 on freeze set:
+   G5.4/G5.8/G5.9 all agree (key2_g54_g58_g59.md); G5.5/G5.7 27/27 INDI verdicts agree (key2_g55_g57.md; partial
+   LOC in key2 noted); G5.1/G5.2: see key2_g51_g52.md. NEXT S160: G5 verdict table in GATES/README, then G2 freeze
+   cells (rate roll/pitch 400+800, att yaw, outer cells, fwdef cell). Unverified: batch2 o5-o7 args.
    Seed 1: G5.1 acro/stab, G5.2 altctl PASS; G5.2 posctl z settle 4.15 s FAIL (> 4.0): cause
    search DONE: EKF2 height error -0.08 m decaying ~5 s, controller holds estimate (README); Q10 OPEN (not blocking);
    S158: PID reference flight of stick_pos_steps posctl s1 (F-5) for Q10.
@@ -71,7 +72,7 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-(none: S157b chain, S158a PID ref, S158b probes all ended and scored S158)
+| S159b | key2 G5.1+G5.2 on freeze set | sonnet | bench/g51_g52_key2.py, results/g5_freeze_s157/key2_g51_g52.md | relaunch |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),

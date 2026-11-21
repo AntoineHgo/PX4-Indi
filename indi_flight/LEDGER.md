@@ -252,3 +252,5 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S156 | key2 vibration hook code vs D-VIB-HOOK | sonnet | design/vib_hook_key2.md | done, 11 calls, ~43k tok, ACCEPT WITH FIXES (1 MAJOR fixed) |
 | S156 | key2 noise profile sources | sonnet | design/noise_profiles_key2.md | done, 12 calls, ~37k tok, ACCEPT WITH CHANGES (quiet 0.5) |
 | S157 | G5 freeze batch2.sh + checks.sh assembly | sonnet | results/g5_freeze_s157/batch2_notes.md | done, 15 calls, ~46k tok; o5-o7 args and g5_events vib passthrough unverified |
+| S159 | key2 G5.5+G5.7 | sonnet | 22 calls, ~$0.6 | 27/27 INDI verdicts agree |
+| S159 | route check 159 | sonnet | 7 calls, ~$0.15 | filed |
