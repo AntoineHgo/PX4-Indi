@@ -76,6 +76,49 @@ def chatter(t, u):  # u: (n,4) motor commands
                         "report_rms": b[3], "n_flagged_windows": len(fl)}
     return res
 
+def interp_sp(tm, sp_t, cols):
+    """Linearly interpolate setpoint columns (n,k) onto times tm; usable only where both bracketing samples are finite and
+    tm lies inside the setpoint time range. Returns (values (len(tm),k), good mask)."""
+    if sp_t is None or cols is None or len(sp_t) < 2: return None, np.zeros(len(tm), bool)
+    o = np.argsort(sp_t); st = np.asarray(sp_t, float)[o]; c = np.asarray(cols, float)[o]
+    hi = np.clip(np.searchsorted(st, tm, side="right"), 1, len(st) - 1); lo = hi - 1
+    fin = np.isfinite(c).all(1); good = (tm >= st[0]) & (tm <= st[-1]) & fin[lo] & fin[hi]
+    w = ((tm - st[lo]) / np.where(st[hi] > st[lo], st[hi] - st[lo], 1.0))[:, None]
+    return c[lo] * (1 - w) + c[hi] * w, good
+
+def steady_state(t, q, pos, h, hold0, hold1, mode, wind, sag, sp_t, sp_xy, sp_z, win_s):
+    """G3 item 3 from the written spec (GATES.md 'Pass per run' 3 and 'Steady-state window').
+    Window: win_s = (t0, t1) on the truth clock if given (command line --t0/--t1), else the last 10 s of the hold.
+    Reference (spec: 'horizontal RMS' of a hold = scatter about the hold point, which is the commanded position hold):
+      position mode: the logged trajectory_setpoint (x, y, and z for altitude) interpolated onto the truth samples;
+      attitude mode: no position setpoint exists, so horizontal and altitude are measured about the window truth mean
+      (scatter only) and are NOT gated; only roll/pitch |mean| is gated (spec: 'in attitude mode').
+    Limits: horizontal 0.30 with wind/gust else 0.15; altitude 0.20 with sag/weak motor else 0.10 (the two conditions are
+    independent in the spec); roll/pitch 1.0 deg in attitude mode. Altitude error = mean(h) - mean(-setpoint z) (NED)."""
+    t0, t1 = win_s if win_s is not None else (hold1 - 10, hold1)
+    win = (t >= t0) & (t <= t1); gated_xy = mode == "position"
+    ro, pi = roll_pitch(q[win]); ref_src = None
+    if gated_xy:
+        sp, good = interp_sp(t[win], sp_t, None if sp_xy is None else np.column_stack([sp_xy, np.zeros(len(sp_xy)) if sp_z is None else sp_z]))
+        if sp is not None and good.any() and sp_z is not None:
+            ref_src = "trajectory_setpoint interpolated per truth sample"
+            px, hh = pos[win][good], h[win][good]
+            e = np.hypot(px[:, 0] - sp[good, 0], px[:, 1] - sp[good, 1])
+            hz_rms = float(np.sqrt(np.mean(e ** 2))); alt = float(np.mean(hh) + np.mean(sp[good, 2]))   # h_sp = -z_sp
+            n_used = int(good.sum())
+        else: gated_xy = False
+    if not gated_xy:
+        ref_src = ref_src or "window truth mean (no position setpoint; ungated)"
+        pw = pos[win]; hz_rms = float(np.sqrt(np.mean((pw[:, 0] - pw[:, 0].mean()) ** 2 + (pw[:, 1] - pw[:, 1].mean()) ** 2)))
+        alt = 0.0; n_used = int(win.sum())
+    L = {"horiz": 0.30 if wind else 0.15, "alt": 0.20 if sag else 0.10, "rollpitch": 1.0 if mode == "attitude" else None}
+    rp = max(abs(ro.mean()), abs(pi.mean())) if win.any() else float("nan")
+    ok = (not gated_xy or (hz_rms <= L["horiz"] and abs(alt) <= L["alt"])) and (L["rollpitch"] is None or rp <= L["rollpitch"])
+    return {"window_s": [float(t0), float(t1)], "mode": mode, "wind": bool(wind), "sag": bool(sag), "ref_source": ref_src,
+            "gated_horiz_alt": bool(gated_xy), "n_samples": int(win.sum()), "n_used": n_used,
+            "horiz_rms_m": hz_rms, "alt_mean_m": alt, "roll_mean_deg": float(ro.mean()), "pitch_mean_deg": float(pi.mean()),
+            "h_window_min_m": float(h[win].min()), "limits": L, "pass": bool(ok)}
+
 def tilt_deg(q):  # q = w,x,y,z ; angle between body z and world z, independent of ENU/NED
     return np.degrees(np.arccos(np.clip(1 - 2 * (q[:, 1] ** 2 + q[:, 2] ** 2), -1, 1)))
 
@@ -136,7 +179,7 @@ def loc(t, q, pos, h, hold0, hold1, ground_contact_t, exc=None):
     return r
 
 def analyse(t, q, w, pos, h, motors_t, motors, hold0, hold1, gc_t, wind=False, mode="position", nav_t=(),
-            sp_t=None, sp_xy=None, land_t=None, position_mode=False):
+            sp_t=None, sp_xy=None, land_t=None, position_mode=False, sp_z=None, win_s=None, sag=False):
     air = h > h[:800].mean() + 0.3; ia = np.where(air)[0]; a0, a1 = t[ia[0]], t[ia[-1]]  # airborne span
     exc = None
     if position_mode:   # item-1 span: [airborne start, min(airborne end, land/RTL start)]
@@ -146,26 +189,19 @@ def analyse(t, q, w, pos, h, motors_t, motors, hold0, hold1, gc_t, wind=False, m
     osc = osc_rates(t[m], w[m], nav_t); plc = pos_limit_cycle(t, pos, hold0, hold1)
     r2 = {"rates": osc, "position_limit_cycle": plc, "airborne_span_s": [float(a0), float(a1)],
           "pass": not (any(v["sustained"] for v in osc.values()) or plc["sustained"])}
-    win = (t >= hold1 - 10) & (t <= hold1); ref = np.array([np.median(pos[(t >= hold0) & (t < hold0 + 1)][:, i]) for i in range(3)])
-    hz_rms = float(np.sqrt(np.mean((pos[win, 0] - ref[0]) ** 2 + (pos[win, 1] - ref[1]) ** 2)))
-    alt = float(np.mean(h[win]) - np.median(h[(t >= hold0) & (t < hold0 + 1)]))
-    ro, pi = roll_pitch(q[win])
-    r3 = {"window_s": [float(hold1 - 10), float(hold1)], "horiz_rms_m": hz_rms, "alt_mean_m": alt,
-          "roll_mean_deg": float(ro.mean()), "pitch_mean_deg": float(pi.mean()),
-          "h_window_min_m": float(h[win].min()), "airborne_in_window": bool(air[win].all()),
-          "limits": {"horiz": 0.30 if wind else 0.15, "alt": 0.20 if wind else 0.10, "rollpitch": 1.0 if mode == "attitude" else None}}
-    L = r3["limits"]; r3["pass"] = bool(hz_rms <= L["horiz"] and abs(alt) <= L["alt"] and
-        (L["rollpitch"] is None or max(abs(ro.mean()), abs(pi.mean())) <= L["rollpitch"]))
+    r3 = steady_state(t, q, pos, h, hold0, hold1, mode, wind, sag, sp_t, sp_xy, sp_z, win_s)
+    hz_rms = r3["horiz_rms_m"]
     mm = (motors_t >= a0) & (motors_t <= a1); ch = chatter(motors_t[mm], motors[mm])
     rc = {"motors": ch, "pass": not any(v["sustained"] for v in ch.values())}
     return {"item1_loc": r1, "item2_oscillation": r2, "item3_steady_state": r3, "chatter": rc,
             "g4_command_chatter_sustained": not rc["pass"],
             "pass": bool(r1["pass"] and r2["pass"] and r3["pass"])}
 
-def load_run(d):
+def load_run(d, t0=None, t1=None, mode=None, wind=False, sag=False):
     from pyulog import ULog
     u = ULog(os.path.join(d, "flight.ulg"), message_name_filter_list=["sim_ground_truth", "actuator_motors", "vehicle_land_detected", "vehicle_status", "trajectory_setpoint"])
     D = {x.name: x.data for x in u.data_list}; g = D["sim_ground_truth"]; t = g["timestamp"] * 1e-6
+    st = u.start_timestamp * 1e-6   # --t0/--t1 are seconds since the ulog start_timestamp
     q = np.stack([g[f"q[{i}]"] for i in range(4)], 1); w = np.stack([g[f"angular_velocity[{i}]"] for i in range(3)], 1)
     pos = np.stack([g["x"], g["y"], g["z"]], 1)
     z0 = np.median(pos[:800, 2]); ev = [e for e in json.load(open(os.path.join(d, "run.json")))["events"] if e["name"] == "hold"][0]
@@ -176,17 +212,18 @@ def load_run(d):
     vs = D["vehicle_status"]; ns = vs["nav_state"]; vt = vs["timestamp"] * 1e-6
     nav_t = list(vt[1:][np.diff(ns) != 0])
     rj = json.load(open(os.path.join(d, "run.json")))
-    sp = D.get("trajectory_setpoint"); sp_t = sp_xy = None
+    sp = D.get("trajectory_setpoint"); sp_t = sp_xy = sp_z = None
     if sp is not None:   # logged ~50 Hz (truth 800 Hz); NaN x/y rows kept here, excluded in excursion()
-        sp_t = sp["timestamp"] * 1e-6; sp_xy = np.stack([sp["position[0]"], sp["position[1]"]], 1)
+        sp_t = sp["timestamp"] * 1e-6; sp_xy = np.stack([sp["position[0]"], sp["position[1]"]], 1); sp_z = sp["position[2]"]
     # land/RTL start: first nav_state in LAND_NAV, or the logged land command if earlier
     lt = [vt[i] for i in range(len(ns)) if ns[i] in LAND_NAV]
     land_t = min(lt) if lt else None
     if rj.get("t_land_cmd_us"): land_t = rj["t_land_cmd_us"] * 1e-6 if land_t is None else min(land_t, rj["t_land_cmd_us"] * 1e-6)
-    return dict(t=t, q=q, w=w, pos=pos, h=h, nav_t=nav_t, sp_t=sp_t, sp_xy=sp_xy, land_t=land_t,
-                position_mode=rj.get("scenario") == "o1_lemniscate", motors_t=mo["timestamp"] * 1e-6,
+    return dict(t=t, q=q, w=w, pos=pos, h=h, nav_t=nav_t, sp_t=sp_t, sp_xy=sp_xy, sp_z=sp_z, land_t=land_t,
+                position_mode=rj.get("scenario") == "o1_lemniscate", sag=sag,
+                win_s=None if t0 is None else (st + t0, st + t1), motors_t=mo["timestamp"] * 1e-6,
                 motors=np.stack([mo[f"control[{i}]"] for i in range(4)], 1), hold0=h0, hold1=h1, gc_t=gc,
-                wind=False, mode=ev.get("mode", "position")), float(np.max(np.diff(t)))
+                wind=wind, mode=mode or ev.get("mode", "position")), float(np.max(np.diff(t)))
 
 def synth(osc_hz=None, osc_amp=8.0, chat_hz=None, seed=0):
     rng = np.random.default_rng(seed); t = np.arange(0, 120, 1 / FS); n = len(t)
@@ -218,6 +255,21 @@ def self_test():
     r2 = analyse(**synth(2, 15.0))
     chk("2 Hz rate oscillation fails item2", r2["item2_oscillation"]["pass"], False)
     chk("70 Hz only m1 flagged", [v["sustained"] for v in c["chatter"]["motors"].values()], [False, True, False, False])
+    # S186 item 3: known hold point (3, -2, alt 10 m) and constant truth offset -> known RMS and altitude error.
+    def ss(dx, dy, dh, wind=False, sag=False, win=(40.0, 50.0), mode="position"):
+        t = np.arange(0, 60, 1 / FS); n = len(t); pos = np.stack([np.full(n, 3.0), np.full(n, -2.0), np.full(n, -10.0)], 1)
+        m = (t >= 40) & (t <= 50); pos[m, 0] += dx; pos[m, 1] += dy; pos[m, 2] -= dh   # offset only inside the window
+        pos[t < 40, 0] += 5.0   # far from the hold point before the window: must not matter
+        q = np.tile([1.0, 0, 0, 0], (n, 1)); ts = np.arange(0, 60, 0.02)
+        return steady_state(t, q, pos, -pos[:, 2], 30.0, 50.0, mode, wind, sag, ts, np.tile([3.0, -2.0], (len(ts), 1)),
+                            np.full(len(ts), -10.0), win)
+    a1 = ss(0.3, 0.4, 0.15)
+    chk("item3 known RMS 0.5 m", round(a1["horiz_rms_m"], 9), 0.5)
+    chk("item3 known altitude error 0.15 m", round(a1["alt_mean_m"], 9), 0.15)
+    chk("item3 0.5 m fails calm and wind", (a1["pass"], ss(0.3, 0.4, 0.15, wind=True)["pass"]), (False, False))
+    chk("item3 rms 0.2 passes with wind only", (ss(0.12, 0.16, 0.0)["pass"], ss(0.12, 0.16, 0.0, wind=True)["pass"]), (False, True))
+    chk("item3 alt 0.15 needs sag", (ss(0, 0, 0.15, wind=True)["pass"], ss(0, 0, 0.15, sag=True)["pass"]), (False, True))
+    chk("item3 window honoured", round(ss(0.0, 0.0, 0.0, win=(0.0, 20.0))["horiz_rms_m"], 6), round(float(np.sqrt(np.mean(np.where(np.arange(0, 20.0000001, 1 / FS) < 40, 25.0, 0)))), 6))
     return ok
 
 if __name__ == "__main__":
@@ -226,8 +278,13 @@ if __name__ == "__main__":
     if "--self-test" in a: sys.exit(0 if self_test() else 1)
     out = None
     if "--out" in a: i = a.index("--out"); out = a[i + 1]; a = a[:i] + a[i + 2:]   # --out DIR: DIR/<run>.json, no overwrite
+    def opt(name, conv=float):
+        global a
+        if name in a: i = a.index(name); v = conv(a[i + 1]); a = a[:i] + a[i + 2:]; return v
+    t0, t1, mode = opt("--t0"), opt("--t1"), opt("--mode", str)
+    wind, sag = "--wind" in a, "--sag" in a; a = [x for x in a if x not in ("--wind", "--sag")]
     for d in (x for pat in a for x in sorted(glob.glob(pat)) if os.path.isdir(x)):
-        kw, maxdt = load_run(d); r = analyse(**kw); r["max_dt_s"] = maxdt
+        kw, maxdt = load_run(d, t0, t1, mode, wind, sag); r = analyse(**kw); r["max_dt_s"] = maxdt
         if out:
             os.makedirs(out, exist_ok=True); fn = os.path.join(out, os.path.basename(d.rstrip("/")) + ".json")
             if os.path.exists(fn): sys.exit("exists, not overwriting: " + fn)
