@@ -32,11 +32,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    acro "not yet flown") flown -> results/g4_gate_s169; bench/g3_checks.py built (self-test + break-check, UNKEYED).
    G4 batch scored (results/g4_gate_s169/README.md): metric rows PASS 18/18 (>= 10x); harsh items 1-3 PASS 3/3;
    chatter clause FAIL 3/3 = 70.00 Hz line, ALSO in PID ref (results/a54_s169) -> shared path (A-54).
-   NEXT (G4): (1) A-54 cause search, ONE session (S170): sensor_accel spectrum of hover_harsh_s1 for the 70 Hz alias
-   (bench/g4_line_probe.py pattern; A-49 S156 vibration line check), check gz_bridge vibration sampling vs IMU rate;
-   if sim alias: fix hook (key2), re-fly typ/harsh hovers; if physical/unfixable: owner Q (relative-ratio clause).
-   (2) key2 of g3_checks.py (sonnet, blind, spec = GATES 240-264, 301-306, 359-362) before the G4 verdict.
-   (3) GATES G4 status line + G4 verdict. Next RC: S173.
+   S170: A-54 cause search DONE (results/a54_s170): vibration lines fold through stock IMU/decimation/EKF2 chain, both
+   stacks, line 0.5 DShot step; no hook change; owner Q14 (absolute floor on chatter clause), not blocking.
+   NEXT (G4): (1) key2 of g3_checks.py (sonnet, blind, spec = GATES 240-264, 301-306, 359-362) before the G4 verdict.
+   (2) GATES G4 status line + G4 verdict written both ways (Q14 A / B). Then G3 pre-test of ~20. Next RC: S173.
    G5.2 posctl z settle s1 4.15 s FAIL (EKF2 height error, Q10; PID ref PASS).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
    events and maybe_landed / EKF z injectability -> Q8 (scored at option A, not blocking).

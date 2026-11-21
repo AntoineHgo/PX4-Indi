@@ -139,3 +139,14 @@ reported as gain-reduction margin 20log10|L| with the same >= 6 dB pass threshol
 B: keep the literal formula: the cell FAILs G2.
 Meanwhile: G2 work continues (model x-check, 267 Hz); both readings reported in GATES G2 freeze status.
 
+## Q14 (S170, 2026-11-21): G4 command-chatter clause fails on a sub-DShot-step line in both stacks. NOT blocking.
+Context (results/a54_s170/README.md): G4 "Additional" flags a 20-100 Hz line in actuator_motors at peak > 20 x median.
+All G4 metric rows PASS 18/18 with >= 10x margin; the clause FAILS 3/3 typical/harsh on a 70 Hz line. Cause (one
+session, A-54): the modelled rotor vibration (1P 159 Hz, blade-pass 476.5 Hz) folds through the stock 800 Hz IMU, 267 Hz
+accel decimation and EKF2 stages into the command; PID carries the same line (78x) - INDI shows more (768x), probably because it
+feeds acceleration back. Line RMS 2.5e-4 of full scale = half of one DShot step (1/2000); C20 23x under its limit. A
+real FIFO-mean IMU attenuates the blade-pass alias only ~6 dB, so a hook change would not close the clause honestly.
+Options: A [recommended, test-defect fix, lesson 6]: a line counts as chatter when peak > 20 x median AND its RMS
+(+-2 Hz) >= one DShot step (5e-4 of full scale); ratio reported. B: keep the clause as written: G4 FAIL recorded,
+stack-independent cause. C: change the vibration model (FIFO mean): line ~4x lower in power, still FAIL; not advised.
+Meanwhile: G4 verdict written both ways; key2 of g3_checks.py; G3 preparation continues.
