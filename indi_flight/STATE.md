@@ -24,8 +24,14 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    S149: SAT never saturates (Q9 note 2). S150 cause D-GAP-G510 (blend too slow, clamp 0.3); kMaxBlend 0.5
    (003e25c6d4). S151: margin at TB 0.3 PM 62.7/67.3 deg (g2_outer_tb03_s151); 3 seeds alt 1.74-1.76 m PASS,
    back ~1.9 s PASS (g5_g510_s151); TB default -> 0.3 (f3b93704b6, key2 ACCEPT, xy PM 51.4/65.2). Row waits on Q9.
-   G5.4 at TB 0.3 PASS s1 (g5_g54_tb03_s151). NEXT S152: G5 rows left wait on Q8/Q9 -> start 4c pre-freeze
-   review (standalone session); G5.5 FAIL stays for re-fly at freeze.
+   G5.4 at TB 0.3 PASS s1 (g5_g54_tb03_s151). G5.5 FAIL stays for re-fly at freeze.
+0e. 4c review 1/3 DONE S152 (design/prefreeze_r1_stage5.md, opus): REJECT, 1 BLOCKING F1 (ALTCTL arm on ground ->
+   Hold fallback at HOVER thrust while landed), MAJOR F2 resetBlend at arm/disarm vs D-GAP, F3 no lib reset on
+   re-entry/hold end (thrust/jerk transient), F4 dt clamp 0.04 makes "<5 Hz -> hold" dead. F1 fixed S152 (z_only zero
+   stock thrust -> straight up; no-held fallback 0 thrust unless flying; 2 tests, break-checked; key2
+   design/prefreeze_r1_f1_key2.md). NEXT S153: ALTCTL arm-on-ground probe 1 flight (G5.2/G5.4: no lift-off before
+   stick, edge step); then F2-F4 fix or spec amendment (G5.4/G5.7 transients); then reviews 2/3 (stage-3 safety
+   diff) and 3/3 (module_parity.md), one per session (~$0.9 each).
 1-3. Probes PASS, re-fly at freeze: G5.4 9/9 (S135), G5.1 6/6 K_Y 20 (S137), G5.2 6/6 (S138, g52_check keyed).
 3b. G5.3 hold PASS 3/3 (S139). G5.7 leaveP: S139 s2/s3 FAIL (5.17-5.25 deg) were the GNSS set-up fault: S143 matched
    re-fly s2 3.62, s3 3.55 deg PASS, thrust step 3.0 % (results/g5_g57_s143_gnss); s1 PASS S139. G5.7 PASS 3/3 as probe;
