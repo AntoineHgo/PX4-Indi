@@ -163,6 +163,7 @@ void IndiAccelControl::reset(const Vector3f &f_b, float coll_cmd, float mean_u)
 	_lpf_f.reset(f);
 	_lpf_f_native.reset(f);
 	_native_f = f;
+	_prev_f_b_valid = true;
 	_lpf_u.reset(u);
 	_lpf_um.reset(u_model);
 	_last_f_b = f;
@@ -382,6 +383,15 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 	const float u_sub = _u_buf[i_d] + ((_tb > 0.f) ? _b : 0.f);
 	const Vector3f f_in = in.f_b_valid ? in.f_b : Vector3f(0.f, 0.f, -_g_t * u_sub);
 	Vector3f f_bf;
+
+	// invalid -> valid edge: the native filter held (or was not fed during) the gap while the law ran on the modelled path;
+	// continue from the force used last cycle, then converge to the measured value at the filter bandwidth
+	if (in.f_b_valid && !_prev_f_b_valid && _native_fed) {
+		_lpf_f_native.reset(_last_f_b);
+		_native_f = _last_f_b;
+	}
+
+	_prev_f_b_valid = in.f_b_valid;
 
 	if (in.f_b_valid && _native_fed) {
 		// D-AF-ALIAS: filtered at the force sample rate by sampleSpecificForce(); keep the stage-rate filter on the same

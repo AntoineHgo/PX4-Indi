@@ -1573,8 +1573,58 @@ TEST_F(IndiAccelControlTest, NativeRateFilterValidToInvalidSwitchHasNoStep)
 	in.f_b = Vector3f(NAN, NAN, NAN);
 	ASSERT_TRUE(_ctrl.update(in, out));
 	EXPECT_TRUE(out.a_f.isAllFinite());
-	// the modelled path (hover) is a_f ~ 0 at the first invalid cycle: the 0.5 m/s^2 offset is only the filtered
-	// force, so the bound is that offset, never a transient beyond it
-	EXPECT_LT(fabsf(out.a_f(0)), 0.6f);
-	EXPECT_LT(fabsf(out.a_f(1)), 0.1f);
+	// the first invalid cycle continues from the filtered force (0.5): a step to the modelled hover value (0) or beyond
+	// the offset would show here
+	EXPECT_NEAR(out.a_f(0), 0.5f, 0.05f);
+	EXPECT_LT(fabsf(out.a_f(1)), 0.05f);
+}
+
+/// M1: invalid -> valid with no native samples during the gap: no step, then convergence to the measured force
+TEST_F(IndiAccelControlTest, NativeRateFilterInvalidToValidHasNoStep)
+{
+	_ctrl.setFilter(kStageHz, 10.f);
+	IndiAccelControl::Input in = hoverInput();
+	in.dt = 1.f / kStageHz;
+	IndiAccelControl::Output out;
+	const Vector3f f_meas(0.5f, 0.f, -kG); // offset from the modelled hover force (0, 0, -g)
+
+	for (int k = 0; k < 300; k++) {
+		_ctrl.sampleSpecificForce(f_meas, 1.f / kNativeHz);
+
+		if (k % kDecim == 0) {
+			in.f_b = f_meas;
+			ASSERT_TRUE(_ctrl.update(in, out));
+		}
+	}
+
+	EXPECT_NEAR(out.a_f(0), 0.5f, 1e-3f);
+
+	// gap: stage runs on the modelled path, no native samples
+	in.f_b_valid = false;
+	in.f_b = Vector3f(NAN, NAN, NAN);
+
+	for (int k = 0; k < 10; k++) {
+		ASSERT_TRUE(_ctrl.update(in, out));
+	}
+
+	const float a_gap = out.a_f(0);
+	EXPECT_LT(fabsf(a_gap), 0.05f); // modelled hover: the filter has settled to the model
+
+	// valid again, samples resume
+	in.f_b_valid = true;
+	in.f_b = f_meas;
+	_ctrl.sampleSpecificForce(f_meas, 1.f / kNativeHz);
+	ASSERT_TRUE(_ctrl.update(in, out));
+	EXPECT_LT(fabsf(out.a_f(0) - a_gap), 0.05f); // no step at the edge
+
+	// converges to the measured value within a few time constants (fc 10 Hz: tau ~ 16 ms; 0.5 s is ~30 tau)
+	for (int k = 0; k < 135; k++) {
+		_ctrl.sampleSpecificForce(f_meas, 1.f / kNativeHz);
+
+		if (k % kDecim == 0) {
+			ASSERT_TRUE(_ctrl.update(in, out));
+		}
+	}
+
+	EXPECT_NEAR(out.a_f(0), 0.5f, 1e-3f);
 }

@@ -254,6 +254,7 @@ private:
 	float _native_hz{0.f};
 	int _native_dev_count{0};
 	bool _native_fed{false};
+	bool _prev_f_b_valid{true}; ///< f_b_valid of the previous update(): edge detection for the native filter re-seed
 	math::LowPassFilter2p<float> _lpf_u{};
 	float _u_buf[kMaxDelaySamples + 1] {};
 	int _u_idx{0};
