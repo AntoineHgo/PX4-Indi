@@ -1,0 +1,155 @@
+{
+ "scenario": "g5_events",
+ "controller": "indi",
+ "seed": 1,
+ "speed": 4.0,
+ "status": "ok",
+ "warnings": [],
+ "window": {
+  "start_s": 94.0,
+  "end_s": 102.00999999999999,
+  "duration_s": 8.01,
+  "offboard_span_s": [
+   94.0,
+   102.00999999999999
+  ],
+  "start_source": "offboard_span",
+  "runjson_start_s": null,
+  "ulog_anchor_s": 94.0
+ },
+ "stamps": {
+  "vehicle_angular_velocity": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_rates_setpoint": {
+   "stamp": "timestamp",
+   "sorted": false,
+   "zero_dt_pairs": 2
+  },
+  "actuator_motors": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "sim_ground_truth": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_attitude": {
+   "stamp": "timestamp_sample",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "vehicle_attitude_setpoint": {
+   "stamp": "timestamp",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  },
+  "indi_pos_status": {
+   "stamp": "timestamp",
+   "sorted": false,
+   "zero_dt_pairs": 0
+  }
+ },
+ "rate_tracking": {
+  "roll_rms_rad_s": 0.009334103230167617,
+  "pitch_rms_rad_s": 0.009231011904843992,
+  "yaw_rms_rad_s": 0.0007099385072138378,
+  "source": "sim_ground_truth"
+ },
+ "rate_tracking_estimate": {
+  "roll_rms_rad_s": 0.009534065763658804,
+  "pitch_rms_rad_s": 0.00947231601587611,
+  "yaw_rms_rad_s": 0.0013878092929115638,
+  "source": "vehicle_angular_velocity"
+ },
+ "attitude_tracking": {
+  "rotation_angle_rms_deg": 0.0,
+  "roll_rms_deg": 0.19286199537215656,
+  "pitch_rms_deg": 0.16020706590678455,
+  "yaw_rms_deg": 89.95554457237574,
+  "source": "sim_ground_truth"
+ },
+ "attitude_tracking_estimate": {
+  "rotation_angle_rms_deg": 0.0,
+  "roll_rms_deg": 0.17835162996747841,
+  "pitch_rms_deg": 0.15410804669804698,
+  "yaw_rms_deg": 96.24671461946916,
+  "source": "vehicle_attitude"
+ },
+ "rate_estimator_error": {
+  "roll_rms_rad_s": 0.0014960434547243745,
+  "pitch_rms_rad_s": 0.001587317897612239,
+  "yaw_rms_rad_s": 0.0012841300968414308,
+  "roll_mean_rad_s": 7.173756205164257e-05,
+  "pitch_mean_rad_s": 6.14864695231568e-05,
+  "yaw_mean_rad_s": -1.0802992298292122e-05,
+  "n": 6409,
+  "definition": "truth - vehicle_angular_velocity, FRD [rad/s]"
+ },
+ "attitude_estimator_error": {
+  "rotation_angle_rms_deg": 6.291786181157211,
+  "n": 2136,
+  "roll_rms_deg": 0.026305717751316147,
+  "roll_mean_deg": 0.017317401431455406,
+  "pitch_rms_deg": 0.02206079130013833,
+  "pitch_mean_deg": 0.0195976688421161,
+  "yaw_rms_deg": 6.291705954790811,
+  "yaw_mean_deg": -6.291696196617201,
+  "definition": "truth - vehicle_attitude, euler diff [deg], rotation angle [deg]"
+ },
+ "steps": [],
+ "position": {
+  "ref_ned": [
+   -0.04000966250896454,
+   -0.0354655385017395,
+   -2.98773193359375
+  ],
+  "rms_3d_m": 0.052539424857694035,
+  "rms_horizontal_m": 0.05163005743518916,
+  "rms_vertical_m": 0.009732848048970814,
+  "max_dev_3d_m": 0.08595523238182068,
+  "max_dev_horizontal_m": 0.0857800543308258,
+  "max_dev_vertical_m": 0.016204833984375
+ },
+ "truth_source": "sim_ground_truth",
+ "effort": {
+  "n_motors": 4,
+  "motor_rate_rms_per_s": 0.04635193294868413,
+  "motor_rate_rms_per_s_raw": 0.12894507388623844,
+  "motor_rate_rms_per_s_per_motor": [
+   0.045494430143786374,
+   0.046366456041454174,
+   0.04703203186940609,
+   0.046514813740089866
+  ],
+  "motor_rate_bandwidth": {
+   "status": "ok",
+   "grid_hz": 400.0,
+   "lowpass_hz": 50.0,
+   "rms_per_s": 0.04635193294868413,
+   "per_motor_rms_per_s": [
+    0.045494430143786374,
+    0.046366456041454174,
+    0.04703203186940609,
+    0.046514813740089866
+   ],
+   "logged_rate_hz": 800.0000000000009,
+   "gap_time_frac": 0.0,
+   "n_grid": 3204
+  },
+  "motor_spread_mean_abs": 0.00034622603561729193,
+  "motor_mean": 0.13663801550865173,
+  "saturation_frac_motors": 0.0,
+  "saturation_frac_high": 0.0,
+  "saturation_frac_low": 0.0
+ },
+ "allocator": {
+  "n_samples": 1600,
+  "frac_any_actuator_saturation": 0.0,
+  "frac_torque_not_achieved": 0.0
+ }
+}

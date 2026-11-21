@@ -30,7 +30,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    S161: G5.11 yaw spike cause = T10 raw filter re-seed; fixed (D-T10-RESET, 49568bcaa5 + d1b65d0f09, key2 review
    design/review_s161_t10.md MAJORs closed). Residual at s1 probe = INDI hover tilt noise floor (Q12 addendum, option D).
    Post-freeze firmware change: also check other freeze rows had no in-flight reset edge (none should be affected).
-   NEXT: score re-fly, key2 g511 (sonnet, no access to g511_check.py), G2 att yaw/outer cells. Next RC: S164.
+   Re-fly at d1b65d0f09 (results/g511_fix_s161): yaw 0.76/1.21/0.83 (2/3 PASS, s2 0.18 above its no-event max),
+   xy 5.8-6.7 FAIL (Q12); row FAIL as written, UNKEYED. Same flights carry G5.6/5.8/5.9: re-score with
+   g5_rows_check.py at the new firmware. NEXT S162: key2 g511 on g511_fix_s161 (sonnet, no access to g511_check.py),
+   g5_rows re-score, then G2 att yaw/outer cells. Next RC: S164.
    S160: G5 verdict table in freeze README. G5.3 hold re-flown PASS 3/3 + key2. G5.11 exact test + g511_check.py:
    FAIL 6/6 tilt cmd jump, UNKEYED. PID ref: xy 7.82 deg FAIL too (stack-indep., Q12); yaw PID 0.48 PASS -> NEXT: INDI
    yaw-reset one-sample q_d spike cause search (1 session; compare heading-reset handling vs mc_pos_control), key2 g511
@@ -78,7 +81,6 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S161-b | G5.11 re-fly s1-3 at d1b65d0f09 (D-T10-RESET + key2 flag split) | shell | results/g511_fix_s161/status.txt | bash indi_flight/results/g511_fix_s161/fly.sh (skips done; check build.log is d1b65d0f09+); then python3 indi_flight/bench/g511_check.py <run dirs> -> README |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
