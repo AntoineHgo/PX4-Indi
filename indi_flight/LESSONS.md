@@ -55,7 +55,9 @@ orchestrator proposes additions in `LESSONS_PROPOSED.md`.
     Stage 1 re-read a 131 KB state file 61 times.
 17. **Two keys for anything that decides a verdict or flies:** metric code, identification code, simulator hooks and
     control-law changes are reviewed or re-implemented by an agent that has not seen the first one's reasoning,
-    before the result is used.
+    before the result is used. Scope (owner, 2026-11-21): firmware changes, identification code, and a new metric
+    script before its first use as gate evidence. A re-scoring with an already keyed script, a result note, a probe
+    or a decision does not get a second key.
 18. **A review brief names one interface:** raw data to result, result to report, or code to specification.
 19. **Review before freeze.** Stage 1 found a control-law bug eight sessions after freezing the firmware that
     contained it.

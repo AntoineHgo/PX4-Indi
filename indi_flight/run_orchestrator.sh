@@ -31,7 +31,7 @@ EXPECTED_ORIGIN="${EXPECTED_ORIGIN:-AntoineHgo/PX4-Indi}"
 FIVE_HOUR_SHARE="${FIVE_HOUR_SHARE:-0.8}"  # leave the top 20 % of every 5-hour window to the owner
 WEEKLY_SHARE="${WEEKLY_SHARE:-0.7}"        # stop launching once the weekly window is 70 % used
 MIN_BUDGET_USD="${MIN_BUDGET_USD:-1}"      # below this headroom a session is mostly start-up cost: wait instead
-MAX_BUDGET_USD="${MAX_BUDGET_USD:-3}"      # bounds what one cut-off session can lose
+MAX_BUDGET_USD="${MAX_BUDGET_USD:-6}"     # bounds what one cut-off session can lose
 # Usage left in a 5-hour window is lost at its reset, so in its last FINAL_STRETCH_S seconds the
 # orchestrator may use the whole window (share 1.0). The owner can lift the 5-hour share at any
 # time with `touch indi_flight/BYPASS_5H` (remove the file to restore it); the supervisor checks
@@ -215,7 +215,7 @@ while [ ! -f indi_flight/DONE ] && [ ! -f indi_flight/STOP ]; do
 	if [ "$state_bytes" -gt "$STATE_MAX_BYTES" ]; then
 		prompt="$prompt
 - indi_flight/STATE.md is $state_bytes bytes, over its $STATE_MAX_BYTES-byte budget. Before other work, move finished
-  history to JOURNAL.md and lessons or ledger rows to LESSONS_PROPOSED.md or LEDGER.md, then commit."
+  history to JOURNAL.md and lessons to LESSONS_PROPOSED.md, then commit. Next actions hold open work only."
 		log "run $runs: STATE.md is $state_bytes bytes (budget $STATE_MAX_BYTES), the orchestrator is told to trim it"
 	fi
 	# results/ must end every session clean: each path committed or ignored (owner rule, 2026-11-18)
@@ -232,6 +232,14 @@ while [ ! -f indi_flight/DONE ] && [ ! -f indi_flight/STOP ]; do
   of a flight still running may stay dirty, and its directory must be named in STATE.md. Directories (paths):
 $dirty_dirs"
 		log "run $runs: indi_flight/results has $n_dirty dirty paths, the orchestrator is told to commit or ignore them"
+	fi
+	# gate progress is measured on indi_flight/GATE_STATUS.tsv, not on self-reported journal lines (owner, 2026-11-21)
+	stale=$(cat "$LOG_DIR/gate_status.stale" 2>/dev/null || echo 0)
+	if [ "$stale" -ge 2 ]; then
+		prompt="$prompt
+- indi_flight/GATE_STATUS.tsv has not changed for $stale sessions. Start with the route check (MISSION, \"Route
+  check\"): name what blocks the next gate verdict, cut what does not lead to it, write the cut in STATE.md."
+		log "run $runs: GATE_STATUS.tsv unchanged for $stale sessions, the orchestrator is told to run a route check"
 	fi
 
 	claude -p "$prompt" \
@@ -257,6 +265,20 @@ $dirty_dirs"
 		awk '!seen[$1]++ {n++; if (n == 1) f = $2; if ($2 > m) m = $2} END {if (n) printf "%dk start, %dk max, %d turns", f/1000, m/1000, n}')
 	log "run $runs: exit $rc after ${elapsed}s, result $subtype, cost \$${cost:-?}, session $session, context ${ctx:-?}"
 	calibrate_window "$LOG_DIR/run-$ts.jsonl" "${cost:-?}"
+	# agent ledger written by the supervisor from the session log (the orchestrator no longer edits LEDGER.md)
+	jq -r --arg ts "$ts" 'select(.type=="assistant" and .parent_tool_use_id==null) | .message.content[]? |
+		select(.type=="tool_use" and (.name=="Agent" or .name=="Task")) |
+		[$ts, (.input.model // "default"), (.input.subagent_type // "-"), (.input.description // "-")] | @tsv' \
+		"$LOG_DIR/run-$ts.jsonl" >>"$LOG_DIR/agent_ledger.tsv" 2>/dev/null
+	printf '%s\tSESSION\t%s\t%ss\t$%s\n' "$ts" "$subtype" "$elapsed" "${cost:-?}" >>"$LOG_DIR/agent_ledger.tsv"
+	# gate status: count sessions in a row that left GATE_STATUS.tsv unchanged
+	if [ -f indi_flight/GATE_STATUS.tsv ] && ! cmp -s indi_flight/GATE_STATUS.tsv "$LOG_DIR/gate_status.prev"; then
+		echo 0 >"$LOG_DIR/gate_status.stale"
+		log "run $runs: GATE_STATUS.tsv changed: $(diff "$LOG_DIR/gate_status.prev" indi_flight/GATE_STATUS.tsv 2>/dev/null | grep '^>' | cut -c3-120 | paste -sd';' | cut -c1-300)"
+		cp indi_flight/GATE_STATUS.tsv "$LOG_DIR/gate_status.prev"
+	else
+		echo $(($(cat "$LOG_DIR/gate_status.stale" 2>/dev/null || echo 0) + 1)) >"$LOG_DIR/gate_status.stale"
+	fi
 	left=$(git status --porcelain --untracked-files=all -- indi_flight/results 2>/dev/null | wc -l)
 	[ "$left" -eq 0 ] || log "run $runs: left $left dirty paths in indi_flight/results (next session is told to sort them)"
 

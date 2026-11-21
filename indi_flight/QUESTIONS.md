@@ -51,6 +51,10 @@ which itself stays set about 2.25 s after the last GCS message (fix_s2: last mes
 mavlink/commander, O-11). Options: A [recommended] timeout reference = firmware's own flag (as now, S144 note), the
 receiver window reported; B: reference = last message sent, row FAIL in both stacks (stock limit).
 Meanwhile: G5.8 hover counted on the S144 definition with the 2.25 s window reported; 3 m/s rows not counted.
+**Owner answer (2026-11-21):** (a) A. (b) B: G5.6 false maybe_landed and G5.11 z are "not tested, owner decision
+Q8(b)", with the reason; no SITL test parameter. Addendum 2: A (reference = actuator_armed.kill rise, commander
+latency reported). Addendum 3 (i): A (excursion from the failsafe-commanded setpoint/trajectory at 3 m/s; hover
+definition unchanged). Addendum 3 (ii): A (firmware flag, receiver window reported).
 
 ## Q9 (S147, 2026-11-21): G5.10 row after its first probe. NOT blocking.
 Context (results/g5_g510_s147/README.md): scenario sat_sustained = 5 s at thrust scale 0.274 (2x hover) with the
@@ -78,6 +82,10 @@ the answer to (c); (c) still decides whether the row also needs a truly saturati
 Q9 note 4 (S151): with TB 0.3 + bound 0.5 the SAT part passes alt loss (1.74-1.76 m) and recovery (1.9-2.0 s) on 3
 seeds (results/g5_g510_s151); only (a) tilt 45.3 deg = MPC_TILTMAX_AIR and (b)/(c) the non-saturating AGG/SAT
 definition keep the row from PASS. Still not blocking.
+**Owner answer (2026-11-21):** (a) A: tilt limit = MPC_TILTMAX_AIR + 5 deg; alt loss 2.0 m and recovery 5 s
+unchanged. (b) A: full-scale part flown in stabilized (full throttle + full roll stick 1 s). (c) A: SAT part at a
+scale where hover needs >= 1.0 command for 5 s, after a one-flight check that motors sit at >= 0.99; the 73 % drop
+stays as a G3-type side probe, not a G5.10 pass condition.
 
 Note S154 (RC154): the stage-6 freeze will proceed with option A assumed for Q8 (a)/(b)/add.2/add.3 and Q9 (a)/(c); an answer
 B from the owner changes only the affected G5 rows, re-scored or re-flown after the freeze.
@@ -97,6 +105,8 @@ Meanwhile: the other rows continue; seeds 2-3 and one PID reference flight of th
 Update S158: PID reference of the same seed PASSES (z settle 3.39 s, os 0.004 m). Option A therefore records the INDI
 s1 FAIL as FAIL (1/6 runs), not as stack-independent. INDI holds the estimate on the setpoint; PID's slower z
 response lets the EKF height error decay inside its own travel. Still not blocking; B or C only on your call.
+**Owner answer (2026-11-21):** B: z settle band = max(2 % of d, 0.10 m), justified in GATES by the EKF height
+accuracy under the typical profile; logged as a test-defect fix.
 
 ## Q11 (S158, 2026-11-21): G5.5 o1-o4/o7 still FAIL at the freeze. Re-open outer-loop base A? NOT blocking.
 Context (results/g5_freeze_s157/README.md, seed 1; seeds 2-3 flying): horizontal RMS vs the analytic trajectory
@@ -111,6 +121,10 @@ B: re-open base A for offboard trajectories only: INDI module's own pos/vel feed
 Meanwhile: seeds 2-3 and a PID o1 reference at the freeze plant are flown and scored as written.
 Update S158: 3/3 seeds FAIL on each of o1-o4/o7 (0.57-0.81 m), o5/o6/offb_vel_step PASS 3/3; PID o1 s1 at the
 freeze plant 0.785 m (also FAIL).
+**Owner answer (2026-11-21):** B: re-open base A for offboard trajectories only. The INDI module gets its own
+pos/vel feedback with full flatness feed-forward. Other modes keep base A. Design note and DECISIONS entry first
+(one page), then code with second key and tests, then a G5.5 pre-test. G5 rows the change touches are re-flown at
+a new freeze. The 0.5 m limit is unchanged.
 
 ## Q12 (S160, 2026-11-21): G5.11 xy reset tilt limit fails for both stacks. NOT blocking.
 Context (results/g5_freeze_s157/README.md, G5.11 row; exact test GATES 5b S160): a 1 m external-position reset
@@ -128,6 +142,9 @@ no-event range of the same metric (0.72-1.10 deg; PID 0.48-0.86): the 1 deg limi
 noise floor under the typical profile. Option D [recommended, gate defect fix]: tilt jump measured as the event value
 minus the 95th percentile of the same metric at no-event instants of the same flight (the row then measures the reset,
 the noise is judged in G4). Meanwhile scored as written. Not blocking.
+**Owner answer (2026-11-21):** B + D. xy is judged on truth excursion (<= 0.5 m) and no oscillation. The 1 deg
+tilt limit is kept for yaw. The yaw tilt jump = event value minus the 95th percentile of the same metric at
+no-event instants of the same flight.
 
 ## Q13 (S164, 2026-11-21): G2 phase-plateau GM formula on bins with |L| > 1. NOT blocking.
 Context (results/g2_plateau_s164.md): the G2 pass uses min(GM, plateau GM), plateau GM = min of 1/|L| over bins with
@@ -138,6 +155,7 @@ Options: A [recommended, test-defect fix] plateau GM over bins with |L| < 1; bin
 reported as gain-reduction margin 20log10|L| with the same >= 6 dB pass threshold (no threshold lowered); 67/67 PASS.
 B: keep the literal formula: the cell FAILs G2.
 Meanwhile: G2 work continues (model x-check, 267 Hz); both readings reported in GATES G2 freeze status.
+**Owner answer (2026-11-21):** A.
 
 ## Q14 (S170, 2026-11-21): G4 command-chatter clause fails on a sub-DShot-step line in both stacks. NOT blocking.
 Context (results/a54_s170/README.md): G4 "Additional" flags a 20-100 Hz line in actuator_motors at peak > 20 x median.
@@ -155,6 +173,8 @@ on every quiet and typical run too (22-39 Hz, command std 2.5e-4): the ratio alo
 only lines. This supports option A (absolute floor); being checked against key1 (A-55) before the G4 verdict.
 Q14 addendum 2 (S170): the original checker (key1) run on all 9 runs agrees with key2: the clause flags 9/9 runs, quiet
 included (22-39 Hz, windows from take-off), so as written it fails every profile (results/g4_gate_s169/a55_key1_all.md).
+**Owner answer (2026-11-21):** A: chatter = peak > 20 x median AND line RMS (+-2 Hz) >= one DShot step (5e-4 of
+full scale); ratio reported.
 
 ## Q15 (S174, 2026-11-21): G4 item 2 (A-56) flags a stack-independent land-entry transient. NOT blocking.
 Context (results/a56_rate_s174/README.md): the 2 Hz pitch-rate "sustained oscillation" that fails G4 item 2 on 1/3
@@ -168,3 +188,27 @@ Options: A [recommended, test-defect fix]: item 2 runs on windows that do not ov
 B: run the item 2 detector on the rate tracking error (q - q_sp) over the whole flight. C: keep as written: G4 item 2
 FAIL recorded, stack-independent cause. Meanwhile: G4 verdict stays NOT PASSED as written; no inner-loop change
 (D-RATE-BLD unchanged at 1.0 s); G3 continues.
+**Owner answer (2026-11-21):** A: item 2 skips windows that overlap the 3 s after a nav_state change. Mode
+transitions are judged by the G5 transient limits. The land-entry transient is reported for both stacks.
+
+## Owner note (2026-11-21): acting on Q8-Q15
+All eight questions are answered. These are test-defect fixes the owner approved, so log each in GATES.md and
+DECISIONS.md as such. Then re-score the existing gate evidence with the amended definitions; no re-fly is needed
+except where a new definition requires new flights (G5.10 SAT/full-scale, Q11 B). Order: (1) re-score G2 (Q13),
+then G4 (Q14, Q15); close each gate that passes. (2) G5 re-scoring (Q8, Q10, Q12, Q9a). (3) Q11 B design and code,
+then the G5.10 re-definition flights. (4) G3 set-up fix (below). Mark Q8-Q15 closed and move them to JOURNAL.md.
+See the process changes in MISSION.md (owner, 2026-11-21): blocking questions, second-key scope, route checks,
+hands-off rule, reference flight first, freeze discipline, GATE_STATUS.tsv, no history in STATE next actions.
+
+Also from the owner, 2026-11-21:
+- Post-freeze firmware commits 20b4a41b22 (D-JFF-SOURCE) and aa4fd2654a (D-JFF-OFFB) were made on a hypothesis
+  that was falsified, but they also fix a real feed-forward defect. Judge them under the new freeze discipline:
+  keep (with the G5 rows they invalidate re-flown) or revert, and record the choice in DECISIONS.md.
+- G3 set-up before any campaign: (a) the runner aborts when a declared plant/noise factor is listed as
+  not_applied (results/g3_pretest_s173: noise profile not applied, tel_frozen hook missing). (b) The excursion rule
+  is measured against the setpoint, so it no longer conflicts with the lemniscate. (c) g3_checks.py runs in Docker,
+  not with scipy from a scratchpad path. (d) Explain run 17 (129 deg tilt, loss of control) and the four
+  oscillating runs, PID reference first. Then re-fly the 20-run pre-test.
+- When the re-flown G3 pre-test is clean, create WAIT_OWNER with "G3 set-up fixed, ready for flight chain" in
+  STATE.md. The owner then builds a detached flight chain (batches flying between sessions) before the 300-run
+  campaign.

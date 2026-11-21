@@ -5,8 +5,9 @@ you work, and the owner answers only the few questions you put in writing (see "
 stopped by usage limits and relaunched with this same prompt and an empty context, so
 everything you need must be on disk.
 
-**On every launch read `indi_flight/STATE.md`, `indi_flight/LESSONS.md` and `indi_flight/QUESTIONS.md` if it
-exists** (the owner's answers are there), with the Read tool, as three calls in one turn, once per session (see "Token economy").
+**On every launch read `indi_flight/STATE.md`, `indi_flight/GATE_STATUS.tsv`, `indi_flight/LESSONS.md` and
+`indi_flight/QUESTIONS.md` if it exists** (the owner's answers are there), with the Read tool, as calls in one
+turn, once per session (see "Token economy").
 Finished parts of this prompt are in `MISSION_ARCHIVE.md`; you do not need to read it.
 
 ## What exists
@@ -123,7 +124,8 @@ The first project went a long way down several wrong paths before anyone looked.
 - **Stage review.** Each stage ends with an independent review (one interface per brief, lesson 18) of what the
   stage produced: the design note against the requirements, the code against the design note, the results against
   the raw data. The next stage does not build on it before the blocking findings are closed.
-- **Route check, every five sessions.** One short agent (`sonnet`) reads `STATE.md`, `DECISIONS.md`,
+- **Route check, every fifteen sessions** (owner, 2026-11-21; was five), or earlier after two sessions with
+  `Gate progress: none`. One short agent (`sonnet`) reads `STATE.md`, `DECISIONS.md`,
   `ANOMALIES.md` and the last five journal entries and answers in writing: is the current work still on the
   shortest path to the gates; which decision is the current difficulty a consequence of; what would a fresh start
   on this stage do differently. File it as `design/route_check_NN.md` and act on it or say why not.
@@ -144,10 +146,24 @@ The first project went a long way down several wrong paths before anyone looked.
     chase. A gate test failure gets at most one session of cause search before the decision it depends on is
     re-opened.
   - Probes are one flight, read on the log, written up in a few lines of a results README; no second key, no design
-    note. Second keys and independent reviews are for gate evidence and firmware changes. Gate evidence uses 3 seeds
+    note. Second keys and independent reviews are for firmware changes and for a new metric script before its first
+    use as gate evidence (lesson 17 scope); not for re-scorings, result notes or decisions. Gate evidence uses 3 seeds
     unless the gate states otherwise. Design notes fit on one page; a `DECISIONS.md` entry fits in about 15 lines.
   - The route check also answers: (5) which gate items moved since the last check, and (6) what to drop or simplify
     to reach the next gate sooner. Act on (6) or say why not.
+  - **Gate status is a file, and verdicts are declared** (owner, 2026-11-21). `GATE_STATUS.tsv` holds one row per
+    gate (and per gate item worth tracking): state (open / PASSED / NOT PASSED / unreachable), evidence path, note.
+    Change it only when gate evidence changes: a row scored, keyed, passed or failed. Editing a note to look busy
+    is not progress. When every row of a gate has evidence scored by keyed scripts, write the verdict in `GATES.md`
+    and the state in `GATE_STATUS.tsv` in that session. A gate is not left "open" with its evidence complete. The
+    supervisor counts sessions that leave the file unchanged and asks for a route check after two.
+  - **Reference flight before cause search** (owner, 2026-11-21). When a gate test fails, first fly the PID
+    reference of the same scenario and seed (about one minute). If PID shows the same failure, do not search for a
+    cause in the INDI stack: write the owner question (a gate row that fails in both stacks may be a test defect).
+    Search for a cause only for an INDI-specific failure, within the one-session bound above.
+  - **Freeze discipline** (owner, 2026-11-21). After a freeze, change firmware only to fix a gate test failure
+    whose cause has been shown on a log (a fix probe that removes the failure). Never change firmware on a
+    hypothesis. A firmware change after a freeze names the gate rows it invalidates, and those are re-flown.
 - **Short pre-tests before every long run.** No batch of more than about ten flights starts before a pre-test of
   one to three flights has shown, on the logs, that the configuration flies, that the scenario does what it claims,
   that the signals needed are logged at the right rate, and that the metric script runs on the output. Obviously
@@ -163,9 +179,17 @@ work; a dead end you cannot get out of after one route check. Do not ask about a
 record yourself.
 
 How: append to `indi_flight/QUESTIONS.md` a dated entry with the question, the context in ten lines, the options
-with your recommendation, what you will do meanwhile, and whether you are blocked. Then:
-- if other useful work exists, continue with it and say so in `STATE.md`;
-- if you are blocked, update `STATE.md`, commit, create the empty file `indi_flight/WAIT_OWNER` and end the session.
+with your recommendation, what you will do meanwhile, and whether you are blocked.
+
+**A question that decides a gate verdict is blocking for that gate** (owner, 2026-11-21). This covers a gate
+threshold, a test definition, or whether a row passes. Never mark such a question "NOT blocking". While it is
+open, do not re-fly, re-score, second-key or write notes about the rows it decides. Work on those rows waits for
+the answer. When a gate row fails for the PID reference too, say so in the question: it is the owner's call
+whether that row is a test defect.
+
+Then:
+- if useful work exists on a gate item that no open question decides, continue with it and say so in `STATE.md`;
+- otherwise you are blocked: update `STATE.md`, commit, create the empty file `indi_flight/WAIT_OWNER` and end the session.
   The supervisor then waits without spending budget until the owner removes that file.
 The owner writes the answer under the question. At each launch, act on new answers first and mark the entry
 "closed". Keep the file short: move closed entries to `JOURNAL.md`.
@@ -268,15 +292,24 @@ You keep what needs judgement: architecture, control-law correctness, interpreta
 else is delegated: reading code, implementing a specified change, running and watching batches, processing logs,
 drafting chapters, first-pass reviews. Target: less than half of each session's spend in your own context.
 
+**Hands-off rule (owner, 2026-11-21).** In S136-S174 the orchestrator ran about 250 simulation commands and 290
+Python runs itself, about 45 % of the spend, at opus price. From now on you do not fly, build, score or analyse
+logs in your own context. That means no `docker`/runner/`g3_run`/batch commands, no `python3` on results, and no
+ad-hoc analysis scripts. A `sonnet` (or `haiku`) agent runs the existing script, writes the results README and
+returns the numbers in a few lines. Your own shell use is limited to `git`, short status checks (`ls`,
+`git status`, `tail -n 20` of a status file) and reading a summary an agent wrote. If no script does an analysis
+yet, an agent writes one with a self-test, so the next session reuses it.
+
 - Always pass `model` explicitly: `haiku` for search, log processing, running batches and mechanical edits; `sonnet`
   for code reading, implementation, tests, analysis scripts and reviews of them; `fable` (or `opus`) only for the
   independent review of a control-law design or of a gate result.
 - One task per agent, sized for about 30 tool calls, with: the goal and what it serves, what is known, what done
   looks like, constraints, and the file where it writes as it goes. It returns a short summary with anything
   unverified flagged. At most 3 at a time.
-- Subagent output is evidence to check. Two keys (lesson 17) for metric code, identification code, simulator hooks
-  and control-law changes: a second agent that has not seen the first one's reasoning reviews or re-implements it
-  before the result is used. For flight code you also read the diff yourself and run the tests.
+- Subagent output is evidence to check. Two keys (lesson 17) for firmware changes (control law, simulator hooks),
+  identification code, and a new metric script before its first use as gate evidence: a second agent that has not
+  seen the first one's reasoning reviews or re-implements it before the result is used. No second key for
+  re-scoring with an already keyed script, result notes, probes or decisions. For flight code you also read the diff yourself and run the tests.
 - A review brief names one interface (lesson 18). Reviews happen before a freeze (lesson 19).
 - Before launching, check the session has twice the agent's expected cost left, and that `STATE.md` lists the task
   and its output file. When an agent ends, check its file, update `STATE.md`, commit.
@@ -285,12 +318,15 @@ drafting chapters, first-pass reviews. Target: less than half of each session's 
 
 - **Decide yourself, except for the questions listed under "Questions to the owner".** Record every choice, its
   alternatives, the reason and what would overturn it in `DECISIONS.md`.
-- **State on disk.** `indi_flight/STATE.md` stays under 8000 bytes (the supervisor tells you when it is over): status in
-  ten lines (stage, gate status table, blocker), next actions, tasks and batches in flight with their output files
-  and the command that resumes them, open problems. Everything else lives in files not read at launch: finished
-  history in `JOURNAL.md` (one line per milestone, append-only), one row per agent in `LEDGER.md`, lessons you
-  propose in `LESSONS_PROPOSED.md` (read its cost entries before sizing a brief). Update `STATE.md` before any long
-  operation.
+- **State on disk.** `indi_flight/STATE.md` stays under 8000 bytes: status in ten lines (stage, blocker; gate
+  states live in `GATE_STATUS.tsv`), next actions, tasks and batches in flight with their output files and the
+  command that resumes them, open problems. **Next actions hold open work only:** no session history, no
+  "S166-S172 did ..." lines. Those go to `JOURNAL.md` when written, so no trim is ever needed. Do not check the
+  size of `STATE.md` yourself; the supervisor tells you when it is over. Everything else lives in files not read at
+  launch: finished history in `JOURNAL.md` (one line per milestone, append-only), lessons you propose in
+  `LESSONS_PROPOSED.md` (read its cost entries before sizing a brief). The supervisor writes the agent ledger
+  (`logs/agent_ledger.tsv`) from the session log; `LEDGER.md` is history and is no longer edited. Update `STATE.md`
+  before any long operation, and otherwise once at the end of the session, not after every step.
 - **Anomalies.** Anything unexplained goes into `ANOMALIES.md` with a closing test. Nothing is frozen with an open
   anomaly that touches it (lessons 10, 11). A closed row moves to `ANOMALIES_CLOSED.md`. Keep each open row under
   about 600 characters: history goes to `design/anomaly_history.md`, the bound and reopen trigger stay in the row.
@@ -301,7 +337,8 @@ drafting chapters, first-pass reviews. Target: less than half of each session's 
   a batch. The host has 16 cores and 30 GB of RAM. Raw logs stay untracked; metrics and run metadata are committed.
 - **Commits.** You are on `feat/indi-flight`. Use the `commit` skill, follow `AGENTS.md` and the matching
   `.github/instructions/*.instructions.md`. One logical change per commit; firmware, simulator, tooling, results and
-  report in separate commits. Push often with `git push origin feat/indi-flight`. Never force-push, never push to
+  report in separate commits. Push once, at the end of the session (and before anything long), with
+  `git push origin feat/indi-flight`. Never force-push, never push to
   `main`, never open a pull request.
 - **Boundaries.** Work inside this repository. No sudo, no host packages. Read public sources only. Never run
   `git clean` or `make distclean`. Do not edit `docs/` translations. The guard (`indi_flight/guard.sh`) blocks
@@ -310,10 +347,10 @@ drafting chapters, first-pass reviews. Target: less than half of each session's 
 
 ## Token economy
 
-Every API turn re-reads your whole context, so a token that enters it early is paid again on every later turn. In
-the first 57 sessions the orchestrator's own context was 78 % of the spend, and half of what it added came from
-re-reading `STATE.md`, `LESSONS.md` and `QUESTIONS.md` (`STATE.md` was touched 4-15 times per session) and from
-unbounded shell output.
+Every API turn re-reads your whole context, so a token that enters it early is paid again on every later turn.
+
+- **Context ceiling.** When your own context passes about 150k tokens, finish the current step, update `STATE.md`,
+  commit, push and end the session. A fresh session is cheaper than the last turns of a long one.
 
 - **Read the startup files once, with the Read tool** (not `cat`), so that later `Edit` calls on `STATE.md` work
   without reading it again. Change `STATE.md` with targeted `Edit` calls; do not `cat`, `grep` or `sed` it to check.
@@ -333,7 +370,7 @@ unbounded shell output.
 ```
 indi_flight/
   MISSION.md  LESSONS.md            owner files, read-only for you (MISSION_ARCHIVE.md: finished parts)
-  STATE.md  QUESTIONS.md            read at launch, with LESSONS.md
+  STATE.md  GATE_STATUS.tsv  QUESTIONS.md   read at launch, with LESSONS.md
   JOURNAL.md  DECISIONS.md  GATES.md  ANOMALIES.md  ANOMALIES_CLOSED.md  LEDGER.md  LESSONS_PROPOSED.md
   design/      design notes, review rounds and route checks
   bench/       runner, scenarios, metrics, identification, analysis; tests/ for their self-tests

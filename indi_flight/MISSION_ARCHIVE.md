@@ -43,3 +43,9 @@ review and its notes. Write `STATE.md` (format below), `DECISIONS.md` (owner dec
 - **Budget.** Usage is the scarcest resource. Each launch has a spend cap given at the end of this prompt; the
   session is cut when it is reached, with its subagents. Keep bulky material in files. Do not re-read what
   `indi_flight/` already summarises. On a usage-limit error, save state and end the session.
+
+## Former "Token economy" preamble (removed 2026-11-21)
+
+In the first 57 sessions the orchestrator's own context was 78 % of the spend, and half of what it added came from
+re-reading `STATE.md`, `LESSONS.md` and `QUESTIONS.md` (`STATE.md` was touched 4-15 times per session) and from
+unbounded shell output.
