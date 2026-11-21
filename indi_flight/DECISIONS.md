@@ -1163,3 +1163,18 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
 - Alternatives: carry freeze-6 evidence (rejected: firmware changed on paths these rows exercise); argue G5.1 inner
   only (rejected: F2/F4 sit in the inner library).
 - Overturn: none (freeze rule); a FAIL follows the freeze-discipline steps (PID reference first).
+
+## D-AF-ALIAS (S189, 2026-11-21): outer-loop measured acceleration aliased by stage decimation (G3 cause)
+- Fact (results/g3_pretest_s187/probe_s189/AF_TRACE_S189.md, run 16): a_f = R(q) lpf(f_b) + g is built once per
+  vehicle_local_position update (88.9 Hz) from the latest vehicle_acceleration sample (267 Hz); the LPF runs after
+  that decimation. A 95.73 Hz vibration line in f_b folds to 6.84 Hz (= 95.73 - 88.89): a_f 0.21 m/s^2 vs 0.022 from
+  a native-rate recompute; stage-style recompute matches the log (corr 0.99998). Real tilt accel ~0.02 m/s^2. The
+  aliased a_f drives t_c -> q_d: the 7 Hz p/q line of the INDI-only item-2 fails. INDI-specific (stock thrust path
+  uses no measured acceleration). LPF 5 only cut the line 30 % (aliasing before the filter), detector-threshold pass.
+- Decision: fix in the INDI module: filter f_b at its own rate (every vehicle_acceleration sample, LPF before the
+  stage reads it). Fix probe on run 16 + 10 draws (and 00/05/17 to see whether the 2.5-4 Hz position-mode lines are
+  other alias folds) before it enters the frozen firmware; two keys; unit test that fails with the decimating form.
+- Alternatives: lower MC_INDI_POS_LPF (rejected: cannot remove an alias, adds outer lag); run the whole stage at
+  267 Hz (larger change, no gate gain shown); stock sensors-module 800->267 Hz fold is stock PX4 (owner note point 1).
+- Rows it invalidates once in firmware: G2 outer cells, G4, G5 outer-loop rows, G3 pre-test (re-flown after FREEZE-10).
+- Overturn: fix probe leaves the 6.84 Hz line in a_f on run 16 -> the cause is elsewhere; re-open.
