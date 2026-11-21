@@ -19,3 +19,9 @@ reopen trigger stay in ANOMALIES.md. Append further history under the anomaly he
 | A-30 | S64 G2-STEP at 400 Hz (`results/g2_step_s64_400`): seed-to-seed spread larger than at 800 Hz: seed1 roll rise 189 ms / settle 312 ms / OS 1.78 % vs seeds 2-3 199-206 / 336-360 / 0.40-0.74 (800 Hz: 206-210 / 365-366). All within G2-STEP limits. Seeds change sensor noise only, so a 17 ms rise difference is unexplained. | open | OPEN S67, Q5: 11 same-seed re-flies (`results/a30_refly_s67`, `results/g16_indi_s67`) cluster rise 202-210 / settle 344-364 / OS 0.4-1.2 %, spread equal at speed 1 and 4; arm instant varies 0.76 s (wall clock). S64 seed1 (189/313/1.78) outside all 11: unexplained. Log diff (`results/g16_indi_s67/s64_outlier_diff.md`): params identical; S64 built from a DIRTY tree (f183dad) vs clean 361ae4f. Test: clean-build re-fly of S64 800 Hz seed 1 vs `results/g2_step_s64`; if it differs, S64 G2-STEP tables are re-flown |
 ## A-56 (S171-S172)
 S171: lead jerk FF in AUTO_LAND (results/a56_s171). S172: D-JFF-SOURCE (20b4a41b22) left omega_ff 24-28 deg/s (stock auto a_ff swings +-2 m/s^2 harsh, results/g4_jff_s172/aff_source.md); D-JFF-OFFB (aa4fd2654a) set omega_ff to 0 outside offboard, but harsh_s3 still flags 2.0 Hz p from 93.5 s (before land entry) and harsh_s2 descent q std 13.9: FF is not the oscillation cause.
+
+## A-56 S174
+Rate-loop probe at harsh s3 (results/a56_rate_s174): lead 0 keeps the line, blend 0.3 s clears s3 but s2 then flags at
+the same window 82. Land detector clean in flight (no edges). Trace: window 82 spans AUTO_LAND entry; trajectory
+setpoint jump there drives q in both stacks (PID s2/s3 16/30.5 deg/s). Cause = stock land-entry setpoint transient, not
+an INDI oscillation; G4 item 2 consequence asked as Q15. IMU_DGYRO_CUTOFF probe not flown (runner fixes cutoffs).

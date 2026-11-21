@@ -155,3 +155,16 @@ on every quiet and typical run too (22-39 Hz, command std 2.5e-4): the ratio alo
 only lines. This supports option A (absolute floor); being checked against key1 (A-55) before the G4 verdict.
 Q14 addendum 2 (S170): the original checker (key1) run on all 9 runs agrees with key2: the clause flags 9/9 runs, quiet
 included (22-39 Hz, windows from take-off), so as written it fails every profile (results/g4_gate_s169/a55_key1_all.md).
+
+## Q15 (S174, 2026-11-21): G4 item 2 (A-56) flags a stack-independent land-entry transient. NOT blocking.
+Context (results/a56_rate_s174/README.md): the 2 Hz pitch-rate "sustained oscillation" that fails G4 item 2 on 1/3
+harsh runs always sits in the 3 detector windows that span AUTO_LAND entry. There the stock land setpoint jumps
+(velocity 0.2-0.54 m/s) and the rate loop tracks its own setpoint for 1-2.5 s, then returns to the hover floor.
+PID shows the same transient, the same size (q std peak 30.5 deg/s PID s3 vs 25.0 INDI). Whether the detector calls it
+"sustained" depends on window alignment, and the run that gets flagged moves with seed and config (blend 0.3 s moved it
+from s3 to s2). The S173 reading "cause in the INDI rate loop" is withdrawn: PID was not flagged, but it is not clean.
+Options: A [recommended, test-defect fix]: item 2 runs on windows that do not overlap the 3 s after a nav_state change
+(mode transitions are judged by the G5 transient limits); the land-entry transient is reported for both stacks.
+B: run the item 2 detector on the rate tracking error (q - q_sp) over the whole flight. C: keep as written: G4 item 2
+FAIL recorded, stack-independent cause. Meanwhile: G4 verdict stays NOT PASSED as written; no inner-loop change
+(D-RATE-BLD unchanged at 1.0 s); G3 continues.
