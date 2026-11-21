@@ -153,3 +153,5 @@ Meanwhile: G4 verdict written both ways; key2 of g3_checks.py; G3 preparation co
 Q14 addendum (S170, later): the blind key2 of the checker (results/g4_gate_s169/g3_key2.md) flags the 20 x median rule
 on every quiet and typical run too (22-39 Hz, command std 2.5e-4): the ratio alone flags a sloped background, not
 only lines. This supports option A (absolute floor); being checked against key1 (A-55) before the G4 verdict.
+Q14 addendum 2 (S170): the original checker (key1) run on all 9 runs agrees with key2: the clause flags 9/9 runs, quiet
+included (22-39 Hz, windows from take-off), so as written it fails every profile (results/g4_gate_s169/a55_key1_all.md).
