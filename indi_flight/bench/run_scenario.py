@@ -1039,14 +1039,15 @@ def main():
             sim.env["PX4_PARAM_SIM_GZ_IMU_NSC"] = str(a.imu_noise_scale)
             meta["sim_seed"] = a.sim_seed
             meta["imu_noise_scale"] = a.imu_noise_scale
+            # vibration reference set always, so scenario sim_params that enable SIM_GZ_VIB_* get it too (key2 S156)
+            vib_rpm = a.vib_rpm if a.vib_rpm is not None else (9540.0 if a.model == "quad5in" else 7000.0)
+            vib_nb = a.vib_nb if a.vib_nb is not None else (3 if a.model == "quad5in" else 2)
+            sim.env["PX4_PARAM_SIM_GZ_VIB_RPM"] = str(vib_rpm)
+            sim.env["PX4_PARAM_SIM_GZ_VIB_NB"] = str(vib_nb)
+            meta["vib"] = {"acc": a.vib_acc, "gyr": a.vib_gyr, "rpm": vib_rpm, "nb": vib_nb}
             if a.vib_acc > 0 or a.vib_gyr > 0:  # needs the rotor joint speeds of SIM_GZ_ESC_FB >= 1
                 sim.env["PX4_PARAM_SIM_GZ_VIB_ACC"] = str(a.vib_acc)
                 sim.env["PX4_PARAM_SIM_GZ_VIB_GYR"] = str(a.vib_gyr)
-                vib_rpm = a.vib_rpm if a.vib_rpm is not None else (9540.0 if a.model == "quad5in" else 7000.0)
-                vib_nb = a.vib_nb if a.vib_nb is not None else (3 if a.model == "quad5in" else 2)
-                sim.env["PX4_PARAM_SIM_GZ_VIB_RPM"] = str(vib_rpm)
-                sim.env["PX4_PARAM_SIM_GZ_VIB_NB"] = str(vib_nb)
-                meta["vib"] = {"acc": a.vib_acc, "gyr": a.vib_gyr, "rpm": vib_rpm, "nb": vib_nb}
         if a.gnss_delay is not None:
             sim.env["PX4_PARAM_SENS_GNSS0_DELAY"] = str(a.gnss_delay)
             meta["gnss_delay"] = a.gnss_delay
