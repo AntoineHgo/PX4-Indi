@@ -631,3 +631,22 @@ offsets 0.11-0.22 m reported only, as S180). Fail: PID guard. Flagged-line readi
 5.0-5.3e-4 inside skipped windows at 5 of 16 transitions (17->4 hover_harsh_s2, cruise_harsh_s1; 14->18
 hover_harsh_s1/s2, cruise_harsh_s2), PID unflagged there (2.7-4.4e-4). Any-window reading: 9 of 12 fail. The verdict
 is NOT PASSED under both readings. Next: one session of cause search on the INDI 20 Hz transition line (PID clean).
+
+## Owner amendments S187 (2026-11-21): Q20, Q21, Q22 test-definition fixes (owner answers, QUESTIONS.md)
+- **G4 PID guard (Q20).** Guard windows only: narrow-band line measure, `psd_windows(..., rms_hz=0.5)` (4 s Hann, 1 s
+  hop, peak bin in 20-100 Hz, RMS over peak +-2 bins). Skipped windows as Q15/S183 (`ta < c+3 and ta+4 > c`). A
+  transition is checked only where an INDI skipped window is flagged (ratio > 20 AND narrow RMS >= 5e-4); otherwise
+  INDI and PID values are reported. When checked: FAIL if PID has no window with ratio > 20 within +-0.5 Hz of the INDI
+  peak at that transition (INDI-only line), or if INDI narrow RMS > 1e-3; else PASS (shared transient), with INDI, PID
+  and ratio reported. Windows from c+3 s on keep the Q14/Q19 detector (+-2 Hz). Both keys code the rule; freeze-9 G4
+  is re-scored without re-fly and that is the G4 verdict.
+- **G5.10 SAT part (Q21).** One flight per stack at thrust scale 0.30, 3 m climb plus the 3 m horizontal step. Valid
+  only if all 4 motors stay >= 0.99 for >= 1 s in BOTH stacks. If valid: limits unchanged (no LOC, alt loss <= 2.0 m,
+  tilt <= MPC_TILTMAX_AIR + 5 deg, back within 0.3 m in <= 5 s after saturation ends), saturation time and hover
+  estimate reported. If not valid: SAT part dropped, G5.10 = stabilized full-scale part (Q17 A); saturation under the
+  position loop stays covered by G3 C3 (C3 is above the hover-estimate clamp; reported with C3).
+- **G3 box (Q22).** G1 error, controller vs plant, per axis: x[0.8, 1.2] (was x[0.5, 2]); log-uniform. Motor tau: tau_up
+  and tau_down both lie in x[0.5, 3]: slow = scale, fast = max(scale / asym, 0.5) (test defect: tau_down reached x9).
+  Corners C1/C2/C4 use e 1.2 / 0.8 / 1.2 in place of 2 / 0.5 / 2. Payload added after identification (e ~1.3) is a G8
+  limit. Run 17 of the S173 pre-test (e 1.52) is out of box: reported with both stacks' values, not in the pre-test set.
+  Before the re-fly, the rate-loop model is checked at e 0.8, tau x0.5, 10 ms (fast-motor corner).
