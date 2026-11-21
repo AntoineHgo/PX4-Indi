@@ -5,14 +5,15 @@
   config g5_freeze_s157 params (XY gains at firmware defaults 1.2/2.4). Re-fly list in D-FREEZE-10: G2 outer, G4,
   G5 outer rows, G3 pre-test. Probe evidence results/freeze10_cand_s191/README.md (all probe checks PASS).
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
-- Blocker: none from the owner. Q23 closed S191 (D-OWNER-Q23): revert aa4fd2654a (G5.7 cause D-G57-FF); with
+- Blocker: Q24 (S194) blocks G3 only. Q23 closed S191 (D-OWNER-Q23): revert aa4fd2654a (G5.7 cause D-G57-FF); with
   D-AF-ALIAS (G3 7 Hz, outer a_f aliased by 88.9 Hz stage decimation) it enters FREEZE-10.
 ## Next actions (owner order; each names its gate item)
 0. FREEZE-10 re-fly RUNNING (Tasks Q10). RC194 done (design/route_check_194.md): no probes/chases while it runs;
    read queue_status.tsv; a haiku agent collects scores per gate; untested in the queue: g4_score.sh rewrites +
    Q20 guard, abort path -> fix and resume with `queue.sh N` if failed (pyulog on host checked S194). Then
-   verdicts G2/G4/G5 rows and G3 pre-test: 02/05 fail -> owner question on GNSS mismatch range with S192
-   matched probe (no cause search); 03/08 (shared with PID) go in the same question with PID values.
+   verdicts G2/G4/G5 rows. G3 pre-test DONE S194 (16/20 both keys, fails 02/03/05/08): Q24 asked, blocking
+   G3 only; no G3 work until answered (option A = lower XY gains probe after the queue, then FREEZE-11).
+   Queue step 2 (G5) started 23:34.
    Binary built 22:38 after 7fe6206fcc, no src commit since (checked). G7 harness starts after the queue ends
    (RC194 item 6 asked parallel; not done: a docker build during gate flights risks the binary and timing).
 1. G2 PASSED at freeze-9 (S184); outer cells invalidated by FREEZE-10, re-fly in item 0.
