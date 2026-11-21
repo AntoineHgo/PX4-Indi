@@ -4,8 +4,8 @@
 - Stage: 6 (validation). FREEZE-7 declared S177 (D-FREEZE-7): firmware 08011e92d0, config g5_freeze_s157 params.
   Rows listed in D-FREEZE-7 re-fly now (queue results/freeze7_s177); other freeze-6 evidence stands.
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
-- Blocker: none for G2/G4/G5.3-5.5. G5.10 stabilized-part scoring waits Q17 (BLOCKING for G5.10). G4 NOT PASSED
-  at freeze-7 (chatter); cause search done S178, no fix shown: step back (action 2).
+- Blocker: Q17 (G5.10 stabilized part) and Q18 (G4 chatter land windows), each BLOCKING for its rows only.
+  G2 and G4 NOT PASSED at freeze-7; freeze-8 in preparation (XY_P 1.2 shown, F2 for L1 to implement).
 ## Next actions (owner order; each names its gate item)
 1. G2 NOT PASSED at freeze-7 (S179: xy PM 38-45, att spot 43.0; D-OFFB-POSVEL overturn met). Read gain probe GP
    (XY_P 1.2/VP 3.6, results/g55_gain_probe_s179): if both G2 cells PM >= 45 with margin, G5.5 <= 0.5 m: change the
@@ -13,13 +13,11 @@
    2 spot cells, G4 18, G5.5 24, G5.3 hold+mission, G5.4. If not: try XY_P 1.2/VP 3.0, then ask owner (G5.5 vs G2).
    Restore results/g4_gate_s169/chatter_cruise_s176_raw.txt (`git checkout`, overwritten by probe scoring) after the
    probes end.
-2. G4 NOT PASSED freeze-7. Step back DONE S179: D-G4-STEPBACK re-opens (3) outer measured-force filter
-   MC_INDI_POS_LPF for L2 (20-22 Hz descent, predates the 2x gains: freeze-6 flagged it too) and (2) offboard
-   setpoint zero-order hold for L1 (33 Hz). Fix probes: F1 (LPF 5, cruise_typ s1-s3, in flight, task F1) then F2
-   (firmware: offboard setpoint extrapolation, cruise_typ s1; implement only after queues 2-4 end, no rebuild while
-   gate queues fly; firmware key2 + unit test before freeze-8). Act per the D-G4-STEPBACK overturn rule. A probe
-   that removes both lines -> freeze-8 (config/firmware), re-fly G4 18, G5.5 24, G2 outer 24, G5.3 (hold+mission)
-   and G5.4 if LPF moves. Do NOT propose the 3 s skip for chatter.
+2. G4 L1 (lemniscate, in scope): implement F2 (sonnet; firmware: extrapolate the offboard setpoint between samples,
+   D-G4-STEPBACK; unit test that fails without it), build, fly cruise_typ s1 with XY_P 1.2 params; read the 33 Hz
+   AND the 88.5 Hz line (F3/GP show 88.5 Hz 1.1e-3 when 33 Hz drops: second L1 source, freeze-6 line). If F2 shows
+   L1 below 5e-4: key2 of the diff, then freeze-8 = F2 + MC_INDI_XY_P default 1.2. L2 (touchdown, touchdown_s179.md)
+   waits Q18: do not chase or re-score land windows. F1 (POS_LPF 5) and F3 (VEL_LP 5) rejected (z offset item 3).
 3. G5: freeze-7 G5.5 24/24, G5.3 mission 3/3, G5.4 6/6 PASS (SCORES.md). G5.3 hold (gust_x) IS in the D-FREEZE-7 list
    ("G5.3/G5.4 x3") and unflown: fly 3 seeds at the final freeze (deferred while F1/F2 may move the config). G5.10 pre-test queue4 (results/g5_10_freeze7_s178, after queue3): read
    SAT motors >= 0.99 time (score_motors.py is NEW: key2 before gate use) and PID reference; stabilized part waits
@@ -55,13 +53,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| Q7 | freeze-7 serial queue G5.5 24 + G4 18 + G5.3/5.4 (detached) | sonnet | results/freeze7_s177/ (queue_status.tsv) | re-run queue.sh (idempotent), see its README |
-| G2Q | G2 outer 24 cells re-fly (flying since 13:30; dir dirty while flying) (model predicts xy PM 46 deg, GM 7.8 dB) | sonnet | results/g2_outer_freeze7_s177/ | queue2.sh (idempotent), README scoring cmd |
-| Q4 | G5.10 pre-test 4 flights, queue4 detached after queue3 (4 h wait cap from 13:32) | - | results/g5_10_freeze7_s178/ (queue4.log) | rerun queue4.sh |
-| SP2 | G2 spot cells roll800_fwdef_s2 + att pitch400_s1, queue3 detached, waits on queue2 (max 3 h from 13:30: on WAIT_TIMEOUT in queue3.log rerun) | sonnet | results/g2_spot_freeze7_s178/ | README resume cmd |
-| SG2 | S179: score G2 outer 24 cells after queue2 ends, then the 2 spot cells | sonnet | results/g2_outer_freeze7_s177/SCORES.md, results/g2_spot_freeze7_s178/SCORES.md | re-brief from its README scoring cmd |
-| GP | S179 gain probe XY_P 1.2 / VP 3.6 (params only): G2 outer pt0 ax1/ax2 r400 s1, G5.5 worst row s1, cruise_typ s1 chatter | sonnet | results/g55_gain_probe_s179/README.md | re-brief from README |
-| F1 | S179 G4 fix probe F1 (D-G4-STEPBACK): MC_INDI_POS_LPF 5, cruise_typ s1-s3 | sonnet | results/g4_fix_probe_s179/README.md | re-brief from README |
+| - | none in flight (S179 end); G5.10 pre-test queue4 flown, 4 metrics committed, unscored | - | results/g5_10_freeze7_s178/ | - |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

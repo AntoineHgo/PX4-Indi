@@ -35,3 +35,23 @@ change from stick release to +5 s against 0.3 m (no reference, likely fails for 
 for the stabilized part.
 Meanwhile: the pre-test flights fly (data only); the stabilized part is not scored until answered. SAT part, G2, G4
 cause search, G5.3/G5.4 continue.
+**Owner answer (2026-11-21):** A. In the stabilized full-scale part of G5.10: no LOC; tilt <= MPC_MAN_TILT_MAX + 5 deg;
+no windup = attitude error to the stick-commanded attitude <= 5 deg within 1 s after the sticks return to centre;
+the alt-loss limit is not applied (full throttle climbs). Log it in GATES.md 5b and DECISIONS.md as an approved
+test-definition fix. PID flies the same flight as the reference.
+
+## Q18 (S179, 2026-11-21): G4 command chatter, windows that contain the touchdown. BLOCKING for G4 (land windows).
+Context: G4 asks for limits on motor-command RMS "in hover and cruise"; Q14 A added the 20-100 Hz chatter detector
+(4 s windows, peak > 20 x median AND line RMS >= 5e-4) over the whole flight. At freeze-7 the cruise runs fail it in
+two places: L1 in the lemniscate (in scope, INDI work continues: setpoint extrapolation probe F2) and L2 in AUTO_LAND.
+S179 localised L2 on logs (results/g4_fix_probe_s179/touchdown_s179.md): line RMS >= 5e-4 only in 1 s windows that
+contain the ground impact (ground_contact - 0.5 s to landed + 0.7 s); steady descent 1.3e-4 (6e-5 with MPC_VEL_LP 5),
+on ground 1e-5. PID shows the same impact signature (26 Hz, 1.2e-3 in the impact window; diffB 5e-4 at 20 Hz), but
+its detector did not flag a sustained 20 Hz line; INDI at 20 Hz is 6e-4 vs PID 1e-4 there. Touchdown is judged by
+G5.4 (passed at freeze-7: touchdown 0.708 m/s, ramp step 7.5 %). The hover_harsh_s1 flag (20.0 Hz) is likely the
+same event (not yet checked).
+Options: A [recommended] the G4 chatter detector skips windows overlapping [ground_contact - 1 s, landed + 1 s] in
+both stacks; touchdown stays judged by G5.4; the land-window values are reported for both stacks. B: keep the rule;
+G4 then needs a touchdown fix (re-open D-F7-GROUND ground handling), likely affecting G5.4/G5.6 too. C: score the
+detector on the hover and cruise segments only (gate text), take-off/land reported.
+Meanwhile: the land windows are not re-scored or chased. L1 (lemniscate) work, G2 (XY_P 1.2 freeze-8), G5 continue.

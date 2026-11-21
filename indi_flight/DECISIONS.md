@@ -1031,3 +1031,9 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   that runs the gains): lower the position gain only, MC_INDI_XY_P 1.9 -> 1.2, VP 3.6 kept (lead at crossover
   atan(3.6/1.2) = 72 deg vs 62 deg; drag-error estimate x1.4, about 0.35-0.40 m against G5.5 0.5 m). Params-only probe
   results/g55_gain_probe_s179 before any default change; L1 amplitude scales with Kp too.
+- S179 F3 (MPC_VEL_LP 5, x3) and GP (XY_P 1.2, s1): L2d descent motor line falls to ~PID (diffB 1.0-1.3e-4, a_c -5x)
+  yet AUTO_LAND stays flagged (F3 2/3, GP 1/1, 1.8-3.1e-3) in windows 67-72 s, i.e. straddling touchdown, a span the
+  S178 chain never analysed (62-66.5 and 69.5-72 only). The L2 location is re-checked on logs (touchdown_s179.md)
+  before any further decision; D-F7-GROUND (touchdown handling) becomes the candidate if the flag sits there.
+  Item 3 z offset 0.29-0.34 m FAIL in F1/F3/GP (not a G4 cruise row; baseline value unchecked). L1: lemniscate still
+  flagged in GP (33.5 Hz 1.1e-3) and F3 (88.5 Hz 1.1-1.2e-3, the freeze-6 line). F2 (setpoint extrapolation) next.

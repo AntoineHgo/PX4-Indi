@@ -1260,3 +1260,8 @@ Also from the owner, 2026-11-21:
   33 Hz = bench 30 ms setpoint staircase passed 3x PID; 18.7 Hz descent line from EKF velocity via xy vel gain.
   Probes P1 (MPC_VEL_LP 8) and P2 (10 ms sender) both still flagged: no fix, step back next session. G2 spot cells + G5.10 pre-test chained after queue2; Q17 (G5.10 stabilized criterion).
   Gate progress: G4 verdict NOT PASSED (freeze-7, evidence complete); G5.5 24/24, G5.3 mission 3/3, G5.4 6/6 PASS at freeze-7; G2 spot cells queued.
+- S179 (2026-11-21): G4 step back (D-G4-STEPBACK): F1 MC_INDI_POS_LPF 5 and F3 MPC_VEL_LP 5 (3 seeds each) do not
+  remove the AUTO_LAND flag; logs place it at the touchdown impact (touchdown_s179.md) -> Q18 to owner. G2 freeze-7
+  scored: xy PM 38.4-44.8 on 13/16 outer cells, att spot 43.0 -> G2 NOT PASSED at freeze-7 (D-OFFB-POSVEL overturn);
+  params probe XY_P 1.2 gives PM 49.5/50.2, G5.5 0.345/0.347 m. G5.10 pre-test flown (unscored).
+  Gate progress: G2 verdict NOT PASSED at freeze-7 (evidence complete) and a shown remedy (XY_P 1.2); G4 L2 located.
