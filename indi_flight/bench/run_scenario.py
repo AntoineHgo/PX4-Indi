@@ -91,6 +91,7 @@ LOG_TOPICS = [
     "sim_schedule_applied",  # D-SCHED s24: row applied by sim_scenario_player (queue 8), only published with --sched
 ]
 TAKEOFF_ALT = 5.0
+GA_ALT_M, GA_CLIMB_MPS = 3.0, 1.0  # --ground-arm: climb target (estimate) and stick climb rate
 # S81 --stick-mode: PX4 custom main modes of the HEARTBEAT (px4_custom_mode.h) and the run's stick parameters
 STICK_MAIN_MODE = {"altctl": 2, "posctl": 3, "acro": 5, "stabilized": 7}
 # S139: (main, sub) of MAV_CMD_DO_SET_MODE for the per-segment modes; hold = AUTO_LOITER (main 4, sub 3)
@@ -742,6 +743,52 @@ def mission_upload(sim, wps, alt_m):
     raise RunError("mission upload timeout")
 
 
+def run_ground_arm(sim, a, meta):
+    """S153 --ground-arm: arm on the ground in altctl / posctl with the throttle stick low (no take-off command), hold it low
+    3 s, centre it 5 s, climb at about +1 m/s to GA_ALT_M (estimate), centre 5 s, then the normal land. Phase starts -> meta."""
+    sim.sp_grid = True
+    mode = a.stick_mode
+    low = dict(x=0, y=0, z=0, r=0, throttle=-1.0, vz_up_demand=0.0)
+    cz = stick_profile.stick_to_raw(stick_profile.inv_expo(GA_CLIMB_MPS / stick_profile.VZ_MAX_UP))
+    climb = dict(x=0, y=0, z=cz, r=0, throttle=stick_profile.raw_to_stick(cz), vz_up_demand=GA_CLIMB_MPS)
+    cur = [low]
+    sp = lambda: sim.send_stick(cur[0])  # noqa: E731
+    ph = meta["ground_arm"] = {"phases_us": {}, "climb_stick_raw_z": cz, "target_alt_m": GA_ALT_M}
+    mark = lambda n: ph["phases_us"].__setitem__(n, int(sim.t * 1e6))  # noqa: E731
+    meta["stick"] = {"mode": mode, "main_mode": STICK_MAIN_MODE[mode], "params": STICK_PARAMS}
+    sim.run(1.0, sp=sp, what="ga_prestream")
+    sim.cmd(176, 1, STICK_MAIN_MODE[mode], 0)
+    sim.run(None, sp=sp, until=lambda: sim.main_mode == STICK_MAIN_MODE[mode], wall_timeout=30, what="ga_mode")
+    mark("mode_set")
+    mark("arm_cmd")
+    for attempt in range(10):
+        if sim.cmd(400, 1):
+            break
+        meta["arm_rejected_t_s"] = meta.get("arm_rejected_t_s", []) + [sim.t]
+        sim.run(1.0, sp=sp, what="ga_arm_retry")
+    else:
+        raise RunError("ground arm rejected 10 times")
+    sim.run(None, sp=sp, until=lambda: sim.armed, wall_timeout=30, what="ga_armed")
+    meta["t_arm_us"] = int(sim.t * 1e6)
+    mark("low")
+    sim.run(3.0, sp=sp, what="ga_low")
+    cur[0] = stick_profile.neutral_sample(mode)
+    mark("centre")
+    sim.run(5.0, sp=sp, what="ga_centre")
+    cur[0] = climb
+    mark("climb")
+    sim.run(None, sp=sp, until=lambda: sim.pos and sim.pos[2] <= -GA_ALT_M, wall_timeout=120 + 60 / a.speed, what="ga_climb")
+    cur[0] = stick_profile.neutral_sample(mode)
+    mark("hold")
+    sim.run(5.0, sp=sp, what="ga_hold")
+    mark("land_cmd")
+    meta["t_land_cmd_us"] = int(sim.t * 1e6)
+    sim.cmd(21, 0, 0, 0, float("nan"), float("nan"), float("nan"), 0)
+    sim.run(None, sp=sp, until=lambda: not sim.armed, wall_timeout=120 + 120 / a.speed, what="land")
+    mark("disarmed")
+    sim.run(2.0, what="post_disarm")
+
+
 def run_auto(sim, a, sc, meta):
     """S131: navigator-driven AUTO flight after arm: takeoff -> hold (loiter) [-> mission] -> RTL | land -> disarm.
     Phase sim times go to meta['auto_phases'] (same time base as the ULog) and the heartbeat mode changes to meta['mode_log']."""
@@ -862,6 +909,9 @@ def main():
                     help="S81: fly a mode='stick' scenario in this manual mode: MANUAL_CONTROL streamed at 50 Hz sim time "
                          "(COM_RC_IN_MODE 1), mode switched by MAV_CMD_DO_SET_MODE after the hover, schedule anchored on "
                          "the observed main mode; sticks.csv in the run dir. Not combinable with --sched")
+    ap.add_argument("--ground-arm", action="store_true",
+                    help="S153: with --stick-mode altctl|posctl: arm on the ground in that mode (throttle low), no take-off command; "
+                         "low 3 s, centre 5 s, climb stick to 3 m, centre 5 s, land (phase times in run.json ground_arm)")
     ap.add_argument("--stick-pilot", action="store_true",
                     help="S118: simulated pilot on the stick scenario in stabilized / acro (altitude PI on thrust, acro levelling); "
                          "corrections logged in sticks.csv, gains in meta.json. Default off")
@@ -897,6 +947,8 @@ def main():
             sc = scenario_overrides.merge(sc_base, ov)
         except (OSError, ValueError) as e:  # json.JSONDecodeError is a ValueError
             raise SystemExit(f"--scenario-overrides {a.scenario_overrides}: {e}")
+    if a.ground_arm and (a.stick_mode not in ("altctl", "posctl") or a.stick_pilot):
+        raise SystemExit("--ground-arm goes with --stick-mode altctl|posctl")
     if a.stick_pilot and not a.stick_mode:
         raise SystemExit("--stick-pilot goes with --stick-mode")
     if (a.stick_mode is not None) != (sc["mode"] == "stick") or (a.stick_mode and a.sched):
@@ -1031,6 +1083,10 @@ def main():
         sim.run(None, until=lambda: sim.t >= T_ARM_S, wall_timeout=120 + 2 * T_ARM_S / a.speed, what="wait_t_arm")
         t_arm_sent = sim.t
         attempt = 0
+        if a.ground_arm:  # S153: arms inside run_ground_arm (mode first, sticks low), so skip the plain arm below
+            run_ground_arm(sim, a, meta)
+            ok = True
+            return 0
         if a.sched:  # the schedule row arms the vehicle at T_ARM_S sim time; no retry
             meta["sched"] = True
         else:

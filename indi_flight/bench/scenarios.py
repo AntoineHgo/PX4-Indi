@@ -161,6 +161,8 @@ for _k, _plant in _V_PLANT.items():
 # Segment times are from the observed main mode. No --sched (runner streams MANUAL_CONTROL).
 SCENARIOS["stick_zsine_o6"] = dict(mode="stick", axis=None, traj=ZSINE_O6,
                                    segments=[("settle", 3.0, 0.0), ("stick", _traj_dur(ZSINE_O6), 0.0), ("hold", 3.0, 0.0)])
+# S153 --ground-arm: the runner's own phase sequence replaces the segments (placeholder for the mode='stick' check)
+SCENARIOS["stick_ground_arm"] = dict(mode="stick", axis=None, traj=None, segments=[("settle", 1.0, 0.0)])
 # S136 G5.1 flight-mode stick steps (GATES 5b): throttle at hover, roll / pitch / yaw doublets from stick_profile.step_sticks
 # (fly with --stick-mode acro or stabilized). The "stick" segment is 3 axes x 3.5 s.
 SCENARIOS["stick_steps"] = dict(mode="stick", axis=None, traj=None, steps=True,
