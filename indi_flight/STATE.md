@@ -47,7 +47,7 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    or max 2 streams with sim-hole figure recorded (LESSONS_PROPOSED S86); parallel runs are never gate evidence.
 4b. G7: align firmware ACT_TC/W_MAX with bench or keep the fwdef cell (lesson 12). Guard params (ERPM_TO/FRZ, SP_TO,
    DT_MAX) unevidenced.
-5. G7 (deferred, stage 7): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site (K128 MAJOR), checker
+5. G7 (deferred, stage 7): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site (K128 MAJOR), D-JFF-SOURCE case, checker
    self-tests for passthrough_check/offb_vel_check.
 RC149 (design/route_check_149.md) cuts: no more PID G5.10 runs; no 3 m/s 3-seed flying before Q8 add.3(i); runner
   MC_INDI_EN alias deferred to stage 7. Next RC: S159.
@@ -77,6 +77,8 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S172a | D-JFF-SOURCE fw diff (uncommitted at launch): build, format, G4 hover x9 re-fly + score + omega_ff land check | haiku | results/g4_jff_s172/ | gate_g4.sh fly/score results/g4_jff_s172 |
+| S172b | key2 of the D-JFF-SOURCE diff | sonnet | design/key2_jff_s172.md | re-run brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),

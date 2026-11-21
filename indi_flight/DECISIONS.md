@@ -926,3 +926,8 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Checks: unit test that a bang-bang jerk with constant a_ff gives omega_ff 0 (fails on today's code); second key on
   the diff; re-fly G4 hover harsh x3 (item 2 whole flight) and the G5 land/RTL rows; omega_ff peak at land entry < 3 deg/s.
 - Overturn: differenced a_ff FF noisier than the bound in G4, or G5.5 tracking worse.
+- S172 implementation: module passes j_ref = NaN, `_j_ff` member removed; library unchanged (its j_ref input and tests
+  stay: a caller with a true jerk may still supply one). Test deviation: the defect sat in the module's input
+  selection, which has no unit harness (D-G7-HARNESS, stage 7), so "fails on old code" is checked in flight instead
+  (omega_ff peak at land entry, results/g4_jff_s172); the stage-7 harness gets this case (auto setpoint with
+  bang-bang jerk and constant acceleration -> omega_ff 0).
