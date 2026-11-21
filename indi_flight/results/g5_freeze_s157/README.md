@@ -18,5 +18,15 @@ touchdown vz 0.721 m/s (<= 0.8), tilt 0.31 deg, re-lift 0.050 m, land vz 0.699, 
 err 0.033 m: all PASS. indi_rate_status and indi_pos_status present (stack valid). Flies, logs, checker runs.
 
 ## Freeze set results
+Seed 1, checked S157 (checkers g51_check.py / g52_check.py, keyed S136/S138; host python3):
+| row | run | verdict | numbers (limit) |
+|---|---|---|---|
+| G5.1 acro | stick_steps_s1_acro | PASS | RMS roll 1.58 / pitch 1.69 / yaw 3.23 deg/s (<= 10) |
+| G5.1 stab | stick_steps_s1_stab | PASS | tilt 0.13/0.15/0.04 deg (<= 3), yaw rate 0.13 deg/s (<= 10) |
+| G5.2 altctl | stick_pos_steps_s1_altctl | PASS | z os 0.023 m (<= 0.3), settle 0.35 s (<= 4) |
+| G5.2 posctl | stick_pos_steps_s1_posctl | **FAIL** | z settle 4.15 s (> 4.0), os 0.054; x os 0.092 m, settle 3.20 s PASS |
+G5.2 posctl z FAIL: gate test failure, cause search <= 1 session (S158). Leads: 2 % band = 0.04 m is near the
+typical-profile truth-z noise (S138 sim-default posctl z settle already 1.2-3.0 s); the same z step settles 0.35 s in
+altctl. First check: truth z std over the centred window vs 0.04 m, and the last band exit time vs the x-step edge.
 (batch in progress: G5.1 stick_steps acro/stab, G5.2 stick_pos_steps altctl/posctl, G5.3 mission + G5.4 auto_tour,
 auto_land10; seeds 1-3. Remaining rows G5.5-G5.11 and the firmware-default cells are next.)

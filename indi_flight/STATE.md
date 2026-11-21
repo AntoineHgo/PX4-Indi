@@ -27,6 +27,8 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    NEXT S158: if no CHAIN_END and no px4 container running, `setsid nohup bash .../chain.sh &` (resumes). Then
    `bash indi_flight/results/g5_freeze_s157/checks.sh`, verdict table in its README, keyed second checker per
    D-FREEZE-6 (g54_key2.py, g5_rows_key2.py exist). Unverified: batch2 o5-o7 args (batch2_notes.md).
+   Seed 1 so far: G5.1 acro/stab PASS, G5.2 altctl PASS, G5.2 posctl z settle 4.15 s FAIL (> 4.0): cause
+   search <= 1 session S158 (leads in results/g5_freeze_s157/README.md).
 1-3. Probes PASS, re-fly at freeze: G5.4 9/9 (S135), G5.1 6/6 K_Y 20 (S137), G5.2 6/6 (S138, g52_check keyed).
 3b. G5.3 hold + mission PASS 3/3 (S139-S140). G5.7 PASS 3/3 as probe (S139/S143 matched GNSS, results/g5_g57_s143_gnss).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (fixes fee02b59b2, 3944e8e367; key2 results/g5_events_s144/key2.md):
