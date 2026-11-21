@@ -18,8 +18,8 @@
    indi_accel_control.cpp:364; D-FREEZE-7 outer law) in DECISIONS.md, re-open the most likely one with a one-page
    note. A firmware change invalidates G4, G5.5, G2 outer rows (re-fly). Ask the owner if it discards > 3 sessions
    or touches Q11 B. No further probing. Do NOT propose the 3 s skip for chatter.
-3. G5: G5.5 24/24 PASS freeze-7. G5.3/G5.4 + event rows (g5/, dirty while flying) in queue.sh: score with existing
-   keyed checkers after QUEUE_END (SC7). G5.10 pre-test queue4 (results/g5_10_freeze7_s178, after queue3): read
+3. G5: freeze-7 G5.5 24/24, G5.3 mission 3/3, G5.4 6/6 PASS (SCORES.md). Check whether D-FREEZE-7 lists the G5.3
+   hold row (not flown in freeze7_s177); if listed, fly it 3 seeds. G5.10 pre-test queue4 (results/g5_10_freeze7_s178, after queue3): read
    SAT motors >= 0.99 time (score_motors.py is NEW: key2 before gate use) and PID reference; stabilized part waits
    Q17. Then G5.10 3 seeds, then G5 verdict.
 4. G3 set-up (owner step 4), after G2/G4/G5 queue: tel_frozen hook (gz_bridge bit-identical rpm injector, two keys;
@@ -54,8 +54,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | Q7 | freeze-7 serial queue G5.5 24 + G4 18 + G5.3/5.4 (detached) | sonnet | results/freeze7_s177/ (queue_status.tsv) | re-run queue.sh (idempotent), see its README |
-| G2Q | G2 outer 24 cells re-fly, waits for Q7 QUEUE_END (model predicts xy PM 46 deg, GM 7.8 dB) | sonnet | results/g2_outer_freeze7_s177/ | queue2.sh (idempotent), README scoring cmd |
-| SC7 | G5.5 scored 24/24 PASS (SCORES.md); G5.3/5.4 + g5/ rows after QUEUE_END (g5/ dir dirty while flying) | sonnet | results/freeze7_s177/SCORES.md | re-brief: existing keyed checkers only |
+| G2Q | G2 outer 24 cells re-fly (flying since 13:30; dir dirty while flying) (model predicts xy PM 46 deg, GM 7.8 dB) | sonnet | results/g2_outer_freeze7_s177/ | queue2.sh (idempotent), README scoring cmd |
 | Q4 | G5.10 pre-test 4 flights, queue4 detached after queue3 (4 h wait cap from 13:32) | - | results/g5_10_freeze7_s178/ (queue4.log) | rerun queue4.sh |
 | SP2 | G2 spot cells roll800_fwdef_s2 + att pitch400_s1, queue3 detached, waits on queue2 (max 3 h from 13:30: on WAIT_TIMEOUT in queue3.log rerun) | sonnet | results/g2_spot_freeze7_s178/ | README resume cmd |
 | SG2 | S178: score G2 outer 24 cells after queue2 ends | sonnet | results/g2_outer_freeze7_s177/SCORES.md | re-brief from its README scoring cmd |
