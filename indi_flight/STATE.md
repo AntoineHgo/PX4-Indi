@@ -61,7 +61,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | - | - | - |
+| S183-A | XY_VP sweep {2.4,2.8} (XY_P 1.2): spot rate+att, G5.5 o1/o3/o7 s1 | sonnet | results/xy_sweep_s183/README.md | rerun results/xy_sweep_s183/queue.sh (skips done) |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
