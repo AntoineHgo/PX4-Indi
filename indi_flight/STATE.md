@@ -23,6 +23,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    G2 rate + att + outer 67/67 cells PASS + KEYED at freeze (plateau GM per Q13 A), outer model x-check done (A-50).
    S165: rate + att yaw model x-check DONE (xcheck_rate.md, 12/15 agree, A-51, verdict independent).
    267 Hz reported cells flown S165 (GATES G2 freeze status). NEXT: G4 (RC159 order G2 -> G4 -> G3). Next RC: S168.
+   S166 G4: bench/g4_metrics.py (self-test + break-check PASS, UNKEYED), pre-look results/g4_prelook_s166 (proxy R20
+   0.09 %, C20 0.0015). BLOCKER for G4 R20/R4: with SIM_GZ_ESC_FB=2 (eRPM model, what INDI flies) no true rotor speed
+   is logged (esc_rpm = telemetry model). NEXT: find/add a truth rotor-speed log in gz_bridge (hook = simulator code,
+   2 keys) or justify reading it from a log field; then key2 of g4_metrics.py; then 27-run G4 pre-test of 3.
    G5.2 posctl z settle s1 4.15 s FAIL (EKF2 height error, Q10; PID ref PASS).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
    events and maybe_landed / EKF z injectability -> Q8 (scored at option A, not blocking).
