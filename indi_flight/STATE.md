@@ -30,12 +30,13 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    24-28 deg/s harsh; stock auto a_ff itself swings +-2 m/s^2). D-JFF-OFFB committed aa4fd2654a (keyed): omega_ff 0 in
    land, G4 rows PASS, but item 2 FAIL 1/3 harsh persists (2 Hz p from BEFORE land entry): FF is NOT the cause (A-56).
    RC173 DONE early (design/route_check_173.md), acted on: no more FF work; A-56 = marginal ~2 Hz loop excited by noise.
-   NEXT S173: (1) G4 VERDICT now in results/g4_gate_s169/README.md: metric rows PASS, item 2 open FAIL 1/3 harsh (A-56,
-   no LOC, tilt < 11 deg), chatter both ways (Q14 A/B). (2) A-56 one discriminating probe (re-opens the outer-loop
-   measured-accel path): harsh_s3 at aa4fd2654a with truth accel substituted (check a hook exists; if none, say so and
-   use D-GAP blend off instead), then blend off if still oscillating; both oscillate -> G2 cells at 2 Hz. (3) G3 pre-test
-   ~20 whatever (2) shows; fold G5.3/G5.4 re-fly (D-JFF-OFFB overturn check) and one offboard trajectory (FF still on
-   in offboard, unverified) into that chain. Deferred to G7: omega_ff step on offboard entry (key2_jffoffb MINOR,
+   S173 DONE: G4 verdict written (NOT PASSED: A-56 + Q14 chatter). A-56 probe results/a56_probe_s173: oscillation
+   persists with stock mc_pos_control and with accel LPF 4 Hz -> outer loop NOT the cause; inner rate loop remains.
+   NEXT S174: (1) G4 item 2 / A-56: G2 freeze attitude+rate loop data at 1.5-3 Hz (|S| peak, phase) on disk, no flight
+   (sonnet read); then one inner-loop probe (rate-loop blend/K at harsh s3) -> re-open the inner-loop decision it names
+   (stage 3 rule RC64/74: 1 session per law change). (2) G3 pre-test idx 0-19 flying (tasks table): score with
+   g3_checks.py, check draws applied (run_validity.py), write README. Then fold G5.3/G5.4 re-fly (D-JFF-OFFB overturn
+   check) and one offboard trajectory (FF still on in offboard, unverified) into the next chain. Deferred to G7: omega_ff step on offboard entry (key2_jffoffb MINOR,
    resetJerkHistory on rising edge). Dropped: typ/quiet G4 re-flights. Next RC: S178.
    G5.2 posctl z settle s1 4.15 s FAIL (EKF2 height error, Q10; PID ref PASS).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
@@ -74,7 +75,7 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S173a | A-56 probe: harsh hover x3, pos0 (stock pos ctl) + lpf4 (accel LPF 4 Hz); no truth-accel hook exists | bash bg | results/a56_probe_s173 (status.txt, FLY_DONE) | `sh indi_flight/results/a56_probe_s173/fly.sh` (skips done), then analyse.sh in Docker |
+| S173b | G3 pre-test idx 0-19 (seed 173, n 300, freeze params, aa4fd2654a), serial | bash bg | results/g3_pretest_s173 (progress.txt, FLY_DONE) | `bash indi_flight/results/g3_pretest_s173/fly.sh 0 19` (skips done) |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
