@@ -1,0 +1,485 @@
+{
+ "scenario": "o1_lemniscate",
+ "controller": "indi",
+ "seed": 270826974,
+ "speed": 1.0,
+ "sim": "v2",
+ "instance": 0,
+ "params_file": "indi_flight/results/g3_pretest_s187/run_008/g3_params.txt",
+ "params_applied": {
+  "NAV_DLL_ACT": 0,
+  "COM_RC_IN_MODE": 4,
+  "COM_RCL_EXCEPT": 4,
+  "SDLOG_PROFILE": 17,
+  "MIS_TAKEOFF_ALT": 5.0,
+  "MC_INDI_G1_R": "2020.973437",
+  "MC_INDI_G1_P": "1110.06024",
+  "MC_INDI_G1_Y": "237.32153",
+  "MC_INDI_G2_Y": "27",
+  "MC_INDI_W_MAX": "2700",
+  "MC_INDI_ACT_BLD": "1.0",
+  "MC_INDI_ACT_TC": "0.033",
+  "MC_INDI_DELAY": "0",
+  "MC_INDI_DT_MAX": "1.0",
+  "MC_INDI_EN": "1",
+  "MC_INDI_ERPM_DLY": "1",
+  "MC_INDI_ERPM_FRZ": "0.5",
+  "MC_INDI_ERPM_TO": "0.02",
+  "MC_INDI_ID_OK": "1",
+  "MC_INDI_INJ_AX": "0",
+  "MC_INDI_K_P": "20",
+  "MC_INDI_K_R": "20",
+  "MC_INDI_K_Y": "20",
+  "MC_INDI_LEAD": "1",
+  "MC_INDI_LND_SLEW": "5.0",
+  "MC_INDI_PINJ_AX": "0",
+  "MC_INDI_POS_DLY": "1",
+  "MC_INDI_POS_LPF": "10.0",
+  "MC_INDI_POS_TB": "0.3",
+  "MC_INDI_SP_TO": "0.5",
+  "MC_INDI_YAW_CUT": "0",
+  "SIM_GZ_ERPM_LAT": "2"
+ },
+ "git": {
+  "commit": "f014b6ad23426111ea2e89bcf29d0adbead0c63b",
+  "dirty": true
+ },
+ "noise_seed": {
+  "gz_sim_seed": 270826974,
+  "px4_baro_srand": 1234
+ },
+ "events": [
+  {
+   "name": "settle",
+   "t_us": 55518000,
+   "dur_s": 3.0,
+   "mode": "trajectory",
+   "axis": null,
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  },
+  {
+   "name": "traj",
+   "t_us": 58518000,
+   "dur_s": 17.80960979386122,
+   "mode": "trajectory",
+   "axis": null,
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  },
+  {
+   "name": "hold",
+   "t_us": 76331000,
+   "dur_s": 3.0,
+   "mode": "trajectory",
+   "axis": null,
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  }
+ ],
+ "phase_log": [],
+ "exit_status": "ok",
+ "error": null,
+ "physics_step_s": 0.00125,
+ "world": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/sim/worlds/default.sdf",
+ "imu_rate": 800,
+ "rate_hz": 800,
+ "imu_filter_hz": {
+  "IMU_GYRO_CUTOFF": 40,
+  "IMU_DGYRO_CUTOFF": 20
+ },
+ "probe_ff_drag": 0.0,
+ "scenario_overrides": {
+  "file": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/results/g3_pretest_s187/run_008/g3_scenario_overrides.json",
+  "overrides": {
+   "dist_segment": "traj",
+   "disturbance": "gust_x",
+   "thrust_sag": {
+    "scale": 0.804811
+   },
+   "wind": {
+    "dir_deg": 3.271344,
+    "peak": 6.541891,
+    "steady": 0.602133
+   }
+  },
+  "merged_keys": [
+   "dist_segment",
+   "disturbance",
+   "thrust_sag",
+   "wind"
+  ],
+  "merged_hooks": {
+   "disturbance": "gust_x",
+   "dist_segment": "traj",
+   "wind": {
+    "dir_deg": 3.271344,
+    "peak": 6.541891,
+    "steady": 0.602133
+   },
+   "thrust_sag": {
+    "scale": 0.804811
+   }
+  }
+ },
+ "provenance": {
+  "commit": "f014b6ad23426111ea2e89bcf29d0adbead0c63b",
+  "dirty": true,
+  "binary": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/build/px4_sitl_default/bin/px4",
+  "binary_sha256": "c6a11b2ba9a2a268bb996c75aaeb59793ac351b4e590155ad790e0e81c16d72f",
+  "binary_commit": "7dc87e84c359dcc4d9537db0449d75d8774adaee",
+  "header_newer_than_binary": false,
+  "files_sha256": {
+   "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/sim/worlds/default.sdf": "851a0e6ca8249cd74427cd1d9215affe0edbce1fde355ffa74fa5622a8cf1bb9",
+   "indi_flight/results/g3_pretest_s187/run_008/g3_params.txt": "c179eefcd6616f187be1c063c550d3e6e80907f604a368f021493d955002166d",
+   "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/params/quad5in_indi_g1.params": "9001a362844586861d6ff4d5306ea00e2ac79ba85de07252a43c4b2202bd7a2b",
+   "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/sim/models/quad5in/model.config": "7ea654fc18d2f1bcc35920c3deb6ca7c0917d0c768ceaefbd4948b86488bff8f",
+   "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/sim/models/quad5in/model.sdf": "4968f2cde140c6e2ae9c821d5bd5bde636887109840046bc34529d8b98c6ae8a"
+  }
+ },
+ "gate_bearing": false,
+ "airframe_params_file": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/params/quad5in_indi_g1.params",
+ "airframe_params_used": {},
+ "boot_params": {
+  "MC_INDI_EN": 1,
+  "MC_INDI_POS_EN": 1
+ },
+ "dly_act_ms": 5,
+ "dly_imu_ms": 5,
+ "gps_dly_ms": 107,
+ "erpm_drop": 0.0,
+ "sim_seed": 835920586,
+ "imu_noise_scale": 4.0,
+ "vib": {
+  "acc": 14.701411,
+  "gyr": 0.235071,
+  "rpm": 9540.0,
+  "nb": 3
+ },
+ "gnss_delay": 170,
+ "model_variant": {
+  "model": "quad5in",
+  "scale": {
+   "tau": 0.580872,
+   "tau_up": 0.860775,
+   "mass": 0.842736,
+   "ixx": 0.746939,
+   "iyy": 1.299549,
+   "izz": 0.84898
+  },
+  "dir": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/results/g3_pretest_s187/run_008/model_variant",
+  "stock_models": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/sim/models",
+  "original": {
+   "ixx": 0.001022,
+   "iyy": 0.001122,
+   "izz": 0.001944,
+   "mass": 0.566,
+   "rotor_mass": [
+    0.011,
+    0.011,
+    0.011,
+    0.011
+   ],
+   "timeConstantUp": [
+    0.033,
+    0.033,
+    0.033,
+    0.033
+   ],
+   "timeConstantDown": [
+    0.033,
+    0.033,
+    0.033,
+    0.033
+   ]
+  },
+  "new": {
+   "ixx": 0.000763371658,
+   "iyy": 0.001458093978,
+   "izz": 0.00165041712,
+   "mass": 0.476988576,
+   "rotor_mass": [
+    0.009270096,
+    0.009270096,
+    0.009270096,
+    0.009270096
+   ],
+   "timeConstantUp": [
+    0.016500003161400004,
+    0.016500003161400004,
+    0.016500003161400004,
+    0.016500003161400004
+   ],
+   "timeConstantDown": [
+    0.019168776000000002,
+    0.019168776000000002,
+    0.019168776000000002,
+    0.019168776000000002
+   ]
+  }
+ },
+ "log_poll": "actuator_motors",
+ "log_from_start": true,
+ "t_arm_target_s": 30.0,
+ "t_offboard_target_s": 52.0,
+ "t_before_arm_wait_s": 14.531,
+ "sched": true,
+ "arm_attempts": 1,
+ "t_arm_sent_s": 30.0,
+ "t_arm_us": 30521000,
+ "t_climb_done_s": 38.49,
+ "t_hold_s": 51.0,
+ "hold_pos_ned": [
+  -0.03166762739419937,
+  0.0011059859534725547,
+  -4.95855712890625
+ ],
+ "hold_yaw_rad": 1.5877265930175781,
+ "hover_thrust_estimate": 0.1151,
+ "hover_thrust_valid": true,
+ "mpc_thr_hover": 0.137,
+ "hover_thr_used": 0.1151,
+ "hover_thr_source": "hte",
+ "t_offboard_sent_s": 52.001,
+ "t_offboard_us": 52518000,
+ "offboard_custom_mode": [
+  6,
+  0
+ ],
+ "t_window_start_us": 55518000,
+ "disturbance": {
+  "profile": "gust_x",
+  "onset_px4_s": 58.518,
+  "onset_us": 58518000,
+  "csv": "disturbance.csv",
+  "wind": {
+   "dir_deg": 3.271344,
+   "peak": 6.541891,
+   "steady": 0.602133
+  },
+  "injector": {
+   "profile": "gust_x",
+   "vel_none_ticks": 0,
+   "updates": 22401,
+   "first_valid_vel_sim_s": 58.51875
+  }
+ },
+ "thrust_sag": {
+  "scale": 0.804811,
+  "t0_us": 55518000,
+  "dur_s": 23.80960979386122,
+  "steps": [
+   [
+    55530000,
+    0.9999
+   ],
+   [
+    56040000,
+    0.9957
+   ],
+   [
+    56520000,
+    0.9918
+   ],
+   [
+    57030000,
+    0.9876
+   ],
+   [
+    57532000,
+    0.9835
+   ],
+   [
+    58031000,
+    0.9794
+   ],
+   [
+    58530000,
+    0.9753
+   ],
+   [
+    59040000,
+    0.9711
+   ],
+   [
+    59520000,
+    0.9672
+   ],
+   [
+    60030000,
+    0.963
+   ],
+   [
+    60521000,
+    0.959
+   ],
+   [
+    61031000,
+    0.9548
+   ],
+   [
+    61541000,
+    0.9506
+   ],
+   [
+    62021000,
+    0.9467
+   ],
+   [
+    62531000,
+    0.9425
+   ],
+   [
+    63041000,
+    0.9383
+   ],
+   [
+    63521000,
+    0.9344
+   ],
+   [
+    64031000,
+    0.9302
+   ],
+   [
+    64541000,
+    0.926
+   ],
+   [
+    65021000,
+    0.9221
+   ],
+   [
+    65531000,
+    0.9179
+   ],
+   [
+    66041000,
+    0.9137
+   ],
+   [
+    66521000,
+    0.9098
+   ],
+   [
+    67031000,
+    0.9056
+   ],
+   [
+    67541000,
+    0.9014
+   ],
+   [
+    68021000,
+    0.8975
+   ],
+   [
+    68531000,
+    0.8933
+   ],
+   [
+    69041000,
+    0.8891
+   ],
+   [
+    69521000,
+    0.8852
+   ],
+   [
+    70031000,
+    0.881
+   ],
+   [
+    70541000,
+    0.8768
+   ],
+   [
+    71021000,
+    0.8729
+   ],
+   [
+    71531000,
+    0.8687
+   ],
+   [
+    72041000,
+    0.8645
+   ],
+   [
+    72521000,
+    0.8606
+   ],
+   [
+    73031000,
+    0.8564
+   ],
+   [
+    73541000,
+    0.8522
+   ],
+   [
+    74021000,
+    0.8483
+   ],
+   [
+    74531000,
+    0.8441
+   ],
+   [
+    75041000,
+    0.84
+   ],
+   [
+    75521000,
+    0.836
+   ],
+   [
+    76031000,
+    0.8318
+   ],
+   [
+    76541000,
+    0.8277
+   ],
+   [
+    77021000,
+    0.8237
+   ],
+   [
+    77531000,
+    0.8195
+   ],
+   [
+    78041000,
+    0.8154
+   ],
+   [
+    78521000,
+    0.8114
+   ],
+   [
+    79031000,
+    0.8072
+   ]
+  ]
+ },
+ "trajectory": {
+  "shape": "lemniscate",
+  "ax": 5.0,
+  "ay": 2.5,
+  "w": 0.848528137423857,
+  "laps": 2,
+  "ramp_s": 3.0,
+  "t0_us": 58518000,
+  "dur_s": 17.80960979386122
+ },
+ "t_window_end_us": 79331000,
+ "t_land_cmd_us": 83340000,
+ "ulog": "flight.ulg",
+ "wall_time_s": 99.6,
+ "metrics_status": "ok",
+ "g3_outcome": "ok"
+}
