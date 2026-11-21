@@ -119,7 +119,9 @@ def build_run(draw, base_params_path, out_dir):
     mv_keys = {k.split("=")[0] for k in items}
     applied["tau_scale"] = {"value": f["tau_scale"]["value"], "via": "--model-variant tau" if "tau" in mv_keys else "nominal"}
     applied["tau_asym"] = {"value": f["tau_asym"]["value"],
-                           "via": "--model-variant tau_down" if "tau_down" in mv_keys else "nominal"}
+                           "via": "--model-variant tau_up/tau_down" if ({"tau_up", "tau_down"} & mv_keys) else "nominal"}
+    for k in ("tau_up", "tau_down"):
+        applied[k] = {"value": f[k]["value"], "via": "--model-variant tau x " + k if k in mv_keys or "tau" in mv_keys else "nominal"}
     applied["mass_scale"] = {"value": f["mass_scale"]["value"], "via": "--model-variant mass" if "mass" in mv_keys else "nominal"}
     applied["inertia_scale"] = {k: f["inertia_scale"][k] for k in ("ixx", "iyy", "izz")}
 

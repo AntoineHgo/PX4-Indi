@@ -64,14 +64,17 @@ def test_ranges():
     for r in camp():
         f = r["factors"]
         for ax in ("roll", "pitch", "yaw"):
-            assert _in(f["g1_err"][ax], 0.5, 2.0)
+            assert _in(f["g1_err"][ax], 0.8, 1.2)
         assert _in(f["tau_scale"]["value"], 0.5, 3.0)
         a = f["tau_asym"]
-        assert _in(a["value"], 1 / 3, 3.0)
-        if not a["inverted"]:
-            assert _in(a["value"], 1.0, 3.0)
-        else:
-            assert _in(a["value"], 1 / 3, 1.0)
+        # Q22: both motor directions inside x[0.5, 3]; the slow one is the tau draw, down slow unless inverted
+        assert _in(f["tau_up"]["value"], 0.5, 3.0) and _in(f["tau_down"]["value"], 0.5, 3.0)
+        slow, fast = (f["tau_up"]["value"], f["tau_down"]["value"]) if a["inverted"] else (f["tau_down"]["value"], f["tau_up"]["value"])
+        assert slow == f["tau_scale"]["value"] and fast <= slow + EPS
+        assert abs(a["value"] - f["tau_down"]["value"] / f["tau_up"]["value"]) < 1e-5
+        mv = r["hooks"]["model_variant"]      # the hook multiplies tau x tau_up / tau_down
+        assert abs(mv["tau"] * mv["tau_up"] - f["tau_up"]["value"]) < 1e-5
+        assert abs(mv["tau"] * mv["tau_down"] - f["tau_down"]["value"]) < 1e-5
         d = f["loop_delay"]
         assert _in(d["total_ms"], 0, 10) and abs(d["total_ms"] / 1.25 - round(d["total_ms"] / 1.25)) < 1e-9
         assert abs(d["act_ms"] - d["imu_ms"]) < EPS
@@ -126,9 +129,9 @@ def test_lhs_stratification():
     full = list(range(n))
     # values are rounded to 1e-6, strata are 1/240 wide: no boundary issue except exact endpoints (prob ~0)
     checks = [
-        ([r["factors"]["g1_err"][a] for r in rr for a in ("roll",)], 0.5, 2.0, True),
-        ([r["factors"]["g1_err"]["pitch"] for r in rr], 0.5, 2.0, True),
-        ([r["factors"]["g1_err"]["yaw"] for r in rr], 0.5, 2.0, True),
+        ([r["factors"]["g1_err"][a] for r in rr for a in ("roll",)], 0.8, 1.2, True),
+        ([r["factors"]["g1_err"]["pitch"] for r in rr], 0.8, 1.2, True),
+        ([r["factors"]["g1_err"]["yaw"] for r in rr], 0.8, 1.2, True),
         ([r["factors"]["tau_scale"]["value"] for r in rr], 0.5, 3.0, True),
         ([r["factors"]["mass_scale"]["value"] for r in rr], 0.7, 1.3, False),
         ([r["factors"]["vibration"]["mult"] for r in rr], 1.0, 5.0, True),
@@ -202,6 +205,31 @@ def test_conditional_fractions_n300():
     assert abs(_frac(allr, lambda r: r["mode"] == "acro") - 0.10) <= 0.04
 
 
+def test_q22_box_2000_draws():
+    """Q22 (S187): e in [0.8, 1.2] per axis, tau_up and tau_down in [0.5, 3] over 2000 draws (fast side floored at 0.5)."""
+    import random
+    rng = random.Random(2187)
+    n_inv = n_floor = 0
+    for _ in range(2000):
+        f, _h = g.decode(g.free_point(rng, g.DIMS_FREE))
+        for ax in ("roll", "pitch", "yaw"):
+            assert 0.8 - EPS <= f["g1_err"][ax] <= 1.2 + EPS, f["g1_err"]
+        for k in ("tau_up", "tau_down"):
+            assert 0.5 - EPS <= f[k]["value"] <= 3.0 + EPS, (k, f[k], f["tau_asym"])
+        slow = max(f["tau_up"]["value"], f["tau_down"]["value"])
+        assert slow == f["tau_scale"]["value"]
+        assert (f["tau_up"]["value"] == slow) == f["tau_asym"]["inverted"] or f["tau_up"]["value"] == f["tau_down"]["value"]
+        n_inv += f["tau_asym"]["inverted"]
+        n_floor += min(f["tau_up"]["value"], f["tau_down"]["value"]) <= 0.5 + EPS
+    assert 0.05 * 2000 < n_inv < 0.15 * 2000 and n_floor > 0     # inverted ~10 %, the floor is exercised
+    # corner values: C1/C4 e = 1.2, C2 e = 0.8 (also in test_corner_pins_exact on every corner run)
+    for c, want in (("C1", 1.2), ("C2", 0.8), ("C4", 1.2)):
+        u = g.free_point(rng, g.DIMS_FREE)
+        u.update({k: float(v) for k, v in g.CORNERS[c].items()})
+        f, _h = g.decode(u)
+        assert all(f["g1_err"][a] == want for a in ("roll", "pitch", "yaw")), (c, f["g1_err"])
+
+
 def test_corner_pins_exact():
     by = {}
     for r in camp():
@@ -211,10 +239,10 @@ def test_corner_pins_exact():
         assert len(fs) == 10
         for f in fs:
             if c == "C1":
-                assert all(f["g1_err"][a] == 2.0 for a in ("roll", "pitch", "yaw"))
+                assert all(f["g1_err"][a] == 1.2 for a in ("roll", "pitch", "yaw"))
                 assert f["tau_scale"]["value"] == 3.0 and f["loop_delay"]["total_ms"] == 10.0
             if c == "C2":
-                assert all(f["g1_err"][a] == 0.5 for a in ("roll", "pitch", "yaw"))
+                assert all(f["g1_err"][a] == 0.8 for a in ("roll", "pitch", "yaw"))
                 assert f["mass_scale"]["value"] == 1.3 and f["thrust_sag"]["on"] and f["thrust_sag"]["scale"] == 0.7
                 assert all(f["inertia_scale"][k] == 1.3 for k in ("ixx", "iyy", "izz"))
             if c == "C3":
@@ -224,7 +252,7 @@ def test_corner_pins_exact():
                 g_ = f["gnss"]
                 assert g_["latency_ms"] == 250 and not g_["matched"] and g_["ekf_delay_ms"] == 150
                 assert f["wind"]["steady_ms"] == 5.0 and 6.0 - EPS <= f["wind"]["gust_peak_total_ms"] <= 9.0 and f["wind"]["gust_amp_ms"] >= 1.0 - EPS
-                assert all(f["g1_err"][a] == 2.0 for a in ("roll", "pitch", "yaw"))
+                assert all(f["g1_err"][a] == 1.2 for a in ("roll", "pitch", "yaw"))
             if c == "C5":
                 assert f["vibration"]["mult"] == 5.0 and f["tel_frozen"]["on"] and f["tel_dropout"]["on"]
                 assert f["tel_dropout"]["prob"] == 0.2 and f["tau_scale"]["value"] == 0.5
@@ -260,7 +288,7 @@ def test_pretest_set():
     assert x["x_gnss"]["gnss"]["latency_ms"] == 250 and x["x_gnss"]["gnss"]["ekf_delay_ms"] == 150
     assert x["x_wind"]["wind"]["gust_peak_total_ms"] == 9.0 and x["x_mass"]["wind"]["steady_ms"] == 0.0
     assert x["x_tel_frozen"]["tel_frozen"]["on"] and not x["x_tel_frozen"]["tel_loss"]["on"]
-    assert x["x_asym"]["tau_asym"]["value"] == 3.0
+    assert x["x_asym"]["tau_asym"]["drawn_ratio"] == 3.0 and x["x_asym"]["tau_up"]["value"] == 0.5   # tau x1 slow, fast floored
     assert all(r["g4_typical_noise"]["profile"] is None for r in rr)
 
 
@@ -281,9 +309,9 @@ def test_laws_decode_grid():
     ln = lambda u, lo, hi: lo + u * (hi - lo)
     for u in (0.25, 0.5, 0.75):
         f, _ = g.decode(_u(asym=u))
-        assert _close(f["tau_asym"]["value"], lg(u, 1, 3)), "asym log law"
+        assert _close(f["tau_asym"]["drawn_ratio"], lg(u, 1, 3)), "asym log law"
         f, _ = g.decode(_u(asym=u, asym_inv=0.0))
-        assert _close(f["tau_asym"]["value"], 1 / lg(u, 1, 3)) and f["tau_asym"]["inverted"]
+        assert _close(f["tau_asym"]["drawn_ratio"], lg(u, 1, 3)) and f["tau_asym"]["inverted"]
         f, _ = g.decode(_u(gnss_lat=u))
         assert f["gnss"]["latency_ms"] == int(round(ln(u, 80, 250))), "gnss latency uniform"
         f, _ = g.decode(_u(gnss_lat=0.5, gnss_off=u))
@@ -295,7 +323,7 @@ def test_laws_decode_grid():
         f, _ = g.decode(_u(tau=u, vib=u))
         assert _close(f["tau_scale"]["value"], lg(u, 0.5, 3.0)) and _close(f["vibration"]["mult"], lg(u, 1, 5))
         f, _ = g.decode(_u(g1_r=u))
-        assert _close(f["g1_ratio"]["roll"], lg(u, 0.5, 2.0))
+        assert _close(f["g1_ratio"]["roll"], lg(u, 0.8, 1.2))
     for u, m in ((0.1, 0), (0.35, 1), (0.6, 2), (0.9, 3)):
         f, _ = g.decode(_u(weak_on=0.0, weak_motor=u, loss_on=0.0, loss_motor=u, frz_on=0.0, frz_motor=u))
         assert f["weak_motor"]["motor"] == f["tel_loss"]["motor"] == f["tel_frozen"]["motor"] == m
@@ -310,7 +338,7 @@ def test_laws_campaign_distributions():
         rr = camp(seed)
         f = lambda r: r["factors"]
         # asym log: P(ratio < sqrt 3) = 0.5 (linear would give 0.366)
-        a = [f(r)["tau_asym"]["value"] for r in rr if not f(r)["tau_asym"]["inverted"]]
+        a = [f(r)["tau_asym"]["drawn_ratio"] for r in rr if not f(r)["tau_asym"]["inverted"]]
         assert 0.43 <= sum(x < math.sqrt(3) for x in a) / len(a) <= 0.57, (seed, "asym law")
         # GNSS latency uniform on [80,250]: P(lat < 141.4) = 0.361 (log would give 0.5); LHS only (C4 pins 250)
         lt = [f(r)["gnss"]["latency_ms"] for r in lhs(seed)]

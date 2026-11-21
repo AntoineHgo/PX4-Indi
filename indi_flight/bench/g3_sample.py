@@ -26,8 +26,9 @@ HOLD_S = 20.0
 HOLD_START_NOMINAL_S = FLIGHT_S - HOLD_S
 
 # ranges (owner floors) -------------------------------------------------------------------------------------------
-G1_ERR = (0.5, 2.0)          # realised controller G1 / plant G1, log-uniform, per axis (ctrl mult = e / I_scale)
-TAU = (0.5, 3.0)             # log-uniform, x nominal
+G1_ERR = (0.8, 1.2)          # Q22 (S187; was 0.5-2.0): realised controller G1 / plant G1, log-uniform, per axis (ctrl mult = e / I_scale)
+TAU = (0.5, 3.0)             # log-uniform, x nominal; Q22: tau_up AND tau_down both stay inside this range
+TAU_FLOOR = TAU[0]
 ASYM = (1.0, 3.0)            # tau_down / tau_up, log-uniform; inverted: (1/3, 1)
 ASYM_INV_FRAC = 0.10         # widening
 DELAY_STEP_MS, DELAY_STEPS = 1.25, 9          # 0 .. 10 ms
@@ -108,7 +109,7 @@ DIMS_FREE = [d for d in DIMS if d != "sat_on"]
 def _nominal_u():
     u = dict(NOMINAL_U)
     for k in ("g1_r", "g1_p", "g1_y"):
-        u[k] = 0.5          # log-uniform [0.5, 2]: u=0.5 -> 1.0
+        u[k] = math.log(1.0 / G1_ERR[0]) / math.log(G1_ERR[1] / G1_ERR[0])   # e = 1.0 (log-mid of [0.8, 1.2] is 0.98)
     u["tau"] = math.log(1.0 / TAU[0]) / math.log(TAU[1] / TAU[0])   # tau x1
     for k in ("mass", "ix", "iy", "iz"):
         u[k] = 0.5
@@ -167,16 +168,21 @@ def decode(u, no_wind=False, no_gnss=False):
     isc = {"roll": r6(sx), "pitch": r6(sy), "yaw": r6(sz)}
     e = {"roll": r6(logu(u["g1_r"], *G1_ERR)), "pitch": r6(logu(u["g1_p"], *G1_ERR)), "yaw": r6(logu(u["g1_y"], *G1_ERR))}
     f["g1_err"] = {**e, "nominal": 1.0, "unit": "e = realised controller G1 / plant G1 (alias of g1_ratio)"}
-    f["g1_ratio"] = {**e, "nominal": 1.0, "unit": "e, log-uniform [0.5, 2], controller G1 / plant G1"}
+    f["g1_ratio"] = {**e, "nominal": 1.0, "unit": "e, log-uniform [0.8, 1.2] (Q22), controller G1 / plant G1"}
     f["g1_ctrl_mult"] = {**{a: r6(e[a] / isc[a]) for a in e}, "i_scale": isc, "nominal": 1.0,
                          "unit": "k = e / I_scale(axis): multiplier on nominal controller G1 (plant G1 ~ G1_nom / I_scale)"}
+    # Q22 (S187): the tau draw is the SLOW motor direction; the fast one is slow / asym, floored at TAU[0]. Both stay in
+    # x[0.5, 3] (before: tau_down = scale x asym reached x9). Down is the slow side unless the draw is inverted (10 %).
     tau = logu(u["tau"], *TAU)
-    f["tau_scale"] = {"value": r6(tau), "nominal": 1.0, "unit": "x nominal motor tau (up and down)"}
     inv = u["asym_inv"] < ASYM_INV_FRAC
-    ratio = logu(u["asym"], *ASYM)
-    if inv:
-        ratio = 1.0 / ratio                      # [1/3, 1]
-    f["tau_asym"] = {"value": r6(ratio), "inverted": bool(inv), "nominal": 1.0, "unit": "tau_down / tau_up"}
+    asym = logu(u["asym"], *ASYM)                # drawn |ratio| slow/fast in [1, 3]
+    fast = max(tau / asym, TAU_FLOOR)
+    t_up, t_dn = (tau, fast) if inv else (fast, tau)
+    f["tau_scale"] = {"value": r6(tau), "nominal": 1.0, "unit": "x nominal motor tau of the SLOW direction (Q22)"}
+    f["tau_up"] = {"value": r6(t_up), "nominal": 1.0, "unit": "x nominal timeConstantUp, in [0.5, 3]"}
+    f["tau_down"] = {"value": r6(t_dn), "nominal": 1.0, "unit": "x nominal timeConstantDown, in [0.5, 3]"}
+    f["tau_asym"] = {"value": r6(t_dn / t_up), "inverted": bool(inv), "drawn_ratio": r6(asym), "nominal": 1.0,
+                     "unit": "realised tau_down / tau_up (after the 0.5 floor on the fast side)"}
     k = pick(u["delay"], DELAY_STEPS)
     d = k * DELAY_STEP_MS
     f["loop_delay"] = {"total_ms": r6(d), "act_ms": r6(d / 2), "imu_ms": r6(d / 2), "steps": k, "nominal": 0.0,
@@ -282,7 +288,9 @@ def hooks_for(f, gz_seed):
             "MC_INDI_G1_Y": {"x_nominal": f["g1_ctrl_mult"]["yaw"]},
             "SIM_GZ_ERPM_LAT": f["tel_latency"]["frames"],
         },
-        "model_variant": {"tau": f["tau_scale"]["value"], "tau_up": 1.0, "tau_down": f["tau_asym"]["value"],
+        "model_variant": {"tau": f["tau_scale"]["value"],
+                          "tau_up": r6(f["tau_up"]["value"] / f["tau_scale"]["value"]),     # relative to tau (multiplies)
+                          "tau_down": r6(f["tau_down"]["value"] / f["tau_scale"]["value"]),
                           "mass": f["mass_scale"]["value"], "ixx": f["inertia_scale"]["ixx"],
                           "iyy": f["inertia_scale"]["iyy"], "izz": f["inertia_scale"]["izz"]},
         "timed": [],
