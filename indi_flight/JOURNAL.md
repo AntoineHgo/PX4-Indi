@@ -1520,3 +1520,4 @@ Blocked: G5.7 only.
   LPF 5 probe passes only under the detector threshold. G5.7 hold-edge lag: XY-gain and Tc 0.01 probes FAIL,
   aa4fd2654a revert PASS s3/s1 (D-G57-FF) -> Q23 (D-JFF-KEEP was owner request). PID key1/key2 on 03: key 1 lacks
   the Q15 A nav-change skip. Gate progress: G3 and G5.7 failure causes shown on logs, fixes named (G3 fix next, G5.7 Q23).
+- S192 (2026-11-21): scored D-OWNER-Q23 probe (results/freeze10_cand_s191): G5.7 3/3 PASS, G5.3/5.4 and G4 cruise PASS, G3 02/05 pass with matched GNSS; FREEZE-10 declared at 7fe6206fcc (D-FREEZE-10). Gate progress: G5.7 FAIL->PASS on candidate (probe, re-score at freeze-10 batch); G3 02/05 cause shown.

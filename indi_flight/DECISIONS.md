@@ -1201,3 +1201,17 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   harsh auto_tour (G5.3/G5.4 vs freeze-9, 10 % rule; omega_ff peaks in takeoff/loiter/mission recorded); one G4
   cruise run with omega_ff non-zero in offboard.
 - Overturn: any probe check fails -> new owner question, no fall-back to A or C.
+
+## D-FREEZE-10 (S192, 2026-11-21): freeze-10 declared (Q23 revert + D-AF-ALIAS)
+- Firmware: 7fe6206fcc (last commit under src/: aa4fd2654a revert on top of D-AF-ALIAS 2d92dbcf59/4afa7a97b6, both
+  keyed). Config unchanged: results/g5_freeze_s157/params.params, XY gains at firmware defaults 1.2/2.4.
+- Evidence: D-OWNER-Q23 probe (results/freeze10_cand_s191/README.md): G5.7 PASS 3/3 (worst 3.61 deg, limit 5;
+  freeze-9 FAIL 5.8-10.7); G5.3/G5.4 land/tour typ+harsh PASS (two harsh metrics > 10 % beyond freeze-9 typ range,
+  far inside limits); G4 cruise_typ_s1 chatter/effort/items 1-2 PASS both keys, omega_ff non-zero in offboard (107
+  dps). Cruise item 3 dz 0.168 m is not a G4 row (RECONCILE_S180, PID equal), noted only. Unit tests 0 failures.
+- Invalidated, to re-fly at freeze-10: G2 outer cells, G4 rows, G5 outer rows, G3 pre-test (20 draws).
+- G3 02/05: matched-GNSS probe removes item 2/3 failures (q 1.45 Hz 1.83/0.71 dps vs 12.2/8.5; xy 0.13/0.11 m vs
+  0.54/0.50). Cause shown: uncompensated GNSS latency +95/+84 ms; PID passes the same draws (S188) -> INDI-specific
+  sensitivity, rests on D-OFFB-POSVEL bandwidth. Decide at the freeze-10 pre-test: if 02/05 fail again, re-open
+  D-OFFB-POSVEL (lower XY_P/VP) or ask owner on the mismatch range; no firmware change before that re-fly.
+- Overturn: any invalidated row FAILs at freeze-10 with a log-shown INDI cause.
