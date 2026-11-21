@@ -255,3 +255,5 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S159 | key2 G5.5+G5.7 | sonnet | 22 calls, ~$0.6 | 27/27 INDI verdicts agree |
 | S159 | route check 159 | sonnet | 7 calls, ~$0.15 | filed |
 | S159 | key2 G5.1+G5.2 | sonnet | 19 calls, ~$0.6 | 17/17 verdicts agree |
+| S160 | sonnet | G5.11 checker + osc detector (self-tests, break-check) | bench/g511_check.py, osc_detector.py | done, 12 calls, verdict FAIL 6/6 UNKEYED |
+| S160 | haiku | key2 G5.3 hold (independent) | key2_g53_hold.txt | done, 6 calls, agrees 3/3 |
