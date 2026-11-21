@@ -30,7 +30,7 @@ T = 1.0 / FS_OUT
 
 # ---- parameters: (value, source)
 P = dict(
-    xy=dict(Kp=0.95, Kvp=1.8, Kvi=0.4, Kvd=0.2),   # stock yaml defaults, freeze file does not set MPC_*
+    xy=dict(Kp=MM.XY_GAINS_INDI['Kp'], Kvp=MM.XY_GAINS_INDI['Kv'], Kvi=0.4, Kvd=0.2),   # MC_INDI_XY_P/VP (freeze-7 defaults); Kvi/Kvd stock MPC_XY_VEL_I/D_ACC
     z=dict(Kp=1.0, Kvp=4.0, Kvi=2.0, Kvd=0.0),
     veld_lp=5.0,        # MPC_VELD_LP yaml default
     lpf=10.0,           # MC_INDI_POS_LPF (freeze params)
@@ -178,7 +178,16 @@ FINDINGS = """- PT0 x/y and PT1 x/y GM (model 11.5-11.7 dB vs measured about 16.
 - GATE reading: PM within 10 deg in all 8 rows; GM within 3 dB in 0 of 4 xy rows (dGM about -5 dB, explained above as an unmodelled attenuation of the thrust/attitude chain, model conservative), n/a (no crossing, agreement) in 4 z rows. Per the gate wording this is a difference to be explained, not yet explained by a test: it needs either the model with the real inner lag (rate loop + rotor model) or a measured attitude-to-acceleration FRF."""
 
 
-def main():
+def main(argv=None):
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--legacy-mpc", action="store_true", help="evaluate the old MPC_XY_P / MPC_XY_VEL_P_ACC xy gains (s164 values)")
+    ap.add_argument("--params", default=None, help="params file with MC_INDI_XY_P / MC_INDI_XY_VP (default 1.9 / 3.6 when absent)")
+    ap.add_argument("--out", default=None)
+    a = ap.parse_args(argv)
+    g = MM.xy_gains(a.params, legacy_mpc=a.legacy_mpc)
+    P["xy"]["Kp"], P["xy"]["Kvp"] = g["Kp"], g["Kv"]
+    out = a.out or os.path.join(RES, "xcheck.md" if a.legacy_mpc else "xcheck_indi_xy.md")
     ok, st = selftest()
     meas = load()
     rows, notes = [], []
@@ -215,7 +224,7 @@ def main():
     L.append("## Model (one paragraph)\n")
     L.append(
         "Small-signal hover, one axis, outer period T = 11.25 ms (88.89 Hz, S163 README). Block list, value, source: "
-        "(1) velocity/position controller C = (Kvp + Kvi/s)(1 + Kp/s) + Kvd s Fd, xy: MPC_XY_P 0.95, MPC_XY_VEL_P/I/D_ACC 1.8/0.4/0.2; z: MPC_Z_P 1.0, "
+        "(1) velocity/position controller C = (Kvp + Kvi/s)(1 + Kp/s) + Kvd s Fd, xy: " + (f"MPC_XY_P {g['Kp']}, MPC_XY_VEL_P_ACC {g['Kv']} (legacy)" if a.legacy_mpc else f"MC_INDI_XY_P {g['Kp']}, MC_INDI_XY_VP {g['Kv']}") + ", MPC_XY_VEL_I/D_ACC 0.4/0.2; z: MPC_Z_P 1.0, "
         "MPC_Z_VEL_P/I/D_ACC 4.0/2.0/0 (the freeze params file does not set MPC_*: stock yaml defaults, "
         "`multicopter_position_control_gain_params.yaml`), structure from `PositionControl.cpp` lines 130-204 (the integrator acts on v_sp - v, so "
         "the factor (1 + Kp/s) multiplies both P and I; I forward-Euler with one-sample delay, D = backward difference then first-order alpha "
@@ -260,7 +269,7 @@ def main():
         "9. Velocity-derivative filter is AlphaFilter with alpha = Ts/(Ts + 1/(2 pi fc)) (as in margins_models.alpha_coef, itself marked unverified).",
     ]
     txt = "\n".join(L) + "\n"
-    open(os.path.join(RES, "xcheck.md"), "w").write(txt)
+    open(out, "w").write(txt)
     for r in rows:
         print(r[0], r[1], "model PM/GM/fc", [fmt(x, 2) for x in r[2][:3]], "meas worst PM", fmt(r[3]), "dPM", fmt(r[7]), "dGM", fmt(r[9]), r[10], "|", r[11][:40])
     print("selftest", "PASS" if ok else "FAIL")

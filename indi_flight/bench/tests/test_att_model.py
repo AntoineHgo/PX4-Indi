@@ -70,10 +70,20 @@ def test_outer_factor():
     assert abs(M.outer_factor(w, 0, 0, 0, 0)[0] - 1) < 1e-12
     s = 1j * w[0]
     O = 1 + 1.8 / s + 0.95 * 1.8 / s ** 2 + 0.4 / s ** 2 + 0.4 * 0.95 / s ** 3 + 0.2 / (1 + s / (2 * math.pi * 5.0))
-    assert abs(M.outer_factor(w)[0] - O) < 1e-12
+    assert abs(M.outer_factor(w, **M.xy_gains(legacy_mpc=True))[0] - O) < 1e-12
     assert abs(abs(O) - 1.19) < 0.02 and abs(math.degrees(np.angle(O)) + 13) < 1.0
-    Lo = M.L_att_indi_outer(w, 400.0)[0] / M.L_att_indi(w, 400.0)[0]
+    Lo = M.L_att_indi_outer(w, 400.0, outer=M.xy_gains(legacy_mpc=True))[0] / M.L_att_indi(w, 400.0)[0]
     assert abs(Lo - O) < 1e-12
+
+
+def test_outer_factor_uses_mc_indi_xy_gains():
+    """Since 7dd352bae2 the xy outer model default is MC_INDI_XY_P 1.9 / MC_INDI_XY_VP 3.6, not MPC_XY_P / MPC_XY_VEL_P_ACC."""
+    assert M.xy_gains() == dict(Kp=1.9, Kv=3.6)
+    assert M.xy_gains({"MC_INDI_XY_P": 2.0, "MC_INDI_XY_VP": 4.0, "MPC_XY_P": 9.0}) == dict(Kp=2.0, Kv=4.0)
+    assert M.xy_gains(legacy_mpc=True) == dict(Kp=0.95, Kv=1.8)
+    s = 1j * 2 * math.pi * 1.3
+    O = 1 + 3.6 / s + 1.9 * 3.6 / s ** 2 + 0.4 / s ** 2 + 0.4 * 1.9 / s ** 3 + 0.2 / (1 + s / (2 * math.pi * 5.0))
+    assert abs(M.outer_factor(np.array([s.imag]))[0] - O) < 1e-12
 
 
 if __name__ == "__main__":

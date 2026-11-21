@@ -227,10 +227,34 @@ def L_att_indi(w, fs=800.0, **kw):
     return _att_path(zi, fs, p["att_p"], p["att_lat"]) * Tcl
 
 
-def outer_factor(w, Kp=0.95, Kv=1.8, Ki=0.4, Kd=0.2, fd=5.0):
+# xy outer gains: since firmware 7dd352bae2 the INDI position module uses MC_INDI_XY_P / MC_INDI_XY_VP in every mode
+# (MPC_XY_VEL_I_ACC / MPC_XY_VEL_D_ACC are still used for xy).  MPC_XY_P / MPC_XY_VEL_P_ACC are the legacy values.
+XY_GAINS_INDI = dict(Kp=1.9, Kv=3.6)
+XY_GAINS_MPC = dict(Kp=0.95, Kv=1.8)
+
+
+def xy_gains(params=None, legacy_mpc=False):
+    """Return dict(Kp, Kv) for the xy outer model.  params: dict or path of a params file / log-params dump with
+    MC_INDI_XY_P / MC_INDI_XY_VP (defaults 1.9 / 3.6 when absent).  legacy_mpc=True evaluates the old MPC_XY_P /
+    MPC_XY_VEL_P_ACC (read from params when present, else 0.95 / 1.8)."""
+    import re
+    if isinstance(params, str):
+        d = {}
+        for ln in open(params):
+            m = re.match(r"\s*(?:\S+\s+\S+\s+)?([A-Z][A-Z0-9_]+)[\s,=:]+([-+0-9.eE]+)\s*$", ln)
+            if m:
+                d[m.group(1)] = float(m.group(2))
+        params = d
+    params = params or {}
+    if legacy_mpc:
+        return dict(Kp=params.get("MPC_XY_P", XY_GAINS_MPC["Kp"]), Kv=params.get("MPC_XY_VEL_P_ACC", XY_GAINS_MPC["Kv"]))
+    return dict(Kp=params.get("MC_INDI_XY_P", XY_GAINS_INDI["Kp"]), Kv=params.get("MC_INDI_XY_VP", XY_GAINS_INDI["Kv"]))
+
+
+def outer_factor(w, Kp=XY_GAINS_INDI["Kp"], Kv=XY_GAINS_INDI["Kv"], Ki=0.4, Kd=0.2, fd=5.0):
     """Horizontal outer loop seen at the attitude break (A-36, keyed T195, design/t195_att_outer_key.md).
-    Small-angle hover: v = g phi/s, x = v/s, phi_sp = a_sp/g with PositionControl P-PID (MPC_XY_P, MPC_XY_VEL_P/I/D_ACC,
-    stock defaults), D on the velocity derivative low-passed at MPC_VELD_LP (fd).  The INDI acceleration increment
+    Small-angle hover: v = g phi/s, x = v/s, phi_sp = a_sp/g with PositionControl P-PID (MC_INDI_XY_P, MC_INDI_XY_VP,
+    MPC_XY_VEL_I/D_ACC; legacy MPC_XY_P/VEL_P_ACC via xy_gains(legacy_mpc=True)), D on the velocity derivative low-passed at MPC_VELD_LP (fd).  The INDI acceleration increment
     cancels in the small-signal sense.  O = 1 + (Kv + Ki/s)(Kp + s)/s^2 + Kd F(s); EKF velocity lag not modelled."""
     s = 1j * np.asarray(w, float)
     F = 1.0 / (1.0 + s / (2 * np.pi * fd))
