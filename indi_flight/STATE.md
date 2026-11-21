@@ -1,25 +1,25 @@
 # STATE (budget 8000 bytes: read at every launch, resume essentials only)
 
 ## Status
-- Stage: 6 (validation). FREEZE-7 declared S177 (D-FREEZE-7): firmware 08011e92d0, config g5_freeze_s157 params.
-  Rows listed in D-FREEZE-7 re-fly now (queue results/freeze7_s177); other freeze-6 evidence stands.
+- Stage: 6 (validation). FREEZE-8 declared S181 (D-FREEZE-8): firmware d2f3845292, config g5_freeze_s157 params
+  (XY gains at firmware defaults 1.2/3.6). Rows listed in D-FREEZE-8 re-fly (queue results/freeze8_s181).
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
 - Blocker: none (Q17, Q18 answered A, logged S180).
-  G2 and G4 NOT PASSED at freeze-7; freeze-8 in preparation (XY_P 1.2 shown, F2 for L1 to implement).
+  G2 and G4 NOT PASSED at freeze-7; freeze-8 re-fly decides them.
 ## Next actions (owner order; each names its gate item)
-1. Freeze-8 (G2, G4 cruise, G5): candidate firmware = F2 9dd5f76382 + F4 d65111154b (kSetpointLeadTc 0.03) +
-   MC_INDI_XY_P default 1.2 (d2f3845292; bench model test 1d9ae87085). F4 met its probe on cruise_typ_s1 (89 Hz
-   4.2e-4, limit 5e-4, thin). Before freeze: (a) F4 gtest DONE; (b) key2 (sonnet, code-to-spec) of F2+F4+XY_P diff
-   IN FLIGHT S181 -> design/key2_freeze8_s181.md; (c) pre-test IN FLIGHT S181 -> results/freeze8_pretest_s181/: cruise_typ s2/s3 + G2-STEP
-   attitude cell. Then declare freeze-8 (D-FREEZE-8, list rows) and re-fly: G2 outer 24 + 2 spot + G2-STEP, G4 18,
-   G5.5 24, G5.3 hold+mission x3, G5.4 6, G5.10 3 seeds (Q17 A scoring).
+1. FREEZE-8 declared S181 (D-FREEZE-8, firmware d2f3845292). Re-fly queue results/freeze8_s181/queue.sh (resume:
+   rerun it; check `tail -n 5 queue_status.tsv`, docker ps). When done: score each group with the keyed scripts used
+   at freeze-7 (agents, sonnet/haiku), write G2 / G4 / G5 verdicts in GATES.md + GATE_STATUS.tsv the same session.
+   Yaw G2-STEP settle 1139 ms (S64 ~920, limit 1350): watch in the 3 seeds, no chase while in limit.
 2. G4 hover_harsh_s1 20 Hz (take-off/loiter, 9.7e-4, PID clean, 1/3 seeds): after F2 result; one session cause bound,
    candidate decision (4) inner rate INDI -> owner question before re-opening (re-flies most gates).
    Q18 re-score done (no verdict moved); cruise item 3 offset is not a G4 row (PID 0.295 m = INDI): closed.
 3. G5: freeze-7 G5.5 24/24, G5.3 mission 3/3, G5.4 6/6 PASS (SCORES.md). G5.3 hold (gust_x) IS in the D-FREEZE-7 list
-   ("G5.3/G5.4 x3") and unflown: fly 3 seeds at the final freeze (deferred while F1/F2 may move the config). G5.10 pre-test queue4 (results/g5_10_freeze7_s178, after queue3): read
-   SAT motors >= 0.99 time (score_motors.py is NEW: key2 before gate use) and PID reference; stabilized part per Q17 A
-   (GATES "Owner amendments S180"). Then G5.10 3 seeds, then G5 verdict.
+   ("G5.3/G5.4 x3"): in the freeze-8 queue. G5.10: (a) key2 done (KEY2_MOTORS_S181.md): sat times agree, key1
+   score_motors.py has 4 defects (exit_status LOC, stab tilt limit MAN_TILT_MAX, recovery = att error to stick sp,
+   KeyError on aborted runs): fix key1 to spec (sonnet) then re-compare; (b) SAT set-up fault (D-G510-SAT-SETUP):
+   ramp SIM_GZ_THR_SC in hover before the window, pre-test INDI + PID 1 seed; (c) then 3 seeds INDI (+PID ref),
+   stabilized part Q17 A; then G5 verdict. Run after the freeze-8 queue (no parallel docker for gate evidence).
 4. G3 set-up (owner step 4), after G2/G4/G5 queue: tel_frozen hook (gz_bridge bit-identical rpm injector, two keys;
    until then runs 03/11 abort); (b) excursion vs setpoint in g3_checks (key2 before gate use); run 17 LOC (tilt
    129 deg): PID reference only, one session max; osc runs 03/07/08/13 are re-flown after the set-up fix, not chased.
@@ -53,9 +53,8 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | G5.10 pre-test queue4 flown, 4 metrics committed, unscored | - | results/g5_10_freeze7_s178/ | - |
-| K8 | key2 freeze-8 diff (S181) | sonnet | design/key2_freeze8_s181.md | re-brief if file has no verdict line |
-| P8 | freeze-8 pre-test 3 flights (S181) | sonnet | results/freeze8_pretest_s181/README.md | re-run missing items |
+| Q8 | freeze-8 re-fly queue (detached docker) | - | results/freeze8_s181/ | rerun queue.sh (idempotent) |
+| K1 | fix key1 score_motors -> bench/g510_score_motors.py | sonnet | KEY2_MOTORS_S181.md "Key1 fixed" | re-brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
