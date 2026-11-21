@@ -16,7 +16,7 @@ FS, T = 800.0, 90.0
 T0, T1 = 40.0, 50.0
 
 
-def make(osc_hz=None, osc_dps=0.0, alt_off=0.0, tilt_deg=0.0, line_hz=None, pos_lc=0.0, land_at=None, seed=0):
+def make(osc_hz=None, osc_dps=0.0, alt_off=0.0, tilt_deg=0.0, line_hz=None, pos_lc=0.0, land_at=None, seed=0, osc_from=0.0, land_rate=1.0):
     rng = np.random.default_rng(seed)
     t = np.arange(0, T, 1 / FS)
     n = len(t)
@@ -25,7 +25,7 @@ def make(osc_hz=None, osc_dps=0.0, alt_off=0.0, tilt_deg=0.0, line_hz=None, pos_
     pos[:, 2][t < 0.5] = 0.0
     pos[:, 0] += pos_lc * np.sin(2 * np.pi * 0.5 * t) * (t > 10)
     if land_at:
-        h = np.where(t > land_at, np.maximum(5.0 - (t - land_at), 0.0), h)
+        h = np.where(t > land_at, np.maximum(5.0 - land_rate * (t - land_at), 0.0), h)
         pos[:, 2] = -h
     th = np.zeros(n)
     if tilt_deg:
@@ -33,7 +33,7 @@ def make(osc_hz=None, osc_dps=0.0, alt_off=0.0, tilt_deg=0.0, line_hz=None, pos_
     q = np.stack([np.cos(th / 2), np.sin(th / 2), np.zeros(n), np.zeros(n)], axis=1)
     w = np.radians(1.0) * rng.normal(size=(n, 3))
     if osc_hz:
-        w[:, 0] += np.radians(osc_dps) * np.sqrt(2) * np.sin(2 * np.pi * osc_hz * t)   # osc_dps = RMS
+        w[:, 0] += np.radians(osc_dps) * np.sqrt(2) * np.sin(2 * np.pi * osc_hz * t) * (t > osc_from)   # osc_dps = RMS
     cmd = 0.5 + 0.002 * rng.normal(size=(n, 4))
     if line_hz:
         cmd += 0.02 * np.sin(2 * np.pi * line_hz * t)[:, None]
@@ -50,10 +50,11 @@ def main():
         "chatter60": (dict(line_hz=60.0), dict(item2=False)),
         "poslc": (dict(pos_lc=0.2), dict(item2=False)),
         "landing": (dict(land_at=70.0), dict(p=True)),
+        "osc_in_land": (dict(land_at=70.0, land_rate=0.5, osc_hz=30.0, osc_dps=8.0, osc_from=70.0), dict(item2=False)),  # D-G3-SPAN
         "alt_off": (dict(alt_off=0.2), dict(item3=False)),
         "loc": (dict(tilt_deg=80.0), dict(item1=False)),
     }
-    patches = {"osc30": ("RMS_DEG_S", 1e9), "chatter60": None, "poslc": ("POS_P2P_M", 9.0),
+    patches = {"osc30": ("RMS_DEG_S", 1e9), "osc_in_land": ("RMS_DEG_S", 1e9), "chatter60": None, "poslc": ("POS_P2P_M", 9.0),
                "alt_off": ("ALT_MEAN", (9.0, 9.0)), "loc": ("TILT_DEG", 179.0)}
     out, bad = {}, 0
     for name, (kw, exp) in cases.items():

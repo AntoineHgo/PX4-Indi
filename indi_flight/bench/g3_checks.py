@@ -21,8 +21,9 @@ Item 3 steady-state on [T0,T1]: horizontal RMS about the reference <= 0.15 m cal
 PROPOSED readings (undefined in the spec, minimal choice):
   - airborne = from the first truth sample with height (-z minus -z[0]) > 1.0 m to the last such sample; "whole flight after
     take-off" is that span (landing and disarm excluded). Not airborne at all = items 1 and 2 fail.
-  - the airborne span also ends at the first vehicle_status nav_state in LAND_NAV_STATES (RTL 5, AUTO_LAND 18): spec says
-    "outside land/RTL"; the commanded descent is not scored (t_land is reported).
+  - "outside land/RTL" (GATES 246) applies to the item-1 height-drop, ground-contact and excursion rules only: those use
+    the airborne span cut at the first vehicle_status nav_state in LAND_NAV_STATES (RTL 5, AUTO_LAND 18). Item-1 tilt/NaN
+    and item 2 use the whole airborne span, commanded descent included (GATES 304 "whole flight", D-G3-SPAN, A-55).
   - "height below segment start": segment start = T0 (height at the first sample >= T0).
   - ground contact = height < 0.1 m inside the airborne span (commanded landing is outside it by construction).
   - reference = median of trajectory_setpoint position over [T0,T1] (hold point commanded; stamps timestamp); if the log has no
@@ -138,23 +139,23 @@ def evaluate(tt, pos, q, w, tm, cmd, ref, t0, t1, wind=False, sag=False, mode="p
         res["item2_oscillation"] = {"pass": False, "reason": "never airborne"}
     else:
         ta, te = float(tt[up[0]]), float(tt[up[-1]])
-        if t_land is not None:
-            te = min(te, t_land)
+        tl = min(te, t_land) if t_land is not None else te  # end of the span outside land/RTL (item-1 drop/contact/exc)
         res["airborne"] = [ta, te]
         res["t_land"] = t_land
         a = (tt >= ta) & (tt <= te)
+        al = (tt >= ta) & (tt <= tl)
         # item 1
         tilt = np.degrees(tilt_rad(np.nan_to_num(q[a], nan=1.0)))
         tilt_s = longest_run_s(tt[a], tilt > TILT_DEG)
         i0 = int(np.searchsorted(tt, t0))
-        drop = float(h[i0] - np.nanmin(h[max(i0, 0):][tt[max(i0, 0):] <= te])) if i0 < len(tt) and tt[i0] <= te else 0.0
-        contact = bool(np.any(h[a] < CONTACT_M))
+        drop = float(h[i0] - np.nanmin(h[max(i0, 0):][tt[max(i0, 0):] <= tl])) if i0 < len(tt) and tt[i0] <= tl else 0.0
+        contact = bool(np.any(h[al] < CONTACT_M))
         am = (tm >= ta) & (tm <= te)
         nan = bool(not np.isfinite(pos[a]).all() or not np.isfinite(q[a]).all() or not np.isfinite(w[a]).all()
                    or not np.isfinite(cmd[am][:, :4]).all())
         exc = None
         if mode == "position" and ref is not None:
-            exc = float(np.nanmax(np.hypot(pos[a, 0] - ref[0], pos[a, 1] - ref[1])))
+            exc = float(np.nanmax(np.hypot(pos[al, 0] - ref[0], pos[al, 1] - ref[1])))
         loc = {"tilt_over_60deg_longest_s": tilt_s, "tilt_max_deg": float(np.max(tilt)), "height_drop_m": drop,
                "ground_contact": contact, "nan": nan, "horizontal_excursion_m": exc}
         loc["pass"] = bool(tilt_s <= TILT_S and drop <= DROP_M and not contact and not nan and (exc is None or exc <= EXCURSION_M))
