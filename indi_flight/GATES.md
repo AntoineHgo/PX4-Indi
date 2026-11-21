@@ -620,3 +620,14 @@ report FAIL on max gap 13.75/15.0 ms only (missing 0.016/0.017 %, under the 0.1 
 was withdrawn by Q2); flown three times, PM 63.1/61.0/59.9, result unchanged, counted. (2) key2 BLOCKED on 3 ax3 cells
 (dPM 3.3 deg on two, GM found by key2 only, 20.9 dB, on the third); both keys above the limits in each. (3) rate and
 attitude spot margins are thin (+2.3/+2.4 deg). (4) 3 rate x-check groups and A-51 as in Q16 A. 250 Hz not measured.
+
+## G4 verdict at freeze-9 (S184, 2026-11-21): NOT PASSED
+Evidence: `results/freeze9_s183/G4_SCORES.md` (18 INDI runs, both keys with the Q19 skip; PID refs `g4_pid/`),
+`results/freeze9_s183/g4/Q19_KEY2_REVIEW.md` (second key: skip correct in both keys, guard data correct, guard
+comparison not coded, metric undefined in the S183 text -> Q20). Pass: effort R20/C20/R4/clip 18/18; item 1 18/18;
+chatter (Q19 skip) 0/18 flagged both keys (max line 4.2e-4, floor 5e-4); item 2 harsh hover 3/3, quiet/typ 12/12,
+harsh cruise flagged 3/3 (p 11.9-12.7, q 11.3-12.0 dps; informational per S183); item 3 harsh hover 3/3 (cruise
+offsets 0.11-0.22 m reported only, as S180). Fail: PID guard. Flagged-line reading: INDI holds a 20.0-20.8 Hz line
+5.0-5.3e-4 inside skipped windows at 5 of 16 transitions (17->4 hover_harsh_s2, cruise_harsh_s1; 14->18
+hover_harsh_s1/s2, cruise_harsh_s2), PID unflagged there (2.7-4.4e-4). Any-window reading: 9 of 12 fail. The verdict
+is NOT PASSED under both readings. Next: one session of cause search on the INDI 20 Hz transition line (PID clean).

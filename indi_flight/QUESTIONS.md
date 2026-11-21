@@ -41,3 +41,17 @@ S180: points 3 and 4 acted on (results/g55_gain_probe_s179/RECONCILE_S180.md: ke
 cruise item 3 offset equals PID, not a G4 row). Points 1-2 stand as rules (point 2 in STATE next action 4).
 
 Q19 closed S183 (owner answer A with PID guard; GATES "Owner amendment S183", D-OWNER-Q19; text in JOURNAL.md S183).
+
+## Q20 (S184, 2026-11-21): which RMS does the Q19 PID guard compare? BLOCKING for G4 (guard rows)
+Context: the S183 amendment says a G4 row FAILS "if the INDI line RMS in a skipped window exceeds the PID reference at
+the same transition". The second key (`results/freeze9_s183/g4/Q19_KEY2_REVIEW.md`, F1) finds the metric undefined:
+which windows, which line, any floor or tolerance. Freeze-9 G4 is NOT PASSED under both readings (GATES "G4 verdict at
+freeze-9"), so this question does not change today's verdict; it sets the target of the fix and of the re-score.
+- Reading A (flagged line): compare only lines above the chatter floor 5e-4 (the G3 detector's own flag). INDI fails
+  where it is flagged and PID is not, or both are flagged and INDI > PID. Freeze-9: 5 of 16 transitions fail (INDI
+  20.0-20.8 Hz 5.0-5.3e-4, PID 2.7-4.4e-4).
+- Reading B (any window): max line RMS over all overlapping windows, strict INDI > PID, no floor. Freeze-9: 9 of 12
+  fail, several at levels far below the 5e-4 floor, i.e. noise-level comparisons between two stacks (lesson 6).
+Recommendation: A (absolute floor, then the PID comparison only where the floor is crossed).
+Meanwhile: one session of cause search on the INDI 20 Hz transition line (log analysis, no firmware change), which
+both readings require. Not blocked on other gates (G5.10 set-up continues). No re-score of guard rows until answered.
