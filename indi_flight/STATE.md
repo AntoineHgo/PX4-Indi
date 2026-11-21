@@ -52,8 +52,6 @@ RC149 (design/route_check_149.md) cuts: no more PID G5.10 runs; no 3 m/s 3-seed 
   MC_INDI_EN alias deferred to stage 7. Next RC: S159.
 Rule (RC64/74): 1 session per inner-loop law change; no anomaly chase unless a gate test fails.
 G3/G5 batches before the stage-6 freeze are PROBES (RC113). G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1.
-Offline G2 todo before stage 6: outer-cell margin key, linear outer-loop model, A-36/A-39 bound, 267 Hz rows
-  (verdict design/g2_verdict_s108.md).
 G3 tooling exists (g3_run.py, quad5in variants, overrides/wind/motor_fault/timed eRPM loss). gust_x results before
   b0486b703e not comparable. eRPM-loss lateness 36-122 ms: take effective time from the log. Weak+sat unflown.
   Acro = G3-unprobed, G5 carries it (RC118). altctl/posctl not in G3 MODE_MIX.
