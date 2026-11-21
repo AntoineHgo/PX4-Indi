@@ -72,7 +72,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
   if ts_true=0.
 - quad5in defaults: bench/params/quad5in_indi_defaults.params (ACT_TC 0.033); firmware ACT_TC 0.05, MC_INDI_ID_OK 0
   halves K.
-- Guard: a long inline `git commit -m` is blocked; use `git commit -F <scratch file>`.
+- Guard: long inline `git commit -m` blocked; use `git commit -F <file>`.
 - Logger misses the first ~0.2 s of indi_pos_status (late subscription): never read a missing sample as bypass.
 ## Tasks in flight
 | id | task | agent | output | resume |
