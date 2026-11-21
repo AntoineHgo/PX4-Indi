@@ -1164,9 +1164,14 @@ def main():
                 new_all = fault_apply(cum_scale, ents, nom_all)
                 k_om = math.sqrt(cum_scale[fmotors[0]])
                 t_req = sim.t
-                for fm in fmotors:
-                    for k, v in new_all[fm].items():
-                        sim.set_param(f"SIM_GZ_EC_{k}{fm + 1}", v)
+                uniform = set(fmotors) == {0, 1, 2, 3} and len({cum_scale[m] for m in fmotors}) == 1
+                if uniform:  # S148 A-48: one atomic param (8 per-motor sets took ~110 ms, asymmetric torque at the edge)
+                    sim.set_param("SIM_GZ_THR_SC", cum_scale[fmotors[0]], kind="motor_fault")
+                    meta["motor_fault"]["via"] = "SIM_GZ_THR_SC"
+                else:
+                    for fm in fmotors:
+                        for k, v in new_all[fm].items():
+                            sim.set_param(f"SIM_GZ_EC_{k}{fm + 1}", v)
                 meta["motor_fault"].update({"event_us": int(t_req * 1e6), "event_done_us": int(sim.t * 1e6),
                                             "applied": new_all[fmotors[0]], "omega_ratio": k_om})
                 if len(fmotors) > 1:
