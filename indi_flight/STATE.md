@@ -9,8 +9,7 @@
 ## Next actions (owner order; each names its gate item)
 1. Freeze-8 (G2, G4 cruise, G5): candidate firmware = F2 9dd5f76382 + F4 d65111154b (kSetpointLeadTc 0.03) +
    MC_INDI_XY_P default 1.2 (to do, with param test). F4 met its probe on cruise_typ_s1 (89 Hz 4.2e-4, limit 5e-4,
-   thin). Before freeze: (a) gtest that fails without F4 (89 Hz staircase on rate_sp -> rate_sp_dot amplitude bound;
-   lesson 20); (b) one key2 (sonnet, code-to-spec) of F2+F4+XY_P diff; (c) pre-test cruise_typ s2/s3 + G2-STEP
+   thin). Before freeze: (a) F4 gtest DONE (GTEST.md, break-checked); (b) one key2 (sonnet, code-to-spec) of F2+F4+XY_P diff; (c) pre-test cruise_typ s2/s3 + G2-STEP
    attitude cell. Then declare freeze-8 (D-FREEZE-8, list rows) and re-fly: G2 outer 24 + 2 spot + G2-STEP, G4 18,
    G5.5 24, G5.3 hold+mission x3, G5.4 6, G5.10 3 seeds (Q17 A scoring).
 2. G4 hover_harsh_s1 20 Hz (take-off/loiter, 9.7e-4, PID clean, 1/3 seeds): after F2 result; one session cause bound,
