@@ -238,3 +238,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S150 | kMaxBlend 0.3->0.5 + test | sonnet | design/kmaxblend_s150.md | done, 12 calls, ~33k tok, commit 003e25c6d4 |
 | S150 | key2 of kMaxBlend change | sonnet | design/kmaxblend_s150_key2.md | done, 5 calls, ~30k tok, MINOR (no neg-side test) |
 | S150 | G5.10 probe TB 0.3 + bound 0.5 | haiku | results/g5_g510_s150/README_b05.md | done, 41 calls, ~53k tok |
+| S151 | key2 MC_INDI_POS_TB default 1.0->0.3 | sonnet | results/g5_g510_s151/key2_tb_default.md | done, ACCEPT 3 MINOR, 5 calls, ~29k tok |
