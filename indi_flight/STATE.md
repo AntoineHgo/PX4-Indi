@@ -30,11 +30,13 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    S168 G4 pre-test DONE (results/g4_pretest_s168, 3 profiles fly, all values >=30x below limits, window defect of S166
    fixed: windows from run.json events). S169: A-52 CLOSED (keys agree on raw samples); bench/gate_g4.sh (18 runs,
    acro "not yet flown") flown -> results/g4_gate_s169; bench/g3_checks.py built (self-test + break-check, UNKEYED).
-   NEXT (G4): (1) A-54 cause search, ONE session: 70 Hz command line at typical/harsh, linear in vib -> chatter clause
-   FAILS as written; read PID ref P169 (bench/g4_line_probe.py LOG T0 T1); substitute truth accel / find the alias
-   path; if not fixable, owner Q (chatter clause = relative ratio, flags a 0.18 %-of-hover forced line).
-   (2) key2 of g3_checks.py (sonnet, blind, spec = GATES 240-264, 301-306, 359-362). (3) score g4_gate_s169 +
-   g3_checks on hover_harsh_s1..3, write results README + GATES G4 status. Next RC: S173.
+   G4 batch scored (results/g4_gate_s169/README.md): metric rows PASS 18/18 (>= 10x); harsh items 1-3 PASS 3/3;
+   chatter clause FAIL 3/3 = 70.00 Hz line, ALSO in PID ref (results/a54_s169) -> shared path (A-54).
+   NEXT (G4): (1) A-54 cause search, ONE session (S170): sensor_accel spectrum of hover_harsh_s1 for the 70 Hz alias
+   (bench/g4_line_probe.py pattern; A-49 S156 vibration line check), check gz_bridge vibration sampling vs IMU rate;
+   if sim alias: fix hook (key2), re-fly typ/harsh hovers; if physical/unfixable: owner Q (relative-ratio clause).
+   (2) key2 of g3_checks.py (sonnet, blind, spec = GATES 240-264, 301-306, 359-362) before the G4 verdict.
+   (3) GATES G4 status line + G4 verdict. Next RC: S173.
    G5.2 posctl z settle s1 4.15 s FAIL (EKF2 height error, Q10; PID ref PASS).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
    events and maybe_landed / EKF z injectability -> Q8 (scored at option A, not blocking).
@@ -76,8 +78,6 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| B169 | G4 gate batch, 18 serial flights (acro not yet flown) | bash bg | results/g4_gate_s169 (status.txt, CHAIN_END) | `indi_flight/bench/gate_g4.sh fly indi_flight/results/g4_gate_s169` (skips done runs); then `... score ...` |
-| P169 | A-54 PID reference: harsh hover_long s1, stock params (queued after B169) | bash bg | results/a54_s169/pid_hover_harsh_s1 | rerun the run_scenario line of JOURNAL S169 |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
