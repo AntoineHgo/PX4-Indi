@@ -28,5 +28,9 @@ Seed 1, checked S157 (checkers g51_check.py / g52_check.py, keyed S136/S138; hos
 G5.2 posctl z FAIL: gate test failure, cause search <= 1 session (S158). Leads: 2 % band = 0.04 m is near the
 typical-profile truth-z noise (S138 sim-default posctl z settle already 1.2-3.0 s); the same z step settles 0.35 s in
 altctl. First check: truth z std over the centred window vs 0.04 m, and the last band exit time vs the x-step edge.
+Cause search DONE S157: not noise (truth z std 0.018 m over the last 2 s). The controller holds the estimate within
+0.02 m of the setpoint (6.895 m) from release + 0.5 s; EKF2 est - truth = -0.078 m at release, -0.047 at +4.0 s,
+-0.003 at +5.5 s. The truth settle is the estimator height error decaying; altctl's same step wanders 0.02 m (PASS).
+Row stays FAIL as written; owner Q10 (keep / band / estimate-based), PID reference flight of this seed next.
 (batch in progress: G5.1 stick_steps acro/stab, G5.2 stick_pos_steps altctl/posctl, G5.3 mission + G5.4 auto_tour,
 auto_land10; seeds 1-3. Remaining rows G5.5-G5.11 and the firmware-default cells are next.)

@@ -19,7 +19,7 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    D-PREFREEZE-R2), r3 (S155) all dispositioned. History: JOURNAL S152-S155.
    S155: review 3/3 DONE (design/prefreeze_r3_parity.md): 0 OPEN, 0 SAFETY, 8 PARTIAL MINOR (D-PREFREEZE-R3).
    STAGE-6 FREEZE DEFINED: D-FREEZE-6, firmware 23acbdef67, bench defaults + ID_OK 1 overlay, firmware-default cells
-   (G5.1 acro yaw + G2 rate roll 800 at ID_OK 0). GATES 5b needs the G4 TYPICAL noise profile for the re-fly:
+   (G5.1 acro yaw + G2 rate roll 800 at ID_OK 0); re-fly with the G4 typical profile.
    S156: vib hook done, A-49 CLOSED; typical = --vib-acc 10 --vib-gyr 0 --imu-noise-scale 4.0 (D-NOISE-PROF).
    S157: pre-test auto_tour PASS but at ID_OK 0 (defaults file defeats runner overlay = set-up fault, fixed:
    results/g5_freeze_s157/params.params, D-FREEZE-6 note). FREEZE RE-FLY RUNNING detached (chain.sh: batch.sh G5.1-5.4
@@ -27,8 +27,9 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    NEXT S158: if no CHAIN_END and no px4 container running, `setsid nohup bash .../chain.sh &` (resumes). Then
    `bash indi_flight/results/g5_freeze_s157/checks.sh`, verdict table in its README, keyed second checker per
    D-FREEZE-6 (g54_key2.py, g5_rows_key2.py exist). Unverified: batch2 o5-o7 args (batch2_notes.md).
-   Seed 1 so far: G5.1 acro/stab PASS, G5.2 altctl PASS, G5.2 posctl z settle 4.15 s FAIL (> 4.0): cause
-   search <= 1 session S158 (leads in results/g5_freeze_s157/README.md).
+   Seed 1: G5.1 acro/stab, G5.2 altctl PASS; G5.2 posctl z settle 4.15 s FAIL (> 4.0): cause
+   search DONE: EKF2 height error -0.08 m decaying ~5 s, controller holds estimate (README); Q10 OPEN (not blocking);
+   S158: PID reference flight of stick_pos_steps posctl s1 (F-5) for Q10.
 1-3. Probes PASS, re-fly at freeze: G5.4 9/9 (S135), G5.1 6/6 K_Y 20 (S137), G5.2 6/6 (S138, g52_check keyed).
 3b. G5.3 hold + mission PASS 3/3 (S139-S140). G5.7 PASS 3/3 as probe (S139/S143 matched GNSS, results/g5_g57_s143_gnss).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (fixes fee02b59b2, 3944e8e367; key2 results/g5_events_s144/key2.md):
@@ -47,7 +48,7 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    self-tests for passthrough_check/offb_vel_check.
 RC149 (design/route_check_149.md) cuts: no more PID G5.10 runs; no 3 m/s 3-seed flying before Q8 add.3(i); runner
   MC_INDI_EN alias deferred to stage 7. Next RC: S159.
-Rule (RC64/RC74): 1 session per inner-loop law change; no anomaly chase unless a gate test fails.
+Rule (RC64/74): 1 session per inner-loop law change; no anomaly chase unless a gate test fails.
 G3/G5 batches before the stage-6 freeze are PROBES (RC113). G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1.
 Offline G2 todo before stage 6: outer-cell margin key, linear outer-loop model, A-36/A-39 bound, 267 Hz rows
   (verdict design/g2_verdict_s108.md).
@@ -59,7 +60,6 @@ Deferred to before G6: yaw fit fix (r regressor + matched grid = probe V3, K126 
 STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair, PID M1 hook, hooks without a
   consumer, stand-alone anomaly chases (fold A-4, A-6 into G3/G5 side-cells), --sched-anchor and set_param fixes,
   EdgeState design (RC133 action 3, dropped by owner directive).
-Later: log a z-only active flag in indi_pos_status when next touching the module.
 ## Notes
 - pretest_gate only on stationary scenarios, or end its window at the fault (S98). SIM_GZ_SEED + SIM_GZ_IMU_NSC hooks
   (accel scale UNVERIFIED, full-rate accel log before G4). D-G7-HARNESS decided, impl stage 7. M3 PT-change UNVERIFIED.
@@ -71,7 +71,7 @@ Later: log a z-only active flag in indi_pos_status when next touching the module
   if ts_true=0.
 - quad5in defaults: bench/params/quad5in_indi_defaults.params (ACT_TC 0.033); firmware ACT_TC 0.05, MC_INDI_ID_OK 0
   halves K.
-- Guard: long inline `git commit -m` blocked; use `git commit -F <file>`.
+- Guard blocks long `git commit -m`: use `-F <file>`.
 - Logger misses the first ~0.2 s of indi_pos_status (late subscription): never read a missing sample as bypass.
 ## Tasks in flight
 | id | task | agent | output | resume |

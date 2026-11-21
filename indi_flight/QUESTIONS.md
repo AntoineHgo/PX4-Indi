@@ -81,3 +81,15 @@ definition keep the row from PASS. Still not blocking.
 
 Note S154 (RC154): the stage-6 freeze will proceed with option A assumed for Q8 (a)/(b)/add.2/add.3 and Q9 (a)/(c); an answer
 B from the owner changes only the affected G5 rows, re-scored or re-flown after the freeze.
+
+## Q10 (S157, 2026-11-21): G5.2 posctl z settle FAIL at the freeze is estimator height error. NOT blocking.
+Context (results/g5_freeze_s157/README.md): freeze re-fly, typical noise, seed 1: G5.2 posctl z step settle 4.15 s
+(limit 4.0 s, band 2 % of d = 0.039 m); overshoot and the x step pass. Truth vs estimate after release: the controller
+holds the estimate on the setpoint within 0.02 m over the whole window, while EKF2 height error (est - truth) is
+-0.078 m at release and decays to 0 over ~5 s; the truth "settle" is that decay. Stock ekf2 (O-11), not the INDI law.
+At the sim-default noise (S138) the same row settled 1.2-3.0 s. Lesson 3: tracking on truth, estimator error separate.
+Options: A [recommended] keep the truth metric and the limit; add a reference PID flight of the same seed (F-5): if PID
+also fails, record the row as FAIL with cause "estimator height error > settle band", stack-independent, reported with
+the est-truth trace; B (gate change after first test): settle band = max(2 % of d, 0.10 m) for z, justified by the
+EKF height accuracy under the typical profile; C: settle measured on the estimate, truth error reported separately.
+Meanwhile: the other rows continue; seeds 2-3 and one PID reference flight of this row are flown and scored as written.
