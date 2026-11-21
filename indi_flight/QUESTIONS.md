@@ -55,3 +55,23 @@ both stacks; touchdown stays judged by G5.4; the land-window values are reported
 G4 then needs a touchdown fix (re-open D-F7-GROUND ground handling), likely affecting G5.4/G5.6 too. C: score the
 detector on the hover and cruise segments only (gate text), take-off/land reported.
 Meanwhile: the land windows are not re-scored or chased. L1 (lemniscate) work, G2 (XY_P 1.2 freeze-8), G5 continue.
+
+## Owner note (2026-11-21, after Q17): stay inside INDI scope
+1. Scope line. A behaviour that the PID reference shows too (same scenario and seed, same signature in the gate
+   metric) is a PX4 fact, not INDI work: report both stacks' values and, if it blocks a gate row, write the owner
+   question. Do not chase or fix stock PX4 code (EKF2, mc_pos_control, land detector, commander) or simulator
+   plumbing beyond the injectors that the gate factor tables require. No new hook without a gate row that consumes it.
+2. G3 tel_frozen hook. Keep it, since the G3 factor table and C5 list frozen telemetry, but build the simplest injector
+   (one session, two keys). If it does not fly after that session, stop and write an owner question proposing to drop
+   the frozen factor from G3 instead of continuing the plumbing.
+3. G4 chatter keys. Before any F2 firmware work, reconcile key 1 (88.5 Hz) and key 2 (33.5 Hz) on the same
+   cruise_typ_s1 lemniscate window (results/g55_gain_probe_s179). F2 targets only a line that both keys agree on.
+   One sonnet task, existing scripts.
+4. G4 item 3 in the XY_P 1.2 probe (altitude_mean 0.29 m, limit 0.1). Look up the freeze-7 value and fly the PID
+   reference before any cause search (point 1 applies).
+
+**Owner answer to Q18 (2026-11-21):** A. The G4 chatter detector skips windows that overlap [ground_contact - 1 s,
+landed + 1 s] in both stacks. Touchdown stays judged by G5.4. Report the land-window values for both stacks. Log it
+in GATES.md and DECISIONS.md as an approved test-definition fix, then re-score the freeze-7 G4 runs with keyed
+scripts (no re-fly). Check that the hover_harsh_s1 20 Hz flag is the same touchdown event. L1 (lemniscate) stays
+in scope.

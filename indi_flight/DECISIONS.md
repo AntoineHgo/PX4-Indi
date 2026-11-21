@@ -1037,3 +1037,14 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   before any further decision; D-F7-GROUND (touchdown handling) becomes the candidate if the flag sits there.
   Item 3 z offset 0.29-0.34 m FAIL in F1/F3/GP (not a G4 cruise row; baseline value unchecked). L1: lemniscate still
   flagged in GP (33.5 Hz 1.1e-3) and F3 (88.5 Hz 1.1-1.2e-3, the freeze-6 line). F2 (setpoint extrapolation) next.
+
+## D-OWNER-Q17-Q18 (S180, 2026-11-21): owner-approved test-definition fixes
+- Q17 A (G5.10 stabilized part): recovery judged on attitude error to the stick-commanded attitude (<= 5 deg within
+  1 s of stick centre), tilt limit MPC_MAN_TILT_MAX + 5 deg, no alt-loss limit. Alternatives B (literal 0.3 m, no
+  reference) and C (drop recovery) rejected by the owner. Text in GATES "Owner amendments S180".
+- Q18 A (G4 chatter): windows overlapping [ground_contact - 1 s, landed + 1 s] are skipped in both stacks; touchdown
+  judged by G5.4; land-window values reported. Alternatives B (touchdown fix, re-open D-F7-GROUND) and C (segment
+  scoring) rejected. Consequence: L2 leaves the G4 verdict; D-G4-STEPBACK keeps L1 (lemniscate) only.
+- Implementation: both chatter keys get the window skip, each written independently with a synthetic self-test;
+  freeze-7 18 G4 runs re-scored (results/freeze7_s177/q18_rescore_s180/).
+- Overturn: a flagged window that the skip removes but that does not contain the ground-contact event on the log.

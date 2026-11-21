@@ -573,3 +573,12 @@ Evidence: `results/g2_outer_freeze7_s177/SCORES.md` (24 outer cells, keyed score
 roll800_fwdef_s2 PM 47.8 PASS (freeze-6 54.3). Cause: the freeze-7 xy gains MC_INDI_XY_P/VP 1.9/3.6 (D-OFFB-POSVEL,
 model predicted 46 deg); its overturn rule is met. Q16 A (PASSED once these cells pass) does not apply. The freeze-6
 67/67 evidence stands for the freeze-6 gains only. Next: gain probe (results/g55_gain_probe_s179), then freeze-8.
+
+## Owner amendments S180 (2026-11-21): test-definition fixes Q17 and Q18 (approved by the owner)
+Each fixes a defect of a test; no threshold is lowered. Decision record D-OWNER-Q17-Q18; question text in JOURNAL.md.
+- G5.10 stabilized full-scale part (Q17 A): no LOC; tilt <= MPC_MAN_TILT_MAX + 5 deg; no windup = attitude error to
+  the stick-commanded attitude <= 5 deg within 1 s after the sticks return to centre; the 2.0 m alt-loss limit is not
+  applied there (full throttle climbs). PID flies the same flight as the reference.
+- G4 command chatter (Q18 A): the 20-100 Hz detector skips 4 s windows that overlap [ground_contact - 1 s,
+  landed + 1 s], in both stacks. Touchdown stays judged by G5.4. The skipped land-window values are reported for
+  both stacks. The freeze-7 G4 runs are re-scored with the keyed scripts (no re-fly).
