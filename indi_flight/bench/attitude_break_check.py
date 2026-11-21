@@ -5,7 +5,7 @@ section 8, MAJOR 2 of the T185 review). Reads indi_rate_status of a ulog, prints
 The check that the INDI law really received x = y + d does not use the module's own x - y - d bookkeeping (circular,
 printed only as a consistency line). It uses two quantities that depend on what _indi.update() got:
   1. rate_sp_dot (logged by the law) equals the filtered, clamped derivative of the logged x, one step ahead:
-       pred[k] = clip(r[k-1] + a ((x[k] - x[k-1]) / dt - r[k-1])), a = dt / (Tc + dt), Tc = kSetpointLeadTc = 0.01 s,
+       pred[k] = clip(r[k-1] + a ((x[k] - x[k-1]) / dt - r[k-1])), a = dt / (Tc + dt), Tc = kSetpointLeadTc = 0.03 s,
        clip = kMaxRateSpDot = 1000 rad/s^2 (src/lib/indi_rate_control/indi_rate_control.hpp:279,283, .cpp:399-404).
      Roll and pitch only: yaw differentiates the setpoint after the yaw error LPF (MC_INDI_YAW_CUT), not reproduced here,
      the yaw axis reports SKIP for this check.
@@ -18,7 +18,7 @@ import sys
 
 import numpy as np
 
-K_TC = 0.01          # IndiRateControl::kSetpointLeadTc
+K_TC = 0.03          # IndiRateControl::kSetpointLeadTc (0.01 before d65111154b)
 K_MAX_DOT = 1000.0   # IndiRateControl::kMaxRateSpDot
 
 

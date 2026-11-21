@@ -37,7 +37,7 @@ INDI_DEF = dict(eta=1.0, g=1.0, Tb=0.0, tau_r=0.033, tau_m=0.02, d_m=0, n=1, K=2
                 gyro_fc=40.0, dgyro_fc=20.0, lat=0, lat_s=0.0, meas=False, eta_m=1.0,
                 fb_lead=0.0, att_p=0.0, sp_lead=False, att_lat=1)
 # Firmware time constant of the setpoint-path lead filter (indi_rate_control.hpp kSetpointLeadTc)
-SP_LEAD_TC = 0.01
+SP_LEAD_TC = 0.03  # 0.01 before d65111154b (F4)
 # HEAD firmware, flown config of S57/S76/S77 (meas800.params): measured-rotor path, MC_INDI_LEAD 1 x K 20 x ACT_TC 0.05 -> c = 1,
 # MC_ROLL_P 8 (airframe 4040_gz_quad5in; attitude path closed), setpoint-path lead on.  sp_lead=False reproduces the law before da64bc26b3.
 # (Plain L_indi keeps its legacy defaults: no lead, no attitude path, so the G2 tables and the self-test are unchanged.)

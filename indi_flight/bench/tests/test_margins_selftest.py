@@ -375,7 +375,7 @@ def test5_sp_lead():
     Lh = MM.L_indi(w, fs, **base)
     Ln = MM.L_indi(w, fs, **dict(base, sp_lead=False))
     # (b) D(z) by the firmware recursion on sin(w k T)
-    FW_SP_LEAD_TC = 0.01  # indi_rate_control.hpp kSetpointLeadTc, literal on purpose (second key S78)
+    FW_SP_LEAD_TC = 0.03  # indi_rate_control.hpp kSetpointLeadTc, literal on purpose (second key S78; 0.01 before F4)
     check(MM.SP_LEAD_TC == FW_SP_LEAD_TC, "T5b model Tc %s != firmware %s" % (MM.SP_LEAD_TC, FW_SP_LEAD_TC))
     als = T / (FW_SP_LEAD_TC + T)
     for i, wi in enumerate(w):
@@ -433,7 +433,8 @@ def test6_yaw_model():
     print("  T6 yaw L: integrator + 1.5 T delay (matched and unmatched spin-up) within 1 %% and 1 deg, |L| %s" % np.round(abs(L), 3))
     # roll/pitch untouched by the yaw addition
     m = MM.margins_of(MM.L_indi, 800.0, **MM.HEAD_FLIGHT)
-    check(abs(m["pm_deg"] - 66.7) < 0.05 and abs(m["gm_db"] - 14.93) < 0.01, "T6c roll HEAD_FLIGHT changed: %s %s" % (m["pm_deg"], m["gm_db"]))
+    # pin re-taken at kSetpointLeadTc 0.03 (F4, S181); 0.01 gave 66.73 deg / 14.934 dB
+    check(abs(m["pm_deg"] - 66.42) < 0.05 and abs(m["gm_db"] - 15.332) < 0.01, "T6c roll HEAD_FLIGHT changed: %s %s" % (m["pm_deg"], m["gm_db"]))
 
 
 def test7_pure_delay():
