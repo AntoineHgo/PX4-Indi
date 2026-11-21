@@ -38,3 +38,19 @@ Params verified in flight.ulg initial_parameters: MPC_XY_P 0.95, MPC_XY_VEL_P_AC
 
 Reading: HEAD firmware at 1x gain gives 0.587 m vs freeze 0.606 m, so the firmware change is worth about 0.02 m and does not fix the RMS.
 The improvement to 0.289 m comes almost entirely from the doubled MPC_XY_P / MPC_XY_VEL_P_ACC gains (single seed, o1 only).
+
+## gx2 on o2-o4, o7 (seed 1)
+Flown by a loop equal to fly.sh with `--scenario` swapped (o2_circle_z, o3_lemniscate_gust, o4_lemniscate_payload, o7_lemniscate_tau2),
+`--out indi_<oN>_s1_gx2`, same params.params (verified MPC_XY_P 1.9 / MPC_XY_VEL_P_ACC 3.6, MC_INDI_ID_OK 1), HEAD build current
+(px4 binary newer than all of src/), 4 flights sequential, all rc=0, no set-up failure, no refly. Scored with `g55_check.py <run> --json <run>/g55.json`
+and `an.py <run>` in Docker (output: indi_<oN>_s1_gx2.chk_an.txt). Freeze = g5_freeze_s157 (firmware 23acbdef67, 1x gain); max error not recomputed for freeze.
+
+| scenario | freeze horiz RMS | gx2 horiz RMS | gx2 max err | gx2 vert RMS | tilt max | line > 2 Hz | motors min-max |
+|---|---|---|---|---|---|---|---|
+| o2_circle_z | 0.794 m FAIL | **0.268 m PASS** | 0.362 m | 0.088 m | 34.1 deg | no (p/q peak 0.50 Hz) | 0.122-0.171 |
+| o3_lemniscate_gust | 0.622 m FAIL | **0.315 m PASS** | 0.525 m | 0.074 m | 43.9 deg | no (peaks 0.56-0.67 Hz) | 0.110-0.191 |
+| o4_lemniscate_payload | 0.582 m FAIL | **0.282 m PASS** | 0.466 m | 0.054 m | 37.6 deg | yes, weak (p 2.30 Hz, q 3.09 Hz; rms>2 Hz p/q 4.6/5.0 deg/s) | 0.136-0.213 |
+| o7_lemniscate_tau2 | 0.591 m FAIL | **0.288 m PASS** | 0.467 m | 0.073 m | 43.8 deg | yes, weak (p 2.41 Hz; rms>2 Hz p/q 3.8/3.3 deg/s) | 0.109-0.190 |
+
+Reading: doubled XY gains bring all four rows to 0.27-0.32 m (limit 0.5), vertical RMS stays <= 0.09 m, no motor saturation (max 0.213, min 0.109).
+Caveat: o4/o7 show a spectral peak above 2 Hz (rate rms >2 Hz 3-5 deg/s, comparable to the 3-4 deg/s of o1 gx2 and the freeze), no sign of growth; seed 1 only, firmware differs from freeze.

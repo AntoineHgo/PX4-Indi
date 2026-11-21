@@ -987,4 +987,5 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - No fable design review: the change is a gain parameterisation backed by a probe; its effect on stability is
   measured by the G2 outer cells at freeze-7. Firmware diff gets key2.
 - Overturn: o2-o4/o7 at gx2 > 0.5 m; G2 outer PT 0 cells < 6 dB / 45 deg at the new gains; G4 hover command RMS or
-  G5.3/G5.4 worse beyond limits at freeze-7 -> fall back to (c) or lower gains.
+  G5.3/G5.4 worse beyond limits at freeze-7 -> fall back to (c) or lower gains. gx2 o2-o4/o7 s1: 0.27-0.32 m;
+  weak 2.3-3.1 Hz rate lines on o4 (payload) and o7 (tau x2): watch G3 osc detector and G2 outer at freeze-7.
