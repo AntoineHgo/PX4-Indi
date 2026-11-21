@@ -73,6 +73,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S153a | ground-arm runner option + F1 probe (altctl/posctl INDI, altctl PID) | sonnet | results/g5_groundarm_s153/README.md | rerun its fly.sh |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),

@@ -438,7 +438,7 @@ pre-identification behaviour of decision 3 must cover it).
      the module's reset() does not touch b; while mean_u is invalid (telemetry loss or frozen) b is frozen and
      coll_f = coll_model; while the collective is clamped (module limit or allocator collective-saturation flag) b
      is frozen (anti-windup; if the allocator exposes no collective-saturation flag, the module's own clamp and
-     the measured mean_u at its limit are used). b starts at 0 at boot only. Recovery: when the freezing condition
+     the measured mean_u at its limit are used). b starts at 0 at boot only (S153: at every arm, D-PREFREEZE-R1 F2). Recovery: when the freezing condition
      clears, b resumes integrating from its held value (no snap, no reset), and coll_f switches back to
      coll_meas + b on the first valid mean_u sample. The rate-loop snap is NOT copied; whether the rate loop
      itself should freeze is filed for the stage-3 safety review (ANOMALIES/STATE).
@@ -802,3 +802,21 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - S151 key2 ACCEPT (results/g5_g510_s151/key2_tb_default.md). xy at TB 0.3: PM 51.4 (vel/pos, S87 floor 49.7) / 65.2 deg,
   GM 16.8 dB. Cost: post-event transient larger than at 1.0 s (D-GAP: 0.107 vs 0.046 m), within G5 limits so far.
 - S151 G5.4 probe at TB 0.3 (results/g5_g54_tb03_s151): edge 4.0/4.4 % hover, all limits PASS (= S135 at 1.0).
+
+## D-PREFREEZE-R1 (S153, 2026-11-21): disposition of review r1 F2-F8 (design/prefreeze_r1_stage5.md)
+- F2 (blend b reset at arm/disarm) -> SPEC AMENDMENT of D-GAP item 1: b starts at 0 at every arm, not only at boot.
+  Reason: G5.9 (written S134, before any test) requires "re-arm: all INDI states zero"; a b learned on a previous
+  flight is stale state of unknown validity (battery swap, payload change). Cost: a take-off with a gap carries it
+  until LP_tb (0.3 s) absorbs it; the D-GAP check "land/re-take-off |b| within 10 %" applies without a disarm only.
+  Alternative rejected: keep b across disarm (conflicts with G5.9). Overturn: a G3/G5 take-off with a weak motor or
+  sag failing a G5.4 limit because of b = 0 at the edge.
+- F3 (no lib reset on position-control re-entry / Hold exit) -> FIX: reset pending on the
+  flag_multicopter_position_control_enabled rising edge and on the Hold -> run edge; held setpoint refreshed at
+  re-entry. Overturn: G5.7 S->P / H->P transients worse than the S143 probe (3.6 deg, 3 % thrust step).
+- F4 (dt clamp 0.04 makes "< 5 Hz -> hold" dead) -> FIX: true dt up to 0.2 s reaches the library; an interval
+  > 0.2 s (rate < 5 Hz) holds, as D-STAGE-STALE (b) states. Alternative (delete the clause, require >= 25 Hz) rejected:
+  leaves a silent wrong-dt band. Overturn: hold triggered in nominal SITL flights (interval jitter).
+- F5, F6: comment fixes with the F3/F4 change. F7 (stock publish branch reachable while armed with pos/vel/climb all
+  false) and F8 (G step HTE vs MPC_THR_HOVER at modelled-force edges): deferred to stage 7 with bound: G5.4 edge steps
+  4.0/4.4 % (limit 10 %) include F8; F7 unreachable in any F-2 mode (offboard-accel sets vel). Reopen if a G5 edge
+  step exceeds 7 % or a Bypass sample appears in an armed log.
