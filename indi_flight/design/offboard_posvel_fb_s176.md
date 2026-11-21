@@ -83,3 +83,7 @@ only by the INDI module (mc_pos_control not running). Before code: one HEAD prob
 MPC_XY_VEL_P_ACC x2 (results/g55_gain_probe_s176). Open for the review: the INDI accel loop should reject drag itself
 (accelerometer sees aero force), so why does a_c carry it - is the 100 ms the accel-loop filter lag (then it bounds
 the gains)?
+
+## Outcome (S176)
+Superseded by DECISIONS D-OFFB-POSVEL: gx1/gx2 probe shows the gain is the lever; the module gets its own xy gains on
+the existing cascade, not the library cascade + mask of sec. 2.

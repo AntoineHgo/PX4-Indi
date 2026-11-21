@@ -972,3 +972,19 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   FF), G5 event rows in hover (to confirm on the freeze-7 re-fly, cheap).
 - Alternative: revert both and keep freeze-6 evidence valid. Rejected: defect, and freeze-7 comes anyway.
 - Overturn: G5.3/G5.4 at freeze-7 worse than freeze-6 by > 10 % (D-JFF-OFFB check).
+
+## D-OFFB-POSVEL (S176, 2026-11-21): INDI module owns its xy pos/vel gains (G5.5, Q11 B)
+- Fact: G5.5 o1-o4/o7 FAIL 0.57-0.81 m (limit 0.5), both stacks. Estimate e ~ drag/|K_v K_p - w^2 + j w K_v| gives
+  ~0.9 m at MPC defaults. Probe (results/g55_gain_probe_s176, o1 s1, HEAD): 0.95/1.8 -> 0.587 m, 1.9/3.6 -> 0.289 m,
+  no line > 2 Hz, no saturation; HEAD firmware itself worth 0.02 m. The lever is the pos/vel bandwidth.
+- Choice: two module params MC_INDI_XY_P / MC_INDI_XY_VP (defaults 1.9 / 3.6, bandwidths in 1/s), used by the
+  module's existing cascade (McIndiPosControl.cpp:599-601) in every mode; z keeps MPC_Z_* (vertical passes). Flatness
+  FF stays as D-JFF-KEEP. ~15 LOC firmware + a param test; mc_pos_control untouched (O-11).
+- Alternatives: (a) S176 draft (library cascade in offboard only, per-axis NaN mask, ~60 LOC): removes the D term,
+  which the estimate shows is not the lever; mode-specific; more code (F-9). (b) MPC_XY_* raised in the params file
+  only: firmware defaults would not be the validated configuration (lesson 12) and are shared with PID.
+  (c) offboard-only gains: kept as fallback.
+- No fable design review: the change is a gain parameterisation backed by a probe; its effect on stability is
+  measured by the G2 outer cells at freeze-7. Firmware diff gets key2.
+- Overturn: o2-o4/o7 at gx2 > 0.5 m; G2 outer PT 0 cells < 6 dB / 45 deg at the new gains; G4 hover command RMS or
+  G5.3/G5.4 worse beyond limits at freeze-7 -> fall back to (c) or lower gains.

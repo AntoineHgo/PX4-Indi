@@ -9,16 +9,18 @@
 1. G2: no work until Q16 answered. On A: write verdict PASSED (GATES G2 + GATE_STATUS) with A-51 as evidence limit.
 2. G4: item 2 PASS both keys (Q15 A). Chatter (+-2 Hz width fixed in key1, b2bfa1d48f): s169 (freeze-6) hover 6/9,
    cruise 9/9 flagged, both keys. Hover: INDI-only 22 Hz AUTO_LAND line (chatter_s175.md, PID none) gone in 1 HEAD
-   flight (results/g4_chatter_probe_s175; touchdown burst only, not sustained); no same-commit A/B. NEXT: (i) cruise
-   line: when/frequency, PID cruise ref of the same seed first (offboard keeps jerk FF, aa4fd2654a does not touch it);
-   (ii) G4 scope of the chatter clause (hover only or cruise too) is a test-text question only if cruise fails for
-   PID as well. Hover re-fly 3 seeds x typ/harsh at freeze-7. Do NOT propose the 3 s skip for chatter.
-3. G5 re-score (owner step 2): G5.2 z band max(2 % d, 0.10 m) (Q10 B); G5.9a ref actuator_armed.kill (Q8 add.2);
-   G5.11 xy truth excursion + yaw p95 jump (Q12 B+D); G5.10 tilt <= TILTMAX+5 (Q9 a); G5.6 false maybe_landed and
-   G5.11 z "not tested Q8(b)". Checker changes get key2 before counting. Evidence: results/g5_freeze_s157, g511_fix_s161.
-4. G5.5 (owner step 3, Q11 B): design note (1 page) + DECISIONS entry for INDI-module pos/vel feedback with flatness
-   FF in offboard only; fable review of the design; then code + key2 + tests; G5.5 pre-test; check whether G2 outer
-   cells / G4 cruise were flown in offboard (then re-fly them at freeze-7).
+   flight (results/g4_chatter_probe_s175; touchdown burst only, not sustained); no same-commit A/B. Cruise (S176,
+   chatter_cruise_s176.md): INDI-specific (PID same seed clean): ~89 Hz line through the offboard lemniscate, 9/9,
+   only 1.4-1.5x the 5e-4 floor; plus the 20-22 Hz AUTO_LAND line (4-8.6x). The offboard path is replaced at freeze-7
+   (Q11 B), so the 89 Hz cause search (1 session max) starts on the first freeze-7 cruise flight if the line persists.
+   Re-fly hover + cruise 3 seeds x typ/harsh at freeze-7. Do NOT propose the 3 s skip for chatter.
+3. G5 re-score DONE S176, key2 agrees (results/g5_rescore_s176). Open MINORs (fix with G7 checker self-tests):
+   no test catches removal of the yaw p95 subtraction (g511_check.py:184); G5.10 MPC_TILTMAX_AIR log-read branch
+   untested, silent 20 deg fallback (g510_check.py:115-119). Freeze-7 re-fly re-scores with these checkers.
+4. G5.5 (Q11 B): D-OFFB-POSVEL decided S176 (own MC_INDI_XY_P/XY_VP 1.9/3.6, all modes; probe o1 0.289 m). Next:
+   firmware (params yaml per instructions files, McIndiPosControl.cpp:599-601) + param test + key2; then G5.5
+   o1-o4/o7 x3 seeds at freeze-7. All bench scenarios start in offboard hold: G2 outer cells (g2_outer_freeze_s163)
+   and all G4 runs re-fly at freeze-7; G2 rate/att cells spot-check 2.
 5. G5.10 re-definition flights (Q9 b/c): SAT part one-flight check motors >= 0.99, full-scale stabilized part.
 6. G3 set-up (owner step 4): (a)+(c) DONE S175 (bba6345575, results/g3_setup_s175: noise applied, accel HF x9.1,
    gyro HF unchanged = check imu-noise-scale reaches gyro (one log read); abort on not_applied; g3_score_docker.sh).
@@ -52,6 +54,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S176f | G5.5 gx2 params on o2-o4/o7 seed 1 (HEAD) | sonnet | results/g55_gain_probe_s176/README.md (section gx2 on o2-o4, o7) | if missing: re-fly with fly.sh + params.params |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
