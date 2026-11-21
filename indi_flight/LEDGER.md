@@ -265,3 +265,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S164 | sonnet | key2 outer margins from pinj CSVs, own FRF + plateau (24 cells) | bench/g2_key2_outer_s164.py, results/g2_outer_freeze_s163/key2.md | done, 6 calls, ~$0.6, 22/24 agree, 2 differ on notch crossing (both >= 19.7 dB) |
 | S164 | sonnet | plateau-GM pass, 67 freeze cells (primary estimator) | bench/g2_plateau_gm_s164.py, results/g2_plateau_s164.md | done, 13 calls, ~$0.6, 66/67 literal, 67/67 under Q13 A |
 | S164 | sonnet | G2 outer analytic linear model x-check (8 loop rows) | bench/g2_outer_model_s164.py, results/g2_outer_freeze_s163/xcheck.md | done, 13 calls, ~$0.6, PM 8/8 within 10 deg, xy GM model -5 dB (A-50) |
+| S165 | sonnet | G2 rate + att yaw linear-model x-check at freeze | bench/g2_rate_model_s165.py, results/g2_freeze_s160/xcheck_rate.md | done, 11 calls, ~$0.35, 12/15 agree, A-51 |
