@@ -1048,3 +1048,12 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Implementation: both chatter keys get the window skip, each written independently with a synthetic self-test;
   freeze-7 18 G4 runs re-scored (results/freeze7_s177/q18_rescore_s180/).
 - Overturn: a flagged window that the skip removes but that does not contain the ground-contact event on the log.
+- S180 F2 (results/f2_probe_s180, commit 9dd5f76382, key2 pending): setpoint extrapolation removes the 33.5 Hz line
+  (staircase confirmed as its source); the 88.5-89.25 Hz line stays on all motors (5.2-7.7e-4). LINE89_S180.md: it
+  is deterministic (unchanged with zero sensor noise), absent in hover, first resolvable in vehicle_rates_setpoint
+  (ratio 46): the 88.9 Hz outer-loop update staircase in the rate setpoint, differentiated by the inner setpoint
+  lead (indi_rate_control.cpp 6c, kSetpointLeadTc 0.01 s), becomes a real 89 Hz body rate. PID has no setpoint
+  derivative. This is a feed-forward path (outside the feedback loop: margins unaffected in the linear model).
+  Fix probe F4: kSetpointLeadTc 0.03 s (simplest; alternative: moving-average derivative over the outer period).
+  F4 touches the inner library: re-fly adds G2-STEP rows and the rate/att spot cells to the freeze-8 list.
+  Overturn: F4 leaves an 89 Hz line >= 5e-4 -> lead path is not the only route, read q_d vs omega_ff steps.
