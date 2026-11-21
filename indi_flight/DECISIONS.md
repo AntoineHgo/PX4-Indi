@@ -1057,3 +1057,8 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   Fix probe F4: kSetpointLeadTc 0.03 s (simplest; alternative: moving-average derivative over the outer period).
   F4 touches the inner library: re-fly adds G2-STEP rows and the rate/att spot cells to the freeze-8 list.
   Overturn: F4 leaves an 89 Hz line >= 5e-4 -> lead path is not the only route, read q_d vs omega_ff steps.
+- S180 F4 (results/f4_probe_s180, firmware commit after 21f6fc4477): kSetpointLeadTc 0.03 s: 89 Hz line 3.9-4.2e-4 on
+  all motors (F2 5.2-7.7e-4), 0/14 windows flagged, both keys; 33.5 Hz absent; R20 0.022 %, C20 6.6e-4. Probe
+  criterion met on one seed, thin margin (4.2 vs 5e-4). Freeze-8 candidate = F2 + F4 + MC_INDI_XY_P 1.2, after key2
+  and a test that fails without the filter change (lesson 20). Not yet checked: G2-STEP attitude step and G5.5
+  tracking with the slower lead (in the freeze-8 re-fly list).
