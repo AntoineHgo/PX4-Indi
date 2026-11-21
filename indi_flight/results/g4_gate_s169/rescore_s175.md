@@ -89,3 +89,16 @@ indi_project/docker/run.sh -n ns -t 300 -- bash indi_flight/results/g4_gate_s169
 Not changed: gate_g4.sh, g4_metrics.py (score mode only produces R20/C20/R4/clip; item 2 is rescore_s175.py calling g3_checks.py --skip-nav-change).
 Side effect: `gate_g4.sh score` also rewrote g4_table.md (identical values) and, once by mistake, a56_rate_s174/bld03/g4_table.md.
 UNVERIFIED: the 22 Hz land-entry line source; cruise item 2/chatter scoping (spec text is ambiguous); window RMS definition is the existing one (+-2 bins).
+
+## S175 width fix (key1 chatter line RMS)
+Rule is peak +-2 Hz; key1 integrated +-2 bins (+-0.5 Hz at the 4 s window). `bench/g3_checks.py`: new `CMD_RMS_HZ = 2.0`, `line_detector(..., rms_hz=)`
+(bins = round(rms_hz x 4 s)); chatter uses it, the rate detector keeps +-2 bins. Self-test case `chat_width` (60 Hz tone 4.0e-4 RMS plus +-1 Hz sidebands
+3.0e-4: old width 4.0e-4 not chatter, new 5.8e-4 chatter) PASS; break-check (CMD_RMS_HZ = 0.5) caught once, `--break-check` PASS; key2 tests 4 passed.
+Re-run: `results/g4_chatter_probe_s175/rescore_s175w.py` (same as rescore_s175.py, output rescore_s175w_runs.md, `<run>/g3_checks_s175w.json`; this file's table above is the BEFORE).
+| scope (key1, Q15 skip as above) | chatter before | chatter after |
+|---|---|---|
+| hover 9 | 4/9 (typ s1-s3, harsh s2) | 6/9 (+ harsh_s1, quiet_s1) |
+| cruise 9 | 9/9 | 9/9 |
+| all 18 | 13/18 | 15/18 |
+Max line RMS (ratio>20) rose in every run (e.g. typ_s1 2.40e-3 -> 2.82e-3, harsh_s2 3.87e-3 -> 4.37e-3); hover_quiet_s2/s3 and harsh_s3 stay "no".
+Item 2 (incl. chatter) therefore FAILs in 6/9 hover runs under key1 (before 4/9).

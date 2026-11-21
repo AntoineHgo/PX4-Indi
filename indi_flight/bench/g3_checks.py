@@ -49,6 +49,7 @@ TILT_DEG, TILT_S = 60.0, 0.2
 DROP_M, CONTACT_M, AIRBORNE_M, EXCURSION_M = 2.0, 0.1, 1.0, 5.0
 WIN_S, STEP_S, PEAK_RATIO, RMS_DEG_S, FREQ_TOL, MIN_WINDOWS = 4.0, 1.0, 20.0, 5.0, 0.10, 3
 RATE_BAND, CMD_BAND = (2.0, 40.0), (20.0, 100.0)
+CMD_RMS_HZ = 2.0           # Q14 rule: chatter line RMS integrated over peak +-2 Hz (S175 width fix; was +-2 bins = +-0.5 Hz)
 CMD_LINE_RMS = 5e-4        # Q14 A: one DShot step of full scale; chatter needs line RMS >= this as well as ratio > 20
 NAV_SKIP_S = 3.0           # Q15 A: rate windows overlapping the 3 s after a nav_state change are skipped
 POS_WIN_S, POS_P2P_M = 10.0, 0.3
@@ -83,14 +84,16 @@ def longest_run_s(t, mask):
     return best
 
 
-def line_detector(xg, fs, band, min_rms=None, t_start=0.0, skip=()):
+def line_detector(xg, fs, band, min_rms=None, t_start=0.0, skip=(), rms_hz=None):
     """xg (n,) uniform, first sample at time t_start. Returns dict: sustained bool, lines [(f_hz, first_window_start_index,
     n_windows)], flagged windows. skip: [(ta, tb)] intervals; a window overlapping one is not evaluated (counts as unflagged,
     so it breaks a run) and is counted in skipped_windows (Q15). Also reports max_ratio (largest peak/median over the evaluated
     windows) with the line RMS (peak +-2 bins) of that window, and max_rms_ratio_flagged (largest line RMS among windows with
-    ratio > PEAK_RATIO; None if none) (Q14)."""
+    ratio > PEAK_RATIO; None if none) (Q14). rms_hz: line RMS integrated over peak +-rms_hz (bins = round(rms_hz/df));
+    None keeps +-2 bins (rate detector)."""
     from scipy.signal import periodogram
     n, step = int(round(WIN_S * fs)), int(round(STEP_S * fs))
+    hb = 2 if rms_hz is None else int(round(rms_hz * WIN_S))
     flags = []  # per window: peak freq if flagged else None
     skipped, max_ratio, rms_at_max, max_rms_fl = 0, 0.0, None, None
     for s in range(0, len(xg) - n + 1, step):
@@ -105,7 +108,7 @@ def line_detector(xg, fs, band, min_rms=None, t_start=0.0, skip=()):
         k = int(np.argmax(Pb))
         ratio = float(Pb[k] / np.median(Pb))
         kk = np.flatnonzero(b)[k]
-        rms = float(np.sqrt(np.sum(P[max(kk - 2, 0):kk + 3]) * (f[1] - f[0])))
+        rms = float(np.sqrt(np.sum(P[max(kk - hb, 0):kk + hb + 1]) * (f[1] - f[0])))
         if ratio > max_ratio:
             max_ratio, rms_at_max = ratio, rms
         ok = Pb[k] > PEAK_RATIO * np.median(Pb)
@@ -190,7 +193,7 @@ def evaluate(tt, pos, q, w, tm, cmd, ref, t0, t1, wind=False, sag=False, mode="p
         osc["position"] = position_limit_cycle(tt[a][fin], pos[a][fin], max(ta, t0), te)
         okm = np.isfinite(cmd[am][:, :4]).all(axis=1)
         _, cg, fsc = uniform(tm[am][okm], cmd[am][okm][:, :4], ta, te)
-        chat = [line_detector(cg[i], fsc, CMD_BAND, CMD_LINE_RMS) for i in range(4)]
+        chat = [line_detector(cg[i], fsc, CMD_BAND, CMD_LINE_RMS, rms_hz=CMD_RMS_HZ) for i in range(4)]
         osc["command_chatter"] = {"motors": chat, "sustained": any(c["sustained"] for c in chat)}
         osc["pass"] = not any(osc[k]["sustained"] for k in ("p", "q", "r", "position", "command_chatter"))
         res["item2_oscillation"] = osc

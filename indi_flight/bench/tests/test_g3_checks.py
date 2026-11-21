@@ -105,6 +105,22 @@ def main():
         else:
             print(f"selftest {name}: {got} {'OK' if ok else 'FAIL'}")
             bad += not ok
+    # S175 width fix: chatter line RMS is integrated over peak +-2 Hz. Peak tone 60 Hz at 4.0e-4 RMS plus sidebands +-1 Hz at 3.0e-4 each:
+    # +-0.5 Hz (old +-2 bins) sees 4.0e-4 < 5e-4 -> not chatter; +-2 Hz sees all three, 5.8e-4 -> chatter.
+    tt = np.arange(0, 20.0, 1 / FS)
+    xx = sum(a * np.sqrt(2) * np.sin(2 * np.pi * f * tt) for f, a in ((59.0, 3e-4), (60.0, 4e-4), (61.0, 3e-4))) + 2e-6 * np.random.default_rng(1).normal(size=len(tt))
+    old = G.CMD_RMS_HZ
+    if brk:
+        G.CMD_RMS_HZ = 0.5       # old width
+    d = G.line_detector(xx, FS, G.CMD_BAND, G.CMD_LINE_RMS, rms_hz=G.CMD_RMS_HZ)
+    G.CMD_RMS_HZ = old
+    ok = d["sustained"]
+    if brk:
+        print(f"break-check chat_width: case {'STILL FAILS DETECTION (BAD)' if ok else 'passes expectation-miss (break caught)'}")
+        bad += ok
+    else:
+        print(f"selftest chat_width: sustained={ok} {'OK' if ok else 'FAIL'}")
+        bad += not ok
     print(("break-check " if brk else "selftest ") + ("PASS" if not bad else "FAIL"))
     return 1 if bad else 0
 
