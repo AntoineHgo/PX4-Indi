@@ -1,0 +1,26 @@
+ok
+PASS land_window got (50.0, 52.0) want (50.0, 52.0)
+PASS land_window no landing got None want None
+PASS land_window no ground_contact rise got None want None
+PASS 70 Hz line only inside land window, skipped -> not flagged got False want False
+PASS 70 Hz line far outside window -> flagged got True want True
+PASS same early line, no landing at all -> flagged got True want True
+PASS line ends right before skip edge (windows ending <= 39) -> flagged got True want True
+PASS line [39,43) all overlapping windows skipped -> not flagged got False want False
+PASS line from 43 s on (window start 43 touches edge, not overlapping) -> flagged got True want True
+PASS line from 42.5 s on -> flagged got True want True
+PASS skipped worst line ~70 Hz reported got True want True
+PASS skipped window count (starts 36..42 -> 7) got 7 want 7
+PASS land_window got (50.0, 52.0) want (50.0, 52.0)
+PASS land_window no landing got None want None
+PASS land_window no ground_contact rise got None want None
+FAIL 70 Hz line only inside land window, skipped -> not flagged got True want False
+PASS 70 Hz line far outside window -> flagged got True want True
+PASS same early line, no landing at all -> flagged got True want True
+PASS line ends right before skip edge (windows ending <= 39) -> flagged got True want True
+FAIL line [39,43) all overlapping windows skipped -> not flagged got True want False
+PASS line from 43 s on (window start 43 touches edge, not overlapping) -> flagged got True want True
+PASS line from 42.5 s on -> flagged got True want True
+FAIL skipped worst line ~70 Hz reported got False want True
+FAIL skipped window count (starts 36..42 -> 7) got 0 want 7
+OK (skip passes, broken skip fails as required)

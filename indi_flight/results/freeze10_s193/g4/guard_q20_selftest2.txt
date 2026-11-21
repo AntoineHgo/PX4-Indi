@@ -1,0 +1,9 @@
+PASS RMS recovered within 5 % (8e-4) got True want True
+PASS INDI peak 20 Hz got True want True
+PASS shared line -> PASS got PASS (shared) want PASS (shared)
+PASS INDI-only line -> FAIL got FAIL (INDI-only line) want FAIL (INDI-only line)
+PASS PID line 4 Hz away -> FAIL got FAIL (INDI-only line) want FAIL (INDI-only line)
+PASS INDI RMS 1.5e-3 -> FAIL got FAIL (INDI RMS > 1e-3) want FAIL (INDI RMS > 1e-3)
+PASS INDI RMS recovered 1.5e-3 within 5 % got True want True
+PASS below floor -> not checked got (False, 'not checked') want (False, 'not checked')
+PASS line outside skipped windows -> not checked got False want False

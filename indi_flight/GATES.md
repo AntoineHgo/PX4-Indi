@@ -661,3 +661,12 @@ RMS 2.94/3.78, 4.84/4.28, 4.47/3.93, 2.86/3.88 e-4 (4 s windows, ratio 0.78-1.14
 chatter 0/18, item 2 and item 3 harsh hover 3/3 (S184), every G4 row passes. Limits carried: harsh-cruise rate flags
 informational (S183); cruise item-3 offsets 0.11-0.22 m equal PID (S180); the 20 Hz take-off->loiter transient exists
 in both stacks at 0.05 % of full command; cruise_harsh_s2 exclusion of freeze-8 is history only (freeze-9 flew it).
+
+## G4 verdict at freeze-10 (S194, 2026-11-22): PASSED
+Evidence: `results/freeze10_s193/G4_SCORES.md` (18 INDI runs re-flown at FREEZE-10 firmware 7fe6206fcc, scored by
+the keyed freeze-9 scripts, both keys, Q19 skip; Q20 guard both keys; PID refs `g4_pid` = freeze9_s183/g4_pid, PID
+path unchanged by the freeze-10 commits, which touch only the INDI modules). Effort R20/C20/R4/clip 18/18; item 1,
+chatter, item 2: 18/18 both keys, no key disagreement; Q20 guard 54 transitions per key, 0 checked, 0 FAIL, max INDI
+narrow RMS 3.46e-4 < 5e-4; guard self-tests 8/8 and 9/9. Nearest limit: K1 chatter line 4.12e-4 (cruise_harsh_s2).
+Limits carried as at freeze-9: harsh-cruise rate flags informational (S183); cruise item-3 |dz| 0.135-0.333 m (fz9
+0.10-0.22) is read in a window after AUTO_LAND (RECONCILE_S180 task 2, both stacks), not a G4 row.

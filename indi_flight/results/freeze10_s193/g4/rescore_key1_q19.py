@@ -14,7 +14,7 @@ for r in rows:
     ev = "hold" if n.startswith("hover") else "traj"
     e = [e for e in json.load(open(f"{O}/{n}/run.json"))["events"] if e["name"] == ev][0]
     end = e["t_us"] * 1e-6 + e["dur_s"]
-    p = subprocess.run(["python3", "indi_flight/results/freeze9_s183/g4/g3_checks_q19.py", f"{O}/{n}/flight.ulg", "--t0", str(end - 10), "--t1", str(end),
+    p = subprocess.run(["python3", "indi_flight/results/freeze10_s193/g4/g3_checks_q19.py", f"{O}/{n}/flight.ulg", "--t0", str(end - 10), "--t1", str(end),
                         "--skip-nav-change", "--json", f"{O}/{n}/g3_checks_q19.json"], capture_output=True, text=True)
     j = json.load(open(f"{O}/{n}/g3_checks_q19.json")); o = j["item2_oscillation"]
     ch = [m for m in o["command_chatter"]["motors"]]
