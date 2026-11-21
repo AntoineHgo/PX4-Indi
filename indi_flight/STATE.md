@@ -19,14 +19,7 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    23acbdef67, bench defaults + ID_OK 1, fwdef cells (G5.1 acro + G2 rate roll 800 at ID_OK 0), G4 typical noise
    (--vib-acc 10 --vib-gyr 0 --imu-noise-scale 4.0, D-NOISE-PROF). Re-fly: results/g5_freeze_s157 (chain.sh:
    batch.sh 18 + batch2.sh 36 flights, status batch_status.txt, DONE2/CHAIN_END). History: JOURNAL S152-S157.
-   S158: FREEZE RE-FLY COMPLETE, 54/54 flights, all scored (README tables). G5.1 6/6, G5.3 3/3, G5.4 6/6, G5.5
-   offb/o5/o6 3/3, G5.7 3/3, events s2/s3 PASS; G5.2 5/6 (Q10, PID ref PASSES -> INDI s1 stays FAIL); G5.5
-   o1-o4/o7 FAIL 3/3 (Q11, PID o1 also FAIL); G5.10 INVALID/tilt (Q9); G5.9a s1 3.75 ms (Q8 add.2). fwdef cell
-   above G5.1 limit 3/3 = 0.5x K gate (probe ID_OK 1 PASSES), no LOC: reported, G5.1 is at identified gains.
-   S159: RC159 filed (+ design/route_check_159_response.md: next G2 freeze cells -> G4 -> G3). Key2 on freeze set:
-   G5.4/G5.8/G5.9 all agree (key2_g54_g58_g59.md); G5.5/G5.7 27/27 INDI verdicts agree (key2_g55_g57.md; partial
-   LOC in key2 noted); G5.1/G5.2 17/17 agree (key2_g51_g52.md). ALL G5 freeze checkers KEYED. NEXT S160: G5 verdict table in GATES/README, then G2 freeze
-   cells (rate roll/pitch 400+800, att yaw, outer cells, fwdef cell). Unverified: batch2 o5-o7 args.
+   S158-S159 (freeze re-fly 54/54 scored, all G5 freeze checkers KEYED, RC159 order G2 -> G4 -> G3): JOURNAL.
    S161: G5.11 yaw spike cause = T10 raw filter re-seed; fixed (D-T10-RESET, 49568bcaa5 + d1b65d0f09, key2 review
    design/review_s161_t10.md MAJORs closed). Residual at s1 probe = INDI hover tilt noise floor (Q12 addendum, option D).
    Post-freeze firmware change: also check other freeze rows had no in-flight reset edge (none should be affected).
