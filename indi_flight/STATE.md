@@ -32,10 +32,7 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    outer margin key2 (sonnet, raw ULog pinj -> margins, no access to pinj_csv.py; ~$0.8), z phase-plateau check,
    linear-model x-checks (rate at freeze params, outer model), then G4 per RC159 order (G2 -> G4 -> G3).
    S160: G5 verdict table in freeze README. G5.3 hold re-flown PASS 3/3 + key2. G5.11 exact test + g511_check.py:
-   FAIL 6/6 tilt cmd jump, UNKEYED. PID ref: xy 7.82 deg FAIL too (stack-indep., Q12); yaw PID 0.48 PASS -> NEXT: INDI
-   yaw-reset one-sample q_d spike cause search (1 session; compare heading-reset handling vs mc_pos_control), key2 g511
-   (sonnet, no access to g511_check.py), G2 cell table + att yaw/outer cells. G2 rate roll/pitch 400/800 x3 + fwdef roll800 x3 flown
-   (g2_freeze_s160 README): all margins PASS; 3 cells fail the pretest_gate hover-RMS line (typical noise): check G2 validity text.
+   FAIL 6/6 tilt cmd jump. PID ref: xy 7.82 deg FAIL too (stack-indep., Q12). Yaw cause fixed S161 (above).
    Seed 1: G5.1 acro/stab, G5.2 altctl PASS; G5.2 posctl z settle 4.15 s FAIL (> 4.0): cause
    search DONE: EKF2 height error -0.08 m decaying ~5 s, controller holds estimate (README); Q10 OPEN (not blocking);
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
