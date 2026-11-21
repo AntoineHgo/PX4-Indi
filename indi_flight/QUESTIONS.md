@@ -111,3 +111,14 @@ B: re-open base A for offboard trajectories only: INDI module's own pos/vel feed
 Meanwhile: seeds 2-3 and a PID o1 reference at the freeze plant are flown and scored as written.
 Update S158: 3/3 seeds FAIL on each of o1-o4/o7 (0.57-0.81 m), o5/o6/offb_vel_step PASS 3/3; PID o1 s1 at the
 freeze plant 0.785 m (also FAIL).
+
+## Q12 (S160, 2026-11-21): G5.11 xy reset tilt limit fails for both stacks. NOT blocking.
+Context (results/g5_freeze_s157/README.md, G5.11 row; exact test GATES 5b S160): a 1 m external-position reset
+(MAV_CMD_EXTERNAL_POSITION_ESTIMATE) moves the estimate 1 m; EKF2 then fuses GNSS and returns it to truth in ~1 s, so
+the position loop sees a 1 m transient error and commands 5.7-6.4 deg tilt (INDI, 3 seeds) and 7.82 deg (PID, seed 1)
+against the row's 1 deg. Truth excursion 0.15-0.19 m (<= 0.5) and no oscillation in both stacks. The firmware-free
+injector cannot produce a reset that the EKF keeps (stock ekf2, O-11).
+Options: A [recommended] record G5.11 xy as FAIL, stack-independent (stock EKF/pos loop), truth excursion reported as
+the controller-relevant number; B (gate change after first test): xy part judged on truth excursion and oscillation
+only, the 1 deg limit kept for yaw (and z if injectable); C: drop the xy part (injector cannot make a persistent reset).
+Meanwhile: yaw part (INDI-specific 1.8 deg spike, PID 0.48 deg) gets its cause search; xy counted FAIL as written.

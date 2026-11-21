@@ -102,7 +102,7 @@ Owner questions scored at option A (D-FREEZE-6). One line per GATES 5b row; "run
 | G5.8 RC/link/offboard loss, hover | PASS 3/3 | failsafe entry <= 1 s after the firmware timeout flag (Q8 add. 1/3 option A); 3 m/s rows not flown (Q8 add. 3) |
 | G5.9 kill, re-arm, take-off | FAIL 8/9 lines | s1 G5.9a 3.75 ms after switch, outputs 0 in the kill-flag sample (stock commander latency, Q8 add. 2); s2/s3 PASS |
 | G5.10 sustained saturation | INVALID | AGG part does not saturate; tilt 45.3 deg = MPC_TILTMAX_AIR vs 20 deg text (Q9 a/c); alt loss and recovery PASS |
-| G5.11 estimator reset xy, yaw | FAIL 6/6 (UNKEYED) | tilt command jump xy 5.7-6.4 deg, yaw 1.8-1.9 deg (<= 1); excursion <= 0.19 m and no osc PASS. xy: estimate jumps 1 m then returns in ~1 s (GNSS fusion), the stock pos loop commands the correction; yaw: one-sample q_d spike at t_a. PID reference g5_events_s1_pid queued (chain.sh) to test stack-independence. g511_check.txt, g511_notes.md |
+| G5.11 estimator reset xy, yaw | FAIL 6/6 (UNKEYED) | xy: tilt cmd jump 5.7-6.4 deg (<= 1); PID ref s1 7.82 deg also FAIL: stack-independent (EKF undoes the 1 m external reset by GNSS fusion in ~1 s, stock pos loop chases the estimate) -> Q12. yaw: INDI 1.8-1.9 deg one-sample q_d spike at t_a; PID ref 0.48 deg PASS -> INDI defect, cause search next session. Excursion <= 0.19 m, no osc, both stacks. g511_check.txt, g5_events_s1_pid.g511.txt |
 | F-8 rows (accel-only offboard, take-off on offboard setpoint) | NOT TESTED | owner decision F-8 |
 G5 overall: OPEN. Blocking rows: G5.2 (1/6), G5.5 o1-o4/o7, G5.9a s1, G5.10, plus the pending/not-tested rows; all FAIL rows have an
 owner question with the cause on the log.

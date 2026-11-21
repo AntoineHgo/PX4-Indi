@@ -28,9 +28,9 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    LOC in key2 noted); G5.1/G5.2 17/17 agree (key2_g51_g52.md). ALL G5 freeze checkers KEYED. NEXT S160: G5 verdict table in GATES/README, then G2 freeze
    cells (rate roll/pitch 400+800, att yaw, outer cells, fwdef cell). Unverified: batch2 o5-o7 args.
    S160: G5 verdict table in freeze README. G5.3 hold re-flown PASS 3/3 + key2. G5.11 exact test + g511_check.py:
-   FAIL 6/6 tilt cmd jump (xy 5.7-6.4, yaw 1.8-1.9 deg), UNKEYED. NEXT: score chain (PID ref: same jump = stack/EKF,
-   then Q to owner on the 1 deg limit for a GNSS-undone 1 m reset; else INDI cause search 1 session), key2 g511 (sonnet,
-   no access to g511_check.py), G2 cell table + att yaw/outer cells. G2 pre-test roll 800/400 s1 PASS (g2_freeze_s160).
+   FAIL 6/6 tilt cmd jump, UNKEYED. PID ref: xy 7.82 deg FAIL too (stack-indep., Q12); yaw PID 0.48 PASS -> NEXT: INDI
+   yaw-reset one-sample q_d spike cause search (1 session; compare heading-reset handling vs mc_pos_control), key2 g511
+   (sonnet, no access to g511_check.py), G2 cell table + att yaw/outer cells. G2 pre-test roll 800/400 s1 PASS (g2_freeze_s160).
    Seed 1: G5.1 acro/stab, G5.2 altctl PASS; G5.2 posctl z settle 4.15 s FAIL (> 4.0): cause
    search DONE: EKF2 height error -0.08 m decaying ~5 s, controller holds estimate (README); Q10 OPEN (not blocking);
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
