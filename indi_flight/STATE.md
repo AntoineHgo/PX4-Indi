@@ -20,13 +20,13 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    S155: review 3/3 DONE (design/prefreeze_r3_parity.md): 0 OPEN, 0 SAFETY, 8 PARTIAL MINOR (D-PREFREEZE-R3).
    STAGE-6 FREEZE DEFINED: D-FREEZE-6, firmware 23acbdef67, bench defaults + ID_OK 1 overlay, firmware-default cells
    (G5.1 acro yaw + G2 rate roll 800 at ID_OK 0). GATES 5b needs the G4 TYPICAL noise profile for the re-fly:
-   S156: D-VIB-HOOK implemented (0f56d56bf1, runner VIB_RPM 9540/NB 3 + full-rate sensor_accel 92788a6bb3); hover
-   pre-test typical 1P 9.70 / BP 4.80 vs 10 / 5 m/s^2 (results/g4_vib_s156, bench/vib_line_check.py) = A-49 closing
-   test PASS, key2 ACCEPT WITH FIXES, fixes 56ebc4e009/bd56c743aa, A-49 CLOSED. Profiles D-NOISE-PROF (quiet 0.5,
-   typical 10, harsh 27 m/s^2 at IMU; typical = --vib-acc 10 --vib-gyr 0 --imu-noise-scale 4.0).
-   NEXT S157: G5.1-G5.11 re-fly 3 seeds serial (haiku batches, existing fly scripts/checkers), typical profile,
-   bench/params/quad5in_indi_defaults.params + ID_OK 1 overlay (NOT the s153 params: POS_TB 1.0). Pre-test 1 row first.
-   Check that each row's scenario passes the vib/noise args. RC154 cuts stand.
+   S156: vib hook done, A-49 CLOSED; typical = --vib-acc 10 --vib-gyr 0 --imu-noise-scale 4.0 (D-NOISE-PROF).
+   S157: pre-test auto_tour PASS but at ID_OK 0 (defaults file defeats runner overlay = set-up fault, fixed:
+   results/g5_freeze_s157/params.params, D-FREEZE-6 note). FREEZE RE-FLY RUNNING detached (chain.sh: batch.sh G5.1-5.4
+   18 flights, then batch2.sh G5.5/5.7/5.10/events/fwdef cell 36 flights; status batch_status.txt, CHAIN_END at end).
+   NEXT S158: if no CHAIN_END and no px4 container running, `setsid nohup bash .../chain.sh &` (resumes). Then
+   `bash indi_flight/results/g5_freeze_s157/checks.sh`, verdict table in its README, keyed second checker per
+   D-FREEZE-6 (g54_key2.py, g5_rows_key2.py exist). Unverified: batch2 o5-o7 args (batch2_notes.md).
 1-3. Probes PASS, re-fly at freeze: G5.4 9/9 (S135), G5.1 6/6 K_Y 20 (S137), G5.2 6/6 (S138, g52_check keyed).
 3b. G5.3 hold + mission PASS 3/3 (S139-S140). G5.7 PASS 3/3 as probe (S139/S143 matched GNSS, results/g5_g57_s143_gnss).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (fixes fee02b59b2, 3944e8e367; key2 results/g5_events_s144/key2.md):
@@ -74,6 +74,7 @@ Later: log a z-only active flag in indi_pos_status when next touching the module
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S157b | G5 freeze re-fly, 54 flights, detached | chain.sh (setsid) | results/g5_freeze_s157/batch_status.txt | `setsid nohup bash indi_flight/results/g5_freeze_s157/chain.sh &` (skips done) |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
