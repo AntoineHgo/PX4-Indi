@@ -1178,6 +1178,9 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   267 Hz (larger change, no gate gain shown); stock sensors-module 800->267 Hz fold is stock PX4 (owner note point 1).
 - Rows it invalidates once in firmware: G2 outer cells, G4, G5 outer-loop rows, G3 pre-test (re-flown after FREEZE-10).
 - Overturn: fix probe leaves the 6.84 Hz line in a_f on run 16 -> the cause is elsewhere; re-open.
+- S190 implemented: 2d92dbcf59 (module also scheduled on vehicle_acceleration, native-rate LPF2p same cut) +
+  4afa7a97b6 (re-seed on f_b invalid->valid, key 2 M1). Probe (fix_s190/PROBE.md): run 16 a_f line 0.256 -> 0.006
+  m/s^2, item 2 PASS on 16/10/0, run 5 still FAIL (2.0 Hz q, item 3). Not overturned.
 
 ## D-G57-FF (S189, 2026-11-21): G5.7 cause shown on log = rate FF off outside offboard (aa4fd2654a)
 - Fact: probes on mode_switch10 (results/freeze9_s183/g5_modes/CAUSE_S189.md, probe_*_s189): XY gains at freeze-6
