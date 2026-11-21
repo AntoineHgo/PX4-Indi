@@ -1,0 +1,1 @@
+cd /home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/results/g2_freeze_s160; while ! grep -q "S163_END\|ABORT\|exit" batch_s163.log; do sleep 30; done; bash ../g2_outer_freeze_s163/batch.sh > ../g2_outer_freeze_s163/batch.log 2>&1

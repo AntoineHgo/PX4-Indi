@@ -26,8 +26,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    Re-fly at d1b65d0f09 (results/g511_fix_s161): yaw 0.76/1.21/0.83 (2/3 PASS), xy 5.8-6.7 FAIL (Q12); row FAIL as
    written, KEYED S162. G5.8/G5.9 re-scored + key2 at d1b65d0f09: unchanged. Reset sweep: other 58 freeze rows
    have no airborne reset (unaffected). G2 attitude 12/12 PASS at freeze, KEYED (results/g2_att_freeze_s162).
-   NEXT S163: G2 rate yaw 400/800 x2 + model-only rate cells at freeze (reuse g2_freeze_s160/batch.sh, PSUF), then
-   outer cells (accel z/xy, vel/pos z/xy) at freeze + their margin key; attitude yaw model x-check open. Next RC: S164.
+   S163: G2 rate yaw + model-only + outer cells at freeze flying (Tasks table; chain ends FINAL_END in
+   g2_freeze_s160/final_s163.log). pretest_gate RMS line is not a G2 validity item (README S163): S160 cells valid.
+   yaw400_s1 first flight INVALID (sim hole from my parallel container). NEXT: score the cells into README + GATES
+   cell table, outer-cell margin key2 (no independent script yet: sonnet brief), attitude yaw model x-check. Next RC: S164.
    S160: G5 verdict table in freeze README. G5.3 hold re-flown PASS 3/3 + key2. G5.11 exact test + g511_check.py:
    FAIL 6/6 tilt cmd jump, UNKEYED. PID ref: xy 7.82 deg FAIL too (stack-indep., Q12); yaw PID 0.48 PASS -> NEXT: INDI
    yaw-reset one-sample q_d spike cause search (1 session; compare heading-reset handling vs mc_pos_control), key2 g511
@@ -75,6 +77,8 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S163 | G2 rate yaw meas 800/400 x2 + model-only r/p/y 800/400 x2 (16 fl) | batch (no agent) | results/g2_freeze_s160/batch_s163.log, cells yaw*_s*, *_mo_s* | `bash batch_s163.sh` (skips done cells) |
+| S163b | G2 outer z/xy PT0/PT1 800/400 x2 seeds at freeze (24 fl), chained after S163 | batch | results/g2_outer_freeze_s163/batch.log, *_margins.json | `bash results/g2_outer_freeze_s163/batch.sh` from repo root (skips done) |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),

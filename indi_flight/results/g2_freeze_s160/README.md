@@ -26,3 +26,16 @@ Every cell meets GM >= 6 dB, PM >= 45 deg and DM >= 2 periods + telemetry latenc
 sim-default noise and the G4 typical profile raises hover rate noise. OPEN (next session): check the GATES G2 validity
 text for whether this line invalidates a cell; if it does, re-fly those 3 cells or record a test-defect fix (logged).
 Verdicts UNKEYED as a set (scripts keyed K100/K101); att yaw and outer cells not yet flown at the freeze.
+
+## S163: validity of the 3 pretest_gate FAIL cells (open item above, closed)
+GATES G2 "Validity of each run" lists: fault == 0, landed == 0, u = c + d, logged rate / holes, injected d = generator.
+The pretest_gate hover rate RMS < 0.02 rad/s line is not part of it (it is a pre-test sanity bound set at sim-default
+noise). The 3 cells are therefore valid G2 runs; no re-fly, no gate change. The G4 typical profile is judged in G4.
+
+## S163 cells: rate yaw (measured) 800/400 x2, model-only (MC_INDI_W_MAX 0, S100 recipe) roll/pitch/yaw 800/400 x2
+`bash batch_s163.sh` (params_yaw.params = params_roll with INJ_AX 3; params_mo_<ax>.params = W_MAX 0). Results below.
+- yaw400_s1 (first flight, kept as yaw400_s1_INVALID_simhole/): watchdog tilt > 60 deg at t 42.9 s in hover, BEFORE the
+  injection started. Cause: two sim holes (gyro and indi_rate_status frozen ~60 ms at 42.05 s, 88.75 ms at 42.28 s; INDI
+  stage cond 0x7f -> 0x7d), produced by an orchestrator post-processing container run in parallel with the flight
+  (STATE 4a rule broken). Motors held a stale full-differential command through the 89 ms hole. Invalid run (G2 validity:
+  gap > 3 periods), re-flown serially. Cells flown during that window (yaw800_s1, yaw800_s2, yaw400_s2) are hole-checked.
