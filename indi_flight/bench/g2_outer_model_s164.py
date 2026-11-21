@@ -30,7 +30,7 @@ T = 1.0 / FS_OUT
 
 # ---- parameters: (value, source)
 P = dict(
-    xy=dict(Kp=MM.XY_GAINS_INDI['Kp'], Kvp=MM.XY_GAINS_INDI['Kv'], Kvi=0.4, Kvd=0.2),   # MC_INDI_XY_P/VP (freeze-7 defaults); Kvi/Kvd stock MPC_XY_VEL_I/D_ACC
+    xy=dict(Kp=MM.XY_GAINS_INDI['Kp'], Kvp=MM.XY_GAINS_INDI['Kv'], Kvi=0.4, Kvd=0.2),   # MC_INDI_XY_P/VP (firmware defaults); Kvi/Kvd stock MPC_XY_VEL_I/D_ACC
     z=dict(Kp=1.0, Kvp=4.0, Kvi=2.0, Kvd=0.0),
     veld_lp=5.0,        # MPC_VELD_LP yaml default
     lpf=10.0,           # MC_INDI_POS_LPF (freeze params)
@@ -182,7 +182,7 @@ def main(argv=None):
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("--legacy-mpc", action="store_true", help="evaluate the old MPC_XY_P / MPC_XY_VEL_P_ACC xy gains (s164 values)")
-    ap.add_argument("--params", default=None, help="params file with MC_INDI_XY_P / MC_INDI_XY_VP (default 1.9 / 3.6 when absent)")
+    ap.add_argument("--params", default=None, help="params file with MC_INDI_XY_P / MC_INDI_XY_VP (firmware defaults 1.2 / 3.6 when absent)")
     ap.add_argument("--out", default=None)
     a = ap.parse_args(argv)
     g = MM.xy_gains(a.params, legacy_mpc=a.legacy_mpc)
