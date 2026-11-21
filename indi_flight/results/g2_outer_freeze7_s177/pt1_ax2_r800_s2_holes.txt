@@ -1,0 +1,15 @@
+hole report: indi_flight/results/g2_outer_freeze7_s177/pt1_ax2_r800_s2/flight.ulg  (span 198.3 s after the first second)
+topic                                 class       rate Hz holes  miss   miss %  max ms  exc ms  verdict
+sim_ground_truth                      sim           800.0    47    74   0.0466   11.25   10.00  PASS
+vehicle_attitude_groundtruth          sim-info      800.0 19470 19514  12.2988   12.50   11.25  info
+vehicle_angular_velocity_groundtruth  sim-info      800.0 19782 19825  12.4948   12.50   11.25  info
+vehicle_local_position_groundtruth    sim-info      800.0 19752 19795  12.4759   12.50   11.25  info
+sensor_gyro                           sim           800.0    46    74   0.0466   13.75   12.50  FAIL
+vehicle_angular_velocity              controller    800.0    38    43   0.0271   13.75   12.50  FAIL
+vehicle_torque_setpoint               controller    800.0    37    41   0.0258   13.75   12.50  FAIL
+actuator_motors                       controller    800.0    37    40   0.0252   13.75   12.50  FAIL
+vehicle_local_position_setpoint       controller     88.9     0     0   0.0000    0.00    0.00  PASS
+CLASS sim        holes   47  missing 0.0466 % (limit 0.05 %)  max 13.75 ms, excess 12.50 ms (limit 10 excess)  FAIL
+CLASS controller holes   38  missing 0.0271 % (limit 0.10 %)  max 13.75 ms, excess 12.50 ms (limit 10 excess)  FAIL
+CLASS logger     holes    2  missing 0.0055 % (limit 0.10 %)  max 11.00 ms, excess 11.00 ms (limit 10 excess)  FAIL
+OVERALL FAIL
