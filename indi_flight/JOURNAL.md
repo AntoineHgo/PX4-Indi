@@ -1221,3 +1221,9 @@ Also from the owner, 2026-11-21:
 - When the re-flown G3 pre-test is clean, create WAIT_OWNER with "G3 set-up fixed, ready for flight chain" in
   STATE.md. The owner then builds a detached flight chain (batches flying between sessions) before the 300-run
   campaign.
+- S175 (2026-11-21): acted on Q8-Q15 (GATES "Owner amendments S175", D-OWNER-Q8-Q15, D-JFF-KEEP keep both post-freeze
+  FF commits, rows re-fly at freeze-7). G2 plateau key2 20/20 agree (0.22 dB); A-51 closing test rejected latency
+  (12/15 -> 5/15) -> Q16 BLOCKING G2. G4 re-score both keys: metric rows 18/18, item 2 PASS (Q15 A); chatter FAIL =
+  INDI-only 22 Hz line AUTO_LAND -> touchdown (PID none), probe S175-f on post-JFF firmware. G3 set-up (a)+(c) fixed
+  (noise profile applied, abort on not_applied, Docker scoring). Gate progress: G2 evidence complete except x-check
+  clause (Q16); G4 item 2 PASS, chatter failure localised as INDI-specific; G3 set-up faults (a)(c) closed.

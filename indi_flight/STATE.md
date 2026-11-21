@@ -20,10 +20,12 @@
    FF in offboard only; fable review of the design; then code + key2 + tests; G5.5 pre-test; check whether G2 outer
    cells / G4 cruise were flown in offboard (then re-fly them at freeze-7).
 5. G5.10 re-definition flights (Q9 b/c): SAT part one-flight check motors >= 0.99, full-scale stabilized part.
-6. G3 set-up (owner step 4): S175-e does (a) abort on not_applied + noise-profile cause, (c) Docker scoring.
-   Still to do: (b) excursion vs setpoint in g3_checks (key2 before gate use); tel_frozen hook (sim hook, two keys);
-   (d) run 17 LOC (tilt 129 deg) and osc runs 03/07/08/13/17: PID reference first, one session max. Then re-fly the
-   20-run pre-test; when clean, write "G3 set-up fixed, ready for flight chain" here and create WAIT_OWNER.
+6. G3 set-up (owner step 4): (a)+(c) DONE S175 (bba6345575, results/g3_setup_s175: noise applied, accel HF x9.1,
+   gyro HF unchanged = check imu-noise-scale reaches gyro (one log read); abort on not_applied; g3_score_docker.sh).
+   Still to do: tel_frozen hook (gz_bridge bit-identical rpm injector, two keys; until then runs 03/11 abort);
+   (b) excursion vs setpoint in g3_checks (key2 before gate use); (d) run 17 LOC (tilt 129 deg) and osc runs
+   03/07/08/13/17: PID reference first, one session max. Then re-fly the 20-run pre-test; when clean, write
+   "G3 set-up fixed, ready for flight chain" here and create WAIT_OWNER.
 7. Freeze-7 re-fly: G4 18 runs, G5.3/G5.4/G5.5 + offboard rows, G5 event rows in hover (cheap confirm).
 8. G7 (stage 7): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site (K128 MAJOR), D-JFF-SOURCE case,
    omega_ff step on offboard entry (key2_jffoffb MINOR), checker self-tests passthrough_check/offb_vel_check;
@@ -51,7 +53,6 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | S175-f | G4 chatter probe post-JFF + key1 width fix | sonnet | results/g4_chatter_probe_s175/README.md | re-brief from file |
-| S175-e | G3 set-up (a) abort on not_applied, noise cause, (c) Docker score | sonnet | results/g3_setup_s175/README.md | re-brief from file |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
