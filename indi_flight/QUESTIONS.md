@@ -68,6 +68,21 @@ from the G2 rate-loop data, then a firmware change that re-opens G2/G4/G5); C (R
 that PID also shows is reported with both values, failing only above an absolute bound you set). Recommendation: A with
 a narrow-band (+-0.5 Hz) line measure that removes the 14->18 artefact; I will not propose a tolerance myself.
 
+**Owner answer to Q20 (2026-11-21):** Reading A with a narrow-band line measure in the guard only, plus C for
+transients PID shares.
+1. Guard metric: key-2 detector `psd_windows(..., rms_hz=0.5)` (4 s Hann, 1 s hop, peak bin in 20-100 Hz, RMS over
+   the peak +-2 bins = +-0.5 Hz). Skipped windows as in S183/Q15 (`ta < c+3 and ta+4 > c`). The Q14 detector outside
+   skipped windows keeps its +-2 Hz measure.
+2. A transition is checked only where an INDI skipped window is flagged (ratio > 20 AND narrow RMS >= 5e-4); otherwise
+   both values are reported.
+3. When checked: FAIL if PID has no window with ratio > 20 within +-0.5 Hz of the INDI peak at that transition
+   (INDI-only line), or if the INDI narrow RMS > 1e-3 (new upper bound set by the owner). Otherwise PASS (transient PID
+   shows too, owner note point 1); INDI, PID and ratio reported. Windows from c+3 s on stay with the Q15 detector.
+4. Review pre-look (read-only, to be confirmed by both keys): every freeze-9 INDI skipped window is below 5e-4 in the
+   narrow band (max 4.84e-4, hover_harsh_s2 17->4); 14->18 drops to 2.3-2.95e-4; INDI/PID at 17->4 on 4 s windows is
+   0.74-1.14. Report the 4 s values, not the 1.7x from line20.py 2 s windows. No firmware chase.
+5. Code the rule in both keys, re-score freeze-9 G4 (no re-fly): that is the G4 verdict.
+
 ## Q21 (S185, 2026-11-21): G5.10 SAT part, the "hover needs >= 1.0 command" set-up cannot be reached. BLOCKING for G5.10 (and so the G5 verdict)
 Context: Q9(c) defines the SAT part at a thrust scale where hover needs >= 1.0 command, entered from a pinned hover.
 - Step-in 1 -> 0.136 with the 3 m step (S181): an 86 % thrust-loss test, both stacks hit the ground (D-G510-SAT-SETUP).
@@ -85,6 +100,19 @@ Options:
      the low scale): changes the stock hover set-up for this row only.
   C. Drop the SAT part; G5.10 = the stabilized full-scale part (Q17 A) only, reported as such.
 Meanwhile: no G5.10 flight or score. Work moves to G3 set-up (tel_frozen hook, STATE next action 4). Blocked on G5 verdict.
+
+**Owner answer to Q21 (2026-11-21):** A as a one-flight feasibility check; C if saturation is not reached.
+1. Cause recorded: Q9(c) is not physically impossible (scale 0.136: T/W 0.993, ~0.9 m loss in 5 s for an ideal loop).
+   The blocker is stock PX4: hover-thrust estimate clamped at MPC_THR_HOVER + HTE_THR_RANGE = 0.337
+   (MulticopterHoverThrustEstimator.cpp:91). PX4 fact: reported, not chased.
+2. Numbers: T/W = 7.31 x scale, hover command = 0.137 / scale; the estimate stays inside its clamp only for scale >= 0.41.
+3. One flight per stack: scale 0.30, a 3 m climb (new z offset) plus the existing 3 m horizontal step
+   (scenarios.py:244). Valid only if all 4 motors stay >= 0.99 for >= 1 s in BOTH stacks (validity, not pass).
+4. If valid: limits unchanged (no LOC, alt loss <= 2.0 m, tilt <= MPC_TILTMAX_AIR + 5 deg, back within 0.3 m in <= 5 s
+   after saturation ends); saturation time and hover-estimate value reported. If not valid: C, G5.10 = stabilized
+   full-scale part (Q17 A); sustained saturation under the position loop stays covered by G3 corner C3.
+5. Not B (per-row stock hover parameter is a hand tune). Note for G3: C3 (scale 0.27, hover cmd 0.51) is also above
+   the hover-estimate clamp; report it with the C3 results.
 
 ## Q22 (S186, 2026-11-21): G3 pre-test oscillations sit outside the attitude-loop stability boundary; box or gains? BLOCKING for G3
 Context (results/g3_pretest_s173/run_017/LOC_CAUSE_S186.md, results/g3_osc_margin_s186/README.md, results/g3_excursion_s186/RESCORE_V2.md):
@@ -113,3 +141,24 @@ Recommendation: A (and report the down-tau x9 corner as it falls). It is the sma
 re-flyable freeze.
 Meanwhile: no G3 flight or score of the oscillation rows. The key-2 item-3 fix (tooling, all options need it) finishes this session.
 G4 waits Q20, G5 waits Q21, G7 waits the G4/G5 verdicts: blocked (WAIT_OWNER).
+**Owner answer to Q22 (2026-11-21):** no attitude-P change, no freeze-10. Narrow the G1-error factor and fix the
+tau box (test definition).
+1. Not A: by model scaled to freeze-9, P 4.7 gives G2-STEP settle ~830-890 ms (limit 450) and outer xy PM ~36.5 deg
+   (limit 45). No P meets G2 and covers G1 error x2 (P 8: max e 1.2 at att PM >= 30; P 7: 1.35, settle 447-480 ms).
+2. G1 error, controller vs plant: x[0.8, 1.2] per axis (was x[0.5, 2]). Basis: identification is accepted only within
+   10 %, the gate halves gains before identification (MC_INDI_ID_OK 0), and G6 covers the x0.5/x2 starting errors.
+   A payload added after identification (e ~1.3) is a stated G8 limit. Gains unchanged; freeze-9 G2/G4/G5 evidence stands.
+3. Tau box, test defect: g3_sample/model_variant multiply tau_down by scale x asymmetry (up to x9). Fix: tau_up and
+   tau_down both lie in x[0.5, 3]; slow = scale, fast = max(scale / asym, 0.5). Corners C1-C6 re-stated on the new
+   ranges (C1/C2/C4 use e 1.2 / 0.8).
+4. Fast-motor corner (missed in Q22): e 0.5, tau x0.5, 10 ms gives rate PM -22 deg at 16.6 Hz. Check the rate loop
+   at e 0.8, tau x0.5, 10 ms on the model before the re-fly; run 08's 10.75 Hz q line is a hypothesis for this.
+5. Not C (G3's controller tau is nominal, the plant's is drawn), not D (LOC is a safety row).
+6. Next: update GATES G3 table + sampler (second key), re-fly the 20-run pre-test; when clean, the flight-chain line
+   in STATE.md + WAIT_OWNER as before.
+7. Run 17 PID reference (owner review, results/g3_pretest_s173/run_017_pid_s185/flight.ulg, same draw and seeds):
+   the PID flight FAILS G3 item 2 in both keys (sustained p 2.75-3.25 Hz, line RMS 18 deg/s; q 2.5-2.75 Hz, 28.8 deg/s),
+   no LOC. "PID: no oscillation" in LOC_CAUSE_S186 was wrong (corrected there). The gap is ~25x, not ~10x: q RMS
+   0.5-20 Hz over 28-74 s is 272 deg/s INDI vs 10.9 deg/s PID. Not verified: whether the PID line is a limit cycle or
+   the gust/wind response (needs a calm-air PID flight; only if the G3 report needs it). Run 17's draw (e 1.52) is
+   outside the new box, so it leaves the pre-test set and goes to the report as an out-of-box case with both values.
