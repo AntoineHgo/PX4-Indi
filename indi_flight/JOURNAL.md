@@ -1473,6 +1473,40 @@ tau box (test definition).
    0.5-20 Hz over 28-74 s is 272 deg/s INDI vs 10.9 deg/s PID. Not verified: whether the PID line is a limit cycle or
    the gust/wind response (needs a calm-air PID flight; only if the G3 report needs it). Run 17's draw (e 1.52) is
    outside the new box, so it leaves the pre-test set and goes to the report as an out-of-box case with both values.
+## S191 (2026-11-21) closed owner question Q23 (full text moved from QUESTIONS.md)
+## Q23 (S189, 2026-11-21): G5.7 cause is aa4fd2654a (kept under D-JFF-KEEP at owner request). Which fix? BLOCKING for G5.7
+Context: G5.7 fails 3/3 at freeze-9 on attitude tracking lag at hold edges (tilt_err 5.8-10.7 deg, limit 5; freeze-6
+2.4-4.2; PID ref 4.50/4.54/7.50, s3 FAIL). Probes (results/freeze9_s183/g5_modes): XY gains back to freeze-6 values:
+still FAIL (probe_s189); kSetpointLeadTc 0.01: still FAIL (probe_tc_s189); aa4fd2654a reverted (rate feed-forward in
+every mode again): PASS s3 and s1, hold edges 2.5-3.8 deg (probe_ff_s189). aa4fd2654a was kept at your request
+(D-JFF-KEEP) because the auto-mode a_ff is the stock smoother state that follows the vehicle: differenced, it fed
+24-28 deg/s of rate FF during AUTO_LAND under strong vibration (results/g4_jff_s172). Without FF, INDI tracking lag at
+hold edges (~48 ms) equals PID's (~50 ms), and PID also fails s3.
+Options:
+ A. FF in every mode except AUTO_LAND (and land-like failsafes): smallest change, keeps the S172 fix where it was seen.
+    Probe first (G5.7 s3 + the S172 AUTO_LAND vibration case), then into FREEZE-10. Recommended.
+ B. Full revert of aa4fd2654a: re-ships the AUTO_LAND FF defect.
+ C. Keep aa4fd2654a: G5.7 stays NOT PASSED with this data (PID fails s3 too: your call whether G5.7 is a test defect).
+Meanwhile: the G3 fix D-AF-ALIAS (outer-loop acceleration aliasing, INDI-only 7 Hz line) is implemented and probed;
+both firmware changes would enter one FREEZE-10, then the invalidated rows are re-flown once. G5.7 work waits.
+Blocked: G5.7 only.
+**Owner answer to Q23 (2026-11-21):** B, full revert of aa4fd2654a (D-JFF-KEEP overturned for that commit only;
+20b4a41b22 stays). Basis (review of the S172 evidence):
+1. The AUTO_LAND rate FF has no gate effect. With FF already 0 in AUTO_LAND (results/g4_jffoffb_s172), G4 item 2
+   still failed 1/3 near land entry (p 2.0 Hz) and descent q std stayed (13.9 deg/s s2): A-56 FF hypothesis falsified
+   (S172). The < 3 deg/s omega_ff target was self-set, not a gate row.
+2. The spike is not an entry transient: on harsh it is a sustained slope of the stock land-task a_ff during descent
+   (aff_source.md); typ peaks equal harsh (24-28 deg/s). Source is stock FlightTaskAuto: no cause search (owner note
+   point 1). Record the 24-28 deg/s landing FF as a known, gate-neutral fact.
+3. Not A: a nav_state or land-setpoint switch is a new hook (new vehicle_status subscription) that no gate row
+   consumes, and RTL / mission landings (nav_state 5 / 3) would need it too. Not C: the revert probe already PASSES
+   G5.7 (s1, s3) and also clears s3 1>2 (10.66 -> 2.45) and 15>2 (6.20 -> 2.38).
+4. Before FREEZE-10, one probe on the candidate build (revert + D-AF-ALIAS 2d92dbcf59/4afa7a97b6):
+   - G5.7 mode_switch10 seeds 1, 2, 3 (s2 not yet flown with the revert).
+   - G5.4 auto_land10 and auto_tour on typ, plus one harsh auto_tour: G5.3/G5.4 rows against freeze-9 under the
+     D-JFF-KEEP 10 % rule; record omega_ff peaks in takeoff, loiter, mission (difference FF never flown there).
+   - One moving offboard run (G4 cruise) showing omega_ff non-zero (not shown in g4_jffoffb_s172 hover).
+5. If any check fails: stop and write a new owner question; no fall-back to A or C.
 - S188 (20261121-195641): G5.10 stabilized part 3/3 both keys at freeze-9 (SAT dropped Q21; PID ref also passes).
   D-FREEZE-9-GAP: G5.1/G5.2/G5.7 had not been re-flown since freeze-6; re-flown: G5.1 6/6, G5.2 6/6 PASS, G5.7 FAIL
   3/3 both keys (attitude jump 5.8-10.7 deg at hold edges; freeze-6 PASS). G3 pre-test on Q22 draws: 10/20 FAIL item 2

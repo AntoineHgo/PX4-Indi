@@ -972,6 +972,7 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   FF), G5 event rows in hover (to confirm on the freeze-7 re-fly, cheap).
 - Alternative: revert both and keep freeze-6 evidence valid. Rejected: defect, and freeze-7 comes anyway.
 - Overturn: G5.3/G5.4 at freeze-7 worse than freeze-6 by > 10 % (D-JFF-OFFB check).
+- Overturned S191 for aa4fd2654a only (D-OWNER-Q23, revert); 20b4a41b22 stays.
 
 ## D-OFFB-POSVEL (S176, 2026-11-21): INDI module owns its xy pos/vel gains (G5.5, Q11 B)
 - Fact: G5.5 o1-o4/o7 FAIL 0.57-0.81 m (limit 0.5), both stacks. Estimate e ~ drag/|K_v K_p - w^2 + j w K_v| gives
@@ -1187,3 +1188,16 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   values FAIL, kSetpointLeadTc 0.01 FAIL, aa4fd2654a reverted PASS s3/s1 (hold edges 2.5-3.8 deg vs 4.3-6.05).
 - Decision: owner question Q23 (D-JFF-KEEP was an owner request). Recommended: FF in every mode except AUTO_LAND.
 - Overturn: Q23 answer.
+
+## D-OWNER-Q23 (S191, 2026-11-21): revert aa4fd2654a (rate FF in every mode again), owner answer B
+- Fact: aa4fd2654a is the G5.7 cause (D-G57-FF; revert probe PASS s1/s3). With FF already 0 in AUTO_LAND
+  (results/g4_jffoffb_s172) G4 item 2 and descent q noise did not change: the 24-28 deg/s landing FF (stock land-task
+  a_ff, sustained slope on harsh, typ peaks equal) has no gate effect. Source is stock code: no cause search.
+- Choice: full revert of aa4fd2654a; 20b4a41b22 (FF only from the a_ff difference) stays. Enters FREEZE-10 with
+  D-AF-ALIAS (2d92dbcf59, 4afa7a97b6).
+- Alternatives: A (FF off in AUTO_LAND / land setpoints) rejected: new vehicle_status hook with no consuming gate row,
+  RTL and mission landings (nav_state 5/3) not covered by a nav_state switch. C (keep) rejected: G5.7 stays failed.
+- Probe before FREEZE-10, on the candidate build: G5.7 mode_switch10 s1-s3; G5.4 auto_land10 + auto_tour typ and one
+  harsh auto_tour (G5.3/G5.4 vs freeze-9, 10 % rule; omega_ff peaks in takeoff/loiter/mission recorded); one G4
+  cruise run with omega_ff non-zero in offboard.
+- Overturn: any probe check fails -> new owner question, no fall-back to A or C.
