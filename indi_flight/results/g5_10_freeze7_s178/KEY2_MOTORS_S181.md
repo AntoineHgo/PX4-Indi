@@ -37,3 +37,22 @@ Sat flights: both fell to the ground ~1.5 s after the injection (watchdog height
 - D4 line 20: requires an 'rec' event; the aborted sat runs have only settle and sat, so the script cannot score them. It also has no tilt/LOC/alt-loss/recovery for the sat part (README says g510_check does that).
 - Key2 caveats: LOC rule (height < 0.3 m or tilt > 90) is my reading, not stated in GATES.md; sat recovery needs the run to reach sat end + 5 s (not the case); sat window start from the run.json event, not from a log of the injection actually taking effect.
 - Not verified: why the 0.136 scale gives free fall rather than a pinned-at-1.0 hover (hover thrust 0.137 would need 1.007; the motor model may be nonlinear), and the sim's thrust scale actually applied in the sat segment.
+
+## Key1 fixed (S181)
+Script: indi_flight/bench/g510_score_motors.py (moved from this folder, rewritten: D1 exit_status no longer forces LOC; D2 stab tilt limit MPC_MAN_TILT_MAX + 5 and no alt-loss limit; D3 recovery = attitude error to q_d <= 5 deg from <= 1 s after stick centre; D4 no KeyError, runs without 'rec' are scored; SAT part has its own checks: LOC, tilt <= MPC_TILTMAX_AIR + 5, alt loss <= 2.0 m, recovery <= 5 s, all-4 saturated fraction >= 0.5 (assumed, spec gives no figure)). LOC = truth height < 0.3 m outside a landing phase, or tilt > 90 deg (docstring). Self-test: bench/tests/test_g510_score_motors.py (6 tests ok; each of D1-D4 fails when its line is reverted, KeyError 'rec' for D4). Same four logs, key1 fixed vs key2:
+
+| item | key1 fixed | key2 | verdict |
+|---|---|---|---|
+| sat all4 s (indi_sat / pid_sat) | 0.0 / 0.0 | 0.0 / 0.0 | agree |
+| sat any s | 0.510 / 0.025 | 0.510 / 0.025 | agree |
+| sat tilt max / limit | 58.92 / 50 ; 39.50 / 50 | same | agree |
+| sat alt loss m | 4.887 ; 4.986 | 4.943 ; 4.994 | agree on verdict (both > 2.0); 0.06 m offset, key1 uses sim_ground_truth (metrics.truth_local_position, finer than the logger-decimated groundtruth key2 reads) |
+| sat LOC / recovery / pass | True, None (log ends at crash), FAIL both | same | agree |
+| stab all4 s (indi / pid) | 0.7698 / 0.7593 | 0.7697 / 0.7592 | agree |
+| stab any s | 0.9835 / 0.9830 | 0.9835 / 0.9830 | agree |
+| stab tilt max / limit | 35.52 / 40 ; 34.99 / 40 | same | agree |
+| stab alt loss | 0 (not a limit) | 0 | agree |
+| stab recovery s after centre | 0.240 / 0.244 | 0.240 / 0.244 | agree |
+| stab LOC / pass | False / PASS both | False / PASS both | agree |
+
+key1 fixed vs key2: AGREE

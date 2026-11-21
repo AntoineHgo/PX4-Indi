@@ -55,3 +55,5 @@ indi_project/docker/run.sh -n s178g510sc -t 600 -- bash -c '
 - Stabilized has no position setpoint, so "back within 0.3 m in 5 s" cannot be applied literally; reported as level
   (tilt <= 5 deg) time after the last motor >= 0.99 sample and altitude loss. Needs an owner/reviewer decision on the form.
 - Nothing was flown yet (queue waits); the stabilized scenario path was not smoke-tested.
+
+Note: score_motors.py (key 1) moved to indi_flight/bench/g510_score_motors.py and was rewritten to the spec (S181 fixes D1-D4); test: bench/tests/test_g510_score_motors.py.
