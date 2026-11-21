@@ -94,3 +94,15 @@ also fails, record the row as FAIL with cause "estimator height error > settle b
 the est-truth trace; B (gate change after first test): settle band = max(2 % of d, 0.10 m) for z, justified by the
 EKF height accuracy under the typical profile; C: settle measured on the estimate, truth error reported separately.
 Meanwhile: the other rows continue; seeds 2-3 and one PID reference flight of this row are flown and scored as written.
+
+## Q11 (S158, 2026-11-21): G5.5 o1-o4/o7 still FAIL at the freeze. Re-open outer-loop base A? NOT blocking.
+Context (results/g5_freeze_s157/README.md, seed 1; seeds 2-3 flying): horizontal RMS vs the analytic trajectory
+0.58-0.79 m (limit 0.5 m) on o1-o4/o7; vertical, o5/o6 and offb_vel_step PASS. Same as the probes (S139-S143). Cause
+(route check 143, D-A18-SOURCE): the acceleration command a_c produced by the stock PositionControl vel/pos feedback in
+base A (accel_only) lags the trajectory ~100 ms; the INDI stage and the plant add only 20-40 ms. A drag feed-forward
+probe made it worse (rejected). PID on o1 (S139, older plant) 1.04 m: the row fails for both stacks. The fix is in the
+architecture you confirmed (base A keeps stock PositionControl for the feedback), so I ask before touching it.
+Options: A [recommended] record G5.5 o1-o4/o7 FAIL with data and cause, both stacks; G5 otherwise judged on its rows;
+B: re-open base A for offboard trajectories only: INDI module's own pos/vel feedback with full flatness FF (estimated
+2-3 sessions + re-freeze of G5); C: owner reviews the 0.5 m limit (gate change after first test, needs your call).
+Meanwhile: seeds 2-3 and a PID o1 reference at the freeze plant are flown and scored as written.

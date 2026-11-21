@@ -15,24 +15,20 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
 0d. G5.10 (results/g5_g510_s151): alt 1.74-1.76 m PASS, back ~1.9 s PASS at TB 0.3 (default, f3b93704b6); tilt
    45.3 deg = MPC_TILTMAX_AIR and non-saturating SAT/AGG wait on Q9. A-48 closed (THR_SC injector, UNKEYED).
    G5.4 at TB 0.3 PASS s1. History: JOURNAL S147-S151.
-0e. Pre-freeze reviews r1 (S152-S153, F1 BLOCKING fixed, F3/F4 fixed 23acbdef67, D-PREFREEZE-R1), r2 (S154,
-   D-PREFREEZE-R2), r3 (S155) all dispositioned. History: JOURNAL S152-S155.
-   S155: review 3/3 DONE (design/prefreeze_r3_parity.md): 0 OPEN, 0 SAFETY, 8 PARTIAL MINOR (D-PREFREEZE-R3).
-   STAGE-6 FREEZE DEFINED: D-FREEZE-6, firmware 23acbdef67, bench defaults + ID_OK 1 overlay, firmware-default cells
-   (G5.1 acro yaw + G2 rate roll 800 at ID_OK 0); re-fly with the G4 typical profile.
-   S156: vib hook done, A-49 CLOSED; typical = --vib-acc 10 --vib-gyr 0 --imu-noise-scale 4.0 (D-NOISE-PROF).
-   S157: pre-test auto_tour PASS but at ID_OK 0 (defaults file defeats runner overlay = set-up fault, fixed:
-   results/g5_freeze_s157/params.params, D-FREEZE-6 note). FREEZE RE-FLY RUNNING detached (chain.sh: batch.sh G5.1-5.4
-   18 flights, then batch2.sh G5.5/5.7/5.10/events/fwdef cell 36 flights; status batch_status.txt, CHAIN_END at end).
-   S158: batch 1 scored (README table): G5.1 6/6, G5.3 3/3, G5.4 6/6 PASS, G5.2 5/6. o1_lemniscate_s1 FAIL 0.61 m.
+0e. Pre-freeze reviews r1-r3 dispositioned (S152-S155, D-PREFREEZE-R1..R3). STAGE-6 FREEZE: D-FREEZE-6, firmware
+   23acbdef67, bench defaults + ID_OK 1, fwdef cells (G5.1 acro + G2 rate roll 800 at ID_OK 0), G4 typical noise
+   (--vib-acc 10 --vib-gyr 0 --imu-noise-scale 4.0, D-NOISE-PROF). Re-fly: results/g5_freeze_s157 (chain.sh:
+   batch.sh 18 + batch2.sh 36 flights, status batch_status.txt, DONE2/CHAIN_END). History: JOURNAL S152-S157.
+   S158: batch 1 scored (README table): G5.1 6/6, G5.3 3/3, G5.4 6/6 PASS, G5.2 5/6. Batch 2 seed 1 scored: G5.5
+   o1-o4/o7 FAIL -> Q11 OPEN; G5.7 PASS; G5.10 INVALID (Q9); events G5.9a only; fwdef G5.1 acro FAIL 15 deg/s =
+   gate failure, cause search (lead: 0.5x K of ID_OK 0); probe p1 queued (probes_s158.sh). If p1 PASSes, the
+   cause is by design: decide whether G5.1 applies to the pre-ident state (DECISIONS D-DEFAULTS-FW) or ask owner.
    NEXT: if no CHAIN_END and no px4 container running, `setsid nohup bash .../chain.sh &` (resumes). Re-run
    checks.sh after DONE2 (o2/o3 check.txt were taken mid-batch), verdict table, keyed second checker per
    D-FREEZE-6 (g54_key2.py, g5_rows_key2.py exist). Unverified: batch2 o5-o7 args (batch2_notes.md).
    Seed 1: G5.1 acro/stab, G5.2 altctl PASS; G5.2 posctl z settle 4.15 s FAIL (> 4.0): cause
    search DONE: EKF2 height error -0.08 m decaying ~5 s, controller holds estimate (README); Q10 OPEN (not blocking);
    S158: PID reference flight of stick_pos_steps posctl s1 (F-5) for Q10.
-1-3. Probes PASS, re-fly at freeze: G5.4 9/9 (S135), G5.1 6/6 K_Y 20 (S137), G5.2 6/6 (S138, g52_check keyed).
-3b. G5.3 hold + mission PASS 3/3 (S139-S140). G5.7 PASS 3/3 as probe (S139/S143 matched GNSS, results/g5_g57_s143_gnss).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (fixes fee02b59b2, 3944e8e367; key2 results/g5_events_s144/key2.md):
    all events take effect; applied time from firmware log; command events 1.75-4.25 ms late (G1.5 1.25 ms) and
    stream-stop G1.5 lines FAIL by construction -> Q8 + addendum OPEN (not blocking). maybe_landed / EKF z not
@@ -79,6 +75,7 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 |---|---|---|---|---|
 | S157b | G5 freeze re-fly, 54 flights, detached (batch 1 done+scored S158) | chain.sh (setsid) | results/g5_freeze_s157/batch_status.txt | `setsid nohup bash indi_flight/results/g5_freeze_s157/chain.sh &` (skips done) |
 | S158a | Q10 PID ref posctl s1, waits CHAIN_END, serial | pid_ref.sh (setsid) | g5_freeze_s157/stick_pos_steps_s1_posctl_pid, PID_REF_END | `setsid nohup bash indi_flight/results/g5_freeze_s157/pid_ref.sh &` |
+| S158b | probes: fwdef ID_OK 1 acro; PID o1 s1 (Q11); waits PID_REF_END | probes_s158.sh (setsid) | g5_freeze_s157/*_fwdef_idok1_acro, o1_lemniscate_s1_pid, PROBES_S158_END | `setsid nohup bash indi_flight/results/g5_freeze_s157/probes_s158.sh &` |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),

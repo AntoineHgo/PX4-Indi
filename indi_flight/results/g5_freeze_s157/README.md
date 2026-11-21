@@ -48,3 +48,19 @@ G5.2 seeds 2-3 (S157): altctl PASS (settle 0.35/0.35 s), posctl PASS (z settle 0
 | G5.3 mission | auto_tour_s{1,2,3} (g53_mission_check.py) | PASS 3/3 | wp min dist <= 0.95 m, vmax 5.03-5.04 m/s (<= 5.5) |
 | G5.4 take-off/land | auto_tour_s*, auto_land10_s* (auto_smoke_check.py) | PASS 6/6 | ramp step 7.5 % hover, edge step 4.1-4.6 % (<= 10 %); land vz 0.70 m/s |
 Batch 2 (G5.5/5.7/5.10/events/fwdef) running; o1_lemniscate_s1 FAIL rms_h 0.61 m (as pre-freeze, base A cause RC143).
+
+### Batch 2 seed 1 verdicts (S158, checks.sh SEEDS=1)
+| row | run | verdict | numbers (limit) |
+|---|---|---|---|
+| G5.5 offb_vel_step | offb_vel_step_s1 | PASS | vx RMS last 3 s 0.037 m/s (<= 0.2), end 0.007 (<= 0.1) |
+| G5.5 o1/o2/o3/o4/o7 | o*_s1 | **FAIL** | horiz RMS 0.61/0.79/0.62/0.58/0.59 m (<= 0.5); vert 0.03-0.09 PASS |
+| G5.5 o5/o6 | o5/o6_s1 | PASS | horiz 0.04, vert 0.036/0.029 m |
+| G5.7 | mode_switch10_s1 | PASS | 10 edges, no LOC |
+| G5.10 | sat_sustained_s1 | INVALID (no saturation in AGG part) | alt_loss PASS, tilt FAIL (Q9 a), back_sat PASS, back_agg FAIL (Q9 b/c) |
+| G5.6/8/9/11 | g5_events_s1 | 1 FAIL line | G5.9a kill 3.75 ms after switch (stock commander latency, Q8 add. 2) |
+| fwdef cell G5.1 acro | stick_steps_s1_fwdef_acro (ID_OK 0, W_MAX 0, ACT_TC 0.05) | **FAIL** | rate RMS roll 15.1 / pitch 15.3 / yaw 16.9 deg/s (<= 10); tilt max 43 deg, no LOC |
+G5.5: as pre-freeze (RC143 cause: lag in the stock PositionControl a_c of base A); owner Q11.
+fwdef FAIL is a gate test failure: cause search S158. Rate-error spectrum (whole flight) shows no distinct oscillation
+(peak 2.9-3.1 Hz, the stick content, same as the ID_OK 1 cell; whole-flight RMS 12/11/8 vs 8/7/6 deg/s), so the
+lead is slow tracking from the 0.5x K gate (D-DEFAULTS-FW) inside the 0.1 s-skip window. Probe queued
+(probes_s158.sh): same cell at ID_OK 1, then PID o1 s1 at the freeze plant for Q11.
