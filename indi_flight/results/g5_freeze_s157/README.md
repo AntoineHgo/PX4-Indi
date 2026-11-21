@@ -37,3 +37,14 @@ auto_land10; seeds 1-3. Remaining rows G5.5-G5.11 and the firmware-default cells
 
 G5.2 seeds 2-3 (S157): altctl PASS (settle 0.35/0.35 s), posctl PASS (z settle 0.36/0.35 s, x os 0.099/0.103 m, settle
 3.34/3.32 s). Row G5.2 = 5/6 runs PASS, 1 FAIL (posctl s1, EKF height transient, Q10). Batch 1 complete: 18/18 logs.
+
+### Batch 1 verdicts, all seeds (S158, checks.sh, host python3)
+| row | runs | verdict | numbers (limit) |
+|---|---|---|---|
+| G5.1 acro | stick_steps_s{1,2,3}_acro | PASS 3/3 | rate RMS roll 1.50-1.97, pitch 1.53-1.69, yaw 3.23-3.33 deg/s (<= 10) |
+| G5.1 stab | stick_steps_s{1,2,3}_stab | PASS 3/3 | tilt err <= 0.15 deg (<= 3), yaw rate <= 0.13 deg/s |
+| G5.2 altctl | stick_pos_steps_s{1,2,3}_altctl | PASS 3/3 | z settle 0.35 s (<= 4) |
+| G5.2 posctl | stick_pos_steps_s{1,2,3}_posctl | 2/3 PASS, s1 FAIL | s1 z settle 4.15 s = EKF height transient (Q10); s2/s3 0.36/0.35 s |
+| G5.3 mission | auto_tour_s{1,2,3} (g53_mission_check.py) | PASS 3/3 | wp min dist <= 0.95 m, vmax 5.03-5.04 m/s (<= 5.5) |
+| G5.4 take-off/land | auto_tour_s*, auto_land10_s* (auto_smoke_check.py) | PASS 6/6 | ramp step 7.5 % hover, edge step 4.1-4.6 % (<= 10 %); land vz 0.70 m/s |
+Batch 2 (G5.5/5.7/5.10/events/fwdef) running; o1_lemniscate_s1 FAIL rms_h 0.61 m (as pre-freeze, base A cause RC143).
