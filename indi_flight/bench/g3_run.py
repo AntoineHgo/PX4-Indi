@@ -158,7 +158,13 @@ def build_run(draw, base_params_path, out_dir):
     else:
         applied["tel_loss"] = {"on": False}
     if f["tel_frozen"]["on"]:
-        not_applied["tel_frozen"] = "hook missing"
+        tf = f["tel_frozen"]
+        ov["erpm_frozen"] = {"motor": int(tf["motor"]), "start": main_seg, "start_offset_s": tf["start_offset_s"],
+                             "duration_s": tf["duration_s"]}
+        applied["tel_frozen"] = {"motor": tf["motor"], "start": main_seg, "start_offset_s": tf["start_offset_s"],
+                                 "duration_s": tf["duration_s"], "via": "scenario-overrides erpm_frozen (timed, sim time, SIM_GZ_ERPM_FRZ)"}
+        notes["tel_frozen"] = (f"anchor = start of '{main_seg}': rpm frozen from +{tf['start_offset_s']} s for "
+                               f"{tf['duration_s']} s (sim time), errorcount not incremented")
     else:
         applied["tel_frozen"] = {"on": False}
 

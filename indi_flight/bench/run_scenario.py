@@ -548,6 +548,22 @@ def erpm_loss_split(dur, t_on, t_len, motor):
     return [("pre", t_on, None), ("loss", t_len, 1 << motor), ("post", dur - t_on - t_len, None)]
 
 
+def timed_windows(dur, events):
+    """Timed telemetry windows inside one segment of length dur. events = [(key, param, bit, t_on, t_len)]. Returns the
+    time-ordered [(what, duration_s, [(key, param, bit_or_0, 'on'|'off')])]: sub-runs summing to dur, each followed by
+    the param changes to apply at its end (windows of different keys may overlap)."""
+    ch = sorted([(t_on, 1, k, pa, bit, "on") for k, pa, bit, t_on, t_len in events]
+                + [(t_on + t_len, 0, k, pa, 0, "off") for k, pa, bit, t_on, t_len in events])
+    out, t = [], 0.0
+    for tc, _, k, pa, bit, ed in ch:
+        if tc > t + 1e-12 or not out:
+            out.append((f"pre_{k}" if not out else f"between", tc - t, []))
+        out[-1][2].append((k, pa, bit, ed))
+        t = tc
+    out.append(("post", dur - t, []))
+    return out
+
+
 def traj_phase(traj, t):
     """Phase of a closed trajectory: phase rate ramps 0 -> w (smoothstep, ramp_s), cruises, ramps back to 0, and the
     total phase is laps * 2 pi, so the path starts and ends at the hold position with zero velocity."""
@@ -886,7 +902,7 @@ def main():
     ap.add_argument("--vib-nb", type=int, default=None, help="blade count of the blade-pass line (quad5in 3, x500 2)")
     ap.add_argument("--scenario-overrides", default=None, metavar="FILE.json",
                     help="JSON object whose top-level keys replace (shallow merge) the same keys of the selected scenario: "
-                         "thrust_sag, motor_fault, erpm_loss, wind {steady, peak, dir_deg}, disturbance, dist_segment; unknown keys and "
+                         "thrust_sag, motor_fault, erpm_loss, erpm_frozen, wind {steady, peak, dir_deg}, disturbance, dist_segment; unknown keys and "
                          "unknown segment names are rejected (bench/scenario_overrides.py); the overrides are recorded in run.json")
     ap.add_argument("--erpm-drop", type=float, default=0.0, help="v2: probability of a dropped eRPM frame")
     ap.add_argument("--sim-seed", type=int, default=0,
@@ -958,7 +974,7 @@ def main():
     if (a.stick_mode is not None) != (sc["mode"] == "stick") or (a.stick_mode and a.sched):
         raise SystemExit("--stick-mode goes with a mode='stick' scenario and not with --sched")
     if a.sched and (sc["mode"] not in ("position", "attitude", "trajectory")
-                    or any(k in sc_base for k in ("disturbance", "motor_fault", "erpm_loss", "thrust_sag"))):
+                    or any(k in sc_base for k in ("disturbance", "motor_fault", "erpm_loss", "erpm_frozen", "thrust_sag"))):
         raise SystemExit("--sched supports position, attitude and trajectory scenarios without runner-side hooks "
                          "(disturbance, motor_fault, erpm_loss, thrust_sag need the runner's segment times)")
     meta = {"scenario": a.scenario, "controller": a.controller, "seed": a.seed, "speed": a.speed, "sim": a.sim,
@@ -972,7 +988,7 @@ def main():
     if ov is not None:
         meta["scenario_overrides"] = {"file": os.path.abspath(a.scenario_overrides), "overrides": ov, "merged_keys": sorted(ov),
                                       "merged_hooks": {k: sc[k] for k in ("disturbance", "dist_segment", "wind", "thrust_sag",
-                                                                           "motor_fault", "erpm_loss") if k in sc}}
+                                                                           "motor_fault", "erpm_loss", "erpm_frozen") if k in sc}}
     af_params = os.path.join(HERE_PARAMS, f"{a.model}_indi_g1.params")  # derived airframe INDI parameters (S46/S47)
     af_params = af_params if os.path.exists(af_params) else None
     prov_files = [os.path.join(WORLDS_DIR, "default.sdf"), a.params, af_params]
@@ -1202,6 +1218,9 @@ def main():
         loss = sc.get("erpm_loss")  # dict(motor, start, end): total eRPM loss from segment start to segment end
         if loss:
             meta["erpm_loss"] = dict(loss)
+        frz = sc.get("erpm_frozen")  # dict(motor, start, start_offset_s, duration_s): bit-identical eRPM (SIM_GZ_ERPM_FRZ)
+        if frz:
+            meta["erpm_frozen"] = dict(frz)
         sag = sc.get("thrust_sag")  # dict(scale): available thrust ramps linearly 1 -> scale over the window
         if sag:
             sag_t0, sag_dur = sim.t, sum(d for _, d, _ in sc["segments"])
@@ -1303,17 +1322,17 @@ def main():
                 sp = None
             if sag:
                 sp = (lambda sp0=sp: (sag_tick(), sp0() if sp0 else None))
-            if loss and "duration_s" in loss and name == loss["start"]:
-                # timed eRPM loss (sim time): on at segment start + offset, off `duration_s` later, the rest of the segment as is
-                for what, d, bit in erpm_loss_split(dur, loss["start_offset_s"], loss["duration_s"], loss["motor"]):
-                    if bit is not None:
-                        sim.set_param("SIM_GZ_ERPM_LOSS", bit)
-                        meta["erpm_loss"]["on_us"] = int(sim.t * 1e6)
+            tev = [(k, pa, 1 << e["motor"], e["start_offset_s"], e["duration_s"])
+                   for k, pa, e in (("erpm_loss", "SIM_GZ_ERPM_LOSS", loss), ("erpm_frozen", "SIM_GZ_ERPM_FRZ", frz))
+                   if e and "duration_s" in e and name == e["start"]]
+            if tev:
+                # timed eRPM loss / frozen window (sim time): on at segment start + offset, off `duration_s` later
+                for what, d, chg in timed_windows(dur, tev):
                     if d > 0:
                         sim.run(d, sp=sp, what=f"scenario:{name}:{what}")
-                    if what == "loss":
-                        sim.set_param("SIM_GZ_ERPM_LOSS", 0)
-                        meta["erpm_loss"]["off_us"] = int(sim.t * 1e6)
+                    for k, pa, bit, ed in chg:
+                        sim.set_param(pa, bit)
+                        meta[k]["on_us" if ed == "on" else "off_us"] = int(sim.t * 1e6)
             else:
                 sim.run(dur, sp=sp, until=xuntil if (sc.get("pos_steps") and name == "xstep") else None, what=f"scenario:{name}")
                 if sc.get("pos_steps") and name == "xstep":
@@ -1326,6 +1345,8 @@ def main():
             sim.set_param("SIM_GZ_THR_SC", 1.0)
         if loss and loss.get("end", 1) is None:
             sim.set_param("SIM_GZ_ERPM_LOSS", 0)
+        if frz:
+            sim.set_param("SIM_GZ_ERPM_FRZ", 0)
         sim.run(4.0, sp=pos_sp, what="recover")  # outside the metrics window
 
         # ---- land ----

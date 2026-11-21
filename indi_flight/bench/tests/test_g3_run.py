@@ -81,7 +81,7 @@ def test_missing_hooks_reported():
         b = r.build_run(d, BASE, OUT)
         assert "g4_typical_noise" in b["applied"]
         if d["factors"]["tel_frozen"]["on"]:
-            assert b["not_applied"]["tel_frozen"] == "hook missing"
+            assert "tel_frozen" in b["applied"] and "tel_frozen" not in b["not_applied"]
 
 
 def test_typical_profile_in_argv():
@@ -93,22 +93,25 @@ def test_typical_profile_in_argv():
         assert abs(float(a[a.index("--vib-acc") + 1]) - (10.0 + vb["acc_ms2"])) < 1e-3
 
 
-def test_unsupported_factor_aborts_before_flying():
-    """A spec with tel_frozen on (no hook) makes g3_run exit non-zero, no flight, nothing written."""
-    import subprocess
-    import tempfile
-    on = [d for d in draws() if d["factors"]["tel_frozen"]["on"]][0]
-    assert r.unapplied([on], BASE) == {on["run_index"]: {"tel_frozen": "hook missing"}}
-    off = [d for d in draws() if not d["factors"]["tel_frozen"]["on"]][0]
-    assert r.unapplied([off], BASE) == {}
-    # end to end: first campaign index with tel_frozen on, seed 21 n 200, real main()
-    out = tempfile.mkdtemp(prefix="g3abort_")
-    for dry in ([], ["--dry-run"]):
-        p = subprocess.run([sys.executable, os.path.join(HERE, "..", "g3_run.py"), "--seed", "21", "--n", "200",
-                            "--start", str(on["run_index"]), "--stop", str(on["run_index"]), "--base-params", BASE,
-                            "--out-root", out] + dry, capture_output=True, text=True, timeout=60)
-        assert p.returncode != 0 and "tel_frozen" in p.stderr and "refusing to fly" in p.stderr, p.stderr
-    assert os.listdir(out) == []
+def test_no_factor_left_unapplied():
+    """S185: every drawn factor has a hook (tel_frozen included), so the abort-before-flying list is empty."""
+    assert r.unapplied(draws(), BASE) == {}
+
+
+def test_erpm_frozen_drawn_motor_and_window():
+    """tel_frozen -> erpm_frozen override (timed, main segment anchor), mirrors tel_loss; loss and frozen are independent."""
+    n = 0
+    for d in draws():
+        b = r.build_run(d, BASE, OUT)
+        tf = d["factors"]["tel_frozen"]
+        if not tf["on"]:
+            assert "erpm_frozen" not in b["overrides"]
+            continue
+        e = b["overrides"]["erpm_frozen"]
+        assert e["motor"] == tf["motor"] and e["start_offset_s"] == tf["start_offset_s"] and e["duration_s"] == tf["duration_s"]
+        assert e["start"] == r.MAIN_SEGMENT[b["applied"]["mode"]["scenario"]]
+        n += 1
+    assert n > 5
 
 
 def test_model_variant_mapping():
@@ -191,7 +194,7 @@ def test_overrides_applied_and_valid():
             assert "wind" in b["applied"] and "wind" not in b["not_applied"]
         else:
             assert "wind" not in ov
-        assert b["not_applied"].keys() <= {"tel_frozen", "g4_typical_noise"}
+        assert b["not_applied"].keys() <= {"g4_typical_noise"}
     assert all(v > 5 for v in seen.values()), seen
 
 

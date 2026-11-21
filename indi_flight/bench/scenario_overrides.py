@@ -10,6 +10,8 @@ Allowed keys (anything else is rejected):
   erpm_loss    {motor, start, end}                  total eRPM loss of one motor from segment `start` to segment `end`
                {motor, start, start_offset_s, duration_s}  timed: loss from (start of segment `start` + offset) for duration
                                                     (sim time); the window must fit inside the scenario
+  erpm_frozen  {motor, start, start_offset_s, duration_s}  timed (sim time): rpm of one motor bit-identical, no error count
+                                                    (SIM_GZ_ERPM_FRZ); same window rule as timed erpm_loss
   wind         {steady, peak, dir_deg}              gust_x parameters (m/s, m/s TOTAL peak, deg from world +x towards +y);
                                                     any subset; needs disturbance == "gust_x" (scenario's or overridden)
   disturbance  "gust_x" | ...                       injector profile name (a scenario without one can get gust_x)
@@ -19,7 +21,7 @@ Segment names must exist in the merged scenario's `segments`. validate() raises 
 import copy
 import math
 
-ALLOWED = ("thrust_sag", "motor_fault", "erpm_loss", "wind", "disturbance", "dist_segment")
+ALLOWED = ("thrust_sag", "motor_fault", "erpm_loss", "erpm_frozen", "wind", "disturbance", "dist_segment")
 WIND_KEYS = ("steady", "peak", "dir_deg")
 N_MOTORS = 4
 WIND_PROFILE_S = 13.0  # gust_x up to the end of the gust (2 ramp + 10 hold + 1 gust); its 15 s tail (28 s total) may run past the window
@@ -123,6 +125,18 @@ def validate(sc, ov):
             _need_seg(sc, "erpm_loss", e["end"])
             if _seg_names(sc).index(e["start"]) >= _seg_names(sc).index(e["end"]):
                 raise ValueError(f"override erpm_loss: start {e['start']!r} must come before end {e['end']!r}")
+    if "erpm_frozen" in ov:
+        e = ov["erpm_frozen"]
+        _dict_keys("erpm_frozen", e, ("motor", "start", "start_offset_s", "duration_s"),
+                   ("motor", "start", "start_offset_s", "duration_s"))
+        _motor("erpm_frozen", e["motor"])
+        _need_seg(sc, "erpm_frozen", e["start"])
+        for k in ("start_offset_s", "duration_s"):
+            if not _num(e[k]) or e[k] < 0 or (k == "duration_s" and e[k] <= 0):
+                raise ValueError(f"override erpm_frozen: {k} {e[k]!r} must be a finite number (offset >= 0, duration > 0)")
+        if _seg_start(sc, e["start"]) + e["start_offset_s"] + e["duration_s"] > _total(sc) + 1e-9:
+            raise ValueError(f"override erpm_frozen: window [{e['start_offset_s']}, +{e['duration_s']}] s after segment "
+                             f"{e['start']!r} ends beyond the scenario end ({_total(sc)} s)")
     if "dist_segment" in ov:
         _need_seg(sc, "dist_segment", ov["dist_segment"])
     if "disturbance" in ov and not isinstance(ov["disturbance"], str):

@@ -18,6 +18,16 @@ def test_split_durations_and_bitmask():
     assert rs.erpm_loss_split(10.0, 0.0, 4.0, 2)[1][2] == 4  # motor 2 -> bit value 4
 
 
+def test_timed_windows_overlap_and_sum():
+    ev = [("erpm_loss", "SIM_GZ_ERPM_LOSS", 1, 3.0, 5.0), ("erpm_frozen", "SIM_GZ_ERPM_FRZ", 4, 6.0, 3.0)]
+    w = rs.timed_windows(20.0, ev)
+    assert abs(sum(d for _, d, _ in w) - 20.0) < 1e-12, w
+    assert [(c[0], c[3]) for _, _, ch in w for c in ch] == [("erpm_loss", "on"), ("erpm_frozen", "on"),
+                                                           ("erpm_loss", "off"), ("erpm_frozen", "off")], w
+    one = rs.timed_windows(20.0, ev[1:])
+    assert [round(d, 9) for _, d, _ in one] == [6.0, 3.0, 11.0] and one[0][2] == [("erpm_frozen", "SIM_GZ_ERPM_FRZ", 4, "on")]
+
+
 def test_fault_weak_motor_times_saturation():
     nom = {0: {"MIN": 100, "MAX": 1000}, 1: {"MIN": 100, "MAX": 1000}}
     cum = {0: 1.0, 1: 1.0}

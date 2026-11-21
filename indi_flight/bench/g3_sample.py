@@ -297,7 +297,7 @@ def hooks_for(f, gz_seed):
     if w["on"]:
         h["timed"].append({"hook": "SIM_GZ_EC_MAX{motor+1} scaled (motor_fault)", "motor": w["motor"], "thrust_scale": w["scale"],
                            "t0": "anchor (main-segment start)"})
-    for key, p in (("tel_loss", "SIM_GZ_ERPM_LOSS bit"), ("tel_frozen", "frozen rpm (no hook)")):
+    for key, p in (("tel_loss", "SIM_GZ_ERPM_LOSS bit"), ("tel_frozen", "SIM_GZ_ERPM_FRZ bit")):
         e = f[key]
         if e["on"]:
             h["timed"].append({"hook": p, "motor": e["motor"], "t_after_anchor_s": e["start_offset_s"],
