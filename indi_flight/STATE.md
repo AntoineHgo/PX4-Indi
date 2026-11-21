@@ -21,10 +21,8 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    0.3 s after thrust returns (PID 33), LOC by checker, alt 2.21 m. S148: A-48 CLOSED = injector artefact (8 seq.
    per-motor EC sets); uniform faults now via atomic SIM_GZ_THR_SC (run_scenario.py, UNKEYED). Re-fly s148 s2: tilt
    45.3 deg = MPC_TILTMAX_AIR, no LOC; s1-s3 alt 2.67-2.74 m FAIL (2.0), back 3.3-3.5 s; PID s2 watchdog abort >3 m.
-   S149 split: SAT part never saturates (cmd max 0.71) -> Q9 note 2. S150 CAUSE (D-GAP-G510): THR_SC scales omega;
-   blend b (TB 1.0, clamp kMaxBlend 0.3 < gap 0.36) too slow. Probe TB 0.3 s1 (results/g5_g510_s150): 1.95 m, back
-   1.44 s, b still clamped. kMaxBlend 0.5 DONE S150 (003e25c6d4, key2 MINOR); probe s1 TB 0.3+0.5: 1.77 m, back 1.87 s
-   (README_b05.md). S151: margin at TB 0.3 PM 62.7/67.3 deg (g2_outer_tb03_s151); 3 seeds alt 1.74-1.76 m PASS,
+   S149: SAT never saturates (Q9 note 2). S150 cause D-GAP-G510 (blend too slow, clamp 0.3); kMaxBlend 0.5
+   (003e25c6d4). S151: margin at TB 0.3 PM 62.7/67.3 deg (g2_outer_tb03_s151); 3 seeds alt 1.74-1.76 m PASS,
    back ~1.9 s PASS (g5_g510_s151); TB default -> 0.3 (f3b93704b6, key2 ACCEPT, xy PM 51.4/65.2). Row waits on Q9.
    G5.4 at TB 0.3 PASS s1 (g5_g54_tb03_s151). NEXT S152: G5 rows left wait on Q8/Q9 -> start 4c pre-freeze
    review (standalone session); G5.5 FAIL stays for re-fly at freeze.
