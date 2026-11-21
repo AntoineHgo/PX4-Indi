@@ -23,7 +23,13 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    option, UNKEYED probe tool): altctl/posctl no lift-off, edge 7.2/7.1 % (<= 10). F2-F8 disposition D-PREFREEZE-R1
    (F2 spec amendment, F3/F4 fix 23acbdef67, key2 ACCEPT w/ K1 fixed; MINORs K2 LPF passthrough at low rate, K5
    wiring untested -> stage 7 harness). G5.7 probe s1 on 23acbdef67 PASS (tilt 3.71 deg, thr 2.6 %; g5_g57_s153).
-   NEXT S154: route check (RC due), then review 2/3 (stage-3 safety diff, ~$0.9); 3/3 (module_parity.md) next session.
+   S154: RC154 done (cuts acted on below); review 2/3 DONE (design/prefreeze_r2_stage3.md, opus): ACCEPT WITH
+   FIXES, 0 BLOCKING; disposition D-PREFREEZE-R2 (F1 stock-parity residual, MINORs stage 7; freeze adds G5.1 acro
+   yaw at firmware defaults ID_OK 0).
+   NEXT S155: review 3/3 as a CHECKLIST (module_parity.md item by item, sonnet; opus key only on gaps), then freeze
+   prep: freeze text with Q8/Q9 "option A assumed" (RC154: they do not block the freeze), G2 firmware-default cell.
+   S156+: stage-6 freeze, G5.1-G5.11 re-fly 3 seeds serial. RC154 cuts: no MINOR fixes before freeze, no re-probe of
+   passing rows, no 4th review; firmware change after 3/3 gets key2 only.
 1-3. Probes PASS, re-fly at freeze: G5.4 9/9 (S135), G5.1 6/6 K_Y 20 (S137), G5.2 6/6 (S138, g52_check keyed).
 3b. G5.3 hold PASS 3/3 (S139). G5.7 leaveP: S139 s2/s3 FAIL (5.17-5.25 deg) were the GNSS set-up fault: S143 matched
    re-fly s2 3.62, s3 3.55 deg PASS, thrust step 3.0 % (results/g5_g57_s143_gnss); s1 PASS S139. G5.7 PASS 3/3 as probe;
@@ -44,7 +50,7 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
 5. G7 (deferred, stage 7): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site (K128 MAJOR), checker
    self-tests for passthrough_check/offb_vel_check.
 RC149 (design/route_check_149.md) cuts: no more PID G5.10 runs; no 3 m/s 3-seed flying before Q8 add.3(i); runner
-  MC_INDI_EN alias deferred to stage 7. Next RC: S154.
+  MC_INDI_EN alias deferred to stage 7. Next RC: S159.
 Rule (RC64/RC74): 1 session per inner-loop law change; no anomaly chase unless a gate test fails.
 G3/G5 batches before the stage-6 freeze are PROBES (RC113). G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1.
 Offline G2 todo before stage 6: outer-cell margin key, linear outer-loop model, A-36/A-39 bound, 267 Hz rows
@@ -75,8 +81,6 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S154a | route check 154 | sonnet | design/route_check_154.md | relaunch if file missing |
-| S154b | pre-freeze review 2/3 (inner-loop delta since 772e5fe72e vs D-S3-SPTO/D-DEFAULTS-FW/D-KY/D-A18/F-1) | opus | design/prefreeze_r2_stage3.md | relaunch if missing |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),

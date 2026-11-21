@@ -78,3 +78,6 @@ the answer to (c); (c) still decides whether the row also needs a truly saturati
 Q9 note 4 (S151): with TB 0.3 + bound 0.5 the SAT part passes alt loss (1.74-1.76 m) and recovery (1.9-2.0 s) on 3
 seeds (results/g5_g510_s151); only (a) tilt 45.3 deg = MPC_TILTMAX_AIR and (b)/(c) the non-saturating AGG/SAT
 definition keep the row from PASS. Still not blocking.
+
+Note S154 (RC154): the stage-6 freeze will proceed with option A assumed for Q8 (a)/(b)/add.2/add.3 and Q9 (a)/(c); an answer
+B from the owner changes only the affected G5 rows, re-scored or re-flown after the freeze.

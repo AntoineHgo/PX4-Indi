@@ -245,3 +245,5 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S153 | F3/F4 fix + 3 gtests break-checked | sonnet | design/prefreeze_r1_f34_fix.md | done, 14 calls, ~47k tok |
 | S153 | key2 of F3/F4 diff | sonnet | design/prefreeze_r1_f34_key2.md | done, 9 calls, ~42k tok, ACCEPT w/ fixes (K1 MAJOR fixed by orchestrator) |
 | S153 | G5.7 probe s1 after F3 fix | haiku | results/g5_g57_s153/README.md | done, 7 calls, ~28k tok, PASS |
+| S154 | route check 154 | sonnet | design/route_check_154.md | done, 8 calls, ~42k tok |
+| S154 | pre-freeze review 2/3 inner-loop delta | opus | design/prefreeze_r2_stage3.md | done, 32 calls, ~89k tok, ~$1.0, ACCEPT WITH FIXES |

@@ -820,3 +820,18 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   false) and F8 (G step HTE vs MPC_THR_HOVER at modelled-force edges): deferred to stage 7 with bound: G5.4 edge steps
   4.0/4.4 % (limit 10 %) include F8; F7 unreachable in any F-2 mode (offboard-accel sets vel). Reopen if a G5 edge
   step exceeds 7 % or a Bypass sample appears in an armed log.
+
+## D-PREFREEZE-R2 (S154, 2026-11-21): disposition of review r2 (design/prefreeze_r2_stage3.md, opus, ACCEPT WITH FIXES)
+- F1 MAJOR (INDI module start failure -> armable with no rate/pos controller, only a boot console error): accepted
+  residual, same as stock PX4 (a failed mc_rate_control/mc_pos_control start is not refused by commander either);
+  F-1 forbids the stock fallback and O-11 freezes commander. Stage 7: error tune + mavlink critical on start failure
+  in rc.mc_apps, and a G8 bring-up checklist line ("check both INDI modules run before first arm"). Alternative
+  (external arming-check registrant) rejected: needs a surviving module, more code than the risk. Overturn: a start
+  failure seen in any SITL or board boot.
+- F2-F4 MINOR (jerk-FF gate: fixed 50 ms age -> chatter if the outer loop runs 5-20 Hz; <= 50 ms FF tail after mode
+  exit; publisher timestamp): deferred to stage 7. Bound: outer loop runs at 50 Hz nominal in every G5 flight; FF tail
+  is inside G5.7 edge limits (3.6-3.7 deg PASS). Reopen if an indi_pos_status interval > 20 ms appears in a gate log.
+- F5 MINOR (MC_INDI_ID_OK in-flight gain step; ID_OK 0 gives effective K_Y 10, the value that failed G5.1): freeze
+  set flies G5.1 acro yaw also at firmware defaults (ID_OK 0), with the G2 firmware-default cell (STATE 4b).
+- F6/F7 (no test for watchdog receipt stamp, rc.mc_apps matrix) and F8 (MC_INDI_POS_EN 1 with MC_INDI_EN 0 starts
+  silently): stage 7, D-G7-HARNESS. S95 F4 (frozen-rpm gaps) stays deferred as before.
