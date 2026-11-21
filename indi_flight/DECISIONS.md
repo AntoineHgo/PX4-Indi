@@ -1088,3 +1088,16 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Alternatives: keep the step-in (rejected: not the gate's quantity, unpassable by any controller); smaller position
   step or higher thrust (rejected: weakens the test, owner wording).
 - Overturn: with the ramp, PID reference also fails no_loc or the 2.0 m alt-loss limit -> owner question (test defect?).
+
+## D-XY-TRADE (S182, 2026-11-21): xy gains trade G2 inner spot margins against G5.5 tracking
+- Fact (logs): spot PM at freeze-8 (XY 1.2/3.6) rate 41.3 / att 42.2; probe XY 0.95/1.8 (results/g2_spot_probe_s182)
+  49.0 / 51.4 (1 seed each; att probe hole check FAIL, 16 sim holes 0.034 %). Loss is below ~3 Hz (rate phase at 1 Hz
+  -167 vs -155), so the outer pos/vel bandwidth is inside the loop seen at the inner break points. Remaining rate
+  gap to freeze-6 (54.3) may be F4 (Tc 0.03), untested. D-OFFB-POSVEL probe: 0.95/1.8 gives G5.5 o1 0.587 m (> 0.5).
+- D-OFFB-POSVEL overturn condition met (G2 cells < 45 deg at its gains).
+- Choice: sweep MC_INDI_XY_VP (and XY_P) between the two points; pick the pair that passes spot cells (PM >= 45)
+  AND G5.5 o1/o3/o7 (worst rows), 1 seed each, then freeze-9 with that firmware default and re-fly the D-FREEZE-8 list.
+- Rejected: high gains in offboard only (option (c) of D-OFFB-POSVEL): the spot cells fly a non-offboard mode, so
+  the margin of the offboard configuration would be unmeasured; that would pass G2 by test choice.
+- Overturn / escalate: no pair passes both -> owner question (G2 margin vs G5.5 tracking limit on this airframe),
+  with the F4 revert as a second lever measured first.
