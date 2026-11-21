@@ -695,6 +695,10 @@ void GZBridge::addRotorVibration(uint64_t timestamp_sample, gz::math::Vector3d &
 
 	rpm_mean /= _MAX_VIB_ROTORS;
 
+	if (!PX4_ISFINITE(rpm_mean)) {
+		return;
+	}
+
 	const float omega = rpm_mean * 2.f * M_PI_F / 60.f; // [rad/s]
 	_vib_phase = matrix::wrap_2pi(_vib_phase + omega * dt);
 	const float scale = (rpm_mean / _sim_gz_vib_rpm.get()) * (rpm_mean / _sim_gz_vib_rpm.get());
