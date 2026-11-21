@@ -1,0 +1,16 @@
+self-test ok: 3 deg tilt -> 3.000000 deg
+seed 1 ekf_yaw: all increments (us) [45990000]; run.json t_applied_us 45986000
+1  ekf_yaw  t_a=45.990s (run.json dt +4 ms) nav_state=[4] valid=True(n_inc=1) tilt_jump=0.764deg(<=1) truth_exc=0.051m(<=0.5) PASS
+1  ekf_yaw no-event ref tilt jump (t_a-2..-9 s): min=0.523 max=0.779 deg  all=[0.644, 0.608, 0.71, 0.523, 0.619, 0.779, 0.708, 0.551]
+seed 1 ekf_xy: all increments (us) [54993750]; run.json t_applied_us 54986000
+1  ekf_xy   t_a=54.994s (run.json dt +8 ms) nav_state=[4] valid=True(n_inc=1) tilt_jump=5.808deg(<=1) truth_exc=0.209m(<=0.5) FAIL
+seed 2 ekf_yaw: all increments (us) [45882500]; run.json t_applied_us 45878000
+2  ekf_yaw  t_a=45.883s (run.json dt +4 ms) nav_state=[4] valid=True(n_inc=1) tilt_jump=1.209deg(<=1) truth_exc=0.060m(<=0.5) FAIL
+2  ekf_yaw no-event ref tilt jump (t_a-2..-9 s): min=0.739 max=1.027 deg  all=[0.74, 0.74, 0.739, 0.914, 0.977, 1.027, 0.868, 1.015]
+seed 2 ekf_xy: all increments (us) [54882500]; run.json t_applied_us 54878000
+2  ekf_xy   t_a=54.883s (run.json dt +4 ms) nav_state=[4] valid=True(n_inc=1) tilt_jump=6.244deg(<=1) truth_exc=0.155m(<=0.5) FAIL
+seed 3 ekf_yaw: all increments (us) [45586250]; run.json t_applied_us 45582000
+3  ekf_yaw  t_a=45.586s (run.json dt +4 ms) nav_state=[4] valid=True(n_inc=1) tilt_jump=0.827deg(<=1) truth_exc=0.100m(<=0.5) PASS
+3  ekf_yaw no-event ref tilt jump (t_a-2..-9 s): min=0.726 max=1.202 deg  all=[0.726, 0.792, 0.911, 1.202, 1.11, 1.173, 0.949, 0.938]
+seed 3 ekf_xy: all increments (us) [54590000]; run.json t_applied_us 54582000
+3  ekf_xy   t_a=54.590s (run.json dt +8 ms) nav_state=[4] valid=True(n_inc=1) tilt_jump=6.736deg(<=1) truth_exc=0.198m(<=0.5) FAIL
