@@ -94,3 +94,4 @@ Moved out of STATE.md on 2026-11-17 (token economy, owner).
 - S159: bench/g5_rows_key2.py overwrites results/g5_events_s145/key2_rows.md on every run (hard-coded path); restore it with git checkout after running on other sets (fix at G7 tidy).
 - S162: bench/g5_rows_key2.py also writes results/g5_events_s145/key2_rows.md (hard-coded path) on every run: redirect stdout to the flight dir and `git checkout` that file after use, or fix the path when next touched.
 - S163: never start a docker job (post-processing, probe, key2) while a gate batch is flying: one key2 container made two 60-89 ms sim holes and a hover flip (results/g2_freeze_s160 README, yaw400_s1). Chain post-processing after the batch instead.
+- S165: a G2 cell (rate or outer, --speed 4, serial) flies and scores in ~1 min wall for ~$0.03 of context; a sonnet model x-check over existing cell tables cost ~$0.35 in 11 calls. Prefer flying a missing cell to arguing about it.
