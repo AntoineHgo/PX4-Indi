@@ -67,3 +67,21 @@ level 0.05 % of full motor command. Options: A strict (Reading A; 17->4 fails; n
 from the G2 rate-loop data, then a firmware change that re-opens G2/G4/G5); C (Reading A, and a transition transient
 that PID also shows is reported with both values, failing only above an absolute bound you set). Recommendation: A with
 a narrow-band (+-0.5 Hz) line measure that removes the 14->18 artefact; I will not propose a tolerance myself.
+
+## Q21 (S185, 2026-11-21): G5.10 SAT part, the "hover needs >= 1.0 command" set-up cannot be reached. BLOCKING for G5.10 (and so the G5 verdict)
+Context: Q9(c) defines the SAT part at a thrust scale where hover needs >= 1.0 command, entered from a pinned hover.
+- Step-in 1 -> 0.136 with the 3 m step (S181): an 86 % thrust-loss test, both stacks hit the ground (D-G510-SAT-SETUP).
+- Ramped scale-down during hover (S184, results/g510_setup_s184/README.md, 4 ramp shapes, INDI and PID): both stacks
+  sink once the scale passes ~0.2 (hover cmd ~0.65-0.8), before the window opens; PID run s1 alt loss 2.39 m, INVALID.
+  Log: rotor speed stays at hover (thrust = weight) while the vehicle sinks 0.4-0.5 m/s: a ramp-disturbance velocity
+  error, not a plant limit (T/W 1.08 at the final scale was real). `hover_thrust_estimate` stuck at 0.337 while the
+  true hover command rises (hypothesis for the low vertical gain, stock PX4, not chased: owner note point 1).
+- This meets the overturn rule of D-G510-SAT-SETUP (PID fails too) and the row text needs a change: your call.
+Options:
+  A. Demand transient at a moderate scale (0.3-0.4, hover cmd ~0.6): 3 m climb step + full-throttle demand saturates
+     all motors >= 0.99 for >= 1 s (scored on the motors), limits unchanged (alt loss 2.0 m, tilt, 5 s recovery). The
+     "pinned hover" wording is dropped. Recommended: tests windup and saturation handling, reachable by both stacks.
+  B. Keep the pinned hover and add the hover-estimate fix to the flight params (MPC_THR_HOVER near the true hover at
+     the low scale): changes the stock hover set-up for this row only.
+  C. Drop the SAT part; G5.10 = the stabilized full-scale part (Q17 A) only, reported as such.
+Meanwhile: no G5.10 flight or score. Work moves to G3 set-up (tel_frozen hook, STATE next action 4). Blocked on G5 verdict.

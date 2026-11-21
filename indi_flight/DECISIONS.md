@@ -1088,6 +1088,8 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Alternatives: keep the step-in (rejected: not the gate's quantity, unpassable by any controller); smaller position
   step or higher thrust (rejected: weakens the test, owner wording).
 - Overturn: with the ramp, PID reference also fails no_loc or the 2.0 m alt-loss limit -> owner question (test defect?).
+- Re-opened S185: overturn met (S184 ramps: PID s1 sank, alt loss 2.39 m, INVALID; INDI same). Not fixable inside the
+  row text (pinned hover at hover cmd >= 1.0 unreachable with stock hover-estimate behaviour) -> Q21 (blocking G5.10).
 
 ## D-XY-TRADE (S182, 2026-11-21): xy gains trade G2 inner spot margins against G5.5 tracking
 - Fact (logs): spot PM at freeze-8 (XY 1.2/3.6) rate 41.3 / att 42.2; probe XY 0.95/1.8 (results/g2_spot_probe_s182)

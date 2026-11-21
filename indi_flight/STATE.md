@@ -14,14 +14,10 @@
    Freeze-8 G4 Q19 re-score (history) waits Q20. Guard comparison is not coded (Q19_KEY2_REVIEW F1): after Q20,
    one script + second key.
 3. G5: freeze-9 (G5_SCORES.md) every flown row PASS both keys; G5.5 worst H 0.499 m (o2 s3, limit 0.5: thin, no
-   chase, the D-XY-PICK trade). G5 verdict waits G5.10 only. G5.10: (a) scorer
-   bench/g510_score_motors.py keyed S181; SAT_MIN_FRAC is validity only (verdict INVALID); (b) SAT set-up fault (D-G510-SAT-SETUP):
-   S184: two hover-pinning ramps (0.136, then 0.148 from T/W 7.31) sank before the window (g510_setup_s184
-   README, patches kept, scenarios.py reverted). Log: rotor speed flat ~1000 rad/s, hover_thrust_estimate stuck
-   0.337 (hypothesis, untested). Second fix failed -> RE-OPEN D-G510-SAT-SETUP first (lesson 24): options in the
-   README "Retry S184-F" (demand transient at scale 0.3-0.4 vs pinned hover); check GATES G5.10 text; if the row
-   text must change, owner question; (c) then 3 seeds INDI (+PID ref),
-   stabilized part Q17 A; then G5 verdict. Run after the freeze-8 queue (no parallel docker for gate evidence).
+   chase). G5 verdict waits G5.10 only. Q21 (SAT set-up, options A demand transient / B hover param / C drop SAT)
+   BLOCKING for G5.10: no G5.10 flight or score until answered. After the answer: scenario per answer (S184 patches
+   in results/g510_setup_s184), one-flight check, 3 seeds INDI + PID ref (fly.sh), stabilized part Q17 A, scorer
+   bench/g510_score_motors.py (keyed S181), then G5 verdict.
 4. G3 set-up (owner step 4), after G2/G4/G5 queue: tel_frozen hook (gz_bridge bit-identical rpm injector, two keys;
    until then runs 03/11 abort); (b) excursion vs setpoint in g3_checks (key2 before gate use); run 17 LOC (tilt
    129 deg): PID reference only, one session max; osc runs 03/07/08/13 are re-flown after the set-up fix, not chased.
@@ -55,6 +51,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T185a | G3 tel_frozen hook: SIM_GZ_ERPM_FRZ bitmask in gz_bridge (held rpm, no errorcount), runner erpm_frozen override, g3_run wiring, 1 probe flight | sonnet | results/g3_telfrz_s185/README.md | re-brief from README; key2 review still due |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
