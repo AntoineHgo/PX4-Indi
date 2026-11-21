@@ -72,6 +72,7 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| B169 | G4 gate batch, 18 serial flights (acro not yet flown) | bash bg | results/g4_gate_s169 (status.txt, CHAIN_END) | `indi_flight/bench/gate_g4.sh fly indi_flight/results/g4_gate_s169` (skips done runs); then `... score ...` |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
