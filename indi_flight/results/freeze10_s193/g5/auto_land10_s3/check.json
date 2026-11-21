@@ -1,0 +1,128 @@
+{
+ "scenario": "auto_land10",
+ "exit_status": "ok",
+ "error": null,
+ "phases_s": {
+  "armed": 31.177,
+  "takeoff_cmd": 31.177,
+  "takeoff_done": 42.536,
+  "hold_end": 52.537,
+  "land_cmd": 52.537,
+  "disarmed": 68.178
+ },
+ "tracking": {
+  "takeoff": {
+   "n": 567,
+   "xy_rms": 0.024250101324063144,
+   "xy_max": 0.041360563179951494,
+   "z_rms": 0.04429380278914617,
+   "z_max": 0.0682229995727539
+  },
+  "hold": {
+   "n": 500,
+   "xy_rms": 0.04711527430717235,
+   "xy_max": 0.07722711665752911,
+   "z_rms": 0.04915055108309275,
+   "z_max": 0.0693817138671875
+  },
+  "land": {
+   "n": 783,
+   "xy_rms": 0.05810427764578722,
+   "xy_max": 0.0901772410771605,
+   "z_rms": 0.10011749935554953,
+   "z_max": 0.5521219274960458
+  }
+ },
+ "handover": {
+  "t_edge_s": 34.2225,
+  "thrust_step": 0.006594181060791016,
+  "alt_dip_m": 0.0,
+  "first_indi_pos_status_s": 30.1175,
+  "vehicle_thrust_setpoint_step": 0.006473615765571594
+ },
+ "g54_takeoff": {
+  "hover_collective": 0.13652783632278442,
+  "n_ramp_points": 26,
+  "n_ramp_points_no_data": 0,
+  "ramp_max_step": 0.010202687233686447,
+  "ramp_max_step_pct_hover": 7.472972185368013,
+  "ramp_max_step_t_s": 31.82,
+  "edge_step": 0.006291747093200684,
+  "edge_step_pct_hover": 4.608398743187792,
+  "dip_m": 0.0,
+  "ramp_ok": true,
+  "edge_ok": true,
+  "dip_ok": true
+ },
+ "land": {
+  "t_ground_contact_s": 65.34125,
+  "t_landed_s": 66.015,
+  "t_disarm_s": 68.01875,
+  "contact_to_disarm_s": 2.677499999999995,
+  "landed_to_disarm_s": 2.0037499999999966,
+  "mean_vz_1_4m": 0.701217770576477,
+  "n": 383,
+  "MPC_LAND_SPEED": 0.699999988079071
+ },
+ "g54_other": {
+  "takeoff": {
+   "target_m": 10.0,
+   "overshoot_m": -0.06015968322753906,
+   "bounce_m": 0.19997596740722656,
+   "overshoot_ok": true,
+   "bounce_ok": true
+  },
+  "touchdown": {
+   "t_td_s": 64.9025,
+   "vz_contact": 0.6895709037780762,
+   "tilt_max_deg": 0.2748253047466278,
+   "relift_m": 0.048795334063470364,
+   "landed_dropped": false,
+   "vz_ok": true,
+   "tilt_ok": true,
+   "relift_ok": true,
+   "landed_ok": true,
+   "tilt_source": "vehicle_attitude_groundtruth"
+  },
+  "land": {
+   "vz_ok": true,
+   "disarm_ok": true,
+   "COM_DISARM_LAND": 2.0
+  },
+  "rtl": "n/a"
+ },
+ "stage_transitions": [
+  [
+   34.2225,
+   2,
+   1
+  ],
+  [
+   65.35249999999999,
+   1,
+   2
+  ]
+ ],
+ "nav_transitions": [
+  [
+   31.2,
+   "loiter",
+   "takeoff"
+  ],
+  [
+   40.65,
+   "takeoff",
+   "loiter"
+  ],
+  [
+   52.56,
+   "loiter",
+   "land"
+  ],
+  [
+   68.02,
+   "land",
+   "loiter"
+  ]
+ ]
+}
