@@ -33,6 +33,7 @@ SCENARIO_STICK = "stick_zsine_o6"
 MAIN_SEGMENT = {SCENARIO_POSITION: "traj", SCENARIO_STICK: "stick"}
 END_SEGMENT = "hold"
 OVERRIDES_NAME = "g3_scenario_overrides.json"
+GNSS_MATCHED = False  # set by --override-gnss-matched (S191 probe): EKF GNSS delay compensation := drawn latency
 RATE_HZ = 800
 G1_PARAMS = (("roll", "MC_INDI_G1_R"), ("pitch", "MC_INDI_G1_P"), ("yaw", "MC_INDI_G1_Y"))
 NOMINAL_EPS = 1e-9
@@ -182,9 +183,10 @@ def build_run(draw, base_params_path, out_dir):
     # GNSS --------------------------------------------------------------------------------------------------------------
     g = f["gnss"]
     argv += ["--gps-dly", str(int(g["latency_ms"]))]
-    if g["ekf_delay_ms"] is not None:
-        argv += ["--gnss-delay", str(int(g["ekf_delay_ms"]))]
-    applied["gnss"] = {"latency_ms": g["latency_ms"], "ekf_delay_ms": g["ekf_delay_ms"]}
+    ekf_dly = g["latency_ms"] if GNSS_MATCHED else g["ekf_delay_ms"]   # S191 probe: --override-gnss-matched
+    if ekf_dly is not None:
+        argv += ["--gnss-delay", str(int(ekf_dly))]
+    applied["gnss"] = {"latency_ms": g["latency_ms"], "ekf_delay_ms": ekf_dly, "drawn_ekf_delay_ms": g["ekf_delay_ms"]}
 
     # thrust: sag (ramp over the window), saturation (all motors step), weak motor (one motor step) -------------------------
     sg, sat, wk = f["thrust_sag"], f["saturation"], f["weak_motor"]
@@ -323,7 +325,11 @@ def main():
     ap.add_argument("--start", type=int, default=0, help="first run index to process")
     ap.add_argument("--stop", type=int, default=None, help="last run index to process (inclusive); draws still use --n")
     ap.add_argument("--timeout-s", type=float, default=1800.0, help="wall-clock timeout per run")
+    ap.add_argument("--override-gnss-matched", action="store_true",
+                    help="probe: set --gnss-delay equal to the drawn GNSS latency (all other factors unchanged)")
     a = ap.parse_args()
+    global GNSS_MATCHED
+    GNSS_MATCHED = a.override_gnss_matched
 
     draws = g3_sample.campaign(a.seed, a.n)
     sel = [d for d in draws if d["run_index"] >= a.start and (a.stop is None or d["run_index"] <= a.stop)]
