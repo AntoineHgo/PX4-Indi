@@ -5,26 +5,18 @@
   D-XY-PICK), config g5_freeze_s157 params (XY gains at firmware defaults 1.2/2.4). D-FREEZE-8 list re-flies in
   queue results/freeze9_s183 (G4 cruise_harsh_s2 excluded until Q19).
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
-- Blocker: Q20 (G4), Q21 (G5.10), Q22 (G3) open; G7 waits G4/G5 verdicts -> WAIT_OWNER (S186).
+- Blocker: none. Q20-Q22 closed S187. G5 verdict waits T6 (G5.10 stabilized); G3 waits pre-test re-fly.
 ## Next actions (owner order; each names its gate item)
 1. G2 PASSED at freeze-9 (S184, GATES "G2 verdict at freeze-9"). Any firmware change re-opens it.
-2. G4 NOT PASSED at freeze-9 (S184): only the PID guard fails (INDI 20 Hz line 5.0-5.3e-4 in skipped windows at
-   17->4 and 14->18). Q20 (guard metric, options A strict / C) BLOCKING for G4: no G4 work until answered.
-   Cause search done S184 (g4_20hz_cause_s184): 17->4 transient in both stacks, INDI 1.7x; 14->18 guard artefact.
-   Freeze-8 G4 Q19 re-score (history) waits Q20. Guard comparison is not coded (Q19_KEY2_REVIEW F1): after Q20,
-   one script + second key.
+2. G4 PASSED at freeze-9 under Q20 (S187, both guard keys 0 checked / 0 FAIL). Any firmware change re-opens it.
 3. G5: freeze-9 (G5_SCORES.md) every flown row PASS both keys; G5.5 worst H 0.499 m (o2 s3, limit 0.5: thin, no
-   chase). G5 verdict waits G5.10 only. Q21 (SAT set-up, options A demand transient / B hover param / C drop SAT)
-   BLOCKING for G5.10: no G5.10 flight or score until answered. After the answer: scenario per answer (S184 patches
-   in results/g510_setup_s184), one-flight check, 3 seeds INDI + PID ref (fly.sh), stabilized part Q17 A, scorer
-   bench/g510_score_motors.py (keyed S181), then G5 verdict.
-4. G3: Q22 (attitude-loop boundary e x tau_mult >= ~5 vs the G3 box; options A P~4.7 + freeze-10 / B narrow /
-   C scheduled P / D report) BLOCKING for G3: no G3 flight or score of osc rows until answered. Set-up done S186:
-   tel_frozen hook (anchored to traj/stick segment, checked), excursion vs setpoint (2 keys agree), chatter out of
-   item 2, run_validity pid_*, item 3 on window + setpoint, height rest-zeroed (D-G3-ZREF): both keys agree
-   21/21 on items 1-3 (results/g3_excursion_s186/rescore_v4, rescore_v3). No open G3 tooling item.
-   After Q22: act on answer, re-fly the 20-run pre-test; when clean, write "G3 set-up fixed, ready for flight chain"
-   here + WAIT_OWNER.
+   chase). G5 verdict waits G5.10 only. Q21: SAT invalid in both stacks -> dropped (results/g510_q21_s187);
+   G5.10 = stabilized part (Q17 A), T6 batch running (INDI s1, s2 PASS key1). When T6 README is done: G5 verdict
+   in GATES.md + GATE_STATUS.tsv.
+4. G3: Q22 answered and acted on S187 (box x[0.8, 1.2] + tau fix, sampler keyed, draws in results/g3_box_s187).
+   Next: re-fly the 20-run pre-test on the new draws (same command as S173, out dir results/g3_pretest_s187), score
+   with both keys (rescore_v4 / rescore_v3 scripts of results/g3_excursion_s186). When clean, write "G3 set-up
+   fixed, ready for flight chain" here + WAIT_OWNER. Run 17 old draw (e 1.52): report only, both stacks' values.
 5. G7 (stage 7, not before G2/G4/G5 verdicts): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site
    (K128 MAJOR), D-JFF-SOURCE case, D-OFFB-POSVEL wiring test, omega_ff step on offboard entry (key2_jffoffb MINOR),
    checker self-tests passthrough_check/offb_vel_check, g511 yaw p95 subtraction test (g511_check.py:184), g510
@@ -54,9 +46,10 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T1 | G4 guard Q20 key 1 + freeze-9 re-score | sonnet | results/freeze9_s183/g4/GUARD_Q20_KEY1.md | re-brief from GATES S187 |
-| T2 | G4 guard Q20 key 2 (independent) | sonnet | results/freeze9_s183/g4/GUARD_Q20_KEY2.md | re-brief from GATES S187 |
-| T3 | G3 sampler box fix (Q22) + fast-motor model check | sonnet | results/g3_box_s187/README.md | re-brief from GATES S187 |
+| T1 | G4 guard Q20 key 1: DONE (0 checked, 0 FAIL; max 4.84e-4) | sonnet | results/freeze9_s183/g4/GUARD_Q20_KEY1.md | - |
+| T4 | G5.10 SAT Q21 feasibility: DONE, invalid both stacks -> SAT dropped (C) | sonnet | results/g510_q21_s187/README.md | - |
+| T6 | G5.10 stabilized part (Q17 A), 3 seeds INDI + PID, both keys; batch shell pid 804821 (S188) | sonnet | results/freeze9_s183/g510_stab/README.md | if batch dead: fly.sh <stack> <seed> for missing runs |
+| T7 | G3 pre-test re-fly, 20 runs on Q22 draws, chained after T6 batch (S188) | sonnet | results/g3_pretest_s187/README.md | README resume section |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
