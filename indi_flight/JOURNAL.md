@@ -1521,3 +1521,4 @@ Blocked: G5.7 only.
   aa4fd2654a revert PASS s3/s1 (D-G57-FF) -> Q23 (D-JFF-KEEP was owner request). PID key1/key2 on 03: key 1 lacks
   the Q15 A nav-change skip. Gate progress: G3 and G5.7 failure causes shown on logs, fixes named (G3 fix next, G5.7 Q23).
 - S192 (2026-11-21): scored D-OWNER-Q23 probe (results/freeze10_cand_s191): G5.7 3/3 PASS, G5.3/5.4 and G4 cruise PASS, G3 02/05 pass with matched GNSS; FREEZE-10 declared at 7fe6206fcc (D-FREEZE-10). Gate progress: G5.7 FAIL->PASS on candidate (probe, re-score at freeze-10 batch); G3 02/05 cause shown.
+- S193 (2026-11-21): FREEZE-10 re-fly queue built and launched detached (results/freeze10_s193/, commit 0d6581ac16, pid 1308846); route check deferred to S194 for budget. Gate progress: G2/G3/G4/G5 re-fly at freeze-10 started (no row scored yet).

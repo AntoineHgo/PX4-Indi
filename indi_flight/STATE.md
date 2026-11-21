@@ -8,9 +8,11 @@
 - Blocker: none from the owner. Q23 closed S191 (D-OWNER-Q23): revert aa4fd2654a (G5.7 cause D-G57-FF); with
   D-AF-ALIAS (G3 7 Hz, outer a_f aliased by 88.9 Hz stage decimation) it enters FREEZE-10.
 ## Next actions (owner order; each names its gate item)
-0. FREEZE-10 re-fly (one detached haiku/sonnet chain, output results/freeze10_s193/; reuse freeze9_s183 fly and
-   score commands, freeze9_s183/g4 scripts need scipy -> run them in docker): order G3 pre-test 20 draws (G3, decides
-   02/05 per D-FREEZE-10), G5 outer rows incl. G5.7 s1-s3, G4 rows, G2 outer cells. Pre-test rule met by the probe.
+0. FREEZE-10 re-fly RUNNING (Tasks Q10). Next session: route check RC193 first (due, deferred S193 for budget),
+   then read queue_status.tsv; a haiku agent collects scores per gate; untested in the queue: G5 host scoring
+   (pyulog), g4_score.sh rewrites + Q20 guard, abort path -> fix and resume with `queue.sh N` if failed. Then
+   verdicts G2/G4/G5 rows and G3 pre-test (02/05 decide D-OFFB-POSVEL / owner question per D-FREEZE-10).
+   Binary built 22:38 after 7fe6206fcc, no src commit since (checked).
 1. G2 PASSED at freeze-9 (S184); outer cells invalidated by FREEZE-10, re-fly in item 0.
 2. G4 PASSED at freeze-9 under Q20 (S187); invalidated by FREEZE-10, re-fly in item 0 (probe cruise_typ_s1 PASS).
 3. G5: freeze-9 (G5_SCORES.md) every flown row PASS both keys; G5.5 worst H 0.499 m (o2 s3, limit 0.5: thin, no
@@ -34,7 +36,7 @@
    params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
 Deferred to before G6: yaw fit fix (r regressor + matched grid = probe V3, K126 MAJORs, A-44).
 Rules: 1 session per inner-loop law change; parallel docker streams only for tolerance-insensitive probes, never gate
-  evidence; G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1. Next RC: S193 (RC178 done, cuts applied).
+  evidence; G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1. Next RC: S194 (due S193, deferred: budget).
 STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer, stand-alone anomaly chases,
   --sched-anchor and set_param fixes, EdgeState design, more PID G5.10 runs.
 ## Notes
@@ -56,7 +58,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none (S192 probe scoring done, committed) | - | - | - |
+| Q10 | FREEZE-10 re-fly queue (G3 pre-test, G5, G4, G2 outer), launched S193 22:58, ~4-5 h | detached pid 1308846 | results/freeze10_s193/ (queue_status.tsv, README.md) | `bash indi_flight/results/freeze10_s193/queue.sh N` (step 1-4, done items skipped) |
 (S189 agents done and committed. Build probes: guard denies a segment naming indi_project with
 rm/tee/git apply etc.; run each run.sh call alone, redirect only into indi_flight/.)
 
