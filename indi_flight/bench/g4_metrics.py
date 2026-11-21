@@ -5,8 +5,10 @@ R = RMS of (x - lowpass(x)), per motor, mean over motors; rad/s and % of the win
 Filter: 4th-order Butterworth, zero phase (filtfilt), on a uniform grid (linear interpolation at the median logged rate
 of the topic); 2 s dropped at each window edge after filtering. Time base: log start, as in vib_line_check.py.
 True rotor speed: esc_status.esc[i].esc_rpm, which the gz_bridge fills from the Gazebo joint velocity (SIM_GZ_ESC_FB=1,
-rounded to 1 rpm), NOT the eRPM telemetry model (mode 2: latency, 100 eRPM rounding, drops). The mode is read from
-the log parameters and reported as esc_fb; valid truth needs esc_fb == 1, otherwise the R values are a telemetry PROXY. Time stamps: timestamp_sample if the topic has it, else
+rounded to 1 rpm), NOT the eRPM telemetry model (mode 2: latency, 100 eRPM rounding, drops). Under mode 2 the
+gz_bridge publishes the truth on esc_status instance 1 (hook 10c741af4b), instance 0 being the telemetry model.
+The mode is read from the log parameters and reported as esc_fb; the instance is chosen from it (FB=1 -> 0, FB=2 -> 1)
+unless --esc-instance is given; truth = (FB 1, inst 0) or (FB 2, inst 1), otherwise the R values are a PROXY. Time stamps: timestamp_sample if the topic has it, else
 timestamp (esc_status has no timestamp_sample; actuator_motors does). Never mixed within a topic.
 
 Usage: g4_metrics.py LOG.ulg --t0 S --t1 S [--json PATH]   |   g4_metrics.py --selftest
@@ -108,6 +110,7 @@ def main():
     ap.add_argument("--t0", type=float)
     ap.add_argument("--t1", type=float)
     ap.add_argument("--json")
+    ap.add_argument("--esc-instance", type=int, help="esc_status multi-instance (default: 1 if SIM_GZ_ESC_FB=2 else 0)")
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--break-check", action="store_true", help="selftest with a 200 Hz cutoff: must FAIL")
     a = ap.parse_args()
@@ -120,7 +123,9 @@ def main():
     from pyulog import ULog
     u = ULog(a.log, ["esc_status", "actuator_motors"])
     t_start = u.start_timestamp
-    esc = u.get_dataset("esc_status").data
+    fb = u.initial_parameters.get("SIM_GZ_ESC_FB")
+    inst = a.esc_instance if a.esc_instance is not None else (1 if fb == 2 else 0)
+    esc = u.get_dataset("esc_status", inst).data
     am = u.get_dataset("actuator_motors").data
     key_e = "timestamp_sample" if "timestamp_sample" in esc else "timestamp"
     key_c = "timestamp_sample" if "timestamp_sample" in am else "timestamp"
@@ -129,12 +134,12 @@ def main():
     rpm = np.stack([np.abs(esc[f"esc[{i}].esc_rpm"]).astype(float) for i in range(4)], axis=1)
     cmd = np.stack([am[f"control[{i}]"] for i in range(4)], axis=1)
     r = metrics_from(te, rpm, tc, cmd, a.t0, a.t1)
-    r.update(log=a.log, rotor_topic=f"esc_status.esc[i].esc_rpm (time: {key_e})", cmd_topic=f"actuator_motors.control[0..3] (time: {key_c})")
-    fb = u.initial_parameters.get("SIM_GZ_ESC_FB")
+    r.update(log=a.log, rotor_topic=f"esc_status[{inst}].esc[i].esc_rpm (time: {key_e})", cmd_topic=f"actuator_motors.control[0..3] (time: {key_c})")
     r["esc_fb"] = fb
-    r["rotor_speed_is_truth"] = fb == 1
-    if fb != 1:
-        print(f"WARNING: SIM_GZ_ESC_FB={fb}: esc_rpm is not simulator truth, R20/R4 are a telemetry proxy", file=sys.stderr)
+    r["esc_instance"] = inst
+    r["rotor_speed_is_truth"] = (fb, inst) in ((1, 0), (2, 1))
+    if not r["rotor_speed_is_truth"]:
+        print(f"WARNING: SIM_GZ_ESC_FB={fb}, instance {inst}: esc_rpm is not simulator truth, R20/R4 are a proxy", file=sys.stderr)
     s = json.dumps(r, indent=1)
     if a.json:
         open(a.json, "w").write(s + "\n")
