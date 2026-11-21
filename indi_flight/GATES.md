@@ -554,3 +554,13 @@ Each fixes a defect of a test; no threshold is lowered. Decision record D-OWNER-
   DShot step (5e-4 of full scale); ratio reported.
 - G4 item 2 (Q15 A): the sustained-oscillation detector skips windows that overlap the 3 s after a nav_state change;
   mode transitions are judged by the G5 transient limits; the land-entry transient is reported for both stacks.
+
+## G4 verdict at freeze-7 (S178, 2026-11-21): NOT PASSED
+Evidence: `results/freeze7_s177/G4_SCORES.md` (18 runs, both keyed scripts, S175 rules). R20, C20, R4 and clip rows 18/18
+PASS; harsh-hover items 1-3 PASS 3/3 (item 2 both keys). Command chatter (20-100 Hz detector): hover 1/9 FAIL
+(hover_harsh_s1, 20.0 Hz, RMS 9.7e-4), cruise 9/9 FAIL on both keys: 33.2-33.5 Hz line through the lemniscate (about
+3x floor; the freeze-6 89 Hz line is gone) and the 20-22 Hz line in AUTO_LAND (3.6-9.6x floor). PID on the same cruise
+seed was clean (S176), so the failure is INDI-specific. Outside the gate scope, noted: harsh cruise shows sustained
+p/q rate flags of 11-13 dps (item 2 applies to harsh hover only). Under the freeze discipline, one session of cause
+search (on logs) follows; a fix shown on a log changes firmware, invalidates the G4 rows and re-flies them, and this
+verdict is then re-opened.
