@@ -7,10 +7,16 @@
 - Blocker: none (Q17, Q18 answered A, logged S180).
   G2 and G4 NOT PASSED at freeze-7; freeze-8 re-fly decides them.
 ## Next actions (owner order; each names its gate item)
-1. FREEZE-8 declared S181 (D-FREEZE-8, firmware d2f3845292). Re-fly queue results/freeze8_s181/queue.sh (resume:
-   rerun it; check `tail -n 5 queue_status.tsv`, docker ps). When done: score each group with the keyed scripts used
-   at freeze-7 (agents, sonnet/haiku), write G2 / G4 / G5 verdicts in GATES.md + GATE_STATUS.tsv the same session.
+1. FREEZE-8 queue results/freeze8_s181/queue.sh (resume: rerun it; `tail -n 5 queue_status.tsv`, docker ps). G2
+   scored S182: NOT PASSED (GATES "G2 verdict at freeze-8": outer 24/24 PASS, spot rate PM 41.3 / att 42.2 FAIL).
+   Score G4 (gate_g4.sh score + keys used at freeze-7) and G5 groups as they finish, verdicts same session.
    Yaw G2-STEP settle 1139 ms (S64 ~920, limit 1350): watch in the 3 seeds, no chase while in limit.
+1b. G2 spot cause (one session, started S182; design/g2_spot_cause_s182.md): low-f phase loss (<3 Hz) both cells
+   tracks MC_INDI_XY_VP 1.8 -> 3.6 (freeze-7, kept at freeze-8); att 4-8 Hz lag at freeze-8 looks like F4
+   (kSetpointLeadTc 0.03, constexpr). No PID injection path exists (stock code, out of scope): PID-ref-first not
+   applicable, say so. After the queue ends (no parallel docker), fly P1 rate + P2 att cell with XY_P 0.95/XY_VP 1.8;
+   P3 att cell on an F4-revert build (Tc 0.01). Then: if gains are the cause, choose XY gains that pass outer AND
+   spot (model + probe), freeze-9 re-fly list; if F4, revert F4 vs G4 89 Hz trade -> owner question if both conflict.
 2. G4 hover_harsh_s1 20 Hz (take-off/loiter, 9.7e-4, PID clean, 1/3 seeds): after F2 result; one session cause bound,
    candidate decision (4) inner rate INDI -> owner question before re-opening (re-flies most gates).
    Q18 re-score done (no verdict moved); cruise item 3 offset is not a G4 row (PID 0.295 m = INDI): closed.
