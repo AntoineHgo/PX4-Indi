@@ -5,14 +5,19 @@
   D-XY-PICK), config g5_freeze_s157 params (XY gains at firmware defaults 1.2/2.4). D-FREEZE-8 list re-flies in
   queue results/freeze9_s183 (G4 cruise_harsh_s2 excluded until Q19).
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
-- Blocker: none. Q20-Q22 closed S187. G5 verdict waits T8 (G5.1/5.2/5.7 re-fly); G3 waits T7 pre-test.
+- Blocker: none. Q20-Q22 closed S187. G5.7 FAIL at freeze-9 (PID ref T10 queued); G3 pre-test 10/20 FAIL (PID
+  refs T9 queued). Both batches run detached; next session reads their scores first.
 ## Next actions (owner order; each names its gate item)
 1. G2 PASSED at freeze-9 (S184, GATES "G2 verdict at freeze-9"). Any firmware change re-opens it.
 2. G4 PASSED at freeze-9 under Q20 (S187, both guard keys 0 checked / 0 FAIL). Any firmware change re-opens it.
 3. G5: freeze-9 (G5_SCORES.md) every flown row PASS both keys; G5.5 worst H 0.499 m (o2 s3, limit 0.5: thin, no
    chase). G5.10 (SAT dropped Q21) stabilized part PASS 3/3 both keys (freeze9_s183/g510_stab, S188).
-   D-FREEZE-9-GAP: G5.1/G5.2/G5.7 never re-flown since freeze-6 -> T8 batch (chained after T7). After T8 scored
-   with both keys: G5 verdict in GATES.md + GATE_STATUS.tsv.
+   D-FREEZE-9-GAP re-fly (S188, freeze9_s183/g5_modes): G5.1 6/6 and G5.2 6/6 PASS both keys; G5.7 FAIL 3/3 both
+   keys on attitude jump (5.8/9.3/10.7 deg > 5; hold edges P>H, S>H, H>P; freeze-6 2.5-3.1 deg PASS) = regression
+   from freeze-8/9 XY gains (or F2). T10 PID refs mode_switch10 x3 chained after T9. Next: if PID also > 5 deg ->
+   owner question (BLOCKING G5.7). If INDI-only -> one session cause search on the log (setpoint rate at hold entry
+   vs attitude tracking; XY_VP 2.4 vs G5.5 0.499 m trade), then re-open D-XY-PICK; a firmware change re-opens
+   G2/G4/G5 rows per freeze rule.
 4. G3: pre-test re-flown on Q22 draws (S188, results/g3_pretest_s187, ANALYSIS_S188.md): NOT clean, both keys
    10/20 FAIL item 2 (p/q osc 2.5-7.3 Hz; 00/05/10/16/17 before trajectory, 02/03/08/09/13 at trajectory/fault;
    items 1 all pass, item 3 fails 02/05). New vs S186: 00, 10, 16 (16 = stab, no fault, no wind). Model predicts
@@ -50,7 +55,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 |---|---|---|---|---|
 | T1 | G4 guard Q20 key 1: DONE (0 checked, 0 FAIL; max 4.84e-4) | sonnet | results/freeze9_s183/g4/GUARD_Q20_KEY1.md | - |
 | T4 | G5.10 SAT Q21 feasibility: DONE, invalid both stacks -> SAT dropped (C) | sonnet | results/g510_q21_s187/README.md | - |
-| T8 | G5.1/G5.2/G5.7 freeze-9 re-fly, both keys, chained after T7 (S188) | sonnet | results/freeze9_s183/g5_modes/README.md | README resume section |
+| T10 | G5.7 PID refs mode_switch10 s1-3, both keys, chained after T9 (S188) | sonnet | results/freeze9_s183/g5_modes/pid_mode_switch10_s*.key*.txt (PID_G57_DONE) | README "PID reference (S188)" |
 | T9 | G3 PID refs of the 10 failing pre-test runs, both keys, chained after T8 (S188) | sonnet | results/g3_pretest_s187/pid_refs/README.md (DONE marker) | README resume section |
 
 ## Open problems

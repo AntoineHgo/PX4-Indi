@@ -1473,3 +1473,8 @@ tau box (test definition).
    0.5-20 Hz over 28-74 s is 272 deg/s INDI vs 10.9 deg/s PID. Not verified: whether the PID line is a limit cycle or
    the gust/wind response (needs a calm-air PID flight; only if the G3 report needs it). Run 17's draw (e 1.52) is
    outside the new box, so it leaves the pre-test set and goes to the report as an out-of-box case with both values.
+- S188 (20261121-195641): G5.10 stabilized part 3/3 both keys at freeze-9 (SAT dropped Q21; PID ref also passes).
+  D-FREEZE-9-GAP: G5.1/G5.2/G5.7 had not been re-flown since freeze-6; re-flown: G5.1 6/6, G5.2 6/6 PASS, G5.7 FAIL
+  3/3 both keys (attitude jump 5.8-10.7 deg at hold edges; freeze-6 PASS). G3 pre-test on Q22 draws: 10/20 FAIL item 2
+  both keys (ANALYSIS_S188.md). PID refs of both failures queued detached (T9, T10). Gate progress: G5.10 scored
+  PASS; G5.1/G5.2 re-scored PASS at freeze-9; G5.7 and G3 pre-test scored FAIL (PID refs pending).
