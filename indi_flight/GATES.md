@@ -158,7 +158,8 @@ gate is decided on the frozen final pair in stage 6 with the same tests.
   - attitude roll/pitch/yaw 800/400: 12/12 PASS, KEYED (results/g2_att_freeze_s162). Open: yaw model x-check.
   - vel/pos and accel x/y/z, 800/400, 2 seeds: 24/24 meet thresholds, KEYED S164 (results/g2_outer_freeze_s163,
     key2.md: 22/24 within 3 deg/1 dB, 2 z-accel cells differ on a crossing in a -27 dB notch, reported at the smaller
-    GM 19.7 dB). Open: linear outer-loop model. 267 Hz rows not flown.
+    GM 19.7 dB). Model x-check S164 (xcheck.md, bench/g2_outer_model_s164.py): PM 8/8 within 10 deg; xy GM model
+    ~5 dB conservative (A-50, verdict independent); z no crossing in either. 267 Hz rows not flown.
   - Phase-plateau GM (S164, results/g2_plateau_s164.md, `python3 indi_flight/bench/g2_plateau_gm_s164.py`): 67 cells;
     literal rule 66/67, att ax2_r800_s2 hit by a 0.2 Hz bin with |L| > 1 (gain-reduction margin 18.5 dB). Defect fix
     proposed in Q13 (plateau over |L| < 1, reduction margin >= 6 dB reported); under it 67/67 PASS. Pending owner.

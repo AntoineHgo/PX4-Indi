@@ -30,7 +30,8 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    thresholds, UNKEYED (g2_outer_freeze_s163); GATES G2 "Freeze status" block. 3 cells re-flown (my parallel
    containers made sim holes; never run docker during a batch). RC163 done (design/route_check_163.md), acted on:
    S164 DONE: outer key2 (KEYED, key2.md) + plateau GM all 67 cells (g2_plateau_s164.md; 1 cell literal FAIL = |L|>1
-   bin, Q13 option A -> 67/67). NEXT S165: ONE x-check script (rate at freeze params + att yaw + minimal analytic outer
+   bin, Q13 option A -> 67/67); outer model x-check DONE (xcheck.md, A-50 xy GM model conservative). NEXT S165:
+   x-check for rate (freeze params) + att yaw only; then 267 Hz; then G4. Old text: ONE x-check script (rate at freeze params + att yaw + minimal analytic outer
    model; disagreement -> ANOMALIES, no model tuning); 267 Hz "reported" = 1 rate + 1 outer cell. G4 does not wait
    for 267 Hz. Then G4 (RC159 order G2 -> G4 -> G3). Next RC: S168.
    S160: G5 verdict table in freeze README. G5.3 hold re-flown PASS 3/3 + key2. G5.11 exact test + g511_check.py:
