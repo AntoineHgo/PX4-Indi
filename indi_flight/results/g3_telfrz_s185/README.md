@@ -24,3 +24,11 @@
 - The detector TRIP path through the injector was not exercised: needs a manoeuvring scenario (e.g. v2_drop_att / G3 main segments with command variation). The G3 campaign will cover that; a one-run follow-up with v2_drop_att and the same ov.json (start segment "up") would confirm it.
 - esc_status instance 1 exists in the log with live motor-0 rpm throughout (many distinct values in the window). Its publisher was not identified; INDI uses the default subscription (instance 0). Worth a look before concluding on other consumers.
 - `make check_format` / astyle not run (tabs, style matched by hand).
+
+## Trip probe (S185)
+Command: `timeout 900 indi_project/docker/run.sh -n s185fly -t 600 -- python3 indi_flight/bench/run_scenario.py --controller indi --params indi_flight/results/g5_freeze_s157/params.params --model quad5in --speed 4 --sim v2 --scenario v2_drop_att --scenario-overrides indi_flight/results/g3_telfrz_s185/ov_trip.json --seed 185 --out indi_flight/results/g3_telfrz_s185/probe_trip` (override: motor 0, segment `up`, +0 s, 3 s; rc 0). Raw logs in probe_trip/ (untracked).
+1. run.json erpm_frozen: on_us 57050000, off_us 60050000 (3.000 s, from the start of `up`).
+2. esc_status inst 0: 2338 frames in window, esc[0].esc_rpm unique = 1 (frozen). esc[0].esc_errorcount delta in window = 49, versus 482 in the 3 s before and 498 in the 3 s after (other ESCs in window: 499/445/482). The frozen branch appears to suppress the errorcount growth on motor 0 as well, not only the rpm update; not expected by design, to check.
+3. Motor 0 command (actuator_motors control[0]) max-min over 0.5 s in window: 0.0442 (at +0.25 s, the roll step), above the 0.02 detector threshold.
+4. measured_torque_in_use (indi_rate_status) goes 0 at +0.075 s after on, stays 0 until +3.132 s, returns to 1 at +3.134 s. fault 0 and rate_sp_stale 0 in window.
+5. Max tilt in window 15.92 deg. Max 3d position error vs hold_pos_ned in window 7.30 m (rms 3.46 m); attitude mode has no position hold, so this is drift, not a control failure. vehicle_status.failsafe = 0 throughout (+-5 s and whole log).
