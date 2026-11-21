@@ -1309,3 +1309,4 @@ scripts (no re-fly). Check that the hover_harsh_s1 20 Hz flag is the same touchd
 in scope.
 
 - S180 (2026-11-21): owner answers Q17/Q18 logged (GATES 'Owner amendments S180'); Q18 skip in both chatter keys, freeze-7 G4 re-score: no window skipped, verdict NOT PASSED unchanged; hover_harsh_s1 flag is take-off/loiter not touchdown; keys reconciled on GP (33.5 + 89.25 Hz); cruise item 3 offset = PID (not a G4 row). F2 probe launched. Gate progress: G4 Q18 re-score row scored (verdict unchanged, evidence q18_rescore_s180).
+- S180 (cont.): F2 committed (33.5 Hz gone, 89 Hz stays); 89 Hz located: outer 88.9 Hz staircase x inner setpoint-lead derivative (zero-noise flight unchanged); F4 kSetpointLeadTc 0.03 committed, probe met (89 Hz 4.2e-4). Gate progress: G4 cruise chatter L1 removed on one probe flight (both keys), freeze-8 candidate defined.

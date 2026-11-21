@@ -7,11 +7,12 @@
 - Blocker: none (Q17, Q18 answered A, logged S180).
   G2 and G4 NOT PASSED at freeze-7; freeze-8 in preparation (XY_P 1.2 shown, F2 for L1 to implement).
 ## Next actions (owner order; each names its gate item)
-1. G4 L1 + G2 freeze-8: F2 committed 9dd5f76382 (candidate, key2 pending): 33.5 Hz gone, 89 Hz line stays on all
-   motors 5.2-7.7e-4 (results/f2_probe_s180). 89 Hz located (LINE89_S180.md: outer 88.9 Hz staircase x inner
-   setpoint lead); fix probe F4 (task F; overturn rule in D-G4-STEPBACK). Then: key2 of F2 (+ any 89 Hz
-   fix) code-to-spec, freeze-8 = F2 + MC_INDI_XY_P default 1.2 (param test); re-fly G2 outer 24 + 2 spot, G4 18,
-   G5.5 24, G5.3 hold+mission x3, G5.4 6. If task E points at the inner loop (decision (4)): owner question first.
+1. Freeze-8 (G2, G4 cruise, G5): candidate firmware = F2 9dd5f76382 + F4 d65111154b (kSetpointLeadTc 0.03) +
+   MC_INDI_XY_P default 1.2 (to do, with param test). F4 met its probe on cruise_typ_s1 (89 Hz 4.2e-4, limit 5e-4,
+   thin). Before freeze: (a) gtest that fails without F4 (89 Hz staircase on rate_sp -> rate_sp_dot amplitude bound;
+   lesson 20); (b) one key2 (sonnet, code-to-spec) of F2+F4+XY_P diff; (c) pre-test cruise_typ s2/s3 + G2-STEP
+   attitude cell. Then declare freeze-8 (D-FREEZE-8, list rows) and re-fly: G2 outer 24 + 2 spot + G2-STEP, G4 18,
+   G5.5 24, G5.3 hold+mission x3, G5.4 6, G5.10 3 seeds (Q17 A scoring).
 2. G4 hover_harsh_s1 20 Hz (take-off/loiter, 9.7e-4, PID clean, 1/3 seeds): after F2 result; one session cause bound,
    candidate decision (4) inner rate INDI -> owner question before re-opening (re-flies most gates).
    Q18 re-score done (no verdict moved); cruise item 3 offset is not a G4 row (PID 0.295 m = INDI): closed.
@@ -52,7 +53,6 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| F | F4 probe: kSetpointLeadTc 0.03 (uncommitted working-tree change in src/lib/indi_rate_control) + cruise_typ_s1 | sonnet | results/f4_probe_s180/README.md | if session cut: `git diff src/lib` shows the change; re-brief from README |
 | - | G5.10 pre-test queue4 flown, 4 metrics committed, unscored | - | results/g5_10_freeze7_s178/ | - |
 
 ## Open problems
