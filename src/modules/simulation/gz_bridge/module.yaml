@@ -169,6 +169,16 @@ parameters:
           min: 0
           max: 255
           default: 0
+        SIM_GZ_ERPM_FRZ:
+          description:
+            short: Motors with frozen eRPM telemetry
+            long: Used by SIM_GZ_ESC_FB 2. Bit i set makes motor i report the value it had when the bit was set,
+              bit-identical in every frame (fresh timestamp, esc_errorcount does not increment) until cleared.
+              Read at runtime, for timed frozen-value scenarios.
+          type: int32
+          min: 0
+          max: 255
+          default: 0
         SIM_GZ_THR_SC:
           description:
             short: Available thrust scale of all motors

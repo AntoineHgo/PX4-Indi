@@ -245,7 +245,12 @@ void GZMixingInterfaceESC::motorSpeedCallback(const gz::msgs::Actuators &actuato
 			// The reply to the previous frame is read with this one: one output period of latency
 			const bool lost = (_erpm_loss_mask & (1u << i)) != 0;
 
-			if (lost || (_erpm_drop_probability > 0.f && uniformRandom() < _erpm_drop_probability)) {
+			const bool frozen = (_erpm_frz_mask & (1u << i)) != 0;
+
+			if (frozen) {
+				// Valid frames that all carry the same value: held rpm, fresh timestamp, no error count
+
+			} else if (lost || (_erpm_drop_probability > 0.f && uniformRandom() < _erpm_drop_probability)) {
 				// CRC failure: the driver keeps returning the last good value with a fresh timestamp
 				_erpm_errors[i]++;
 

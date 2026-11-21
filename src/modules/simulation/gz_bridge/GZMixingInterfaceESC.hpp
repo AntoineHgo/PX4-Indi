@@ -93,6 +93,10 @@ public:
 		param_get(param_find("SIM_GZ_ERPM_LOSS"), &loss_mask);
 		_erpm_loss_mask = static_cast<uint32_t>(loss_mask);
 
+		int32_t frz_mask = 0;
+		param_get(param_find("SIM_GZ_ERPM_FRZ"), &frz_mask);
+		_erpm_frz_mask = static_cast<uint32_t>(frz_mask);
+
 		float thrust_scale = 1.f;
 		param_get(param_find("SIM_GZ_THR_SC"), &thrust_scale);
 		_motor_speed_scale = sqrtf(math::constrain(thrust_scale, 0.f, 1.f)); // thrust ~ rotor speed squared
@@ -137,6 +141,7 @@ private:
 	int32_t _erpm_poles{14};
 	float _erpm_drop_probability{0.f};
 	uint32_t _erpm_loss_mask{0}; // SIM_GZ_ERPM_LOSS: motors whose every eRPM frame fails
+	uint32_t _erpm_frz_mask{0}; // SIM_GZ_ERPM_FRZ: motors whose eRPM frames are valid but repeat the held value
 	float _motor_speed_scale{1.f}; // sqrt(SIM_GZ_THR_SC), applied to motor outputs
 	float _erpm_reply_rpm[esc_status_s::CONNECTED_ESC_MAX] {}; // speed sampled at the previous frame
 	static constexpr int ERPM_DELAY_LEN = 9; // SIM_GZ_ERPM_LAT up to 8 frames
