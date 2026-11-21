@@ -3,6 +3,8 @@
 import sys, json, os, glob
 import numpy as np
 FS = 800.0
+DSHOT_STEP = 5e-4  # Q14 A: line RMS floor = one DShot step (full scale 1)
+NAV_SKIP_S = 3.0   # Q15 A: skip detector windows overlapping this long after a nav_state change
 RATIO = 20.0   # peak / band-median threshold (spec); --break raises it to prove the self-test bites
 
 def grid(t, y, fs=FS):
@@ -11,16 +13,21 @@ def grid(t, y, fs=FS):
     y = np.atleast_2d(y.T).T if y.ndim == 1 else y
     return tg, np.stack([np.interp(tg, t, y[:, i]) for i in range(y.shape[1])], 1)
 
-def psd_windows(x, fs, f0, f1, win=4.0, step=1.0):
+def psd_windows(x, fs, f0, f1, win=4.0, step=1.0, rms_hz=None, t_off=0.0, skip=(), skipped=None):
     """Yield (t_start, f_peak, ratio, rms_at_peak) per window: Hann PSD, one peak = band maximum."""
     n, h = int(win * fs), int(step * fs); w = np.hanning(n); df = fs / n
     f = np.fft.rfftfreq(n, 1 / fs); b = np.where((f >= f0) & (f <= f1))[0]
-    out = []
+    hb = 2 if rms_hz is None else int(round(rms_hz / df)); out = []
     for s in range(0, len(x) - n + 1, h):
+        ta = t_off + s / fs   # absolute window span [ta, ta+win] vs skip intervals (t_change, t_change+NAV_SKIP_S)
+        if any(ta < c1 and ta + win > c0 for c0, c1 in skip):
+            out.append((s / fs, 0.0, 0.0, 0.0))
+            if skipped is not None: skipped.append(ta)
+            continue
         seg = x[s:s + n]; seg = seg - seg.mean()
         P = np.abs(np.fft.rfft(seg * w)) ** 2 / (fs * np.sum(w ** 2)); P[1:-1] *= 2
         k = b[np.argmax(P[b])]
-        rms = np.sqrt(P[max(k - 2, 0):k + 3].sum() * df)
+        rms = np.sqrt(P[max(k - hb, 0):k + hb + 1].sum() * df)
         out.append((s / fs, f[k], P[k] / np.median(P[b]), rms))
     return out
 
@@ -36,11 +43,11 @@ def sustained(wins, rms_min=None, ratio=None):
         if len(streak) >= 3 and best is None: best = (t0 - 2.0, streak[0])
     return best  # (start time of the 3-window streak, freq) or None
 
-def osc_rates(t, w):   # w: (n,3) rad/s, truth p,q,r
-    tg, g = grid(t, np.degrees(w)); res = {}
+def osc_rates(t, w, nav_t=()):   # w: (n,3) rad/s, truth p,q,r; nav_t: times of nav_state changes
+    tg, g = grid(t, np.degrees(w)); res = {}; skip = [(c, c + NAV_SKIP_S) for c in nav_t]
     for i, a in enumerate("pqr"):
-        wins = psd_windows(g[:, i], FS, 2, 40); s = sustained(wins, rms_min=5.0)
-        res[a] = {"sustained": s is not None, "at": s, "max_ratio": max(x[2] for x in wins),
+        sk = []; wins = psd_windows(g[:, i], FS, 2, 40, t_off=tg[0], skip=skip, skipped=sk); s = sustained(wins, rms_min=5.0)
+        res[a] = {"sustained": s is not None, "at": s, "max_ratio": max(x[2] for x in wins), "skipped_windows_t": sk,
                   "max_rms_dps": max(x[3] for x in wins if x[2] > RATIO) if any(x[2] > RATIO for x in wins) else 0.0}
     return res
 
@@ -50,6 +57,7 @@ def pos_limit_cycle(t, pos, t0, t1):
     for a in np.arange(t0, t1 - 10 + 1e-9, 10.0):
         m = (t >= a) & (t < a + 10); tt = t[m]
         p2p.append([float(np.ptp(pos[m, i] - np.polyval(np.polyfit(tt, pos[m, i], 1), tt))) for i in range(3)])
+    if not p2p: return {"sustained": False, "p2p_m": [], "note": "hold < 10 s, not evaluated"}
     p2p = np.array(p2p); bad = (p2p > 0.3).any(1); run = 0; flag = False
     for b in bad: run = run + 1 if b else 0; flag |= run >= 3
     return {"sustained": bool(flag), "p2p_m": p2p.tolist()}
@@ -57,9 +65,12 @@ def pos_limit_cycle(t, pos, t0, t1):
 def chatter(t, u):  # u: (n,4) motor commands
     tg, g = grid(t, u); res = {}
     for i in range(4):
-        wins = psd_windows(g[:, i], FS, 20, 100); s = sustained(wins)
+        wins = psd_windows(g[:, i], FS, 20, 100, rms_hz=2.0); s = sustained(wins, rms_min=DSHOT_STEP)
+        fl = [x for x in wins if x[2] > RATIO and x[3] >= DSHOT_STEP]  # Q14 A: both conditions
+        b = max(fl, key=lambda x: x[3]) if fl else max(wins, key=lambda x: x[2])
         res[f"m{i}"] = {"sustained": s is not None, "at": s, "max_ratio": max(x[2] for x in wins),
-                        "f_at_max": max(wins, key=lambda x: x[2])[1]}
+                        "f_at_max": max(wins, key=lambda x: x[2])[1], "report_f_hz": b[1], "report_ratio": b[2],
+                        "report_rms": b[3], "n_flagged_windows": len(fl)}
     return res
 
 def tilt_deg(q):  # q = w,x,y,z ; angle between body z and world z, independent of ENU/NED
@@ -83,11 +94,11 @@ def loc(t, q, pos, h, hold0, hold1, ground_contact_t):
     r["pass"] = not (longest * dt > 0.2 or drop > 2.0 or hz > 5.0 or nan or gc)
     return r
 
-def analyse(t, q, w, pos, h, motors_t, motors, hold0, hold1, gc_t, wind=False, mode="position"):
+def analyse(t, q, w, pos, h, motors_t, motors, hold0, hold1, gc_t, wind=False, mode="position", nav_t=()):
     r1 = loc(t, q, pos, h, hold0, hold1, gc_t)
     air = h > h[:800].mean() + 0.3; ia = np.where(air)[0]; a0, a1 = t[ia[0]], t[ia[-1]]  # airborne span
     m = (t >= a0) & (t <= a1)
-    osc = osc_rates(t[m], w[m]); plc = pos_limit_cycle(t, pos, hold0, hold1)
+    osc = osc_rates(t[m], w[m], nav_t); plc = pos_limit_cycle(t, pos, hold0, hold1)
     r2 = {"rates": osc, "position_limit_cycle": plc, "airborne_span_s": [float(a0), float(a1)],
           "pass": not (any(v["sustained"] for v in osc.values()) or plc["sustained"])}
     win = (t >= hold1 - 10) & (t <= hold1); ref = np.array([np.median(pos[(t >= hold0) & (t < hold0 + 1)][:, i]) for i in range(3)])
@@ -107,7 +118,7 @@ def analyse(t, q, w, pos, h, motors_t, motors, hold0, hold1, gc_t, wind=False, m
 
 def load_run(d):
     from pyulog import ULog
-    u = ULog(os.path.join(d, "flight.ulg"), message_name_filter_list=["sim_ground_truth", "actuator_motors", "vehicle_land_detected"])
+    u = ULog(os.path.join(d, "flight.ulg"), message_name_filter_list=["sim_ground_truth", "actuator_motors", "vehicle_land_detected", "vehicle_status"])
     D = {x.name: x.data for x in u.data_list}; g = D["sim_ground_truth"]; t = g["timestamp"] * 1e-6
     q = np.stack([g[f"q[{i}]"] for i in range(4)], 1); w = np.stack([g[f"angular_velocity[{i}]"] for i in range(3)], 1)
     pos = np.stack([g["x"], g["y"], g["z"]], 1)
@@ -116,7 +127,9 @@ def load_run(d):
     sgn = 1.0 if np.median(pos[(t > h0) & (t < h1), 2]) > z0 else -1.0
     h = sgn * (pos[:, 2] - z0); mo = D["actuator_motors"]
     ld = D["vehicle_land_detected"]; gc = list(ld["timestamp"][ld["ground_contact"] > 0] * 1e-6)
-    return dict(t=t, q=q, w=w, pos=pos, h=h, motors_t=mo["timestamp"] * 1e-6,
+    vs = D["vehicle_status"]; ns = vs["nav_state"]; vt = vs["timestamp"] * 1e-6
+    nav_t = list(vt[1:][np.diff(ns) != 0])
+    return dict(t=t, q=q, w=w, pos=pos, h=h, nav_t=nav_t, motors_t=mo["timestamp"] * 1e-6,
                 motors=np.stack([mo[f"control[{i}]"] for i in range(4)], 1), hold0=h0, hold1=h1, gc_t=gc,
                 wind=False, mode=ev.get("mode", "position")), float(np.max(np.diff(t)))
 

@@ -49,6 +49,8 @@ TILT_DEG, TILT_S = 60.0, 0.2
 DROP_M, CONTACT_M, AIRBORNE_M, EXCURSION_M = 2.0, 0.1, 1.0, 5.0
 WIN_S, STEP_S, PEAK_RATIO, RMS_DEG_S, FREQ_TOL, MIN_WINDOWS = 4.0, 1.0, 20.0, 5.0, 0.10, 3
 RATE_BAND, CMD_BAND = (2.0, 40.0), (20.0, 100.0)
+CMD_LINE_RMS = 5e-4        # Q14 A: one DShot step of full scale; chatter needs line RMS >= this as well as ratio > 20
+NAV_SKIP_S = 3.0           # Q15 A: rate windows overlapping the 3 s after a nav_state change are skipped
 POS_WIN_S, POS_P2P_M = 10.0, 0.3
 HORIZ_RMS = (0.15, 0.30)   # calm, wind
 ALT_MEAN = (0.10, 0.20)    # calm, sag
@@ -81,21 +83,36 @@ def longest_run_s(t, mask):
     return best
 
 
-def line_detector(xg, fs, band, min_rms=None):
-    """xg (n,) uniform. Returns dict: sustained bool, lines [(f_hz, first_window_start_index, n_windows)], flagged windows."""
+def line_detector(xg, fs, band, min_rms=None, t_start=0.0, skip=()):
+    """xg (n,) uniform, first sample at time t_start. Returns dict: sustained bool, lines [(f_hz, first_window_start_index,
+    n_windows)], flagged windows. skip: [(ta, tb)] intervals; a window overlapping one is not evaluated (counts as unflagged,
+    so it breaks a run) and is counted in skipped_windows (Q15). Also reports max_ratio (largest peak/median over the evaluated
+    windows) with the line RMS (peak +-2 bins) of that window, and max_rms_ratio_flagged (largest line RMS among windows with
+    ratio > PEAK_RATIO; None if none) (Q14)."""
     from scipy.signal import periodogram
     n, step = int(round(WIN_S * fs)), int(round(STEP_S * fs))
     flags = []  # per window: peak freq if flagged else None
+    skipped, max_ratio, rms_at_max, max_rms_fl = 0, 0.0, None, None
     for s in range(0, len(xg) - n + 1, step):
+        w0, w1 = t_start + s / fs, t_start + (s + n) / fs
+        if any(w0 < tb and w1 > ta for ta, tb in skip):
+            skipped += 1
+            flags.append(None)
+            continue
         f, P = periodogram(xg[s:s + n], fs, window="hann", detrend="constant", scaling="density")
         b = (f >= band[0]) & (f <= band[1])
         fb, Pb = f[b], P[b]
         k = int(np.argmax(Pb))
+        ratio = float(Pb[k] / np.median(Pb))
+        kk = np.flatnonzero(b)[k]
+        rms = float(np.sqrt(np.sum(P[max(kk - 2, 0):kk + 3]) * (f[1] - f[0])))
+        if ratio > max_ratio:
+            max_ratio, rms_at_max = ratio, rms
         ok = Pb[k] > PEAK_RATIO * np.median(Pb)
+        if ok:
+            max_rms_fl = rms if max_rms_fl is None else max(max_rms_fl, rms)
         if ok and min_rms is not None:
-            kk = np.flatnonzero(b)[k]
-            rms = np.sqrt(np.sum(P[max(kk - 2, 0):kk + 3]) * (f[1] - f[0]))
-            ok = rms > min_rms
+            ok = rms >= min_rms
         flags.append(float(fb[k]) if ok else None)
     lines, i = [], 0
     while i < len(flags):
@@ -108,7 +125,9 @@ def line_detector(xg, fs, band, min_rms=None):
         if j - i + 1 >= MIN_WINDOWS:
             lines.append((flags[i], i * STEP_S, j - i + 1))
         i = j + 1
-    return {"sustained": bool(lines), "lines": lines, "flagged_windows": sum(f is not None for f in flags), "windows": len(flags)}
+    return {"sustained": bool(lines), "lines": lines, "flagged_windows": sum(f is not None for f in flags), "windows": len(flags),
+            "skipped_windows": skipped, "max_ratio": max_ratio, "rms_at_max_ratio": rms_at_max,
+            "max_rms_ratio_flagged": max_rms_fl}
 
 
 def position_limit_cycle(t, pos, ta, te):
@@ -127,8 +146,9 @@ def position_limit_cycle(t, pos, ta, te):
     return {"sustained": best >= MIN_WINDOWS, "max_consecutive_windows": best, "windows": len(flags)}
 
 
-def evaluate(tt, pos, q, w, tm, cmd, ref, t0, t1, wind=False, sag=False, mode="position", ref_source="given", t_land=None):
-    """tt (n,), pos (n,3) NED, q (n,4), w (n,3) rad/s truth; tm (m,), cmd (m,4); ref (3,) NED hold point or None."""
+def evaluate(tt, pos, q, w, tm, cmd, ref, t0, t1, wind=False, sag=False, mode="position", ref_source="given", t_land=None, nav_changes=None):
+    """nav_changes: times [s] of vehicle_status.nav_state changes; if given (G4, Q15) the rate detector skips windows
+    overlapping [t, t + NAV_SKIP_S]. tt (n,), pos (n,3) NED, q (n,4), w (n,3) rad/s truth; tm (m,), cmd (m,4); ref (3,) NED hold point or None."""
     h = -pos[:, 2]
     h = h - h[0] if np.isfinite(h[0]) else h
     up = np.flatnonzero(np.isfinite(h) & (h > AIRBORNE_M))
@@ -163,13 +183,14 @@ def evaluate(tt, pos, q, w, tm, cmd, ref, t0, t1, wind=False, sag=False, mode="p
         # item 2
         fin = np.isfinite(pos[a]).all(axis=1) & np.isfinite(w[a]).all(axis=1)
         osc = {}
-        _, wg, fs = uniform(tt[a][fin], np.degrees(w[a][fin]), ta, te)
+        tg, wg, fs = uniform(tt[a][fin], np.degrees(w[a][fin]), ta, te)
+        skip = [(c, c + NAV_SKIP_S) for c in (nav_changes or [])]
         for i, name in enumerate("pqr"):
-            osc[name] = line_detector(wg[i], fs, RATE_BAND, RMS_DEG_S)
+            osc[name] = line_detector(wg[i], fs, RATE_BAND, RMS_DEG_S, float(tg[0]), skip)
         osc["position"] = position_limit_cycle(tt[a][fin], pos[a][fin], max(ta, t0), te)
         okm = np.isfinite(cmd[am][:, :4]).all(axis=1)
         _, cg, fsc = uniform(tm[am][okm], cmd[am][okm][:, :4], ta, te)
-        chat = [line_detector(cg[i], fsc, CMD_BAND) for i in range(4)]
+        chat = [line_detector(cg[i], fsc, CMD_BAND, CMD_LINE_RMS) for i in range(4)]
         osc["command_chatter"] = {"motors": chat, "sustained": any(c["sustained"] for c in chat)}
         osc["pass"] = not any(osc[k]["sustained"] for k in ("p", "q", "r", "position", "command_chatter"))
         res["item2_oscillation"] = osc
@@ -215,12 +236,13 @@ def load(log, t0, t1):
     o = np.argsort(stamps(am), kind="stable")
     tm = stamps(am)[o]
     cmd = np.stack([am[f"control[{i}]"][o] for i in range(4)], axis=1).astype(float)
-    t_land = None
+    t_land, nav_changes = None, []
     if "vehicle_status" in [d.name for d in u.data_list]:
         vs = u.get_dataset("vehicle_status").data
         tv = (vs["timestamp"].astype(np.int64) - ts) * 1e-6
         ln = np.flatnonzero(np.isin(vs["nav_state"], LAND_NAV_STATES))
         t_land = float(tv[ln[0]]) if ln.size else None
+        nav_changes = [float(x) for x in tv[1:][np.diff(vs["nav_state"]) != 0]]
     ref, src = None, None
     try:
         sp = u.get_dataset("trajectory_setpoint").data
@@ -231,7 +253,7 @@ def load(log, t0, t1):
             ref, src = np.nanmedian(r[np.isfinite(r).all(axis=1)], axis=0), "trajectory_setpoint median over window"
     except (KeyError, IndexError):
         pass
-    return tt, pos, q, w, tm, cmd, ref, src, t_land
+    return tt, pos, q, w, tm, cmd, ref, src, t_land, nav_changes
 
 
 def main():
@@ -242,10 +264,12 @@ def main():
     ap.add_argument("--wind", action="store_true")
     ap.add_argument("--sag", action="store_true")
     ap.add_argument("--mode", choices=("position", "attitude"), default="position")
+    ap.add_argument("--skip-nav-change", action="store_true", help="G4 (Q15): skip rate windows within 3 s after a nav_state change")
     ap.add_argument("--json")
     a = ap.parse_args()
-    tt, pos, q, w, tm, cmd, ref, src, t_land = load(a.log, a.t0, a.t1)
-    r = evaluate(tt, pos, q, w, tm, cmd, ref, a.t0, a.t1, a.wind, a.sag, a.mode, src or "none", t_land)
+    tt, pos, q, w, tm, cmd, ref, src, t_land, navc = load(a.log, a.t0, a.t1)
+    r = evaluate(tt, pos, q, w, tm, cmd, ref, a.t0, a.t1, a.wind, a.sag, a.mode, src or "none", t_land,
+                 navc if a.skip_nav_change else None)
     r["log"] = a.log
     s = json.dumps(r, indent=1)
     if a.json:

@@ -16,7 +16,7 @@ FS, T = 800.0, 90.0
 T0, T1 = 40.0, 50.0
 
 
-def make(osc_hz=None, osc_dps=0.0, alt_off=0.0, tilt_deg=0.0, line_hz=None, pos_lc=0.0, land_at=None, seed=0, osc_from=0.0, land_rate=1.0):
+def make(osc_hz=None, osc_dps=0.0, alt_off=0.0, tilt_deg=0.0, line_hz=None, pos_lc=0.0, land_at=None, seed=0, osc_from=0.0, land_rate=1.0, line_amp=0.02, cmd_noise=0.002, osc_until=None, nav_changes=None):
     rng = np.random.default_rng(seed)
     t = np.arange(0, T, 1 / FS)
     n = len(t)
@@ -33,12 +33,12 @@ def make(osc_hz=None, osc_dps=0.0, alt_off=0.0, tilt_deg=0.0, line_hz=None, pos_
     q = np.stack([np.cos(th / 2), np.sin(th / 2), np.zeros(n), np.zeros(n)], axis=1)
     w = np.radians(1.0) * rng.normal(size=(n, 3))
     if osc_hz:
-        w[:, 0] += np.radians(osc_dps) * np.sqrt(2) * np.sin(2 * np.pi * osc_hz * t) * (t > osc_from)   # osc_dps = RMS
-    cmd = 0.5 + 0.002 * rng.normal(size=(n, 4))
+        w[:, 0] += np.radians(osc_dps) * np.sqrt(2) * np.sin(2 * np.pi * osc_hz * t) * (t > osc_from) * (t < (osc_until or 1e9))   # osc_dps = RMS
+    cmd = 0.5 + cmd_noise * rng.normal(size=(n, 4))
     if line_hz:
-        cmd += 0.02 * np.sin(2 * np.pi * line_hz * t)[:, None]
+        cmd += line_amp * np.sin(2 * np.pi * line_hz * t)[:, None]
     ref = np.array([0.0, 0.0, -5.0])
-    return G.evaluate(t, pos, q, w, t, cmd, ref, T0, T1, t_land=land_at)
+    return G.evaluate(t, pos, q, w, t, cmd, ref, T0, T1, t_land=land_at, nav_changes=nav_changes)
 
 
 def main():
@@ -51,10 +51,17 @@ def main():
         "poslc": (dict(pos_lc=0.2), dict(item2=False)),
         "landing": (dict(land_at=70.0), dict(p=True)),
         "osc_in_land": (dict(land_at=70.0, land_rate=0.5, osc_hz=30.0, osc_dps=8.0, osc_from=70.0), dict(item2=False)),  # D-G3-SPAN
+        # Q14 A: ratio > 20 in both; line RMS 0.0004 < 5e-4 -> not chatter, 0.001 -> chatter
+        "chat_lowrms": (dict(line_hz=60.0, line_amp=0.0004 * np.sqrt(2), cmd_noise=2e-5), dict(item2=True)),
+        "chat_hirms": (dict(line_hz=60.0, line_amp=0.001 * np.sqrt(2), cmd_noise=2e-5), dict(item2=False)),
+        # Q15 A: 3 s burst of 8 deg/s RMS at 30 Hz; nav_state change at 60 s
+        "burst_in_nav": (dict(osc_hz=30.0, osc_dps=8.0, osc_from=60.0, osc_until=63.0, nav_changes=[60.0]), dict(item2=True)),
+        "burst_later": (dict(osc_hz=30.0, osc_dps=8.0, osc_from=70.0, osc_until=73.0, nav_changes=[60.0]), dict(item2=False)),
         "alt_off": (dict(alt_off=0.2), dict(item3=False)),
         "loc": (dict(tilt_deg=80.0), dict(item1=False)),
     }
-    patches = {"osc30": ("RMS_DEG_S", 1e9), "osc_in_land": ("RMS_DEG_S", 1e9), "chatter60": None, "poslc": ("POS_P2P_M", 9.0),
+    patches = {"burst_in_nav": None, "osc30": ("RMS_DEG_S", 1e9), "osc_in_land": ("RMS_DEG_S", 1e9), "chatter60": None, "poslc": ("POS_P2P_M", 9.0),
+               "chat_hirms": ("CMD_LINE_RMS", 1e9),
                "alt_off": ("ALT_MEAN", (9.0, 9.0)), "loc": ("TILT_DEG", 179.0)}
     out, bad = {}, 0
     for name, (kw, exp) in cases.items():
@@ -63,7 +70,9 @@ def main():
             if name not in patches:
                 continue
             saved = {}
-            if name == "chatter60":
+            if name == "burst_in_nav":
+                kw = dict(kw, nav_changes=None)     # rule reverted: no skipping -> the burst must be flagged
+            elif name == "chatter60":
                 saved["CMD_BAND"] = G.CMD_BAND
                 G.CMD_BAND = (100.0, 150.0)       # detector looks at the wrong band: blind to the 60 Hz line
             else:
@@ -81,6 +90,13 @@ def main():
             ok = ok and not r["item2_oscillation"]["q"]["sustained"]
         if name == "chatter60":
             ok = ok and r["item2_oscillation"]["command_chatter"]["sustained"]
+        if name == "chat_lowrms":
+            c = r["item2_oscillation"]["command_chatter"]["motors"][0]
+            ok = ok and c["max_ratio"] > 20 and c["rms_at_max_ratio"] < G.CMD_LINE_RMS and c["flagged_windows"] == 0
+        if name == "burst_in_nav":
+            ok = ok and r["item2_oscillation"]["p"]["skipped_windows"] > 0
+        if name == "burst_later":
+            ok = ok and r["item2_oscillation"]["p"]["sustained"] and r["item2_oscillation"]["p"]["skipped_windows"] > 0
         if name == "poslc":
             ok = ok and r["item2_oscillation"]["position"]["sustained"]
         if brk:
