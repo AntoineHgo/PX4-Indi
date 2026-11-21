@@ -241,3 +241,6 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S151 | key2 MC_INDI_POS_TB default 1.0->0.3 | sonnet | results/g5_g510_s151/key2_tb_default.md | done, ACCEPT 3 MINOR, 5 calls, ~29k tok |
 | S152 | 4c pre-freeze review 1/3 stage-5 code vs spec | opus | design/prefreeze_r1_stage5.md | done, 13 calls, ~79k tok, ~$0.93, REJECT 1B 3M 4m |
 | S152 | key2 of F1 fix (ALTCTL ground thrust) | sonnet | design/prefreeze_r1_f1_key2.md | done, ACCEPT 2 MINOR, 6 calls, ~32k tok |
+| S153 | ground-arm runner option + F1 probe (3 flights) | sonnet | results/g5_groundarm_s153/README.md | done, 18 calls, ~58k tok, PASS 3/3 |
+| S153 | F3/F4 fix + 3 gtests break-checked | sonnet | design/prefreeze_r1_f34_fix.md | done, 14 calls, ~47k tok |
+| S153 | key2 of F3/F4 diff | sonnet | design/prefreeze_r1_f34_key2.md | done, 9 calls, ~42k tok, ACCEPT w/ fixes (K1 MAJOR fixed by orchestrator) |
