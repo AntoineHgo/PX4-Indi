@@ -14,7 +14,8 @@ Definitions
   Saturated = actuator_motors command >= 0.99; reported s with all 4 and with any motor, sample i held to sample i+1.
   SAT checks: no LOC; tilt max <= MPC_TILTMAX_AIR + 5 deg; altitude loss <= 2.0 m (truth, vs median of the 1 s before);
         recovery = 3D truth within 0.3 m of hold_pos_ned and staying so, <= 5 s after the window end (log must cover
-        it); motors: all-4 saturated fraction of the window >= SAT_MIN_FRAC (assumed 0.5, spec gives no figure).
+        it); validity (not pass): all-4 saturated fraction of the window >= SAT_MIN_FRAC (0.5,
+        spec gives no figure), else verdict INVALID (set-up fault, re-fly), never FAIL.
   STAB checks (Q17 A): no LOC; tilt max <= MPC_MAN_TILT_MAX + 5 deg; no altitude-loss limit; recovery = attitude error
         (truth vs q_d of vehicle_attitude_setpoint, quaternion angle) <= 5 deg and staying so from <= 1 s after stick
         centre (first manual_control_setpoint sample after the last non-zero roll/pitch/throttle stick).
@@ -73,7 +74,7 @@ def score(D):
     key = "sat" if kind == "sat" else "full"
     out = {"kind": kind, "exit_status": D.get("exit_status"), "log_end_s": log_end}
     if key not in ev:
-        out.update(loc=True, error=f"no '{key}' event", passed=False)
+        out.update(loc=True, error=f"no '{key}' event", passed=False, valid=True, verdict="FAIL")
         return out
     t0 = ev[key][0]
     t1 = t0 + ev[key][1]
@@ -125,7 +126,10 @@ def score(D):
         out["recovery_ok"] = bool(rec is not None and rec <= 5.0)
         out["alt_ok"] = bool(out["alt_loss_m"] is not None and out["alt_loss_m"] <= 2.0)
         out["motors_ok"] = bool(out["frac_all4_ge_0.99"] >= SAT_MIN_FRAC)
-        out["passed"] = bool(not out["loc"] and out["tilt_ok"] and out["alt_ok"] and out["recovery_ok"] and out["motors_ok"])
+        # scenario validity, not a gate check (GATES has no motor figure): an unsaturated window is INVALID, not FAIL
+        out["valid"] = out["motors_ok"]
+        out["passed"] = bool(not out["loc"] and out["tilt_ok"] and out["alt_ok"] and out["recovery_ok"])
+        out["verdict"] = "INVALID" if not out["valid"] else ("PASS" if out["passed"] else "FAIL")
     else:
         rec = None
         st, sp = D["stick"], D["sp"]
@@ -144,6 +148,8 @@ def score(D):
         out["recovery_s"] = rec
         out["recovery_ok"] = bool(rec is not None and rec <= 1.0)
         out["passed"] = bool(not out["loc"] and out["tilt_ok"] and out["recovery_ok"])
+        out["valid"] = True
+        out["verdict"] = "PASS" if out["passed"] else "FAIL"
     return out
 
 

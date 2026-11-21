@@ -84,7 +84,7 @@ def test_sat_checks_and_motors():
     r = S.score(make("sat", lambda t: 0 * t + 10, lambda t: np.where((t > 9) & (t < 12), 7.0, 10.0), 20.0))
     assert not r["alt_ok"] and not r["passed"], r  # 3 m loss > 2.0
     r = S.score(make("sat", lambda t: 0 * t + 10, hover, 20.0, sat_fn=lambda t: 0.5 + 0 * t))
-    assert not r["motors_ok"] and not r["passed"], r  # motors never saturated
+    assert not r["motors_ok"] and not r["valid"] and r["verdict"] == "INVALID", r  # motors never saturated
     r = S.score(make("sat", lambda t: 0 * t + 55, hover, 20.0))
     assert not r["tilt_ok"], r
     r = S.score(make("sat", lambda t: 0 * t + 10, lambda t: np.where(t > 13, 11.0, 10.0), 20.0))
