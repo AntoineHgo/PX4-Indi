@@ -20,6 +20,9 @@ sys.path.insert(0, HERE)
 import g3_sample  # noqa: E402
 import run_validity  # noqa: E402
 
+# D-NOISE-PROF typical profile (same values as bench/gate_g4.sh "typ")
+TYPICAL_VIB_ACC, TYPICAL_VIB_GYR, TYPICAL_IMU_NSC = 10.0, 0.0, 4.0
+
 RUN_SCENARIO = os.path.join(HERE, "run_scenario.py")
 CONTROLLER = "indi"
 # UNVERIFIED: no G3 scenario with the "take-off, hover, step_roll, lemniscate, hold" timeline exists in scenarios.py yet;
@@ -161,8 +164,12 @@ def build_run(draw, base_params_path, out_dir):
 
     # vibration ---------------------------------------------------------------------------------------------------
     vb = f["vibration"]
-    argv += ["--vib-acc", _num(vb["acc_ms2"]), "--vib-gyr", _num(vb["gyr_rads"])]
-    applied["vibration"] = {"acc_ms2": vb["acc_ms2"], "gyr_rads": vb["gyr_rads"], "mult": vb["mult"]}
+    # G4 typical profile goes underneath the drawn vibration (GATES G3 table): one rotor line, so the amplitudes add
+    # (same rpm line, in phase: the conservative sum). UNVERIFIED choice, see g3_setup_s175/README.md.
+    acc_tot, gyr_tot = TYPICAL_VIB_ACC + vb["acc_ms2"], TYPICAL_VIB_GYR + vb["gyr_rads"]
+    argv += ["--vib-acc", _num(acc_tot), "--vib-gyr", _num(gyr_tot), "--imu-noise-scale", _num(TYPICAL_IMU_NSC)]
+    applied["vibration"] = {"acc_ms2": vb["acc_ms2"], "gyr_rads": vb["gyr_rads"], "mult": vb["mult"],
+                            "effective_acc_ms2": acc_tot, "effective_gyr_rads": gyr_tot}
 
     # GNSS --------------------------------------------------------------------------------------------------------------
     g = f["gnss"]
@@ -211,7 +218,8 @@ def build_run(draw, base_params_path, out_dir):
         argv += ["--scenario-overrides", os.path.join(out_dir, OVERRIDES_NAME)]
 
     # G4 typical-noise profile ------------------------------------------------------------------------------------------
-    not_applied["g4_typical_noise"] = "hook missing"
+    applied["g4_typical_noise"] = {"vib_acc_ms2": TYPICAL_VIB_ACC, "vib_gyr_rads": TYPICAL_VIB_GYR,
+                                   "imu_noise_scale": TYPICAL_IMU_NSC, "via": "run_scenario --vib-acc/--vib-gyr/--imu-noise-scale"}
 
     # every factor accounted for (loud, never silent) ----------------------------------------------------------------------
     expected = set(f) | {"mode", "g4_typical_noise"}
@@ -225,6 +233,16 @@ def build_run(draw, base_params_path, out_dir):
     merged.update(params)
     return {"argv": argv, "params": params, "overrides": ov, "merged_params": merged, "applied": applied, "not_applied": not_applied,
             "notes": notes}
+
+
+def unapplied(draws, base_params_path, out_root="/nonexistent"):
+    """{run_index: not_applied dict} for every draw that has a declared factor the runner cannot apply."""
+    bad = {}
+    for d in draws:
+        na = build_run(d, base_params_path, os.path.join(out_root, f"run_{d['run_index']:03d}"))["not_applied"]
+        if na:
+            bad[d["run_index"]] = na
+    return bad
 
 
 def command(argv):
@@ -300,9 +318,14 @@ def main():
     a = ap.parse_args()
 
     draws = g3_sample.campaign(a.seed, a.n)
-    for d in draws:
-        if d["run_index"] < a.start or (a.stop is not None and d["run_index"] > a.stop):
-            continue
+    sel = [d for d in draws if d["run_index"] >= a.start and (a.stop is None or d["run_index"] <= a.stop)]
+    bad = unapplied(sel, a.base_params, a.out_root)
+    if bad:  # set-up fault: abort before anything is flown or written
+        for i, na in sorted(bad.items()):
+            print(f"ABORT run_{i:03d}: declared factor(s) not applicable: {na}", file=sys.stderr)
+        print("g3_run: refusing to fly, a declared plant/noise factor would be not_applied", file=sys.stderr)
+        sys.exit(3)
+    for d in sel:
         out = os.path.join(a.out_root, f"run_{d['run_index']:03d}")
         r = build_run(d, a.base_params, out)
         cmd = command(r["argv"])

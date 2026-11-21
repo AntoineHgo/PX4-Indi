@@ -79,9 +79,36 @@ def test_every_factor_accounted():
 def test_missing_hooks_reported():
     for d in draws():
         b = r.build_run(d, BASE, OUT)
-        assert b["not_applied"]["g4_typical_noise"] == "hook missing"
+        assert "g4_typical_noise" in b["applied"]
         if d["factors"]["tel_frozen"]["on"]:
             assert b["not_applied"]["tel_frozen"] == "hook missing"
+
+
+def test_typical_profile_in_argv():
+    for d in draws()[:20]:
+        b = r.build_run(d, BASE, OUT)
+        a = b["argv"]
+        assert float(a[a.index("--imu-noise-scale") + 1]) == 4.0
+        vb = d["factors"]["vibration"]
+        assert abs(float(a[a.index("--vib-acc") + 1]) - (10.0 + vb["acc_ms2"])) < 1e-3
+
+
+def test_unsupported_factor_aborts_before_flying():
+    """A spec with tel_frozen on (no hook) makes g3_run exit non-zero, no flight, nothing written."""
+    import subprocess
+    import tempfile
+    on = [d for d in draws() if d["factors"]["tel_frozen"]["on"]][0]
+    assert r.unapplied([on], BASE) == {on["run_index"]: {"tel_frozen": "hook missing"}}
+    off = [d for d in draws() if not d["factors"]["tel_frozen"]["on"]][0]
+    assert r.unapplied([off], BASE) == {}
+    # end to end: first campaign index with tel_frozen on, seed 21 n 200, real main()
+    out = tempfile.mkdtemp(prefix="g3abort_")
+    for dry in ([], ["--dry-run"]):
+        p = subprocess.run([sys.executable, os.path.join(HERE, "..", "g3_run.py"), "--seed", "21", "--n", "200",
+                            "--start", str(on["run_index"]), "--stop", str(on["run_index"]), "--base-params", BASE,
+                            "--out-root", out] + dry, capture_output=True, text=True, timeout=60)
+        assert p.returncode != 0 and "tel_frozen" in p.stderr and "refusing to fly" in p.stderr, p.stderr
+    assert os.listdir(out) == []
 
 
 def test_model_variant_mapping():
@@ -123,7 +150,7 @@ def test_argv_flags():
         b = r.build_run(d, BASE, OUT)
         a = b["argv"]
         assert argval(a, "--sim") == "v2" and argval(a, "--model") == "quad5in"
-        assert float(argval(a, "--vib-acc")) == d["factors"]["vibration"]["acc_ms2"]
+        assert abs(float(argval(a, "--vib-acc")) - (10.0 + d["factors"]["vibration"]["acc_ms2"])) < 1e-6
         assert int(argval(a, "--gps-dly")) == d["factors"]["gnss"]["latency_ms"]
         ekf = d["factors"]["gnss"]["ekf_delay_ms"]
         assert (argval(a, "--gnss-delay") is None) == (ekf is None)
