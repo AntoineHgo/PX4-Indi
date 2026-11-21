@@ -25,10 +25,11 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    267 Hz reported cells flown S165 (GATES G2 freeze status). NEXT: G4 (RC159 order G2 -> G4 -> G3). Next RC: S168.
    S166 G4: bench/g4_metrics.py (self-test + break-check PASS, UNKEYED), pre-look results/g4_prelook_s166 (proxy R20
    0.09 %, C20 0.0015). BLOCKER for G4 R20/R4: with SIM_GZ_ESC_FB=2 (eRPM model, what INDI flies) no true rotor speed
-   is logged (esc_rpm = telemetry model). S167: hook DONE 10c741af4b (FB=2 -> true rpm on esc_status instance 1,
-   runner logs "esc_status 0 1" fc7f74e85a); builds, UNVERIFIED, UNKEYED, make format not run. NEXT (G4 R20/R4):
-   rebuild (HEAD moved), 1 hover flight FB=2: instance 1 in ulog, rpm != instance 0, ~controller rate; key2 of
-   hook (sonnet, diff only); then key2 of g4_metrics.py pointed at instance 1; then 27-run G4 pre-test of 3.
+   is logged. S168: hook 10c741af4b VERIFIED on a flight + KEYED + format clean (results/g4_truth_s168: inst 1 at
+   800 Hz, 1 rpm resolution, inst 0 lags 1 frame); g4_metrics.py picks inst 1 under FB=2 (b926354ef2). RC168 done.
+   NEXT (G4): score pre-test S168d with g4_metrics.py (window = hold segment from run.json events), compare key2
+   S168e; if both fine, write bench/gate_g4.sh as a chain of 27 (hover_long, traj_lemniscate; acro row needs stick
+   quantisation: DEFERRED per RC168, row listed "not yet flown") and fly it serial.
    G5.2 posctl z settle s1 4.15 s FAIL (EKF2 height error, Q10; PID ref PASS).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
    events and maybe_landed / EKF z injectability -> Q8 (scored at option A, not blocking).
@@ -70,6 +71,8 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S168d | G4 pre-test: hover_long quiet/harsh + traj_lemniscate typical, s1 | bash | results/g4_pretest_s168/status.txt, CHAIN_END | indi_flight/results/g4_pretest_s168/chain.sh (repo root) |
+| S168e | key2 re-implementation of g4_metrics R20/R4/C20/C4/clip | sonnet | bench/g4_metrics_key2.py, results/g4_pretest_s168/key2_metrics.md | relaunch brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
