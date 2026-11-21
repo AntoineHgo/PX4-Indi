@@ -1,0 +1,16 @@
+mode_switch10_s3 G57 FAIL
+  edges 10 PASS (expected order ok)
+    posctl>altctl t=  7.02s v=2.52 thr= 1.03% tilt= 0.30deg
+    altctl>posctl t=  9.03s v=1.03 thr= 7.86% tilt=10.66deg
+    posctl>stab t= 11.04s v=2.52 thr= 0.43% tilt= 0.57deg
+    stab>posctl t= 13.05s v=1.04 thr= 3.07% tilt= 6.36deg
+    posctl>hold t= 15.06s v=2.32 thr= 0.32% tilt= 6.05deg
+    hold>posctl t= 17.07s v=0.13 thr= 0.26% tilt= 4.42deg
+    posctl>altctl t= 19.08s v=2.00 thr= 1.13% tilt= 0.29deg
+    altctl>stab t= 21.09s v=0.84 thr= 0.18% tilt= 0.05deg
+    stab>hold t= 23.10s v=0.31 thr= 2.02% tilt= 5.51deg
+    hold>posctl t= 25.11s v=0.05 thr= 0.57% tilt= 5.63deg
+  validity (AMENDED leaveP: speed >= 1.5 at 4 edges leaving posctl) min 2.00 VALID
+  max thrust step / hover          7.8573 %    limit <= 20 %  PASS
+  max attitude jump               10.6634 deg  limit <= 5 deg  FAIL
+  LOC none  PASS

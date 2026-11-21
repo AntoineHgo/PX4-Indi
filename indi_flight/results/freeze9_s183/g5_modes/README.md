@@ -59,3 +59,16 @@ A flight that failed leaves a partial dir without flight.ulg or with a bad run.j
 
 S157 had no scorer json for these rows (text only), so none is written. Raw ulg, rootfs, sticks.csv and *.log are covered by
 indi_flight/.gitignore (checked with git check-ignore); key*.txt, run.json, batch_status.txt are committed with the results.
+
+## PID reference (S188)
+Why: G5.7 failed 3/3 (both keys) for INDI, and the owner rule is that a failing gate row is first flown with the PID reference,
+same scenario and seed. Script `fly_pid_g57.sh`: mode_switch10 seeds 1-3, `--controller pid_default` with no `--params` (the INDI
+params file would start INDI), all other flags as fly_all.sh; outputs `pid_mode_switch10_s<seed>/` plus `.key1.txt`/`.key2.txt`
+(same scorers as fly_all.sh), containers `f9g57pid_*`, `PID_G57_DONE` touched at the end, progress in batch_status.txt.
+Command (detached, chained after the G3 PID chain pid 965041):
+```
+nohup bash -c 'while kill -0 965041 2>/dev/null; do sleep 30; done; bash indi_flight/results/freeze9_s183/g5_modes/fly_pid_g57.sh' \
+  > indi_flight/results/freeze9_s183/g5_modes/pid_g57.nohup.log 2>&1 &
+```
+Resume: rerun `bash .../fly_pid_g57.sh` (flights with flight.ulg skipped, scoring re-runs); delete a failed run's dir first.
+`DRYRUN=1` prints the seed-1 command.
