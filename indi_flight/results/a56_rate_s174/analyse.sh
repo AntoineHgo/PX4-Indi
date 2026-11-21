@@ -3,7 +3,7 @@
 # Same computation as results/g4_jffoffb_s172/analyse.sh (G4 window, g3_checks item 2, omega/descent q std).
 cd /home/ahugo/Documents/Drotek/Codes/PX4-Indi
 O=indi_flight/results/a56_rate_s174
-for cfg in bld03 lead0 dgyro15; do
+for cfg in bld03 lead0; do
   sh indi_flight/bench/gate_g4.sh score $O/$cfg
   for r in $O/$cfg/hover_harsh_s?; do
     n=$(basename $r)
