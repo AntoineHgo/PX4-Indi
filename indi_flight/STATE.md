@@ -8,11 +8,13 @@
 - Blocker: none from the owner. Q23 closed S191 (D-OWNER-Q23): revert aa4fd2654a (G5.7 cause D-G57-FF); with
   D-AF-ALIAS (G3 7 Hz, outer a_f aliased by 88.9 Hz stage decimation) it enters FREEZE-10.
 ## Next actions (owner order; each names its gate item)
-0. FREEZE-10 re-fly RUNNING (Tasks Q10). Next session: route check RC193 first (due, deferred S193 for budget),
-   then read queue_status.tsv; a haiku agent collects scores per gate; untested in the queue: G5 host scoring
-   (pyulog), g4_score.sh rewrites + Q20 guard, abort path -> fix and resume with `queue.sh N` if failed. Then
-   verdicts G2/G4/G5 rows and G3 pre-test (02/05 decide D-OFFB-POSVEL / owner question per D-FREEZE-10).
-   Binary built 22:38 after 7fe6206fcc, no src commit since (checked).
+0. FREEZE-10 re-fly RUNNING (Tasks Q10). RC194 done (design/route_check_194.md): no probes/chases while it runs;
+   read queue_status.tsv; a haiku agent collects scores per gate; untested in the queue: g4_score.sh rewrites +
+   Q20 guard, abort path -> fix and resume with `queue.sh N` if failed (pyulog on host checked S194). Then
+   verdicts G2/G4/G5 rows and G3 pre-test: 02/05 fail -> owner question on GNSS mismatch range with S192
+   matched probe (no cause search); 03/08 (shared with PID) go in the same question with PID values.
+   Binary built 22:38 after 7fe6206fcc, no src commit since (checked). G7 harness starts after the queue ends
+   (RC194 item 6 asked parallel; not done: a docker build during gate flights risks the binary and timing).
 1. G2 PASSED at freeze-9 (S184); outer cells invalidated by FREEZE-10, re-fly in item 0.
 2. G4 PASSED at freeze-9 under Q20 (S187); invalidated by FREEZE-10, re-fly in item 0 (probe cruise_typ_s1 PASS).
 3. G5: freeze-9 (G5_SCORES.md) every flown row PASS both keys; G5.5 worst H 0.499 m (o2 s3, limit 0.5: thin, no
@@ -36,8 +38,8 @@
    params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
 Deferred to before G6: yaw fit fix (r regressor + matched grid = probe V3, K126 MAJORs, A-44).
 Rules: 1 session per inner-loop law change; parallel docker streams only for tolerance-insensitive probes, never gate
-  evidence; G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1. Next RC: S194 (due S193, deferred: budget).
-STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer, stand-alone anomaly chases,
+  evidence; G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1. Next RC: S209 (RC194 done).
+STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 margin): A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer, stand-alone anomaly chases,
   --sched-anchor and set_param fixes, EdgeState design, more PID G5.10 runs.
 ## Notes
 - Nominal plant: matched GNSS --gps-dly 110 --gnss-delay 110. G4 typical noise: --vib-acc 10 --vib-gyr 0
