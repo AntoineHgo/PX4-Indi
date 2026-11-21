@@ -874,3 +874,13 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Cost: no per-rotor beat / line width; one-line spectrum per harmonic. Overturn: a G4 metric or a G3 vibration
   failure that depends on the beat structure (then per-rotor model with measured net amplitude).
 - Effect on the freeze: simulator change, not flight firmware; the G5 re-fly has not started, so no row is re-flown.
+
+## D-NOISE-PROF (S156, 2026-11-21): G4 profile values after key2 (design/noise_profiles_key2.md)
+- Vibration line amplitude at the IMU (SIM_GZ_VIB_ACC, SIM_GZ_VIB_RPM 9540, NB 3): quiet 0.5, typical 10, harsh 27
+  m/s^2; gyro lines 0 (unsourced); noise via SIM_GZ_IMU_NSC as in noise_profiles.md (typical NSC 4.0: accel 81 %).
+- Basis: datasheets confirmed by key2; amplitudes placed against PX4 strong-vibration onset (2-3 m/s^2 p-p) and
+  ArduPilot Vibe classes (RMS 15 / 30) with A = sqrt2 x RMS. Typical and harsh are judgement values inside those
+  classes, no first-hand 5-inch measurement found.
+- Alternatives: NSC 4.5 (accel 91 %, gyro +12 %), rejected: gyro is the controller's input, keep it on target.
+- Overturn: a first-hand public 5-inch vibration measurement outside the class used, or a G4/G5 result that hinges on
+  the typical amplitude (then fly the row at quiet and harsh too and report the spread).

@@ -250,3 +250,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S155 | pre-freeze review 3/3 parity checklist | sonnet | design/prefreeze_r3_parity.md | done, 16 calls, ~52k tok, 0 SAFETY gaps |
 | S155 | G4 noise profile source note | sonnet | design/noise_profiles.md | done, 25 calls, ~55k tok, UNKEYED, A-49 found |
 | S156 | key2 vibration hook code vs D-VIB-HOOK | sonnet | design/vib_hook_key2.md | done, 11 calls, ~43k tok, ACCEPT WITH FIXES (1 MAJOR fixed) |
+| S156 | key2 noise profile sources | sonnet | design/noise_profiles_key2.md | done, 12 calls, ~37k tok, ACCEPT WITH CHANGES (quiet 0.5) |
