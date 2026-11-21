@@ -245,6 +245,16 @@ SCENARIOS["sat_sustained"] = dict(
     motor_fault=[dict(segment="sat", motors=[0, 1, 2, 3], thrust_scale=0.274),
                  dict(segment="rec", motors=[0, 1, 2, 3], thrust_scale=1.0, reset=True)])
 
+# S187 G5.10 SAT part, owner Q21 (GATES "Owner amendments S187"): thrust scale 0.30 (T/W 2.19, hover cmd ~0.46) applied during the
+# settled hover ("hov", 4 s), then at "sat" a 3 m climb (NED z -3) plus the 3 m x step; "rec" resets the scale to 1 (as sat_sustained).
+# Separate from sat_sustained, which keeps its other users (g510_check, S147 results). Event name "sat" is what g510_score_motors reads.
+SCENARIOS["sat_q21"] = dict(
+    mode="position", axis=None,
+    segments=[("settle", 3.0, 0.0), ("hov", 4.0, 0.0), ("sat", 6.0, 0.0), ("rec", 10.0, 0.0)],
+    seg_pos={"sat": [3.0, 0.0, -3.0], "rec": [3.0, 0.0, -3.0]},
+    motor_fault=[dict(segment="hov", motors=[0, 1, 2, 3], thrust_scale=0.30),
+                 dict(segment="rec", motors=[0, 1, 2, 3], thrust_scale=1.0, reset=True)])
+
 # S178 G5.10 redefined full-scale part (GATES owner amendment S175, Q9 b): stabilized, full throttle + full roll stick for 1 s
 # (raw z 1000, y 1000), then centred sticks. Fly with --stick-mode stabilized. No existing scenario can command it
 # (seg_sticks had centred / pitch-3 m/s only; stick_steps uses 0.5 of the stick).
