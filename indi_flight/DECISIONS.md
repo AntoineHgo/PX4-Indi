@@ -943,3 +943,6 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   more code); drop FF everywhere (loses the G5.5 offboard lag gain).
 - Checks: harsh hover re-fly omega_ff peak in AUTO_LAND < 3 deg/s and G4 item 2; key2 on the diff; G5.5 rows unchanged
   (offboard path untouched). Overturn: auto-mode tracking rows (G5.3/G5.4) worse than the freeze by > 10 %.
+- S172 result: committed aa4fd2654a; AUTO_LAND omega_ff 0 on 3/3 harsh (was 24-28), G4 rows PASS; G4 item 2 FAIL 1/3
+  persists (2 Hz p from before land entry), so FF was not the oscillation cause (A-56). Kept: removes a
+  vibration-coupled signal, PID parity. G5.3/G5.4 overturn check and offboard FF-on check pending (S173).

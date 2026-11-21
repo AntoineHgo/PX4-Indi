@@ -23,24 +23,18 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    G2 rate + att + outer 67/67 cells PASS + KEYED at freeze (plateau GM per Q13 A), outer model x-check done (A-50).
    S165: rate + att yaw model x-check DONE (xcheck_rate.md, 12/15 agree, A-51, verdict independent).
    267 Hz reported cells flown S165 (GATES G2 freeze status). NEXT: G4 (RC159 order G2 -> G4 -> G3). Next RC: S168.
-   S166 G4: bench/g4_metrics.py (self-test + break-check PASS, UNKEYED), pre-look results/g4_prelook_s166 (proxy R20
-   0.09 %, C20 0.0015). BLOCKER for G4 R20/R4: with SIM_GZ_ESC_FB=2 (eRPM model, what INDI flies) no true rotor speed
-   is logged. S168: hook 10c741af4b VERIFIED on a flight + KEYED + format clean (results/g4_truth_s168: inst 1 at
-   800 Hz, 1 rpm resolution, inst 0 lags 1 frame); g4_metrics.py picks inst 1 under FB=2 (b926354ef2). RC168 done.
-   S168 G4 pre-test DONE (results/g4_pretest_s168, 3 profiles fly, all values >=30x below limits, window defect of S166
-   fixed: windows from run.json events). S169: A-52 CLOSED (keys agree on raw samples); bench/gate_g4.sh (18 runs,
-   acro "not yet flown") flown -> results/g4_gate_s169; bench/g3_checks.py built (self-test + break-check, UNKEYED).
-   G4 batch scored (results/g4_gate_s169/README.md): metric rows PASS 18/18 (>= 10x); harsh items 1-3 PASS 3/3;
-   chatter clause FAIL 3/3 = 70.00 Hz line, ALSO in PID ref (results/a54_s169) -> shared path (A-54).
-   S170: A-54 cause search DONE (results/a54_s170): vibration lines fold through stock IMU/decimation/EKF2 chain, both
-   stacks, line 0.5 DShot step; no hook change; Q14 (chatter floor). key2 g3_checks DONE (g3_key2.md), A-55.
-   S171: A-55 CLOSED (D-G3-SPAN: item 2 whole flight incl. descent; key1 fixed). G4 item 2 FAIL 1/3 harsh: sustained
-   2 Hz q in AUTO_LAND descent (A-56: INDI descent rate RMS 3-6 deg/s harsh vs PID 0.3).
+   S166-S171 (JOURNAL): G4 tooling keyed (g4_metrics.py, truth hook inst 1 under FB=2, gate_g4.sh, g3_checks.py key1+2);
+   G4 batch results/g4_gate_s169: metric rows PASS 18/18 (>= 10x); chatter clause FAIL 9/9 incl. quiet (A-54, Q14);
+   item 2 whole flight (D-G3-SPAN) FAIL 1/3 harsh (A-56).
    S172: D-JFF-SOURCE committed 20b4a41b22 (keyed) but did NOT remove the AUTO_LAND omega_ff spike (results/g4_jff_s172,
-   24-28 deg/s harsh; stock auto a_ff itself swings +-2 m/s^2): D-JFF-OFFB (FF offboard only) coded, in test (S172c/d).
-   NEXT (G4): (1) close S172c/d: if omega_ff < 3 deg/s and item 2 PASS 3/3, commit fw + results, close A-56, re-fly G5
-   land/RTL rows (G5.3/G5.4) once; else re-open (A-56 at its session limit). (2) G4 verdict both ways (Q14 A/B) in the
-   G4 README. Then G3 pre-test ~20. Next RC: S173.
+   24-28 deg/s harsh; stock auto a_ff itself swings +-2 m/s^2). D-JFF-OFFB committed aa4fd2654a (keyed): omega_ff 0 in
+   land, G4 rows PASS, but item 2 FAIL 1/3 harsh persists (2 Hz p from BEFORE land entry): FF is NOT the cause (A-56).
+   NEXT S173: (0) route check RC173 FIRST (due), with A-56 at its cause-search limit: which decision to re-open
+   (candidate: outer-loop measured-acceleration noise path under harsh vibration; or harsh profile realism, D-NOISE-PROF);
+   ask owner if it points at F-/O-. (1) re-fly G5.3/G5.4 land/RTL rows once at aa4fd2654a (D-JFF-OFFB overturn check:
+   not > 10 % worse than freeze); fly one offboard trajectory to confirm FF still on in offboard (unverified: hover
+   hold gives 0). (2) MINOR key2_jffoffb: omega_ff step on offboard entry -> resetJerkHistory() on the rising edge,
+   with G5.7 offboard-entry row. (3) G4 verdict both ways (Q14 A/B). Then G3 pre-test ~20.
    G5.2 posctl z settle s1 4.15 s FAIL (EKF2 height error, Q10; PID ref PASS).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
    events and maybe_landed / EKF z injectability -> Q8 (scored at option A, not blocking).
@@ -78,8 +72,6 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S172c | D-JFF-OFFB fw diff (UNCOMMITTED in working tree): build + harsh hover x3 + omega_ff | haiku | results/g4_jffoffb_s172/ | gate_g4.sh fly results/g4_jffoffb_s172 harsh hover N |
-| S172d | key2 of the D-JFF-OFFB diff | sonnet | design/key2_jffoffb_s172.md | re-run brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
