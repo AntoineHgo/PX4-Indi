@@ -1349,4 +1349,5 @@ in scope.
   Run 17 LOC cause (log): 1.8 Hz pitch limit cycle from ~20 s, motors unsaturated, telemetry fine, touchdown inside it.
   Linear model: attitude loop PM<0 in exactly the 4 osc runs (03/07/13/17), boundary e x tau_mult >= ~5; P ~4.7 fixes up to
   e 2 x tau 3, not the down-tau x9 corner. A-58 (77.5 Hz chatter in G3 draws). Q22 written (box vs gains), blocking G3 -> WAIT_OWNER.
-  Gate progress: G3 pre-test re-scored with fixed checkers; osc failures explained (attitude-loop margin), verdict path -> Q22.
+  Keys then agree 21/21 on items 1-3 (D-G3-ZREF: truth height zeroed at rest).
+  Gate progress: G3 pre-test re-scored with fixed checkers (2 keys agree); osc failures explained (attitude-loop margin), verdict path -> Q22.
