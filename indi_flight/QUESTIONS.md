@@ -44,3 +44,20 @@ Q19 closed S183 (owner answer A with PID guard; GATES "Owner amendment S183", D-
 
 Q20, Q21, Q22 closed S187 (owner answers acted on: GATES "Owner amendments S187", DECISIONS D-OWNER-Q20-Q22; full
 text in JOURNAL.md S187).
+
+## Q23 (S189, 2026-11-21): G5.7 cause is aa4fd2654a (kept under D-JFF-KEEP at owner request). Which fix? BLOCKING for G5.7
+Context: G5.7 fails 3/3 at freeze-9 on attitude tracking lag at hold edges (tilt_err 5.8-10.7 deg, limit 5; freeze-6
+2.4-4.2; PID ref 4.50/4.54/7.50, s3 FAIL). Probes (results/freeze9_s183/g5_modes): XY gains back to freeze-6 values:
+still FAIL (probe_s189); kSetpointLeadTc 0.01: still FAIL (probe_tc_s189); aa4fd2654a reverted (rate feed-forward in
+every mode again): PASS s3 and s1, hold edges 2.5-3.8 deg (probe_ff_s189). aa4fd2654a was kept at your request
+(D-JFF-KEEP) because the auto-mode a_ff is the stock smoother state that follows the vehicle: differenced, it fed
+24-28 deg/s of rate FF during AUTO_LAND under strong vibration (results/g4_jff_s172). Without FF, INDI tracking lag at
+hold edges (~48 ms) equals PID's (~50 ms), and PID also fails s3.
+Options:
+ A. FF in every mode except AUTO_LAND (and land-like failsafes): smallest change, keeps the S172 fix where it was seen.
+    Probe first (G5.7 s3 + the S172 AUTO_LAND vibration case), then into FREEZE-10. Recommended.
+ B. Full revert of aa4fd2654a: re-ships the AUTO_LAND FF defect.
+ C. Keep aa4fd2654a: G5.7 stays NOT PASSED with this data (PID fails s3 too: your call whether G5.7 is a test defect).
+Meanwhile: the G3 fix D-AF-ALIAS (outer-loop acceleration aliasing, INDI-only 7 Hz line) is implemented and probed;
+both firmware changes would enter one FREEZE-10, then the invalidated rows are re-flown once. G5.7 work waits.
+Blocked: G5.7 only.

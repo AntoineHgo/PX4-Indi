@@ -1178,3 +1178,9 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   267 Hz (larger change, no gate gain shown); stock sensors-module 800->267 Hz fold is stock PX4 (owner note point 1).
 - Rows it invalidates once in firmware: G2 outer cells, G4, G5 outer-loop rows, G3 pre-test (re-flown after FREEZE-10).
 - Overturn: fix probe leaves the 6.84 Hz line in a_f on run 16 -> the cause is elsewhere; re-open.
+
+## D-G57-FF (S189, 2026-11-21): G5.7 cause shown on log = rate FF off outside offboard (aa4fd2654a)
+- Fact: probes on mode_switch10 (results/freeze9_s183/g5_modes/CAUSE_S189.md, probe_*_s189): XY gains at freeze-6
+  values FAIL, kSetpointLeadTc 0.01 FAIL, aa4fd2654a reverted PASS s3/s1 (hold edges 2.5-3.8 deg vs 4.3-6.05).
+- Decision: owner question Q23 (D-JFF-KEEP was an owner request). Recommended: FF in every mode except AUTO_LAND.
+- Overturn: Q23 answer.

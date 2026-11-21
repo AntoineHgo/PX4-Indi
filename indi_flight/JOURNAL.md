@@ -1481,3 +1481,8 @@ tau box (test definition).
 - S188 (cont.): PID refs flown. G5.7 PID attitude jump 4.50/4.54/7.50 deg (INDI 5.8/9.3/10.7): mostly INDI-specific.
   G3 pre-test PID key 1 fails 03/08/13 (shared); INDI-only 00/02/05/09/10/16/17. Next: one cause-search session for
   both. Gate progress: G3 and G5.7 failures classified INDI-specific vs shared (reference rule).
+- S189: one cause-search session for G3 and G5.7. G3 INDI-only 7 Hz p/q line (runs 16/10) = outer a_f aliased: 267 Hz
+  f_b sampled at the 88.9 Hz stage before its LPF, 95.73 Hz vibration -> 6.84 Hz (recompute corr 0.99998; D-AF-ALIAS);
+  LPF 5 probe passes only under the detector threshold. G5.7 hold-edge lag: XY-gain and Tc 0.01 probes FAIL,
+  aa4fd2654a revert PASS s3/s1 (D-G57-FF) -> Q23 (D-JFF-KEEP was owner request). PID key1/key2 on 03: key 1 lacks
+  the Q15 A nav-change skip. Gate progress: G3 and G5.7 failure causes shown on logs, fixes named (G3 fix next, G5.7 Q23).
