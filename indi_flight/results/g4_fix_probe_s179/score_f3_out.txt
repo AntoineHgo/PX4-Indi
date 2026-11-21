@@ -1,0 +1,35 @@
+| run | R20 % | C20 | R4 % | clip | chatter peak ratio (max) | line RMS at max ratio | line RMS max (ratio>20) | chatter | item 2 p/q/r | skipped windows | item 2 | item1 | item3 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| cruise_f3_s1 | 0.057 | 0.00161 | 0.400 | 0.0000 | 578 | 1.53e-04 | 1.12e-03 | CHATTER | -/-/- | 19/19/19 | FAIL | PASS | FAIL |
+| cruise_f3_s2 | 0.058 | 0.00164 | 0.435 | 0.0000 | 468 | 1.51e-04 | 1.07e-03 | CHATTER | -/-/- | 19/19/19 | FAIL | PASS | FAIL |
+| cruise_f3_s3 | 0.059 | 0.00162 | 0.415 | 0.0000 | 460 | 1.52e-04 | 1.02e-03 | CHATTER | -/-/- | 19/19/19 | FAIL | PASS | FAIL |
+cruise_f3_s1 key2 peak 34.5 Hz ratio 81 rms 1.07e-03 chatter ['m0', 'm1', 'm2', 'm3'] item2 pass
+cruise_f3_s2 key2 peak 33.5 Hz ratio 107 rms 1.18e-03 chatter ['m0', 'm2', 'm3'] item2 pass
+cruise_f3_s3 key2 peak 32.0 Hz ratio 69 rms 1.11e-03 chatter ['m0', 'm2', 'm3'] item2 pass
+nav_state: 9.4: 4->17, 16.2: 17->4, 31.0: 4->14, 61.6: 14->18, 72.2: 18->14
+[fixed +-2 Hz] flagged spans (t0-t1, peak Hz, max line RMS): 37.0-55.0 (88.8, 1.1e-03); 66.0-72.0 (20.3, 1.8e-03)
+[fixed +-2 Hz] flagged windows 34 of 141; max line RMS 1.82e-03 (3.6x floor); by phase (window centre): takeoff/loiter=0/58, offb-pre-traj=0/12, traj-ramp=2/6, traj-cruise=27/29, hold=0/6, land-cmd=5/30
+  flagged-window mean speed m/s range 0.0-3.7, mean |dv/dt| m/s2 range 0.20-2.50
+  all-window mean |dv/dt| inside traj-cruise: 2.19 (lemniscate: speed never constant)
+[old +-2 bins] flagged spans (t0-t1, peak Hz, max line RMS): 37.5-54.0 (88.8, 9.6e-04); 66.5-72.0 (20.1, 1.0e-03)
+[old +-2 bins] flagged windows 30 of 141; max line RMS 1.00e-03 (2.0x floor); by phase (window centre): takeoff/loiter=0/58, offb-pre-traj=0/12, traj-ramp=1/6, traj-cruise=25/29, hold=0/6, land-cmd=4/30
+sustained chatter key1 fixed/key1 old/key2: span h>1.0 noskip: 1/1/1; span h>1.0 skip3s: 1/1/1; span h>0.3 noskip: 1/1/1; span h>0.3 skip3s: 1/1/1
+
+nav_state: 8.9: 4->17, 16.6: 17->4, 30.5: 4->14, 61.1: 14->18, 72.0: 18->14
+[fixed +-2 Hz] flagged spans (t0-t1, peak Hz, max line RMS): 36.5-54.0 (88.9, 1.2e-03)
+[fixed +-2 Hz] flagged windows 28 of 142; max line RMS 1.18e-03 (2.4x floor); by phase (window centre): takeoff/loiter=0/58, offb-pre-traj=0/12, traj-ramp=3/6, traj-cruise=25/28, hold=0/6, land-cmd=0/32
+  flagged-window mean speed m/s range 1.9-3.7, mean |dv/dt| m/s2 range 1.39-2.48
+  all-window mean |dv/dt| inside traj-cruise: 2.18 (lemniscate: speed never constant)
+[old +-2 bins] flagged spans (t0-t1, peak Hz, max line RMS): 36.5-44.5 (88.8, 8.3e-04); 41.5-54.0 (89.3, 1.0e-03)
+[old +-2 bins] flagged windows 27 of 142; max line RMS 1.00e-03 (2.0x floor); by phase (window centre): takeoff/loiter=0/58, offb-pre-traj=0/12, traj-ramp=3/6, traj-cruise=24/28, hold=0/6, land-cmd=0/32
+sustained chatter key1 fixed/key1 old/key2: span h>1.0 noskip: 1/0/1; span h>1.0 skip3s: 1/0/1; span h>0.3 noskip: 1/0/1; span h>0.3 skip3s: 1/0/1
+
+nav_state: 9.1: 4->17, 16.7: 17->4, 30.6: 4->14, 61.3: 14->18, 72.3: 18->14
+[fixed +-2 Hz] flagged spans (t0-t1, peak Hz, max line RMS): 36.5-54.5 (88.5, 1.1e-03); 66.0-73.0 (20.3, 3.1e-03)
+[fixed +-2 Hz] flagged windows 36 of 143; max line RMS 3.12e-03 (6.2x floor); by phase (window centre): takeoff/loiter=0/58, offb-pre-traj=0/12, traj-ramp=3/6, traj-cruise=26/28, hold=0/6, land-cmd=7/33
+  flagged-window mean speed m/s range 0.0-3.7, mean |dv/dt| m/s2 range 0.11-2.56
+  all-window mean |dv/dt| inside traj-cruise: 2.22 (lemniscate: speed never constant)
+[old +-2 bins] flagged spans (t0-t1, peak Hz, max line RMS): 37.0-53.5 (88.8, 8.9e-04); 66.5-72.5 (20.3, 1.6e-03)
+[old +-2 bins] flagged windows 31 of 143; max line RMS 1.64e-03 (3.3x floor); by phase (window centre): takeoff/loiter=0/58, offb-pre-traj=0/12, traj-ramp=2/6, traj-cruise=24/28, hold=0/6, land-cmd=5/33
+sustained chatter key1 fixed/key1 old/key2: span h>1.0 noskip: 1/1/1; span h>1.0 skip3s: 1/1/1; span h>0.3 noskip: 1/1/1; span h>0.3 skip3s: 1/1/1
+

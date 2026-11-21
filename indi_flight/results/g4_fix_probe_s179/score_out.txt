@@ -1,0 +1,43 @@
+| run | R20 % | C20 | R4 % | clip | chatter peak ratio (max) | line RMS at max ratio | line RMS max (ratio>20) | chatter | item 2 p/q/r | skipped windows | item 2 | item1 | item3 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| cruise_f1_s1 | 0.057 | 0.00152 | 0.191 | 0.0000 | 5946 | 1.46e-03 | 1.46e-03 | CHATTER | -/-/- | 19/19/19 | FAIL | PASS | FAIL |
+| cruise_f1_s2 | 0.056 | 0.00153 | 0.186 | 0.0000 | 5281 | 1.46e-03 | 1.49e-03 | CHATTER | -/-/- | 19/19/19 | FAIL | PASS | FAIL |
+| cruise_f1_s3 | 0.057 | 0.00153 | 0.185 | 0.0000 | 6005 | 1.11e-03 | 1.46e-03 | CHATTER | -/-/- | 19/19/19 | FAIL | PASS | FAIL |
+Traceback (most recent call last):
+  File "<stdin>", line 6, in <module>
+  File "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/g3_checks_key2.py", line 121, in load_run
+    u = ULog(os.path.join(d, "flight.ulg"), message_name_filter_list=["sim_ground_truth", "actuator_motors", "vehicle_land_detected", "vehicle_status"])
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/pyulog/core.py", line 140, in __init__
+    self._load_file(log_file, message_name_filter_list, parse_header_only)
+  File "/usr/local/lib/python3.12/dist-packages/pyulog/core.py", line 859, in _load_file
+    self._file_handle = open(log_file, "rb") #pylint: disable=consider-using-with
+                        ^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'indi_flight/results/g4_fix_probe_s179/score/cruise_p1_s1/flight.ulg'
+nav_state: 8.4: 4->17, 15.0: 17->4, 29.7: 4->14, 60.6: 14->18, 71.1: 18->14
+[fixed +-2 Hz] flagged spans (t0-t1, peak Hz, max line RMS): 36.0-54.0 (33.3, 1.5e-03); 66.5-71.0 (20.0, 1.7e-03)
+[fixed +-2 Hz] flagged windows 31 of 139; max line RMS 1.67e-03 (3.3x floor); by phase (window centre): takeoff/loiter=0/56, offb-pre-traj=0/12, traj-ramp=2/6, traj-cruise=27/28, hold=0/6, land-cmd=2/31
+  flagged-window mean speed m/s range 0.0-3.8, mean |dv/dt| m/s2 range 0.18-2.61
+  all-window mean |dv/dt| inside traj-cruise: 2.24 (lemniscate: speed never constant)
+[old +-2 bins] flagged spans (t0-t1, peak Hz, max line RMS): 36.0-53.0 (33.3, 1.4e-03); 66.5-71.0 (20.0, 1.0e-03)
+[old +-2 bins] flagged windows 29 of 139; max line RMS 1.43e-03 (2.9x floor); by phase (window centre): takeoff/loiter=0/56, offb-pre-traj=0/12, traj-ramp=2/6, traj-cruise=25/28, hold=0/6, land-cmd=2/31
+sustained chatter key1 fixed/key1 old/key2: span h>1.0 noskip: 1/1/1; span h>1.0 skip3s: 1/1/1; span h>0.3 noskip: 1/1/1; span h>0.3 skip3s: 1/1/1
+
+nav_state: 7.7: 4->17, 14.9: 17->4, 29.7: 4->14, 59.9: 14->18, 70.5: 18->14
+[fixed +-2 Hz] flagged spans (t0-t1, peak Hz, max line RMS): 35.5-53.0 (33.3, 1.5e-03); 66.5-71.5 (20.3, 2.2e-03)
+[fixed +-2 Hz] flagged windows 31 of 138; max line RMS 2.21e-03 (4.4x floor); by phase (window centre): takeoff/loiter=0/56, offb-pre-traj=0/12, traj-ramp=3/6, traj-cruise=25/28, hold=0/6, land-cmd=3/30
+  flagged-window mean speed m/s range 0.0-3.8, mean |dv/dt| m/s2 range 0.08-2.65
+  all-window mean |dv/dt| inside traj-cruise: 2.22 (lemniscate: speed never constant)
+[old +-2 bins] flagged spans (t0-t1, peak Hz, max line RMS): 35.5-52.5 (33.3, 1.4e-03); 66.5-71.0 (20.3, 1.1e-03)
+[old +-2 bins] flagged windows 29 of 138; max line RMS 1.42e-03 (2.8x floor); by phase (window centre): takeoff/loiter=0/56, offb-pre-traj=0/12, traj-ramp=3/6, traj-cruise=24/28, hold=0/6, land-cmd=2/30
+sustained chatter key1 fixed/key1 old/key2: span h>1.0 noskip: 1/1/1; span h>1.0 skip3s: 1/1/1; span h>0.3 noskip: 1/1/1; span h>0.3 skip3s: 1/1/1
+
+nav_state: 8.6: 4->17, 14.8: 17->4, 29.6: 4->14, 60.8: 14->18, 71.5: 18->14
+[fixed +-2 Hz] flagged spans (t0-t1, peak Hz, max line RMS): 36.0-54.0 (33.3, 1.4e-03); 67.5-72.5 (20.3, 2.3e-03)
+[fixed +-2 Hz] flagged windows 32 of 140; max line RMS 2.29e-03 (4.6x floor); by phase (window centre): takeoff/loiter=0/56, offb-pre-traj=0/12, traj-ramp=2/6, traj-cruise=27/28, hold=0/6, land-cmd=3/32
+  flagged-window mean speed m/s range 0.0-3.8, mean |dv/dt| m/s2 range 0.10-2.64
+  all-window mean |dv/dt| inside traj-cruise: 2.21 (lemniscate: speed never constant)
+[old +-2 bins] flagged spans (t0-t1, peak Hz, max line RMS): 36.5-53.5 (33.3, 1.4e-03); 67.5-72.0 (22.1, 1.2e-03)
+[old +-2 bins] flagged windows 29 of 140; max line RMS 1.39e-03 (2.8x floor); by phase (window centre): takeoff/loiter=0/56, offb-pre-traj=0/12, traj-ramp=1/6, traj-cruise=26/28, hold=0/6, land-cmd=2/32
+sustained chatter key1 fixed/key1 old/key2: span h>1.0 noskip: 1/1/1; span h>1.0 skip3s: 1/1/1; span h>0.3 noskip: 1/1/1; span h>0.3 skip3s: 1/1/1
+
