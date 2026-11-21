@@ -70,3 +70,17 @@ Commands (queue-produced, read not re-run; same as freeze-8): rate `m3a_margins_
 | ax2_r400_s1 (pitch att) | 13.2 (13.6) | 47.4 (42.2) | 91.5 (82.1) | GM>=6, PM>=45, DM>=2 periods | PASS (PM +5.2 deg vs freeze-8) | OVERALL PASS |
 
 **Total: 2/2 meet the margin limits (freeze-8 0/2). Rate cell has a hole-check OVERALL FAIL, so it is "PASS on margins only (not clean)"; att cell is clean.** Second key not run (primary only, as freeze-8). Rate PM 47.1 is only 2.1 deg above the limit; att 47.4 is 2.4 deg above.
+
+# Re-score S184 (current g2o after hole re-flies)
+
+Commands (repo root, host python3, no containers): `sed 's#g2_outer_freeze_s163#freeze9_s183/g2o#' indi_flight/bench/g2_freeze_table_s163.py > $S/tab9.py; python3 $S/tab9.py` (rc 0); `sed -e 's#g2_outer_freeze_s163#freeze9_s183/g2o#' -e "s#^HERE = .*#HERE = '$PWD/indi_flight/bench'#" indi_flight/bench/g2_key2_outer_s164.py > $S/key2_9.py; python3 $S/key2_9.py` (rc 0, self-test PASS, wrote g2o/key2.md). Spot rate: `m3a_margins_pretest.py g2s/roll800_fwdef_s2/s1.csv 1 60 10 800` re-run to $S/rate_margins_rerun.txt, identical to margins.txt; gate.md is 1 s older than s1.csv, so `pretest_gate.py g2s/roll800_fwdef_s2/s1/flight.ulg $S/gate_rerun.md --delay 4 --length 15` re-run to scratch, identical (PASS). Holes: `grep OVERALL g2o/*_holes.txt` and g2s/roll800_fwdef_s2/holes.txt. Key2 for the spot cell not run (none in the spot section). Values: S184 (S183 first attempt, where listed).
+
+| cell | GM dB | PM deg | DM s | key2 PM / dPM deg | hole OVERALL | sim missing % | controller missing % |
+|---|---|---|---|---|---|---|---|
+| g2o pt0_ax1_r400_s2 | 13.43 (13.43 first) | 51.58 (51.57) | 0.395 (0.384) | 53.43 / +1.85 | PASS (first re-fly; first attempt FAIL) | 0.0063 | 0.0000 |
+| g2o pt1_ax1_r400_s2 | 14.14 (13.88) | 58.28 (57.61) | 0.508 (0.513) | 59.06 / +0.78 | PASS (third attempt) | 0.0139 | 0.0000 |
+| g2o pt0_ax3_r800_s2 | n/a (n/a) | 65.68 (65.47) | 0.260 (0.246) | 65.44 / -0.24 | PASS (third attempt) | 0.0104 | 0.0278 |
+| g2o pt1_ax3_r800_s1 | n/a (n/a); key2 GM 20.85, BLOCKED | 59.90 (63.13) | 0.231 (0.256) | 59.56 / -0.35 | FAIL (third attempt; sim max gap 13.75 ms, ctrl 15.00 ms) | 0.0161 | 0.0172 |
+| g2s roll800_fwdef_s2 | 16.09 (15.93) | 47.31 (47.08) | 0.076 (0.076) | n/a | PASS | 0.0128 | 0.0151 |
+
+Totals (24 outer cells): margins PASS 24/24 with GM n/a (ax3) counted as no limit, as freeze-8 (raw table column: 16/24, the 8 ax3 cells show GM nan); holes PASS 23/24 (FAIL: pt1_ax3_r800_s1); key2 21 agree / 3 BLOCKED (pt1_ax3_r400_s1, pt1_ax3_r400_s2, pt1_ax3_r800_s1); min xy PM 48.5 deg (pt0_ax1_r800_s2); min ax3 PM 59.9 deg (pt1_ax3_r800_s1); min DM 0.231 s (pt1_ax3_r800_s1).
