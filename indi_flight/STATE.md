@@ -21,7 +21,9 @@
 4. G3 set-up (owner step 4; active now, G4/G5 wait Q20/Q21): (a) tel_frozen hook DONE S185 (SIM_GZ_ERPM_FRZ,
    erpm_frozen, key2 no blocking; detector needs command variation >0.02/0.5 s, so frozen windows must sit in
    manoeuvring segments: check g3_run MAIN_SEGMENT per scenario after T185c); (b) excursion vs setpoint in g3_checks (key2 before gate use); run 17 LOC (tilt
-   129 deg): PID reference only, one session max; osc runs 03/07/08/13 are re-flown after the set-up fix, not chased.
+   129 deg, in landing ~8.5 s after LAND, eRPM drop 19.9 % + vib): PID ref flown S185 (run_017_pid_s185: no LOC, tilt
+   38.6, but osc flag p/q too) -> INDI-specific LOC: one session of cause search (sonnet, log analysis, no firmware
+   edit); harness fix: run_validity rejects "pid_default" (marks PID runs void); osc runs 03/07/08/13 are re-flown after the set-up fix, not chased.
    Then re-fly the 20-run pre-test; when clean, write "G3 set-up fixed, ready for flight chain" here + WAIT_OWNER.
 5. G7 (stage 7, not before G2/G4/G5 verdicts): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site
    (K128 MAJOR), D-JFF-SOURCE case, D-OFFB-POSVEL wiring test, omega_ff step on offboard entry (key2_jffoffb MINOR),
@@ -52,7 +54,6 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T185d | G3 run 17 PID reference (same seed/plant) | haiku | results/g3_pretest_s173/run_017_pid_s185/README.md | if missing: re-brief (fly.sh + g3_run PID stack, score.sh) |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
