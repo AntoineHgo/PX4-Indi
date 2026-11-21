@@ -81,3 +81,18 @@ def test_ca_r_w_max_alias_translated():  # K122 #1
     assert run(u, dict(REQ, CA_R_W_MAX=1000.0), "indi")["valid"]
     r = run(ulog(dict(LOG, MC_INDI_W_MAX=900.0), [topic("indi_rate_status", 800)]), dict(REQ, CA_R_W_MAX=1000.0), "indi")
     assert not r["valid"] and any("MC_INDI_W_MAX" in p for p in r["problems"])
+
+
+def test_pid_default_alias_valid():
+    # S186: g3 pre-test launched PID runs as "pid_default"; they were voided as unknown controller
+    r = run(ulog({"MC_INDI_EN": 0}), {}, "pid_default")
+    assert r["valid"], r["problems"]
+
+
+def test_pid_alias_still_checks_pid():
+    r = run(ulog({"MC_INDI_EN": 0}, [topic("indi_rate_status", 800)]), {}, "pid_default")
+    assert not r["valid"] and any("pid run" in p for p in r["problems"])
+
+
+def test_unknown_controller_void():
+    assert not run(ulog({"MC_INDI_EN": 0}), {}, "foo")["valid"]

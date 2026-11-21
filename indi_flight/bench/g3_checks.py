@@ -9,7 +9,11 @@ command chatter line (GATES.md G4 "Additional": actuator_motors, band 20-100 Hz,
 
 Item 1 LOC (airborne, truth): tilt > 60 deg for > 0.2 s; height below the height at T0 by > 2.0 m (t >= T0);
   ground contact while airborne (height < 0.1 m between take-off and last time above 1 m); NaN in truth or in the four
-  motor commands while airborne; horizontal excursion > 5 m from the reference (position mode only).
+  motor commands while airborne; horizontal excursion > 5 m (position mode only). Horizontal excursion = max over the item-1
+  span [airborne start, min(airborne end, land/RTL start)] of the horizontal distance between the truth position and the
+  horizontal position setpoint (trajectory_setpoint x, y) at the same time (setpoint linearly interpolated onto the truth
+  timestamps; no zero-order hold; truth samples outside the setpoint's first/last sample excluded; setpoint samples with NaN
+  x or y excluded, excluded fraction of the span reported as excursion_sp_nan_frac; no usable sample -> excursion None, skipped).
 Item 2 sustained oscillation: truth p,q,r on the uniform grid (g4_metrics.uniform, starts on the first raw sample), Hann PSD,
   4 s windows, 1 s step, band 2-40 Hz; window flagged when the PSD peak > 20 x band median and the rate RMS at the peak
   > 5 deg/s; sustained = flagged in >= 3 consecutive windows with peak frequency within +-10 %. Position limit cycle:
@@ -29,7 +33,8 @@ PROPOSED readings (undefined in the spec, minimal choice):
   - reference = median of trajectory_setpoint position over [T0,T1] (hold point commanded; stamps timestamp); if the log has no
     trajectory_setpoint it falls back to the truth window mean (reported as ref_source) -- then horizontal RMS is a spread only.
   - mode position gates horizontal RMS and altitude mean (roll/pitch reported); mode attitude gates roll/pitch only (no
-    position reference exists; horizontal excursion LOC skipped).
+    position reference exists; horizontal excursion LOC skipped). Horizontal excursion is measured against the time-matched
+    position setpoint (see Item 1), not against the fixed hold reference.
   - "within +-10 %": each flagged window within 10 % of the first window of the run.
   - position limit-cycle windows: consecutive non-overlapping 10 s windows from T0 to the end of the airborne span.
   - controller fault flag: NOT implemented (no flag defined in the spec); NaN check only.
@@ -149,9 +154,35 @@ def position_limit_cycle(t, pos, ta, te):
     return {"sustained": best >= MIN_WINDOWS, "max_consecutive_windows": best, "windows": len(flags)}
 
 
-def evaluate(tt, pos, q, w, tm, cmd, ref, t0, t1, wind=False, sag=False, mode="position", ref_source="given", t_land=None, nav_changes=None):
+def horizontal_excursion(t, pos, tsp, xysp):
+    """Max |truth xy - setpoint xy| over the span samples t (n,), pos (n,3). Frame: no alignment is applied, truth
+    (sim_ground_truth x,y NED) and trajectory_setpoint x,y are compared as logged -- the same direct comparison the
+    existing check makes between truth and the setpoint-derived hold reference (item 3, ref from trajectory_setpoint).
+    Returns (excursion or None, excluded fraction of the span). Span samples bracketed by a setpoint sample with NaN x or y, outside the first/last setpoint sample, or with
+    non-finite truth are excluded."""
+    n = len(t)
+    if n == 0:
+        return None, None
+    tsp, xysp = np.asarray(tsp, float), np.asarray(xysp, float)
+    o = np.argsort(tsp, kind="stable")
+    ts, xs, ys = tsp[o], xysp[o, 0], xysp[o, 1]
+    if len(ts) == 0 or not (np.isfinite(xs) & np.isfinite(ys)).any():
+        return None, 1.0
+    # np.interp over ALL raw samples: a truth sample bracketed by a NaN setpoint sample gets NaN and is excluded
+    # (no interpolation across NaN gaps).
+    sx, sy = np.interp(t, ts, xs), np.interp(t, ts, ys)
+    inside = (t >= ts[0]) & (t <= ts[-1]) & np.isfinite(sx) & np.isfinite(sy) & np.isfinite(pos[:, :2]).all(axis=1)
+    frac = float(1.0 - inside.sum() / n)
+    if not inside.any():
+        return None, frac
+    d = np.hypot(pos[inside, 0] - sx[inside], pos[inside, 1] - sy[inside])
+    return float(np.max(d)), frac
+
+
+def evaluate(tt, pos, q, w, tm, cmd, ref, t0, t1, wind=False, sag=False, mode="position", ref_source="given", t_land=None, nav_changes=None, sp=None):
     """nav_changes: times [s] of vehicle_status.nav_state changes; if given (G4, Q15) the rate detector skips windows
-    overlapping [t, t + NAV_SKIP_S]. tt (n,), pos (n,3) NED, q (n,4), w (n,3) rad/s truth; tm (m,), cmd (m,4); ref (3,) NED hold point or None."""
+    overlapping [t, t + NAV_SKIP_S]. tt (n,), pos (n,3) NED, q (n,4), w (n,3) rad/s truth; tm (m,), cmd (m,4); ref (3,) NED hold point or None.
+    sp: (t_sp (k,), xy_sp (k,2)) trajectory_setpoint x,y on the same time base and frame as tt/pos, or None."""
     h = -pos[:, 2]
     h = h - h[0] if np.isfinite(h[0]) else h
     up = np.flatnonzero(np.isfinite(h) & (h > AIRBORNE_M))
@@ -176,11 +207,12 @@ def evaluate(tt, pos, q, w, tm, cmd, ref, t0, t1, wind=False, sag=False, mode="p
         am = (tm >= ta) & (tm <= te)
         nan = bool(not np.isfinite(pos[a]).all() or not np.isfinite(q[a]).all() or not np.isfinite(w[a]).all()
                    or not np.isfinite(cmd[am][:, :4]).all())
-        exc = None
-        if mode == "position" and ref is not None:
-            exc = float(np.nanmax(np.hypot(pos[al, 0] - ref[0], pos[al, 1] - ref[1])))
+        exc, nan_frac = None, None
+        if mode == "position" and sp is not None:
+            exc, nan_frac = horizontal_excursion(tt[al], pos[al], sp[0], sp[1])
         loc = {"tilt_over_60deg_longest_s": tilt_s, "tilt_max_deg": float(np.max(tilt)), "height_drop_m": drop,
-               "ground_contact": contact, "nan": nan, "horizontal_excursion_m": exc}
+               "ground_contact": contact, "nan": nan, "horizontal_excursion_m": exc,
+               "excursion_sp_nan_frac": nan_frac}
         loc["pass"] = bool(tilt_s <= TILT_S and drop <= DROP_M and not contact and not nan and (exc is None or exc <= EXCURSION_M))
         res["item1_loc"] = loc
         # item 2
@@ -259,6 +291,18 @@ def load(log, t0, t1):
     return tt, pos, q, w, tm, cmd, ref, src, t_land, nav_changes
 
 
+def load_setpoint_xy(log):
+    """(t_sp, xy_sp) trajectory_setpoint position x,y on the ulog time base (stamps timestamp), or None."""
+    from pyulog import ULog
+    u = ULog(log, ["trajectory_setpoint"])
+    try:
+        sp = u.get_dataset("trajectory_setpoint").data
+    except (KeyError, IndexError, ValueError):
+        return None
+    t = (sp["timestamp"].astype(np.int64) - u.start_timestamp) * 1e-6
+    return t, np.stack([sp["position[0]"], sp["position[1]"]], axis=1).astype(float)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("log")
@@ -272,7 +316,7 @@ def main():
     a = ap.parse_args()
     tt, pos, q, w, tm, cmd, ref, src, t_land, navc = load(a.log, a.t0, a.t1)
     r = evaluate(tt, pos, q, w, tm, cmd, ref, a.t0, a.t1, a.wind, a.sag, a.mode, src or "none", t_land,
-                 navc if a.skip_nav_change else None)
+                 navc if a.skip_nav_change else None, sp=load_setpoint_xy(a.log))
     r["log"] = a.log
     s = json.dumps(r, indent=1)
     if a.json:

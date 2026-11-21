@@ -15,6 +15,17 @@ ALIASED = ("MC_RATE_CTL_TYPE",)
 PARAM_ALIAS = {"CA_R_W_MAX": "MC_INDI_W_MAX"}  # run_scenario.py:826 renames it for indi runs
 
 
+def controller_kind(name):
+    """Map a run_scenario controller name to "indi" / "pid" (alias by prefix: pid_default, pid_*; indi, indi_*), else None."""
+    if name in ("indi", "pid"):
+        return name
+    if isinstance(name, str) and name.startswith("pid_"):
+        return "pid"
+    if isinstance(name, str) and name.startswith("indi_"):
+        return "indi"
+    return None
+
+
 def _close(a, b):
     return abs(a - b) <= REL_TOL * max(abs(a), abs(b), 1e-12)
 
@@ -46,8 +57,10 @@ def check_run(ulog_path, requested_params, controller, expected_rate_hz=800.0, _
     except Exception as e:  # noqa: BLE001 - unreadable log is itself an invalid run
         return {"valid": False, "problems": [f"cannot read ulog: {e}"], "checked": checked}
     init = ulog.initial_parameters
-    if controller not in ("indi", "pid"):
+    kind = controller_kind(controller)
+    if kind is None:
         problems.append(f"unknown controller {controller!r}")
+    controller = kind
 
     cmp = {}
     for name, want in requested_params.items():

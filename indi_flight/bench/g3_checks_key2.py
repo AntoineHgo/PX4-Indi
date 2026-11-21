@@ -4,6 +4,7 @@ import sys, json, os, glob
 import numpy as np
 FS = 800.0
 DSHOT_STEP = 5e-4  # Q14 A: line RMS floor = one DShot step (full scale 1)
+LAND_NAV = (5, 18, 20)   # vehicle_status nav_state: AUTO_RTL, AUTO_LAND, AUTO_PRECLAND
 NAV_SKIP_S = 3.0   # Q15 A: skip detector windows overlapping this long after a nav_state change
 RATIO = 20.0   # peak / band-median threshold (spec); --break raises it to prove the self-test bites
 
@@ -81,22 +82,64 @@ def roll_pitch(q):
     return (np.degrees(np.arctan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y))),
             np.degrees(np.arcsin(np.clip(2 * (w * y - z * x), -1, 1))))
 
-def loc(t, q, pos, h, hold0, hold1, ground_contact_t):
-    """Truth LOC rules over the airborne span; segment = the hold, reference = position at hold start."""
+EXC_LIMIT = 5.0  # item-1 horizontal excursion threshold, m (unchanged)
+
+def excursion(t, pos, s0, s1, sp_t, sp_xy):
+    """S186 item-1 horizontal excursion: max over truth samples in [s0, s1] of the horizontal distance between truth
+    (x, y) and the trajectory_setpoint (x, y) linearly interpolated onto the truth timestamps (no zero-order hold).
+    A truth sample is usable only if the setpoint samples bracketing it in time both exist and have finite x and y
+    (so NaN velocity/acceleration-only setpoints are excluded, and an interpolation never bridges a NaN sample or runs
+    beyond the first/last setpoint sample).
+    FRAME: trajectory_setpoint x,y is in the estimator local frame (NED, origin at the arming position). Truth
+    (sim_ground_truth x,y) is used raw, exactly as the existing key-2 check uses truth against the estimator frame
+    (no offset or rotation is applied anywhere in this file; both are NED, origins differ by the ~cm start estimate).
+    Returns excursion_m (None = skipped), excursion_sp_nan_frac (fraction of span samples excluded for any reason,
+    NaN-bracketed or outside the setpoint time range) and the split of that fraction."""
+    skip = {"excursion_m": None, "excursion_sp_nan_frac": None, "excursion_sp_nan_only_frac": None,
+            "excursion_sp_outside_frac": None, "span_s": [float(s0), float(s1)], "n_span": 0, "n_used": 0}
+    if sp_t is None or len(sp_t) < 2 or s1 <= s0:
+        return skip
+    o = np.argsort(sp_t); sp_t = np.asarray(sp_t, float)[o]; sp_xy = np.asarray(sp_xy, float)[o]
+    m = np.where((t >= s0) & (t <= s1))[0]; tm = t[m]; n = len(m)
+    if n == 0:
+        return skip
+    fin = np.isfinite(sp_xy).all(1)
+    inside = (tm >= sp_t[0]) & (tm <= sp_t[-1])
+    hi = np.clip(np.searchsorted(sp_t, tm, side="right"), 1, len(sp_t) - 1); lo = hi - 1
+    brk = fin[lo] & fin[hi]; good = inside & brk
+    d = None
+    if good.any():
+        ta, tb = sp_t[lo[good]], sp_t[hi[good]]
+        w = (tm[good] - ta) / np.where(tb > ta, tb - ta, 1.0)
+        spx = sp_xy[lo[good], 0] * (1 - w) + sp_xy[hi[good], 0] * w
+        spy = sp_xy[lo[good], 1] * (1 - w) + sp_xy[hi[good], 1] * w
+        d = float(np.max(np.hypot(pos[m[good], 0] - spx, pos[m[good], 1] - spy)))
+    nu = int(good.sum())
+    return {"excursion_m": d, "excursion_sp_nan_frac": 1 - nu / n,
+            "excursion_sp_nan_only_frac": float((inside & ~brk).sum() / n),
+            "excursion_sp_outside_frac": float((~inside).sum() / n),
+            "span_s": [float(s0), float(s1)], "n_span": int(n), "n_used": nu}
+
+def loc(t, q, pos, h, hold0, hold1, ground_contact_t, exc=None):
+    """Truth LOC rules over the airborne span; segment = the hold. Horizontal excursion: see excursion() (exc)."""
     tl = tilt_deg(q); dt = np.median(np.diff(t)); bad = tl > 60; longest = run = 0
     for b in bad: run = run + 1 if b else 0; longest = max(longest, run)
     m0 = np.argmin(abs(t - hold0)); seg = (t >= hold0) & (t <= hold1)
-    hz = float(np.max(np.hypot(pos[seg, 0] - pos[m0, 0], pos[seg, 1] - pos[m0, 1])))
     drop = float(h[m0] - h[seg].min()); nan = bool(np.isnan(pos).any() or np.isnan(q).any())
     gc = [x for x in ground_contact_t if hold0 <= x <= hold1]
-    r = {"tilt_max_deg": float(tl.max()), "tilt_gt60_s": longest * dt, "drop_m": drop, "max_horiz_m": hz,
-         "nan": nan, "ground_contact_in_hold": len(gc), "controller_fault": "UNVERIFIED (no flag defined in spec)"}
-    r["pass"] = not (longest * dt > 0.2 or drop > 2.0 or hz > 5.0 or nan or gc)
+    r = {"tilt_max_deg": float(tl.max()), "tilt_gt60_s": longest * dt, "drop_m": drop, "nan": nan, "ground_contact_in_hold": len(gc), "controller_fault": "UNVERIFIED (no flag defined in spec)"}
+    exc = exc or {"excursion_m": None}; r.update(exc)   # excursion None = skipped (non-position mode / no setpoint)
+    ex = exc["excursion_m"]
+    r["pass"] = not (longest * dt > 0.2 or drop > 2.0 or (ex is not None and ex > EXC_LIMIT) or nan or gc)
     return r
 
-def analyse(t, q, w, pos, h, motors_t, motors, hold0, hold1, gc_t, wind=False, mode="position", nav_t=()):
-    r1 = loc(t, q, pos, h, hold0, hold1, gc_t)
+def analyse(t, q, w, pos, h, motors_t, motors, hold0, hold1, gc_t, wind=False, mode="position", nav_t=(),
+            sp_t=None, sp_xy=None, land_t=None, position_mode=False):
     air = h > h[:800].mean() + 0.3; ia = np.where(air)[0]; a0, a1 = t[ia[0]], t[ia[-1]]  # airborne span
+    exc = None
+    if position_mode:   # item-1 span: [airborne start, min(airborne end, land/RTL start)]
+        exc = excursion(t, pos, a0, a1 if land_t is None else min(a1, land_t), sp_t, sp_xy)
+    r1 = loc(t, q, pos, h, hold0, hold1, gc_t, exc)
     m = (t >= a0) & (t <= a1)
     osc = osc_rates(t[m], w[m], nav_t); plc = pos_limit_cycle(t, pos, hold0, hold1)
     r2 = {"rates": osc, "position_limit_cycle": plc, "airborne_span_s": [float(a0), float(a1)],
@@ -118,7 +161,7 @@ def analyse(t, q, w, pos, h, motors_t, motors, hold0, hold1, gc_t, wind=False, m
 
 def load_run(d):
     from pyulog import ULog
-    u = ULog(os.path.join(d, "flight.ulg"), message_name_filter_list=["sim_ground_truth", "actuator_motors", "vehicle_land_detected", "vehicle_status"])
+    u = ULog(os.path.join(d, "flight.ulg"), message_name_filter_list=["sim_ground_truth", "actuator_motors", "vehicle_land_detected", "vehicle_status", "trajectory_setpoint"])
     D = {x.name: x.data for x in u.data_list}; g = D["sim_ground_truth"]; t = g["timestamp"] * 1e-6
     q = np.stack([g[f"q[{i}]"] for i in range(4)], 1); w = np.stack([g[f"angular_velocity[{i}]"] for i in range(3)], 1)
     pos = np.stack([g["x"], g["y"], g["z"]], 1)
@@ -129,7 +172,16 @@ def load_run(d):
     ld = D["vehicle_land_detected"]; gc = list(ld["timestamp"][ld["ground_contact"] > 0] * 1e-6)
     vs = D["vehicle_status"]; ns = vs["nav_state"]; vt = vs["timestamp"] * 1e-6
     nav_t = list(vt[1:][np.diff(ns) != 0])
-    return dict(t=t, q=q, w=w, pos=pos, h=h, nav_t=nav_t, motors_t=mo["timestamp"] * 1e-6,
+    rj = json.load(open(os.path.join(d, "run.json")))
+    sp = D.get("trajectory_setpoint"); sp_t = sp_xy = None
+    if sp is not None:   # logged ~50 Hz (truth 800 Hz); NaN x/y rows kept here, excluded in excursion()
+        sp_t = sp["timestamp"] * 1e-6; sp_xy = np.stack([sp["position[0]"], sp["position[1]"]], 1)
+    # land/RTL start: first nav_state in LAND_NAV, or the logged land command if earlier
+    lt = [vt[i] for i in range(len(ns)) if ns[i] in LAND_NAV]
+    land_t = min(lt) if lt else None
+    if rj.get("t_land_cmd_us"): land_t = rj["t_land_cmd_us"] * 1e-6 if land_t is None else min(land_t, rj["t_land_cmd_us"] * 1e-6)
+    return dict(t=t, q=q, w=w, pos=pos, h=h, nav_t=nav_t, sp_t=sp_t, sp_xy=sp_xy, land_t=land_t,
+                position_mode=rj.get("scenario") == "o1_lemniscate", motors_t=mo["timestamp"] * 1e-6,
                 motors=np.stack([mo[f"control[{i}]"] for i in range(4)], 1), hold0=h0, hold1=h1, gc_t=gc,
                 wind=False, mode=ev.get("mode", "position")), float(np.max(np.diff(t)))
 
@@ -163,7 +215,13 @@ if __name__ == "__main__":
     a = sys.argv[1:]
     if "--break" in a: RATIO = 1e9
     if "--self-test" in a: sys.exit(0 if self_test() else 1)
+    out = None
+    if "--out" in a: i = a.index("--out"); out = a[i + 1]; a = a[:i] + a[i + 2:]   # --out DIR: DIR/<run>.json, no overwrite
     for d in (x for pat in a for x in sorted(glob.glob(pat)) if os.path.isdir(x)):
         kw, maxdt = load_run(d); r = analyse(**kw); r["max_dt_s"] = maxdt
-        json.dump(r, open(os.path.join(d, "g3_checks_key2.json"), "w"), indent=1, default=float)
+        if out:
+            os.makedirs(out, exist_ok=True); fn = os.path.join(out, os.path.basename(d.rstrip("/")) + ".json")
+            if os.path.exists(fn): sys.exit("exists, not overwriting: " + fn)
+        else: fn = os.path.join(d, "g3_checks_key2.json")
+        json.dump(r, open(fn, "w"), indent=1, default=float)
         print(os.path.basename(d.rstrip("/")), r["pass"], r["item1_loc"]["pass"], r["item2_oscillation"]["pass"], r["item3_steady_state"]["pass"], r["chatter"]["pass"])
