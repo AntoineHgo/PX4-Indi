@@ -166,7 +166,7 @@ gate is decided on the frozen final pair in stage 6 with the same tests.
     19.3/15.4/11.5 dB at 800/400/267 Hz (A-51 trend). Rate x-check S165: xcheck_rate.md, 12/15 agree (A-51).
   - Phase-plateau GM (S164, results/g2_plateau_s164.md, `python3 indi_flight/bench/g2_plateau_gm_s164.py`): 67 cells;
     literal rule 66/67, att ax2_r800_s2 hit by a 0.2 Hz bin with |L| > 1 (gain-reduction margin 18.5 dB). Defect fix
-    proposed in Q13 (plateau over |L| < 1, reduction margin >= 6 dB reported); under it 67/67 PASS. Pending owner.
+    proposed in Q13 (plateau over |L| < 1, reduction margin >= 6 dB reported); under it 67/67 PASS. Owner Q13 A (S175); rate/att plateau key2 S175.
 
 ## G2-STEP Inner-loop attitude step criterion (written S61 2026-11-17, owner note N1 B.2, before its first test)
 - Test: step_roll, step_pitch (15 deg), step_yaw (45 deg) on quad5in, sim v2 (eRPM), 800 Hz (400 Hz reported), speed 4,
@@ -525,3 +525,32 @@ from `main` contains no `indi_flight/` path (`git diff --stat main -- indi_fligh
 Checks: every gate section has an evidence path that exists; G1 evidence limits and G3 excluded corners (beyond-range list) listed;
 hardware bring-up checklist present; errata and history appendix present; `git diff main -- docs/ko docs/zh docs/uk` empty;
 page lives in `docs/en` only; markdown lint passes if `make` docs target exists (unverified). Command: `bench/gate_g8.sh`.
+
+## Owner amendments S175 (2026-11-21): test-defect fixes after first test (owner answers Q8-Q15)
+Each fixes a defect of a test; no threshold is lowered. Decision record D-OWNER-Q8-Q15; question text in JOURNAL.md.
+- G1.5 / G5 events (Q8 a A): discrete MAVLink events (stream stop, kill, EKF reset command) are referenced to the
+  firmware's own applied flag or counter; every G5 transient metric starts there; commanded-applied spread reported.
+  The 1-physics-step rule stays for physics injectors (torque, wind, motor, eRPM).
+- G5.6 false maybe_landed and G5.11 z reset (Q8 b B): not tested, owner decision Q8(b) (land detector needs ground
+  contact; ekf2 external-position reset is horizontal only; no SITL test parameter).
+- G5.9a (Q8 add.2 A): "motors 0 within one command period" referenced to the actuator_armed.kill rise; stock
+  commander latency switch -> kill reported.
+- G5.8 (Q8 add.3): (i) A at 3 m/s, excursion = max horizontal deviation of ground truth from the setpoint/trajectory
+  the failsafe action commands, <= 1 m; hover definition unchanged. (ii) A link-loss timeout referenced to the
+  firmware's own flag; the ~2.25 s receiver window is reported.
+- G5.10 (Q9): (a) tilt limit = MPC_TILTMAX_AIR + 5 deg; alt loss 2.0 m and recovery 5 s unchanged. (b) full-scale part
+  flown in stabilized: full throttle + full roll stick for 1 s, same limits. (c) SAT part at a thrust scale where hover
+  needs >= 1.0 command for 5 s, after a one-flight check that the motors sit at >= 0.99; the 73 % drop is a G3-type
+  side probe, not a G5.10 pass condition.
+- G5.2 (Q10 B): z settle band = max(2 % of d, 0.10 m), from the EKF2 height accuracy under the typical profile
+  (results/g5_freeze_s157: est - truth -0.078 m at release, decaying over ~5 s).
+- G5.5 (Q11 B): limit 0.5 m unchanged; offboard trajectories are flown with the INDI module's own pos/vel feedback
+  and flatness feed-forward (design change, not a test change).
+- G5.11 (Q12 B + D): xy judged on truth excursion <= 0.5 m and no oscillation; the 1 deg tilt limit kept for yaw,
+  with tilt jump = event value minus the 95th percentile of the same metric at no-event instants of the same flight.
+- G2 (Q13 A): phase-plateau GM over bins with |L| < 1; bins with |L| > 1 within 10 deg of -180 deg are reported as
+  gain-reduction margin 20log10|L| and must also be >= 6 dB.
+- G4 Additional (Q14 A): a 20-100 Hz command line is chatter when peak > 20 x median AND its RMS (+-2 Hz) >= one
+  DShot step (5e-4 of full scale); ratio reported.
+- G4 item 2 (Q15 A): the sustained-oscillation detector skips windows that overlap the 3 s after a nav_state change;
+  mode transitions are judged by the G5 transient limits; the land-entry transient is reported for both stacks.

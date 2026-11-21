@@ -73,6 +73,9 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S175-a | G2 plateau GM key2 (rate+att, Q13 A) | sonnet | results/g2_plateau_s164_key2.md | re-brief from file |
+| S175-b | G4 key1 amend (Q14 A, Q15 A) + re-score | sonnet | results/g4_gate_s169/rescore_s175.md | re-brief from file |
+| S175-c | G4 key2 amend, blind + re-score | sonnet | results/g4_gate_s169/rescore_key2_s175.md | re-brief from file |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),

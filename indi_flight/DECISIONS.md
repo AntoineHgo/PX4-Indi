@@ -946,3 +946,29 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - S172 result: committed aa4fd2654a; AUTO_LAND omega_ff 0 on 3/3 harsh (was 24-28), G4 rows PASS; G4 item 2 FAIL 1/3
   persists (2 Hz p from before land entry), so FF was not the oscillation cause (A-56). Kept: removes a
   vibration-coupled signal, PID parity. G5.3/G5.4 overturn check and offboard FF-on check pending (S173).
+
+## D-OWNER-Q8-Q15 (S175, 2026-11-21): owner-approved test-defect fixes after first test
+- Owner answers in JOURNAL.md (S175 entry). Each is a defect fix of a test, not a lowered threshold; logged in GATES.md
+  "Owner amendments S175". Q8: (a) A discrete events referenced to the firmware's applied flag/counter, 1-step rule
+  kept for physics injectors; (b) B G5.6 false maybe_landed and G5.11 z "not tested, owner decision Q8(b)"; add.2 A
+  G5.9a reference = actuator_armed.kill rise, commander latency reported; add.3 (i) A 3 m/s excursion from the
+  failsafe-commanded setpoint, (ii) A firmware link-loss flag, receiver window reported. Q9: (a) tilt <= MPC_TILTMAX_AIR
+  + 5 deg; (b) full-scale part in stabilized (full throttle + full roll 1 s); (c) SAT part at a scale where hover needs
+  >= 1.0 command for 5 s, one-flight check first; 73 % drop = G3-type side probe. Q10 B: z settle band = max(2 % d,
+  0.10 m). Q11 B: offboard trajectories get the INDI module's own pos/vel feedback with flatness FF (design first).
+  Q12 B+D: xy on truth excursion <= 0.5 m + no oscillation; yaw tilt jump = event - p95 of no-event instants. Q13 A:
+  plateau GM over |L| < 1, reduction margin >= 6 dB. Q14 A: chatter needs line RMS >= 5e-4. Q15 A: item 2 skips
+  windows overlapping 3 s after a nav_state change.
+- Overturn: none by me (owner decisions on the tests).
+
+## D-JFF-KEEP (S175, 2026-11-21): keep post-freeze commits 20b4a41b22 and aa4fd2654a (owner request)
+- Fact: both were made on the falsified hypothesis "FF causes A-56" (freeze discipline breach), but each fixes a real
+  defect: jerk FF differenced a vibration-coupled stock a_ff (24-28 deg/s omega_ff at AUTO_LAND, results/g4_jff_s172).
+- Choice: keep. Reverting re-ships a known defect in code proposed upstream, and Q11 B forces a new firmware freeze
+  (freeze-7) in any case, so the re-fly cost is shared.
+- Rows invalidated (re-flown at freeze-7): G4 all 18 runs (hover loses rate FF outside offboard; cruise
+  traj_lemniscate is offboard), G5.3/G5.4 (auto modes), G5.5 (offboard FF source), G3 pre-test (probe anyway).
+  Not invalidated: G2 cells (FF is outside the feedback loop and zero at constant setpoint), G5.1 acro (no pos module
+  FF), G5 event rows in hover (to confirm on the freeze-7 re-fly, cheap).
+- Alternative: revert both and keep freeze-6 evidence valid. Rejected: defect, and freeze-7 comes anyway.
+- Overturn: G5.3/G5.4 at freeze-7 worse than freeze-6 by > 10 % (D-JFF-OFFB check).
