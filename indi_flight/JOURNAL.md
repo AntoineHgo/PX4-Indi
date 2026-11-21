@@ -1227,3 +1227,8 @@ Also from the owner, 2026-11-21:
   INDI-only 22 Hz line AUTO_LAND -> touchdown (PID none), probe S175-f on post-JFF firmware. G3 set-up (a)+(c) fixed
   (noise profile applied, abort on not_applied, Docker scoring). Gate progress: G2 evidence complete except x-check
   clause (Q16); G4 item 2 PASS, chatter failure localised as INDI-specific; G3 set-up faults (a)(c) closed.
+- S176 (2026-11-21): G4 cruise chatter INDI-specific (PID same seed clean): ~89 Hz offboard-trajectory line 1.4-1.5x
+  floor + AUTO_LAND 22 Hz line; cause search deferred to freeze-7 (offboard path changes). G5 checkers on S175 rules,
+  re-score keyed (G5.2/G5.9a/G5.11 pass on evidence). G5.5: gain probe shows xy pos/vel bandwidth is the lever
+  (o1 0.587 -> 0.289 m; o2-o4/o7 0.27-0.32 m at 2x); D-OFFB-POSVEL replaces the cascade+mask draft. Gate progress:
+  G5 rows G5.2/G5.9a/G5.11 scored and keyed; G5.5 failure cause shown and fix probed; G4 cruise chatter localised.

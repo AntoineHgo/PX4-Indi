@@ -54,7 +54,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S176f | G5.5 gx2 params on o2-o4/o7 seed 1 (HEAD) | sonnet | results/g55_gain_probe_s176/README.md (section gx2 on o2-o4, o7) | if missing: re-fly with fly.sh + params.params |
+| S176g | D-OFFB-POSVEL firmware (uncommitted diff in src/modules/mc_indi_pos_control) + o1 s1 default-params flight | sonnet | results/g55_posvel_fw_s176/README.md | read README; if diff incomplete, re-brief from D-OFFB-POSVEL |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
