@@ -592,3 +592,12 @@ the lemniscate, both keys. The AUTO_LAND 20-22 Hz flags came from the whole-log 
 span; with the span extended to the last sample, land windows hold 20-23.5 Hz 1.2-4.7e-3 (INDI) and 20-26 Hz
 1.1-1.5e-3 (PID, 5 runs), reported only. Both keys agree on the GP probe (XY_P 1.2) lemniscate lines m3 33.5 Hz and
 m2 89.25 Hz (`results/g55_gain_probe_s179/RECONCILE_S180.md`): F2 targets these.
+
+## G2 verdict at freeze-8 (S182, 2026-11-21): NOT PASSED
+Evidence: `results/freeze8_s181/G2_SCORES.md` (24 outer cells, keyed scorer + `g2o/key2.md`; 2 spot cells, primary
+only as at freeze-7). Outer: 24/24 PASS on margins (xy PM 49.9-63.7 deg, GM >= 10.8 dB; z PM >= 60.2, no GM crossing;
+DM >= 240 ms), holes 24/24 PASS; key2 agrees on 22/24 (pt0_ax3_r400_s2, pt1_ax3_r400_s1 dPM 3.5/3.6 deg > 3 tol, z
+PM >= 60 so no verdict effect). Spot: rate roll800_fwdef_s2 PM 41.3 FAIL (freeze-7 47.8, freeze-6 54.3); attitude
+ax2_r400_s1 PM 42.2 FAIL (43.0, 53.4), GM 13.6 (19.1). The freeze-7 attribution of the attitude drop to the xy gains
+is contradicted (xy back to 1.2, attitude spot unchanged). G2-STEP rows still flying; they cannot lift the verdict.
+Next: one session of cause search on the spot drop since freeze-6 (D-FREEZE-8 overturn), PID reference first.
