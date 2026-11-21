@@ -5,7 +5,7 @@
   D-XY-PICK), config g5_freeze_s157 params (XY gains at firmware defaults 1.2/2.4). D-FREEZE-8 list re-flies in
   queue results/freeze9_s183 (G4 cruise_harsh_s2 excluded until Q19).
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
-- Blocker: none (Q19 answered A + PID guard, logged S183: GATES "Owner amendment S183", D-OWNER-Q19).
+- Blocker: Q20 (G4), Q21 (G5.10), Q22 (G3) open; G7 waits G4/G5 verdicts -> WAIT_OWNER (S186).
 ## Next actions (owner order; each names its gate item)
 1. G2 PASSED at freeze-9 (S184, GATES "G2 verdict at freeze-9"). Any firmware change re-opens it.
 2. G4 NOT PASSED at freeze-9 (S184): only the PID guard fails (INDI 20 Hz line 5.0-5.3e-4 in skipped windows at
@@ -18,13 +18,13 @@
    BLOCKING for G5.10: no G5.10 flight or score until answered. After the answer: scenario per answer (S184 patches
    in results/g510_setup_s184), one-flight check, 3 seeds INDI + PID ref (fly.sh), stabilized part Q17 A, scorer
    bench/g510_score_motors.py (keyed S181), then G5 verdict.
-4. G3 set-up (owner step 4; active now, G4/G5 wait Q20/Q21): (a) tel_frozen hook DONE S185 (SIM_GZ_ERPM_FRZ,
-   erpm_frozen, key2 no blocking; detector needs command variation >0.02/0.5 s, so frozen windows must sit in
-   manoeuvring segments: check g3_run MAIN_SEGMENT per scenario after T185c); (b) excursion vs setpoint in g3_checks (key2 before gate use); run 17 LOC (tilt
-   129 deg, in landing ~8.5 s after LAND, eRPM drop 19.9 % + vib): PID ref flown S185 (run_017_pid_s185: no LOC, tilt
-   38.6, but osc flag p/q too) -> INDI-specific LOC: one session of cause search (sonnet, log analysis, no firmware
-   edit); harness fix: run_validity rejects "pid_default" (marks PID runs void); osc runs 03/07/08/13 are re-flown after the set-up fix, not chased.
-   Then re-fly the 20-run pre-test; when clean, write "G3 set-up fixed, ready for flight chain" here + WAIT_OWNER.
+4. G3: Q22 (attitude-loop boundary e x tau_mult >= ~5 vs the G3 box; options A P~4.7 + freeze-10 / B narrow /
+   C scheduled P / D report) BLOCKING for G3: no G3 flight or score of osc rows until answered. Set-up done S186:
+   tel_frozen hook (anchored to traj/stick segment, checked), excursion vs setpoint (2 keys agree), chatter out of
+   item 2, run_validity pid_*. Open tooling: key2 item 3 ignored window/reference (T186d,
+   results/g3_excursion_s186/KEY2_ITEM3_S186.md); if keys still disagree, fix before any G3 scoring.
+   After Q22: act on answer, re-fly the 20-run pre-test; when clean, write "G3 set-up fixed, ready for flight chain"
+   here + WAIT_OWNER.
 5. G7 (stage 7, not before G2/G4/G5 verdicts): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site
    (K128 MAJOR), D-JFF-SOURCE case, D-OFFB-POSVEL wiring test, omega_ff step on offboard entry (key2_jffoffb MINOR),
    checker self-tests passthrough_check/offb_vel_check, g511 yaw p95 subtraction test (g511_check.py:184), g510
@@ -54,9 +54,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T186a | run 17 INDI LOC cause search (log only) | sonnet | results/g3_pretest_s173/run_017/LOC_CAUSE_S186.md | re-brief from file |
-| T186b | run_validity pid_default + g3_checks excursion vs setpoint (key1) | sonnet | results/g3_excursion_s186/KEY1.md | re-brief from file |
-| T186c | g3_checks_key2 excursion vs setpoint (key2, spec only) | sonnet | results/g3_excursion_s186/KEY2.md | re-brief from file |
+| T186d | key2 item 3 from GATES spec + compare to key1 | sonnet | results/g3_excursion_s186/KEY2_ITEM3_S186.md | re-brief from file if missing |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

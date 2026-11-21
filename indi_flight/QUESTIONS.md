@@ -85,3 +85,31 @@ Options:
      the low scale): changes the stock hover set-up for this row only.
   C. Drop the SAT part; G5.10 = the stabilized full-scale part (Q17 A) only, reported as such.
 Meanwhile: no G5.10 flight or score. Work moves to G3 set-up (tel_frozen hook, STATE next action 4). Blocked on G5 verdict.
+
+## Q22 (S186, 2026-11-21): G3 pre-test oscillations sit outside the attitude-loop stability boundary; box or gains? BLOCKING for G3
+Context (results/g3_pretest_s173/run_017/LOC_CAUSE_S186.md, results/g3_osc_margin_s186/README.md, results/g3_excursion_s186/RESCORE_V2.md):
+- Fixed two G3 checker defects (both keys agree): excursion now vs the time-matched setpoint (old rule measured the 5 m lemniscate),
+  and the G4 chatter line no longer decides G3 item 2 (GATES 304). Remaining pre-test failures: sustained 1.6-2 Hz roll/pitch limit
+  cycle in runs 03, 07, 13, 17 (17 tumbles at touchdown inside the cycle: LOC); small q 10.75 Hz line in 08; item 3 horizontal in 02/05/09.
+- Run 17 log: motors unsaturated (max 0.27), measured torque valid, no telemetry fault: a closed-loop limit cycle from ~20 s.
+- Linear model (existing margins_models.py, drawn factors per run): rate loop PM 36-79 deg on every draw; ATTITUDE loop (MC_ROLL_P /
+  MC_PITCH_P 8 around the INDI rate loop) PM -16 to -0.6 deg at 1.6-1.8 Hz in exactly those 4 runs; 35 of the other 36 axis-runs OK.
+  Boundary: unstable when e x tau_mult >= ~5 (e = controller G1 / plant G1, tau_mult = slow motor tau / 33 ms); PM < 30 deg above ~3.5.
+  The G3 box reaches e 2 x tau 3 x asymmetry 3 = 18.
+- PID reference on run 17's draw (one flight): also sustained p/q oscillation (2.75-3.25 Hz, 18-29 deg/s RMS), no LOC. So that row fails
+  in both stacks on that draw; INDI's is ~10x larger and ends in LOC.
+- Attitude P ~4.7 restores PM >= 30 deg at e 2, tau x3 (nominal attitude crossover 1.25 -> 0.7 Hz, PM 69 -> 78). With the slow-down
+  corner (tau x3 and asymmetry x3 = down tau x9) even P 2 gives only 19 deg: no single gain covers the whole box.
+Options:
+  A. Keep the box. Set INDI-configuration attitude P to ~4.7 (stock params, values only, zero code diff), declare freeze-10, re-fly the
+     G2/G4/G5 rows it invalidates (about 3-5 sessions). The down-tau x9 corner is then expected to fail and is reported as an explained,
+     out-of-reach corner (G3 NOT PASSED there unless you narrow it).
+  B. Narrow the box to what identification bounds (G6 flies G3 after identification): e.g. G1 error x[0.67, 1.5] and tau asymmetry
+     applied inside x[0.5, 3] (down tau <= x3). Current gains then still fail at e 1.5 x tau 3 = 4.5 (PM < 30), so B alone is not enough.
+  C. Attitude P scheduled from the identified motor tau (bandwidth rule, decision 4): a firmware design change (new law parameter,
+     two keys, freeze-10). Covers the tau part, not the G1-error part.
+  D. Keep gains and box, report G3 NOT PASSED with this boundary as the explanation, and move on to G6-G8.
+Recommendation: A (and report the down-tau x9 corner as it falls). It is the smallest change that buys margin, and gives a
+re-flyable freeze.
+Meanwhile: no G3 flight or score of the oscillation rows. The key-2 item-3 fix (tooling, all options need it) finishes this session.
+G4 waits Q20, G5 waits Q21, G7 waits the G4/G5 verdicts: blocked (WAIT_OWNER).

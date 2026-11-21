@@ -1344,3 +1344,9 @@ in scope.
   BLOCKING G5.10). G3 tel_frozen hook built (SIM_GZ_ERPM_FRZ in gz_bridge + erpm_frozen override, g3_run wired),
   key2 no blocking, hover probe + trip probe: detector trips and releases (A-57 trip latency, bounded). Run 17 PID ref
   ref: no LOC (tilt 38.6, osc flag in both) -> INDI-specific. Gate progress: G3 set-up item (a) tel_frozen hook done (runs 03/11 no longer abort); G5.10 -> Q21.
+- S186 (2026-11-21): G3 set-up. Checker fixes, 2 keys each: item-1 excursion vs time-matched trajectory_setpoint (old fixed
+  point measured the lemniscate; keys agree 0.01 m), G4 chatter no longer decides G3 item 2 (GATES 304), run_validity pid_*.
+  Run 17 LOC cause (log): 1.8 Hz pitch limit cycle from ~20 s, motors unsaturated, telemetry fine, touchdown inside it.
+  Linear model: attitude loop PM<0 in exactly the 4 osc runs (03/07/13/17), boundary e x tau_mult >= ~5; P ~4.7 fixes up to
+  e 2 x tau 3, not the down-tau x9 corner. A-58 (77.5 Hz chatter in G3 draws). Q22 written (box vs gains), blocking G3 -> WAIT_OWNER.
+  Gate progress: G3 pre-test re-scored with fixed checkers; osc failures explained (attitude-loop margin), verdict path -> Q22.
