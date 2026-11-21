@@ -9,22 +9,12 @@
 ## Next actions (in order; each names its gate item)
 History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrations: read before sizing a brief).
 0b. Nominal plant: matched GNSS --gps-dly 110 --gnss-delay 110 (S140 set-up fault fixed). G5.1-G5.4 re-fly at freeze.
-0c. G5.5 o1 0.59 / o2 0.79 m FAIL after A18 (S141). S143: lag builds in a_c (lag_chain_s143.md); drag-FF probe
-   REJECTED (o1 1.11 m, g5_g55_s143_drag; D-A18-SOURCE outcome). Lag chase STOPPED (RC143): o1-o4/o7 FAIL recorded,
-   cause = stock PositionControl feedback producing a_c (D-outer-arch base A). Re-fly at freeze; if still FAIL, owner Q.
-   S146 (results/g5_events_s145/README.md, fix_s1-3, key2 AGREES): G5.8 hover PASS 3/3; G5.9 b/c/d PASS 3/3;
-   G5.9a FAIL 3/3 = stock commander latency switch->actuator_armed.kill 3.75-10 ms, outputs 0 at the flag (Q8 add. 2).
-   G5.8 3 m/s (results/g5_events_s147_move, key2 fixes S147): s1 entry PASS, excursion undefined -> Q8 add. 3;
-   3 seeds once answered; meanwhile G5.6/G5.11 probes.
-0d. G5.10 probe S147 (results/g5_g510_s147, 0f41810f90): INDI s1 alt 2.15 m FAIL, tilt 48.9 FAIL, back 4.3 s PASS;
-   PID 3.22 m/44.7 deg. Q9 open (20 deg unreachable with the row's step; full-scale part). s2/s3: tilt 65 deg
-   0.3 s after thrust returns (PID 33), LOC by checker, alt 2.21 m. S148: A-48 CLOSED = injector artefact (8 seq.
-   per-motor EC sets); uniform faults now via atomic SIM_GZ_THR_SC (run_scenario.py, UNKEYED). Re-fly s148 s2: tilt
-   45.3 deg = MPC_TILTMAX_AIR, no LOC; s1-s3 alt 2.67-2.74 m FAIL (2.0), back 3.3-3.5 s; PID s2 watchdog abort >3 m.
-   S149: SAT never saturates (Q9 note 2). S150 cause D-GAP-G510 (blend too slow, clamp 0.3); kMaxBlend 0.5
-   (003e25c6d4). S151: margin at TB 0.3 PM 62.7/67.3 deg (g2_outer_tb03_s151); 3 seeds alt 1.74-1.76 m PASS,
-   back ~1.9 s PASS (g5_g510_s151); TB default -> 0.3 (f3b93704b6, key2 ACCEPT, xy PM 51.4/65.2). Row waits on Q9.
-   G5.4 at TB 0.3 PASS s1 (g5_g54_tb03_s151). G5.5 FAIL stays for re-fly at freeze.
+0c. G5.5 o1-o4/o7 FAIL recorded (lag chase STOPPED RC143, cause stock PositionControl a_c, base A). Re-fly at
+   freeze; if still FAIL, owner Q. G5.8 hover PASS 3/3, G5.9 b/c/d PASS 3/3, G5.9a FAIL = stock commander latency
+   (Q8 add. 2). G5.8 3 m/s: 3 seeds once Q8 add. 3 answered. Meanwhile G5.6/G5.11 probes. History: JOURNAL S141-S147.
+0d. G5.10 (results/g5_g510_s151): alt 1.74-1.76 m PASS, back ~1.9 s PASS at TB 0.3 (default, f3b93704b6); tilt
+   45.3 deg = MPC_TILTMAX_AIR and non-saturating SAT/AGG wait on Q9. A-48 closed (THR_SC injector, UNKEYED).
+   G5.4 at TB 0.3 PASS s1. History: JOURNAL S147-S151.
 0e. 4c review 1/3 DONE S152 (design/prefreeze_r1_stage5.md, opus): REJECT, 1 BLOCKING F1 (ALTCTL arm on ground ->
    Hold fallback at HOVER thrust while landed), MAJOR F2 resetBlend at arm/disarm vs D-GAP, F3 no lib reset on
    re-entry/hold end (thrust/jerk transient), F4 dt clamp 0.04 makes "<5 Hz -> hold" dead. F1 fixed S152 (z_only zero
