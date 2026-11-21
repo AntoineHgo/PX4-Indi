@@ -8,9 +8,11 @@
 - Blocker: none (Q19 answered A + PID guard, logged S183: GATES "Owner amendment S183", D-OWNER-Q19).
 ## Next actions (owner order; each names its gate item)
 1. G2 PASSED at freeze-9 (S184, GATES "G2 verdict at freeze-9"). Any firmware change re-opens it.
-2. G4 at freeze-9: agent S183-G flies cruise_harsh_s2 + PID refs (g4_pid/), key2 copy with Q19 skip (*_q19.py:
-   new metric change, give it a second key before the verdict), PID guard table, G4_SCORES.md -> G4 verdict.
-   Then re-score freeze-8 G4 with keyed scripts (owner Q19 order, history, no re-fly).
+2. G4 NOT PASSED at freeze-9 (S184): only the PID guard fails (INDI 20 Hz line 5.0-5.3e-4 in skipped windows at
+   17->4 and 14->18; PID clean). Q20 (guard metric) BLOCKING for guard rows: no re-score until answered. Cause
+   search S184-D (one session bound; firmware fix only if a log shows the cause, freeze rule; it re-opens G2).
+   Freeze-8 G4 Q19 re-score (history) waits Q20. Guard comparison is not coded (Q19_KEY2_REVIEW F1): after Q20,
+   one script + second key.
 3. G5: freeze-9 (G5_SCORES.md) every flown row PASS both keys; G5.5 worst H 0.499 m (o2 s3, limit 0.5: thin, no
    chase, the D-XY-PICK trade). G5 verdict waits G5.10 only. G5.10: (a) scorer
    bench/g510_score_motors.py keyed S181; SAT_MIN_FRAC is validity only (verdict INVALID); (b) SAT set-up fault (D-G510-SAT-SETUP):
@@ -49,8 +51,8 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S184-B | G4: PID refs (g4_pid/fly_pid.sh, background, dir dirty until FLY_DONE), guard, G4_SCORES | sonnet | freeze9_s183/G4_SCORES.md | rerun g4_pid/fly_pid.sh (skips done) |
-| S184-C | 2nd key on Q19 skip + PID guard code | sonnet | freeze9_s183/g4/Q19_KEY2_REVIEW.md | relaunch brief |
+| S184-D | G4 guard rows: cause search INDI 20 Hz line at 17->4 / 14->18 (logs only) | sonnet | results/g4_20hz_cause_s184/README.md | relaunch brief |
+| S184-E | G5.10 SAT set-up (D-G510-SAT-SETUP) + 1-seed pre-test INDI+PID | sonnet | results/g510_setup_s184/README.md | relaunch brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
