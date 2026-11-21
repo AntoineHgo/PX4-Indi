@@ -16,8 +16,11 @@
 3. G5: freeze-9 (G5_SCORES.md) every flown row PASS both keys; G5.5 worst H 0.499 m (o2 s3, limit 0.5: thin, no
    chase, the D-XY-PICK trade). G5 verdict waits G5.10 only. G5.10: (a) scorer
    bench/g510_score_motors.py keyed S181; SAT_MIN_FRAC is validity only (verdict INVALID); (b) SAT set-up fault (D-G510-SAT-SETUP):
-   S184 18-step ramp to 0.136 sank both stacks (g510_setup_s184, reverted, patch kept); retry S184-F sets the
-   scale from model max thrust / weight; (c) then 3 seeds INDI (+PID ref),
+   S184: two hover-pinning ramps (0.136, then 0.148 from T/W 7.31) sank before the window (g510_setup_s184
+   README, patches kept, scenarios.py reverted). Log: rotor speed flat ~1000 rad/s, hover_thrust_estimate stuck
+   0.337 (hypothesis, untested). Second fix failed -> RE-OPEN D-G510-SAT-SETUP first (lesson 24): options in the
+   README "Retry S184-F" (demand transient at scale 0.3-0.4 vs pinned hover); check GATES G5.10 text; if the row
+   text must change, owner question; (c) then 3 seeds INDI (+PID ref),
    stabilized part Q17 A; then G5 verdict. Run after the freeze-8 queue (no parallel docker for gate evidence).
 4. G3 set-up (owner step 4), after G2/G4/G5 queue: tel_frozen hook (gz_bridge bit-identical rpm injector, two keys;
    until then runs 03/11 abort); (b) excursion vs setpoint in g3_checks (key2 before gate use); run 17 LOC (tilt
@@ -52,7 +55,6 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S184-F | G5.10 set-up retry: scale from model T/W (~1.1 x weight), 1-seed INDI+PID | sonnet | results/g510_setup_s184/README.md "Retry" | relaunch brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

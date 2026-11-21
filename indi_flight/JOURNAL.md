@@ -1334,3 +1334,9 @@ in scope.
   scenario and seed). Scope confirmed: the item 2 rate detector limit applies to harsh hover; harsh-cruise rate flags
   stay informational (reported). Log it in GATES.md and DECISIONS.md as an approved test-definition fix, re-score
   freeze-8 G4 with keyed scripts (no re-fly), then fly cruise_harsh_s2 in the freeze-9 set and score G4 at freeze-9.
+- S184 (2026-11-21): results sorted (freeze-9 committed, rate s1.csv ignored). G2 re-scored after hole re-flies ->
+  G2 PASSED at freeze-9 (outer 24/24, spot 47.3/47.4, G2-STEP 9/9; 1 max-gap hole cell counted under evidence limit 1).
+  G4 scored (effort 18/18, chatter 0/18 Q19 skip, 2 keys; Q19 key2 review: skip OK, guard comparison not coded) ->
+  G4 NOT PASSED on the PID guard; cause search: 17->4 20 Hz transient in both stacks (INDI 1.7x), 14->18 guard
+  artefact; Q20 asked (blocking G4). G5.10 set-up: two ramps invalid (sank before window), reverted.
+  Gate progress: G2 open -> PASSED; G4 open -> NOT PASSED (guard, Q20); G5.10 set-up 2 attempts invalid (D-G510-SAT-SETUP to re-open).
