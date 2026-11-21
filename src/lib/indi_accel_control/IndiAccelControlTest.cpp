@@ -825,6 +825,33 @@ TEST_F(IndiAccelBlendTest, ConvergesToThrustGap)
 	EXPECT_LE(fabsf(_ctrl.blend()), IndiAccelControl::kMaxBlend);
 }
 
+TEST_F(IndiAccelBlendTest, ConvergesToLargeThrustGap04)
+{
+	// steady gap u_model - u_meas = 0.4 (above the old 0.3 bound): measured mean u = previous collective - 0.4
+	constexpr float kGap = 0.4f;
+	const float u_hover = kG / kGt;
+	startBlend(1.f);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), u_hover, u_hover - kGap);
+
+	for (int i = 0; i < 1000; i++) { // 10 tb
+		IndiAccelControl::Input in = hoverInput();
+		const float u_meas = _u_cmd - kGap;
+		in.f_b = Vector3f(0.f, 0.f, -kGt * u_meas);
+		in.mean_u = u_meas;
+		in.mean_u_valid = true;
+		IndiAccelControl::Output out;
+		ASSERT_TRUE(_ctrl.update(in, out));
+		_u_cmd = out.thrust;
+		_out = out;
+	}
+
+	EXPECT_FALSE(_out.blend_frozen);
+	EXPECT_NEAR(_ctrl.blend(), kGap, 0.01f);
+	// u_f = u_meas + b equals the model (previous collective), the collective settles at hover + gap
+	EXPECT_NEAR(_u_cmd, u_hover + kGap, 0.01f);
+	EXPECT_NEAR((_u_cmd - kGap) + _ctrl.blend(), _u_cmd, 0.01f);
+}
+
 TEST_F(IndiAccelBlendTest, NegativeControlDisabledKeepsGap)
 {
 	startBlend(0.f);

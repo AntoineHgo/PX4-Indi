@@ -82,8 +82,9 @@ public:
 	static constexpr float kMaxDt = 0.5f;
 	/// Upper bound of the tilt limit (rad), keeps tan() finite
 	static constexpr float kMaxTiltLimit = 1.5f;
-	/// Bound of the collective blend state b (u units)
-	static constexpr float kMaxBlend = 0.3f;
+	/// Bound of the collective blend state b (u units). With available thrust down to 2x hover the hover command
+	/// is u = 0.5 on any airframe, so the gap is <= 0.5; the collective clamp and the anti-windup freeze still bound u.
+	static constexpr float kMaxBlend = 0.5f;
 	/// Measured mean u at or above this (physical limit 1) freezes the blend (anti-windup)
 	static constexpr float kMeanUSatLimit = 0.98f;
 
