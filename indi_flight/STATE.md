@@ -64,6 +64,7 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S165b | G2 267 Hz reported cells (outer z pt1/pt0 s1, rate roll s1) | bash chain | results/g2_freeze_s160/chain267_status.txt (CHAIN267_END), outer jsons in g2_outer_freeze_s163/pt*_ax3_r267_s1* | `bash indi_flight/results/g2_freeze_s160/chain267.sh` (skips done cells); then margins + table |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
