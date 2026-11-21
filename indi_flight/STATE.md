@@ -19,25 +19,11 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    23acbdef67, bench defaults + ID_OK 1, fwdef cells (G5.1 acro + G2 rate roll 800 at ID_OK 0), G4 typical noise
    (--vib-acc 10 --vib-gyr 0 --imu-noise-scale 4.0, D-NOISE-PROF). Re-fly: results/g5_freeze_s157 (chain.sh:
    batch.sh 18 + batch2.sh 36 flights, status batch_status.txt, DONE2/CHAIN_END). History: JOURNAL S152-S157.
-   S158-S159 (freeze re-fly 54/54 scored, all G5 freeze checkers KEYED, RC159 order G2 -> G4 -> G3): JOURNAL.
-   S161: G5.11 yaw spike cause = T10 raw filter re-seed; fixed (D-T10-RESET, 49568bcaa5 + d1b65d0f09, key2 review
-   design/review_s161_t10.md MAJORs closed). Residual at s1 probe = INDI hover tilt noise floor (Q12 addendum, option D).
-   Post-freeze firmware change: also check other freeze rows had no in-flight reset edge (none should be affected).
-   Re-fly at d1b65d0f09 (results/g511_fix_s161): yaw 0.76/1.21/0.83 (2/3 PASS), xy 5.8-6.7 FAIL (Q12); row FAIL as
-   written, KEYED S162. G5.8/G5.9 re-scored + key2 at d1b65d0f09: unchanged. Reset sweep: other 58 freeze rows
-   have no airborne reset (unaffected). G2 attitude 12/12 PASS at freeze, KEYED (results/g2_att_freeze_s162).
-   S163 DONE: G2 rate cell set at freeze complete, all PASS + KEYED (g2_freeze_s160 README); outer 24/24 meet
-   thresholds, UNKEYED (g2_outer_freeze_s163); GATES G2 "Freeze status" block. 3 cells re-flown (my parallel
-   containers made sim holes; never run docker during a batch). RC163 done (design/route_check_163.md), acted on:
-   S164 DONE: outer key2 (KEYED, key2.md) + plateau GM all 67 cells (g2_plateau_s164.md; 1 cell literal FAIL = |L|>1
-   bin, Q13 option A -> 67/67); outer model x-check DONE (xcheck.md, A-50 xy GM model conservative). NEXT S165:
-   x-check for rate (freeze params) + att yaw only; then 267 Hz; then G4. Old text: ONE x-check script (rate at freeze params + att yaw + minimal analytic outer
-   model; disagreement -> ANOMALIES, no model tuning); 267 Hz "reported" = 1 rate + 1 outer cell. G4 does not wait
-   for 267 Hz. Then G4 (RC159 order G2 -> G4 -> G3). Next RC: S168.
-   S160: G5 verdict table in freeze README. G5.3 hold re-flown PASS 3/3 + key2. G5.11 exact test + g511_check.py:
-   FAIL 6/6 tilt cmd jump. PID ref: xy 7.82 deg FAIL too (stack-indep., Q12). Yaw cause fixed S161 (above).
-   Seed 1: G5.1 acro/stab, G5.2 altctl PASS; G5.2 posctl z settle 4.15 s FAIL (> 4.0): cause
-   search DONE: EKF2 height error -0.08 m decaying ~5 s, controller holds estimate (README); Q10 OPEN (not blocking);
+   S158-S164 (JOURNAL): G5 freeze rows scored + KEYED; G5.11 T10 fix d1b65d0f09 (yaw 2/3 PASS, xy FAIL Q12);
+   G2 rate + att + outer 67/67 cells PASS + KEYED at freeze (plateau GM per Q13 A), outer model x-check done (A-50).
+   NEXT S165: x-check for rate (freeze params) + att yaw only (ONE script, disagreement -> ANOMALIES, no model
+   tuning); then 267 Hz "reported" = 1 rate + 1 outer cell; then G4 (G4 does not wait for 267 Hz). Next RC: S168.
+   G5.2 posctl z settle s1 4.15 s FAIL (EKF2 height error, Q10; PID ref PASS).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
    events and maybe_landed / EKF z injectability -> Q8 (scored at option A, not blocking).
 4a. Flying: parallel docker streams ONLY for tolerance-insensitive probes (G5.5, G5.10 sat); G5.7 and event rows serial
