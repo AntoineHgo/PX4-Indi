@@ -276,7 +276,7 @@ public:
 	const matrix::Vector3f &getFilteredMeasuredTorque() const { return _t_f_meas; }
 
 	/// Time constant of the first order low pass on the rate setpoint derivative, s
-	static constexpr float kSetpointLeadTc = 0.01f;
+	static constexpr float kSetpointLeadTc = 0.03f;
 
 	/// Magnitude bound of the filtered rate setpoint derivative per axis, rad/s^2: an impulse guard against setpoint
 	/// jumps that slip through the resets, not a shaping filter (a 5 rad/s step over one 1 kHz cycle would be 5000)
