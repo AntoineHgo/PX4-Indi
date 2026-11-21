@@ -137,6 +137,11 @@ void IndiAccelControl::reset(const Vector3f &f_b, float coll_cmd, float mean_u)
 	_u_idx = 0;
 	_thrust_prev = c;
 
+	resetJerkHistory();
+}
+
+void IndiAccelControl::resetJerkHistory()
+{
 	_time = 0.f;
 	_a_ff_prev.zero();
 	_j_diff.zero();

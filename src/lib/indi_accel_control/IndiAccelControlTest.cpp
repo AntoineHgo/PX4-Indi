@@ -300,6 +300,36 @@ TEST_F(IndiAccelControlTest, ResetGivesZeroIncrementOnFirstCycle)
 	EXPECT_NEAR((out.t_c - out.t_f).norm(), 0.f, 1e-4f);
 }
 
+TEST_F(IndiAccelControlTest, ResetJerkHistoryKeepsMeasuredFilters)
+{
+	// D-T10-RESET: an estimator reset must not re-seed the measured force / collective filters with a raw sample
+	_ctrl.setFilter(100.f, 10.f);
+	IndiAccelControl::Input in = hoverInput();
+	_ctrl.reset(in.f_b, in.mean_u, in.mean_u);
+	IndiAccelControl::Output out;
+
+	for (int k = 0; k < 50; k++) {
+		ASSERT_TRUE(_ctrl.update(in, out));
+	}
+
+	IndiAccelControl ref = _ctrl;
+	in.f_b(0) += 0.3f; // one noisy accelerometer sample at the reset cycle
+	in.mean_u += 0.05f;
+	IndiAccelControl::Output out_ref;
+	ASSERT_TRUE(ref.update(in, out_ref));
+	_ctrl.resetJerkHistory();
+	ASSERT_TRUE(_ctrl.update(in, out));
+
+	for (int i = 0; i < 3; i++) {
+		EXPECT_FLOAT_EQ(out.a_f(i), out_ref.a_f(i));
+		EXPECT_FLOAT_EQ(out.t_f(i), out_ref.t_f(i));
+		EXPECT_FLOAT_EQ(out.t_c(i), out_ref.t_c(i));
+	}
+
+	// the filtered value moved by less than the raw step (the full reset() would put the raw sample through)
+	EXPECT_LT(fabsf(out.a_f(0)), 0.2f);
+}
+
 TEST_F(IndiAccelControlTest, FilterMatching)
 {
 	// same step (scaled) on f_b and on mean u: identical normalised responses, also with a delay

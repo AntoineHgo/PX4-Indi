@@ -194,6 +194,12 @@ public:
 	void reset(const matrix::Vector3f &f_b, float coll_cmd, float mean_u);
 
 	/**
+	 * Forget the jerk difference history only (estimator reset, D-T10-RESET). The measured force and collective
+	 * filters, the delay buffers and the previous thrust command are kept: they do not depend on the estimator frame.
+	 */
+	void resetJerkHistory();
+
+	/**
 	 * Run one cycle.
 	 * @return false (out untouched) if a required input is non finite or invalid (p, v, q, f_b, dt,
 	 *         mean_u if mean_u_valid), so the caller can hold.

@@ -277,11 +277,10 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 		const Vector3f a_ref = inject_output ? a_c_pre_inject : (a_c_pre_inject + inject);
 
 		if (_indi_reset_pending) {
-			// T10: estimator reset while the stage runs: restart the differencing from the current state (same call as the
-			// bypass branch below; the blend is kept by reset(), so no collective step)
-			const float coll_rs = fresh_thr ? _coll_meas : _last_thrust;
-			const float c_rs = PX4_ISFINITE(coll_rs) ? math::max(coll_rs, 0.f) : 0.f;
-			_indi.reset((fresh_acc && !model_force) ? _f_b : Vector3f(0.f, 0.f, -c_rs * G), c_rs, fresh_esc ? _mean_u : NAN);
+			// T10: estimator reset while the stage runs: forget the jerk difference history so that a setpoint step from
+			// the reset is not differentiated. The measured force/collective filters are frame independent and kept
+			// (D-T10-RESET: re-seeding them with one raw sample gave a 1.9 deg tilt spike at a yaw reset)
+			_indi.resetJerkHistory();
 			_indi_reset_pending = false;
 		}
 
