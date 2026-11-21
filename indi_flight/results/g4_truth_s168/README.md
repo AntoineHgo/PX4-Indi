@@ -20,4 +20,5 @@ Flight ok (exit ok, HEAD 250f4490f6, SITL rebuilt, build rc 0). `check_truth.py`
 - `bench/g4_metrics.py` now selects the instance from SIM_GZ_ESC_FB (FB 2 -> instance 1, truth) or `--esc-instance`;
   selftest PASS. Window 58-72 s: truth R20 0.770 rad/s = 0.077 % hover, R4 2.60 rad/s = 0.262 %, C20 0.0014, clip 0
   (g4_metrics_inst1.json); proxy instance 0: R20 0.090 %, R4 0.268 % (g4_metrics_inst0.json). Probe only.
+NOTE (later S168): the 58-72 s window runs past the hold end (62.0 s); hold-window values in ../g4_pretest_s168/README.md.
 Verdict: hook works as specified on the log (G4 R20/R4 truth signal available). Key2 of the hook: key2_hook.md.
