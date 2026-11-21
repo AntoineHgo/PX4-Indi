@@ -96,3 +96,31 @@ TEST(IndiStageModeTest, HoldFallbackNeverHoverThrustOnGround)
 	EXPECT_FLOAT_EQ(holdFallbackThrust(true, 0.3f), 0.3f);
 	EXPECT_FLOAT_EQ(holdFallbackThrust(true, NAN), 0.5f);
 }
+
+TEST(IndiStageModeTest, PosControlEntryEdgeRequestsReset)
+{
+	EXPECT_TRUE(shouldResetOnPosControlEntry(false, true));
+	EXPECT_FALSE(shouldResetOnPosControlEntry(true, true));
+	EXPECT_FALSE(shouldResetOnPosControlEntry(true, false));
+	EXPECT_FALSE(shouldResetOnPosControlEntry(false, false));
+}
+
+TEST(IndiStageModeTest, HoldToRunEdgeRequestsReset)
+{
+	EXPECT_TRUE(shouldResetOnHoldToRun(true, true));
+	EXPECT_FALSE(shouldResetOnHoldToRun(false, true));
+	EXPECT_FALSE(shouldResetOnHoldToRun(true, false));
+}
+
+TEST(IndiStageModeTest, SampleIntervalGate)
+{
+	// 0.3 s (3.3 Hz): hold; 0.1 s: run with the true dt; 0.001 s: lower clamp
+	EXPECT_FALSE(stageIntervalOk(0.3f));
+	EXPECT_TRUE(stageIntervalOk(0.1f));
+	EXPECT_FLOAT_EQ(stageDt(0.1f), 0.1f);
+	EXPECT_FLOAT_EQ(stageDt(0.001f), 0.002f);
+	EXPECT_TRUE(stageIntervalOk(0.001f));
+	EXPECT_FALSE(stageIntervalOk(NAN));
+	EXPECT_EQ(selectStageMode(true, true, true, true, stageIntervalOk(0.3f)), StageMode::Hold);
+	EXPECT_EQ(selectStageMode(true, true, true, true, stageIntervalOk(0.1f)), StageMode::Indi);
+}

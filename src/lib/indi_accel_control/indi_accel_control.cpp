@@ -116,8 +116,9 @@ void IndiAccelControl::reset(const Vector3f &f_b, float coll_cmd, float mean_u)
 	const float c = PX4_ISFINITE(coll_cmd) ? math::max(coll_cmd, 0.f) : kGravity / (_g_t * _k_cmd);
 
 	// D-GAP: model path = commanded collective (u_model = c * k_cmd). Measured path = the measured mean u when it is
-	// given, else its steady relation to the model path, u_model - b. Either way u_meas + b = u_model at the
-	// restart (no collective step at the edge, no innovation for b; A16: b is held, never reset)
+	// given, else its steady relation to the model path, u_model - b. Only the second case gives u_meas + b = u_model
+	// (no collective step); with mean_u passed there is a step equal to the gap mean_u + b - u_model (pre-freeze r1 F6).
+	// A16: b is held, never reset
 	const float u_model = c * _k_cmd;
 	const float u = PX4_ISFINITE(mean_u) ? mean_u : (u_model - _b);
 
@@ -237,7 +238,8 @@ void IndiAccelControl::setAppliedThrust(float c_applied)
 
 bool IndiAccelControl::update(const Input &in, Output &out)
 {
-	// 9. required inputs, checked before any state is touched
+	// 9. required inputs: this early check rejects before any state is touched; the late finiteness checks (jerk
+	// history, delay buffer, filters and blend are already advanced then) do not (pre-freeze r1 F5)
 	if ((!in.accel_only && (!allFinite(in.p) || !allFinite(in.v))) || (in.f_b_valid && !allFinite(in.f_b)) || !PX4_ISFINITE(in.q(0))
 	    || !PX4_ISFINITE(in.q(1))
 	    || !PX4_ISFINITE(in.q(2)) || !PX4_ISFINITE(in.q(3)) || !PX4_ISFINITE(in.dt)

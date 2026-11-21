@@ -187,7 +187,8 @@ public:
 	 * @param coll_cmd commanded collective (thrust command units): model path u_model = coll_cmd * k_cmd and the
 	 *        previous thrust command are set from it.
 	 * @param mean_u MEASURED mean rotor thrust, or NaN if not available: measured path starts at it, else at the
-	 *        steady relation u_model - b (so u_meas + b = u_model, no collective step at the first update).
+	 *        steady relation u_model - b (then u_meas + b = u_model, no collective step; with mean_u given the first
+	 *        update has a step equal to mean_u + b - u_model, pre-freeze r1 F6).
 	 * Non finite coll_cmd or f_b are replaced by hover values.
 	 */
 	void reset(const matrix::Vector3f &f_b, float coll_cmd, float mean_u);

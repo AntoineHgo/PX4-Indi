@@ -151,6 +151,8 @@ private:
 	float _held_thrust_body[3] {};
 	float _held_thrust_ned[3] {};
 	bool _held_valid{false};
+	bool _pos_entry_pending{false};	///< F3: position control re-entered, restart the stage and refresh the held setpoint
+	bool _stage_was_hold{false};	///< F3: previous stage cycle was a Hold
 	hrt_abstime _degraded_since{0};
 	bool _degraded_warned{false};
 	int _stage_reason{-1};		///< last reported stage condition bitmask (instrument)

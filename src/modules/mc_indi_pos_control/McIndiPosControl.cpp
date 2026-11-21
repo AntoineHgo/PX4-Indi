@@ -92,7 +92,7 @@ void McIndiPosControl::pollStageInputs()
 	}
 }
 
-void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active, bool model_force, bool flying, float tilt_limit_rad,
+void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_active, bool model_force, bool flying, float tilt_limit_rad,
 				    float ht,
 				    vehicle_local_position_setpoint_s &local_pos_sp, vehicle_attitude_setpoint_s &att_sp)
 {
@@ -148,17 +148,21 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 		_esc_time = (esc_status.timestamp != 0) ? esc_status.timestamp : now;
 	}
 
-	// filter and thrust model configuration (same low-pass on f_b and u, rate = work item rate)
-	const float rate = (dt > 1e-4f) ? roundf(1.f / dt) : 0.f;
+	// F4: the library sees the true interval (lower-clamped, up to kStageDtMax); a longer interval holds (rate < 5 Hz).
+	// Filter set-up: rate of the true interval, protected against jitter by the hysteresis below (no per-cycle reconfiguration)
+	const bool interval_ok = stageIntervalOk(raw_dt);
+	const float dt = stageDt(raw_dt);
+	const float rate = interval_ok ? roundf(1.f / dt) : 0.f;
 	const float cut = _param_indi_lpf.get();
 
 	// hysteresis: a rate deviation of more than 20 % must persist for kRateDevCycles cycles (a single late
-	// sample must not re-configure the filters, and the return from it must not either)
+	// sample must not re-configure the filters, and the return from it must not either); after a Hold (restart) a deviated rate re-configures at once (key2 K1)
 	constexpr int kRateDevCycles = 5;
-	const bool rate_dev = (rate > 5.f) && (fabsf(rate - _filter_hz) > 0.2f * _filter_hz);
+	const bool rate_dev = (rate >= 5.f) && (fabsf(rate - _filter_hz) > 0.2f * _filter_hz);
 	_rate_dev_count = rate_dev ? math::min(_rate_dev_count + 1, kRateDevCycles) : 0;
 
-	if (rate > 5.f && (_filter_hz <= 0.f || _rate_dev_count >= kRateDevCycles || !isEqualF(cut, _filter_cut))) {
+	if (rate >= 5.f && (_filter_hz <= 0.f || _rate_dev_count >= kRateDevCycles || (_stage_was_hold && rate_dev)
+			    || !isEqualF(cut, _filter_cut))) {
 		_filter_hz = rate;
 		_filter_cut = cut;
 		_rate_dev_count = 0;
@@ -212,13 +216,43 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 
 	const bool acc_ok = acc_fresh_now && !_acc_stale_latched;
 	const bool aref_ok = a_c_pre_inject.isAllFinite();
-	StageMode mode = selectStageMode(want_active, att_ok, acc_ok, aref_ok, rate > 5.f, model_force);
+	StageMode mode = selectStageMode(want_active, att_ok, acc_ok, aref_ok, interval_ok, model_force);
 	const bool can_run = (mode == StageMode::Indi) || (mode == StageMode::IndiModelAccel);
+
+	// F3: re-entry to position control: restart the stage and refresh the held setpoint from the current attitude and the
+	// measured collective, so a Hold on the first cycle never publishes a pre-switch setpoint
+	if (_pos_entry_pending) {
+		_pos_entry_pending = false;
+		_indi_reset_pending = true;
+		const float coll_h = fresh_thr ? _coll_meas : _last_thrust;
+
+		if (att_ok && PX4_ISFINITE(coll_h)) {
+			const float c_h = math::max(coll_h, 0.f);
+			const Vector3f thr_b(0.f, 0.f, -c_h);
+			const Vector3f thr_n = matrix::Dcmf(_q) * thr_b;
+			vehicle_attitude_setpoint_s held_att{};
+			vehicle_local_position_setpoint_s held_pos{};
+			_q.copyTo(held_att.q_d);
+			thr_b.copyTo(held_att.thrust_body);
+			thr_n.copyTo(held_pos.thrust);
+			storeHeld(held_att, held_pos);
+
+		} else {
+			_held_valid = false;
+		}
+	}
+
+	// F3: Hold -> run: the time base did not advance in Hold
+	if (shouldResetOnHoldToRun(_stage_was_hold, can_run)) {
+		_indi_reset_pending = true;
+	}
+
+	_stage_was_hold = (mode == StageMode::Hold);
 
 	// instrument: report each change of the stage conditions (bit set = condition met), capped
 	const bool lib_ok_prev = _indi_active;
 	const int reason = (want_active ? 1 : 0) | (fresh_att ? 2 : 0) | (fresh_acc ? 4 : 0) | (a_c_pre_inject.isAllFinite() ? 8 : 0)
-			   | (rate > 5.f ? 16 : 0) | (fresh_esc ? 32 : 0) | (lib_ok_prev ? 64 : 0);
+			   | (interval_ok ? 16 : 0) | (fresh_esc ? 32 : 0) | (lib_ok_prev ? 64 : 0);
 
 	if (reason != _stage_reason && _stage_reports < 20) {
 		PX4_INFO("INDI stage cond 0x%02x (want att acc aref rate esc active) rate %.0f", reason, (double)rate);
@@ -328,6 +362,7 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 
 		// update() rejected its inputs: hold (D-STAGE-STALE b)
 		mode = StageMode::Hold;
+		_stage_was_hold = true;
 	}
 
 	if (mode == StageMode::Hold) {
@@ -753,8 +788,8 @@ void McIndiPosControl::Run()
 	vehicle_local_position_s vehicle_local_position;
 
 	if (_local_pos_sub.update(&vehicle_local_position)) {
-		const float dt =
-			math::constrain(((vehicle_local_position.timestamp_sample - _time_stamp_last_loop) * 1e-6f), 0.002f, 0.04f);
+		const float raw_dt = (vehicle_local_position.timestamp_sample - _time_stamp_last_loop) * 1e-6f; // F4: true interval for the stage
+		const float dt = math::constrain(raw_dt, kStageDtMin, 0.04f); // stock-style consumers keep the clamp
 		_time_stamp_last_loop = vehicle_local_position.timestamp_sample;
 
 		_sample_interval_s.update(dt);
@@ -773,6 +808,7 @@ void McIndiPosControl::Run()
 
 				if (!previous.flag_multicopter_position_control_enabled && _vehicle_control_mode.flag_multicopter_position_control_enabled) {
 					_time_position_control_enabled = _vehicle_control_mode.timestamp;
+					_pos_entry_pending = shouldResetOnPosControlEntry(previous.flag_multicopter_position_control_enabled, true);
 
 				} else if (previous.flag_multicopter_position_control_enabled && !_vehicle_control_mode.flag_multicopter_position_control_enabled) {
 					// clear existing setpoint when controller is no longer active
@@ -1043,7 +1079,7 @@ void McIndiPosControl::Run()
 				_j_ff = matrix::Vector3f(NAN, NAN, NAN);
 			}
 
-			runIndiStage(dt, now, want_indi, model_force, flying, _tilt_limit_slew_rate.getState(), ht, local_pos_sp, attitude_setpoint);
+			runIndiStage(raw_dt, now, want_indi, model_force, flying, _tilt_limit_slew_rate.getState(), ht, local_pos_sp, attitude_setpoint);
 
 			// zero the stock integrator only on cycles where the INDI stage actually ran (this cycle)
 			if (_indi_active) {

@@ -79,3 +79,30 @@ inline bool shouldResetStageState(bool prev_armed, bool armed)
 {
 	return prev_armed != armed;
 }
+
+/** Rising edge of position control (pre-freeze review r1 F3): the stage state is stale from the non-position mode. */
+inline bool shouldResetOnPosControlEntry(bool prev_pos_enabled, bool pos_enabled)
+{
+	return !prev_pos_enabled && pos_enabled;
+}
+
+/** Hold -> run edge (F3): the time base did not advance in Hold, so the differencing and filters restart. */
+inline bool shouldResetOnHoldToRun(bool prev_was_hold, bool can_run)
+{
+	return prev_was_hold && can_run;
+}
+
+/** Stage sample interval (F4): below kStageDtMin the interval is clamped, above kStageDtMax (rate < 5 Hz) the stage holds. */
+static constexpr float kStageDtMin = 0.002f;
+static constexpr float kStageDtMax = 0.2f; // library kMaxDt is 0.5
+
+inline bool stageIntervalOk(float raw_dt)
+{
+	return std::isfinite(raw_dt) && (raw_dt <= kStageDtMax);
+}
+
+/** The dt the library sees: the true interval, lower-clamped (and capped at kStageDtMax; longer intervals hold). */
+inline float stageDt(float raw_dt)
+{
+	return std::isfinite(raw_dt) ? std::fmin(std::fmax(raw_dt, kStageDtMin), kStageDtMax) : kStageDtMax;
+}
