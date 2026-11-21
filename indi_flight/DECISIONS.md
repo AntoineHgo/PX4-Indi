@@ -781,3 +781,18 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   Per route check 143: lag chase STOPPED. G5.5 o1-o4/o7 recorded FAIL (probe) with data; the residual lag sits in the
   stock-PositionControl feedback that produces a_c (D-outer-arch base A, accel_only). Re-opening that is an
   architecture change: owner question only if G5.5 is still FAIL at the freeze re-fly.
+
+## D-GAP-G510 (S150, 2026-11-21): G5.10 altitude-loss failure re-opens D-GAP (blend TB and bound), not the test
+- Evidence (results/g5_g510_s148/s1, indi_pos_status read S150): after the 0.274 thrust drop the blend b rises
+  0.016 / 0.113 / 0.243 at +0.25 / 0.75 / 1.25 s (LP with MC_INDI_POS_TB 1.0 s) and clamps at kMaxBlend 0.3 from
+  +1.5 s to REC; altitude minimum at +1.7 s. Gap to absorb at hover: u_model 0.5 - mean_u 0.137 = 0.36 > 0.3, so the
+  clamp also leaves a standing error (0.4 m low at REC). Until b catches up, the collective is carried by the stock
+  z-loop error (a_c down to -17 m/s^2): lesson 9 in the thrust channel. THR_SC scales rotor speed (sqrt, on the
+  outputs, GZMixingInterfaceESC.hpp:98), so mean_u sees the drop: a command/omega^2 gap, the D-GAP case.
+- Candidates: (1) lower TB (faster DC restoration; limited by the outer acceleration-break margin, D-GAP risk of a
+  lightly damped mode); (2) kMaxBlend sized to the largest gap the gates ask (G5.10: 0.36 at 2x hover, so >= 0.5);
+  (3) D-GAP alternative (b), integrator on the acceleration error. (1)+(2) keep one mechanism and are tried first.
+- Test: probe TB 0.3 s, seed 1 (results/g5_g510_s150). Accept (1) only with G2 outer-cell margin at the new TB.
+- Overturn: TB 0.3 s still loses > 2.0 m, or costs the outer-break PM below 45 deg -> candidate (3), or owner Q9 (c).
+- Physical floor: with a 0.033 s motor and ~0.1 s INDI response the ideal loss is ~0.1-0.3 m, so 2.0 m is reachable;
+  the row is not failed by physics (PID loses > 3 m).

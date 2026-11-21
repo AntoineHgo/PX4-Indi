@@ -72,3 +72,6 @@ So the row as flown measures the transient of an instantaneous 73 % thrust-effec
 saturation. Proposal (c) A [recommended]: SAT part = scale chosen so hover needs >= 1.0 command (e.g. THR_SC <= hover
 fraction) for 5 s with the limits as written, flown after a one-flight check that motors sit at >= 0.99; the 73 %
 drop kept as a G3-type side probe, not a G5.10 pass condition. B: keep as is (row FAIL counted). Not blocking.
+Q9 note 3 (S150): the 2.7 m loss is a controller limit, not a test defect: the D-GAP collective blend (TB 1.0 s,
+bound 0.3 < the 0.36 gap) absorbs the drop too slowly (DECISIONS D-GAP-G510). Being fixed on the INDI side whatever
+the answer to (c); (c) still decides whether the row also needs a truly saturating part.

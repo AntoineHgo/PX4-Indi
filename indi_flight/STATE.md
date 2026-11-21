@@ -21,9 +21,11 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    0.3 s after thrust returns (PID 33), LOC by checker, alt 2.21 m. S148: A-48 CLOSED = injector artefact (8 seq.
    per-motor EC sets); uniform faults now via atomic SIM_GZ_THR_SC (run_scenario.py, UNKEYED). Re-fly s148 s2: tilt
    45.3 deg = MPC_TILTMAX_AIR, no LOC; s1-s3 alt 2.67-2.74 m FAIL (2.0), back 3.3-3.5 s; PID s2 watchdog abort >3 m.
-   S149 split (altloss_split.md, unkeyed): SAT part never saturates (cmd max 0.71); 2.7 m lost in 1.7 s after the
-   drop, 0 after REC -> Q9 note 2 (row invalid as saturation test). NEXT: key2 THR_SC + check whether THR_SC scales
-   omega (gap-remover rate sets the 1.5 s ramp?); then build a truly saturating SAT variant (1 pre-test flight).
+   S149 split: SAT part never saturates (cmd max 0.71) -> Q9 note 2. S150 CAUSE (D-GAP-G510): THR_SC scales omega;
+   blend b (TB 1.0, clamp kMaxBlend 0.3 < gap 0.36) too slow. Probe TB 0.3 s1 (results/g5_g510_s150): 1.95 m, back
+   1.44 s, b still clamped. NEXT (G5.10 alt loss): (i) firmware kMaxBlend 0.3 -> 0.5 (sonnet impl + test that fails
+   at 0.3, key2), (ii) G2 outer acceleration-break margin at TB 0.3 (accept condition), (iii) then 3 seeds TB 0.3.
+   Truly saturating variant waits for Q9 (c).
 1-3. Probes PASS, re-fly at freeze: G5.4 9/9 (S135), G5.1 6/6 K_Y 20 (S137), G5.2 6/6 (S138, g52_check keyed).
 3b. G5.3 hold PASS 3/3 (S139). G5.7 leaveP: S139 s2/s3 FAIL (5.17-5.25 deg) were the GNSS set-up fault: S143 matched
    re-fly s2 3.62, s3 3.55 deg PASS, thrust step 3.0 % (results/g5_g57_s143_gnss); s1 PASS S139. G5.7 PASS 3/3 as probe;
@@ -43,10 +45,8 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    or align firmware ACT_TC/W_MAX with bench (G7 lesson 12). Guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
 5. G7 (deferred, stage 7): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site (K128 MAJOR), checker
    self-tests for passthrough_check/offb_vel_check.
-RC149 filed (design/route_check_149.md): on path; G5.5/G5.10 trace to D-outer-arch base A. Acted: NEXT = G5.10
-  cause search, OFFLINE first on s148 logs (split alt loss: thrust deficit during SAT vs z-loop response after exit);
-  re-open saturation handling only if recoverable altitude was lost, else numbers to owner via Q9. Cuts: no more PID
-  G5.10 runs; no 3 m/s 3-seed flying before Q8 add.3(i); runner MC_INDI_EN alias deferred to stage 7. Next RC: S154.
+RC149 (design/route_check_149.md) cuts: no more PID G5.10 runs; no 3 m/s 3-seed flying before Q8 add.3(i); runner
+  MC_INDI_EN alias deferred to stage 7. Next RC: S154.
 Rule (RC64/RC74): 1 session per inner-loop law change; no anomaly chase unless a gate test fails.
 G3/G5 batches before the stage-6 freeze are PROBES (RC113). G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1.
 Offline G2 todo before stage 6: outer-cell margin key, linear outer-loop model, A-36/A-39 bound, 267 Hz rows
