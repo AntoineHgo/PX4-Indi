@@ -159,7 +159,11 @@ gate is decided on the frozen final pair in stage 6 with the same tests.
   - vel/pos and accel x/y/z, 800/400, 2 seeds: 24/24 meet thresholds, KEYED S164 (results/g2_outer_freeze_s163,
     key2.md: 22/24 within 3 deg/1 dB, 2 z-accel cells differ on a crossing in a -27 dB notch, reported at the smaller
     GM 19.7 dB). Model x-check S164 (xcheck.md, bench/g2_outer_model_s164.py): PM 8/8 within 10 deg; xy GM model
-    ~5 dB conservative (A-50, verdict independent); z no crossing in either. 267 Hz rows not flown.
+    ~5 dB conservative (A-50, verdict independent); z no crossing in either.
+  - 267 Hz reported (S165, `bash indi_flight/results/g2_freeze_s160/chain267.sh`, seed 1, UNKEYED): rate roll GM 11.5 dB,
+    PM 54.3 deg, DM 52 ms (pretest-gate rate RMS 0.0205 vs 0.02 marginal); outer z PT1/PT0 PM 62.8/65.6 deg, no
+    phase crossover, DM 245/261 ms (PT0 hole check: 1 hole 6.25 ms, count-disagree flag at 266.7 Hz). Rate GM falls
+    19.3/15.4/11.5 dB at 800/400/267 Hz (A-51 trend). Rate x-check S165: xcheck_rate.md, 12/15 agree (A-51).
   - Phase-plateau GM (S164, results/g2_plateau_s164.md, `python3 indi_flight/bench/g2_plateau_gm_s164.py`): 67 cells;
     literal rule 66/67, att ax2_r800_s2 hit by a 0.2 Hz bin with |L| > 1 (gain-reduction margin 18.5 dB). Defect fix
     proposed in Q13 (plateau over |L| < 1, reduction margin >= 6 dB reported); under it 67/67 PASS. Pending owner.

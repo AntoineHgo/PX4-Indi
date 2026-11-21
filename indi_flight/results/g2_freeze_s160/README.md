@@ -55,3 +55,15 @@ All 16 cells: GM >= 6 dB, PM >= 45 deg, DM >= 2 periods + telemetry latency; 18/
 bench/second_key_m3a_s100.py (independent of m3a_margins_pretest.py; limits 1 dB / 3 deg). With S160 the rate-loop cell
 set at the freeze is complete (roll/pitch/yaw x 800/400 x measured/model-only + fwdef roll 800). Still open for the
 G2 rate row: linear-model x-check at the freeze params, phase-plateau GM rule (min 1/|L| within 10 deg of -180).
+
+### S165: 267 Hz reported cells and rate model x-check
+Command: `bash indi_flight/results/g2_freeze_s160/chain267.sh` (serial, docker idle before start; status chain267_status.txt).
+- roll267_s1 (rate roll, PT input/output as the freeze recipe): GM 11.5 dB, PM 54.3 deg, DM 52.4 ms, 18/18 bins;
+  logger 0 dropouts, torque setpoint 266.7 Hz (hole_report not run on this cell). Pretest gate: "rate RMS axis 0 0.0205 >= 0.02" FAIL (marginal pre-injection
+  hover rate RMS); reported, not pass evidence (267 Hz is "reported" in G2).
+- Outer z (results/g2_outer_freeze_s163/pt{1,0}_ax3_r267_s1_*): PM 62.8 / 65.6 deg, GM none (min arg -151 / -171 deg),
+  DM 245 / 261 ms, f_c 0.71 / 0.70 Hz. Holes: PT1 PASS; PT0 controller class FAIL = 1 hole of 6.25 ms (excess 2.5 ms)
+  plus count-disagree flags from the non-integer 266.7 Hz rate.
+- Trend: rate GM 19.3 / 15.4 / 11.5 dB at 800 / 400 / 267 Hz; the linear model misses this rate dependence (A-51).
+- Model x-check (bench/g2_rate_model_s165.py, --selftest): xcheck_rate.md, 12/15 groups agree, all cells pass both ways.
+UNKEYED (seed 1 only; 267 Hz is reported, not a pass condition).

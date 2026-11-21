@@ -22,7 +22,7 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    S158-S164 (JOURNAL): G5 freeze rows scored + KEYED; G5.11 T10 fix d1b65d0f09 (yaw 2/3 PASS, xy FAIL Q12);
    G2 rate + att + outer 67/67 cells PASS + KEYED at freeze (plateau GM per Q13 A), outer model x-check done (A-50).
    S165: rate + att yaw model x-check DONE (xcheck_rate.md, 12/15 agree, A-51, verdict independent).
-   NEXT: 267 Hz "reported" = 1 rate + 1 outer cell; then G4 (G4 does not wait for 267 Hz). Next RC: S168.
+   267 Hz reported cells flown S165 (GATES G2 freeze status). NEXT: G4 (RC159 order G2 -> G4 -> G3). Next RC: S168.
    G5.2 posctl z settle s1 4.15 s FAIL (EKF2 height error, Q10; PID ref PASS).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
    events and maybe_landed / EKF z injectability -> Q8 (scored at option A, not blocking).
@@ -64,7 +64,6 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S165b | G2 267 Hz reported cells (outer z pt1/pt0 s1, rate roll s1) | bash chain | results/g2_freeze_s160/chain267_status.txt (CHAIN267_END), outer jsons in g2_outer_freeze_s163/pt*_ax3_r267_s1* | `bash indi_flight/results/g2_freeze_s160/chain267.sh` (skips done cells); then margins + table |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
