@@ -582,3 +582,13 @@ Each fixes a defect of a test; no threshold is lowered. Decision record D-OWNER-
 - G4 command chatter (Q18 A): the 20-100 Hz detector skips 4 s windows that overlap [ground_contact - 1 s,
   landed + 1 s], in both stacks. Touchdown stays judged by G5.4. The skipped land-window values are reported for
   both stacks. The freeze-7 G4 runs are re-scored with the keyed scripts (no re-fly).
+
+## G4 re-score under Q18 (S180, 2026-11-21): verdict unchanged, NOT PASSED
+Evidence: `results/freeze7_s177/q18_rescore_s180/KEY1.md`, `KEY2.md` (both keys with the skip, self-tests incl. break
+check). Both keys' gate span is the airborne span, which ends 1-2 s before ground_contact: 0 windows skipped, no
+verdict moves. Hover 1/9 FAIL: hover_harsh_s1 20.0 Hz, 9.7e-4, all 4 motors, take-off/loiter (not touchdown:
+ground_contact 104.5 s, flag at ~12-18 s key 1); PID hover_harsh s1-s3 clean. Cruise 9/9 FAIL: 33.0-33.5 Hz line in
+the lemniscate, both keys. The AUTO_LAND 20-22 Hz flags came from the whole-log phase script (S176), not the gate
+span; with the span extended to the last sample, land windows hold 20-23.5 Hz 1.2-4.7e-3 (INDI) and 20-26 Hz
+1.1-1.5e-3 (PID, 5 runs), reported only. Both keys agree on the GP probe (XY_P 1.2) lemniscate lines m3 33.5 Hz and
+m2 89.25 Hz (`results/g55_gain_probe_s179/RECONCILE_S180.md`): F2 targets these.
