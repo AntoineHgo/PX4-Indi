@@ -468,6 +468,18 @@ vz over the final descent within +-20 % of MPC_LAND_SPEED; disarm <= COM_DISARM_
   HOLD brakes by design, so the speed rule above cannot be met. Validity = truth horizontal speed >= 1.5 m/s at each
   of the 4 edges that leave posctl (P->A, P->S, P->H, P->A); all 10 edges stay gated with unchanged limits
   (`g57_check.py --validity leaveP`).
+- G5.11 exact test (S160, before its first scoring; the row did not state reference, window or applied time).
+  Flights: the freeze `g5_events` runs (3 seeds), events `ekf_yaw` (+5 deg) and `ekf_xy` (1 m). Applied time t_a =
+  first sample where the firmware reset counter increments (`vehicle_attitude.quat_reset_counter`,
+  `vehicle_local_position.xy_reset_counter`; Q8 option A). Validity: counter increments once, nav_state constant over
+  [t_a - 1 s, t_a + 8 s] (value reported), no other event in that window. Per event, truth only (shared definitions):
+  tilt command jump = max over [t_a, t_a + 1 s] of the angle between the `vehicle_attitude_setpoint` body z axis and
+  its mean over [t_a - 1 s, t_a) <= 1 deg (body z is yaw-invariant, so the yaw reset is judged on tilt as written);
+  truth excursion = max 3-D distance of truth position over [t_a, t_a + 5 s] from its mean over [t_a - 1 s, t_a)
+  <= 0.5 m; no sustained oscillation over [t_a, t_a + 8 s] (shared-definition detector, body rates; 8 s gives the
+  5 windows of 4 s needed for 3 consecutive flags). Reported: truth yaw change, max setpoint yaw step. z reset 0.5 m:
+  not injectable firmware-free (Q8 b); "not tested" until a firmware-free trigger (EKF2_HGT_REF switch probe) or the
+  owner answer. 3 seeds. Checker `bench/g511_check.py` (self-test, break-checked; second key before the verdict counts).
 
 ### 6. G6 Defaults and identification from a wrong start
 
