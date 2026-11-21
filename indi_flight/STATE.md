@@ -75,6 +75,8 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S154a | route check 154 | sonnet | design/route_check_154.md | relaunch if file missing |
+| S154b | pre-freeze review 2/3 (inner-loop delta since 772e5fe72e vs D-S3-SPTO/D-DEFAULTS-FW/D-KY/D-A18/F-1) | opus | design/prefreeze_r2_stage3.md | relaunch if missing |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
