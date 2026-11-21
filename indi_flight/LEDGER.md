@@ -270,3 +270,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S168 | sonnet | key2 of true-rpm hook 10c741af4b (code vs spec) | results/g4_truth_s168/key2_hook.md | done, 10 calls, no BLOCKING, item 6 verified on log by orchestrator |
 | S168 | sonnet | route check 168 | design/route_check_168.md | done, 7 calls, on path, cuts acted on in STATE |
 | S168 | sonnet | key2 re-implementation of G4 metrics | bench/g4_metrics_key2.py, results/g4_pretest_s168/key2_metrics.md | done, 10 calls, agree <=2 % except harsh C20 7 % (A-52) |
+| S169 | sonnet | A-52 closing test, both G4 keys on raw 800 Hz samples | results/g4_pretest_s168/a52_raw.md, bench/a52_raw_check.py | done, 9 calls, PASS <=0.03 %, cause key2 grid phase; A-53 opened (rpm stream gaps) |

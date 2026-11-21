@@ -2,6 +2,7 @@
 # G4 noise and effort gate (GATES section 4). Run from the repo root.
 #   gate_g4.sh fly   OUT [profile flight seed]   fly one run, or all 18 (3 profiles x hover/cruise x 3 seeds), serial
 #   gate_g4.sh score OUT                          score every run dir in OUT with bench/g4_metrics.py -> OUT/g4_table.md
+#     (score needs pyulog/scipy: run it in Docker, indi_project/docker/run.sh -n g4score -t 900 -- sh <this> score OUT)
 # Acro row: not yet flown (stick quantisation model deferred, RC168).
 # Config: freeze params (D-FREEZE-6), matched GNSS 110 ms, SIM_GZ_ESC_FB=2 default of the runner, profiles D-NOISE-PROF.
 set -u
