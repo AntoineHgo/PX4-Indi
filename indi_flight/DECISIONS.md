@@ -1062,3 +1062,17 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   criterion met on one seed, thin margin (4.2 vs 5e-4). Freeze-8 candidate = F2 + F4 + MC_INDI_XY_P 1.2, after key2
   and a test that fails without the filter change (lesson 20). Not yet checked: G2-STEP attitude step and G5.5
   tracking with the slower lead (in the freeze-8 re-fly list).
+
+## D-FREEZE-8 (S181, 2026-11-21): freeze-8 declared
+- Firmware: d2f3845292 (last commit under src/) = freeze-7 + F2 9dd5f76382 (setpoint extrapolation) + F4 d65111154b
+  (kSetpointLeadTc 0.03, gtest 269f6c301d break-checked) + MC_INDI_XY_P default 1.2 (D-G4-STEPBACK / G2 remedy).
+  Key2 code-to-spec (design/key2_freeze8_s181.md): 0 blocking; M1 (bench Tc 0.01) fixed eb1c1bfcb4; minors m1
+  (extrapolation in every mode, not offboard only: flown by the G5 rows below), m2-m4 (fallback setpoint not
+  extrapolated, no stream timeout, sender time base) to G7. Pre-test results/freeze8_pretest_s181: cruise_typ s2/s3
+  89 Hz 3.8-4.2e-4 (limit 5e-4), 0 flagged; G2-STEP att 3/3 (yaw settle 1139 ms of 1350, S64 ~920 ms: noted).
+- Configuration: results/g5_freeze_s157/params.params, MC_INDI_XY_P/XY_VP NOT overridden (firmware 1.2/3.6).
+- Rows to re-fly (F4 touches the inner library, XY_P the outer gains): G2 outer cells (freeze-7 set) + 2 rate/att
+  spot cells + G2-STEP 3 seeds; G4 18 runs; G5.5 o1-o7 + offb_vel_step x3; G5.3 hold + mission x3; G5.4 x3;
+  G5 event rows in hover 1 seed confirm; G5.10 stabilized part 3 seeds (sat part waits results/g5_10_freeze7_s178/
+  SAT_SETUP_S181.md); G3 pre-test after its set-up fix. All freeze-7 evidence of these rows is superseded.
+- Overturn: as D-FREEZE-6 (a row FAIL caused in frozen firmware -> one session cause search, then re-open).
