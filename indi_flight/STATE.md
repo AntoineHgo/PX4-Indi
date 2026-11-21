@@ -17,7 +17,8 @@
 3. G5: freeze-7 G5.5 24/24, G5.3 mission 3/3, G5.4 6/6 PASS (SCORES.md). G5.3 hold (gust_x) IS in the D-FREEZE-7 list
    ("G5.3/G5.4 x3"): in the freeze-8 queue. G5.10: (a) key2 done (KEY2_MOTORS_S181.md): sat times agree, key1
    score_motors.py has 4 defects (exit_status LOC, stab tilt limit MAN_TILT_MAX, recovery = att error to stick sp,
-   KeyError on aborted runs): fix key1 to spec (sonnet) then re-compare; (b) SAT set-up fault (D-G510-SAT-SETUP):
+   KeyError on aborted runs): FIXED S181 -> bench/g510_score_motors.py, keys AGREE; its SAT_MIN_FRAC 0.5 (all-4
+   motors >= 0.99 share of window) is a scenario-validity check, not in GATES: confirm it reports INVALID not FAIL; (b) SAT set-up fault (D-G510-SAT-SETUP):
    ramp SIM_GZ_THR_SC in hover before the window, pre-test INDI + PID 1 seed; (c) then 3 seeds INDI (+PID ref),
    stabilized part Q17 A; then G5 verdict. Run after the freeze-8 queue (no parallel docker for gate evidence).
 4. G3 set-up (owner step 4), after G2/G4/G5 queue: tel_frozen hook (gz_bridge bit-identical rpm injector, two keys;
@@ -54,7 +55,6 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | Q8 | freeze-8 re-fly queue (detached docker) | - | results/freeze8_s181/ | rerun queue.sh (idempotent) |
-| K1 | fix key1 score_motors -> bench/g510_score_motors.py | sonnet | KEY2_MOTORS_S181.md "Key1 fixed" | re-brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
