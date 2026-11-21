@@ -47,3 +47,22 @@ text in JOURNAL.md S187).
 
 Q23 closed S191 (owner answer B: full revert of aa4fd2654a, D-JFF-KEEP overturned for it; DECISIONS
 D-OWNER-Q23; full text in JOURNAL.md S191).
+
+## Q24 (S194, 2026-11-21): G3 pre-test at FREEZE-10, four draws fail (BLOCKING for G3 only)
+Context. FREEZE-10 pre-test (results/freeze10_s193/g3_pretest/README.md, 20 draws, seed 173): key 1 16/20, key 2
+16/20, both keys fail 02, 03, 05, 08 (item 2 = sustained oscillation, item 3 = steady xy error).
+- 02/05: GNSS latency uncompensated by +95/+84 ms (GATES l.289 draws latency + U[-100,+100] ms in 50 % of runs).
+  q ~1.45 Hz accel-loop oscillation (detector reports its 2.0 Hz band floor), 13-16 dps, xy error ~0.49-0.5 m.
+  S192 probe: same draws with matched GNSS pass items 1-3 both keys. PID passes 02/05 (S187 refs). INDI-specific,
+  cause shown: the outer loop (D-OFFB-POSVEL, XY gains 1.2/2.4) is less tolerant of a stale position than PID.
+- 03 (+20 ms): INDI q 2.0-2.5 Hz, 19-20 dps. PID ref: key 1 FAIL (q 2.5 Hz), key 2 PASS.
+- 08 (-63 ms): INDI q 10.75 Hz ~9 dps; PID fails both keys (p 11 Hz, r 8 Hz). Shared with PID.
+Options.
+ A. Keep the gate. After the queue ends, probe 02/05 (and 03) with lower XY_P/VEL_P (config only). If they pass and
+    the G5.5/G5.7 probes hold, declare FREEZE-11 and re-fly G2 outer/G4/G5 outer (~4-5 h CPU, ~2 sessions).
+ B. Narrow the mismatch to U[-50,+50] ms and add "EKF2/SENS GNSS delay set within 50 ms of the measured
+    latency" to the F-3 requirements and bring-up checklist. Gate change after first test: your call only.
+ C. Keep the gate and the gains; G3 NOT PASSED for uncompensated GNSS latency above ~+60 ms, stated as a limit.
+ For 08 (and 03 key 1): count as a scenario property shared with PID (reported, not an INDI failure), or count.
+Recommendation: A for 02/05/03 (honest fix, config only); 08 reported as shared with PID, not counted against INDI.
+Meanwhile: the queue (G5, G4, G2 outer) runs on; no G3 re-fly, re-score or note until answered. Not blocked overall.
