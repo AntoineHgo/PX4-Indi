@@ -257,6 +257,11 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 		in.z_only = deriveZOnly(_vehicle_control_mode.flag_control_position_enabled,
 					_vehicle_control_mode.flag_control_velocity_enabled);
 		in.thrust_dir = Vector3f(local_pos_sp.thrust[0], local_pos_sp.thrust[1], local_pos_sp.thrust[2]);
+
+		if (in.z_only && isZeroThrustDir(in.thrust_dir(0), in.thrust_dir(1), in.thrust_dir(2))) {
+			in.thrust_dir = Vector3f(0.f, 0.f, -1.f); // review r1 F1: ALTCTL on ground, stock thrust 0
+		}
+
 		in.q = _q;
 		const bool model_acc = (mode == StageMode::IndiModelAccel);
 		// D-STAGE-STALE (a): the library substitutes the delayed modelled specific force (f_b_valid = false)
@@ -328,7 +333,7 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 	if (mode == StageMode::Hold) {
 		// zero-order hold of the last attitude setpoint and thrust published by an INDI cycle. Edge: if no INDI cycle
 		// has run yet, the held values are those of the last bypass cycle (the ground/rampup handover value, stored
-		// there); with no cycle at all, a level attitude at hover thrust. The stock thrust is never published.
+		// there); with no cycle at all, a level attitude at hover thrust in flight, zero thrust otherwise (review r1 F1). The stock thrust is never published.
 		if (_held_valid) {
 			for (int i = 0; i < 4; i++) { att_sp.q_d[i] = _held_q_d[i]; }
 
@@ -337,7 +342,7 @@ void McIndiPosControl::runIndiStage(float dt, hrt_abstime now, bool want_active,
 			_last_thrust = -_held_thrust_body[2];
 
 		} else {
-			const Vector3f thr_vec(0.f, 0.f, -(PX4_ISFINITE(ht) ? ht : 0.5f));
+			const Vector3f thr_vec(0.f, 0.f, -holdFallbackThrust(flying, ht));
 			const float yaw_hold = PX4_ISFINITE(yaw_sp) ? yaw_sp : (att_ok ? matrix::Eulerf(_q).psi() : 0.f);
 			ControlMath::thrustToAttitude(thr_vec, yaw_hold, att_sp);
 			thr_vec.copyTo(local_pos_sp.thrust);

@@ -80,3 +80,19 @@ TEST(IndiStageModeTest, ArmEdgesResetStageState)
 	EXPECT_FALSE(shouldResetStageState(true, true));
 	EXPECT_FALSE(shouldResetStageState(false, false));
 }
+
+TEST(IndiStageModeTest, ZeroStockThrustIsStraightUpInZOnly)
+{
+	EXPECT_TRUE(isZeroThrustDir(0.f, 0.f, 0.f));   // ALTCTL on ground, MPC thrust min 0
+	EXPECT_TRUE(isZeroThrustDir(0.f, 0.f, -0.f));
+	EXPECT_FALSE(isZeroThrustDir(0.f, 0.f, -0.1f)); // a real direction is kept
+	EXPECT_FALSE(isZeroThrustDir(0.01f, 0.f, 0.f));
+	EXPECT_FALSE(isZeroThrustDir(NAN, 0.f, 0.f));   // non-finite still goes to the D-STAGE-STALE hold
+}
+
+TEST(IndiStageModeTest, HoldFallbackNeverHoverThrustOnGround)
+{
+	EXPECT_FLOAT_EQ(holdFallbackThrust(false, 0.3f), 0.f);
+	EXPECT_FLOAT_EQ(holdFallbackThrust(true, 0.3f), 0.3f);
+	EXPECT_FLOAT_EQ(holdFallbackThrust(true, NAN), 0.5f);
+}

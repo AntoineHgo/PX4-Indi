@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 /**
  * Pure decision logic of the INDI outer-loop stage (D-STAGE-STALE, owner rule F-1: no PID fallback).
  * Header only, no PX4 dependency, so it is unit tested on its own.
@@ -54,6 +56,22 @@ inline bool useModelledForce(bool takeoff_flight, bool ground_contact, bool mayb
 inline bool deriveZOnly(bool pos, bool vel)
 {
 	return !(pos || vel);
+}
+
+/**
+ * D-ALTCTL-Z on the ground (pre-freeze review r1 F1): with minimum thrust 0 the stock chain gives a zero thrust
+ * vector, whose direction the library rejects (stage Hold). A finite zero vector means "no tilt": use straight up.
+ */
+inline bool isZeroThrustDir(float x, float y, float z)
+{
+	const float n2 = x * x + y * y + z * z;
+	return std::isfinite(n2) && (n2 < 1e-12f);
+}
+
+/** Hold with no held INDI output (pre-freeze review r1 F1): minimum thrust 0 unless flying, never hover thrust on ground. */
+inline float holdFallbackThrust(bool flying, float ht)
+{
+	return flying ? (std::isfinite(ht) ? ht : 0.5f) : 0.f;
 }
 
 /** Arm or disarm edge: the stage state (blend b, held setpoint, stale latch, differencing) restarts for the next arm. */
