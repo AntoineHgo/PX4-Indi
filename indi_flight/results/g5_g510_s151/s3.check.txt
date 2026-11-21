@@ -1,0 +1,26 @@
+run: indi_flight/results/g5_g510_s151/s3
+scenario: sat_sustained
+seed: 3
+truth_source: sim_ground_truth
+events_s: {'settle': 55.690999999999995, 'sat': 58.690999999999995, 'rec': 63.701, 'agg': 73.702, 'aghold': 81.712, 'end': 93.712}
+z_pre_m: 5.061023712158203
+alt_loss_m: 1.7580044269561768
+tilt_max_deg: 45.344757080078125
+sat_frac_sat_part: 0.9488522954091816
+sat_frac_rec_part: 0.0
+sat_frac_agg_part: 0.0
+last_sat_agg_s: None
+back_s_sat: 1.9252499999999984
+back_s_agg: None
+overshoot_x_sat_m: 0.04548526927828789
+overshoot_x_agg_m: 1.9321696870028973
+loc: False
+verdict: {'no_loc': True, 'alt_loss': True, 'tilt': False, 'back_sat': True, 'back_agg': False}
+invalid: ['no saturation in AGG part']
+pass: False
+PASS no_loc
+PASS alt_loss
+FAIL tilt
+PASS back_sat
+FAIL back_agg
+RESULT INVALID
