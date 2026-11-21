@@ -13,10 +13,12 @@
    chase). G5.10 (SAT dropped Q21) stabilized part PASS 3/3 both keys (freeze9_s183/g510_stab, S188).
    D-FREEZE-9-GAP: G5.1/G5.2/G5.7 never re-flown since freeze-6 -> T8 batch (chained after T7). After T8 scored
    with both keys: G5 verdict in GATES.md + GATE_STATUS.tsv.
-4. G3: Q22 answered and acted on S187 (box x[0.8, 1.2] + tau fix, sampler keyed, draws in results/g3_box_s187).
-   Next: re-fly the 20-run pre-test on the new draws (same command as S173, out dir results/g3_pretest_s187), score
-   with both keys (rescore_v4 / rescore_v3 scripts of results/g3_excursion_s186). When clean, write "G3 set-up
-   fixed, ready for flight chain" here + WAIT_OWNER. Run 17 old draw (e 1.52): report only, both stacks' values.
+4. G3: pre-test re-flown on Q22 draws (S188, results/g3_pretest_s187, ANALYSIS_S188.md): NOT clean, both keys
+   10/20 FAIL item 2 (p/q osc 2.5-7.3 Hz; 00/05/10/16/17 before trajectory, 02/03/08/09/13 at trajectory/fault;
+   items 1 all pass, item 3 fails 02/05). New vs S186: 00, 10, 16 (16 = stab, no fault, no wind). Model predicts
+   all 20 stable (PM 45-78). T9 PID refs of the 10 runs chained after T8 (pid_refs/). Next: read PID scores. If PID
+   shows the same item-2 fails -> owner question (detector/test defect?), BLOCKING G3. If INDI-only -> one session
+   cause search (start with 16/10: stab, no faults), then re-open the decision. Run 17 old draw: report only.
 5. G7 (stage 7, not before G2/G4/G5 verdicts): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site
    (K128 MAJOR), D-JFF-SOURCE case, D-OFFB-POSVEL wiring test, omega_ff step on offboard entry (key2_jffoffb MINOR),
    checker self-tests passthrough_check/offb_vel_check, g511 yaw p95 subtraction test (g511_check.py:184), g510
@@ -49,7 +51,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 | T1 | G4 guard Q20 key 1: DONE (0 checked, 0 FAIL; max 4.84e-4) | sonnet | results/freeze9_s183/g4/GUARD_Q20_KEY1.md | - |
 | T4 | G5.10 SAT Q21 feasibility: DONE, invalid both stacks -> SAT dropped (C) | sonnet | results/g510_q21_s187/README.md | - |
 | T8 | G5.1/G5.2/G5.7 freeze-9 re-fly, both keys, chained after T7 (S188) | sonnet | results/freeze9_s183/g5_modes/README.md | README resume section |
-| T7 | G3 pre-test re-fly, 20 runs on Q22 draws, chained after T6 batch (S188) | sonnet | results/g3_pretest_s187/README.md | README resume section |
+| T9 | G3 PID refs of the 10 failing pre-test runs, both keys, chained after T8 (S188) | sonnet | results/g3_pretest_s187/pid_refs/README.md (DONE marker) | README resume section |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
