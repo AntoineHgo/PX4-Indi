@@ -254,3 +254,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S157 | G5 freeze batch2.sh + checks.sh assembly | sonnet | results/g5_freeze_s157/batch2_notes.md | done, 15 calls, ~46k tok; o5-o7 args and g5_events vib passthrough unverified |
 | S159 | key2 G5.5+G5.7 | sonnet | 22 calls, ~$0.6 | 27/27 INDI verdicts agree |
 | S159 | route check 159 | sonnet | 7 calls, ~$0.15 | filed |
+| S159 | key2 G5.1+G5.2 | sonnet | 19 calls, ~$0.6 | 17/17 verdicts agree |

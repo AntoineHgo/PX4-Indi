@@ -25,7 +25,7 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    above G5.1 limit 3/3 = 0.5x K gate (probe ID_OK 1 PASSES), no LOC: reported, G5.1 is at identified gains.
    S159: RC159 filed (+ design/route_check_159_response.md: next G2 freeze cells -> G4 -> G3). Key2 on freeze set:
    G5.4/G5.8/G5.9 all agree (key2_g54_g58_g59.md); G5.5/G5.7 27/27 INDI verdicts agree (key2_g55_g57.md; partial
-   LOC in key2 noted); G5.1/G5.2: see key2_g51_g52.md. NEXT S160: G5 verdict table in GATES/README, then G2 freeze
+   LOC in key2 noted); G5.1/G5.2 17/17 agree (key2_g51_g52.md). ALL G5 freeze checkers KEYED. NEXT S160: G5 verdict table in GATES/README, then G2 freeze
    cells (rate roll/pitch 400+800, att yaw, outer cells, fwdef cell). Unverified: batch2 o5-o7 args.
    Seed 1: G5.1 acro/stab, G5.2 altctl PASS; G5.2 posctl z settle 4.15 s FAIL (> 4.0): cause
    search DONE: EKF2 height error -0.08 m decaying ~5 s, controller holds estimate (README); Q10 OPEN (not blocking);
@@ -72,7 +72,6 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S159b | key2 G5.1+G5.2 on freeze set | sonnet | bench/g51_g52_key2.py, results/g5_freeze_s157/key2_g51_g52.md | relaunch |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
