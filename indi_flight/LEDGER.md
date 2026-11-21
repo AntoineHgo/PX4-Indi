@@ -272,3 +272,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S168 | sonnet | key2 re-implementation of G4 metrics | bench/g4_metrics_key2.py, results/g4_pretest_s168/key2_metrics.md | done, 10 calls, agree <=2 % except harsh C20 7 % (A-52) |
 | S169 | sonnet | A-52 closing test, both G4 keys on raw 800 Hz samples | results/g4_pretest_s168/a52_raw.md, bench/a52_raw_check.py | done, 9 calls, PASS <=0.03 %, cause key2 grid phase; A-53 opened (rpm stream gaps) |
 | S169 | sonnet | build g3_checks.py (G3 items 1-3 + G4 chatter), self-test, break-check | bench/g3_checks.py, results/g4_pretest_s168/g3_checks_build.md | done, 14 calls, UNKEYED; flags 70 Hz command line (A-54) |
+| S170 | sonnet | blind key2 of g3_checks.py | bench/g3_checks_key2.py, results/g4_gate_s169/g3_key2.md | done, 9 calls, items 1/3 + harsh chatter agree; item 2 span disagreement (landing); ratio flags quiet (A-55) |

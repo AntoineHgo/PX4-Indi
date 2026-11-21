@@ -150,3 +150,6 @@ Options: A [recommended, test-defect fix, lesson 6]: a line counts as chatter wh
 (+-2 Hz) >= one DShot step (5e-4 of full scale); ratio reported. B: keep the clause as written: G4 FAIL recorded,
 stack-independent cause. C: change the vibration model (FIFO mean): line ~4x lower in power, still FAIL; not advised.
 Meanwhile: G4 verdict written both ways; key2 of g3_checks.py; G3 preparation continues.
+Q14 addendum (S170, later): the blind key2 of the checker (results/g4_gate_s169/g3_key2.md) flags the 20 x median rule
+on every quiet and typical run too (22-39 Hz, command std 2.5e-4): the ratio alone flags a sloped background, not
+only lines. This supports option A (absolute floor); being checked against key1 (A-55) before the G4 verdict.

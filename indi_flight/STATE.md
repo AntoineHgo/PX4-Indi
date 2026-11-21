@@ -34,8 +34,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    chatter clause FAIL 3/3 = 70.00 Hz line, ALSO in PID ref (results/a54_s169) -> shared path (A-54).
    S170: A-54 cause search DONE (results/a54_s170): vibration lines fold through stock IMU/decimation/EKF2 chain, both
    stacks, line 0.5 DShot step; no hook change; owner Q14 (absolute floor on chatter clause), not blocking.
-   NEXT (G4): (1) key2 of g3_checks.py (sonnet, blind, spec = GATES 240-264, 301-306, 359-362) before the G4 verdict.
-   (2) GATES G4 status line + G4 verdict written both ways (Q14 A / B). Then G3 pre-test of ~20. Next RC: S173.
+   S170 key2 of g3_checks.py DONE (results/g4_gate_s169/g3_key2.md): items 1/3 + harsh chatter agree; A-55 opened.
+   NEXT (G4): (1) A-55 closing test (haiku/CPU): key1 g3_checks.py on all 9 hover runs with run.json windows (last 10 s
+   of hold), table vs g3_checks_key2.json; item-2 span per GATES 304 ("whole flight": decide if landing counts, one
+   line in DECISIONS). (2) GATES G4 status line + verdict both ways (Q14 A/B). Then G3 pre-test ~20. Next RC: S173.
    G5.2 posctl z settle s1 4.15 s FAIL (EKF2 height error, Q10; PID ref PASS).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
    events and maybe_landed / EKF z injectability -> Q8 (scored at option A, not blocking).
