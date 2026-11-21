@@ -15,15 +15,12 @@
    D-FREEZE-9-GAP re-fly (S188, freeze9_s183/g5_modes): G5.1 6/6 and G5.2 6/6 PASS both keys; G5.7 FAIL 3/3 both
    keys on hold-edge tracking lag. Cause shown S189 (D-G57-FF): aa4fd2654a revert probe PASS s3/s1. Fix waits
    for Q23 (BLOCKING G5.7; do not re-fly/score G5.7 meanwhile).
-4. G3 (NEXT SESSION, firmware): D-AF-ALIAS fix in mc_indi_pos_control/indi_accel_control: low-pass f_b on every
-   vehicle_acceleration sample (267 Hz) before the 88.9 Hz stage reads it; unit test that fails with the
-   decimating form (break-check); key 2 code-to-spec; fix probe on run 16 + 10 draws (a_f 6.84 Hz line gone,
-   item 2 PASS), then 00/05/17 (2.5-4.2 Hz pos-mode lines: other alias folds?). Evidence: results/g3_pretest_s187/
-   probe_s189/AF_TRACE_S189.md (LPF 5 probe = detector-threshold pass only, not a fix). Then FREEZE-10 with the
-   Q23 fix; invalidated: G2 outer, G4, G5 outer rows, G3 pre-test. PID key 1 vs 2 on 03: key 1 lacks the Q15 A
-   nav-change skip (pid_refs/RECONCILE_S189.md) -> PID passes 03, so 03 is INDI-only too; key 1 G3 scorer needs
-   the skip if GATES applies Q15 A to G3 item 2 (check GATES ~l.555 before the G3 verdict). Shared 08/13 -> owner
-   question with G3 verdict data. Run 17 old draw: report only.
+4. G3: D-AF-ALIAS fixes 2d92dbcf59 + 4afa7a97b6 (keyed) re-flown S191 (results/g3_pretest_s190/README.md): key1
+   15/20, key2 16/20, 2.5-7.3 Hz lines gone. Left: q 2.0 Hz on 02/05/19 (INDI-only in S188 PID refs; 02/05 also
+   item 3 ~0.5 m), 03 (2.0 Hz) and 08 (10.75 Hz) shared with PID. Cause search (one session, S191 agent):
+   results/g3_pretest_s190/CAUSE_S191.md. Then FREEZE-10 with the Q23 fix; invalidated: G2 outer, G4, G5 outer
+   rows, G3 pre-test. GATES l.555 Q15 A nav-change skip is filed under G4 item 2, not G3. Shared 03/08 -> owner
+   question with G3 verdict data.
 5. G7 (stage 7, not before G2/G4/G5 verdicts): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site
    (K128 MAJOR), D-JFF-SOURCE case, D-OFFB-POSVEL wiring test, omega_ff step on offboard entry (key2_jffoffb MINOR),
    checker self-tests passthrough_check/offb_vel_check, g511 yaw p95 subtraction test (g511_check.py:184), g510
@@ -53,7 +50,8 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-(none in flight; S189 agents done and committed. Build probes: guard denies a segment naming indi_project with
+| S191-cause | G3 2.0 Hz q cause on 02/05/19, PID signature on 03/08 | sonnet | results/g3_pretest_s190/CAUSE_S191.md | re-brief from STATE item 4 |
+(S189 agents done and committed. Build probes: guard denies a segment naming indi_project with
 rm/tee/git apply etc.; run each run.sh call alone, redirect only into indi_flight/.)
 
 ## Open problems
