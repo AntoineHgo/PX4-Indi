@@ -28,9 +28,11 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    have no airborne reset (unaffected). G2 attitude 12/12 PASS at freeze, KEYED (results/g2_att_freeze_s162).
    S163 DONE: G2 rate cell set at freeze complete, all PASS + KEYED (g2_freeze_s160 README); outer 24/24 meet
    thresholds, UNKEYED (g2_outer_freeze_s163); GATES G2 "Freeze status" block. 3 cells re-flown (my parallel
-   containers made sim holes; never run docker during a batch). NEXT S164: RC164 first (route check due), then
-   outer margin key2 (sonnet, raw ULog pinj -> margins, no access to pinj_csv.py; ~$0.8), z phase-plateau check,
-   linear-model x-checks (rate at freeze params, outer model), then G4 per RC159 order (G2 -> G4 -> G3).
+   containers made sim holes; never run docker during a batch). RC163 done (design/route_check_163.md), acted on:
+   NEXT S164: outer margin key2 (sonnet, raw ULog -> margins, no access to pinj_csv.py; ~$0.8); ONE plateau-GM script
+   over all freeze cells (z incl.); ONE x-check script (rate at freeze params + att yaw + minimal analytic outer
+   model; disagreement -> ANOMALIES, no model tuning); 267 Hz "reported" = 1 rate + 1 outer cell. G4 does not wait
+   for 267 Hz. Then G4 (RC159 order G2 -> G4 -> G3). Next RC: S168.
    S160: G5 verdict table in freeze README. G5.3 hold re-flown PASS 3/3 + key2. G5.11 exact test + g511_check.py:
    FAIL 6/6 tilt cmd jump. PID ref: xy 7.82 deg FAIL too (stack-indep., Q12). Yaw cause fixed S161 (above).
    Seed 1: G5.1 acro/stab, G5.2 altctl PASS; G5.2 posctl z settle 4.15 s FAIL (> 4.0): cause
