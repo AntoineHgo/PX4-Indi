@@ -20,3 +20,13 @@ feedback-derived from the vibration-noisy estimate (quiet descent RMS 0.2-0.3, h
 Next (part 2, next session): read how omega_ff is built in mc_indi_pos_control / indi_accel_control and which modes
 feed it; confirm by one harsh descent flight with omega_ff zeroed (param or SITL switch, if one exists); then a
 D- entry (gate the FF to setpoint-generated jerk, or filter) as a control-law change (two keys, re-fly G4 + G5 land rows).
+
+## Part 1b (S171, same session): source of omega_ff
+`McIndiPosControl.cpp:1085` takes `_j_ff` from `trajectory_setpoint.jerk` when finite and non-zero (else NaN -> the
+library differences a_ff). In AUTO_LAND the stock trajectory generator publishes jerk = +-4.00 m/s^3 (MPC_JERK_AUTO,
+bang-bang) while the published acceleration setpoint moves by only 0.005-0.024 m/s^2 std per second (harsh_s2 bins
+121-124; jerk sign flips 20-28 per second in 122-124). 4 / g = 0.41 rad/s = 23 deg/s = the observed omega_ff peak.
+Every hover run gets the 23-28 deg/s omega_ff spike at land entry (quiet_s1, typ_s3, harsh_s3, 120-126 s); harsh_s2
+additionally gets the sustained jerk flipping (probably re-planning on the noisy estimate, UNVERIFIED) -> 2 Hz q.
+So the published jerk is not the derivative of the published acceleration: as a feed-forward it is wrong in auto modes.
+Fix candidate: D-JFF-SOURCE (DECISIONS).

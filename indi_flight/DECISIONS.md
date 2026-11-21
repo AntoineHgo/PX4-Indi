@@ -914,3 +914,15 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Check: new self-test case `osc_in_land` (oscillation only in the descent) FAILs item 2 on the fixed key1 and
   passed it wrongly on the old one; break-check PASS. Re-score: keys agree, q flagged on harsh_s2 only (9 hover runs).
 - Overturn: owner reading of "whole flight" that excludes commanded descents.
+
+## D-JFF-SOURCE (S171, 2026-11-21): jerk feed-forward source (A-56). DECIDED, code next session
+- Fact (results/a56_s171): stock `trajectory_setpoint.jerk` in auto modes is the trajectory generator's bang-bang
+  jerk (+-MPC_JERK_AUTO), not the derivative of the published acceleration (std 0.02 m/s^2 while jerk = +-4 m/s^3).
+  Used as FF it commands up to 23 deg/s of body rate that the attitude loop then fights (2 Hz q, G4 item 2 FAIL).
+- Choice: never read `trajectory_setpoint.jerk`; the jerk FF always comes from the library's own difference of
+  a_ff (the existing NaN branch, already what MAVLink offboard flies, so G5.5 and G2 outer cells are unaffected).
+- Alternatives: clamp the jerk (keeps a wrong signal); gate FF off in auto modes (loses FF where a_ff is good);
+  consistency check jerk vs da_ff/dt (more code, F-9).
+- Checks: unit test that a bang-bang jerk with constant a_ff gives omega_ff 0 (fails on today's code); second key on
+  the diff; re-fly G4 hover harsh x3 (item 2 whole flight) and the G5 land/RTL rows; omega_ff peak at land entry < 3 deg/s.
+- Overturn: differenced a_ff FF noisier than the bound in G4, or G5.5 tracking worse.
