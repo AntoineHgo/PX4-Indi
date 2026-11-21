@@ -5,18 +5,17 @@
   D-XY-PICK), config g5_freeze_s157 params (XY gains at firmware defaults 1.2/2.4). D-FREEZE-8 list re-flies in
   queue results/freeze9_s183 (G4 cruise_harsh_s2 excluded until Q19).
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
-- Blocker: none (Q17, Q18 answered A, logged S180).
-  G2 and G4 NOT PASSED at freeze-7; freeze-8 re-fly decides them.
+- Blocker: none (Q19 answered A + PID guard, logged S183: GATES "Owner amendment S183", D-OWNER-Q19).
 ## Next actions (owner order; each names its gate item)
-1. FREEZE-9 queue results/freeze9_s183/queue.sh (resume: rerun it; `tail -n 5 queue_status.tsv`, docker ps;
-   86 items). Score each group with the scripts and keys used at freeze-8 (results/freeze8_s181/G2_SCORES.md,
-   G4_SCORES.md, G5_SCORES.md list the commands), verdicts same session. G2: outer 24 + spot 2 + G2-STEP 9.
-   Sweep (results/xy_sweep_s183, 1 seed) gave spot PM 47.2/48.1, G5.5 0.44-0.45 m: thin, 3 seeds decide; any
-   spot PM < 45 or G5.5 > 0.5 m -> D-XY-PICK overturn (F4-revert probe, then owner question). Yaw G2-STEP settle
-   (freeze-8 1208 ms, limit 1350): no chase while in limit.
-2. G4: Q19 BLOCKING (A = PASSED at freeze-8). Freeze-9 re-flies 17 of 18; cruise_harsh_s2 flown after Q19 answer.
-   Score the 17 effort/hover rows; no note on the Q19 chatter row.
-3. G5: freeze-9 rows re-fly in the queue (freeze-8 all scored rows PASSED). G5.10: (a) scorer
+1. G2 at freeze-9 (results/freeze9_s183/G2_SCORES.md): margins 26/26 + G2-STEP 9/9 (yaw 1180 ms); spot rate
+   PM 47.3 (re-fly, holes PASS) / att 47.4. Hole re-flies (README "Hole re-fly"): 3 outer cells failed holes twice
+   (2nd attempt under host load); 3rd attempt in agent S183-G (holefail_first/, holefail_second/ kept). When clean
+   (or holes <= 0.1 % per GATES evidence limit 1 with margins unchanged): write G2 verdict in GATES + GATE_STATUS.
+2. G4 at freeze-9: agent S183-G flies cruise_harsh_s2 + PID refs (g4_pid/), key2 copy with Q19 skip (*_q19.py:
+   new metric change, give it a second key before the verdict), PID guard table, G4_SCORES.md -> G4 verdict.
+   Then re-score freeze-8 G4 with keyed scripts (owner Q19 order, history, no re-fly).
+3. G5: freeze-9 (G5_SCORES.md) every flown row PASS both keys; G5.5 worst H 0.499 m (o2 s3, limit 0.5: thin, no
+   chase, the D-XY-PICK trade). G5 verdict waits G5.10 only. G5.10: (a) scorer
    bench/g510_score_motors.py keyed S181; SAT_MIN_FRAC is validity only (verdict INVALID); (b) SAT set-up fault (D-G510-SAT-SETUP):
    ramp SIM_GZ_THR_SC in hover before the window, pre-test INDI + PID 1 seed; (c) then 3 seeds INDI (+PID ref),
    stabilized part Q17 A; then G5 verdict. Run after the freeze-8 queue (no parallel docker for gate evidence).
@@ -53,7 +52,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S183-Q | freeze-9 re-fly queue (86 items, nohup) | none (detached) | results/freeze9_s183/queue_status.tsv, README.md | rerun results/freeze9_s183/queue.sh (skips done) |
+| S183-G | G2 3-cell hole re-fly + G4 cruise_harsh_s2, PID refs, Q19 key2, G4_SCORES | sonnet | results/freeze9_s183/README.md, G4_SCORES.md | rerun results/freeze9_s183/queue.sh (skips done), then G4 part from README |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
