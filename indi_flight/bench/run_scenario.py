@@ -174,7 +174,7 @@ class Sim:
         self.wall0 = time.time()
         self.sends = []
         self.sends_pending = []  # blocking rows still waiting for their sim_time_after (next ATTITUDE)
-        self.sp_period = SETPOINT_PERIOD  # sim s between sp() calls
+        self.sp_period = float(os.environ.get("INDI_SP_PERIOD", SETPOINT_PERIOD))  # env: S178 probe P2 only; sim s between sp() calls
         self.sp_grid = False  # --stick-mode: sp() on a fixed sim-time grid (see run), offboard paths unchanged
         self.sticks = []  # S81 --stick-mode: applied MANUAL_CONTROL samples (sim time, raw fields), written to sticks.csv
 
