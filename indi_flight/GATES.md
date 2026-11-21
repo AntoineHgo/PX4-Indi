@@ -156,8 +156,12 @@ gate is decided on the frozen final pair in stage 6 with the same tests.
   - rate roll/pitch/yaw x 800/400 x measured/model-only (2-3 seeds) + fwdef roll 800: all PASS, KEYED
     (results/g2_freeze_s160/README.md). Open: linear-model x-check at freeze params, phase-plateau GM rule.
   - attitude roll/pitch/yaw 800/400: 12/12 PASS, KEYED (results/g2_att_freeze_s162). Open: yaw model x-check.
-  - vel/pos and accel x/y/z, 800/400, 2 seeds: 24/24 meet thresholds, UNKEYED (results/g2_outer_freeze_s163).
-    Open: outer margin key2, z phase-plateau check, linear outer-loop model. 267 Hz rows not flown.
+  - vel/pos and accel x/y/z, 800/400, 2 seeds: 24/24 meet thresholds, KEYED S164 (results/g2_outer_freeze_s163,
+    key2.md: 22/24 within 3 deg/1 dB, 2 z-accel cells differ on a crossing in a -27 dB notch, reported at the smaller
+    GM 19.7 dB). Open: linear outer-loop model. 267 Hz rows not flown.
+  - Phase-plateau GM (S164, results/g2_plateau_s164.md, `python3 indi_flight/bench/g2_plateau_gm_s164.py`): 67 cells;
+    literal rule 66/67, att ax2_r800_s2 hit by a 0.2 Hz bin with |L| > 1 (gain-reduction margin 18.5 dB). Defect fix
+    proposed in Q13 (plateau over |L| < 1, reduction margin >= 6 dB reported); under it 67/67 PASS. Pending owner.
 
 ## G2-STEP Inner-loop attitude step criterion (written S61 2026-11-17, owner note N1 B.2, before its first test)
 - Test: step_roll, step_pitch (15 deg), step_yaw (45 deg) on quad5in, sim v2 (eRPM), 800 Hz (400 Hz reported), speed 4,

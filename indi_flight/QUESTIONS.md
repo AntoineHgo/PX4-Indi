@@ -129,3 +129,13 @@ noise floor under the typical profile. Option D [recommended, gate defect fix]: 
 minus the 95th percentile of the same metric at no-event instants of the same flight (the row then measures the reset,
 the noise is judged in G4). Meanwhile scored as written. Not blocking.
 
+## Q13 (S164, 2026-11-21): G2 phase-plateau GM formula on bins with |L| > 1. NOT blocking.
+Context (results/g2_plateau_s164.md): the G2 pass uses min(GM, plateau GM), plateau GM = min of 1/|L| over bins with
+arg L within 10 deg of -180. First applied at the freeze (67 cells): 66 PASS; attitude pitch 800 Hz seed 2 gets
+"-18.5 dB" from its 0.2 Hz bin, BELOW crossover, |L| = +18.5 dB, arg -170.9 deg (other seeds -158 to -165 deg there).
+There 1/|L| is not a gain margin: the loop is stable with 18.5 dB of gain REDUCTION margin. Classic GM 20.2 dB, PM 54.1.
+Options: A [recommended, test-defect fix] plateau GM over bins with |L| < 1; bins with |L| > 1 within 10 deg of -180 are
+reported as gain-reduction margin 20log10|L| with the same >= 6 dB pass threshold (no threshold lowered); 67/67 PASS.
+B: keep the literal formula: the cell FAILs G2.
+Meanwhile: G2 work continues (model x-check, 267 Hz); both readings reported in GATES G2 freeze status.
+
