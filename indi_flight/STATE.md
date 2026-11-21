@@ -29,12 +29,14 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    S172: D-JFF-SOURCE committed 20b4a41b22 (keyed) but did NOT remove the AUTO_LAND omega_ff spike (results/g4_jff_s172,
    24-28 deg/s harsh; stock auto a_ff itself swings +-2 m/s^2). D-JFF-OFFB committed aa4fd2654a (keyed): omega_ff 0 in
    land, G4 rows PASS, but item 2 FAIL 1/3 harsh persists (2 Hz p from BEFORE land entry): FF is NOT the cause (A-56).
-   NEXT S173: (0) route check RC173 FIRST (due), with A-56 at its cause-search limit: which decision to re-open
-   (candidate: outer-loop measured-acceleration noise path under harsh vibration; or harsh profile realism, D-NOISE-PROF);
-   ask owner if it points at F-/O-. (1) re-fly G5.3/G5.4 land/RTL rows once at aa4fd2654a (D-JFF-OFFB overturn check:
-   not > 10 % worse than freeze); fly one offboard trajectory to confirm FF still on in offboard (unverified: hover
-   hold gives 0). (2) MINOR key2_jffoffb: omega_ff step on offboard entry -> resetJerkHistory() on the rising edge,
-   with G5.7 offboard-entry row. (3) G4 verdict both ways (Q14 A/B). Then G3 pre-test ~20.
+   RC173 DONE early (design/route_check_173.md), acted on: no more FF work; A-56 = marginal ~2 Hz loop excited by noise.
+   NEXT S173: (1) G4 VERDICT now in results/g4_gate_s169/README.md: metric rows PASS, item 2 open FAIL 1/3 harsh (A-56,
+   no LOC, tilt < 11 deg), chatter both ways (Q14 A/B). (2) A-56 one discriminating probe (re-opens the outer-loop
+   measured-accel path): harsh_s3 at aa4fd2654a with truth accel substituted (check a hook exists; if none, say so and
+   use D-GAP blend off instead), then blend off if still oscillating; both oscillate -> G2 cells at 2 Hz. (3) G3 pre-test
+   ~20 whatever (2) shows; fold G5.3/G5.4 re-fly (D-JFF-OFFB overturn check) and one offboard trajectory (FF still on
+   in offboard, unverified) into that chain. Deferred to G7: omega_ff step on offboard entry (key2_jffoffb MINOR,
+   resetJerkHistory on rising edge). Dropped: typ/quiet G4 re-flights. Next RC: S178.
    G5.2 posctl z settle s1 4.15 s FAIL (EKF2 height error, Q10; PID ref PASS).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
    events and maybe_landed / EKF z injectability -> Q8 (scored at option A, not blocking).

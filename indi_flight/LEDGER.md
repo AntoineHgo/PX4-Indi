@@ -278,3 +278,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S172 | haiku | log read a_ff at land entry | results/g4_jff_s172/aff_source.md | done, 17 calls; a_ff itself swings harsh (commit-order caveat wrong) |
 | S172 | haiku (resumed) | build + harsh hover x3 with D-JFF-OFFB | results/g4_jffoffb_s172/README.md | done, 12 calls; omega_ff 0, item 2 FAIL 1/3 persists |
 | S172 | sonnet | key2 D-JFF-OFFB diff | design/key2_jffoffb_s172.md | done, 8 calls, MINOR offboard-entry step |
+| S172 | sonnet | route check 173 (early) | design/route_check_173.md | done, 8 calls, ~$0.2; verdict now, one A-56 probe, then G3 |
