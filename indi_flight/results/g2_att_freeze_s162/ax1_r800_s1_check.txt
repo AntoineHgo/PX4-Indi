@@ -1,0 +1,11 @@
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/attitude_break_check.py:39: RuntimeWarning: divide by zero encountered in divide
+  raw = np.diff(x) / dt
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/attitude_break_check.py:39: RuntimeWarning: invalid value encountered in divide
+  raw = np.diff(x) / dt
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/attitude_break_check.py:40: RuntimeWarning: invalid value encountered in multiply
+  return np.clip(rdot[:-1] + a * (raw - rdot[:-1]), -K_MAX_DOT, K_MAX_DOT)
+PASS  window: 39999 cycles with d != 0, fault in window 0, stale in window 0
+PASS  consistency x-y-d (circular, informative): max 2.98e-08
+PASS  law fed x: rate_sp_dot: rms rate_sp_dot 6.773 rad/s^2, one-step error vs filtered d/dt of x 0.0123 (0.0018 of signal, limit 0.02); same error if the law had been fed y 0.9745
+PASS  law fed x: c responds at excited bins: median power of c at 20 excited bins over 179 unexcited bins 10056.4 (limit 4.0), 4 periods
+RESULT PASS
