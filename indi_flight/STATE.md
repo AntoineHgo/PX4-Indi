@@ -36,7 +36,8 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    stacks, line 0.5 DShot step; no hook change; Q14 (chatter floor). key2 g3_checks DONE (g3_key2.md), A-55.
    S171: A-55 CLOSED (D-G3-SPAN: item 2 whole flight incl. descent; key1 fixed). G4 item 2 FAIL 1/3 harsh: sustained
    2 Hz q in AUTO_LAND descent (A-56: INDI descent rate RMS 3-6 deg/s harsh vs PID 0.3).
-   NEXT (G4): (1) A-56 one-session cause search (gate test failure; results/a56_s171/README.md). (2) G4 verdict both
+   NEXT (G4): (1) A-56 cause search part 2 (lead: INDI omega_ff 7-22 deg/s in AUTO_LAND fights att loop, results/
+   a56_s171/README.md): read omega_ff source, one zeroed-FF harsh descent, then D- fix (two keys). (2) G4 verdict both
    ways (Q14 A/B) in the G4 README. Then G3 pre-test ~20. Next RC: S173.
    G5.2 posctl z settle s1 4.15 s FAIL (EKF2 height error, Q10; PID ref PASS).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
