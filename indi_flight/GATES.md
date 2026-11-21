@@ -601,3 +601,11 @@ PM >= 60 so no verdict effect). Spot: rate roll800_fwdef_s2 PM 41.3 FAIL (freeze
 ax2_r400_s1 PM 42.2 FAIL (43.0, 53.4), GM 13.6 (19.1). The freeze-7 attribution of the attitude drop to the xy gains
 is contradicted (xy back to 1.2, attitude spot unchanged). G2-STEP rows still flying; they cannot lift the verdict.
 Next: one session of cause search on the spot drop since freeze-6 (D-FREEZE-8 overturn), PID reference first.
+
+## Owner amendment S183 (2026-11-21): Q19 test-definition fix (approved by the owner)
+- G4 command-chatter check (line 362, "the G3 detector, also on the command") applies the Q15 A skip: windows that
+  overlap the 3 s after a nav_state change are not counted by the sustained-oscillation detector. Both keys apply it.
+- PID guard: chatter lines inside skipped windows are still reported for INDI and PID; the row FAILS if the INDI line
+  RMS in a skipped window exceeds the PID reference at the same transition (same scenario and seed).
+- Scope: the item 2 rate-detector limit applies to harsh hover; harsh-cruise rate flags are informational (reported).
+- Re-score: freeze-8 G4 with keyed scripts (no re-fly); cruise_harsh_s2 flown in the freeze-9 set, G4 scored at freeze-9.

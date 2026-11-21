@@ -40,16 +40,4 @@ Q17 and Q18 closed S180 (owner answers A; GATES "Owner amendments S180", D-OWNER
 S180: points 3 and 4 acted on (results/g55_gain_probe_s179/RECONCILE_S180.md: keys agree on 33.5 and 89.25 Hz;
 cruise item 3 offset equals PID, not a G4 row). Points 1-2 stand as rules (point 2 in STATE next action 4).
 
-## Q19 (S182, 2026-11-21): does the Q15 A nav_state skip apply to the command-chatter check? BLOCKING for G4
-Context: freeze-8 G4 (results/freeze8_s181/G4_SCORES.md, both keys, Q18 skip applied): R20/C20/R4/clip 18/18 in
-limits; hover 9/9 clean (freeze-7 hover_harsh_s1 20 Hz gone); cruise 33.5/89 Hz lines gone (89 Hz residue 4.2e-4 <
-5e-4). One row splits the keys: cruise_harsh_s2, motor m2, 20.0 Hz, RMS 6.0e-4 (ratio 472), at the hold-to-land
-switch (~58-65 s, still airborne, so the Q18 touchdown skip does not cover it). Key 1 scores chatter inside item 2 and
-applies the Q15 A 3 s skip after a nav_state change: no flag. Key 2 scores chatter separately without that skip: flag.
-With the skip both keys clear it; without it both flag it. GATES line 362 defines the command check as "the G3
-detector, also on the command"; Q15 A says "the sustained-oscillation detector skips windows that overlap the 3 s
-after a nav_state change; mode transitions are judged by the G5 transient limits". PID: S180 reported land windows
-20-26 Hz 1.1-1.5e-3 in PID too (same land-entry signature, larger). If the skip applies, G4 PASSES at freeze-8.
-Options: A (recommended) the Q15 A skip applies to the command check too (same detector, line 362), key 2 gets the
-skip, G4 PASSED; B the skip is for the rate detector only: G4 NOT PASSED on cruise_harsh_s2.
-Meanwhile: no re-fly, re-score or note on G4; work continues on G2 spot probes and G5 scoring. Not blocked overall.
+Q19 closed S183 (owner answer A with PID guard; GATES "Owner amendment S183", D-OWNER-Q19; text in JOURNAL.md S183).

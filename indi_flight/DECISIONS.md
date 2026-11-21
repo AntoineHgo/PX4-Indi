@@ -1121,3 +1121,10 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   G4 cruise_harsh_s2. G5.10 stabilized/sat parts and G3 pre-test follow after the queue, as in D-FREEZE-8.
 - Pre-test: the xy_sweep_s183 vp2.4 flights (2 spot cells + G5.5 o1/o3/o7 s1) on the same build.
 - Overturn: as D-XY-PICK (spot PM < 45 or G5.5 > 0.5 m on any seed -> owner question, F4 revert probe first).
+
+## D-OWNER-Q19 (S183, 2026-11-21): Q15 A skip on the G4 command-chatter check, with PID guard
+- Owner answer A (QUESTIONS Q19, text in JOURNAL S183): GATES "Owner amendment S183". Key 2 chatter scorer gets the
+  3 s nav_state skip; both keys report skipped-window lines for INDI and the PID reference, row FAIL if INDI RMS > PID.
+- Consequence: PID reference flights of the G4 cruise rows that have a skipped-window line (at least cruise_harsh_s2)
+  are flown at the same seed. Freeze-8 G4 re-score queued (history); freeze-9 G4 decides the verdict.
+- Overturn: owner only (test definition).

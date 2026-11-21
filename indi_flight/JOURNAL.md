@@ -1313,3 +1313,24 @@ in scope.
 - S181 (2026-11-21): MC_INDI_XY_P default 1.2 (d2f3845292) + bench yaml-default test; key2 freeze-8 diff 0 blocking (M1 bench lead Tc 0.01 -> 0.03 fixed, roll model PM 66.4 deg); pre-test cruise s2/s3 89 Hz 3.8-4.2e-4, G2-STEP att 3/3 -> FREEZE-8 declared (D-FREEZE-8); re-fly queue results/freeze8_s181 (87 flights) started. G5.10: score_motors key2 found 4 key1 defects, key1 fixed (bench/g510_score_motors.py), keys agree; SAT pre-test was a set-up fault (thrust step with the position step, both stacks crash) -> D-G510-SAT-SETUP ramp. (The git mv of score_motors landed in commit 210ad05859.) Gate progress: G2/G4/G5 freeze-8 evidence in flight (87 flights queued); G5.10 metric keyed (two keys agree), SAT set-up fault found and decided.
 - S182 (2026-11-21): freeze-8 queue 87/87 rc 0, all groups scored by keyed scripts (agents). G2 NOT PASSED at freeze-8: outer 24/24 PASS, spot rate 41.3 / att 42.2 FAIL; G2-STEP 9/9. Cause search: low-f phase loss from xy gains, probe XY 0.95/1.8 -> 49.0/51.4 (D-XY-TRADE, sweep next, offboard-only gains rejected). G4: all rows in limits, 33/89 Hz gone, cruise_harsh_s2 keys split on Q15 skip -> Q19 (blocking G4). G5: every scored row PASS (G5.5 24/24, G5.3 6/6, G5.4 6/6, events 9/9), G5.10 open. G5.10 scorer: saturation fraction is validity only (INVALID). Gate progress: G2 verdict at freeze-8 written + cause shown; G4 scored (Q19 decides); G5 rows re-scored PASS at freeze-8.
 - S183 (2026-11-21): xy sweep (results/xy_sweep_s183): XY_VP 2.4 -> spot PM 47.2/48.1, G5.5 0.44-0.45 m; 2.8 -> 45.5/46.4, rate holes FAIL. D-XY-PICK 2.4, firmware default 83976c5099 (key2 AGREE), FREEZE-9 declared (D-FREEZE-9), re-fly queue results/freeze9_s183 started (G4 cruise_harsh_s2 held for Q19). Gate progress: G2 spot cells PM >= 45 on 1 seed at the new default (freeze-9 3 seeds decide).
+- S183 Q19 closed (full text follows):
+  ## Q19 (S182, 2026-11-21): does the Q15 A nav_state skip apply to the command-chatter check? BLOCKING for G4
+  Context: freeze-8 G4 (results/freeze8_s181/G4_SCORES.md, both keys, Q18 skip applied): R20/C20/R4/clip 18/18 in
+  limits; hover 9/9 clean (freeze-7 hover_harsh_s1 20 Hz gone); cruise 33.5/89 Hz lines gone (89 Hz residue 4.2e-4 <
+  5e-4). One row splits the keys: cruise_harsh_s2, motor m2, 20.0 Hz, RMS 6.0e-4 (ratio 472), at the hold-to-land
+  switch (~58-65 s, still airborne, so the Q18 touchdown skip does not cover it). Key 1 scores chatter inside item 2 and
+  applies the Q15 A 3 s skip after a nav_state change: no flag. Key 2 scores chatter separately without that skip: flag.
+  With the skip both keys clear it; without it both flag it. GATES line 362 defines the command check as "the G3
+  detector, also on the command"; Q15 A says "the sustained-oscillation detector skips windows that overlap the 3 s
+  after a nav_state change; mode transitions are judged by the G5 transient limits". PID: S180 reported land windows
+  20-26 Hz 1.1-1.5e-3 in PID too (same land-entry signature, larger). If the skip applies, G4 PASSES at freeze-8.
+  Options: A (recommended) the Q15 A skip applies to the command check too (same detector, line 362), key 2 gets the
+  skip, G4 PASSED; B the skip is for the rate detector only: G4 NOT PASSED on cruise_harsh_s2.
+  Meanwhile: no re-fly, re-score or note on G4; work continues on G2 spot probes and G5 scoring. Not blocked overall.
+  **Owner answer to Q19 (2026-11-21):** A, with a PID guard. The Q15 A 3 s skip after a nav_state change applies to the
+  command-chatter check too (same G3 detector, GATES line 362); key 2 gets the skip so both keys score alike. Guard,
+  because no G5 transient limit judges command oscillation: chatter lines inside skipped windows are still reported for
+  both stacks, and the row FAILS if the INDI line RMS there exceeds the PID reference at the same transition (same
+  scenario and seed). Scope confirmed: the item 2 rate detector limit applies to harsh hover; harsh-cruise rate flags
+  stay informational (reported). Log it in GATES.md and DECISIONS.md as an approved test-definition fix, re-score
+  freeze-8 G4 with keyed scripts (no re-fly), then fly cruise_harsh_s2 in the freeze-9 set and score G4 at freeze-9.

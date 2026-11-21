@@ -42,7 +42,7 @@ item g2s_rate $R/g2s/roll800_fwdef_s2/margins.txt g2s rate
 item g2s_att $R/g2s/ax2_r400_s1_margins.json g2s att
 # 3. G4
 for sd in 1 2 3; do for pr in quiet typ harsh; do for fl in hover cruise; do
-  [ "$fl$pr$sd" = cruiseharsh2 ] && continue  # Q19 open: not re-flown (D-FREEZE-9)
+  # cruise_harsh_s2 was held for Q19 (closed S183), flown in the rerun
   item g4_${fl}_${pr}_s$sd $R/g4/${fl}_${pr}_s$sd/flight.ulg g4 $pr $fl $sd
 done; done; done
 # 4. G5.5
