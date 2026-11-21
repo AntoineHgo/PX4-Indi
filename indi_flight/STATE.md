@@ -71,6 +71,8 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| a56r | A-56 rate probe s3 harsh: bld03/lead0/dgyro15 (G4 item 2) | bash bg | results/a56_rate_s174 (status.txt, FLY_DONE) | `sh indi_flight/results/a56_rate_s174/fly.sh` then docker `analyse.sh` |
+| g3sc | score G3 pre-test 20 runs (G3 pre-test) | sonnet | results/g3_pretest_s173/score_s174.md | re-brief from README |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
