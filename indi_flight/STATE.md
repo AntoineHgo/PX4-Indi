@@ -7,10 +7,10 @@
 - Blocker: none (Q17, Q18 answered A, logged S180).
   G2 and G4 NOT PASSED at freeze-7; freeze-8 in preparation (XY_P 1.2 shown, F2 for L1 to implement).
 ## Next actions (owner order; each names its gate item)
-1. G4 L1 + G2 freeze-8: F2 probe in flight (task D). If F2 meets its criterion (no 33.5/89 Hz line >= 5e-4 on
-   either key, lemniscate window): key2 of the firmware diff (sonnet, code-to-spec), I read the diff, then freeze-8 =
-   F2 + MC_INDI_XY_P default 1.2 (param test); re-fly G2 outer 24 + 2 spot, G4 18, G5.5 24, G5.3 hold+mission x3,
-   G5.4 6. If not: re-read lines (overturn rule D-G4-STEPBACK), G2 freeze-8 = XY_P 1.2 alone.
+1. G4 L1 + G2 freeze-8: F2 committed 9dd5f76382 (candidate, key2 pending): 33.5 Hz gone, 89 Hz line stays on all
+   motors 5.2-7.7e-4 (results/f2_probe_s180). 89 Hz cause search (one session, task E). Then: key2 of F2 (+ any 89 Hz
+   fix) code-to-spec, freeze-8 = F2 + MC_INDI_XY_P default 1.2 (param test); re-fly G2 outer 24 + 2 spot, G4 18,
+   G5.5 24, G5.3 hold+mission x3, G5.4 6. If task E points at the inner loop (decision (4)): owner question first.
 2. G4 hover_harsh_s1 20 Hz (take-off/loiter, 9.7e-4, PID clean, 1/3 seeds): after F2 result; one session cause bound,
    candidate decision (4) inner rate INDI -> owner question before re-opening (re-flies most gates).
    Q18 re-score done (no verdict moved); cruise item 3 offset is not a G4 row (PID 0.295 m = INDI): closed.
@@ -51,7 +51,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| D | F2 setpoint extrapolation: firmware + gtest + SITL build + cruise_typ_s1 (XY_P 1.2) + both chatter keys | sonnet | results/f2_probe_s180/README.md; uncommitted diff in src/modules/mc_indi_pos_control | re-brief from README |
+| E | 89 Hz line source: per-signal line on F2 log + up to 3 truth-substitution flights | sonnet | results/f2_probe_s180/LINE89_S180.md | re-brief from file |
 | - | G5.10 pre-test queue4 flown, 4 metrics committed, unscored | - | results/g5_10_freeze7_s178/ | - |
 
 ## Open problems
