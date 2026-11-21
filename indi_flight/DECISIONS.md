@@ -1076,3 +1076,15 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   G5 event rows in hover 1 seed confirm; G5.10 stabilized part 3 seeds (sat part waits results/g5_10_freeze7_s178/
   SAT_SETUP_S181.md); G3 pre-test after its set-up fix. All freeze-7 evidence of these rows is superseded.
 - Overturn: as D-FREEZE-6 (a row FAIL caused in frozen firmware -> one session cause search, then re-open).
+
+## D-G510-SAT-SETUP (S181, 2026-11-21): G5.10 SAT part reaches the scale before its 5 s window
+- Fact (results/g5_10_freeze7_s178/SAT_SETUP_S181.md, logs): the pre-test stepped SIM_GZ_THR_SC 1.0 -> 0.136 at the
+  same instant as the 3 m step; rotor speed fell 9540 -> 5000 rpm in 0.2 s, controllers needed ~1.2 s to wind up,
+  both stacks (INDI, PID) hit the ground at +1.4-1.6 s. That is an 86 % thrust-loss test, not "hover needs >= 1.0
+  command for 5 s" (Q9 c). Set-up fault, found in the pre-test (no gate test of G5.10 flown yet).
+- Choice: bring the scale to 0.136 in steps during a hover segment before the SAT window (e.g. 1.0 -> 0.5 -> 0.3 ->
+  0.2 -> 0.136, ~1 s each, existing per-segment motor_fault entries), so the window starts in a pinned hover; then
+  the 3 m step and the 5 s window as defined. Step size, altitude (5 m), limits unchanged.
+- Alternatives: keep the step-in (rejected: not the gate's quantity, unpassable by any controller); smaller position
+  step or higher thrust (rejected: weakens the test, owner wording).
+- Overturn: with the ramp, PID reference also fails no_loc or the 2.0 m alt-loss limit -> owner question (test defect?).
