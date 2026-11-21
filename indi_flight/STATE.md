@@ -23,10 +23,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    S161: G5.11 yaw spike cause = T10 raw filter re-seed; fixed (D-T10-RESET, 49568bcaa5 + d1b65d0f09, key2 review
    design/review_s161_t10.md MAJORs closed). Residual at s1 probe = INDI hover tilt noise floor (Q12 addendum, option D).
    Post-freeze firmware change: also check other freeze rows had no in-flight reset edge (none should be affected).
-   Re-fly at d1b65d0f09 (results/g511_fix_s161): yaw 0.76/1.21/0.83 (2/3 PASS, s2 0.18 above its no-event max),
-   xy 5.8-6.7 FAIL (Q12); row FAIL as written, UNKEYED. Same flights carry G5.6/5.8/5.9: re-score with
-   g5_rows_check.py at the new firmware. NEXT S162: key2 g511 on g511_fix_s161 (sonnet, no access to g511_check.py),
-   g5_rows re-score, then G2 att yaw/outer cells. Next RC: S164.
+   Re-fly at d1b65d0f09 (results/g511_fix_s161): yaw 0.76/1.21/0.83 (2/3 PASS), xy 5.8-6.7 FAIL (Q12); row FAIL as
+   written, KEYED S162. G5.8/G5.9 re-scored + key2 at d1b65d0f09: unchanged. S162: G2 attitude cells flying (tasks).
+   NEXT: score att cells (margins + holes + model x-check), reset-edge sweep verdict, then outer-cell margin key +
+   G2 rate yaw / model-only cells at freeze. Next RC: S164.
    S160: G5 verdict table in freeze README. G5.3 hold re-flown PASS 3/3 + key2. G5.11 exact test + g511_check.py:
    FAIL 6/6 tilt cmd jump, UNKEYED. PID ref: xy 7.82 deg FAIL too (stack-indep., Q12); yaw PID 0.48 PASS -> NEXT: INDI
    yaw-reset one-sample q_d spike cause search (1 session; compare heading-reset handling vs mc_pos_control), key2 g511
@@ -74,6 +74,8 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S162-att | G2 attitude cells at freeze, 6 cells x 2 seeds (pre-test roll/yaw 800 s1 gates the rest) | results/g2_att_freeze_s162 (chain.log, *_margins.json) | `bash indi_flight/results/g2_att_freeze_s162/chain.sh > .../chain.log` (resumable, skips done cells) |
+| S162-rs | reset-edge sweep of freeze logs (host python) | results/g5_freeze_s157/reset_edge_sweep_s162.txt | rerun bench/reset_edge_sweep.py on freeze ulgs |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
