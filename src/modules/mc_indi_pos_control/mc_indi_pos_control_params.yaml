@@ -39,6 +39,28 @@ parameters:
       decimal: 1
       increment: 0.1
       default: 0.3
+    MC_INDI_XY_P:
+      description:
+        short: Horizontal position gain
+        long: Position gain of the INDI outer loop. Replaces MPC_XY_P when the INDI position module runs.
+      type: float
+      unit: 1/s
+      min: 0
+      max: 10
+      decimal: 2
+      increment: 0.1
+      default: 1.9
+    MC_INDI_XY_VP:
+      description:
+        short: Horizontal velocity P gain
+        long: Acceleration per velocity error of the INDI outer loop. Replaces MPC_XY_VEL_P_ACC when the INDI position module runs.
+      type: float
+      unit: 1/s
+      min: 0
+      max: 20
+      decimal: 2
+      increment: 0.1
+      default: 3.6
     MC_INDI_PINJ_AX:
       description:
         short: INDI outer-loop bench excitation axis
