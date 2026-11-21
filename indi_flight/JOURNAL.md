@@ -1015,3 +1015,10 @@ Standing rule (S35): bench param sets carry SENS_BAR_AUTOCAL 0.
 - S173 (later): G2 freeze data at 1.5-3 Hz show no lightly damped mode (design/a56_g2_2hz_s173.md, sonnet); PID had only 1 harsh flight, so PID harsh s2/s3 queued after the G3 pre-test (results/a56_pid_s173). Gate progress: G4 item 2 closing test defined (stack-dependence).
 - S173 (end): G3 pre-test idx 0-19 flown 20/20 ok (results/g3_pretest_s173), unscored. Gate progress: G3 pre-test flown (scoring S174).
 - S173 (end2): PID harsh s2/s3 clean (results/a56_pid_s173) -> A-56 INDI-specific, in the rate loop. Gate progress: G4 item 2 cause localised to the INDI rate loop.
+- S174 (2026-11-21): results backlog sorted (66 paths; raw captures ignored). A-56 rate probe (results/a56_rate_s174):
+  lead 0 keeps the s3 2 Hz line, blend 0.3 s clears s3 but s2 flags at the same window; trace shows the window spans
+  AUTO_LAND entry where the stock land setpoint jumps and both stacks transient (PID s3 30.5 vs INDI 25 deg/s q std);
+  S173 "INDI rate loop" reading withdrawn, Q15 asked, no firmware change. G3 pre-test scored (sonnet, UNKEYED,
+  score_s174.md): 0/20 pass with chatter, 4/20 without; campaign blocked by set-up faults (noise profile not applied,
+  tel_frozen hook missing, 5 m excursion rule vs 5 m lemniscate, windows). Gate progress: G4 item 2 failure
+  re-attributed to a stack-independent transient (verdict waits Q14/Q15); G3 pre-test scored, set-up faults found.

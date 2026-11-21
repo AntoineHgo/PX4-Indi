@@ -280,3 +280,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S172 | sonnet | key2 D-JFF-OFFB diff | design/key2_jffoffb_s172.md | done, 8 calls, MINOR offboard-entry step |
 | S172 | sonnet | route check 173 (early) | design/route_check_173.md | done, 8 calls, ~$0.2; verdict now, one A-56 probe, then G3 |
 | S173 | sonnet | A-56 G2 loop data at 1.5-3 Hz | design/a56_g2_2hz_s173.md | 9 calls, ~$0.2 | done |
+| S174 | g3sc | sonnet | score G3 pre-test 20 runs | results/g3_pretest_s173/score_s174.md | done, 22 tool calls |

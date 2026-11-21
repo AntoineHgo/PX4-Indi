@@ -25,15 +25,17 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    267 Hz reported cells flown S165 (GATES G2 freeze status). NEXT: G4 (RC159 order G2 -> G4 -> G3). Next RC: S168.
    S166-S172 (JOURNAL): G4 tooling keyed; G4 batch results/g4_gate_s169 rows PASS 18/18, chatter FAIL (A-54, Q14),
    item 2 FAIL 1/3 harsh (A-56). D-JFF-SOURCE 20b4a41b22, D-JFF-OFFB aa4fd2654a (FF not the cause). RC173 acted on.
-   S173 DONE: G4 verdict written (NOT PASSED: A-56 + Q14 chatter). A-56 probe results/a56_probe_s173: oscillation
-   persists with stock mc_pos_control and with accel LPF 4 Hz -> outer loop NOT the cause; inner rate loop remains.
-   G2 freeze data at 1.5-3 Hz: no lightly damped mode (design/a56_g2_2hz_s173.md; no PID margins exist).
-   NEXT S174: (1) G4 item 2 / A-56: PID clean 3/3 harsh (results/a56_pid_s173) -> INDI rate loop is the cause. One
-   rate-loop probe at harsh s3 (candidates: measured/modelled blend, frozen-eRPM path, rate LPF) -> re-open the
-   inner-loop decision it names (RC64/74: 1 session per law change). (2) G3 pre-test idx 0-19 FLOWN 20/20 ok (results/g3_pretest_s173,
-   README): score with g3_checks.py (per-scenario windows), check draws applied, check scenario mix (17/20 o1). Then fold G5.3/G5.4 re-fly (D-JFF-OFFB overturn
-   check) and one offboard trajectory (FF still on in offboard, unverified) into the next chain. Deferred to G7: omega_ff step on offboard entry (key2_jffoffb MINOR,
-   resetJerkHistory on rising edge). Dropped: typ/quiet G4 re-flights. Next RC: S178.
+   S173: G4 verdict NOT PASSED (A-56 + Q14 chatter). S174: A-56 = stock AUTO_LAND-entry setpoint transient in BOTH
+   stacks (results/a56_rate_s174; PID s3 larger), not an INDI oscillation; Q15 asked (detector excludes transitions).
+   No inner-loop change (D-RATE-BLD stays 1.0 s). G4 now waits only on Q14/Q15 answers (re-score g4_gate_s169).
+   NEXT S175 (G3 pre-test, results/g3_pretest_s173/score_s174.md, UNKEYED): campaign BLOCKED by set-up faults:
+   (a) g4_typical_noise NOT applied on 20/20 runs; (b) tel_frozen hook missing (runs 03, 11); (c) LOC rule
+   "excursion > 5 m" trips on the 5 m-radius o1 stand-in (16/17): define excursion vs setpoint (GATES text, test
+   defect, log it); (d) windows: stand-ins lack the 20 s hold -> write gate_g3.sh windows per GATES 3; (e) score.sh
+   needs scipy (scratchpad PYTHONPATH) -> run in Docker. Then explain run 17 LOC (tilt 129 deg) and osc runs
+   03/07/08/13/17 (one session max), re-pre-test ~20. Mix 17/20 position is sampler-correct (p 0.107).
+   Then fold G5.3/G5.4 re-fly (D-JFF-OFFB overturn check) and one offboard trajectory into the next chain. Deferred
+   to G7: omega_ff step on offboard entry (key2_jffoffb MINOR). Next RC: S178.
    G5.2 posctl z settle s1 4.15 s FAIL (EKF2 height error, Q10; PID ref PASS).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
    events and maybe_landed / EKF z injectability -> Q8 (scored at option A, not blocking).
@@ -71,8 +73,6 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| a56r | A-56 rate probe s3 harsh: bld03/lead0/dgyro15 (G4 item 2) | bash bg | results/a56_rate_s174 (status.txt, FLY_DONE) | `sh indi_flight/results/a56_rate_s174/fly.sh` then docker `analyse.sh` |
-| g3sc | score G3 pre-test 20 runs (G3 pre-test) | sonnet | results/g3_pretest_s173/score_s174.md | re-brief from README |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
