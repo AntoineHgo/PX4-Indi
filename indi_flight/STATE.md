@@ -5,14 +5,14 @@
   D-XY-PICK), config g5_freeze_s157 params (XY gains at firmware defaults 1.2/2.4). D-FREEZE-8 list re-flies in
   queue results/freeze9_s183 (G4 cruise_harsh_s2 excluded until Q19).
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
-- Blocker: none. Q20-Q22 closed S187. G5 verdict waits T6 (G5.10 stabilized); G3 waits pre-test re-fly.
+- Blocker: none. Q20-Q22 closed S187. G5 verdict waits T8 (G5.1/5.2/5.7 re-fly); G3 waits T7 pre-test.
 ## Next actions (owner order; each names its gate item)
 1. G2 PASSED at freeze-9 (S184, GATES "G2 verdict at freeze-9"). Any firmware change re-opens it.
 2. G4 PASSED at freeze-9 under Q20 (S187, both guard keys 0 checked / 0 FAIL). Any firmware change re-opens it.
 3. G5: freeze-9 (G5_SCORES.md) every flown row PASS both keys; G5.5 worst H 0.499 m (o2 s3, limit 0.5: thin, no
-   chase). G5 verdict waits G5.10 only. Q21: SAT invalid in both stacks -> dropped (results/g510_q21_s187);
-   G5.10 = stabilized part (Q17 A), T6 batch running (INDI s1, s2 PASS key1). When T6 README is done: G5 verdict
-   in GATES.md + GATE_STATUS.tsv.
+   chase). G5.10 (SAT dropped Q21) stabilized part PASS 3/3 both keys (freeze9_s183/g510_stab, S188).
+   D-FREEZE-9-GAP: G5.1/G5.2/G5.7 never re-flown since freeze-6 -> T8 batch (chained after T7). After T8 scored
+   with both keys: G5 verdict in GATES.md + GATE_STATUS.tsv.
 4. G3: Q22 answered and acted on S187 (box x[0.8, 1.2] + tau fix, sampler keyed, draws in results/g3_box_s187).
    Next: re-fly the 20-run pre-test on the new draws (same command as S173, out dir results/g3_pretest_s187), score
    with both keys (rescore_v4 / rescore_v3 scripts of results/g3_excursion_s186). When clean, write "G3 set-up
@@ -48,7 +48,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 |---|---|---|---|---|
 | T1 | G4 guard Q20 key 1: DONE (0 checked, 0 FAIL; max 4.84e-4) | sonnet | results/freeze9_s183/g4/GUARD_Q20_KEY1.md | - |
 | T4 | G5.10 SAT Q21 feasibility: DONE, invalid both stacks -> SAT dropped (C) | sonnet | results/g510_q21_s187/README.md | - |
-| T6 | G5.10 stabilized part (Q17 A), 3 seeds INDI + PID, both keys; batch shell pid 804821 (S188) | sonnet | results/freeze9_s183/g510_stab/README.md | if batch dead: fly.sh <stack> <seed> for missing runs |
+| T8 | G5.1/G5.2/G5.7 freeze-9 re-fly, both keys, chained after T7 (S188) | sonnet | results/freeze9_s183/g5_modes/README.md | README resume section |
 | T7 | G3 pre-test re-fly, 20 runs on Q22 draws, chained after T6 batch (S188) | sonnet | results/g3_pretest_s187/README.md | README resume section |
 
 ## Open problems
