@@ -22,3 +22,9 @@ No code changed; no rescore_v4 produced. Agreement stays as in KEY2_ITEM3_S186.m
 ## Decision needed from the owner
 State in GATES.md the zero of the truth height axis (raw sim z, or relative to rest height). If ground-referenced, key 1 needs the z0 alignment;
 if raw, key 2 must drop z0 for item 3. run_007 flips between F and P with that choice.
+
+## Key 1 after D-G3-ZREF
+Key 1 (bench/g3_checks.py) item 3 now zeroes truth z to the median over the first 1 s (z_rest); self-test zref_rest_offset added (old code -0.005, new 0.000).
+Re-run on run_000..019 + run_017_pid_s185 into rescore_v4/key1/ against rescore_v3/key2/: item-3 verdicts agree 21 of 21 (run_007 -0.0974 P both).
+Altitude means identical to 1e-4 m on the 18 position-mode runs; largest difference 0.0050 m on attitude-mode runs 004/010/016 (key 1 0.005 vs key 2 0.000:
+key 2 measures attitude-mode altitude about the window mean, ungated; key 1 still reports the rest-offset-referenced value, also ungated). No verdict affected.
