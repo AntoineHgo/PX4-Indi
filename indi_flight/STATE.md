@@ -28,9 +28,13 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    is logged. S168: hook 10c741af4b VERIFIED on a flight + KEYED + format clean (results/g4_truth_s168: inst 1 at
    800 Hz, 1 rpm resolution, inst 0 lags 1 frame); g4_metrics.py picks inst 1 under FB=2 (b926354ef2). RC168 done.
    S168 G4 pre-test DONE (results/g4_pretest_s168, 3 profiles fly, all values >=30x below limits, window defect of S166
-   fixed: windows from run.json events). NEXT (G4): A-52 closing test (harsh C20 keys 7 % apart; run both on raw 800 Hz samples); write bench/gate_g4.sh = chain of 27
-   (hover_long + traj_lemniscate x 3 profiles x 3 seeds; acro row DEFERRED per RC168, listed "not yet flown") using
-   pretest chain.sh/score.sh; fly serial, then the G4 harsh G3-items + chatter check.
+   fixed: windows from run.json events). S169: A-52 CLOSED (keys agree on raw samples); bench/gate_g4.sh (18 runs,
+   acro "not yet flown") flown -> results/g4_gate_s169; bench/g3_checks.py built (self-test + break-check, UNKEYED).
+   NEXT (G4): (1) A-54 cause search, ONE session: 70 Hz command line at typical/harsh, linear in vib -> chatter clause
+   FAILS as written; read PID ref P169 (bench/g4_line_probe.py LOG T0 T1); substitute truth accel / find the alias
+   path; if not fixable, owner Q (chatter clause = relative ratio, flags a 0.18 %-of-hover forced line).
+   (2) key2 of g3_checks.py (sonnet, blind, spec = GATES 240-264, 301-306, 359-362). (3) score g4_gate_s169 +
+   g3_checks on hover_harsh_s1..3, write results README + GATES G4 status. Next RC: S173.
    G5.2 posctl z settle s1 4.15 s FAIL (EKF2 height error, Q10; PID ref PASS).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
    events and maybe_landed / EKF z injectability -> Q8 (scored at option A, not blocking).
@@ -73,7 +77,7 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | B169 | G4 gate batch, 18 serial flights (acro not yet flown) | bash bg | results/g4_gate_s169 (status.txt, CHAIN_END) | `indi_flight/bench/gate_g4.sh fly indi_flight/results/g4_gate_s169` (skips done runs); then `... score ...` |
-| A169 | A-52 closing test (keys on raw 800 Hz samples) | sonnet | results/g4_pretest_s168/a52_raw.md, bench/a52_raw_check.py | re-brief from ANOMALIES A-52 |
+| P169 | A-54 PID reference: harsh hover_long s1, stock params (queued after B169) | bash bg | results/a54_s169/pid_hover_harsh_s1 | rerun the run_scenario line of JOURNAL S169 |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
