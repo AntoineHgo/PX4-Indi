@@ -1340,3 +1340,7 @@ in scope.
   G4 NOT PASSED on the PID guard; cause search: 17->4 20 Hz transient in both stacks (INDI 1.7x), 14->18 guard
   artefact; Q20 asked (blocking G4). G5.10 set-up: two ramps invalid (sank before window), reverted.
   Gate progress: G2 open -> PASSED; G4 open -> NOT PASSED (guard, Q20); G5.10 set-up 2 attempts invalid (D-G510-SAT-SETUP to re-open).
+- S185 (2026-11-21): Q21 asked (G5.10 SAT set-up unreachable as worded, PID sinks too; D-G510-SAT-SETUP re-opened,
+  BLOCKING G5.10). G3 tel_frozen hook built (SIM_GZ_ERPM_FRZ in gz_bridge + erpm_frozen override, g3_run wired),
+  key2 no blocking, hover probe + trip probe: detector trips and releases (A-57 trip latency, bounded). Run 17 PID ref
+  launched. Gate progress: G3 set-up item (a) tel_frozen hook done (runs 03/11 no longer abort); G5.10 -> Q21.

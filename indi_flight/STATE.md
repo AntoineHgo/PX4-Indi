@@ -18,8 +18,9 @@
    BLOCKING for G5.10: no G5.10 flight or score until answered. After the answer: scenario per answer (S184 patches
    in results/g510_setup_s184), one-flight check, 3 seeds INDI + PID ref (fly.sh), stabilized part Q17 A, scorer
    bench/g510_score_motors.py (keyed S181), then G5 verdict.
-4. G3 set-up (owner step 4), after G2/G4/G5 queue: tel_frozen hook (gz_bridge bit-identical rpm injector, two keys;
-   until then runs 03/11 abort); (b) excursion vs setpoint in g3_checks (key2 before gate use); run 17 LOC (tilt
+4. G3 set-up (owner step 4; active now, G4/G5 wait Q20/Q21): (a) tel_frozen hook DONE S185 (SIM_GZ_ERPM_FRZ,
+   erpm_frozen, key2 no blocking; detector needs command variation >0.02/0.5 s, so frozen windows must sit in
+   manoeuvring segments: check g3_run MAIN_SEGMENT per scenario after T185c); (b) excursion vs setpoint in g3_checks (key2 before gate use); run 17 LOC (tilt
    129 deg): PID reference only, one session max; osc runs 03/07/08/13 are re-flown after the set-up fix, not chased.
    Then re-fly the 20-run pre-test; when clean, write "G3 set-up fixed, ready for flight chain" here + WAIT_OWNER.
 5. G7 (stage 7, not before G2/G4/G5 verdicts): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site
@@ -51,7 +52,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| T185a | G3 tel_frozen hook: SIM_GZ_ERPM_FRZ bitmask in gz_bridge (held rpm, no errorcount), runner erpm_frozen override, g3_run wiring, 1 probe flight | sonnet | results/g3_telfrz_s185/README.md | re-brief from README; key2 review still due |
+| T185d | G3 run 17 PID reference (same seed/plant) | haiku | results/g3_pretest_s173/run_017_pid_s185/README.md | if missing: re-brief (fly.sh + g3_run PID stack, score.sh) |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
