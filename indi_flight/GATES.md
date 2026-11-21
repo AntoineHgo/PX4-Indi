@@ -650,3 +650,14 @@ is NOT PASSED under both readings. Next: one session of cause search on the INDI
   Corners C1/C2/C4 use e 1.2 / 0.8 / 1.2 in place of 2 / 0.5 / 2. Payload added after identification (e ~1.3) is a G8
   limit. Run 17 of the S173 pre-test (e 1.52) is out of box: reported with both stacks' values, not in the pre-test set.
   Before the re-fly, the rate-loop model is checked at e 0.8, tau x0.5, 10 ms (fast-motor corner).
+
+## G4 verdict at freeze-9 under Q20 (S187, 2026-11-21): PASSED
+Evidence: `results/freeze9_s183/G4_SCORES.md` (all rows other than the guard, S184, both keys), guard re-score under
+the S187 rule (no re-fly) in `results/freeze9_s183/g4/GUARD_Q20_KEY1.md` and `GUARD_Q20_KEY2.md` (scripts
+`bench/g4_guard_q20_key1.py`, `bench/g4_guard_q20_key2.py`, written independently, each with a synthetic self-test).
+Both keys: 54 transitions in 18 INDI runs, 0 checked, 0 FAIL; max INDI narrow-band RMS in a skipped window 4.84e-4
+(hover_harsh_s2 17->4, 20.0 Hz), below the 5e-4 flag; 14->18 2.3-2.95e-4. Reported, not checked: 17->4 INDI/PID narrow
+RMS 2.94/3.78, 4.84/4.28, 4.47/3.93, 2.86/3.88 e-4 (4 s windows, ratio 0.78-1.14). With effort 18/18, item 1 18/18,
+chatter 0/18, item 2 and item 3 harsh hover 3/3 (S184), every G4 row passes. Limits carried: harsh-cruise rate flags
+informational (S183); cruise item-3 offsets 0.11-0.22 m equal PID (S180); the 20 Hz take-off->loiter transient exists
+in both stacks at 0.05 % of full command; cruise_harsh_s2 exclusion of freeze-8 is history only (freeze-9 flew it).
