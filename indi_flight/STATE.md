@@ -25,8 +25,10 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    267 Hz reported cells flown S165 (GATES G2 freeze status). NEXT: G4 (RC159 order G2 -> G4 -> G3). Next RC: S168.
    S166 G4: bench/g4_metrics.py (self-test + break-check PASS, UNKEYED), pre-look results/g4_prelook_s166 (proxy R20
    0.09 %, C20 0.0015). BLOCKER for G4 R20/R4: with SIM_GZ_ESC_FB=2 (eRPM model, what INDI flies) no true rotor speed
-   is logged (esc_rpm = telemetry model). NEXT: gz_bridge GZMixingInterfaceESC.cpp:238 has true _rotor_rpm but
-   publishes it only under FB=1: publish it always on a separate topic/instance under FB=2 (sim hook, 2 keys, rebuild); then key2 of g4_metrics.py; then 27-run G4 pre-test of 3.
+   is logged (esc_rpm = telemetry model). S167: hook DONE 10c741af4b (FB=2 -> true rpm on esc_status instance 1,
+   runner logs "esc_status 0 1" fc7f74e85a); builds, UNVERIFIED, UNKEYED, make format not run. NEXT (G4 R20/R4):
+   rebuild (HEAD moved), 1 hover flight FB=2: instance 1 in ulog, rpm != instance 0, ~controller rate; key2 of
+   hook (sonnet, diff only); then key2 of g4_metrics.py pointed at instance 1; then 27-run G4 pre-test of 3.
    G5.2 posctl z settle s1 4.15 s FAIL (EKF2 height error, Q10; PID ref PASS).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
    events and maybe_landed / EKF z injectability -> Q8 (scored at option A, not blocking).
