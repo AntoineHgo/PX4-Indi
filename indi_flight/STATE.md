@@ -5,20 +5,23 @@
   D-XY-PICK), config g5_freeze_s157 params (XY gains at firmware defaults 1.2/2.4). D-FREEZE-8 list re-flies in
   queue results/freeze9_s183 (G4 cruise_harsh_s2 excluded until Q19).
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
-- Blocker: G5.7 waits for Q23 (fix choice for D-G57-FF). Causes shown on logs S189: G3 7 Hz = D-AF-ALIAS
-  (outer a_f aliased by 88.9 Hz stage decimation), G5.7 = D-G57-FF (rate FF off outside offboard, aa4fd2654a).
+- Blocker: none from the owner. Q23 closed S191 (D-OWNER-Q23): revert aa4fd2654a (G5.7 cause D-G57-FF); with
+  D-AF-ALIAS (G3 7 Hz, outer a_f aliased by 88.9 Hz stage decimation) it enters FREEZE-10.
 ## Next actions (owner order; each names its gate item)
 1. G2 PASSED at freeze-9 (S184, GATES "G2 verdict at freeze-9"). Any firmware change re-opens it.
 2. G4 PASSED at freeze-9 under Q20 (S187, both guard keys 0 checked / 0 FAIL). Any firmware change re-opens it.
 3. G5: freeze-9 (G5_SCORES.md) every flown row PASS both keys; G5.5 worst H 0.499 m (o2 s3, limit 0.5: thin, no
    chase). G5.10 (SAT dropped Q21) stabilized part PASS 3/3 both keys (freeze9_s183/g510_stab, S188).
    D-FREEZE-9-GAP re-fly (S188, freeze9_s183/g5_modes): G5.1 6/6 and G5.2 6/6 PASS both keys; G5.7 FAIL 3/3 both
-   keys on hold-edge tracking lag. Cause shown S189 (D-G57-FF): aa4fd2654a revert probe PASS s3/s1. Fix waits
-   for Q23 (BLOCKING G5.7; do not re-fly/score G5.7 meanwhile).
+   keys on hold-edge tracking lag. Cause shown S189 (D-G57-FF): aa4fd2654a revert probe PASS s3/s1. Q23 B
+   (D-OWNER-Q23): revert aa4fd2654a, then the D-OWNER-Q23 probe on the FREEZE-10 candidate before re-scoring G5.7.
 4. G3: D-AF-ALIAS fixes 2d92dbcf59 + 4afa7a97b6 (keyed) re-flown S191 (results/g3_pretest_s190/README.md): key1
    15/20, key2 16/20, 2.5-7.3 Hz lines gone. Left: q 2.0 Hz on 02/05/19 (INDI-only in S188 PID refs; 02/05 also
-   item 3 ~0.5 m), 03 (2.0 Hz) and 08 (10.75 Hz) shared with PID. Cause search (one session, S191 agent):
-   results/g3_pretest_s190/CAUSE_S191.md. Then FREEZE-10 with the Q23 fix; invalidated: G2 outer, G4, G5 outer
+   item 3 ~0.5 m), 03 (2.0 Hz) and 08 (10.75 Hz) shared with PID. Cause search S191 (CAUSE_S191.md): 02/05 =
+   1.45 Hz accel-loop oscillation (q 12.2/8.5 dps vs PID 0.4/0.5; "2.0 Hz" = detector band floor), setpoints
+   steady; 02/05 = the two most uncompensated GNSS draws (+95/+84 ms, passing max +59): consistent, not shown ->
+   matched-GNSS probe in S191-q23p. 19 = key 1 scores the land pulse (key 2 stops at land): scope, not osc.
+   03 PID q 2.5 Hz key 1 only; 08 PID p 11 Hz vs INDI q 10.75 Hz. Revert aa4fd2654a committed 7fe6206fcc. Then FREEZE-10 with the aa4fd2654a revert; invalidated: G2 outer, G4, G5 outer
    rows, G3 pre-test. GATES l.555 Q15 A nav-change skip is filed under G4 item 2, not G3. Shared 03/08 -> owner
    question with G3 verdict data.
 5. G7 (stage 7, not before G2/G4/G5 verdicts): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site
@@ -50,7 +53,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S191-cause | G3 2.0 Hz q cause on 02/05/19, PID signature on 03/08 | sonnet | results/g3_pretest_s190/CAUSE_S191.md | re-brief from STATE item 4 |
+| S191-q23p | D-OWNER-Q23 probe on candidate 7fe6206fcc (revert + D-AF-ALIAS) + G3 draw 02/05 matched-GNSS probe | sonnet | results/freeze10_cand_s191/README.md | re-brief: probe list in DECISIONS D-OWNER-Q23 |
 (S189 agents done and committed. Build probes: guard denies a segment naming indi_project with
 rm/tee/git apply etc.; run each run.sh call alone, redirect only into indi_flight/.)
 
