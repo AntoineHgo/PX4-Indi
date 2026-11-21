@@ -72,6 +72,9 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S160a | G5.3 hold re-fly at freeze plant (was missing), 3 seeds | bash | results/g5_freeze_s157/hold_wind_s*, hold3.log | `bash indi_flight/results/g5_freeze_s157/hold3.sh` (skips done) |
+| S160c | G2 freeze cells pre-test roll 800+400 s1 (freeze plant + typical noise); then CELLS for pitch, seeds 2-3, PSUF=_fwdef | bash | results/g2_freeze_s160/<cell>/margins.txt, batch.log | `CELLS="..." PSUF= bash indi_flight/results/g2_freeze_s160/batch.sh` |
+| S160b | G5.11 checker + osc detector (GATES 5b G5.11 S160) | sonnet | bench/g511_check.py, bench/osc_detector.py, results/g5_freeze_s157/g511_*.txt | re-brief from GATES G5.11 text |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
