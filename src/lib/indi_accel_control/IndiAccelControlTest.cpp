@@ -661,6 +661,21 @@ TEST_F(IndiAccelControlTest, JerkFeedforwardCoordinatedTurn)
 	}
 }
 
+TEST_F(IndiAccelControlTest, ResetJerkHistoryForgetsDifference)
+{
+	// D-T10-RESET: a step of a_ff right after resetJerkHistory() is not differentiated into jerk
+	IndiAccelControl::Input in = hoverInput();
+	in.j_ref = Vector3f(kNaN, kNaN, kNaN);
+	IndiAccelControl::Output out;
+	in.a_ff = Vector3f(0.f, 0.f, 0.f);
+	ASSERT_TRUE(_ctrl.update(in, out));
+	ASSERT_TRUE(_ctrl.update(in, out));
+	_ctrl.resetJerkHistory();
+	in.a_ff = Vector3f(0.3f, 0.f, 0.f);
+	ASSERT_TRUE(_ctrl.update(in, out));
+	EXPECT_EQ(out.j_used(0), 0.f);
+}
+
 TEST_F(IndiAccelControlTest, JerkBackwardDifferenceAndHold)
 {
 	IndiAccelControl::Input in = hoverInput();

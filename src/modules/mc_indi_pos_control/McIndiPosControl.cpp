@@ -277,11 +277,20 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 		const Vector3f a_ref = inject_output ? a_c_pre_inject : (a_c_pre_inject + inject);
 
 		if (_indi_reset_pending) {
+			// restart of the stage (position-control entry, Hold -> run, stage state reset): differencing restarts from
+			// the current state (same call as the bypass branch below; the blend is kept by reset(), so no collective step)
+			const float coll_rs = fresh_thr ? _coll_meas : _last_thrust;
+			const float c_rs = PX4_ISFINITE(coll_rs) ? math::max(coll_rs, 0.f) : 0.f;
+			_indi.reset((fresh_acc && !model_force) ? _f_b : Vector3f(0.f, 0.f, -c_rs * G), c_rs, fresh_esc ? _mean_u : NAN);
+			_indi_reset_pending = false;
+			_indi_jerk_reset_pending = false;
+
+		} else if (_indi_jerk_reset_pending) {
 			// T10: estimator reset while the stage runs: forget the jerk difference history so that a setpoint step from
 			// the reset is not differentiated. The measured force/collective filters are frame independent and kept
 			// (D-T10-RESET: re-seeding them with one raw sample gave a 1.9 deg tilt spike at a yaw reset)
 			_indi.resetJerkHistory();
-			_indi_reset_pending = false;
+			_indi_jerk_reset_pending = false;
 		}
 
 		IndiAccelControl::Input in;
@@ -399,6 +408,7 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 
 	trackDegraded(StageMode::Bypass, now);
 	_indi_reset_pending = false; // the bypass branch below resets the stage every cycle
+	_indi_jerk_reset_pending = false;
 
 	// bypass: stock attitude setpoint is published, the stage tracks the thrust actually commanded (A3)
 	_indi.setBlendHold(true); // D-GAP: reset() below keeps b; model path from the commanded collective, measured path from the ESC mean u
@@ -863,7 +873,7 @@ void McIndiPosControl::Run()
 		reset_counters.heading = vehicle_local_position.heading_reset_counter;
 
 		if (_indi_reset_detector.update(reset_counters)) {
-			_indi_reset_pending = true;
+			_indi_jerk_reset_pending = true;
 		}
 
 		if (_vehicle_control_mode.flag_multicopter_position_control_enabled) {

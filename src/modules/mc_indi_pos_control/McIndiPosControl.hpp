@@ -320,6 +320,7 @@ private:
 	uint8_t _heading_reset_counter{0};
 	EkfResetDetector _indi_reset_detector{}; /**< T10: estimator reset seen by the INDI stage */
 	bool _indi_reset_pending{false};
+	bool _indi_jerk_reset_pending{false}; ///< estimator reset: clear the jerk history only (D-T10-RESET)
 
 	// A18: feed-forward acceleration and jerk of the trajectory setpoint of this cycle (inputs of the jerk feed-forward),
 	// and the omega_ff the stage produced (valid only on an active INDI cycle), published every cycle
