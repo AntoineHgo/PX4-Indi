@@ -77,6 +77,8 @@ Later: log a z-only active flag in indi_pos_status when next touching the module
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S155-1 | review 3/3 module_parity checklist | sonnet | design/prefreeze_r3_parity.md | re-launch same brief if file incomplete |
+| S155-2 | G4 noise profile source note (GATES 5b: freeze re-fly needs typical profile) | sonnet | design/noise_profiles.md | re-launch if incomplete |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
