@@ -60,7 +60,8 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| Q8 | freeze-8 re-fly queue (detached docker) | - | results/freeze8_s181/ | rerun queue.sh (idempotent) |
+| S182a | G5 + G2-STEP scoring of freeze-8 queue (done 16:13, 87 rc 0) | sonnet | results/freeze8_s181/G5_SCORES.md | re-brief from file if partial |
+| S182b | G2 spot probes P1/P2 (XY 0.95/1.8) | sonnet | results/g2_spot_probe_s182/README.md | re-fly from its fly.sh |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
