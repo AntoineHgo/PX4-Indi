@@ -83,7 +83,7 @@ LOG_TOPICS = [
     "vehicle_local_position_groundtruth", "actuator_motors", "esc_status", "vehicle_thrust_setpoint",
     "vehicle_torque_setpoint", "sensor_combined", "vehicle_status", "vehicle_control_mode", "vehicle_land_detected",
     "parameter_update", "hover_thrust_estimate", "control_allocator_status", "indi_pos_status",
-    "vehicle_imu_status", "sensor_gyro",  # D-SIM-STEP pre-test evidence: gyro rate (sensor_gyro ~ IMU rate, 800 Hz)
+    "vehicle_imu_status", "sensor_gyro", "sensor_accel",  # sensor_accel: A-49 vibration line check (S156). D-SIM-STEP pre-test evidence: gyro rate (sensor_gyro ~ IMU rate, 800 Hz)
     "vehicle_attitude_groundtruth", "vehicle_angular_velocity_groundtruth",  # A-12 s18: were 100 Hz (profile rate)
     "sim_ground_truth",  # A-15 s21: sim-only truth, uORB queue 16, one sample per sim step
     "indi_rate_status", "actuator_torque_measured",  # D-G2-INJ s39: c, d, u per cycle and the measured rotor torque
@@ -878,8 +878,11 @@ def main():
     ap.add_argument("--rate-hz", type=int, choices=RATES_HZ, default=800,
                     help="controller rate = IMU_GYRO_RATEMAX (800: stock PX4 multicopter default, rc.mc_defaults; 400; "
                          "267 = 800/3, the 'reported 250 Hz' point). Sets vehicle_angular_velocity rate")
-    ap.add_argument("--vib-acc", type=float, default=0.0, help="v2: IMU vibration accel amplitude per rotor [m/s^2]")
-    ap.add_argument("--vib-gyr", type=float, default=0.0, help="v2: IMU vibration gyro amplitude per rotor [rad/s]")
+    ap.add_argument("--vib-acc", type=float, default=0.0, help="v2: IMU vibration accel amplitude at the IMU [m/s^2]")
+    ap.add_argument("--vib-gyr", type=float, default=0.0, help="v2: IMU vibration gyro amplitude at the IMU [rad/s]")
+    ap.add_argument("--vib-rpm", type=float, default=None,
+                    help="rotor speed where the vib amplitudes apply [rpm] (default: hover, quad5in 9540, x500 7000)")
+    ap.add_argument("--vib-nb", type=int, default=None, help="blade count of the blade-pass line (quad5in 3, x500 2)")
     ap.add_argument("--scenario-overrides", default=None, metavar="FILE.json",
                     help="JSON object whose top-level keys replace (shallow merge) the same keys of the selected scenario: "
                          "thrust_sag, motor_fault, erpm_loss, wind {steady, peak, dir_deg}, disturbance, dist_segment; unknown keys and "
@@ -1039,7 +1042,11 @@ def main():
             if a.vib_acc > 0 or a.vib_gyr > 0:  # needs the rotor joint speeds of SIM_GZ_ESC_FB >= 1
                 sim.env["PX4_PARAM_SIM_GZ_VIB_ACC"] = str(a.vib_acc)
                 sim.env["PX4_PARAM_SIM_GZ_VIB_GYR"] = str(a.vib_gyr)
-                meta["vib"] = {"acc": a.vib_acc, "gyr": a.vib_gyr}
+                vib_rpm = a.vib_rpm if a.vib_rpm is not None else (9540.0 if a.model == "quad5in" else 7000.0)
+                vib_nb = a.vib_nb if a.vib_nb is not None else (3 if a.model == "quad5in" else 2)
+                sim.env["PX4_PARAM_SIM_GZ_VIB_RPM"] = str(vib_rpm)
+                sim.env["PX4_PARAM_SIM_GZ_VIB_NB"] = str(vib_nb)
+                meta["vib"] = {"acc": a.vib_acc, "gyr": a.vib_gyr, "rpm": vib_rpm, "nb": vib_nb}
         if a.gnss_delay is not None:
             sim.env["PX4_PARAM_SENS_GNSS0_DELAY"] = str(a.gnss_delay)
             meta["gnss_delay"] = a.gnss_delay
