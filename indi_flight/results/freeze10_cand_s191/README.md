@@ -38,3 +38,19 @@ All three .check.txt: every G5.4 line PASS. G5.3 mission g53 check: PASS on tour
 ## Overall
 - Do all D-OWNER-Q23 probe checks pass? NO for completeness: every scored check passes (G5.7 3/3, G5.4 3/3, G5.3 2/2, G4 R/C/clip, G3 02/05 both keys), but the G4 chatter / item 2 / item 3 / PID guard rows of cruise_typ_s1 are not scored (scorer failure, see 3), so the G4 verdict is incomplete. No check failed.
 - G3 02/05: matched GNSS compensation REMOVES the failure (1.45 Hz accel-loop oscillation 12.2/8.5 -> 1.8/0.7 dps, item 3 0.54/0.50 -> 0.13/0.11 m, items 1-3 pass on both keys). Two draws only; the other S190 failing draws (03, 08, 19) were not re-flown matched.
+
+## G4 rows (S192 re-score)
+cruise_typ_s1 only, existing freeze-9 scripts, unchanged (key1 `freeze9_s183/g4/rescore_key1_q19.py` via sed on the path; key2 `rescore_key2_q19.py` via sed restricting its loops to cruise/typ/s1; `guard_q19.py`; `bench/g4_guard_q20_key{1,2}.py`; `g4_gate_s169/chatter_cruise_s176.py` with RAW=g4/chatter_cruise_raw.txt, tracked file stays clean). Outputs in g4/: key1_q19_stdout.txt, key2_q19_stdout.txt, guard_indi.jsonl, guard_q20_key{1,2}_stdout.txt, chatter_stdout.txt. Scipy was missing on the host (scripts need it, normally run in docker); it was installed outside the repo (scratchpad, v1.18.1) and used via PYTHONPATH, no docker. Limits per freeze9_s183/G4_SCORES.md.
+
+| row | limit | this probe | freeze-9 cruise_typ_s1 | verdict |
+|---|---|---|---|---|
+| chatter key 1 (line RMS >= 5e-4 and ratio > 20, sustained, Q19 skip) | no sustained chatter | no; max line RMS (ratio>20) 4.11e-04 | no; 4.11e-04 | PASS |
+| chatter key 2 | no sustained chatter | no; line RMS 3.97e-04 (peak 89.2 Hz m0, ratio 1031) | no; 4.10e-04 | PASS |
+| item 1 (LOC) | pass | PASS | PASS | PASS |
+| item 2 key 1 (rate oscillation, p/q/r sustained) | none sustained | PASS (-/-/-, 19/19/19 skipped windows) | PASS (-/-/-, 20/20/20) | PASS |
+| item 2 key 2 | none sustained | pass (max rms 2.2/2.3/0.8 dps; freeze-9 4.5/4.0/1.2 key1/key2 max for p/q/r) | pass (4.5/4.0/1.2) | PASS |
+| item 3 steady state | xy RMS <= 0.15 m, mean abs dz <= 0.1 m | xy RMS 0.021 m PASS; mean dz 0.168 m (key1 value, abs) FAIL | xy 0.039 m; dz +0.098 m PASS | FAIL |
+| Q20 PID guard key 1 / key 2 | INDI line RMS not above PID at same transition (only where flagged and PID ref exists) | 0 checked (no INDI flagged window; max narrow RMS 1.61e-04 at 17->4#1; no PID typ ref) | 0 checked (same, no PID typ ref) | not applicable (no checked transition, 0 FAIL) |
+| Q19 guard (guard_q19.py) | flagged = ratio > 20 and RMS >= 5e-4 | no flagged transition (max any 1.87e-04 at 17->4#1) | n/a, freeze-9 typ not compared (no PID typ ref) | no flag |
+
+Note: item 3 altitude FAIL (0.168 m vs 0.1 m) is the only failing G4 row; freeze-9 failed the same row on cruise_typ_s2 (0.147 m) and on every harsh cruise run (0.17-0.22 m), so this probe's value is in the freeze-9 spread but above its s1.
