@@ -1130,3 +1130,11 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Consequence: PID reference flights of the G4 cruise rows that have a skipped-window line (at least cruise_harsh_s2)
   are flown at the same seed. Freeze-8 G4 re-score queued (history); freeze-9 G4 decides the verdict.
 - Overturn: owner only (test definition).
+
+## D-G3-ZREF (S186): zero of truth height in G3 item 3
+Decision: altitude error = (truth z - z_rest) - setpoint z, z_rest = median truth z over the first 1 s at rest (key 2's reading).
+Reason: trajectory_setpoint z is in the estimator frame, whose origin is the vehicle at rest at arming; re-zeroing truth to its
+rest value puts both in that frame. Raw truth carries the model's rest offset (+5 mm on the pre-test, results/g3_excursion_s186/
+ALT_OFFSET_S186.md). Alternative: raw truth z (key 1 today), rejected: compares two frames with different origins.
+Effect: key 1 adds z_rest for item 3 (one change, self-test) before G3 scoring; run 07 then reads -0.097 m (pass at 0.10).
+Overturn: a log showing the estimator origin is not the rest position (e.g. arming in flight, origin reset before the window).

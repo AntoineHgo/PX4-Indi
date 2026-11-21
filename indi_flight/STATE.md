@@ -22,8 +22,8 @@
    C scheduled P / D report) BLOCKING for G3: no G3 flight or score of osc rows until answered. Set-up done S186:
    tel_frozen hook (anchored to traj/stick segment, checked), excursion vs setpoint (2 keys agree), chatter out of
    item 2, run_validity pid_*, key2 item 3 on window + setpoint (agree 20/21). Open tooling before G3 scoring:
-   constant 5 mm altitude-mean offset key1 vs key2 (run 07 -0.102 vs -0.097 at the 0.10 limit;
-   results/g3_excursion_s186/KEY2_ITEM3_S186.md): trace which origin is right (one sonnet task).
+   5 mm altitude offset traced (key1 raw truth z, key2 rest-zeroed); D-G3-ZREF picks rest-zeroed: key 1 adds
+   z_rest for item 3 + self-test (one sonnet task), then keys should agree 21/21 (ALT_OFFSET_S186.md).
    After Q22: act on answer, re-fly the 20-run pre-test; when clean, write "G3 set-up fixed, ready for flight chain"
    here + WAIT_OWNER.
 5. G7 (stage 7, not before G2/G4/G5 verdicts): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site
