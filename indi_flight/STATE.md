@@ -49,6 +49,8 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 - quad5in defaults: bench/params/quad5in_indi_defaults.params (ACT_TC 0.033); firmware ACT_TC 0.05, MC_INDI_ID_OK 0
   halves K.
 - Guard blocks long `git commit -m`: use `-F <file>`.
+- chatter_cruise_s176.py without RAW= overwrites tracked results/g4_gate_s169/chatter_cruise_s176_raw.txt: brief
+  agents to set RAW to their own folder; `git checkout` it if dirty.
 - Logger misses the first ~0.2 s of indi_pos_status (late subscription): never read a missing sample as bypass.
 ## Tasks in flight
 | id | task | agent | output | resume |
