@@ -22,7 +22,7 @@ Item 2 sustained oscillation: truth p,q,r on the uniform grid (g4_metrics.unifor
   Chatter is computed and reported (item2_oscillation.command_chatter, top-level g4_command_chatter_sustained) for G4
   (GATES.md line ~361 and Q14 A, line ~553); it does NOT decide item 2 or the G3 verdict (item 2 = GATES.md line 304: p, q, r, position).
 Item 3 steady-state on [T0,T1]: horizontal RMS about the reference <= 0.15 m calm / 0.30 m with --wind; altitude |mean error|
-  <= 0.10 m calm / 0.20 m with --sag; roll/pitch |mean| <= 1.0 deg in attitude mode.
+  (truth height re-zeroed to its median over the first 1 s at rest, D-G3-ZREF) <= 0.10 m calm / 0.20 m with --sag; roll/pitch |mean| <= 1.0 deg in attitude mode.
 
 PROPOSED readings (undefined in the spec, minimal choice):
   - airborne = from the first truth sample with height (-z minus -z[0]) > 1.0 m to the last such sample; "whole flight after
@@ -240,7 +240,8 @@ def evaluate(tt, pos, q, w, tm, cmd, ref, t0, t1, wind=False, sag=False, mode="p
         ref = np.nanmean(pos[m], axis=0)
         res["ref_source"] = "truth window mean"
     horiz = float(np.sqrt(np.mean((pos[m, 0] - ref[0]) ** 2 + (pos[m, 1] - ref[1]) ** 2)))
-    alt = float(np.mean(-pos[m, 2] + ref[2]))
+    z_rest = float(np.nanmedian(pos[tt <= tt[0] + 1.0, 2]))   # D-G3-ZREF: estimator z origin = rest position
+    alt = float(np.mean(-(pos[m, 2] - z_rest) + ref[2]))
     rp = [float(np.degrees(np.mean(rr))), float(np.degrees(np.mean(pp)))]
     it3 = {"horizontal_rms_m": {"value": horiz, "threshold": HORIZ_RMS[wind], "gated": mode == "position"},
            "altitude_mean_m": {"value": alt, "threshold": ALT_MEAN[sag], "gated": mode == "position"},

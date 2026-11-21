@@ -16,13 +16,14 @@ FS, T = 800.0, 90.0
 T0, T1 = 40.0, 50.0
 
 
-def make(osc_hz=None, osc_dps=0.0, alt_off=0.0, tilt_deg=0.0, line_hz=None, pos_lc=0.0, land_at=None, seed=0, osc_from=0.0, land_rate=1.0, line_amp=0.02, cmd_noise=0.002, osc_until=None, nav_changes=None):
+def make(osc_hz=None, osc_dps=0.0, alt_off=0.0, tilt_deg=0.0, line_hz=None, pos_lc=0.0, land_at=None, seed=0, osc_from=0.0, land_rate=1.0, line_amp=0.02, cmd_noise=0.002, osc_until=None, nav_changes=None, rest_off=0.0):
     rng = np.random.default_rng(seed)
     t = np.arange(0, T, 1 / FS)
     n = len(t)
-    h = np.minimum(t / 5.0, 1.0) * 5.0 + alt_off * (t > 30)          # climb 1 m/s to 5 m then hold
+    h = np.clip(t - 1.0, 0.0, 5.0) + alt_off * (t > 30)          # at rest 1 s, climb 1 m/s to 5 m then hold
     pos = np.stack([rng.normal(0, 0.02, n), rng.normal(0, 0.02, n), -h], axis=1)
     pos[:, 2][t < 0.5] = 0.0
+    pos[:, 2] += rest_off                                              # D-G3-ZREF: constant model offset incl. at rest
     pos[:, 0] += pos_lc * np.sin(2 * np.pi * 0.5 * t) * (t > 10)
     if land_at:
         h = np.where(t > land_at, np.maximum(5.0 - land_rate * (t - land_at), 0.0), h)
@@ -110,6 +111,11 @@ def main():
         else:
             print(f"selftest {name}: {got} {'OK' if ok else 'FAIL'}")
             bad += not ok
+    # D-G3-ZREF: +0.005 m rest offset, hovering exactly on the setpoint -> altitude mean error 0 (old code: -0.005)
+    ra = make(rest_off=0.005)["item3_steady_state"]["altitude_mean_m"]["value"]
+    ok = abs(ra) < 5e-4
+    print(f"selftest zref_rest_offset: alt={ra:.6f} {'OK' if ok else 'FAIL'}")
+    bad += (not ok) and not brk
     # S175 width fix: chatter line RMS is integrated over peak +-2 Hz. Peak tone 60 Hz at 4.0e-4 RMS plus sidebands +-1 Hz at 3.0e-4 each:
     # +-0.5 Hz (old +-2 bins) sees 4.0e-4 < 5e-4 -> not chatter; +-2 Hz sees all three, 5.8e-4 -> chatter.
     tt = np.arange(0, 20.0, 1 / FS)
