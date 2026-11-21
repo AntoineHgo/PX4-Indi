@@ -152,6 +152,13 @@ gate is decided on the frozen final pair in stage 6 with the same tests.
   Before the stage-6 gate run: margin second key for the outer cells, linear outer-loop model, A-36 and A-39
   explained or bounded, 2 seeds everywhere, 267 Hz rows, serial flights only (S86 finding 1). No G2 closure claimed.
 
+  Freeze status (stage 6, D-FREEZE-6 plant, serial, hole-checked; S160-S163):
+  - rate roll/pitch/yaw x 800/400 x measured/model-only (2-3 seeds) + fwdef roll 800: all PASS, KEYED
+    (results/g2_freeze_s160/README.md). Open: linear-model x-check at freeze params, phase-plateau GM rule.
+  - attitude roll/pitch/yaw 800/400: 12/12 PASS, KEYED (results/g2_att_freeze_s162). Open: yaw model x-check.
+  - vel/pos and accel x/y/z, 800/400, 2 seeds: 24/24 meet thresholds, UNKEYED (results/g2_outer_freeze_s163).
+    Open: outer margin key2, z phase-plateau check, linear outer-loop model. 267 Hz rows not flown.
+
 ## G2-STEP Inner-loop attitude step criterion (written S61 2026-11-17, owner note N1 B.2, before its first test)
 - Test: step_roll, step_pitch (15 deg), step_yaw (45 deg) on quad5in, sim v2 (eRPM), 800 Hz (400 Hz reported), speed 4,
   firmware INDI defaults + derived physical parameters only, >= 3 seeds, provenance G1.7 (clean tree, binary at HEAD).

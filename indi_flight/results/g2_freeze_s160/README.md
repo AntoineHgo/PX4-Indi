@@ -39,3 +39,19 @@ noise). The 3 cells are therefore valid G2 runs; no re-fly, no gate change. The 
   stage cond 0x7f -> 0x7d), produced by an orchestrator post-processing container run in parallel with the flight
   (STATE 4a rule broken). Motors held a stale full-differential command through the 89 ms hole. Invalid run (G2 validity:
   gap > 3 periods), re-flown serially. Cells flown during that window (yaw800_s1, yaw800_s2, yaw400_s2) are hole-checked.
+- yaw800_s2 / yaw400_s2 first flights (kept as *_INVALID_holes/): controller holes 17.5 / 22.5 ms, flown while orchestrator
+  probe containers ran (06:21-06:23). Re-flown serially 07:03-07:05: yaw400_s2 holes PASS; yaw800_s2 holes OVERALL FAIL
+  only on "count-disagree, count-based missing -3" of vehicle_local_position_setpoint (3 EXTRA samples, 0 gaps, max excess
+  1.25 ms): not a hole, outer-loop topic, rate-loop topics PASS -> run valid for the rate cell.
+
+### S163 results (table: bench/g2_freeze_table_s163.py -> ../g2_outer_freeze_s163/table_s163.md)
+| cells (2 seeds each) | worst PM deg | worst GM dB | worst DM ms | key2 max abs dPM / dGM |
+|---|---|---|---|---|
+| yaw measured 800 / 400 | 79.0 / 80.8 | 19.8 / 15.3 | 72.8 / 78.7 | 0.4 deg / 0.09 dB |
+| model-only roll 800 / 400 | 55.9 / 54.6 | 13.8 / 11.8 | 43.6 / 41.7 | 0.4 / 0.17 |
+| model-only pitch 800 / 400 | 55.8 / 54.5 | 13.7 / 12.1 | 43.4 / 41.7 | 0.2 / 0.07 |
+| model-only yaw 800 / 400 | 76.1 / 75.4 | 18.0 / 17.0 | 64.2 / 63.6 | 0.1 / 0.12 |
+All 16 cells: GM >= 6 dB, PM >= 45 deg, DM >= 2 periods + telemetry latency; 18/18 bins accepted; KEYED by
+bench/second_key_m3a_s100.py (independent of m3a_margins_pretest.py; limits 1 dB / 3 deg). With S160 the rate-loop cell
+set at the freeze is complete (roll/pitch/yaw x 800/400 x measured/model-only + fwdef roll 800). Still open for the
+G2 rate row: linear-model x-check at the freeze params, phase-plateau GM rule (min 1/|L| within 10 deg of -180).

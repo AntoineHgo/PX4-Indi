@@ -1,0 +1,15 @@
+hole report: indi_flight/results/g2_freeze_s160/yaw800_s2/s1/flight.ulg  (span 108.9 s after the first second)
+topic                                 class       rate Hz holes  miss   miss %  max ms  exc ms  verdict
+sim_ground_truth                      sim           800.0    11    14   0.0161    5.00    3.75  PASS
+vehicle_attitude_groundtruth          sim-info      800.0 11083 11096  12.7348    6.25    5.00  info
+vehicle_angular_velocity_groundtruth  sim-info      800.0 11276 11290  12.9575    6.25    5.00  info
+vehicle_local_position_groundtruth    sim-info      800.0 11247 11261  12.9242    6.25    5.00  info
+sensor_gyro                           sim           800.0    19    22   0.0253    5.00    3.75  PASS
+vehicle_angular_velocity              controller    800.0    23    24   0.0275    6.25    5.00  PASS
+vehicle_torque_setpoint               controller    800.0    20    20   0.0230    6.25    5.00  PASS
+actuator_motors                       controller    800.0    19    18   0.0207    6.25    5.00  PASS
+vehicle_local_position_setpoint       controller     88.9     0     0   0.0000   17.50    6.25  FAIL (count-disagree: count-based missing -1)
+CLASS sim        holes   19  missing 0.0161 % (limit 0.05 %)  max 5.00 ms, excess 3.75 ms (limit 10 excess)  PASS
+CLASS controller holes   23  missing 0.0275 % (limit 0.10 %)  max 17.50 ms, excess 6.25 ms (limit 10 excess)  FAIL
+CLASS logger     holes    0  missing 0.0000 % (limit 0.10 %)  max 0.00 ms, excess 0.00 ms (limit 10 excess)  PASS
+OVERALL FAIL
