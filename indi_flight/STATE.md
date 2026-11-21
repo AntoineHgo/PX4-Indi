@@ -4,12 +4,15 @@
 - Stage: 6 (validation) on freeze-6 firmware 23acbdef67 + post-freeze commits kept (D-JFF-KEEP). Q11 B forces a
   freeze-7 (offboard pos/vel feedback in the INDI module); rows invalidated by D-JFF-KEEP and Q11 B re-fly there.
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
-- Blocker: G2 verdict waits Q16 (BLOCKING for G2). G4 chatter clause question pending (Q17, after S175-d).
+- Blocker: G2 verdict waits Q16 (BLOCKING for G2). G4 chatter: INDI-specific AUTO_LAND line, probe S175-f.
 ## Next actions (owner order; each names its gate item)
 1. G2: no work until Q16 answered. On A: write verdict PASSED (GATES G2 + GATE_STATUS) with A-51 as evidence limit.
-2. G4: item 2 PASS both keys (Q15 A). Chatter clause FAIL key1 4/9 hover (~22 Hz line at AUTO_LAND entry, 3-8 DShot
-   steps), key2 16/18 (whole airborne window). S175-d result -> write Q17 (does the Q15 skip extend to the chatter
-   clause; PID ref; common window) BLOCKING for G4. G4 rows were flown at freeze-6: re-fly at freeze-7 (D-JFF-KEEP).
+2. G4: item 2 PASS both keys (Q15 A). Chatter clause FAIL: ~22 Hz command line AUTO_LAND entry -> touchdown (~10 s,
+   3-8 DShot steps), INDI only, PID ref none (results/g4_gate_s169/chatter_s175.md). INDI-specific gate failure: no
+   owner question; the 3 s skip would only break the streak, do NOT propose it. Probe S175-f: is it gone with
+   aa4fd2654a (FF offboard-only)? If yes: D-JFF-KEEP is a shown fix, G4 re-fly at freeze-7. If no: one session of
+   cause search (land descent in mc_indi_pos_control), then re-open the decision. Key1 width bug (+-0.5 Hz) in S175-f.
+   G4 rows were flown at freeze-6: re-fly at freeze-7 (D-JFF-KEEP).
 3. G5 re-score (owner step 2): G5.2 z band max(2 % d, 0.10 m) (Q10 B); G5.9a ref actuator_armed.kill (Q8 add.2);
    G5.11 xy truth excursion + yaw p95 jump (Q12 B+D); G5.10 tilt <= TILTMAX+5 (Q9 a); G5.6 false maybe_landed and
    G5.11 z "not tested Q8(b)". Checker changes get key2 before counting. Evidence: results/g5_freeze_s157, g511_fix_s161.
@@ -47,7 +50,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S175-d | G4 chatter: PID ref + key1/key2 window reconcile | sonnet | results/g4_gate_s169/chatter_s175.md | re-brief from file |
+| S175-f | G4 chatter probe post-JFF + key1 width fix | sonnet | results/g4_chatter_probe_s175/README.md | re-brief from file |
 | S175-e | G3 set-up (a) abort on not_applied, noise cause, (c) Docker score | sonnet | results/g3_setup_s175/README.md | re-brief from file |
 
 ## Open problems
