@@ -21,3 +21,6 @@ end of the hold (hold ends at 62.0 s on the log time base), so those numbers (R2
 segment; the hold-window value is the one above. Gate scoring must take windows from run.json events (score.sh does).
 Pre-test verdict: configuration, scenarios, signals and metric OK. Acro row not flown (stick quantisation model
 deferred, RC168). Key2 of the metric: key2_metrics.md.
+Key2 (S168, sonnet, `bench/g4_metrics_key2.py`, written blind, self-test PASS): hover_typ_s1 and quiet agree within 1 %;
+harsh R20 1.1 %, R4 0.4 %, C4 2.2 %, C20 7 % (key1 0.000532, key2 0.000495): open as A-52 (bound: 23x below limit).
+lemn windows differ (key2 took the whole trajectory event incl. ramp), not compared.
