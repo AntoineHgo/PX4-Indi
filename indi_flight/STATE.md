@@ -55,7 +55,10 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none in flight (S179 end); G5.10 pre-test queue4 flown, 4 metrics committed, unscored | - | results/g5_10_freeze7_s178/ | - |
+| A | Q18 chatter land-window skip, key 1 + re-score freeze-7 18 + PID land values + hover_harsh_s1 | sonnet | results/freeze7_s177/q18_rescore_s180/KEY1.md | re-brief |
+| B | Q18 skip, key 2 (independent) + re-score freeze-7 18 | sonnet | results/freeze7_s177/q18_rescore_s180/KEY2.md | re-brief |
+| C | owner note 3+4: key1 88.5 vs key2 33.5 on GP s1; item 3 alt_mean freeze-7 + PID ref | sonnet | results/g55_gain_probe_s179/RECONCILE_S180.md | re-brief |
+| - | G5.10 pre-test queue4 flown, 4 metrics committed, unscored | - | results/g5_10_freeze7_s178/ | - |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

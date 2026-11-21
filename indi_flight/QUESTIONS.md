@@ -21,40 +21,7 @@ DECISIONS D-OWNER-Q8-Q15 and D-JFF-KEEP; full text in JOURNAL.md S175).
 Q16 closed S178 (owner answer A: G2 PASSED once the freeze-7 outer cells and 2 rate/att spot-check cells pass;
 3 rate x-check groups reported as evidence limit, A-51 open; full text in JOURNAL.md S178).
 
-## Q17 (S178, 2026-11-21): G5.10 stabilized full-scale part, recovery criterion. BLOCKING for G5.10.
-Context: Q9 (b) says the full-scale part is flown in stabilized (full throttle + full roll stick for 1 s) with "same
-limits": no LOC, alt loss <= 2.0 m, tilt <= MPC_TILTMAX_AIR + 5 deg, no windup = back within 0.3 m in <= 5 s.
-Stabilized has no position or altitude setpoint, so "back within 0.3 m" has no reference, and at full roll stick the
-tilt is commanded up to MPC_MAN_TILT_MAX, not MPC_TILTMAX_AIR. Pre-test flights (INDI + PID, seed 1) are queued
-(results/g5_10_freeze7_s178, new scenario g510_stab_full; SAT part per Q9 (c) at SIM_GZ_THR_SC 0.136, hover needs
-1.007 command). PID flies the same flight as reference.
-Options: A [recommended] in stabilized: no LOC; tilt <= MPC_MAN_TILT_MAX + 5 deg; no windup = attitude error to the
-stick-commanded attitude <= 5 deg within 1 s after the sticks return to centre (rate/attitude integrators are the
-only wind-up there); alt loss not applied (full throttle climbs). B: keep the literal text, measuring altitude
-change from stick release to +5 s against 0.3 m (no reference, likely fails for PID too). C: drop the recovery clause
-for the stabilized part.
-Meanwhile: the pre-test flights fly (data only); the stabilized part is not scored until answered. SAT part, G2, G4
-cause search, G5.3/G5.4 continue.
-**Owner answer (2026-11-21):** A. In the stabilized full-scale part of G5.10: no LOC; tilt <= MPC_MAN_TILT_MAX + 5 deg;
-no windup = attitude error to the stick-commanded attitude <= 5 deg within 1 s after the sticks return to centre;
-the alt-loss limit is not applied (full throttle climbs). Log it in GATES.md 5b and DECISIONS.md as an approved
-test-definition fix. PID flies the same flight as the reference.
-
-## Q18 (S179, 2026-11-21): G4 command chatter, windows that contain the touchdown. BLOCKING for G4 (land windows).
-Context: G4 asks for limits on motor-command RMS "in hover and cruise"; Q14 A added the 20-100 Hz chatter detector
-(4 s windows, peak > 20 x median AND line RMS >= 5e-4) over the whole flight. At freeze-7 the cruise runs fail it in
-two places: L1 in the lemniscate (in scope, INDI work continues: setpoint extrapolation probe F2) and L2 in AUTO_LAND.
-S179 localised L2 on logs (results/g4_fix_probe_s179/touchdown_s179.md): line RMS >= 5e-4 only in 1 s windows that
-contain the ground impact (ground_contact - 0.5 s to landed + 0.7 s); steady descent 1.3e-4 (6e-5 with MPC_VEL_LP 5),
-on ground 1e-5. PID shows the same impact signature (26 Hz, 1.2e-3 in the impact window; diffB 5e-4 at 20 Hz), but
-its detector did not flag a sustained 20 Hz line; INDI at 20 Hz is 6e-4 vs PID 1e-4 there. Touchdown is judged by
-G5.4 (passed at freeze-7: touchdown 0.708 m/s, ramp step 7.5 %). The hover_harsh_s1 flag (20.0 Hz) is likely the
-same event (not yet checked).
-Options: A [recommended] the G4 chatter detector skips windows overlapping [ground_contact - 1 s, landed + 1 s] in
-both stacks; touchdown stays judged by G5.4; the land-window values are reported for both stacks. B: keep the rule;
-G4 then needs a touchdown fix (re-open D-F7-GROUND ground handling), likely affecting G5.4/G5.6 too. C: score the
-detector on the hover and cruise segments only (gate text), take-off/land reported.
-Meanwhile: the land windows are not re-scored or chased. L1 (lemniscate) work, G2 (XY_P 1.2 freeze-8), G5 continue.
+Q17 and Q18 closed S180 (owner answers A; GATES "Owner amendments S180", D-OWNER-Q17-Q18; text in JOURNAL.md).
 
 ## Owner note (2026-11-21, after Q17): stay inside INDI scope
 1. Scope line. A behaviour that the PID reference shows too (same scenario and seed, same signature in the gate
@@ -69,9 +36,3 @@ Meanwhile: the land windows are not re-scored or chased. L1 (lemniscate) work, G
    One sonnet task, existing scripts.
 4. G4 item 3 in the XY_P 1.2 probe (altitude_mean 0.29 m, limit 0.1). Look up the freeze-7 value and fly the PID
    reference before any cause search (point 1 applies).
-
-**Owner answer to Q18 (2026-11-21):** A. The G4 chatter detector skips windows that overlap [ground_contact - 1 s,
-landed + 1 s] in both stacks. Touchdown stays judged by G5.4. Report the land-window values for both stacks. Log it
-in GATES.md and DECISIONS.md as an approved test-definition fix, then re-score the freeze-7 G4 runs with keyed
-scripts (no re-fly). Check that the hover_harsh_s1 20 Hz flag is the same touchdown event. L1 (lemniscate) stays
-in scope.
