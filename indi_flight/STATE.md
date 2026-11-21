@@ -1,70 +1,44 @@
 # STATE (budget 8000 bytes: read at every launch, resume essentials only)
 
 ## Status
-- Stage: 5 (outer loop, every mode) opened S129. Stage 4 ident frozen (D-IDENT-STOP, RC126), defaults D-DEFAULTS-FW (S128).
-  Stage 3 inner loop time-boxed (RC64/RC74). Stage 1 frozen S36. Started S1 (2026-11-15).
-- Gates: G1 PASSED S84 | G2 open (cell table in GATES.md) | G3 open | G4 open | G5 open, FINAL text S134 (GATES 5b) |
-  G6 open | G7 open | G8 open.
-- Blocker: none. Q7 closed S140 (rule A, GATES 5b G5.7). F-7/F-8/F-9 acted on S134 (D-F7-GROUND).
-## Next actions (in order; each names its gate item)
-History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrations: read before sizing a brief).
-0b. Nominal plant: matched GNSS --gps-dly 110 --gnss-delay 110 (S140 set-up fault fixed). G5.1-G5.4 re-fly at freeze.
-0c. G5.5 o1-o4/o7 FAIL recorded (lag chase STOPPED RC143, cause stock PositionControl a_c, base A). Re-fly at
-   freeze; if still FAIL, owner Q. G5.8 hover PASS 3/3, G5.9 b/c/d PASS 3/3, G5.9a FAIL = stock commander latency
-   (Q8 add. 2). G5.8 3 m/s: 3 seeds once Q8 add. 3 answered. Meanwhile G5.6/G5.11 probes. History: JOURNAL S141-S147.
-0d. G5.10 (results/g5_g510_s151): alt 1.74-1.76 m PASS, back ~1.9 s PASS at TB 0.3 (default, f3b93704b6); tilt
-   45.3 deg = MPC_TILTMAX_AIR and non-saturating SAT/AGG wait on Q9. A-48 closed (THR_SC injector, UNKEYED).
-   G5.4 at TB 0.3 PASS s1. History: JOURNAL S147-S151.
-0e. Pre-freeze reviews r1-r3 dispositioned (S152-S155, D-PREFREEZE-R1..R3). STAGE-6 FREEZE: D-FREEZE-6, firmware
-   23acbdef67, bench defaults + ID_OK 1, fwdef cells (G5.1 acro + G2 rate roll 800 at ID_OK 0), G4 typical noise
-   (--vib-acc 10 --vib-gyr 0 --imu-noise-scale 4.0, D-NOISE-PROF). Re-fly: results/g5_freeze_s157 (chain.sh:
-   batch.sh 18 + batch2.sh 36 flights, status batch_status.txt, DONE2/CHAIN_END). History: JOURNAL S152-S157.
-   S158-S164 (JOURNAL): G5 freeze rows scored + KEYED; G5.11 T10 fix d1b65d0f09 (yaw 2/3 PASS, xy FAIL Q12);
-   G2 rate + att + outer 67/67 cells PASS + KEYED at freeze (plateau GM per Q13 A), outer model x-check done (A-50).
-   S165: rate + att yaw model x-check DONE (xcheck_rate.md, 12/15 agree, A-51, verdict independent).
-   267 Hz reported cells flown S165 (GATES G2 freeze status). NEXT: G4 (RC159 order G2 -> G4 -> G3). Next RC: S168.
-   S166-S172 (JOURNAL): G4 tooling keyed; G4 batch results/g4_gate_s169 rows PASS 18/18, chatter FAIL (A-54, Q14),
-   item 2 FAIL 1/3 harsh (A-56). D-JFF-SOURCE 20b4a41b22, D-JFF-OFFB aa4fd2654a (FF not the cause). RC173 acted on.
-   S173: G4 verdict NOT PASSED (A-56 + Q14 chatter). S174: A-56 = stock AUTO_LAND-entry setpoint transient in BOTH
-   stacks (results/a56_rate_s174; PID s3 larger), not an INDI oscillation; Q15 asked (detector excludes transitions).
-   No inner-loop change (D-RATE-BLD stays 1.0 s). G4 now waits only on Q14/Q15 answers (re-score g4_gate_s169).
-   NEXT S175 (G3 pre-test, results/g3_pretest_s173/score_s174.md, UNKEYED): campaign BLOCKED by set-up faults:
-   (a) g4_typical_noise NOT applied on 20/20 runs; (b) tel_frozen hook missing (runs 03, 11); (c) LOC rule
-   "excursion > 5 m" trips on the 5 m-radius o1 stand-in (16/17): define excursion vs setpoint (GATES text, test
-   defect, log it); (d) windows: stand-ins lack the 20 s hold -> write gate_g3.sh windows per GATES 3; (e) score.sh
-   needs scipy (scratchpad PYTHONPATH) -> run in Docker. Then explain run 17 LOC (tilt 129 deg) and osc runs
-   03/07/08/13/17 (one session max), re-pre-test ~20. Mix 17/20 position is sampler-correct (p 0.107).
-   Then fold G5.3/G5.4 re-fly (D-JFF-OFFB overturn check) and one offboard trajectory into the next chain. Deferred
-   to G7: omega_ff step on offboard entry (key2_jffoffb MINOR). Next RC: S178.
-   G5.2 posctl z settle s1 4.15 s FAIL (EKF2 height error, Q10; PID ref PASS).
-4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
-   events and maybe_landed / EKF z injectability -> Q8 (scored at option A, not blocking).
-4a. Flying: parallel docker streams ONLY for tolerance-insensitive probes (G5.5, G5.10 sat); G5.7 and event rows serial
-   or max 2 streams with sim-hole figure recorded (LESSONS_PROPOSED S86); parallel runs are never gate evidence.
-4b. G7: align firmware ACT_TC/W_MAX with bench or keep the fwdef cell (lesson 12). Guard params (ERPM_TO/FRZ, SP_TO,
-   DT_MAX) unevidenced.
-5. G7 (deferred, stage 7): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site (K128 MAJOR), D-JFF-SOURCE case, checker
-   self-tests for passthrough_check/offb_vel_check.
-RC149 (design/route_check_149.md) cuts: no more PID G5.10 runs; no 3 m/s 3-seed flying before Q8 add.3(i); runner
-  MC_INDI_EN alias deferred to stage 7. Next RC: S159.
-Rule (RC64/74): 1 session per inner-loop law change; no anomaly chase unless a gate test fails.
-G3/G5 batches before the stage-6 freeze are PROBES (RC113). G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1.
-G3 tooling exists (g3_run.py, quad5in variants, overrides/wind/motor_fault/timed eRPM loss). gust_x results before
-  b0486b703e not comparable. eRPM-loss lateness 36-122 ms: take effective time from the log. Weak+sat unflown.
-  Acro = G3-unprobed, G5 carries it (RC118). altctl/posctl not in G3 MODE_MIX.
-DEFERRED until defaults exist: g3_checks.py, gate_g3.sh, frozen-telemetry hook, G4 profiles.
+- Stage: 6 (validation) on freeze-6 firmware 23acbdef67 + post-freeze commits kept (D-JFF-KEEP). Q11 B forces a
+  freeze-7 (offboard pos/vel feedback in the INDI module); rows invalidated by D-JFF-KEEP and Q11 B re-fly there.
+- Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
+- Blocker: G2 verdict waits Q16 (BLOCKING for G2). G4 chatter clause question pending (Q17, after S175-d).
+## Next actions (owner order; each names its gate item)
+1. G2: no work until Q16 answered. On A: write verdict PASSED (GATES G2 + GATE_STATUS) with A-51 as evidence limit.
+2. G4: item 2 PASS both keys (Q15 A). Chatter clause FAIL key1 4/9 hover (~22 Hz line at AUTO_LAND entry, 3-8 DShot
+   steps), key2 16/18 (whole airborne window). S175-d result -> write Q17 (does the Q15 skip extend to the chatter
+   clause; PID ref; common window) BLOCKING for G4. G4 rows were flown at freeze-6: re-fly at freeze-7 (D-JFF-KEEP).
+3. G5 re-score (owner step 2): G5.2 z band max(2 % d, 0.10 m) (Q10 B); G5.9a ref actuator_armed.kill (Q8 add.2);
+   G5.11 xy truth excursion + yaw p95 jump (Q12 B+D); G5.10 tilt <= TILTMAX+5 (Q9 a); G5.6 false maybe_landed and
+   G5.11 z "not tested Q8(b)". Checker changes get key2 before counting. Evidence: results/g5_freeze_s157, g511_fix_s161.
+4. G5.5 (owner step 3, Q11 B): design note (1 page) + DECISIONS entry for INDI-module pos/vel feedback with flatness
+   FF in offboard only; fable review of the design; then code + key2 + tests; G5.5 pre-test; check whether G2 outer
+   cells / G4 cruise were flown in offboard (then re-fly them at freeze-7).
+5. G5.10 re-definition flights (Q9 b/c): SAT part one-flight check motors >= 0.99, full-scale stabilized part.
+6. G3 set-up (owner step 4): S175-e does (a) abort on not_applied + noise-profile cause, (c) Docker scoring.
+   Still to do: (b) excursion vs setpoint in g3_checks (key2 before gate use); tel_frozen hook (sim hook, two keys);
+   (d) run 17 LOC (tilt 129 deg) and osc runs 03/07/08/13/17: PID reference first, one session max. Then re-fly the
+   20-run pre-test; when clean, write "G3 set-up fixed, ready for flight chain" here and create WAIT_OWNER.
+7. Freeze-7 re-fly: G4 18 runs, G5.3/G5.4/G5.5 + offboard rows, G5 event rows in hover (cheap confirm).
+8. G7 (stage 7): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site (K128 MAJOR), D-JFF-SOURCE case,
+   omega_ff step on offboard entry (key2_jffoffb MINOR), checker self-tests passthrough_check/offb_vel_check;
+   ACT_TC/W_MAX firmware vs bench (lesson 12); guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
 Deferred to before G6: yaw fit fix (r regressor + matched grid = probe V3, K126 MAJORs, A-44).
-STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair, PID M1 hook, hooks without a
-  consumer, stand-alone anomaly chases (fold A-4, A-6 into G3/G5 side-cells), --sched-anchor and set_param fixes,
-  EdgeState design (RC133 action 3, dropped by owner directive).
+Rules: 1 session per inner-loop law change; parallel docker streams only for tolerance-insensitive probes, never gate
+  evidence; G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1. Next RC: S178.
+STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer, stand-alone anomaly chases,
+  --sched-anchor and set_param fixes, EdgeState design, more PID G5.10 runs.
 ## Notes
-- pretest_gate only on stationary scenarios, or end its window at the fault (S98). SIM_GZ_SEED + SIM_GZ_IMU_NSC hooks
-  (accel scale UNVERIFIED, full-rate accel log before G4). D-G7-HARNESS decided, impl stage 7. M3 PT-change UNVERIFIED.
-- Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36, A-39.
+- Nominal plant: matched GNSS --gps-dly 110 --gnss-delay 110. G4 typical noise: --vib-acc 10 --vib-gyr 0
+  --imu-noise-scale 4.0 (D-NOISE-PROF).
+- G3 tooling: g3_run.py, quad5in variants, overrides/wind/motor_fault/timed eRPM loss. eRPM-loss lateness 36-122 ms:
+  take effective time from the log. Weak+sat unflown. Acro G3-unprobed (G5 carries it). altctl/posctl not in MODE_MIX.
+- pretest_gate only on stationary scenarios, or end its window at the fault (S98). SIM_GZ_SEED + SIM_GZ_IMU_NSC hooks.
 - Stabilized stick centre = HTE; runner thr0 honours HTE valid flag, fallback MPC_THR_HOVER.
-- Check script bench/attitude_break_check.py; ratesp_csv.py keyed; run_validity.py (W_MAX check) over cited sets.
-- Runner traps: pid_default + params with MC_INDI_EN 1 flies INDI (s148). MC_INDI_EN 1 in a params file does not start the module, only MC_RATE_CTL_TYPE 1 does (accept
-  MC_INDI_EN as alias, keyed). Pilot sticks kept after LAND -> RC override to POSCTL (K118 MINORs). margins_of hangs
+- Runner traps: pid_default + params with MC_INDI_EN 1 flies INDI (s148). MC_INDI_EN 1 in a params file does not start
+  the module, only MC_RATE_CTL_TYPE 1 does. Pilot sticks kept after LAND -> RC override to POSCTL. margins_of hangs
   if ts_true=0.
 - quad5in defaults: bench/params/quad5in_indi_defaults.params (ACT_TC 0.033); firmware ACT_TC 0.05, MC_INDI_ID_OK 0
   halves K.
@@ -73,13 +47,13 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S175-a | G2 plateau GM key2 (rate+att, Q13 A) | sonnet | results/g2_plateau_s164_key2.md | re-brief from file |
-| S175-b | G4 key1 amend (Q14 A, Q15 A) + re-score | sonnet | results/g4_gate_s169/rescore_s175.md | re-brief from file |
-| S175-c | G4 key2 amend, blind + re-score | sonnet | results/g4_gate_s169/rescore_key2_s175.md | re-brief from file |
+| S175-d | G4 chatter: PID ref + key1/key2 window reconcile | sonnet | results/g4_gate_s169/chatter_s175.md | re-brief from file |
+| S175-e | G3 set-up (a) abort on not_applied, noise cause, (c) Docker score | sonnet | results/g3_setup_s175/README.md | re-brief from file |
 
 ## Open problems
-- Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
-  MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit untested, DESCEND failsafe tests.
-- Review notes (`indi_project/review/external_review_s59_notes/`): open per item: `module_parity.md` for stage 5.
-- Unmodelled in margins_models.py (T78 list): gz/ESC latency 0, measured path = eta x motor state, yaw, attitude
-  loop; 267 Hz analytic only.
+- Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
+  untested, DESCEND failsafe tests.
+- Review notes (`indi_project/review/external_review_s59_notes/`): `module_parity.md` for stage 5.
+- Unmodelled in margins_models.py: measured path = eta x motor state, yaw structure (A-51), attitude loop; 267 Hz
+  analytic only. Motor latency now optional (lat_s, S175).
+- Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36, A-39.
