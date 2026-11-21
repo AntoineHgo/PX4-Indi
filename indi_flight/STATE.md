@@ -7,10 +7,7 @@
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
 - Blocker: none (Q19 answered A + PID guard, logged S183: GATES "Owner amendment S183", D-OWNER-Q19).
 ## Next actions (owner order; each names its gate item)
-1. G2 at freeze-9 (results/freeze9_s183/G2_SCORES.md): margins 26/26 + G2-STEP 9/9 (yaw 1180 ms); spot rate
-   PM 47.3 (re-fly, holes PASS) / att 47.4. Hole re-flies (README "Hole re-fly"): 3 outer cells failed holes twice
-   (2nd attempt under host load); 3rd attempt in agent S183-G (holefail_first/, holefail_second/ kept). When clean
-   (or holes <= 0.1 % per GATES evidence limit 1 with margins unchanged): write G2 verdict in GATES + GATE_STATUS.
+1. G2 PASSED at freeze-9 (S184, GATES "G2 verdict at freeze-9"). Any firmware change re-opens it.
 2. G4 at freeze-9: agent S183-G flies cruise_harsh_s2 + PID refs (g4_pid/), key2 copy with Q19 skip (*_q19.py:
    new metric change, give it a second key before the verdict), PID guard table, G4_SCORES.md -> G4 verdict.
    Then re-score freeze-8 G4 with keyed scripts (owner Q19 order, history, no re-fly).
@@ -52,7 +49,8 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S183-G | G2 3-cell hole re-fly + G4 cruise_harsh_s2, PID refs, Q19 key2, G4_SCORES | sonnet | results/freeze9_s183/README.md, G4_SCORES.md | rerun results/freeze9_s183/queue.sh (skips done), then G4 part from README |
+| S184-B | G4: PID refs (g4_pid/fly_pid.sh, background, dir dirty until FLY_DONE), guard, G4_SCORES | sonnet | freeze9_s183/G4_SCORES.md | rerun g4_pid/fly_pid.sh (skips done) |
+| S184-C | 2nd key on Q19 skip + PID guard code | sonnet | freeze9_s183/g4/Q19_KEY2_REVIEW.md | relaunch brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

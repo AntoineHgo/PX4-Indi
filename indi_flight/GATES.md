@@ -609,3 +609,14 @@ Next: one session of cause search on the spot drop since freeze-6 (D-FREEZE-8 ov
   RMS in a skipped window exceeds the PID reference at the same transition (same scenario and seed).
 - Scope: the item 2 rate-detector limit applies to harsh hover; harsh-cruise rate flags are informational (reported).
 - Re-score: freeze-8 G4 with keyed scripts (no re-fly); cruise_harsh_s2 flown in the freeze-9 set, G4 scored at freeze-9.
+
+## G2 verdict at freeze-9 (S184, 2026-11-21): PASSED
+Evidence: `results/freeze9_s183/G2_SCORES.md` (outer table, G2-STEP, spot, section "Re-score S184" after hole
+re-flies; keyed scorer + `g2o/key2.md`). Outer 24/24 meet the limits: xy PM >= 48.5 deg, GM >= 13.4 dB; z PM >= 59.9,
+no GM crossing (key2 plateau GM >= 14.0 where found); DM >= 231 ms. Spot (Q16 A): rate roll800_fwdef_s2 PM 47.3, GM
+16.1, holes PASS; attitude ax2_r400_s1 PM 47.4, GM 13.2, holes PASS (primary only, as freeze-8). G2-STEP 9/9, both
+keys (roll/pitch settle <= 345 of 450 ms, yaw <= 1180 of 1350). Evidence limits carried: (1) pt1_ax3_r800_s1 hole
+report FAIL on max gap 13.75/15.0 ms only (missing 0.016/0.017 %, under the 0.1 % of evidence limit 1; the 10 ms bound
+was withdrawn by Q2); flown three times, PM 63.1/61.0/59.9, result unchanged, counted. (2) key2 BLOCKED on 3 ax3 cells
+(dPM 3.3 deg on two, GM found by key2 only, 20.9 dB, on the third); both keys above the limits in each. (3) rate and
+attitude spot margins are thin (+2.3/+2.4 deg). (4) 3 rate x-check groups and A-51 as in Q16 A. 250 Hz not measured.
