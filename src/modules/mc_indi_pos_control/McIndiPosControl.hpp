@@ -42,6 +42,7 @@
 #include "GotoControl/GotoControl.hpp"
 #include "IndiStageMode.hpp"
 #include "FailsafeSetpoint.hpp"
+#include "SetpointExtrapolation.hpp"
 #include "EkfResetDetect.hpp"
 #include <lib/indi_accel_control/indi_accel_control.hpp>
 #include <lib/indi_rate_control/indi_rate_control.hpp>

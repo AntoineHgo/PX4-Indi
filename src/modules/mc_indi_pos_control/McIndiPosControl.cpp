@@ -1013,7 +1013,8 @@ void McIndiPosControl::Run()
 
 			_control.setVelocityLimits(max_speed_xy, limit_speed_up, limit_speed_down);
 
-			_control.setInputSetpoint(_setpoint);
+			// F2: extrapolate a copy of the held sample between sender samples (the stored sample stays untouched)
+			_control.setInputSetpoint(extrapolateSetpoint(_setpoint, hrt_absolute_time(), TRAJECTORY_STREAM_TIMEOUT_US));
 
 			// update states
 			if (!PX4_ISFINITE(_setpoint.position[2])
