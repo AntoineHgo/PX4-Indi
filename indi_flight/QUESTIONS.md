@@ -55,3 +55,15 @@ freeze-9"), so this question does not change today's verdict; it sets the target
 Recommendation: A (absolute floor, then the PID comparison only where the floor is crossed).
 Meanwhile: one session of cause search on the INDI 20 Hz transition line (log analysis, no firmware change), which
 both readings require. Not blocked on other gates (G5.10 set-up continues). No re-score of guard rows until answered.
+Added S184 after the cause search (`results/g4_20hz_cause_s184/README.md`, script line20.py with self-test):
+- 17->4 (take-off -> loiter): a physical 20 Hz roll/pitch transient (truth body rate 1.5e-3 rad/s, torque x/y, all 4
+  motors differential), onset at the end of the take-off setpoint stream, decays ~5x within 10 s. PID shows the same
+  onset and shape at 0.5-0.65x the INDI amplitude (PID motor line 2.8-4.1e-4, INDI up to 5.3e-4). The 1.5-1.9x INDI
+  amplification is shown; its cause (rate-loop gain near 20 Hz) is a hypothesis.
+- 14->18 (offboard -> land): no tone in 19.5-21 Hz in either stack (both at floor); the guard's 5e-4 flag there comes
+  from its +-2 Hz integration on broadband descent energy, i.e. a guard artefact under both readings.
+So this is partly a PX4 fact (owner note point 1): the transient exists in both stacks, INDI amplifies it ~1.7x at a
+level 0.05 % of full motor command. Options: A strict (Reading A; 17->4 fails; next = identify the 20 Hz amplification
+from the G2 rate-loop data, then a firmware change that re-opens G2/G4/G5); C (Reading A, and a transition transient
+that PID also shows is reported with both values, failing only above an absolute bound you set). Recommendation: A with
+a narrow-band (+-0.5 Hz) line measure that removes the 14->18 artefact; I will not propose a tolerance myself.
