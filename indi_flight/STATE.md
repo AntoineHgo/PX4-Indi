@@ -15,17 +15,8 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
 0d. G5.10 (results/g5_g510_s151): alt 1.74-1.76 m PASS, back ~1.9 s PASS at TB 0.3 (default, f3b93704b6); tilt
    45.3 deg = MPC_TILTMAX_AIR and non-saturating SAT/AGG wait on Q9. A-48 closed (THR_SC injector, UNKEYED).
    G5.4 at TB 0.3 PASS s1. History: JOURNAL S147-S151.
-0e. 4c review 1/3 DONE S152 (design/prefreeze_r1_stage5.md, opus): REJECT, 1 BLOCKING F1 (ALTCTL arm on ground ->
-   Hold fallback at HOVER thrust while landed), MAJOR F2 resetBlend at arm/disarm vs D-GAP, F3 no lib reset on
-   re-entry/hold end (thrust/jerk transient), F4 dt clamp 0.04 makes "<5 Hz -> hold" dead. F1 fixed S152 (z_only zero
-   stock thrust -> straight up; no-held fallback 0 thrust unless flying; 2 tests, break-checked; key2
-   design/prefreeze_r1_f1_key2.md). S153: F1 ground-arm probe PASS (results/g5_groundarm_s153, --ground-arm runner
-   option, UNKEYED probe tool): altctl/posctl no lift-off, edge 7.2/7.1 % (<= 10). F2-F8 disposition D-PREFREEZE-R1
-   (F2 spec amendment, F3/F4 fix 23acbdef67, key2 ACCEPT w/ K1 fixed; MINORs K2 LPF passthrough at low rate, K5
-   wiring untested -> stage 7 harness). G5.7 probe s1 on 23acbdef67 PASS (tilt 3.71 deg, thr 2.6 %; g5_g57_s153).
-   S154: RC154 done (cuts acted on below); review 2/3 DONE (design/prefreeze_r2_stage3.md, opus): ACCEPT WITH
-   FIXES, 0 BLOCKING; disposition D-PREFREEZE-R2 (F1 stock-parity residual, MINORs stage 7; freeze adds G5.1 acro
-   yaw at firmware defaults ID_OK 0).
+0e. Pre-freeze reviews r1 (S152-S153, F1 BLOCKING fixed, F3/F4 fixed 23acbdef67, D-PREFREEZE-R1), r2 (S154,
+   D-PREFREEZE-R2), r3 (S155) all dispositioned. History: JOURNAL S152-S155.
    S155: review 3/3 DONE (design/prefreeze_r3_parity.md): 0 OPEN, 0 SAFETY, 8 PARTIAL MINOR (D-PREFREEZE-R3).
    STAGE-6 FREEZE DEFINED: D-FREEZE-6, firmware 23acbdef67, bench defaults + ID_OK 1 overlay, firmware-default cells
    (G5.1 acro yaw + G2 rate roll 800 at ID_OK 0). GATES 5b needs the G4 TYPICAL noise profile for the re-fly:
