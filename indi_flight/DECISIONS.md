@@ -835,3 +835,28 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   set flies G5.1 acro yaw also at firmware defaults (ID_OK 0), with the G2 firmware-default cell (STATE 4b).
 - F6/F7 (no test for watchdog receipt stamp, rc.mc_apps matrix) and F8 (MC_INDI_POS_EN 1 with MC_INDI_EN 0 starts
   silently): stage 7, D-G7-HARNESS. S95 F4 (frozen-rpm gaps) stays deferred as before.
+
+## D-PREFREEZE-R3 (S155, 2026-11-21): disposition of review r3 (design/prefreeze_r3_parity.md, sonnet checklist)
+- 37 rows of module_parity.md: 0 OPEN, 0 SAFETY, 8 PARTIAL MINOR, 6 DEFERRED, 5 N/A, rest CLOSED. No opus key
+  (RC154: key only on gaps). PARTIALs deferred to stage 7 with bounds: T2.frozen (one frozen ESC biases module B
+  mean_u by <= 1/4 of its error, absorbed by the D-GAP blend; flown by the G3 frozen-telemetry draw), T1.5 (no INDI
+  reset on a rates-enabled rising edge; G5.7 mode-edge rows PASS as probes), T3.11 (telemetry-loss warning only;
+  O-5 modelled fallback by design), T1.8, T2.fresh. Reopen: a G3 frozen-telemetry or G5.7 failure tracing to them.
+
+## D-FREEZE-6 (S155, 2026-11-21): stage-6 freeze definition
+- Firmware: the commit pinned in the "Frozen at" line below (src/lib/indi_*, src/modules/mc_indi_*, gz_bridge). Any
+  later firmware change: key2 only (RC154), then the G5/G2 rows it touches are re-flown; the change is logged here.
+- Configuration: quad5in, bench/params/quad5in_indi_defaults.params with the runner overlay MC_INDI_ID_OK 1
+  (run_scenario.py:1005) = "identified" set; nominal plant matched GNSS --gps-dly 110 --gnss-delay 110.
+- Firmware-default cells added (D-PREFREEZE-R2 F5, STATE 4b, lesson 12): G5.1 acro yaw and G2 rate roll 800 Hz at
+  ID_OK 0, W_MAX 0, ACT_TC 0.05 (the pre-identification state D-DEFAULTS-FW claims safe).
+- Noise: GATES 5b requires the freeze re-fly with the G4 typical profile, so the re-fly waits for
+  design/noise_profiles.md + a profile hook check (one pre-test flight); the text is not relaxed to sim default.
+- Owner questions: Q8 (a)/(b)/add.2/add.3 and Q9 (a)/(c) scored at option A (recommended); an answer B re-scores or
+  re-flies only the affected rows (G5.6, G5.8 3 m/s, G5.9a, G5.10, G5.11).
+- Evidence: 3 seeds per row, serial (no parallel docker streams), each checker keyed before its verdict counts.
+- Open anomalies touching the frozen code (A-1, A-6 outer loop; A-34/A-35/A-39 margins) stay open rows with
+  their bounds; each is closed or re-bounded by the gate run that measures it (G4 for A-6, G2 for A-34-A-39).
+- Frozen at: firmware 23acbdef67 (last commit under src/, S153); reviews r1-r3 dispositioned.
+- Overturn: a gate row FAIL whose cause is in the frozen firmware -> one session of cause search, then re-open the
+  decision underneath (owner rule), with a new freeze line.
