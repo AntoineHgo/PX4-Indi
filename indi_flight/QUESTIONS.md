@@ -83,6 +83,7 @@ Note S154 (RC154): the stage-6 freeze will proceed with option A assumed for Q8 
 B from the owner changes only the affected G5 rows, re-scored or re-flown after the freeze.
 
 ## Q10 (S157, 2026-11-21): G5.2 posctl z settle FAIL at the freeze is estimator height error. NOT blocking.
+Update S157: seeds 2-3 posctl settle 0.36/0.35 s PASS; the FAIL is seed 1 only (5/6 runs PASS).
 Context (results/g5_freeze_s157/README.md): freeze re-fly, typical noise, seed 1: G5.2 posctl z step settle 4.15 s
 (limit 4.0 s, band 2 % of d = 0.039 m); overshoot and the x step pass. Truth vs estimate after release: the controller
 holds the estimate on the setpoint within 0.02 m over the whole window, while EKF2 height error (est - truth) is

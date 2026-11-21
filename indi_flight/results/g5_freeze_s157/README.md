@@ -34,3 +34,6 @@ Cause search DONE S157: not noise (truth z std 0.018 m over the last 2 s). The c
 Row stays FAIL as written; owner Q10 (keep / band / estimate-based), PID reference flight of this seed next.
 (batch in progress: G5.1 stick_steps acro/stab, G5.2 stick_pos_steps altctl/posctl, G5.3 mission + G5.4 auto_tour,
 auto_land10; seeds 1-3. Remaining rows G5.5-G5.11 and the firmware-default cells are next.)
+
+G5.2 seeds 2-3 (S157): altctl PASS (settle 0.35/0.35 s), posctl PASS (z settle 0.36/0.35 s, x os 0.099/0.103 m, settle
+3.34/3.32 s). Row G5.2 = 5/6 runs PASS, 1 FAIL (posctl s1, EKF height transient, Q10). Batch 1 complete: 18/18 logs.
