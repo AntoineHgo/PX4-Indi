@@ -25,7 +25,9 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    blend b (TB 1.0, clamp kMaxBlend 0.3 < gap 0.36) too slow. Probe TB 0.3 s1 (results/g5_g510_s150): 1.95 m, back
    1.44 s, b still clamped. kMaxBlend 0.5 DONE S150 (003e25c6d4, key2 MINOR); probe s1 TB 0.3+0.5: 1.77 m, back 1.87 s
    (README_b05.md). S151: margin at TB 0.3 PM 62.7/67.3 deg (g2_outer_tb03_s151); 3 seeds alt 1.74-1.76 m PASS,
-   back ~1.9 s PASS (g5_g510_s151); TB default -> 0.3 (D-GAP-G510 ACCEPTED). Row waits on Q9 (tilt, AGG, (c)).
+   back ~1.9 s PASS (g5_g510_s151); TB default -> 0.3 (f3b93704b6, key2 ACCEPT, xy PM 51.4/65.2). Row waits on Q9.
+   G5.4 at TB 0.3 PASS s1 (g5_g54_tb03_s151). NEXT S152: G5 rows left wait on Q8/Q9 -> start 4c pre-freeze
+   review (standalone session); G5.5 FAIL stays for re-fly at freeze.
 1-3. Probes PASS, re-fly at freeze: G5.4 9/9 (S135), G5.1 6/6 K_Y 20 (S137), G5.2 6/6 (S138, g52_check keyed).
 3b. G5.3 hold PASS 3/3 (S139). G5.7 leaveP: S139 s2/s3 FAIL (5.17-5.25 deg) were the GNSS set-up fault: S143 matched
    re-fly s2 3.62, s3 3.55 deg PASS, thrust step 3.0 % (results/g5_g57_s143_gnss); s1 PASS S139. G5.7 PASS 3/3 as probe;
@@ -77,7 +79,6 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S151 | key2 of MC_INDI_POS_TB default 1.0->0.3 (uncommitted yaml + bench defaults) | sonnet | results/g5_g510_s151/key2_tb_default.md | re-brief from D-GAP-G510 |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
