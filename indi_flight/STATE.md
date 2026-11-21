@@ -74,6 +74,9 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| S161-a | DONE: cause = T10 raw re-seed; fix 49568bcaa5 (D-T10-RESET), unit test break-checked | sonnet | results/g5_freeze_s157/g511_yaw_cause.md | - |
+| S161-b | G5.11 re-fly s1-3 at 49568bcaa5 (bg) | shell | results/g511_fix_s161/status.txt | bash indi_flight/results/g511_fix_s161/fly.sh (skips done); then python3 indi_flight/bench/g511_check.py <run dirs> |
+| S161-c | key2 review of the fix vs D-T10-RESET | sonnet | design/review_s161_t10.md | re-brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),

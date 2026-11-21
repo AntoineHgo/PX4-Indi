@@ -886,3 +886,16 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Alternatives: NSC 4.5 (accel 91 %, gyro +12 %), rejected: gyro is the controller's input, keep it on target.
 - Overturn: a first-hand public 5-inch vibration measurement outside the class used, or a G4/G5 result that hinges on
   the typical amplitude (then fly the row at quiet and harsh too and report the spread).
+
+## D-T10-RESET (S161, 2026-11-21): estimator reset clears only the jerk history
+- Evidence (results/g5_freeze_s157/g511_yaw_cause.md, sonnet, UNKEYED): at an EKF yaw reset the T10 branch
+  (McIndiPosControl.cpp, `_indi_reset_pending`) calls `IndiAccelControl::reset(_f_b, ...)`, which re-seeds the
+  measured-force filter with ONE raw accelerometer sample (+-0.25 m/s^2 vibration vs 0.04 filtered) and the measured
+  collective with raw mean_u: a_f steps 0.33 m/s^2 -> 1.9 deg tilt spike over ~30 ms (G5.11 yaw FAIL, PID 0.48 deg).
+- T10's stated purpose (g5_build_list T10) is only that jerk differencing not see the reset as a step. Body-frame f_b,
+  mean_u, the delay buffers and the previous thrust are estimator-frame independent: no estimator reset changes them.
+- Choice: new `IndiAccelControl::resetJerkHistory()` (the jerk part of reset()); the T10 branch calls it instead of
+  reset(). Alternatives: drop heading from the detector (leaves the raw re-seed on xy/z/v resets); seed reset() from
+  the filtered state (keeps an unneeded restart of all filters). Firmware change after D-FREEZE-6: affects only flights
+  with an in-flight estimator reset (G5.11 rows); re-fly G5.11 x3 and check the other freeze rows had no reset edge.
+- Overturn: G5.11 yaw tilt jump still > 1 deg after the fix, or a jerk-FF spike at a reset.
