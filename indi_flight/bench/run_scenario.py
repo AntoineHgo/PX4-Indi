@@ -292,6 +292,7 @@ class Sim:
             open(os.path.join(self.out, "sched.txt"), "w").write(text)
         with open(os.path.join(topics_dir, "logger_topics.txt"), "w") as f:
             f.writelines(f"{t} 0 0\n" for t in LOG_TOPICS)  # instance 0 only: multi-instance adds exhaust the 255 slots
+            f.write("esc_status 0 1\n")  # S167 G4: true rotor speed (gz_bridge, SIM_GZ_ESC_FB=2 only)
         self.px4 = self.spawn([f"{BUILD}/bin/px4", "-i", str(self.a.instance), "-d", "-w", self.rootfs,
                                f"{BUILD}/etc"], "px4.log")
         if self.a.paused_start:  # A-17 s25: gz was started paused; unpause once the wait pattern is in px4.log
