@@ -30,7 +30,8 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    S160: G5 verdict table in freeze README. G5.3 hold re-flown PASS 3/3 + key2. G5.11 exact test + g511_check.py:
    FAIL 6/6 tilt cmd jump, UNKEYED. PID ref: xy 7.82 deg FAIL too (stack-indep., Q12); yaw PID 0.48 PASS -> NEXT: INDI
    yaw-reset one-sample q_d spike cause search (1 session; compare heading-reset handling vs mc_pos_control), key2 g511
-   (sonnet, no access to g511_check.py), G2 cell table + att yaw/outer cells. G2 pre-test roll 800/400 s1 PASS (g2_freeze_s160).
+   (sonnet, no access to g511_check.py), G2 cell table + att yaw/outer cells. G2 rate roll/pitch 400/800 x3 + fwdef roll800 x3 flown
+   (g2_freeze_s160 README): all margins PASS; 3 cells fail the pretest_gate hover-RMS line (typical noise): check G2 validity text.
    Seed 1: G5.1 acro/stab, G5.2 altctl PASS; G5.2 posctl z settle 4.15 s FAIL (> 4.0): cause
    search DONE: EKF2 height error -0.08 m decaying ~5 s, controller holds estimate (README); Q10 OPEN (not blocking);
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
@@ -73,7 +74,6 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S160c | chain: PID g5_events_s1 ref (G5.11 cause) + G2 freeze cells pitch s1, roll/pitch s2-s3, fwdef roll800 s1-3 | bash | results/g2_freeze_s160/batch.log, chain.log (CHAIN_END); g5_freeze_s157/g5_events_s1_pid.g511.txt | `bash indi_flight/results/g2_freeze_s160/chain.sh` (resumable) |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
