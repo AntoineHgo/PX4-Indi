@@ -1,0 +1,76 @@
+[
+ {
+  "name": "G5.8 rc_loss",
+  "status": "PASS",
+  "text": "timeout ref flag rise 63.606 s (publication instant, on change) - 0.5 s; entry 63.616 s via vehicle_status.failsafe rise (nav_state unchanged); entry-timeout 510 ms (<= 1000); configured action hold (nav 4), entered nav 4: True; excursion 0.062 m (<= 1, vehicle_local_position_groundtruth); max tilt 0.4 deg (report only); hover case only, 3 m/s: not flown; G5.3/G5.4 sub-check not computed",
+  "entry_minus_timeout_s": 0.51,
+  "excursion_m": 0.062073260740416566,
+  "max_tilt_deg": 0.3958201032944125,
+  "nav_after": 4
+ },
+ {
+  "name": "G5.8 link_loss",
+  "status": "PASS",
+  "text": "timeout ref last telemetry_status gcs heartbeat 76.534 s + 3 s; entry 79.537 s via vehicle_status.gcs_connection_lost rise; entry-timeout 4 ms (<= 1000); configured action hold (nav 4), entered nav 4: True; excursion 0.074 m (<= 1, vehicle_local_position_groundtruth); max tilt 0.5 deg (report only); hover case only, 3 m/s: not flown; G5.3/G5.4 sub-check not computed",
+  "entry_minus_timeout_s": 0.00375,
+  "excursion_m": 0.0742090555442815,
+  "max_tilt_deg": 0.47924919672072,
+  "nav_after": 4
+ },
+ {
+  "name": "G5.8 offboard_loss",
+  "status": "PASS",
+  "text": "timeout ref last offboard_control_mode 97.265 s + 4.0 s; entry 101.289 s via nav_state 14->4; entry-timeout 24 ms (<= 1000); configured action hold (nav 4), entered nav 4: True; excursion 0.096 m (<= 1, vehicle_local_position_groundtruth); max tilt 3.6 deg (report only); hover case only, 3 m/s: not flown; G5.3/G5.4 sub-check not computed",
+  "entry_minus_timeout_s": 0.02375,
+  "excursion_m": 0.09642810322075,
+  "max_tilt_deg": 3.622973186800731,
+  "nav_after": 4
+ },
+ {
+  "name": "G5.9a commander latency (info)",
+  "status": "INFO",
+  "text": "manual_control_switches.kill_switch change -> actuator_armed.kill rise 7.50 ms; event applied time -> kill rise 35.75 ms",
+  "commander_latency_ms": 7.5,
+  "applied_to_kill_ms": 35.75
+ },
+ {
+  "name": "G5.9a kill command (info)",
+  "status": "INFO",
+  "text": "actuator_motors (controller command) NOT 0 after kill: up to 1.000 until disarm 5.01 s after the reference; reference actuator_armed.kill rise (firmware applied flag, published on change, logged at every publication) at 112.2987 s"
+ },
+ {
+  "name": "G5.9a kill chain (info)",
+  "status": "INFO",
+  "text": "actuator_armed.kill rise 0.00 ms after the switch; outputs 0 0.00 ms after the kill flag",
+  "armed_kill_ms": 0.0,
+  "out_after_flag_ms": 0.0
+ },
+ {
+  "name": "G5.9a kill motors",
+  "status": "PASS",
+  "text": "actuator_outputs all 0 at 0.00 ms after the reference (last non-zero 0.00 ms), command period 1.25 ms, output sample spacing 1.25 ms; actuator_armed.kill rise (firmware applied flag, published on change, logged at every publication) at 112.2987 s; reference = first publication carrying the change (on-change topic)",
+  "delay_ms": 0.0,
+  "last_nonzero_ms": 0.0,
+  "period_ms": 1.25,
+  "ref_us": 112298750
+ },
+ {
+  "name": "G5.9b rearm states",
+  "status": "PASS",
+  "text": "indi_pos_status +15.8 ms: states non-zero none (of 2); measurements (reported only) a_f[0]=2.25e-05, a_f[1]=-3.57e-06, a_f[2]=9.74, t_f[0]=6.02e-07, t_f[1]=-9.57e-08, t_f[2]=-0.00176, mean_u=2.46e-05 | indi_rate_status +0.8 ms: states non-zero none (of 6); measurements (reported only) angular_accel_filtered[0]=-0.126, angular_accel_filtered[1]=-0.102, angular_accel_filtered[2]=-0.083, torque_increment[0]=0.00012, torque_increment[1]=7.15e-05, torque_increment[2]=5.09e-06",
+  "nonzero": []
+ },
+ {
+  "name": "G5.9c first second",
+  "status": "PASS",
+  "text": "max |0.1 s window mean - first window| over motors and windows = 0.01 % of full scale (<= 5); first-window means [0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]",
+  "dev_pct": 0.010169326051254765
+ },
+ {
+  "name": "G5.9d takeoff",
+  "status": "PASS",
+  "text": "edge 127.213 s: |thrust step| 0.0064 = 4.6 % of hover 0.137 (<= 10); truth altitude dip 0.000 m (<= 0.3)",
+  "thrust_step": 0.006356167503529131,
+  "dip_m": 0.0
+ }
+]

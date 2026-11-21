@@ -1,0 +1,153 @@
+{
+ "scenario": "auto_tour",
+ "exit_status": "ok",
+ "error": null,
+ "phases_s": {
+  "armed": 31.076999999999998,
+  "takeoff_cmd": 31.076999999999998,
+  "takeoff_done": 38.757,
+  "hold_end": 48.757999999999996,
+  "mission_uploaded": 48.757999999999996,
+  "mission_start": 50.768,
+  "mission_end": 75.136,
+  "rtl_cmd": 78.136,
+  "disarmed": 94.077
+ },
+ "tracking": {
+  "takeoff": {
+   "n": 383,
+   "xy_rms": 0.05120943915100811,
+   "xy_max": 0.08379925499021404,
+   "z_rms": 0.019534692177835995,
+   "z_max": 0.040439605712890625
+  },
+  "hold": {
+   "n": 500,
+   "xy_rms": 0.02540835501991948,
+   "xy_max": 0.05349919279415285,
+   "z_rms": 0.05302909800946561,
+   "z_max": 0.06485795974731445
+  },
+  "mission": {
+   "n": 1218,
+   "xy_rms": 0.17707473504309187,
+   "xy_max": 0.25602919703779325,
+   "z_rms": 0.0273493960592878,
+   "z_max": 0.07946395874023438
+  },
+  "rtl": {
+   "n": 797,
+   "xy_rms": 0.026537611733510633,
+   "xy_max": 0.04861383058957532,
+   "z_rms": 0.08951387790965445,
+   "z_max": 0.5274638277478516
+  }
+ },
+ "handover": {
+  "t_edge_s": 34.1,
+  "thrust_step": 0.006562024354934692,
+  "alt_dip_m": 0.0,
+  "first_indi_pos_status_s": 30.096249999999998,
+  "vehicle_thrust_setpoint_step": 0.006572544574737549
+ },
+ "g54_takeoff": {
+  "hover_collective": 0.13641268014907837,
+  "n_ramp_points": 26,
+  "n_ramp_points_no_data": 0,
+  "ramp_max_step": 0.010255541652441025,
+  "ramp_max_step_pct_hover": 7.518026653558359,
+  "ramp_max_step_t_s": 31.69625,
+  "edge_step": 0.0063292235136032104,
+  "edge_step_pct_hover": 4.639761865749085,
+  "dip_m": 0.0,
+  "ramp_ok": true,
+  "edge_ok": true,
+  "dip_ok": true
+ },
+ "land": {
+  "t_ground_contact_s": 90.95875,
+  "t_landed_s": 91.6325,
+  "t_disarm_s": 93.63374999999999,
+  "contact_to_disarm_s": 2.674999999999997,
+  "landed_to_disarm_s": 2.001249999999999,
+  "mean_vz_1_4m": 0.7067405581474304,
+  "n": 383,
+  "MPC_LAND_SPEED": 0.699999988079071
+ },
+ "g54_other": {
+  "takeoff": {
+   "target_m": 5.0,
+   "overshoot_m": -0.01019906997680664,
+   "bounce_m": 0.19997072219848633,
+   "overshoot_ok": true,
+   "bounce_ok": true
+  },
+  "touchdown": {
+   "t_td_s": 90.52125,
+   "vz_contact": 0.6845319867134094,
+   "tilt_max_deg": 0.292752206325531,
+   "relift_m": 0.0497236168012023,
+   "landed_dropped": false,
+   "vz_ok": true,
+   "tilt_ok": true,
+   "relift_ok": true,
+   "landed_ok": true,
+   "tilt_source": "vehicle_attitude_groundtruth"
+  },
+  "land": {
+   "vz_ok": true,
+   "disarm_ok": true,
+   "COM_DISARM_LAND": 2.0
+  },
+  "rtl": {
+   "max_err_m": 0.04416847229003906,
+   "ok": true,
+   "t_rtl_cmd_s": 78.136,
+   "t_descent_start_s": 83.88125
+  }
+ },
+ "stage_transitions": [
+  [
+   34.1,
+   2,
+   1
+  ],
+  [
+   90.96875,
+   1,
+   2
+  ]
+ ],
+ "nav_transitions": [
+  [
+   31.09,
+   "loiter",
+   "takeoff"
+  ],
+  [
+   37.34,
+   "takeoff",
+   "loiter"
+  ],
+  [
+   50.78,
+   "loiter",
+   "mission"
+  ],
+  [
+   75.14,
+   "mission",
+   "loiter"
+  ],
+  [
+   78.15,
+   "loiter",
+   "rtl"
+  ],
+  [
+   93.63,
+   "rtl",
+   "loiter"
+  ]
+ ]
+}

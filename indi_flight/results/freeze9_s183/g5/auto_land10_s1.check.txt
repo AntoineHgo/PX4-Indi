@@ -1,0 +1,30 @@
+scenario auto_land10 exit ok error None
+phases (sim s): armed=31.1, takeoff_cmd=31.1, takeoff_done=42.0, hold_end=52.0, land_cmd=52.0, disarmed=68.1
+
+== tracking vs trajectory_setpoint (ground truth; rows with finite position setpoint only)
+takeoff  [31.1,42.0] n=546 xy rms 0.055 max 0.073 m | z rms 0.032 max 0.056 m
+hold     [42.0,52.0] n=500 xy rms 0.063 max 0.097 m | z rms 0.020 max 0.029 m
+land     [52.0,68.1] n=803 xy rms 0.079 max 0.112 m | z rms 0.087 max 0.517 m
+
+== take-off handover (takeoff_status rampup(4) -> flight(5))
+edge at 34.084 s: indi_pos_status.thrust step 0.0066 (nan = no sample before the edge; first sample 30.181 s), altitude dip within 1 s 0.000 m
+vehicle_thrust_setpoint (-xyz[2]) step at the edge: 0.0065
+G5.4 take-off (vehicle_thrust_setpoint collective, hover 0.1364 from hold phase; 0.1 s means; ramp 31.08..34.08 s, 26 points from ramp+0.5 s):
+  ramp max step 0.0102 = 7.5 % hover at 31.88 s -> PASS (<= 10 %)
+  edge step 0.0063 = 4.6 % hover -> PASS (<= 10 %)
+  truth dip within 1 s 0.000 m -> PASS (<= 0.3 m)
+
+== landing
+ground_contact 64.83 s, landed 65.52 s, disarm 67.52 s -> contact->disarm 2.69 s (landed->disarm 2.00 s)
+mean vz (down+) between 1 and 4 m height: 0.697 m/s over 383 samples; MPC_LAND_SPEED 0.699999988079071
+
+== G5.4 other limits (truth = vehicle_local_position_groundtruth)
+take-off (target 10.0 m = MIS_TAKEOFF_ALT): overshoot -0.045 m -> PASS (<= 0.5), bounce 0.200 m -> PASS (<= 0.3)
+touchdown (truth z_up <= ground+0.05 m) at 64.41 s (ground_contact 64.83 s): max vz 0.707 m/s -> PASS (<= 0.8); tilt max 0.54 deg (vehicle_attitude_groundtruth) -> PASS (<= 10); re-lift 0.049 m -> PASS (<= 0.15); landed stays true -> PASS
+land: mean vz 0.697 vs MPC_LAND_SPEED 0.700 (+-20 %) -> PASS; contact->disarm 2.69 s vs COM_DISARM_LAND 2.0 + 1 s -> PASS
+rtl height error: n/a (no rtl phase)
+
+== stage_mode / nav_state transitions
+indi_pos_status stage_mode: first 2 at 30.18 s, n=3321, values [1, 2], transitions [(34.08375, 2, 1), (64.84625, 1, 2)]
+vehicle_status nav_state: [(31.08, 'loiter', 'takeoff'), (40.52, 'takeoff', 'loiter'), (52.0, 'loiter', 'land'), (67.52, 'land', 'loiter')]
+heartbeat mode_log [t, main, sub, armed]: [[31.053, 4, 3, True], [32.055, 4, 2, True], [41.055, 4, 3, True], [52.057, 4, 6, True], [68.058, 4, 3, False]]

@@ -44,7 +44,21 @@ Freeze-8 comparison: xy GM rose about 2.5-3 dB (10.8-11.7 to 13.4-14.6), xy PM 4
 
 # G2-STEP at freeze-9
 
-pending (9 flights still flying).
+Commands (same as freeze-8): `python3 indi_flight/bench/g2_step_metrics.py steps/g2_step_primary.json steps/seed{1,2,3}/step_{roll,pitch,yaw}_indi > steps/step_out.txt` (rc 0; steps/g2_step_primary.json copied unchanged from freeze8_s181/steps); second key per flight `python3 indi_flight/bench/t127_step_metrics_key.py steps/seed<N>/step_<axis>_indi steps/key2_seed<N>_<axis>.md` (rc 0 x9; est_g2 rows). Pass per seed: roll/pitch overshoot <= 5 %, 2 % settle <= 450 ms; yaw overshoot <= 5 %, settle <= 1350 ms; truth overshoot <= 5 %. Values: freeze-9 (freeze-8).
+
+| seed | axis | rise (ms) | overshoot est / truth (%) | settle (ms) | limit settle | verdict | key2 rise / OS / settle (est_g2) |
+|---|---|---|---|---|---|---|---|
+| 1 | roll | 189.1 (190.0) | 0.53 / 0.06 (0.80 / 0.88) | 345.0 (337.5) | 450 | PASS (script pass True) | 191.2 / 0.53 / 345.0 |
+| 1 | pitch | 189.3 (187.4) | 0.37 / 0.18 (0.44 / 0.26) | 333.8 (343.8) | 450 | PASS (script pass True) | 191.2 / 0.37 / 333.8 |
+| 1 | yaw | 621.4 (625.6) | 0.14 / 0.00 (0.00 / 0.00) | 1150.0 (1207.5) | 1350 | PASS (script pass True) | 618.8 / 0.14 / 1150.0 |
+| 2 | roll | 188.6 (190.4) | 0.47 / 0.53 (0.47 / 0.25) | 331.3 (333.8) | 450 | PASS (script pass True) | 187.5 / 0.47 / 331.2 |
+| 2 | pitch | 189.7 (187.0) | 0.61 / 0.53 (0.41 / 0.34) | 330.0 (343.8) | 450 | PASS (script pass True) | 187.5 / 0.61 / 330.0 |
+| 2 | yaw | 622.4 (624.3) | 0.07 / 0.00 (0.10 / 0.00) | 1177.5 (1173.8) | 1350 | PASS (script pass True) | 622.5 / 0.07 / 1177.5 |
+| 3 | roll | 188.1 (190.8) | 0.46 / 0.07 (0.48 / 0.34) | 345.0 (333.8) | 450 | PASS (script pass True) | 187.5 / 0.46 / 345.0 |
+| 3 | pitch | 190.5 (190.4) | 0.40 / 0.42 (0.55 / 0.09) | 333.8 (345.0) | 450 | PASS (script pass True) | 187.5 / 0.40 / 333.8 |
+| 3 | yaw | 620.9 (622.4) | 0.11 / 0.00 (0.23 / 0.00) | 1180.0 (1177.5) | 1350 | PASS (script pass True) | 618.8 / 0.11 / 1180.0 |
+
+Count: 9/9 PASS, key2 agrees on every overshoot and settle (rise within 3 ms; yaw rise key2 618.8-622.5 vs key1 620.9-622.4). Worst roll/pitch settle 345.0 ms (roll s1 and s3, limit 450; freeze-8 345.0), worst roll/pitch overshoot 0.61 % (pitch s2, 5 %); yaw settle 1150.0 / 1177.5 / 1180.0 ms (limit 1350; max 1180.0 = 87 % of limit, seed 3; freeze-8 max 1207.5), yaw overshoot <= 0.14 %, truth overshoot <= 0.53 %. Not a pass condition and reported only: truth settle column (2160 ms pitch s1, 2358.8 ms roll s2, 3028.8 ms yaw s1, NaN yaw s3), same behaviour as freeze-8.
 
 # G2 spot-check at freeze-9 (S183 cells), scores
 
