@@ -2230,6 +2230,45 @@ TEST(IndiRateControlSetpointLeadTest, LeadZeroIsPreviousLawOnRandomInput)
 	}
 }
 
+TEST(IndiRateControlSetpointLeadTest, StaircaseSetpointRippleIsFilteredAt889Hz)
+{
+	// outer loop at 88.9 Hz (11.25 ms) feeds a staircase of a 2 rad/s^2 ramp to an 800 Hz inner loop. The raw derivative
+	// is a 18 rad/s^2 spike every 9th cycle. Computed ripple (peak to peak) of rate_sp_dot: 0.65 rad/s^2 with
+	// kSetpointLeadTc = 0.03 s, 1.87 rad/s^2 with 0.01 s. The bound is 0.6 of the mean ramp rate (1.2 rad/s^2): between
+	// the two, so the lead may not carry a ripple of more than ~60 % of the signal at the outer loop frequency
+	const float dt = 0.00125f;
+	const float ramp = 2.f;
+	const Vector3f zero;
+	IndiRateControl ctrl = makeSpController();
+
+	float sp = 0.f;
+	float sum = 0.f;
+	float lo = 1e9f;
+	float hi = -1e9f;
+	int n = 0;
+
+	for (int k = 0; k < 1600; k++) {
+		if (k % 9 == 0) {
+			sp = ramp * (float)k * dt;
+		}
+
+		ctrl.update(zero, Vector3f(sp, 0.f, 0.f), zero, zero, dt, false);
+
+		if (k >= 800) {
+			const float v = ctrl.getRateSpDot()(0);
+			sum += v;
+			lo = fminf(lo, v);
+			hi = fmaxf(hi, v);
+			n++;
+		}
+	}
+
+	const float mean = sum / (float)n;
+	printf("staircase lead: mean %.3f rad/s^2, ripple p-p %.3f rad/s^2\n", (double)mean, (double)(hi - lo));
+	EXPECT_NEAR(mean, ramp, 0.1f * ramp);
+	EXPECT_LT(hi - lo, 0.6f * ramp);
+}
+
 TEST(IndiRateControlSetpointLeadTest, YawFilterToggleGivesNoDerivativeImpulse)
 {
 	// the yaw derivative switches between the filtered and the raw setpoint when the yaw filter is toggled: the
