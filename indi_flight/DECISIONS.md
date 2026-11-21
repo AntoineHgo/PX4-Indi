@@ -1112,3 +1112,12 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
 - Next: firmware default (two keys), FREEZE-9, re-fly the D-FREEZE-8 list (3 seeds decide).
 - Overturn: any freeze-9 seed with spot PM < 45 or G5.5 > 0.5 m -> owner question (G2 margin vs G5.5 limit on this
   airframe), F4 revert probe measured first.
+
+## D-FREEZE-9 (S183, 2026-11-21): freeze-9 declared
+- Firmware: 83976c5099 = freeze-8 + MC_INDI_XY_VP default 2.4 (D-XY-PICK; key2 results/xy_sweep_s183/
+  KEY2_FW_DEFAULT_S183.md AGREE). Configuration: results/g5_freeze_s157/params.params, XY gains not overridden.
+- Rows invalidated (outer gains act in every mode): the whole D-FREEZE-8 list. Re-fly queue results/freeze9_s183
+  (copy of freeze8 queue). Excluded until Q19 is answered (rule: no re-fly of rows an open question decides):
+  G4 cruise_harsh_s2. G5.10 stabilized/sat parts and G3 pre-test follow after the queue, as in D-FREEZE-8.
+- Pre-test: the xy_sweep_s183 vp2.4 flights (2 spot cells + G5.5 o1/o3/o7 s1) on the same build.
+- Overturn: as D-XY-PICK (spot PM < 45 or G5.5 > 0.5 m on any seed -> owner question, F4 revert probe first).
