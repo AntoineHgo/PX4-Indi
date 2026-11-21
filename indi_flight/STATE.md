@@ -22,8 +22,8 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    design/prefreeze_r1_f1_key2.md). S153: F1 ground-arm probe PASS (results/g5_groundarm_s153, --ground-arm runner
    option, UNKEYED probe tool): altctl/posctl no lift-off, edge 7.2/7.1 % (<= 10). F2-F8 disposition D-PREFREEZE-R1
    (F2 spec amendment, F3/F4 fix 23acbdef67, key2 ACCEPT w/ K1 fixed; MINORs K2 LPF passthrough at low rate, K5
-   wiring untested -> stage 7 harness). NEXT: G5.7 probe s1 on 23acbdef67 (results/g5_g57_s153); then reviews 2/3
-   (stage-3 safety diff) and 3/3 (module_parity.md), one per session (~$0.9).
+   wiring untested -> stage 7 harness). G5.7 probe s1 on 23acbdef67 PASS (tilt 3.71 deg, thr 2.6 %; g5_g57_s153).
+   NEXT S154: route check (RC due), then review 2/3 (stage-3 safety diff, ~$0.9); 3/3 (module_parity.md) next session.
 1-3. Probes PASS, re-fly at freeze: G5.4 9/9 (S135), G5.1 6/6 K_Y 20 (S137), G5.2 6/6 (S138, g52_check keyed).
 3b. G5.3 hold PASS 3/3 (S139). G5.7 leaveP: S139 s2/s3 FAIL (5.17-5.25 deg) were the GNSS set-up fault: S143 matched
    re-fly s2 3.62, s3 3.55 deg PASS, thrust step 3.0 % (results/g5_g57_s143_gnss); s1 PASS S139. G5.7 PASS 3/3 as probe;
@@ -75,7 +75,6 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S153c | G5.7 probe s1 after F3 fix | haiku | results/g5_g57_s153/README.md | rerun its fly.sh |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),

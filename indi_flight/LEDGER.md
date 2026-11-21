@@ -244,3 +244,4 @@ Stage-1 rows are in JOURNAL.md. Moved out of STATE.md on 2026-11-17 (token econo
 | S153 | ground-arm runner option + F1 probe (3 flights) | sonnet | results/g5_groundarm_s153/README.md | done, 18 calls, ~58k tok, PASS 3/3 |
 | S153 | F3/F4 fix + 3 gtests break-checked | sonnet | design/prefreeze_r1_f34_fix.md | done, 14 calls, ~47k tok |
 | S153 | key2 of F3/F4 diff | sonnet | design/prefreeze_r1_f34_key2.md | done, 9 calls, ~42k tok, ACCEPT w/ fixes (K1 MAJOR fixed by orchestrator) |
+| S153 | G5.7 probe s1 after F3 fix | haiku | results/g5_g57_s153/README.md | done, 7 calls, ~28k tok, PASS |
