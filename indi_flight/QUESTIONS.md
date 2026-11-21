@@ -65,3 +65,10 @@ full-scale saturation), limits as the row; B: drop the full-scale part.
 Meanwhile: 3 seeds of the SAT part as is (counts against the current text), A-48 closing test. Not blocked.
 Q9 note (S147, later): seeds 2/3 show the real G5.10 failure is INDI's tilt spike at the saturation EXIT (65 deg,
 PID 33 deg), not the 20 deg text; (a) still applies to the SAT part. Cause search first (A-48), no answer needed for it.
+Q9 note 2 (S149, results/g5_g510_s148/altloss_split.md, haiku log read, UNKEYED): the SAT part does NOT saturate:
+motor command peaks 0.71, 0 % of time >= 0.99 in s1-s3 (THR_SC 0.274 leaves 2x hover thrust available). All 2.7 m alt
+loss happens in the first 1.7 s after the thrust drop (collective ramps 0.14 -> 0.71 in ~1.5 s), none after REC.
+So the row as flown measures the transient of an instantaneous 73 % thrust-effectiveness loss, not sustained
+saturation. Proposal (c) A [recommended]: SAT part = scale chosen so hover needs >= 1.0 command (e.g. THR_SC <= hover
+fraction) for 5 s with the limits as written, flown after a one-flight check that motors sit at >= 0.99; the 73 %
+drop kept as a G3-type side probe, not a G5.10 pass condition. B: keep as is (row FAIL counted). Not blocking.

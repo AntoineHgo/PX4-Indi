@@ -14,18 +14,16 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    cause = stock PositionControl feedback producing a_c (D-outer-arch base A). Re-fly at freeze; if still FAIL, owner Q.
    S146 (results/g5_events_s145/README.md, fix_s1-3, key2 AGREES): G5.8 hover PASS 3/3; G5.9 b/c/d PASS 3/3;
    G5.9a FAIL 3/3 = stock commander latency switch->actuator_armed.kill 3.75-10 ms, outputs 0 at the flag (Q8 add. 2).
-   G5.8 3 m/s pre-test S146 (results/g5_events_s146_move): entry PASS, excursion metric undefined at 3 m/s and
-   link_loss receiver window 2.25 s -> Q8 addendum 3 (not blocking). Key2 B1/M1 FIXED S147 (6b623d589e, fc8a16f58d;
-   the 1-line fc8a fix is unflown, self-test OK), re-fly s1 valid (results/g5_events_s147_move): entry 510/1/21 ms PASS,
-   excursion FAIL by definition. 3 m/s 3 seeds once Q8 add. 3 (i) answered; meanwhile G5.6/G5.11 probes.
+   G5.8 3 m/s (results/g5_events_s147_move, key2 fixes S147): s1 entry PASS, excursion undefined -> Q8 add. 3;
+   3 seeds once answered; meanwhile G5.6/G5.11 probes.
 0d. G5.10 probe S147 (results/g5_g510_s147, 0f41810f90): INDI s1 alt 2.15 m FAIL, tilt 48.9 FAIL, back 4.3 s PASS;
    PID 3.22 m/44.7 deg. Q9 open (20 deg unreachable with the row's step; full-scale part). s2/s3: tilt 65 deg
    0.3 s after thrust returns (PID 33), LOC by checker, alt 2.21 m. S148: A-48 CLOSED = injector artefact (8 seq.
    per-motor EC sets); uniform faults now via atomic SIM_GZ_THR_SC (run_scenario.py, UNKEYED). Re-fly s148 s2: tilt
    45.3 deg = MPC_TILTMAX_AIR, no LOC; s1-s3 alt 2.67-2.74 m FAIL (2.0), back 3.3-3.5 s; PID s2 watchdog abort >3 m.
-   NEXT: key2 of THR_SC change + g510_check; why alt loss grew vs S147 (2.15-2.21); alt-loss = open G5.10 item
-   (1 session cause search, then re-open outer-law saturation handling). Q9 a/b still open. S147 s1-s3 superseded.
-   Runner trap: --controller pid_default with a params file holding MC_INDI_EN 1 flies INDI (s148 indi_s2_rep).
+   S149 split (altloss_split.md, unkeyed): SAT part never saturates (cmd max 0.71); 2.7 m lost in 1.7 s after the
+   drop, 0 after REC -> Q9 note 2 (row invalid as saturation test). NEXT: key2 THR_SC + check whether THR_SC scales
+   omega (gap-remover rate sets the 1.5 s ramp?); then build a truly saturating SAT variant (1 pre-test flight).
 1-3. Probes PASS, re-fly at freeze: G5.4 9/9 (S135), G5.1 6/6 K_Y 20 (S137), G5.2 6/6 (S138, g52_check keyed).
 3b. G5.3 hold PASS 3/3 (S139). G5.7 leaveP: S139 s2/s3 FAIL (5.17-5.25 deg) were the GNSS set-up fault: S143 matched
    re-fly s2 3.62, s3 3.55 deg PASS, thrust step 3.0 % (results/g5_g57_s143_gnss); s1 PASS S139. G5.7 PASS 3/3 as probe;
@@ -69,7 +67,7 @@ Later: combined opus review of stage-3 safety diff + stage-5 slice (incl. T9/T10
 - Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36, A-39.
 - Stabilized stick centre = HTE; runner thr0 honours HTE valid flag, fallback MPC_THR_HOVER.
 - Check script bench/attitude_break_check.py; ratesp_csv.py keyed; run_validity.py (W_MAX check) over cited sets.
-- Runner open: MC_INDI_EN 1 in a params file does not start the module, only MC_RATE_CTL_TYPE 1 does (accept
+- Runner traps: pid_default + params with MC_INDI_EN 1 flies INDI (s148). MC_INDI_EN 1 in a params file does not start the module, only MC_RATE_CTL_TYPE 1 does (accept
   MC_INDI_EN as alias, keyed). Pilot sticks kept after LAND -> RC override to POSCTL (K118 MINORs). margins_of hangs
   if ts_true=0.
 - quad5in defaults: bench/params/quad5in_indi_defaults.params (ACT_TC 0.033); firmware ACT_TC 0.05, MC_INDI_ID_OK 0
