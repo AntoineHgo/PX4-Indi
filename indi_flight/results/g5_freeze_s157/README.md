@@ -107,3 +107,11 @@ Owner questions scored at option A (D-FREEZE-6). One line per GATES 5b row; "run
 | F-8 rows (accel-only offboard, take-off on offboard setpoint) | NOT TESTED | owner decision F-8 |
 G5 overall: OPEN. Blocking rows: G5.2 (1/6), G5.5 o1-o4/o7, G5.9a s1, G5.10, plus the pending/not-tested rows; all FAIL rows have an
 owner question with the cause on the log.
+
+## S162 post-freeze validity after D-T10-RESET (d1b65d0f09)
+bench/reset_edge_sweep.py (self-test on edges; UNKEYED, informative) over all 62 freeze ulogs
+(reset_edge_sweep_s162.txt): estimator reset counters (quat, xy, z, vxy, heading) increment while airborne only in
+g5_events_s1/s2/s3 and g5_events_s1_pid (the injected ekf_yaw/ekf_xy events; the xy injection also bumps z and vxy
+counters). The INDI g5_events flights were re-flown at d1b65d0f09 (../g511_fix_s161). The other 58 flights have no
+airborne reset edge, so the firmware change cannot alter them: freeze rows stand. Limit: resets while landed-armed
+were not listed (landed filter); the change keeps the full restart on entry (d1b65d0f09).
