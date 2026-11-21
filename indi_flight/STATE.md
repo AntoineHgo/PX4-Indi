@@ -27,15 +27,16 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    G5.4/G5.8/G5.9 all agree (key2_g54_g58_g59.md); G5.5/G5.7 27/27 INDI verdicts agree (key2_g55_g57.md; partial
    LOC in key2 noted); G5.1/G5.2 17/17 agree (key2_g51_g52.md). ALL G5 freeze checkers KEYED. NEXT S160: G5 verdict table in GATES/README, then G2 freeze
    cells (rate roll/pitch 400+800, att yaw, outer cells, fwdef cell). Unverified: batch2 o5-o7 args.
+   S160: G5 verdict table in freeze README. G5.3 hold re-flown PASS 3/3 + key2. G5.11 exact test + g511_check.py:
+   FAIL 6/6 tilt cmd jump (xy 5.7-6.4, yaw 1.8-1.9 deg), UNKEYED. NEXT: score chain (PID ref: same jump = stack/EKF,
+   then Q to owner on the 1 deg limit for a GNSS-undone 1 m reset; else INDI cause search 1 session), key2 g511 (sonnet,
+   no access to g511_check.py), G2 cell table + att yaw/outer cells. G2 pre-test roll 800/400 s1 PASS (g2_freeze_s160).
    Seed 1: G5.1 acro/stab, G5.2 altctl PASS; G5.2 posctl z settle 4.15 s FAIL (> 4.0): cause
    search DONE: EKF2 height error -0.08 m decaying ~5 s, controller holds estimate (README); Q10 OPEN (not blocking);
-   S158: PID reference flight of stick_pos_steps posctl s1 (F-5) for Q10.
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
    events and maybe_landed / EKF z injectability -> Q8 (scored at option A, not blocking).
 4a. Flying: parallel docker streams ONLY for tolerance-insensitive probes (G5.5, G5.10 sat); G5.7 and event rows serial
    or max 2 streams with sim-hole figure recorded (LESSONS_PROPOSED S86); parallel runs are never gate evidence.
-4c. Pre-freeze review, standalone session (not beside flying), split into 2-3 single-interface reviews (stage-3 safety
-   diff, stage-5 slice + D-KY, module_parity.md): after the probes close, before the freeze.
 4b. Audit DONE S138 (design/defaults_audit_s138.md): no G2 cell at the current pair. Rate roll 800 Hz probe DONE S138 (GM 18.8 dB, PM 56 deg). Next: rate roll
    pitch/400 Hz at freeze; attitude yaw (g2_attbreak_s107 ax3 r800).
    Freeze G2 set must add the firmware-default cell (ID_OK 0, W_MAX 0, ACT_TC 0.05; D-DEFAULTS-FW overturn test)
@@ -72,9 +73,7 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S160a | G5.3 hold re-fly at freeze plant (was missing), 3 seeds | bash | results/g5_freeze_s157/hold_wind_s*, hold3.log | `bash indi_flight/results/g5_freeze_s157/hold3.sh` (skips done) |
-| S160c | G2 freeze cells pre-test roll 800+400 s1 (freeze plant + typical noise); then CELLS for pitch, seeds 2-3, PSUF=_fwdef | bash | results/g2_freeze_s160/<cell>/margins.txt, batch.log | `CELLS="..." PSUF= bash indi_flight/results/g2_freeze_s160/batch.sh` |
-| S160b | G5.11 checker + osc detector (GATES 5b G5.11 S160) | sonnet | bench/g511_check.py, bench/osc_detector.py, results/g5_freeze_s157/g511_*.txt | re-brief from GATES G5.11 text |
+| S160c | chain: PID g5_events_s1 ref (G5.11 cause) + G2 freeze cells pitch s1, roll/pitch s2-s3, fwdef roll800 s1-3 | bash | results/g2_freeze_s160/batch.log, chain.log (CHAIN_END); g5_freeze_s157/g5_events_s1_pid.g511.txt | `bash indi_flight/results/g2_freeze_s160/chain.sh` (resumable) |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),

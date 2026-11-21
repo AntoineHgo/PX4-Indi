@@ -93,7 +93,7 @@ Owner questions scored at option A (D-FREEZE-6). One line per GATES 5b row; "run
 | G5.1 acro, stab | PASS 6/6 | rate RMS <= 1.97/1.69/3.33 deg/s; tilt err <= 0.15 deg. fwdef cell (ID_OK 0) above 10 deg/s 3/3 = 0.5x K gate by design, no LOC (reported, not a G5.1 run) |
 | G5.2 altctl, posctl | FAIL 5/6 | posctl s1 z settle 4.15 s > 4.0 = EKF2 height error decay; PID same seed PASS 3.39 s (Q10) |
 | G5.3 mission | PASS 3/3 | wp dist <= 0.95 m, vmax <= 5.04 m/s |
-| G5.3 hold | PASS 3/3 (key2 pending) | hold RMS 0.044/0.056/0.080 m (<= 0.3), nav 4 over window; hold3.sh S160 (g53_hold_check.txt) |
+| G5.3 hold | PASS 3/3, keyed (key2_g53_hold.txt agrees) | hold RMS 0.044/0.056/0.080 m (<= 0.3), nav 4 over window; hold3.sh S160 (g53_hold_check.txt) |
 | G5.4 take-off, land, RTL | PASS 6/6 | edge step 4.0-4.6 % hover (<= 10), land vz 0.70 m/s |
 | G5.5 offb_vel_step, o5, o6 | PASS 3/3 each | vx RMS <= 0.037 m/s; horiz 0.04 m |
 | G5.5 o1-o4, o7 | FAIL 3/3 each | horiz RMS 0.57-0.81 m > 0.5; base A stock a_c lag (RC143); PID o1 0.785 m also FAIL (Q11) |
@@ -102,7 +102,7 @@ Owner questions scored at option A (D-FREEZE-6). One line per GATES 5b row; "run
 | G5.8 RC/link/offboard loss, hover | PASS 3/3 | failsafe entry <= 1 s after the firmware timeout flag (Q8 add. 1/3 option A); 3 m/s rows not flown (Q8 add. 3) |
 | G5.9 kill, re-arm, take-off | FAIL 8/9 lines | s1 G5.9a 3.75 ms after switch, outputs 0 in the kill-flag sample (stock commander latency, Q8 add. 2); s2/s3 PASS |
 | G5.10 sustained saturation | INVALID | AGG part does not saturate; tilt 45.3 deg = MPC_TILTMAX_AIR vs 20 deg text (Q9 a/c); alt loss and recovery PASS |
-| G5.11 estimator reset xy, yaw | PENDING | exact test written S160 (GATES 5b), checker g511_check.py in progress; z part not injectable (Q8 b) |
+| G5.11 estimator reset xy, yaw | FAIL 6/6 (UNKEYED) | tilt command jump xy 5.7-6.4 deg, yaw 1.8-1.9 deg (<= 1); excursion <= 0.19 m and no osc PASS. xy: estimate jumps 1 m then returns in ~1 s (GNSS fusion), the stock pos loop commands the correction; yaw: one-sample q_d spike at t_a. PID reference g5_events_s1_pid queued (chain.sh) to test stack-independence. g511_check.txt, g511_notes.md |
 | F-8 rows (accel-only offboard, take-off on offboard setpoint) | NOT TESTED | owner decision F-8 |
 G5 overall: OPEN. Blocking rows: G5.2 (1/6), G5.5 o1-o4/o7, G5.9a s1, G5.10, plus the pending/not-tested rows; all FAIL rows have an
 owner question with the cause on the log.
