@@ -24,8 +24,9 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    S157: pre-test auto_tour PASS but at ID_OK 0 (defaults file defeats runner overlay = set-up fault, fixed:
    results/g5_freeze_s157/params.params, D-FREEZE-6 note). FREEZE RE-FLY RUNNING detached (chain.sh: batch.sh G5.1-5.4
    18 flights, then batch2.sh G5.5/5.7/5.10/events/fwdef cell 36 flights; status batch_status.txt, CHAIN_END at end).
-   NEXT S158: if no CHAIN_END and no px4 container running, `setsid nohup bash .../chain.sh &` (resumes). Then
-   `bash indi_flight/results/g5_freeze_s157/checks.sh`, verdict table in its README, keyed second checker per
+   S158: batch 1 scored (README table): G5.1 6/6, G5.3 3/3, G5.4 6/6 PASS, G5.2 5/6. o1_lemniscate_s1 FAIL 0.61 m.
+   NEXT: if no CHAIN_END and no px4 container running, `setsid nohup bash .../chain.sh &` (resumes). Re-run
+   checks.sh after DONE2 (o2/o3 check.txt were taken mid-batch), verdict table, keyed second checker per
    D-FREEZE-6 (g54_key2.py, g5_rows_key2.py exist). Unverified: batch2 o5-o7 args (batch2_notes.md).
    Seed 1: G5.1 acro/stab, G5.2 altctl PASS; G5.2 posctl z settle 4.15 s FAIL (> 4.0): cause
    search DONE: EKF2 height error -0.08 m decaying ~5 s, controller holds estimate (README); Q10 OPEN (not blocking);
@@ -76,7 +77,8 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S157b | G5 freeze re-fly, 54 flights, detached | chain.sh (setsid) | results/g5_freeze_s157/batch_status.txt | `setsid nohup bash indi_flight/results/g5_freeze_s157/chain.sh &` (skips done) |
+| S157b | G5 freeze re-fly, 54 flights, detached (batch 1 done+scored S158) | chain.sh (setsid) | results/g5_freeze_s157/batch_status.txt | `setsid nohup bash indi_flight/results/g5_freeze_s157/chain.sh &` (skips done) |
+| S158a | Q10 PID ref posctl s1, waits CHAIN_END, serial | pid_ref.sh (setsid) | g5_freeze_s157/stick_pos_steps_s1_posctl_pid, PID_REF_END | `setsid nohup bash indi_flight/results/g5_freeze_s157/pid_ref.sh &` |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
