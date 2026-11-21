@@ -54,6 +54,9 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| T186a | run 17 INDI LOC cause search (log only) | sonnet | results/g3_pretest_s173/run_017/LOC_CAUSE_S186.md | re-brief from file |
+| T186b | run_validity pid_default + g3_checks excursion vs setpoint (key1) | sonnet | results/g3_excursion_s186/KEY1.md | re-brief from file |
+| T186c | g3_checks_key2 excursion vs setpoint (key2, spec only) | sonnet | results/g3_excursion_s186/KEY2.md | re-brief from file |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
