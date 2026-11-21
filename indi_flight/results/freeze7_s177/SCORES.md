@@ -32,3 +32,27 @@ Commands (existing checkers only):
 | offb_vel_step | 2 | vx_rms 0.005 / vx_end 0.018 / dz 0.111 | PASS | - |
 | offb_vel_step | 3 | vx_rms 0.004 / vx_end 0.010 / dz 0.086 | PASS | - |
 Worst: o1 s3 H 0.311, o3 s3 H 0.323 (limit 0.5), max V 0.097 (o4 s1, limit 0.3); offb_vel_step worst vx_rms 0.005 (0.2), vx_end 0.018 (0.1), dz 0.127 (0.3). 24/24 PASS. Freeze-6 probe o1 s1 0.297 m; freeze-7 o1 s1 0.303 m.
+
+## G5.3 / G5.4 (6 flights)
+Commands (repo root, existing checkers, same as freeze-6 checks.sh; outputs in g5/): `python3 bench/g53_mission_check.py g5/auto_tour_sN --json g5/auto_tour_sN/g53.json` (G5.3 mission, `*.g53.check.txt`); `bench/auto_smoke_check.py <run> --json <run>/check.json` (G5.4, `<run>.check.txt`); `bench/g54_key2.py g5/auto_land10_s{1,2,3}` (`key2_g54.txt`); `bench/g54_land_key2.py` (`key2_g54_land.txt`). Not run: G5.3 hold (`gust_x`/hold_wind, not flown in this set).
+All 6 flights: exit ok, no INVALID flag in any checker output, no phase missing.
+
+G5.3 mission (wp 1.0 m acceptance, speed <= 5.5 m/s): all 4 waypoints reached, wp min dists below.
+| flight | wp min dist 1/2/3/4 (m) | vmax (m/s) | verdict | invalid |
+|---|---|---|---|---|
+| auto_tour s1 | 0.760 / 0.764 / 0.813 / 0.034 | 5.196 | PASS | - |
+| auto_tour s2 | 0.783 / 0.785 / 0.802 / 0.020 | 5.191 | PASS | - |
+| auto_tour s3 | 0.817 / 0.746 / 0.777 / 0.050 | 5.199 | PASS | - |
+
+G5.4 (take-off overshoot <= 0.5 m, bounce <= 0.3 m; ramp/edge step <= 10 % hover; dip <= 0.3 m; touchdown vz <= 0.8 m/s, tilt <= 10 deg, re-lift <= 0.15 m; land mean vz 0.70 +-20 %; contact->disarm <= 3.0 s; RTL height error <= 1 m):
+| flight | overshoot (m) | bounce (m) | ramp max / edge step (% hover) | dip (m) | td vz (m/s) | td tilt (deg) | re-lift (m) | land mean vz (m/s) | contact->disarm (s) | RTL err (m) | verdict | invalid |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| auto_tour s1 | -0.090 | 0.200 | 7.5 / 4.0 | 0 | 0.693 | 0.97 | 0.050 | 0.697 | 2.68 | 0.023 | PASS | - |
+| auto_tour s2 | -0.075 | 0.200 | 7.5 / 4.0 | 0 | 0.698 | 0.40 | 0.049 | 0.693 | 2.68 | 0.034 | PASS | - |
+| auto_tour s3 | -0.026 | 0.200 | 7.5 / 4.6 | 0 | 0.708 | 0.19 | 0.050 | 0.704 | 2.69 | 0.030 | PASS | - |
+| auto_land10 s1 | -0.062 | 0.200 | 7.5 / 4.4 | 0 | 0.697 | 0.33 | 0.050 | 0.700 | 2.69 | n/a | PASS | - |
+| auto_land10 s2 | -0.091 | 0.200 | 7.5 / 4.6 | 0 | 0.680 | 0.61 | 0.050 | 0.690 | 2.68 | n/a | PASS | - |
+| auto_land10 s3 | -0.045 | 0.200 | 7.5 / 4.6 | 0 | 0.700 | 0.47 | 0.049 | 0.702 | 2.68 | n/a | PASS | - |
+Key2 (g54_key2 / g54_land_key2) agrees on all 3 auto_land10 flights: td vz 0.680-0.700, tilt <= 0.61 deg, re-lift 0.05 m, edge step 4.4-4.6 %, land mean vz 0.696-0.705, contact->disarm 2.68-2.69 s, all PASS.
+
+Worst case: G5.3 wp min dist 0.817 m (limit 1.0; freeze-6 0.946), vmax 5.199 m/s (limit 5.5; freeze-6 5.04); G5.4 overshoot -0.026 m (0.5), bounce 0.200 (0.3), ramp step 7.5 % / edge 4.6 % (10 %; freeze-6 4.0-4.6 %), td vz 0.708 (0.8; freeze-6 0.70), tilt 0.97 deg (10), re-lift 0.050 (0.15), RTL err 0.034 m (1). 6/6 PASS on both rows.
