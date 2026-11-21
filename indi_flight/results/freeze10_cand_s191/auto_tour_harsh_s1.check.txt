@@ -1,0 +1,31 @@
+scenario auto_tour exit ok error None
+phases (sim s): armed=31.1, takeoff_cmd=31.1, takeoff_done=38.4, hold_end=48.4, mission_uploaded=48.4, mission_start=50.4, mission_end=74.7, rtl_cmd=77.7, disarmed=94.1
+
+== tracking vs trajectory_setpoint (ground truth; rows with finite position setpoint only)
+takeoff  [31.1,38.4] n=364 xy rms 0.029 max 0.055 m | z rms 0.103 max 0.126 m
+hold     [38.4,48.4] n=500 xy rms 0.056 max 0.089 m | z rms 0.082 max 0.106 m
+mission  [50.4,74.7] n=1217 xy rms 0.154 max 0.224 m | z rms 0.063 max 0.109 m
+rtl      [77.7,94.1] n=820 xy rms 0.046 max 0.104 m | z rms 0.096 max 0.475 m
+
+== take-off handover (takeoff_status rampup(4) -> flight(5))
+edge at 34.121 s: indi_pos_status.thrust step 0.0066 (nan = no sample before the edge; first sample 30.196 s), altitude dip within 1 s 0.000 m
+vehicle_thrust_setpoint (-xyz[2]) step at the edge: 0.0065
+G5.4 take-off (vehicle_thrust_setpoint collective, hover 0.1364 from hold phase; 0.1 s means; ramp 31.12..34.12 s, 26 points from ramp+0.5 s):
+  ramp max step 0.0102 = 7.5 % hover at 31.62 s -> PASS (<= 10 %)
+  edge step 0.0063 = 4.6 % hover -> PASS (<= 10 %)
+  truth dip within 1 s 0.000 m -> PASS (<= 0.3 m)
+
+== landing
+ground_contact 90.55 s, landed 91.23 s, disarm 93.23 s -> contact->disarm 2.68 s (landed->disarm 2.00 s)
+mean vz (down+) between 1 and 4 m height: 0.705 m/s over 382 samples; MPC_LAND_SPEED 0.699999988079071
+
+== G5.4 other limits (truth = vehicle_local_position_groundtruth)
+take-off (target 5.0 m = MIS_TAKEOFF_ALT): overshoot -0.102 m -> PASS (<= 0.5), bounce 0.200 m -> PASS (<= 0.3)
+touchdown (truth z_up <= ground+0.05 m) at 90.12 s (ground_contact 90.55 s): max vz 0.685 m/s -> PASS (<= 0.8); tilt max 0.50 deg (vehicle_attitude_groundtruth) -> PASS (<= 10); re-lift 0.050 m -> PASS (<= 0.15); landed stays true -> PASS
+land: mean vz 0.705 vs MPC_LAND_SPEED 0.700 (+-20 %) -> PASS; contact->disarm 2.68 s vs COM_DISARM_LAND 2.0 + 1 s -> PASS
+rtl height error over [77.7, 83.4] s (descent start = setpoint z_up 0.3 m below its max since rtl_cmd): 0.080 m -> PASS (<= 1)
+
+== stage_mode / nav_state transitions
+indi_pos_status stage_mode: first 2 at 30.20 s, n=5605, values [1, 2], transitions [(34.121249999999996, 2, 1), (90.56625, 1, 2)]
+vehicle_status nav_state: [(31.1, 'loiter', 'takeoff'), (37.3, 'takeoff', 'loiter'), (50.38, 'loiter', 'mission'), (74.7, 'mission', 'loiter'), (77.71, 'loiter', 'rtl'), (93.23, 'rtl', 'loiter')]
+heartbeat mode_log [t, main, sub, armed]: [[31.087, 4, 3, True], [32.085, 4, 2, True], [38.085, 4, 3, True], [51.086, 4, 4, True], [75.093, 4, 3, True], [78.093, 4, 5, True], [94.095, 4, 3, False]]
