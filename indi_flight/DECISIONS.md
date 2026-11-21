@@ -1152,3 +1152,14 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   Freeze-9 G2/G4/G5 evidence stands.
 - Overturn: a fail at the new box edges that the model does not predict re-opens the attitude-loop analysis
   (results/g3_osc_margin_s186); a payload (e ~1.3) limit is a G8 statement, not a gate row.
+
+## D-FREEZE-9-GAP (S188, 2026-11-21): G5.1, G5.2, G5.7 re-fly at freeze-9 before the G5 verdict
+- Found: the D-FREEZE-8 and D-FREEZE-9 re-fly lists omit G5.1 (stabilized/acro steps), G5.2 (altctl/posctl stick
+  steps) and G5.7 (mode switches). Their last evidence is freeze-6 (results/g5_freeze_s157, S158-S159, keyed).
+  Freeze-8 changed the inner library (F2 setpoint extrapolation in every mode, F4 lead Tc) and the outer XY gains;
+  freeze-9 the XY_VP default. By the freeze rule these rows are invalidated.
+- Decision: re-fly them at freeze-9 with the S157 commands and keyed scorers (3 seeds each as at S157), serially after
+  the G3 pre-test chain; G5 verdict after their scores. No new script.
+- Alternatives: carry freeze-6 evidence (rejected: firmware changed on paths these rows exercise); argue G5.1 inner
+  only (rejected: F2/F4 sit in the inner library).
+- Overturn: none (freeze rule); a FAIL follows the freeze-discipline steps (PID reference first).
