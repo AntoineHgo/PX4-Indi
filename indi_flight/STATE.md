@@ -23,13 +23,8 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    G2 rate + att + outer 67/67 cells PASS + KEYED at freeze (plateau GM per Q13 A), outer model x-check done (A-50).
    S165: rate + att yaw model x-check DONE (xcheck_rate.md, 12/15 agree, A-51, verdict independent).
    267 Hz reported cells flown S165 (GATES G2 freeze status). NEXT: G4 (RC159 order G2 -> G4 -> G3). Next RC: S168.
-   S166-S171 (JOURNAL): G4 tooling keyed (g4_metrics.py, truth hook inst 1 under FB=2, gate_g4.sh, g3_checks.py key1+2);
-   G4 batch results/g4_gate_s169: metric rows PASS 18/18 (>= 10x); chatter clause FAIL 9/9 incl. quiet (A-54, Q14);
-   item 2 whole flight (D-G3-SPAN) FAIL 1/3 harsh (A-56).
-   S172: D-JFF-SOURCE committed 20b4a41b22 (keyed) but did NOT remove the AUTO_LAND omega_ff spike (results/g4_jff_s172,
-   24-28 deg/s harsh; stock auto a_ff itself swings +-2 m/s^2). D-JFF-OFFB committed aa4fd2654a (keyed): omega_ff 0 in
-   land, G4 rows PASS, but item 2 FAIL 1/3 harsh persists (2 Hz p from BEFORE land entry): FF is NOT the cause (A-56).
-   RC173 DONE early (design/route_check_173.md), acted on: no more FF work; A-56 = marginal ~2 Hz loop excited by noise.
+   S166-S172 (JOURNAL): G4 tooling keyed; G4 batch results/g4_gate_s169 rows PASS 18/18, chatter FAIL (A-54, Q14),
+   item 2 FAIL 1/3 harsh (A-56). D-JFF-SOURCE 20b4a41b22, D-JFF-OFFB aa4fd2654a (FF not the cause). RC173 acted on.
    S173 DONE: G4 verdict written (NOT PASSED: A-56 + Q14 chatter). A-56 probe results/a56_probe_s173: oscillation
    persists with stock mc_pos_control and with accel LPF 4 Hz -> outer loop NOT the cause; inner rate loop remains.
    G2 freeze data at 1.5-3 Hz: no lightly damped mode (design/a56_g2_2hz_s173.md; no PID margins exist).
