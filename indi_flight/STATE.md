@@ -17,9 +17,9 @@
    applicable, say so. After the queue ends (no parallel docker), fly P1 rate + P2 att cell with XY_P 0.95/XY_VP 1.8;
    P3 att cell on an F4-revert build (Tc 0.01). Then: if gains are the cause, choose XY gains that pass outer AND
    spot (model + probe), freeze-9 re-fly list; if F4, revert F4 vs G4 89 Hz trade -> owner question if both conflict.
-2. G4 hover_harsh_s1 20 Hz (take-off/loiter, 9.7e-4, PID clean, 1/3 seeds): after F2 result; one session cause bound,
-   candidate decision (4) inner rate INDI -> owner question before re-opening (re-flies most gates).
-   Q18 re-score done (no verdict moved); cruise item 3 offset is not a G4 row (PID 0.295 m = INDI): closed.
+2. G4 freeze-8 scored S182 (G4_SCORES.md): all rows in limits except cruise_harsh_s2 20 Hz at hold->land switch,
+   keys split on the Q15 skip -> Q19 BLOCKING for G4 (no G4 work until answered; A = PASSED). If a freeze-9 follows
+   from the G2 spot fix, G4 re-flies anyway.
 3. G5: freeze-7 G5.5 24/24, G5.3 mission 3/3, G5.4 6/6 PASS (SCORES.md). G5.3 hold (gust_x) IS in the D-FREEZE-7 list
    ("G5.3/G5.4 x3"): in the freeze-8 queue. G5.10: (a) key2 done (KEY2_MOTORS_S181.md): sat times agree, key1
    score_motors.py has 4 defects (exit_status LOC, stab tilt limit MAN_TILT_MAX, recovery = att error to stick sp,
