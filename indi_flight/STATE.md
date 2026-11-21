@@ -14,14 +14,15 @@
 1b. G2 spot cause (one session, started S182; design/g2_spot_cause_s182.md): low-f phase loss (<3 Hz) both cells
    tracks MC_INDI_XY_VP 1.8 -> 3.6 (freeze-7, kept at freeze-8); att 4-8 Hz lag at freeze-8 looks like F4
    (kSetpointLeadTc 0.03, constexpr). No PID injection path exists (stock code, out of scope): PID-ref-first not
-   applicable, say so. After the queue ends (no parallel docker), fly P1 rate + P2 att cell with XY_P 0.95/XY_VP 1.8;
-   P3 att cell on an F4-revert build (Tc 0.01). Then: if gains are the cause, choose XY gains that pass outer AND
-   spot (model + probe), freeze-9 re-fly list; if F4, revert F4 vs G4 89 Hz trade -> owner question if both conflict.
+   applicable. P1/P2 flown S182 (results/g2_spot_probe_s182): XY 0.95/1.8 -> PM 49.0 / 51.4: cause shown (D-XY-TRADE).
+   NEXT: sweep XY_VP {2.4, 2.8} (XY_P 1.2): per pair spot rate + att cell + G5.5 o1/o3/o7 s1 (one sonnet agent, copy
+   results/g2_spot_probe_s182/fly.sh + queue.sh fly()); pick the pair passing PM >= 45 and G5.5 <= 0.5 m; set it as
+   firmware default (two keys), freeze-9, re-fly the D-FREEZE-8 list. No pair -> F4-revert probe, then owner question.
 2. G4 freeze-8 scored S182 (G4_SCORES.md): all rows in limits except cruise_harsh_s2 20 Hz at hold->land switch,
    keys split on the Q15 skip -> Q19 BLOCKING for G4 (no G4 work until answered; A = PASSED). If a freeze-9 follows
    from the G2 spot fix, G4 re-flies anyway.
-3. G5: freeze-7 G5.5 24/24, G5.3 mission 3/3, G5.4 6/6 PASS (SCORES.md). G5.3 hold (gust_x) IS in the D-FREEZE-7 list
-   ("G5.3/G5.4 x3"): in the freeze-8 queue. G5.10: (a) key2 done (KEY2_MOTORS_S181.md): sat times agree, key1
+3. G5: freeze-8 (results/freeze8_s181/G5_SCORES.md) all scored rows PASS incl. G5.3 hold 3/3; G2-STEP 9/9 (yaw settle
+   1208 ms s1, limit 1350, rising since S64 ~920: no chase while in limit). G5.10: (a) key2 done (KEY2_MOTORS_S181.md): sat times agree, key1
    score_motors.py has 4 defects (exit_status LOC, stab tilt limit MAN_TILT_MAX, recovery = att error to stick sp,
    KeyError on aborted runs): FIXED S181 -> bench/g510_score_motors.py, keys AGREE; SAT_MIN_FRAC is now validity
    only (verdict INVALID, S182 825bec01b8); (b) SAT set-up fault (D-G510-SAT-SETUP):
@@ -60,8 +61,7 @@ STOP list: A-39 / yaw measured-path chase, PID M1 hook, hooks without a consumer
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S182a | G5 + G2-STEP scoring of freeze-8 queue (done 16:13, 87 rc 0) | sonnet | results/freeze8_s181/G5_SCORES.md | re-brief from file if partial |
-| S182b | G2 spot probes P1/P2 (XY 0.95/1.8) | sonnet | results/g2_spot_probe_s182/README.md | re-fly from its fly.sh |
+| - | none | - | - | - |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
