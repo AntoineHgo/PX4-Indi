@@ -931,3 +931,15 @@ no stock integrator there is no bypass -> INDI edge; HandoverBlend is removed on
   selection, which has no unit harness (D-G7-HARNESS, stage 7), so "fails on old code" is checked in flight instead
   (omega_ff peak at land entry, results/g4_jff_s172); the stage-7 harness gets this case (auto setpoint with
   bang-bang jerk and constant acceleration -> omega_ff 0).
+
+## D-JFF-OFFB (S172, 2026-11-21): rate feed-forward in offboard only (re-opens D-A18 scope; A-56)
+- Fact (results/g4_jff_s172, aff_source.md): with D-JFF-SOURCE the AUTO_LAND omega_ff peak is unchanged (24-28 deg/s
+  harsh, 9/9 runs over 3 deg/s); the stock auto a_ff itself swings smoothly -2..2.3 m/s^2 in harsh descents (30-100x
+  quiet), so differencing it still feeds a vibration-coupled signal into the rate loop. A fix that needs a second fix:
+  the scope of D-A18 (jerk FF in every mode) is re-opened.
+- Choice: `setFeedforward(flag_control_offboard_enabled)` each cycle; the difference history keeps running, only the
+  output is gated. Auto/manual modes fly without rate FF, as the PID stack does. D-JFF-SOURCE kept (offboard has no jerk).
+- Alternatives: low-pass/limit omega_ff (a filter tuned on one symptom; F-9); FF only when a_ff is "smooth" (detector,
+  more code); drop FF everywhere (loses the G5.5 offboard lag gain).
+- Checks: harsh hover re-fly omega_ff peak in AUTO_LAND < 3 deg/s and G4 item 2; key2 on the diff; G5.5 rows unchanged
+  (offboard path untouched). Overturn: auto-mode tracking rows (G5.3/G5.4) worse than the freeze by > 10 %.

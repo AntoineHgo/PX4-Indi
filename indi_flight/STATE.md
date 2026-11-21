@@ -36,10 +36,11 @@ History: JOURNAL.md. Agent ledger: LEDGER.md. LESSONS_PROPOSED.md (cost calibrat
    stacks, line 0.5 DShot step; no hook change; Q14 (chatter floor). key2 g3_checks DONE (g3_key2.md), A-55.
    S171: A-55 CLOSED (D-G3-SPAN: item 2 whole flight incl. descent; key1 fixed). G4 item 2 FAIL 1/3 harsh: sustained
    2 Hz q in AUTO_LAND descent (A-56: INDI descent rate RMS 3-6 deg/s harsh vs PID 0.3).
-   NEXT (G4): (1) A-56 CAUSE FOUND (results/a56_s171): stock trajectory_setpoint.jerk is bang-bang +-MPC_JERK_AUTO
-   in auto modes, used as rate FF (McIndiPosControl.cpp:1085). Implement D-JFF-SOURCE (always difference a_ff; unit
-   test fails on old code; second key), re-fly G4 hover harsh x3 + G5 land/RTL rows. (2) G4 verdict both
-   ways (Q14 A/B) in the G4 README. Then G3 pre-test ~20. Next RC: S173.
+   S172: D-JFF-SOURCE committed 20b4a41b22 (keyed) but did NOT remove the AUTO_LAND omega_ff spike (results/g4_jff_s172,
+   24-28 deg/s harsh; stock auto a_ff itself swings +-2 m/s^2): D-JFF-OFFB (FF offboard only) coded, in test (S172c/d).
+   NEXT (G4): (1) close S172c/d: if omega_ff < 3 deg/s and item 2 PASS 3/3, commit fw + results, close A-56, re-fly G5
+   land/RTL rows (G5.3/G5.4) once; else re-open (A-56 at its session limit). (2) G4 verdict both ways (Q14 A/B) in the
+   G4 README. Then G3 pre-test ~20. Next RC: S173.
    G5.2 posctl z settle s1 4.15 s FAIL (EKF2 height error, Q10; PID ref PASS).
 4. G5.6/5.8/5.9/5.11 injector KEYED S144 (results/g5_events_s144/key2.md); G1.5 timing of command/stream-stop
    events and maybe_landed / EKF z injectability -> Q8 (scored at option A, not blocking).
@@ -77,8 +78,8 @@ STOP list: A-39 / yaw measured-path chase, more G2 cells at the preliminary pair
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S172a | D-JFF-SOURCE fw diff (uncommitted at launch): build, format, G4 hover x9 re-fly + score + omega_ff land check | haiku | results/g4_jff_s172/ | gate_g4.sh fly/score results/g4_jff_s172 |
-| S172b | key2 of the D-JFF-SOURCE diff | sonnet | design/key2_jff_s172.md | re-run brief |
+| S172c | D-JFF-OFFB fw diff (UNCOMMITTED in working tree): build + harsh hover x3 + omega_ff | haiku | results/g4_jffoffb_s172/ | gate_g4.sh fly results/g4_jffoffb_s172 harsh hover N |
+| S172d | key2 of the D-JFF-OFFB diff | sonnet | design/key2_jffoffb_s172.md | re-run brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): module harness (D-G7-HARNESS; must cover the MC_INDI_ID_OK call site, K128 MAJOR),
