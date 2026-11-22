@@ -50,3 +50,22 @@ D-OWNER-Q23; full text in JOURNAL.md S191).
 
 Q24 and Q25 closed S197 (owner answers B and B: GATES "Owner amendments S197", D-OWNER-Q24, D-OWNER-Q25,
 design/airframe_requirements.md; full text in JOURNAL.md S197).
+
+## Q26 (S199, 2026-11-22): G3 NOT PASSED at freeze-10, step back or close as a limit?
+Context. The 300-run campaign finished (results/g3_campaign_f10, FAILS_S199.md; re-fly results/g3_refly_s199/SUMMARY.md).
+Two losses of control, both reproduced at speed 1, both INDI-specific (PID flies the same draws without LOC): 245
+(corner C1: controller G1 x2, motor tau x3, delay 10 ms) diverges in a growing 2 Hz pitch oscillation; 264 (corner C3:
+saturation 0.351 plus weak motor 0.709) tilts past 60 deg at the fault. Item 2 fails on 79 runs: real lines class A
+(11 Hz pitch, high delay + fast motor + controller G1 below plant, 8 runs) and class B (2 Hz, high delay + slow motor,
+37 runs; C1 and C6 fail every run); 283 (A) and 239 (B) reproduce and PID passes them. Item 3 94.95 %. Verdict written
+(GATES "G3 verdict at freeze-10"). G2 margins were measured on the nominal plant only; the failures sit where delay and
+actuator-model error combine (fixed ACT_TC 0.033 s against plant tau 0.017-0.1 s, no delay in the modelled state), plus
+saturation handling with a weak motor. A fix is an inner-loop law change: FREEZE-11 re-opens G2, G4, G5 and the whole
+G3 campaign (about 5-7 sessions and 8 h CPU), more than three sessions of finished work.
+Options.
+- A (recommended): one session of cause search on 245, 239, 283, 264 (logs, linear margin model with the drawn plant);
+  if a fix probe removes the failure on a log, FREEZE-11 with the re-flies named above.
+- B: close G3 as NOT PASSED with the explanation; state the envelope (delay, tau and G1 mismatch, saturation with a
+  weak motor) as a limit and a bring-up requirement in the report; go on to G6-G8.
+Meanwhile: the cause search (needed under A and B, every failure must be explained); no firmware change until you
+answer. Blocked: only for the firmware change and the re-flies.

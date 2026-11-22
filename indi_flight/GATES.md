@@ -721,3 +721,22 @@ rule; key-2 G5.9b/9c print no verdict, values inside the limits. Limits of the e
 key 1 only (no key-2 script exists; as at freeze-9); mission waypoint margin 0.03 m (worst 0.970 m vs 1.0 m).
 Not tested: G5.6 and G5.11 z reset (owner Q8(b), S175); accel-only offboard and take-off on an offboard setpoint alone
 (owner decision F-8); G5.10 SAT part dropped (Q21: no stack reaches 4 motors >= 0.99 for 1 s).
+
+## G3 verdict at freeze-10 (S199, 2026-11-22): NOT PASSED
+Evidence: `results/g3_campaign_f10/` (300/300 runs at speed 4, FREEZE-10 binary d220e193, `SCORES.tsv`, both keys per
+run), `FAILS_S199.md` (classification), `results/g3_refly_s199/SUMMARY.md` (speed-1 re-fly and PID reference of the same
+draws, campaign speed rule and reference-before-cause rule).
+- Item 1 (no LOC, no quota): FAIL. Run 245 (corner C1: controller G1 x2, tau x3, delay 10 ms) diverges in a growing 2 Hz
+  pitch oscillation and falls (watchdog height < 0.3 m at 64.7 s; speed 1: 65.05 s). Run 264 (corner C3: saturation hook
+  0.351 with weak motor 0.709) tilts past 60 deg at the fault (60.7 s; speed 1: 60.9 s). PID flies both draws without LOC.
+- Item 2 (no sustained oscillation, no quota): FAIL. 79 of 297 scored runs fail on at least one key (key 1 73, key 2 45).
+  Real lines: class A, 10.75-11.5 Hz pitch, 8 runs (high delay, fast motor, controller G1 below plant); class B, 2.0-2.5
+  Hz, 37 runs (high delay, slow motor; corners C1 and C6 fail 19/19 scored). Reproduced at speed 1 on 283 (A) and 239
+  (B), where PID passes; 008 (A) also fails for PID (other axis, 161-207 dps), a draw shared with PID. Class C (25 runs,
+  key 1 only) are landing windows that key 2 skips by design; class D (9, key 1 only) are borderline 2 Hz lines.
+- Items 3-6: 15 item-3 misses in 297 scored runs (94.95 %, all within the speed-1 spread of their limit); items 4-6
+  not reported separately by the classification. Not decisive given items 1-2.
+- Aborts: 039 is a harness artefact (LAND overridden by the stick re-centre; both stacks hover until the wall
+  timeout, re-flown at speed 1), not a control failure.
+The remaining 77 item-2 indices were not re-flown at speed 1: the verdict does not depend on them (item 1 fails on two
+confirmed, INDI-specific runs). Step back: QUESTIONS.md Q26.

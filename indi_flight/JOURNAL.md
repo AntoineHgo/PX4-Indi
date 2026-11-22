@@ -1585,3 +1585,8 @@ offboard trajectories (a steady-state hover limit; no reference stack meets it o
   with PID, 02 item-3 quota miss 0.318 m) -> set-up fixed, WAIT_OWNER for the flight chain. G5 audit gaps closed: events
   seeds 2-3 pass; G5.8 at 3 m/s scorer written with two independent keys, 9/9 PASS; G5 verdict PASSED. G7(f) F-10 plan
   (results/g7_s198/F10_PLAN.md). Gate progress: G5 PASSED (verdict written); G3 pre-test re-scored 16 -> 17/20 under Q24 B.
+- S199 (2026-11-22): G3 campaign chain finished (300/300, speed 4), committed. Failure classification (FAILS_S199.md):
+  2 LOC (245 C1, 264 C3), item 2 on 79 runs (A 11 Hz, B 2 Hz real; C key-1 landing windows; D borderline), item 3
+  94.95 %, 039 harness. Speed-1 re-fly + PID reference of 8 draws (g3_refly_s199): both LOC and A/B lines reproduce,
+  PID no LOC and passes 283/239. G3 verdict NOT PASSED at freeze-10; Q26 (step back A vs close as limit B). Gate
+  progress: G3 verdict written, NOT PASSED.

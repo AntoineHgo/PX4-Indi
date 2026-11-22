@@ -4,23 +4,23 @@
 - Stage: 6 (validation). FREEZE-10 (D-FREEZE-10): firmware 7fe6206fcc, config g5_freeze_s157 params (XY gains at
   firmware defaults 1.2/2.4). Later commits e9e85e395d, 39c1700523 behaviour-neutral (D-G7-NUTTX-BUILD); gate binary
   built 22:38 after 7fe6206fcc, not rebuilt.
-- Gates: see GATE_STATUS.tsv. G1, G2, G4, G5 PASSED (G5 S198).
-- G3 campaign: detached flight chain `bench/g3_chain.sh` (owner-built), 300 runs seed 173 idx 0-299 at FREEZE-10
-  into results/g3_campaign_f10 (README there), both keys per run. Start/resume:
-  `bash indi_flight/bench/g3_chain.sh start indi_flight/results/g3_campaign_f10 0 299 --speed 4` (launched by owner
-  session 2026-11-22); `status`, `stop`, `rescore`. Speed 4 evidence + speed-1 re-fly rule for failures:
-  results/g3_campaign_f10/speed_check/README.md (also A-4 evidence for the G3 set-up).
+- Gates: see GATE_STATUS.tsv. G1, G2, G4, G5 PASSED; G3 NOT PASSED at freeze-10 (S199), Q26 open.
+- G3 tooling: flight chain `bench/g3_chain.sh` (README in results/g3_campaign_f10; speed-1 rule in its
+  speed_check/README.md); list re-fly with PID twins: results/g3_refly_s199/refly_all.sh.
 - Owner answers Q24 B and Q25 B (2026-11-22) acted on S197: GATES "Owner amendments S197", D-OWNER-Q24, D-OWNER-Q25,
   design/airframe_requirements.md (F-3 list + bring-up items). FREEZE-10 stands.
 - Owner rule F-10 (2026-11-22): delivered code short needed comments, no project ids/paths, explicit names, PX4
   style. Brief every coder with F-10. Clean-up = separate behaviour-neutral commits, independent review.
 
 ## Next actions (each names its gate item)
-1. G3: campaign CHAIN_FINISHED 18:08, committed 83f98905e5: 297 ok + 3 aborted (039 land wall timeout, 245
-   watchdog height, 264 watchdog tilt; unscored by design). Key 1 218/297 pass (73 item2, 15 item3), key 2 246/297
-   (45 item2, 15 item3). Item 2 has no quota: verdict needs the speed-1 re-fly of every item 1-2 failure (campaign
-   README "Verdict") and PID reference of the same draws (reference-before-cause rule), then an owner question if
-   shared with PID. Then the verdict per GATES "Campaign pass" (key 2 col 5 is G4).
+1. G3 NOT PASSED at freeze-10 (S199, GATES "G3 verdict at freeze-10"; FAILS_S199.md, g3_refly_s199/SUMMARY.md).
+   Q26 open (A: cause search then FREEZE-11 with G2/G4/G5/G3 re-fly; B: close as limit). Meanwhile, the one-session
+   cause search (needed under A and B): 245 (C1 2 Hz pitch divergence), 239 (class B 2 Hz), 283 (class A 10.75 Hz q),
+   264 (C3 saturation + weak motor tilt). Raw ulg in g3_campaign_f10/run_NNN and g3_refly_s199/indi_NNN, PID twins in
+   g3_refly_s199/pid_NNN. Suspects: fixed ACT_TC vs drawn tau (slow/asymmetric), delay absent from the modelled
+   state, rate gain with controller G1 below plant at high delay (margins measured only at nominal plant), allocation
+   under saturation with a weak motor. Use margins_models.py with the drawn plant. No firmware change before the Q26
+   answer. Side defect: key 1 (g3_score.sh) scores landing windows that key 2 skips (class C, 25 runs).
    Pre-test 17/20 (results/g3_pretest_q24_s197). 02 item-3 miss (0.318 m, +48 ms) is a quota item, not a chase.
 2. G5 PASSED at freeze-10 (S198). A firmware change after the freeze re-opens the rows it touches (freeze rule).
    Trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
@@ -69,7 +69,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| refly | G3 subset re-fly: INDI speed 1 + PID speed 1 on 245,264,008,240,283,239,046,039 (S199) | detached wrapper pid 3600096, start 18:18, ETA ~19:15 | results/g3_refly_s199 (dirty while flying; DONE at end) | `bash indi_flight/results/g3_refly_s199/refly_all.sh` resumes (README) |
+| - | none | - | - | - |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
