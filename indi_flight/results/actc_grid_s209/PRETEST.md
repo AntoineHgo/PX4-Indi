@@ -27,3 +27,8 @@ artefact at tiny residual; tighter SITL cases (more noise, G4 vib) can pass norm
 Wall time: flight 41 s + ident ~40 s = ~80 s per cell (28 cells ~ 37 min).
 Remaining cells (27 left, skips done): `python3 indi_flight/bench/actc_grid.py --out indi_flight/results/actc_grid_s209`
 Frames cells (15 of 30) are NOT valid until ERPM_LAT is applied at boot (owner decision: scenario sim_params shim).
+
+## Frames fix
+Driver now writes `<cell>/run_cell.py` (registers scenario hover_latN = hover + sim_params SIM_GZ_ERPM_LAT N, then runs the stock run_scenario.py). Old frames>0 folders kept as *_noframes, rows in GRID_noframes.tsv.
+Re-fly t1_a3d_d0f3_s1: log param SIM_GZ_ERPM_LAT = 3 at start, no params-file line, but fitted delay 1.73 ms vs 1.82 (t1_a1_d0f0): rise about 0 ms, expected +3.75. STEP 3 FAILED, the 27-cell grid was NOT launched.
+Cause not found (param value is 3 in the log; code path GZMixingInterfaceESC.cpp:262-265 reads as designed): next, compare esc_status instance 0 vs 1 (true rotor speed) lag, or run a v2_lat_att scenario. g3_run.py tel_latency: YES, params-file path (g3_run.py:143 params["SIM_GZ_ERPM_LAT"], written to --params; no sim_params or overrides), so G3 frames were probably not applied either.

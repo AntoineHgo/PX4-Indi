@@ -3,7 +3,8 @@
 
 One identification flight per cell on quad5in (MC_INDI_ID_OK 0, params-only, firmware multisine injector as in
 results/ident_m3a_s123/pos0), then bench/ident_actc.py on the log. Writes <out>/GRID.tsv and <out>/<cell>/run.json.
-Plant: --model-variant tau_up=k,tau_down=k (multiples of the stock 0.033 s), --dly-act MS, param SIM_GZ_ERPM_LAT (NOT effective, see params_text).
+Plant: --model-variant tau_up=k,tau_down=k (multiples of the stock 0.033 s), --dly-act MS, SIM_GZ_ERPM_LAT via a per-cell scenario copy
+(sim_params, read at boot; a params file is applied after boot and has no effect, A-59).
 Resumable: a cell with run.json status "done" is skipped. Cell id: t<tau_slow factor>_a<asym><d|u>_d<ms>f<frames>_s<seed>.
 """
 import argparse
@@ -53,10 +54,7 @@ def truth(c):
 def params_text(c, axis):
     t = open(BASE_PARAMS).read().rstrip("\n").splitlines()
     t = [l for l in t if not l.startswith(("MC_INDI_INJ_AX", "#"))]
-    # WARNING (S209 pre-test): gz_bridge reads SIM_GZ_ERPM_LAT only at construction, a params file is applied after boot, so this
-    # line has NO effect (estimated delay unchanged, 1.75 ms at 3 frames vs 1.82 at 0). Only a scenario "sim_params" entry
-    # (PX4_PARAM_ env at boot) works; run_scenario has no CLI for it. Frames are therefore not applied by this driver.
-    t += [f"MC_INDI_INJ_AX {axis}", "MC_INDI_ID_OK 0", f"SIM_GZ_ERPM_LAT {c['frames']}"]
+    t += [f"MC_INDI_INJ_AX {axis}", "MC_INDI_ID_OK 0"]
     return "\n".join(t) + "\n"
 
 
@@ -64,7 +62,9 @@ def commands(c, out, axis, speed, tmo):
     up, dn = truth(c)
     d = os.path.join(out, cid(c))
     rel = lambda p: os.path.relpath(p, REPO)
-    argv = ["python3", "indi_flight/bench/run_scenario.py", "--scenario", "hover", "--controller", "indi_m3a", "--model", "quad5in",
+    scen = "hover_lat%d" % c["frames"] if c["frames"] else "hover"
+    runner = rel(os.path.join(d, "run_cell.py")) if c["frames"] else "indi_flight/bench/run_scenario.py"
+    argv = ["python3", runner, "--scenario", scen, "--controller", "indi_m3a", "--model", "quad5in",
             "--seed", str(c["seed"]), "--sim-seed", str(c["seed"]), "--speed", str(speed), "--sim", "v2",
             "--params", rel(os.path.join(d, "inj.params")), "--out", rel(d),
             "--model-variant", f"tau_up={up / TAU0:g},tau_down={dn / TAU0:g}"]
@@ -75,10 +75,23 @@ def commands(c, out, axis, speed, tmo):
     return d, run, ident
 
 
+WRAPPER = """# per-cell scenario copy: hover plus sim_params SIM_GZ_ERPM_LAT={n} (PX4_PARAM_ env at boot), then the stock run_scenario.py
+import os, runpy, sys
+BENCH = {bench!r}
+sys.path.insert(0, BENCH)
+import scenarios
+scenarios.SCENARIOS["hover_lat{n}"] = {{**scenarios.SCENARIOS["hover"], "sim_params": {{"SIM_GZ_ERPM_LAT": {n}}}}}
+sys.argv[0] = os.path.join(BENCH, "run_scenario.py")
+runpy.run_path(sys.argv[0], run_name="__main__")
+"""
+
+
 def fly(c, out, a):
     d, run, ident = commands(c, out, a.axis, a.speed, a.timeout)
     os.makedirs(d, exist_ok=True)
     open(os.path.join(d, "inj.params"), "w").write(params_text(c, a.axis))
+    if c["frames"]:
+        open(os.path.join(d, "run_cell.py"), "w").write(WRAPPER.format(n=c["frames"], bench=HERE))
     up, dn = truth(c)
     rec = dict(cell=cid(c), spec=c, true=dict(tau_up=up, tau_down=dn), run_cmd=run, ident_cmd=ident + [f"--t0={a.t0}", f"--t1={a.t1}"],
                status="started", t_start=time.time())
