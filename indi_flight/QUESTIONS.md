@@ -73,3 +73,19 @@ S199 cause search, first pass (results/g3_refly_s199/CAUSE_S199.md, describing-f
 on the linear model): 245, 239, 283 point to a rate loop with little phase margin when the drawn motor tau departs
 from the controller's fixed 0.033 s (x3 slow: 245, 239; x0.5 fast + 10 ms delay: 283); saturation follows the growth.
 264: both stacks see the weak-motor yaw collapse; PID recovers, INDI hits its 220 dps rate limit and tilts over.
+S200 addendum (linear model with the drawn plants, results/g3_refly_s199/MARGINS_S200.md; model checked against
+the nominal G2 roll cell within 1 deg / 1 dB):
+- 245 and 239 shown: the rate loop alone keeps PM 44-49 deg, but closing the stock attitude loop around it at plant
+  tau x3 (slow) leaves PM 6 deg (245) and 13 deg (239) at 2.1 Hz; model |L| 0.84-0.94 at about -135 deg matches the
+  log estimate. The position loop is not needed for the mode. 283 (fast tau, 10 ms delay): model GM 6.2 dB, the log
+  shows about 3 dB less; that gap is outside the linear model (vibration x5, dropout). 264 is not modelled.
+- No fixed MC_INDI_ACT_TC holds PM 45 deg / GM 6 dB over the G3 box corners (tau x0.5..3, delay 0-10 ms, G1 x0.8-1.2,
+  0-3 frames): 0.033 gives worst-case PM 5.7 deg, the best value 0.05 gives 15 deg and lowers 283 to GM 3.6 dB.
+  A fixed actuator model cannot cover a x6 tau range; PID flies the same draws without LOC.
+- Option C (new): treat the motor time constant like G1 in Q22. MC_INDI_ACT_TC is a physical parameter that the
+  procedure identifies (F-3 bring-up item), so the G3 tau factor becomes identification error (for example x[0.7, 1.5],
+  up/down asymmetry kept); the x0.5..3 result stays in the report as the unidentified-airframe limit. 264
+  (saturation + weak motor, INDI tilts over where PID recovers) is not covered by C and still needs A or B.
+- Updated recommendation: C for the tau factor plus A for 264 only (one fix probe on the weak-motor recovery), then
+  FREEZE-11 with the re-flies named above if the probe works. Note that C changes a gate after its first test and
+  narrows a factor PID passes at full width: your call, not mine.
