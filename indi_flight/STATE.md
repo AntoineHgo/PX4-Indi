@@ -41,6 +41,9 @@ CUT RC203 (design/route_check_203.md): F-10 unit 9 and the whole-branch F-10 rev
 4. G6: yaw fit fix key 1 committed (57e80feac8; results/ident_yaw_fix_s202). Second key in flight; then A-44
    closing run (production logs axyaw/half_ax3, within 3 % of 205). ID_OK 0 waits for G6 (D-G7-DEFAULTS).
 CUT RC204 (design/route_check_204.md): after the yaw fit is keyed, nothing advances a gate without Q26: WAIT_OWNER.
+CUT RC205 (design/route_check_205.md): same; only G6 yaw key 2 then A-44 closing run (existing logs
+  results/ident_m3a_s123/{axyaw,half_ax3}, commands in fit_yaw_s125.md, no flights) before WAIT_OWNER. F-10 unit 9,
+  F-10 review, G8 drafting, g3_score key-1 fix stay deferred.
 5. G8 (paused until Q26): drafts report/02_outer_loop_design.md and docs/en/config_mc/indi_control.md; open items in
    report/DOCS_DRAFT_S201.md (arming refusal without eRPM: check code or reword; identification user steps = G6).
 Rules: 1 session per inner-loop law change; parallel docker streams only for tolerance-insensitive probes, never gate
@@ -72,7 +75,8 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| YAW-K2 | G6: second key of ident_fit_yaw.py (key 1 done 57e80feac8, 12/12 tests) | sonnet | design/key2_ident_fit_yaw_s204.md | re-launch brief (code vs spec + K126, break-checks in scratchpad copy) |
+| YAW-K2 | G6: second key of ident_fit_yaw.py (key 1 done 57e80feac8, 12/12 tests); S204 run cut, relaunched S205 | sonnet | design/key2_ident_fit_yaw_s204.md | re-launch brief (code vs spec + K126, break-checks in scratchpad copy) |
+| RC205 | route check (supervisor: GATE_STATUS unchanged 5 sessions) | sonnet | design/route_check_205.md | re-launch brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
