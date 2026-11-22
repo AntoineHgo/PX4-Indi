@@ -13,6 +13,9 @@
 CUT RC202 (design/route_check_202.md): no further 283/264 modelling; G8 report/docs drafting paused until Q26;
   G7 older list justified in writing (not fixed) except MC_INDI_ID_OK call site (firmware: after Q26) and the
   offb_vel_check checker defects; F-10 units merged in pairs. No firmware law change, no G3 re-fly before Q26.
+CUT RC203 (design/route_check_203.md): F-10 unit 9 and the whole-branch F-10 review deferred until after Q26 (one
+  batch after the freeze decision); no new work after YAW-FIT and F10-U8: then WAIT_OWNER. Not taken: the RC203
+  proposal of a default answer B to Q26 by S206 (Q26 decides a gate verdict: blocking, owner's call only).
 1. G3 NOT PASSED (GATES "G3 verdict at freeze-10"; FAILS_S199.md, g3_refly_s199/SUMMARY.md, CAUSE_S199.md,
    MARGINS_S200.md). Cause search closed. Under A/C: FREEZE-11 re-flies G2, G4, G5, G3 (tooling: bench/g3_chain.sh,
    README in results/g3_campaign_f10, speed-1 rule in its speed_check/README.md; refly list with PID twins:
