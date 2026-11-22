@@ -51,7 +51,7 @@ VIB = (1.0, 5.0)             # x the x1 point
 VIB_X1_ACC, VIB_X1_GYR = 1.0, 0.05   # m/s^2, rad/s per rotor (provisional, decision 1)
 GNSS_LAT = (80, 250)         # ms, integer ms so that "matched" is exact
 GNSS_MATCH_FRAC = 0.50
-GNSS_MISMATCH = (-100, 100)  # ms around the latency, min 0
+GNSS_MISMATCH = (-50, 50)  # ms around the latency, min 0. Q24 B (S197): was (-100, 100)
 # wind dir_deg (0..360) is in the gz WORLD frame: ENU, x east, y north, the direction the air moves TO (disturbance.py:
 # w = (cos, sin) * speed), not a meteorological "from" bearing and not a PX4 NED course.
 WIND = (0.0, 5.0)            # steady m/s

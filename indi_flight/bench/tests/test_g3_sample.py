@@ -96,7 +96,7 @@ def test_ranges():
         assert abs(f["vibration"]["gyr_rads"] - 0.05 * f["vibration"]["mult"]) < EPS
         gn = f["gnss"]
         assert 80 <= gn["latency_ms"] <= 250 and gn["ekf_delay_ms"] >= 0
-        assert abs(gn["ekf_delay_ms"] - gn["latency_ms"]) <= 100
+        assert abs(gn["ekf_delay_ms"] - gn["latency_ms"]) <= 50
         w = f["wind"]
         if "not_drawn" in w:        # D-G3-STICK-FACTORS: stick-mode run, wind is off
             assert r["mode"] != "position" and w["steady_ms"] == 0.0 and w["gust_peak_total_ms"] == 0.0
@@ -250,7 +250,7 @@ def test_corner_pins_exact():
                 assert abs(f["saturation"]["scale"] - 0.27 * 1.3) < EPS and not f["thrust_sag"]["on"]
             if c == "C4":
                 g_ = f["gnss"]
-                assert g_["latency_ms"] == 250 and not g_["matched"] and g_["ekf_delay_ms"] == 150
+                assert g_["latency_ms"] == 250 and not g_["matched"] and g_["ekf_delay_ms"] == 200
                 assert f["wind"]["steady_ms"] == 5.0 and 6.0 - EPS <= f["wind"]["gust_peak_total_ms"] <= 9.0 and f["wind"]["gust_amp_ms"] >= 1.0 - EPS
                 assert all(f["g1_err"][a] == 1.2 for a in ("roll", "pitch", "yaw"))
             if c == "C5":
@@ -285,7 +285,7 @@ def test_pretest_set():
     x = {r["kind"].split()[1]: r["factors"] for r in ext}
     assert x["x_tau"]["tau_scale"]["value"] == 3.0 and x["x_tau"]["loop_delay"]["total_ms"] == 0.0
     assert x["x_saturation"]["saturation"]["on"] and x["x_vib"]["vibration"]["mult"] == 5.0
-    assert x["x_gnss"]["gnss"]["latency_ms"] == 250 and x["x_gnss"]["gnss"]["ekf_delay_ms"] == 150
+    assert x["x_gnss"]["gnss"]["latency_ms"] == 250 and x["x_gnss"]["gnss"]["ekf_delay_ms"] == 200
     assert x["x_wind"]["wind"]["gust_peak_total_ms"] == 9.0 and x["x_mass"]["wind"]["steady_ms"] == 0.0
     assert x["x_tel_frozen"]["tel_frozen"]["on"] and not x["x_tel_frozen"]["tel_loss"]["on"]
     assert x["x_asym"]["tau_asym"]["drawn_ratio"] == 3.0 and x["x_asym"]["tau_up"]["value"] == 0.5   # tau x1 slow, fast floored
@@ -315,7 +315,7 @@ def test_laws_decode_grid():
         f, _ = g.decode(_u(gnss_lat=u))
         assert f["gnss"]["latency_ms"] == int(round(ln(u, 80, 250))), "gnss latency uniform"
         f, _ = g.decode(_u(gnss_lat=0.5, gnss_off=u))
-        assert f["gnss"]["mismatch_offset_ms"] == int(round(ln(u, -100, 100))), "mismatch (-100, 100) uniform"
+        assert f["gnss"]["mismatch_offset_ms"] == int(round(ln(u, -50, 50))), "mismatch (-50, 50) uniform"
         f, _ = g.decode(_u(sag_on=0.0, sag=u))
         assert _close(f["thrust_sag"]["scale"], ln(u, 0.7, 1.0)), "sag uniform"
         f, _ = g.decode(_u(weak_on=0.0, weak=u))
@@ -329,7 +329,7 @@ def test_laws_decode_grid():
         assert f["weak_motor"]["motor"] == f["tel_loss"]["motor"] == f["tel_frozen"]["motor"] == m
     f, _ = g.decode(_u(sag_on=0.0, loss_on=0.0, frz_on=0.0))
     assert f["thrust_sag"]["ramp_s"] == 10.0 and f["tel_loss"]["duration_s"] == 2.0 and f["tel_frozen"]["duration_s"] == 1.0
-    assert g.GNSS_MISMATCH == (-100, 100)
+    assert g.GNSS_MISMATCH == (-50, 50)
 
 
 def test_laws_campaign_distributions():
@@ -343,10 +343,10 @@ def test_laws_campaign_distributions():
         # GNSS latency uniform on [80,250]: P(lat < 141.4) = 0.361 (log would give 0.5); LHS only (C4 pins 250)
         lt = [f(r)["gnss"]["latency_ms"] for r in lhs(seed)]
         assert 0.30 <= sum(x < 141.42 for x in lt) / len(lt) <= 0.42, (seed, "gnss latency law")
-        # mismatch offsets: both signs, spread over (-100, 100)
+        # mismatch offsets: both signs, spread over (-50, 50)
         off = [f(r)["gnss"]["mismatch_offset_ms"] for r in rr if not f(r)["gnss"]["matched"]]
         neg, pos = sum(x < 0 for x in off) / len(off), sum(x > 0 for x in off) / len(off)
-        assert 0.35 <= neg <= 0.65 and 0.35 <= pos <= 0.65 and min(off) < -80 and max(off) > 80, (seed, "mismatch sign")
+        assert 0.35 <= neg <= 0.65 and 0.35 <= pos <= 0.65 and min(off) < -40 and max(off) > 40, (seed, "mismatch sign")
         # motor index spread: all four indices drawn, none under 8 % of the on-runs
         for key in ("weak_motor", "tel_loss", "tel_frozen"):
             m = [f(r)[key]["motor"] for r in rr if f(r)[key]["on"]]
