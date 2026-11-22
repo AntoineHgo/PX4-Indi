@@ -84,6 +84,24 @@ weakening the test is a failure of the project.
   cannot run without it, and say why in one line. Choose the simplest mechanism that can be shown to work over a
   general or elaborate one. Simplification never lowers a gate threshold or hides a failure (honesty still outranks
   the goal).
+- **F-10 Delivered code reads as upstream PX4 code (owner, 2026-11-22).** Applies to every file that goes into the
+  firmware-only branch (sources, unit tests, CMake, Kconfig, `.msg`, parameter `.yaml`, ROMFS), to code already
+  written and to every future change; brief each implementing agent with it.
+  - Comments are short and only where needed: they say what the code does not show (physical reason, unit or frame,
+    a non-obvious constraint or edge case). No comment that restates the code, no derivation or design history, no
+    change log. A long explanation belongs in the report or the `docs/en` page, not in the source.
+  - No reference to project documents, tests or bookkeeping: no decision, anomaly, gate, finding, question, session,
+    stage, freeze, lesson or review ids (`D-AF-ALIAS`, `A14`, `G7(b)`, `F4`, `D-F7`, `S196`, `K128`, `Q24` ...), no
+    path into `indi_flight/` or `indi_project/`, no "owner", "gate", "freeze" in the project sense. Traceability goes
+    in commit messages and `DECISIONS.md`. Physical symbols that are standard INDI notation (G1, G2, tau) are fine.
+  - Names are explicit: a reader understands a variable, function, member, test or parameter from its name without
+    the report (`rate_setpoint_timeout`, not `sp_to`; units in the name where it helps, `_rad_s`, `_s`). Short math
+    symbols only inside a short formula where the comment or the surrounding names define them.
+  - PX4 coding style: `make format` clean, PX4 naming conventions (`_member`, `camelCase` methods in classes,
+    `ModuleParams`/`DEFINE_PARAMETERS` style), the existing file headers, and the instructions files.
+  - Comment and rename work is behaviour-neutral by construction: show it (unit tests pass, and the SITL and one NuttX
+    build produce the same results or the same `.text` where names do not reach it). Then no gate row is
+    invalidated; say so in one decision. Never mix a clean-up commit with a behaviour change.
 - Kept from the first project: actuator state from measured rotor speed with a modelled fallback when telemetry is
   missing (O-5); inversion on u = omega^2 (O-6); upstream-reviewable architecture, meaning separate modules behind
   Kconfig options, started from `rc.mc_apps` by parameter, with `mc_rate_control`, `mc_att_control`,
@@ -231,7 +249,9 @@ test, its thresholds change only to fix a defect in the test, with the change lo
 - **G7 Code and upstream.** Stock modules at zero diff. Module-level tests for both modules. Each control behaviour
   has a test that fails when the behaviour is broken (checked by breaking it). Open items of the review closed or
   justified in writing. Firmware defaults are a validated configuration. `make format` clean. Flash and RAM cost
-  measured on one NuttX board build. Parameters and messages follow the instructions files. A clean firmware-only
+  measured on one NuttX board build. Parameters and messages follow the instructions files. Delivered code meets F-10
+  (checked by a review agent that did not write it, over every file of the firmware-only branch, plus a grep for
+  project ids and paths that returns nothing). A clean firmware-only
   branch from `main` exists for a pull request (do not open it).
 - **G8 Report.** Design first (both loops, block diagram, final parameters, analysis with margins), then validation
   against these gates, then limits and a hardware bring-up checklist (what to measure on a bench before the first

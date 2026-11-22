@@ -6,7 +6,11 @@
   G5 outer rows, G3 pre-test. Probe evidence results/freeze10_cand_s191/README.md (all probe checks PASS).
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
 - Blocker: none. Owner ANSWERED Q24 (B: mismatch +-50 ms, 08/03 shared) and Q25 (B: sourced trajectory limit,
-  re-score only) 2026-11-22, see QUESTIONS.md: act on them first. Was: Q24 blocks G3, Q25 blocks G5. Q23 closed S191 (D-OWNER-Q23): revert aa4fd2654a (G5.7 cause D-G57-FF); with
+  re-score only) 2026-11-22, see QUESTIONS.md: act on them first. Was: Q24 blocks G3, Q25 blocks G5.
+- NEW owner rule F-10 (MISSION.md, 2026-11-22): delivered code has short needed comments only, no project ids/doc
+  paths, explicit names, PX4 style. Next after Q24/Q25: plan the clean-up of all firmware-branch files (grep 2026-11-22:
+  ~118 id/doc hits, worst indi_rate_control_test.cpp, McIndiPosControl.cpp, lib headers; comments 15-29 % of lines),
+  behaviour-neutral, separate commits, independent review. Fold the S196e yaml text fix into it. Brief every coder with F-10. Q23 closed S191 (D-OWNER-Q23): revert aa4fd2654a (G5.7 cause D-G57-FF); with
   D-AF-ALIAS (G3 7 Hz, outer a_f aliased by 88.9 Hz stage decimation) it enters FREEZE-10.
 ## Next actions (owner order; each names its gate item)
 0. FREEZE-10 re-fly RUNNING (Tasks Q10). RC194 done (design/route_check_194.md): no probes/chases while it runs;
