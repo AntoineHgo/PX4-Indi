@@ -108,8 +108,111 @@ def test_decimated_rate_intercept_closed_loop():
         assert abs(r["g1"] - 205.3) / 205.3 < 0.02, (seed, r["g1"], r["ci1"])
         assert abs(r["dr"] - 1.4) < 0.15 and abs(r["g2"] - 27.0) / 27.0 < 0.03, (r["dr"], r["g2"])
         assert r["verdict"]["passed"], [c for c in r["verdict"]["criteria"] if not c[2]]
-        assert r["shift_samples"] in (-1, 0, 1), r["shift_samples"]
+        # No latency is injected in _plant4 and u is the plant state itself: the known answer is 0 samples. The scan is
+        # evaluated on every m-th sample (m = 2), so the physical resolution is 2 samples; the old (-1, 0, 1) tolerance
+        # hid an off-by-one. Pinned to 0 here; test_decimated_shift_exact pins injected non-zero latencies exactly.
+        assert r["shift_samples"] == 0, r["shift_samples"]
         print("m=2 seed", seed, "G1 %.1f ci %.1f G2 %.2f Dr %.3f J/df %.1f" % (r["g1"], r["ci1"], r["g2"], r["dr"], r["j"] / r["j_df"]))
+
+
+def test_decimated_shift_exact():
+    """S205 (key-2 MINOR-4): m = 2 plant with an injected u latency of 2 and 4 samples (even, so the 400 Hz hold
+    structure is preserved): recovered exactly, not within +-1. Odd delays are not tested: they break the 2-sample hold
+    and the scan, evaluated on every m-th sample, cannot resolve them (that is the +-1 physical resolution)."""
+    a = _plant4(1)
+    for dl in (2, 4):
+        b = list(a)
+        b[3] = np.roll(a[3], dl)
+        r = Y.fit_yaw(*b, 8.0, 40.0)
+        assert r["decim"] == 2 and r["shift_samples"] == dl and not r["at_boundary"], (dl, r["shift_samples"], r["decim"])
+
+
+def _noisy_g1_fit(sd, t1):
+    a = list(_plant4(1))
+    a[1] = a[1] + sd * np.random.default_rng(5).standard_normal(len(a[1]))  # white gyro noise, rad/s
+    return Y.fit_yaw(*a, 8.0, t1)
+
+
+def test_ci_too_wide_gate_fails_by_name():
+    """S205 (key-2 MAJOR-1): gyro noise sd 0.2 rad/s on a 22 s window gives CI/G1 ~ 0.34 > 0.15: the gate
+    '95% CI/|G1|' must fail by name and be the ONLY failing gate (F, J, df, shift, chain, excl are all fine, so this is
+    not a side effect of a weak instrument). Counter-case (sd 0.03, same window and seed): CI/G1 ~ 0.05, passes, and
+    every gate passes."""
+    r = _noisy_g1_fit(0.2, 30.0)
+    bad = [c for c in r["verdict"]["criteria"] if not c[2]]
+    assert [c[0].startswith("95% CI/|G1|") for c in bad] == [True], bad
+    assert r["ci1"] / abs(r["g1"]) > 0.15 and not r["verdict"]["passed"]
+    ok = _noisy_g1_fit(0.03, 30.0)
+    rel = ok["ci1"] / abs(ok["g1"])
+    assert 0.0 < rel < 0.15, rel
+    assert ok["verdict"]["passed"], [c for c in ok["verdict"]["criteria"] if not c[2]]
+    assert any(c[0].startswith("95% CI/|G1|") and c[2] for c in ok["verdict"]["criteria"])
+
+
+def _hac_direct(U, L):
+    """Independent Newey-West/Bartlett long-run covariance (test-local, not ident_iv._hac)."""
+    S = U.T @ U
+    for l in range(1, L + 1):
+        G = U[l:].T @ U[:-l]
+        S = S + (1 - l / (L + 1)) * (G + G.T)
+    return S
+
+
+def test_gmm_j_is_two_step_not_2sls():
+    """S205 (key-2 MINOR-1): heteroskedastic (exp(z0)) and AR(1) errors, valid instruments. The two-step efficient GMM J
+    (independent direct computation in the test) differs from the J built on 2SLS residuals by ~50 %. _gmm_j must match
+    the two-step value to rounding and must NOT match the 2SLS one."""
+    rng = np.random.default_rng(1)
+    n, L = 4000, 5
+    z = rng.standard_normal((n, 4))
+    v = rng.standard_normal(n)
+    x = z @ np.array([1.0, 0.5, 0.3, 0.2]) + v
+    s = rng.standard_normal(n)
+    eps = np.zeros(n)
+    for i in range(1, n):
+        eps[i] = 0.6 * eps[i - 1] + s[i]
+    y = 2.0 * x + 1.0 + (0.5 * v + eps) * np.exp(z[:, 0])
+    X, Z = np.column_stack([np.ones(n), x]), np.column_stack([np.ones(n), z])
+    Xh = Z @ np.linalg.lstsq(Z, X, rcond=None)[0]
+    e1 = y - X @ np.linalg.solve(Xh.T @ X, Xh.T @ y)
+    W = np.linalg.inv(_hac_direct(Z * e1[:, None], L))
+    A = X.T @ Z
+    e2 = y - X @ np.linalg.solve(A @ W @ A.T, A @ W @ (Z.T @ y))
+    g2 = (Z * e2[:, None]).sum(0)
+    j_two = float(g2 @ np.linalg.solve(_hac_direct(Z * e2[:, None], L), g2))
+    g1 = (Z * e1[:, None]).sum(0)
+    j_2sls = float(g1 @ np.linalg.solve(_hac_direct(Z * e1[:, None], L), g1))
+    assert abs(j_two - j_2sls) / j_two > 0.2, (j_two, j_2sls)  # the DGP really separates the two
+    j, df = Y._gmm_j(y, X, Z, e1, L)
+    assert df == 3 and abs(j - j_two) / j_two < 1e-6, (j, j_two)
+    assert abs(j - j_2sls) / j_two > 0.2, (j, j_2sls)
+
+
+def test_rate_regressor_on_matched_grid():
+    """S205 (key-2 MINOR-3): the rate regressor column of _prepare2 equals F[C w] with w the gyro SAMPLED AT u's update
+    stamps and interpolated (matched grid), checked against an independent construction on a decimated (m = 2) log whose
+    gyro carries a 300 Hz tone + noise, so a regressor built from the raw 800 Hz gyro differs by far more than the
+    tolerance (asserted: the raw-built column is >5 % away, so the test can tell them apart)."""
+    rng = np.random.default_rng(2)
+    n = 6000
+    t = np.arange(n) / FS
+    om = np.sin(2 * np.pi * 5 * t) + 0.5 * np.sin(2 * np.pi * 300 * t + 1.0) + 0.3 * rng.standard_normal(n)
+    u = np.repeat(rng.standard_normal(n // 2), 2)  # 400 Hz updates held on 800 Hz stamps
+    d = np.sin(2 * np.pi * 3 * t)
+    _, X, _, _, _ = Y._prepare2(t, om, t, u, t, d, 1.0, 6.0, None, None, 15, FS)
+    taps = Y.iv.smooth_taps(15)
+    tg = np.arange(1.0, 6.0, 1 / FS)
+    chg = np.concatenate([[True], np.diff(u) != 0])
+    tc = t[chg]
+    w = np.interp(tg, tc, om[chg])
+    w[(tg < tc[0]) | (tg > tc[-1])] = np.nan
+    want = Y.iv.apply_taps(Y.iv.apply_taps(w, Y.base.CENTRAL_DIFF_MATCH), taps)
+    raw = Y.iv.apply_taps(Y.iv.apply_taps(np.interp(tg, t, om), Y.base.CENTRAL_DIFF_MATCH), taps)
+    ok = np.isfinite(want) & np.isfinite(X[:, 2]) & np.isfinite(raw)
+    scale = np.std(want[ok])
+    assert ok.sum() > 3000
+    assert np.max(np.abs(X[ok, 2] - want[ok])) < 1e-9 * scale, np.max(np.abs(X[ok, 2] - want[ok])) / scale
+    assert np.sqrt(np.mean((raw[ok] - want[ok]) ** 2)) > 0.05 * scale  # the test discriminates raw from matched
 
 
 def test_omitting_rate_term_is_biased():
