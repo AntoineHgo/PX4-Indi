@@ -4,9 +4,12 @@
 - Stage: 6 (validation). FREEZE-10 (D-FREEZE-10): firmware 7fe6206fcc, config g5_freeze_s157 params (XY gains at
   firmware defaults 1.2/2.4). Later firmware commits behaviour-neutral (D-G7-NUTTX-BUILD, D-F10-NEUTRAL).
 - Gates: see GATE_STATUS.tsv. G1, G2, G4, G5 PASSED; G3 NOT PASSED at freeze-10 (S199). Q26 open (A / B / C).
-- Blocker: G3, G6, G7, G8 verdicts all wait on Q26 (RC202). S206: the last allowed item (G6 yaw fit key 2 + A-44
-  closing run) is done; WAIT_OWNER set. Route check for the "GATE_STATUS unchanged 6 sessions" trigger: RC205
-  (S205) stands, nothing changed since; its (6) acted on this session.
+- Q26 closed S207: items 1-4 done (results/q26_actc_s207, q26_kscale_s207, q26_264_s207); Q27 asked (box C1/C2/B,
+  K fixed, 264 K probe, pre-ID G6 item). No box, gate text or firmware change before its answer. G3, G6, G7, G8
+  verdicts wait on Q27: WAIT_OWNER set S207. On answer: act per Q27 (C1 = G3 campaign re-fly with controller ACT_TC
+  drawn in U[1,1.5] x tau_slow, g3_chain.sh G3_PARAMS / g3_run tooling; class C rule into GATES if accepted).
+- CUT RC207 (design/route_check_207.md): until Q27 is answered only Q26 items 1-5; next action 3 (f)(g) and the
+  older G7 list, next action 5 (G8 drafting) and the g3_score key-1 fix stay deferred.
 - Owner rule F-10 (2026-11-22): brief every coder with F-10. Clean-up = separate behaviour-neutral commits,
   independent review.
 

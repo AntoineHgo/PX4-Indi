@@ -1611,3 +1611,94 @@ offboard trajectories (a steady-state hover limit; no reference stack meets it o
   axyaw/half_ax3 G1 207.5/208.1 vs 205.3 (f686875ca7), A-44 closed (V0 597 left unexplained, method removed). RC205
   stands for the supervisor route-check trigger. All work allowed before Q26 done: WAIT_OWNER. Gate progress: none
   (G6 yaw identification pre-item keyed and closed; no gate row scored, G3/G6/G7/G8 verdicts wait on Q26).
+
+## S207 (2026-11-22): Q26 closed, full text
+## Q26 (S199, 2026-11-22): G3 NOT PASSED at freeze-10, step back or close as a limit?
+Context. The 300-run campaign finished (results/g3_campaign_f10, FAILS_S199.md; re-fly results/g3_refly_s199/SUMMARY.md).
+Two losses of control, both reproduced at speed 1, both INDI-specific (PID flies the same draws without LOC): 245
+(corner C1: controller G1 x2, motor tau x3, delay 10 ms) diverges in a growing 2 Hz pitch oscillation; 264 (corner C3:
+saturation 0.351 plus weak motor 0.709) tilts past 60 deg at the fault. Item 2 fails on 79 runs: real lines class A
+(11 Hz pitch, high delay + fast motor + controller G1 below plant, 8 runs) and class B (2 Hz, high delay + slow motor,
+37 runs; C1 and C6 fail every run); 283 (A) and 239 (B) reproduce and PID passes them. Item 3 94.95 %. Verdict written
+(GATES "G3 verdict at freeze-10"). G2 margins were measured on the nominal plant only; the failures sit where delay and
+actuator-model error combine (fixed ACT_TC 0.033 s against plant tau 0.017-0.1 s, no delay in the modelled state), plus
+saturation handling with a weak motor. A fix is an inner-loop law change: FREEZE-11 re-opens G2, G4, G5 and the whole
+G3 campaign (about 5-7 sessions and 8 h CPU), more than three sessions of finished work.
+Options.
+- A (recommended): one session of cause search on 245, 239, 283, 264 (logs, linear margin model with the drawn plant);
+  if a fix probe removes the failure on a log, FREEZE-11 with the re-flies named above.
+- B: close G3 as NOT PASSED with the explanation; state the envelope (delay, tau and G1 mismatch, saturation with a
+  weak motor) as a limit and a bring-up requirement in the report; go on to G6-G8.
+Meanwhile: the cause search (needed under A and B, every failure must be explained); no firmware change until you
+answer. Blocked: only for the firmware change and the re-flies.
+S199 cause search, first pass (results/g3_refly_s199/CAUSE_S199.md, describing-function estimates, not yet checked
+on the linear model): 245, 239, 283 point to a rate loop with little phase margin when the drawn motor tau departs
+from the controller's fixed 0.033 s (x3 slow: 245, 239; x0.5 fast + 10 ms delay: 283); saturation follows the growth.
+264: both stacks see the weak-motor yaw collapse; PID recovers, INDI hits its 220 dps rate limit and tilts over.
+S200 addendum (linear model with the drawn plants, results/g3_refly_s199/MARGINS_S200.md; model checked against
+the nominal G2 roll cell within 1 deg / 1 dB):
+- 245 and 239 shown: the rate loop alone keeps PM 44-49 deg, but closing the stock attitude loop around it at plant
+  tau x3 (slow) leaves PM 6 deg (245) and 13 deg (239) at 2.1 Hz; model |L| 0.84-0.94 at about -135 deg matches the
+  log estimate. The position loop is not needed for the mode. 283 (fast tau, 10 ms delay): model GM 6.2 dB, the log
+  shows about 3 dB less; that gap is outside the linear model (vibration x5, dropout). 264 is not modelled.
+- No fixed MC_INDI_ACT_TC holds PM 45 deg / GM 6 dB over the G3 box corners (tau x0.5..3, delay 0-10 ms, G1 x0.8-1.2,
+  0-3 frames): 0.033 gives worst-case PM 5.7 deg, the best value 0.05 gives 15 deg and lowers 283 to GM 3.6 dB.
+  A fixed actuator model cannot cover a x6 tau range; PID flies the same draws without LOC.
+- Option C (new): treat the motor time constant like G1 in Q22. MC_INDI_ACT_TC is a physical parameter that the
+  procedure identifies (F-3 bring-up item), so the G3 tau factor becomes identification error (for example x[0.7, 1.5],
+  up/down asymmetry kept); the x0.5..3 result stays in the report as the unidentified-airframe limit. 264
+  (saturation + weak motor, INDI tilts over where PID recovers) is not covered by C and still needs A or B.
+- Updated recommendation: C for the tau factor plus A for 264 only (one fix probe on the weak-motor recovery), then
+  FREEZE-11 with the re-flies named above if the probe works. Note that C changes a gate after its first test and
+  narrows a factor PID passes at full width: your call, not mine.
+S202 reminder (route check design/route_check_202.md): G6, G7 and G8 verdicts all wait on Q26 (G6 scope depends on
+whether ACT_TC becomes an identified parameter; G7 and G8 depend on whether FREEZE-11 changes firmware). Meanwhile:
+G6 yaw fit fix, F-10 clean-up units, no firmware law change, no G3 re-fly. Not blocked yet; blocked once that work is done.
+S206: that work is done (yaw fit keyed, A-44 closed; F-10 unit 9 and the F-10 review deferred until after your answer,
+since FREEZE-11 may change the code they touch). BLOCKED on Q26 for G3, G6, G7, G8: WAIT_OWNER set.
+Owner-session note (2026-11-22, written in the owner's session at the owner's request; NOT an answer: Q26 stays open,
+WAIT_OWNER unchanged). Underlying question: should INDI meet the same genericity as PID over airframe and configuration?
+INDI replaces the vehicle model (inertia, aerodynamics) by measurement, but keeps a model of the actuator (G1, motor tau,
+loop delay): the rate law cancels the motor pole with tau_c = MC_INDI_ACT_TC (D-RATE-LEAD), whose measured safe band is
+one-sided, ACT_TC / plant tau in [1, 2] (S53 addendum 2; x0.6 already fails G2). PID has no actuator model to get wrong.
+Published multirotor INDI identifies actuator dynamics per vehicle (and adapts G1); none known to us ships one actuator
+model for every airframe (from memory, not re-checked). So PID-level genericity is the wrong target for INDI's physical
+parameters; it is the right target for its pre-identification state. Points that Option C does not yet state:
+1. Box consistency. The G3 run flies the identified quad5in set (ID_OK 1, ACT_TC 0.033) against plant tau x0.5..3,
+   i.e. ACT_TC / tau 0.33..2: class B and 245 sit at 0.33-0.45, far below the band the law was designed for. Q22 already
+   reduced G1 to identification error on the same reasoning; tau is listed as identified (decision 3, D-RATE-LEAD,
+   identification plan) and should follow. G6 is the gate that covers a wrong start through identification.
+2. The C box should be one-sided, as the law is: the identification reports an upper bound of tau_c and the procedure
+   rounds up (S53 (c)). So the residual error box is ACT_TC / tau about [1, 2] (with the bound's real uncertainty), not a
+   symmetric x[0.7, 1.5] around the true value. The quad5in set flies the point estimate 0.033 (S128), which drops the
+   round-up rule; S200 also prefers 0.05 on the slow side.
+3. Gains as bandwidths (decision 4). K is fixed at 20 rad/s for every tau; with tau x3, K tau reaches the lead cap 2.
+   Scaling K with 1/tau_c (identified) is the generic form; worth a model check before FREEZE-11.
+4. Pre-identification state (ID_OK 0: gains x0.5, firmware ACT_TC 0.05) is where the full x0.5..3 tau range belongs. It
+   has never flown the G3 box. Suggestion: the x0.5..3 campaign result becomes the requirement for that state (a G6
+   item), not only a limit sentence in the report.
+5. C is untested in flight. The S200 margins are a model; class A (283: fast motor, 10 ms delay, ACT_TC / tau = 2) sits
+   inside the band and may survive C (S200: ACT_TC 0.05 lowers its GM to 3.6 dB, so a matched 0.0165 may help; not
+   shown). Cheap check, no firmware change: re-fly the 8 S199 re-fly draws (245, 264, 008, 240, 283, 239, 046, 039) at
+   speed 1 with ACT_TC = drawn plant tau (slow value), and again with ACT_TC = 1.5 x drawn tau (round-up error). If 245,
+   239 (and 283) come out clean, C holds; if not, the cascade needs a law change whatever the box.
+6. Not covered by any option: class C (25 runs, key 1 only, touchdown windows, low mass): key 1 runs without the
+   nav-change skip that key 2 applies (FAILS_S199.md section 1). This is a scoring-rule mismatch between the keys to settle
+   in the verdict, separate from the controller.
+264 (saturation plus weak motor) stays under A whatever is chosen for tau. Changing the box after the first test stays
+the owner's call; the x0.5..3 result is reported as is in either case.
+**Owner answer Q26 (2026-11-22): check first, C not yet chosen.**
+1. Re-fly check, no firmware change (FREEZE-10 binary, params file overrides only): the 8 S199 re-fly draws (245, 264,
+   008, 240, 283, 239, 046, 039) at speed 1, same index and seeds, in two sets: (a) MC_INDI_ACT_TC = drawn plant tau
+   (slow value, max of up/down), standing for a perfect identification; (b) MC_INDI_ACT_TC = 1.5 x drawn plant tau,
+   standing for the round-up error. Everything else as in the campaign. Score with both keys, compare per draw with the
+   S199 INDI and PID re-flies (one table, like g3_refly_s199/SUMMARY.md). Own results dir; no G3 campaign re-fly.
+2. Model check, no flight: K_R/K_P scaled with 1/tau_c (K tau_c held at its quad5in value) against fixed K 20, on the
+   drawn plants of 245, 239, 283 and on the G3 box corners (MARGINS_S200 method).
+3. 264 stays under A: cause search on the logs only, no fix probe in firmware yet.
+4. Class C (key 1 without the nav-change skip): write how the verdict should treat it; settle it in the verdict, not
+   in the controller.
+5. Then report the results in a new question (Q27) with a recommendation on C (box shape, one-sided as in note point
+   2), K scaling, the pre-identification requirement (note point 4) and FREEZE-11. No box change, no gate text change
+   and no firmware change before my answer to Q27. G6-G8 stay as they are until then.
+- S207 (2026-11-22): Q26 owner answer acted on. RC207 filed (cuts: G7 (f)(g), G8 drafting, key-1 fix stay deferred). Item 1: 16 INDI re-flies (results/q26_actc_s207): ACT_TC = tau clears 245, 239, 283; 1.5 tau clears 245, 239, keeps 283/008 10.75 Hz; 264 LOC in both. Item 2 (q26_kscale_s207): K scaled with 1/tau_c worse than fixed K; matched ACT_TC worst PM 5.7 -> 35.9 deg. Item 3 (q26_264_s207): CW rotor collapse, INDI counter-torque about half of PID (likely). Item 4: class C = Q15 A skip missing from G3 key 1. Q27 asked, WAIT_OWNER. Gate progress: none (G3 check data for Q27; no gate row scored, verdicts wait on Q27).
