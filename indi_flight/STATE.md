@@ -19,7 +19,7 @@ CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older 
 1. G3/G6 ACT_TC identification (Q27 item 1): survey design/actc_ident_survey_s208.md -> one-page design note ->
    estimator + synthetic self-test (asym tau, delay, closed loop) -> second key -> offline error grid -> few SITL
    confirmation flights -> bound -> capped/two-sided ACT_TC rule with model margins on corners -> GATES G3 box
-   draft -> Q28. Next: FRD fix (sub-sample delay bias) checked against key-2 indep*.py -> 2-flight pre-test ->
+   draft -> Q28. FRD fix done 2dd2110a0c (off-grid bias -16 % -> -0.6 %). Next: 2-flight pre-test ->
    30-flight grid (g3_run/run_scenario hooks, ID_OK 0, injector roll then pitch). Synthetic: tau_sym = 0.61 x
    tau_slow, 0.92 x tau_mean at asym 3 (input to the ACT_TC rule). rpm_max only scales y (gain), not tau.
    Quality thresholds set on synthetic noise: check against SITL residuals in the pre-test before the grid.
@@ -72,7 +72,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| FRD | fractional-delay fix of ident_actc.py (KEY2 item 2 + MINORs) | sonnet | bench/tests/SELFTEST_IDENT_ACTC_S208.md "Fix S208" | S209: code edits left uncommitted, no section; FRD2 agent verifies + writes section, then commit |
+| PRE | ACT_TC grid driver bench/actc_grid.py + 2-flight pre-test (design/actc_ident_s208.md "SITL error measurement") | sonnet | results/actc_grid_s209/PRETEST.md | read PRETEST.md; if driver ok, launch the 30-flight grid detached |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
