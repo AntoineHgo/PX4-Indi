@@ -38,8 +38,9 @@ CUT RC203 (design/route_check_203.md): F-10 unit 9 and the whole-branch F-10 rev
    omega_ff step on offboard entry; checker defects in bench/tests/SELFTEST_G7_S194.md (no verdict, no LOC check in
    offb_vel_check, IndexError on empty topic); g511_check.py:184; g510_check.py:115-119; ACT_TC/W_MAX firmware vs
    bench (lesson 12); guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
-4. G6: yaw fit fix (r regressor + matched grid = probe V3, K126 MAJORs, A-44) in progress (uncommitted edits to
-   bench/ident_fit_yaw.py + its test); then second key. ID_OK 0 waits for G6 (D-G7-DEFAULTS).
+4. G6: yaw fit fix key 1 committed (57e80feac8; results/ident_yaw_fix_s202). Second key in flight; then A-44
+   closing run (production logs axyaw/half_ax3, within 3 % of 205). ID_OK 0 waits for G6 (D-G7-DEFAULTS).
+CUT RC204 (design/route_check_204.md): after the yaw fit is keyed, nothing advances a gate without Q26: WAIT_OWNER.
 5. G8 (paused until Q26): drafts report/02_outer_loop_design.md and docs/en/config_mc/indi_control.md; open items in
    report/DOCS_DRAFT_S201.md (arming refusal without eRPM: check code or reword; identification user steps = G6).
 Rules: 1 session per inner-loop law change; parallel docker streams only for tolerance-insensitive probes, never gate
@@ -71,8 +72,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| RC204 | route check addendum (GATE_STATUS unchanged 4 sessions) | sonnet | design/route_check_204.md | re-launch brief |
-| YAW-FIT | G6: finish ident_fit_yaw.py key 1 (full self-test run, README final) | sonnet | results/ident_yaw_fix_s202/README.md | re-launch brief |
+| YAW-K2 | G6: second key of ident_fit_yaw.py (key 1 done 57e80feac8, 12/12 tests) | sonnet | design/key2_ident_fit_yaw_s204.md | re-launch brief (code vs spec + K126, break-checks in scratchpad copy) |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
