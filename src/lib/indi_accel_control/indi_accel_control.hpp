@@ -34,7 +34,7 @@
 /**
  * @file indi_accel_control.hpp
  *
- * Outer-loop (acceleration) INDI with jerk feedforward, see indi_project/plan/s8_impl_spec.md sec. 2.
+ * Outer-loop (acceleration) INDI with jerk feedforward.
  *
  * Frames: NED world, FRD body, R = R(q) body -> world. Specific thrust t = -c z_b (c > 0), g_vec = (0, 0, +g).
  * The accelerometer measures f_b = R^T (a - g_vec), so a_f = R f_b_filtered + g_vec.
@@ -82,8 +82,8 @@ public:
 	static constexpr float kMaxDt = 0.5f;
 	/// Upper bound of the tilt limit (rad), keeps tan() finite
 	static constexpr float kMaxTiltLimit = 1.5f;
-	/// Bound of the collective blend state b (u units). With available thrust down to 2x hover the hover command
-	/// is u = 0.5 on any airframe, so the gap is <= 0.5; the collective clamp and the anti-windup freeze still bound u.
+	/// Bound of the collective blend state b (normalised thrust units). With available thrust down to 2x hover
+	/// the hover command is 0.5 on any airframe, so the gap is at most 0.5.
 	static constexpr float kMaxBlend = 0.5f;
 	/// Measured mean u at or above this (physical limit 1) freezes the blend (anti-windup)
 	static constexpr float kMeanUSatLimit = 0.98f;
@@ -106,9 +106,9 @@ public:
 		float yaw_ref{NAN};        ///< NaN: keep the yaw of q
 		float yawspeed_ref{NAN};   ///< NaN: 0
 		float dt{0.f};             ///< time since the previous call (s), [kMinDt, kMaxDt]
-		bool accel_only{false};    ///< start at a_ref (A14): no p/v terms, a_c = a_ref, p and v are not required
-		/// D-ALTCTL-Z: only the collective is INDI, the direction is thrust_dir (stock thrust vector, NED, any norm,
-		/// z < -0.1 norm). Output thrust vector = thrust_dir/|.| * (t_c,z / n_z), no tilt limit, omega_ff = 0
+		bool accel_only{false};    ///< a_c = a_ref: no p/v terms, p and v are not required
+		/// Only the collective is INDI, the direction is thrust_dir (NED, any norm, z < -0.1 norm).
+		/// Output thrust vector = thrust_dir/|.| * (t_c,z / n_z), no tilt limit, omega_ff = 0
 		bool z_only{false};
 		matrix::Vector3f thrust_dir{};
 	};
@@ -149,10 +149,10 @@ public:
 
 	/**
 	 * Feed EVERY specific-force sample (native rate, e.g. vehicle_acceleration ~267 Hz) through a low-pass of the same
-	 * cut-off as setFilter() but configured at the sample rate of the force itself (D-AF-ALIAS: a vibration line above
-	 * the stage rate must be removed before the stage decimates, else it folds into the control band).
+	 * cut-off as setFilter() but configured at the sample rate of the force itself (a vibration line above the
+	 * control rate must be removed before decimation, else it folds into the control band).
 	 * update() then uses this output instead of filtering the decimated in.f_b. Non finite samples and dt <= 0 are ignored.
-	 * Until a sample was fed, update() keeps the legacy path (_lpf_f at stage rate).
+	 * Until a sample was fed, update() filters in.f_b with _force_lowpass at the control rate.
 	 */
 	void sampleSpecificForce(const matrix::Vector3f &f_b, float dt_s);
 
@@ -167,22 +167,22 @@ public:
 	int measurementDelay() const { return _delay; }
 
 	/**
-	 * D-GAP collective blend: u_f = u_meas + b, b = LP_tb(u_model - u_meas), so the collective is measured at
+	 * Collective blend: u_f = u_meas + b, b = LP_tb(u_model - u_meas), so the collective is measured at
 	 * high frequency and modelled (previous clamped command) at DC. tb <= 0 or non finite disables it and sets
 	 * b = 0. b is also zero at construction; reset() leaves it alone.
 	 */
 	void setBlendTimeConstant(float tb_s);
-	float blendTimeConstant() const { return _tb; }
-	float blend() const { return _b; }
+	float blendTimeConstant() const { return _blend_time_constant_s; }
+	float blend() const { return _blend_offset; }
 
 	/// Freeze b (landed, bypass, edges). Takes effect on the next update(); b is held, never reset.
 	void setBlendHold(bool hold) { _blend_hold = hold; }
 
 	/// Clear b (arm/disarm edge: a blend learned in the previous flight must not seed the next one).
-	void resetBlend() { _b = 0.f; }
+	void resetBlend() { _blend_offset = 0.f; }
 
 	/**
-	 * Bench loop break at the stage output: the vehicle receives a thrust-acceleration magnitude c_applied (m/s^2)
+	 * Bench loop break at the controller output: the vehicle receives a thrust-acceleration magnitude c_applied (m/s^2)
 	 * other than the one update() returned. Sets the previous thrust command to the clamped normalised value of it
 	 * (same conversion and limits as update()), so the blend model path follows what the actuator was given.
 	 * Non finite values are ignored.
@@ -197,13 +197,13 @@ public:
 	 *        previous thrust command are set from it.
 	 * @param mean_u MEASURED mean rotor thrust, or NaN if not available: measured path starts at it, else at the
 	 *        steady relation u_model - b (then u_meas + b = u_model, no collective step; with mean_u given the first
-	 *        update has a step equal to mean_u + b - u_model, pre-freeze r1 F6).
+	 *        update has a step equal to mean_u + b - u_model).
 	 * Non finite coll_cmd or f_b are replaced by hover values.
 	 */
 	void reset(const matrix::Vector3f &f_b, float coll_cmd, float mean_u);
 
 	/**
-	 * Forget the jerk difference history only (estimator reset, D-T10-RESET). The measured force and collective
+	 * Forget the jerk difference history only (estimator reset). The measured force and collective
 	 * filters, the delay buffers and the previous thrust command are kept: they do not depend on the estimator frame.
 	 */
 	void resetJerkHistory();
@@ -240,15 +240,15 @@ private:
 	float _tilt_max{0.7854f};
 	float _thr_min{0.12f};
 	float _thr_max{1.f};
-	float _g_t{19.6f};
-	float _k_cmd{1.f};
+	float _thrust_gain_mps2{19.6f};
+	float _mean_thrust_per_command{1.f};
 	int _delay{0};
 	bool _jerk_ff{true};
 
 	// state
-	math::LowPassFilter2p<matrix::Vector3f> _lpf_f{};
+	math::LowPassFilter2p<matrix::Vector3f> _force_lowpass{};
 	// native-rate specific-force filter (sampleSpecificForce): same cut-off, own sample rate
-	math::LowPassFilter2p<matrix::Vector3f> _lpf_f_native{};
+	math::LowPassFilter2p<matrix::Vector3f> _force_lowpass_native{};
 	matrix::Vector3f _native_f{0.f, 0.f, -kGravity};
 	float _native_cut{0.f};
 	float _native_hz{0.f};
@@ -257,12 +257,12 @@ private:
 	bool _prev_f_b_valid{true}; ///< f_b_valid of the previous update(): edge detection for the native filter re-seed
 	math::LowPassFilter2p<float> _lpf_u{};
 	float _u_buf[kMaxDelaySamples + 1] {};
-	int _u_idx{0};
+	int _delay_buffer_index{0};
 	// model path of the collective blend: previous clamped command through the same delay and filter
 	math::LowPassFilter2p<float> _lpf_um{};
 	float _um_buf[kMaxDelaySamples + 1] {};
-	float _tb{0.f};
-	float _b{0.f};
+	float _blend_time_constant_s{0.f};
+	float _blend_offset{0.f};
 	bool _blend_hold{false};
 	bool _coll_clamped{false};	///< collective was clamped in the previous update
 	float _thrust_prev{0.f};
@@ -276,7 +276,7 @@ private:
 	matrix::Vector3f _a_ff_prev{};
 	float _t_a_ff_prev[3] {};
 	bool _a_ff_prev_valid[3] {};
-	matrix::Vector3f _j_diff{};
+	matrix::Vector3f _jerk_difference{};
 	math::LowPassFilter2p<matrix::Vector3f> _lpf_j{};
-	matrix::Vector3f _j_diff_f{};	///< _j_diff low-pass filtered, used as the jerk reference
+	matrix::Vector3f _jerk_difference_filtered{};	///< _jerk_difference low-pass filtered, used as the jerk reference
 };

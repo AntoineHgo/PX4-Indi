@@ -75,26 +75,26 @@ void IndiAccelControl::setLimits(float vel_xy_max, float vel_z_up_max, float vel
 
 void IndiAccelControl::setFilter(float sample_freq_hz, float cutoff_hz)
 {
-	_lpf_f.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
+	_force_lowpass.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
 	_lpf_u.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
 	_lpf_um.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
 	_lpf_j.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
 
 	// set_cutoff_frequency() zeroes the delay elements (output would fall to 0 and take the filter time to
 	// come back): re-seed every filter from its last output instead
-	_lpf_f.reset(_last_f_b);
+	_force_lowpass.reset(_last_f_b);
 
 	// native-rate force filter: new cut-off, keeps its own sample rate (configured on the first sample)
 	_native_cut = cutoff_hz;
 
 	if (_native_hz > 0.f) {
-		_lpf_f_native.set_cutoff_frequency(_native_hz, _native_cut);
-		_lpf_f_native.reset(_native_f);
+		_force_lowpass_native.set_cutoff_frequency(_native_hz, _native_cut);
+		_force_lowpass_native.reset(_native_f);
 	}
 
 	_lpf_u.reset(_last_u);
 	_lpf_um.reset(_last_um);
-	_lpf_j.reset(_j_diff_f);
+	_lpf_j.reset(_jerk_difference_filtered);
 }
 
 void IndiAccelControl::sampleSpecificForce(const Vector3f &f_b, float dt_s)
@@ -104,7 +104,7 @@ void IndiAccelControl::sampleSpecificForce(const Vector3f &f_b, float dt_s)
 		return;
 	}
 
-	// same hysteresis as the stage: a rate deviation of more than 20 % must persist for kNativeRateDevSamples samples
+	// same hysteresis as the control-rate check: a rate deviation of more than 20 % must persist for kNativeRateDevSamples samples
 	constexpr int kNativeRateDevSamples = 16;
 	const float rate = roundf(1.f / dt_s);
 	const bool rate_dev = (_native_hz > 0.f) && (fabsf(rate - _native_hz) > 0.2f * _native_hz);
@@ -114,54 +114,54 @@ void IndiAccelControl::sampleSpecificForce(const Vector3f &f_b, float dt_s)
 		const bool first = !_native_fed;
 		_native_hz = rate;
 		_native_dev_count = 0;
-		_lpf_f_native.set_cutoff_frequency(_native_hz, _native_cut); // zeroes the delay elements: re-seed, never from zero
-		_lpf_f_native.reset(first ? f_b : _native_f);
+		_force_lowpass_native.set_cutoff_frequency(_native_hz, _native_cut); // zeroes the delay elements: re-seed, never from zero
+		_force_lowpass_native.reset(first ? f_b : _native_f);
 	}
 
 	if (!_native_fed) {
-		_lpf_f_native.reset(f_b); // start without a step
+		_force_lowpass_native.reset(f_b); // start without a step
 	}
 
-	_native_f = _lpf_f_native.apply(f_b);
+	_native_f = _force_lowpass_native.apply(f_b);
 	_native_fed = true;
 }
 
 void IndiAccelControl::setThrustModel(float g_t, float k_cmd)
 {
 	if (PX4_ISFINITE(g_t) && (g_t > FLT_EPSILON)) {
-		_g_t = g_t;
+		_thrust_gain_mps2 = g_t;
 	}
 
 	if (PX4_ISFINITE(k_cmd) && (k_cmd > FLT_EPSILON)) {
-		_k_cmd = k_cmd;
+		_mean_thrust_per_command = k_cmd;
 	}
 }
 
 void IndiAccelControl::setBlendTimeConstant(float tb_s)
 {
 	if (PX4_ISFINITE(tb_s) && (tb_s > FLT_EPSILON)) {
-		_tb = tb_s;
+		_blend_time_constant_s = tb_s;
 
 	} else {
-		_tb = 0.f;
-		_b = 0.f;
+		_blend_time_constant_s = 0.f;
+		_blend_offset = 0.f;
 	}
 }
 
 void IndiAccelControl::reset(const Vector3f &f_b, float coll_cmd, float mean_u)
 {
 	const Vector3f f = allFinite(f_b) ? f_b : Vector3f(0.f, 0.f, -kGravity);
-	const float c = PX4_ISFINITE(coll_cmd) ? math::max(coll_cmd, 0.f) : kGravity / (_g_t * _k_cmd);
+	const float c = PX4_ISFINITE(coll_cmd) ? math::max(coll_cmd, 0.f) : kGravity / (_thrust_gain_mps2 * _mean_thrust_per_command);
 
-	// D-GAP: model path = commanded collective (u_model = c * k_cmd). Measured path = the measured mean u when it is
+	// Model path = commanded collective (u_model = c * k_cmd). Measured path = the measured mean u when it is
 	// given, else its steady relation to the model path, u_model - b. Only the second case gives u_meas + b = u_model
-	// (no collective step); with mean_u passed there is a step equal to the gap mean_u + b - u_model (pre-freeze r1 F6).
-	// A16: b is held, never reset
-	const float u_model = c * _k_cmd;
-	const float u = PX4_ISFINITE(mean_u) ? mean_u : (u_model - _b);
+	// (no collective step); with mean_u passed there is a step equal to the gap mean_u + b - u_model.
+	// b is held, never reset.
+	const float u_model = c * _mean_thrust_per_command;
+	const float u = PX4_ISFINITE(mean_u) ? mean_u : (u_model - _blend_offset);
 
-	_lpf_f.reset(f);
-	_lpf_f_native.reset(f);
+	_force_lowpass.reset(f);
+	_force_lowpass_native.reset(f);
 	_native_f = f;
 	_prev_f_b_valid = true;
 	_lpf_u.reset(u);
@@ -175,7 +175,7 @@ void IndiAccelControl::reset(const Vector3f &f_b, float coll_cmd, float mean_u)
 		_um_buf[i] = u_model;
 	}
 
-	_u_idx = 0;
+	_delay_buffer_index = 0;
 	_thrust_prev = c;
 
 	resetJerkHistory();
@@ -185,8 +185,8 @@ void IndiAccelControl::resetJerkHistory()
 {
 	_time = 0.f;
 	_a_ff_prev.zero();
-	_j_diff.zero();
-	_lpf_j.reset(_j_diff);
+	_jerk_difference.zero();
+	_lpf_j.reset(_jerk_difference);
 
 	for (int i = 0; i < 3; i++) {
 		_t_a_ff_prev[i] = 0.f;
@@ -202,7 +202,7 @@ void IndiAccelControl::updateJerkDifference(const Vector3f &a_ff, const bool a_v
 		if (!a_valid[i]) {
 			// no reference: no jerk, forget the history so that the return does not create a spike
 			_a_ff_prev_valid[i] = false;
-			_j_diff(i) = 0.f;
+			_jerk_difference(i) = 0.f;
 			continue;
 		}
 
@@ -210,19 +210,19 @@ void IndiAccelControl::updateJerkDifference(const Vector3f &a_ff, const bool a_v
 			_a_ff_prev(i) = a_ff(i);
 			_t_a_ff_prev[i] = _time;
 			_a_ff_prev_valid[i] = true;
-			_j_diff(i) = 0.f;
+			_jerk_difference(i) = 0.f;
 			continue;
 		}
 
 		if (fabsf(a_ff(i) - _a_ff_prev(i)) > 0.f) {
 			const float dt_change = math::max(_time - _t_a_ff_prev[i], kMinDt);
-			_j_diff(i) = math::constrain((a_ff(i) - _a_ff_prev(i)) / dt_change, -kMaxJerk, kMaxJerk);
+			_jerk_difference(i) = math::constrain((a_ff(i) - _a_ff_prev(i)) / dt_change, -kMaxJerk, kMaxJerk);
 			_a_ff_prev(i) = a_ff(i);
 			_t_a_ff_prev[i] = _time;
 
 		} else if ((_time - _t_a_ff_prev[i]) > kJerkHold) {
 			// unchanged for longer than the hold: the stream is constant (or has no jerk), not a step in progress
-			_j_diff(i) = 0.f;
+			_jerk_difference(i) = 0.f;
 		}
 
 		// else: a_ff unchanged for less than the hold, hold the last difference
@@ -230,7 +230,7 @@ void IndiAccelControl::updateJerkDifference(const Vector3f &a_ff, const bool a_v
 
 	// A setpoint stream slower than the loop makes the held difference a staircase: smooth it with the
 	// measurement filter cut-off so that its steps do not reach the rate setpoint.
-	_j_diff_f = _lpf_j.apply(_j_diff);
+	_jerk_difference_filtered = _lpf_j.apply(_jerk_difference);
 }
 
 Quatf IndiAccelControl::bodyzToAttitude(Vector3f body_z, const float yaw_sp)
@@ -278,14 +278,14 @@ Quatf IndiAccelControl::bodyzToAttitude(Vector3f body_z, const float yaw_sp)
 void IndiAccelControl::setAppliedThrust(float c_applied)
 {
 	if (PX4_ISFINITE(c_applied)) {
-		_thrust_prev = math::constrain(c_applied / (_g_t * _k_cmd), _thr_min, _thr_max);
+		_thrust_prev = math::constrain(c_applied / (_thrust_gain_mps2 * _mean_thrust_per_command), _thr_min, _thr_max);
 	}
 }
 
 bool IndiAccelControl::update(const Input &in, Output &out)
 {
-	// 9. required inputs: this early check rejects before any state is touched; the late finiteness checks (jerk
-	// history, delay buffer, filters and blend are already advanced then) do not (pre-freeze r1 F5)
+	// Required inputs: this early check rejects before any state is touched; the late finiteness checks (jerk
+	// history, delay buffer, filters and blend are already advanced then) do not
 	if ((!in.accel_only && (!allFinite(in.p) || !allFinite(in.v))) || (in.f_b_valid && !allFinite(in.f_b)) || !PX4_ISFINITE(in.q(0))
 	    || !PX4_ISFINITE(in.q(1))
 	    || !PX4_ISFINITE(in.q(2)) || !PX4_ISFINITE(in.q(3)) || !PX4_ISFINITE(in.dt)
@@ -293,7 +293,7 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 		return false;
 	}
 
-	// D-ALTCTL-Z: the stock thrust direction must be finite and clearly upward
+	// z_only: the given thrust direction must be finite and clearly upward
 	Vector3f n_dir{};
 
 	if (in.z_only) {
@@ -314,7 +314,7 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 	const Dcmf R(q);
 	const Vector3f z_b = R.col(2);
 
-	// 1. reference handling
+	// Reference handling
 	Vector3f p_term{};
 	Vector3f v_ff{};
 	Vector3f a_ref{};
@@ -339,12 +339,12 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 			j_used(i) = math::constrain(in.j_ref(i), -kMaxJerk, kMaxJerk);
 
 		} else {
-			j_used(i) = _j_diff_f(i);
+			j_used(i) = _jerk_difference_filtered(i);
 			from_diff = true;
 		}
 	}
 
-	// 2. commanded acceleration
+	// Commanded acceleration
 	Vector3f v_sp = p_term + v_ff;
 	const float vxy = Vector2f(v_sp(0), v_sp(1)).norm();
 
@@ -362,71 +362,71 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 		a_c(i) = in.accel_only ? a_ref(i) : (_k_vel(i) * (v_sp(i) - in.v(i)) + a_ref(i));
 	}
 
-	// 4. measured thrust (the delay line runs first: a substituted f_b needs the delayed signal, see 3.)
-	// f_b_valid == false (D-STAGE-STALE a) also makes mean_u unusable: the stage runs on the model alone
+	// Measured thrust (the delay line runs first: a substituted f_b needs the delayed signal)
+	// f_b_valid == false also makes mean_u unusable: the loop runs on the model alone
 	const bool u_valid = in.mean_u_valid && in.f_b_valid;
-	const float u_model = _thrust_prev * _k_cmd;
+	const float u_model = _thrust_prev * _mean_thrust_per_command;
 	// invalid telemetry: feed u_model - b so that u_meas_f + b stays continuous (no step at loss or recovery)
-	const float u_in = u_valid ? in.mean_u : (u_model - _b);
-	_u_idx = (_u_idx + 1) % (kMaxDelaySamples + 1);
-	_u_buf[_u_idx] = u_in;
-	_um_buf[_u_idx] = u_model;
-	const int i_d = (_u_idx + kMaxDelaySamples + 1 - _delay) % (kMaxDelaySamples + 1);
+	const float u_in = u_valid ? in.mean_u : (u_model - _blend_offset);
+	_delay_buffer_index = (_delay_buffer_index + 1) % (kMaxDelaySamples + 1);
+	_u_buf[_delay_buffer_index] = u_in;
+	_um_buf[_delay_buffer_index] = u_model;
+	const int i_d = (_delay_buffer_index + kMaxDelaySamples + 1 - _delay) % (kMaxDelaySamples + 1);
 	const float u_meas_f = _lpf_u.apply(_u_buf[i_d]);
 	const float u_model_f = _lpf_um.apply(_um_buf[i_d]);
 	_last_u = u_meas_f;
 	_last_um = u_model_f;
 
-	// 3. measured acceleration. Invalid f_b: the body specific force of the SAME delayed actuator signal that
-	// feeds t_f below (_u_buf[i_d] plus the held blend, scale _g_t, body (0,0,-_g_t*u)), through the same f_b filter.
+	// Measured acceleration. Invalid f_b: the body specific force of the SAME delayed actuator signal that
+	// feeds t_f below (_u_buf[i_d] plus the held blend, scale _thrust_gain_mps2, body (0,0,-_thrust_gain_mps2*u)), through the same f_b filter.
 	// Measured and modelled paths are then identical signals through identical filters and cancel: t_c = a_c - g.
-	const float u_sub = _u_buf[i_d] + ((_tb > 0.f) ? _b : 0.f);
-	const Vector3f f_in = in.f_b_valid ? in.f_b : Vector3f(0.f, 0.f, -_g_t * u_sub);
+	const float u_sub = _u_buf[i_d] + ((_blend_time_constant_s > 0.f) ? _blend_offset : 0.f);
+	const Vector3f f_in = in.f_b_valid ? in.f_b : Vector3f(0.f, 0.f, -_thrust_gain_mps2 * u_sub);
 	Vector3f f_bf;
 
 	// invalid -> valid edge: the native filter held (or was not fed during) the gap while the law ran on the modelled path;
 	// continue from the force used last cycle, then converge to the measured value at the filter bandwidth
 	if (in.f_b_valid && !_prev_f_b_valid && _native_fed) {
-		_lpf_f_native.reset(_last_f_b);
+		_force_lowpass_native.reset(_last_f_b);
 		_native_f = _last_f_b;
 	}
 
 	_prev_f_b_valid = in.f_b_valid;
 
 	if (in.f_b_valid && _native_fed) {
-		// D-AF-ALIAS: filtered at the force sample rate by sampleSpecificForce(); keep the stage-rate filter on the same
+		// filtered at the force sample rate by sampleSpecificForce(); keep the control-rate filter on the same
 		// value so a switch to the modelled path (invalid f_b) starts without a step
 		f_bf = _native_f;
-		_lpf_f.reset(f_bf);
+		_force_lowpass.reset(f_bf);
 
 	} else {
-		f_bf = _lpf_f.apply(f_in);
+		f_bf = _force_lowpass.apply(f_in);
 	}
 
 	_last_f_b = f_bf;
 	const Vector3f a_f = R * f_bf + Vector3f(0.f, 0.f, kGravity);
 
-	// D-GAP blend: b = LP_tb(u_model - u_meas), held (never reset) on the ground, at bypass edges (hold flag),
+	// Blend: b = LP_tb(u_model - u_meas), held (never reset) on the ground, at bypass edges (hold flag),
 	// while the telemetry is invalid and while the collective is clamped (anti-windup)
 	// anti-windup also on the measured mean_u at its physical limit and on the allocator saturation report
 	const bool u_at_limit = u_valid && (in.mean_u >= kMeanUSatLimit);
 	const bool blend_frozen = _blend_hold || !u_valid || _coll_clamped || u_at_limit || in.alloc_saturated;
 
-	if ((_tb > 0.f) && !blend_frozen) {
-		_b += (in.dt / (_tb + in.dt)) * ((u_model_f - u_meas_f) - _b);
-		_b = math::constrain(_b, -kMaxBlend, kMaxBlend);
+	if ((_blend_time_constant_s > 0.f) && !blend_frozen) {
+		_blend_offset += (in.dt / (_blend_time_constant_s + in.dt)) * ((u_model_f - u_meas_f) - _blend_offset);
+		_blend_offset = math::constrain(_blend_offset, -kMaxBlend, kMaxBlend);
 	}
 
 	// u_f = u_meas_f + b also with invalid telemetry (the measured path was fed u_model - b)
-	const float u_f = (_tb > 0.f) ? (u_meas_f + _b) : u_meas_f;
-	const Vector3f t_f = z_b * (-_g_t * u_f);
+	const float u_f = (_blend_time_constant_s > 0.f) ? (u_meas_f + _blend_offset) : u_meas_f;
+	const Vector3f t_f = z_b * (-_thrust_gain_mps2 * u_f);
 
-	// 5. INDI increment
+	// INDI increment
 	Vector3f t_c = t_f + (a_c - a_f);
 
-	// 6. saturation, vertical priority
-	const float c_min = _g_t * _k_cmd * _thr_min;
-	const float c_max = _g_t * _k_cmd * _thr_max;
+	// Saturation, vertical priority
+	const float c_min = _thrust_gain_mps2 * _mean_thrust_per_command * _thr_min;
+	const float c_max = _thrust_gain_mps2 * _mean_thrust_per_command * _thr_max;
 
 	if (!PX4_ISFINITE(t_c(0)) || !PX4_ISFINITE(t_c(1)) || !PX4_ISFINITE(t_c(2))) {
 		return false;
@@ -437,7 +437,7 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 	}
 
 	if (in.z_only) {
-		// D-ALTCTL-Z: keep the INDI vertical command, replace the direction by the stock one (already tilt limited)
+		// keep the INDI vertical command, replace the direction by the given one (already tilt limited)
 		t_c = n_dir * (t_c(2) / n_dir(2));
 
 	} else {
@@ -487,15 +487,15 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 		c = t_c.norm();
 	}
 
-	const float thrust = math::constrain(c / (_g_t * _k_cmd), _thr_min, _thr_max);
+	const float thrust = math::constrain(c / (_thrust_gain_mps2 * _mean_thrust_per_command), _thr_min, _thr_max);
 	const bool coll_clamped = clamped || (thrust <= _thr_min) || (thrust >= _thr_max);
 
-	// 7. attitude
+	// Attitude
 	const float yaw = PX4_ISFINITE(in.yaw_ref) ? in.yaw_ref : Eulerf(q).psi();
 	const Vector3f body_z_d = -t_c / c;
 	const Quatf q_d = bodyzToAttitude(body_z_d, yaw);
 
-	// 8. rate feedforward
+	// Rate feedforward
 	Vector3f omega_ff{};
 
 	if (_jerk_ff && !in.z_only && (c >= kMinThrustForFf)) {
@@ -524,7 +524,7 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 	out.t_c = t_c;
 	out.j_used = j_used;
 	out.jerk_from_difference = from_diff;
-	out.blend = _b;
+	out.blend = _blend_offset;
 	out.blend_frozen = blend_frozen;
 	return true;
 }
