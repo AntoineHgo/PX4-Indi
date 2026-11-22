@@ -5,7 +5,8 @@
   config g5_freeze_s157 params (XY gains at firmware defaults 1.2/2.4). Re-fly list in D-FREEZE-10: G2 outer, G4,
   G5 outer rows, G3 pre-test. Probe evidence results/freeze10_cand_s191/README.md (all probe checks PASS).
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
-- Blocker: Q24 (S194) blocks G3, Q25 (S194) blocks G5; G7 harness is free work. Q23 closed S191 (D-OWNER-Q23): revert aa4fd2654a (G5.7 cause D-G57-FF); with
+- Blocker: none. Owner ANSWERED Q24 (B: mismatch +-50 ms, 08/03 shared) and Q25 (B: sourced trajectory limit,
+  re-score only) 2026-11-22, see QUESTIONS.md: act on them first. Was: Q24 blocks G3, Q25 blocks G5. Q23 closed S191 (D-OWNER-Q23): revert aa4fd2654a (G5.7 cause D-G57-FF); with
   D-AF-ALIAS (G3 7 Hz, outer a_f aliased by 88.9 Hz stage decimation) it enters FREEZE-10.
 ## Next actions (owner order; each names its gate item)
 0. FREEZE-10 re-fly RUNNING (Tasks Q10). RC194 done (design/route_check_194.md): no probes/chases while it runs;
@@ -73,8 +74,8 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | Q10 | FREEZE-10 re-fly queue: ENDED 01:14 S194, all 4 steps rc 0 | - | results/freeze10_s193/ | - |
-| S196c | G7(g) build + tests of indi-fw-pr in px4-indi-sim (sonnet) | - | results/g7_s196/FW_BRANCH_BUILD.md | re-brief; remove stray worktree first (`git worktree list`) |
-| S196e | G7(f) text-only fixes per D-G7-F-TEXT (sonnet), uncommitted src edits | - | results/g7_s196/F_TEXT_FIXES.md | check `git diff --stat -- src msg ROMFS`, re-brief or `git checkout` |
+| S196c | G7(g) build of indi-fw-pr: KILLED 02:51 (host OOM, session lost); build had failed (pymavlink submodule clone) | - | results/g7_s196/build_sitl_default.log | worktree removed; re-brief, put worktree OUTSIDE the repo (VS Code cpptools indexed it to 23 GB) |
+| S196e | G7(f) text fixes per D-G7-F-TEXT: KILLED 02:51, half done; src reverted | - | results/g7_s196/F_TEXT_PARTIAL_S196e.patch (rate_control yaml only) | re-brief from D-G7-F-TEXT; patch is a starting point, unreviewed |
 (S195 agents done and committed: results/g7_s195/.)
 (none; S194 checker self-tests committed: bench/tests/test_passthrough_check.py, test_offb_vel_check.py)
 (S189 agents done and committed. Build probes: guard denies a segment naming indi_project with
