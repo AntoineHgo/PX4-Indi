@@ -71,7 +71,8 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | - | - | - |
+| S200a | G3 cause search: drawn-plant margins + ACT_TC sweep (sonnet) | - | results/g3_refly_s199/MARGINS_S200.md | re-brief from STATE action 1 |
+| S200b | G7(f) F-10 unit 1 McIndiPosControl.cpp (sonnet) | - | results/g7_s198/F10_UNIT1.md | re-brief from F10_PLAN unit 1 |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
