@@ -36,9 +36,11 @@
 5. G7: S195 done (a)(c)(d)(e), see GATE_STATUS. e9e85e395d (fminf, NuttX) + 39c1700523 (4040 ACT_TC) are after
    FREEZE-10: behaviour-neutral, no row invalidated (D-G7-NUTTX-BUILD); gate binary not rebuilt. Open: (b) break
    audit (BREAK_AUDIT.md, 57/66 killed): lib survivors M7/M19/M20/M21/A14 killed by tests 293161cbb4, helper survivors
-   H16/H19/H26/H27 killed (HELPER_SURVIVOR_TESTS.md). NEXT: break-check IndiInjection/IndiInjectionStep/
-   IndiPosInjection (test files only, method of SURVIVOR_TESTS.md); (g) firmware-only branch; (f) checklist;
-   v6x flash overflow 23.5 kB -> report/upstream note. Tests build in px4-indi-sim (px4-dev fails protobuf).
+   H16/H19/H26/H27 killed (HELPER_SURVIVOR_TESTS.md); injection helpers 67 mutations, 0 survivors (S196,
+   results/g7_s196/INJECTION_BREAK_CHECK.md). (g) bench/make_fw_branch.sh -> local indi-fw-pr (A firmware + B sim
+   commits), pass rules empty; re-run with --force-recreate after any firmware commit; quad5in model not in branch
+   (sim model lives in indi_flight/sim). Open: (g) build check, (f) checklist (S196 agents); v6x flash overflow 23.5 kB
+   -> report/upstream note. Tests build in px4-indi-sim (px4-dev fails protobuf).
    Harness extraction (firmware refactor) waits: fold into FREEZE-11 if Q24 A, else after verdicts with re-fly named.
    Older list: module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site
    (K128 MAJOR), D-JFF-SOURCE case, D-OFFB-POSVEL wiring test, omega_ff step on offboard entry (key2_jffoffb MINOR),
@@ -71,6 +73,8 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | Q10 | FREEZE-10 re-fly queue: ENDED 01:14 S194, all 4 steps rc 0 | - | results/freeze10_s193/ | - |
+| S196c | G7(g) build + tests of indi-fw-pr in px4-indi-sim (sonnet) | - | results/g7_s196/FW_BRANCH_BUILD.md | re-brief; remove stray worktree first (`git worktree list`) |
+| S196d | G7(f) instructions/nav-terms checklist on indi-fw-pr (sonnet) | - | results/g7_s196/INSTRUCTIONS_CHECKLIST.md | re-brief |
 (S195 agents done and committed: results/g7_s195/.)
 (none; S194 checker self-tests committed: bench/tests/test_passthrough_check.py, test_offb_vel_check.py)
 (S189 agents done and committed. Build probes: guard denies a segment naming indi_project with

@@ -36,7 +36,7 @@ Prior records: indi_flight/design/t206_lib_mutation_tests_log.md (accel, T206 it
 | 27 | rate feedforward gate | IndiRateFeedforwardGateTest.* | none -> H21, H22 |
 | 28 | setpoint timeout watchdog | IndiRateSetpointWatchdogTest.* | none -> H23-H25 |
 | 29 | torque stamp tracker (foreign stamp) | IndiTorqueStampTrackerTest.* | none -> H26, H27 |
-| 30 | IndiInjection / IndiInjectionStep / IndiPosInjection (excitation waveform) | IndiInjection*Test, IndiPosInjectionTest | none, NOT RUN (test-signal code, outside control law; unverified) |
+| 30 | IndiInjection / IndiInjectionStep / IndiPosInjection (excitation waveform) | IndiInjection*Test, IndiPosInjectionTest | S196: 67 mutations, 58 killed, 9 equivalent, 0 survived; 14 real pre-fix survivors killed by 8 new tests, see g7_s196/INJECTION_BREAK_CHECK.md |
 
 Already break-checked before this task: 1 behaviour group (accel z-only/thrust-direction items, T206: 9 mutations, all killed). Behaviours 1-29 otherwise had no record.
 
@@ -132,7 +132,7 @@ Every mutation was reverted with `git checkout -- <file>` right after its run. F
 Note: indi_flight/STATE.md was already modified before the audit (unrelated); no commit was made. No container left running.
 
 ## 5. Unverified
-- Behaviour 30 (IndiInjection, IndiInjectionStep, IndiPosInjection) has no break-check run (excitation signal code, not control law).
+- Behaviour 30 (IndiInjection, IndiInjectionStep, IndiPosInjection): break-checked in S196, 67 mutations, 58 killed, 9 equivalent by reading, 0 survived (g7_s196/INJECTION_BREAK_CHECK.md; its Unverified section lists the open points).
 - Several mutation rows list only the first 1-3 failing tests (full lists are in the run output, not saved).
 - Tests were run per ctest regex filter; the full-suite pass of the unmutated tree is the earlier 13/13 record (NUTTX_FIX.md), not re-run here.
 - Not mutated: yaw-cutoff design branch, sample-rate redesign, measurement-delay slew, accel reset(), bodyzToAttitude, zero-thrust-dir helper, shouldResetOnPosControlEntry/HoldToRun, deriveZOnly.
