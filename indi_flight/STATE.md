@@ -5,15 +5,17 @@
   config g5_freeze_s157 params (XY gains at firmware defaults 1.2/2.4). Re-fly list in D-FREEZE-10: G2 outer, G4,
   G5 outer rows, G3 pre-test. Probe evidence results/freeze10_cand_s191/README.md (all probe checks PASS).
 - Gates: see GATE_STATUS.tsv. Owner answers Q8-Q15 acted on S175 (GATES "Owner amendments S175", D-OWNER-Q8-Q15).
-- Blocker: Q24 (S194) blocks G3 only. Q23 closed S191 (D-OWNER-Q23): revert aa4fd2654a (G5.7 cause D-G57-FF); with
+- Blocker: Q24 (S194) blocks G3, Q25 (S194) blocks G5; G7 harness is free work. Q23 closed S191 (D-OWNER-Q23): revert aa4fd2654a (G5.7 cause D-G57-FF); with
   D-AF-ALIAS (G3 7 Hz, outer a_f aliased by 88.9 Hz stage decimation) it enters FREEZE-10.
 ## Next actions (owner order; each names its gate item)
 0. FREEZE-10 re-fly RUNNING (Tasks Q10). RC194 done (design/route_check_194.md): no probes/chases while it runs;
    read queue_status.tsv; a haiku agent collects scores per gate; untested in the queue: g4_score.sh rewrites +
    Q20 guard, abort path -> fix and resume with `queue.sh N` if failed (pyulog on host checked S194). Then
-   verdicts G2/G4/G5 rows. G3 pre-test DONE S194 (16/20 both keys, fails 02/03/05/08): Q24 asked, blocking
-   G3 only; no G3 work until answered (option A = lower XY gains probe after the queue, then FREEZE-11).
-   Queue step 2 (G5) started 23:34.
+   verdicts. Queue ENDED 01:14 S194. G4 PASSED at freeze-10 (S194). G3 pre-test 16/20 both keys (fails
+   02/03/05/08): Q24 blocks G3. G5 scored (results/freeze10_s193/G5_SCORES.md): all rows pass both keys except
+   G5.5 o2_circle_z s1 0.5027 m (limit 0.5); PID ref 1.14-1.16 m (g55_pid_ref/): Q25 blocks the G5 verdict.
+   G5.9a key2 reference-definition difference as freeze-8/9 (key 1 PASS). G2: scored (G2_SCORES.md), S194c
+   re-flies hole cell pt1_ax2_r400_s2 + key2 BLOCKED check -> then write G2 verdict.
    Binary built 22:38 after 7fe6206fcc, no src commit since (checked). G7 harness starts after the queue ends
    (RC194 item 6 asked parallel; not done: a docker build during gate flights risks the binary and timing).
 1. G2 PASSED at freeze-9 (S184); outer cells invalidated by FREEZE-10, re-fly in item 0.
@@ -61,7 +63,8 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| Q10 | FREEZE-10 re-fly queue (G3 pre-test, G5, G4, G2 outer), launched S193 22:58, ~4-5 h | detached pid 1308846 | results/freeze10_s193/ (queue_status.tsv, README.md) | `bash indi_flight/results/freeze10_s193/queue.sh N` (step 1-4, done items skipped) |
+| Q10 | FREEZE-10 re-fly queue: ENDED 01:14 S194, all 4 steps rc 0 | - | results/freeze10_s193/ | - |
+| S194c | G2 hole cell re-fly pt1_ax2_r400_s2 (orig in g2o/orig_s194/) + key2 BLOCKED values | agent | G2_SCORES.md "Re-score S194" | `queue.sh 4` flies missing cells |
 (S189 agents done and committed. Build probes: guard denies a segment naming indi_project with
 rm/tee/git apply etc.; run each run.sh call alone, redirect only into indi_flight/.)
 
