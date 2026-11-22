@@ -1,0 +1,278 @@
+{
+ "scenario": "stick_zsine_o6",
+ "controller": "pid_default",
+ "seed": 1962701026,
+ "speed": 1.0,
+ "sim": "v2",
+ "instance": 0,
+ "params_file": "indi_flight/results/g3_refly_s199/pid_039/run_039/g3_params.txt",
+ "params_applied": {
+  "NAV_DLL_ACT": 0,
+  "COM_RC_IN_MODE": 1,
+  "COM_RCL_EXCEPT": 7,
+  "SDLOG_PROFILE": 17,
+  "MIS_TAKEOFF_ALT": 5.0,
+  "MPC_VEL_MANUAL": 10.0,
+  "MPC_Z_VEL_MAX_UP": 3.0,
+  "MPC_Z_VEL_MAX_DN": 3.0,
+  "MAN_DEADZONE": 0,
+  "MPC_THR_CURVE": 0,
+  "MPC_MANTHR_MIN": 0.08,
+  "MPC_THR_MAX": 1.0,
+  "SIM_GZ_ERPM_LAT": "3",
+  "MC_INDI_ID_OK": "1"
+ },
+ "git": {
+  "commit": "23cc2c81f8097c3b22d2e79e1417a6cdb158822e",
+  "dirty": false
+ },
+ "noise_seed": {
+  "gz_sim_seed": 1962701026,
+  "px4_baro_srand": 1234
+ },
+ "events": [
+  {
+   "name": "settle",
+   "t_us": 55763000,
+   "dur_s": 3.0,
+   "mode": "stick",
+   "axis": null,
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  },
+  {
+   "name": "stick",
+   "t_us": 58763000,
+   "dur_s": 18.0,
+   "mode": "stick",
+   "axis": null,
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  },
+  {
+   "name": "hold",
+   "t_us": 76775000,
+   "dur_s": 3.0,
+   "mode": "stick",
+   "axis": null,
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  }
+ ],
+ "phase_log": [],
+ "exit_status": "failed",
+ "error": "RunError: wall timeout (240s) in phase 'land' (sim t=323.37)",
+ "physics_step_s": 0.00125,
+ "world": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/sim/worlds/default.sdf",
+ "imu_rate": 800,
+ "rate_hz": 800,
+ "imu_filter_hz": {
+  "IMU_GYRO_CUTOFF": 40,
+  "IMU_DGYRO_CUTOFF": 20
+ },
+ "probe_ff_drag": 0.0,
+ "scenario_overrides": {
+  "file": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/results/g3_refly_s199/pid_039/run_039/g3_scenario_overrides.json",
+  "overrides": {
+   "erpm_frozen": {
+    "duration_s": 1.0,
+    "motor": 1,
+    "start": "stick",
+    "start_offset_s": 4.634931
+   }
+  },
+  "merged_keys": [
+   "erpm_frozen"
+  ],
+  "merged_hooks": {
+   "erpm_frozen": {
+    "duration_s": 1.0,
+    "motor": 1,
+    "start": "stick",
+    "start_offset_s": 4.634931
+   }
+  }
+ },
+ "provenance": {
+  "commit": "23cc2c81f8097c3b22d2e79e1417a6cdb158822e",
+  "dirty": false,
+  "binary": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/build/px4_sitl_default/bin/px4",
+  "binary_sha256": "d220e19315c2798aa18a1bab6ce7300cd0f6eff14d43273d5064c06009d46076",
+  "binary_commit": "c0b733e677a78a4ae272c180aa9fa73f2135d734",
+  "header_newer_than_binary": false,
+  "files_sha256": {
+   "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/sim/worlds/default.sdf": "851a0e6ca8249cd74427cd1d9215affe0edbce1fde355ffa74fa5622a8cf1bb9",
+   "indi_flight/results/g3_refly_s199/pid_039/run_039/g3_params.txt": "61fd56d991a0827473c6444e3c3a30c8b0f7cfda4d76c0320a28858d8b5118cc",
+   "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/params/quad5in_indi_g1.params": "9001a362844586861d6ff4d5306ea00e2ac79ba85de07252a43c4b2202bd7a2b",
+   "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/sim/models/quad5in/model.config": "7ea654fc18d2f1bcc35920c3deb6ca7c0917d0c768ceaefbd4948b86488bff8f",
+   "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/sim/models/quad5in/model.sdf": "4968f2cde140c6e2ae9c821d5bd5bde636887109840046bc34529d8b98c6ae8a"
+  }
+ },
+ "gate_bearing": false,
+ "dly_act_ms": 1,
+ "dly_imu_ms": 1,
+ "gps_dly_ms": 157,
+ "erpm_drop": 0.132191,
+ "sim_seed": 516029940,
+ "imu_noise_scale": 4.0,
+ "vib": {
+  "acc": 12.532141,
+  "gyr": 0.126607,
+  "rpm": 9540.0,
+  "nb": 3
+ },
+ "gnss_delay": 157,
+ "model_variant": {
+  "model": "quad5in",
+  "scale": {
+   "tau": 2.709883,
+   "tau_up": 0.909108,
+   "mass": 0.703872,
+   "ixx": 1.272416,
+   "iyy": 0.781067,
+   "izz": 0.880195
+  },
+  "dir": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/results/g3_refly_s199/pid_039/run_039/model_variant",
+  "stock_models": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/sim/models",
+  "original": {
+   "ixx": 0.001022,
+   "iyy": 0.001122,
+   "izz": 0.001944,
+   "mass": 0.566,
+   "rotor_mass": [
+    0.011,
+    0.011,
+    0.011,
+    0.011
+   ],
+   "timeConstantUp": [
+    0.033,
+    0.033,
+    0.033,
+    0.033
+   ],
+   "timeConstantDown": [
+    0.033,
+    0.033,
+    0.033,
+    0.033
+   ]
+  },
+  "new": {
+   "ixx": 0.0013004091519999998,
+   "iyy": 0.0008763571739999999,
+   "izz": 0.00171109908,
+   "mass": 0.398391552,
+   "rotor_mass": [
+    0.007742592,
+    0.007742592,
+    0.007742592,
+    0.007742592
+   ],
+   "timeConstantUp": [
+    0.081298018374012,
+    0.081298018374012,
+    0.081298018374012,
+    0.081298018374012
+   ],
+   "timeConstantDown": [
+    0.089426139,
+    0.089426139,
+    0.089426139,
+    0.089426139
+   ]
+  }
+ },
+ "log_poll": "actuator_motors",
+ "log_from_start": true,
+ "t_arm_target_s": 30.0,
+ "t_offboard_target_s": 52.0,
+ "t_before_arm_wait_s": 14.772,
+ "arm_attempts": 1,
+ "t_arm_sent_s": 30.005,
+ "t_arm_us": 30762000,
+ "t_climb_done_s": 38.993,
+ "t_hold_s": 51.005,
+ "hold_pos_ned": [
+  -0.0365712009370327,
+  -0.0483839176595211,
+  -4.982147216796875
+ ],
+ "hold_yaw_rad": 1.5828018188476562,
+ "hover_thrust_estimate": 0.1,
+ "hover_thrust_valid": true,
+ "mpc_thr_hover": 0.137,
+ "hover_thr_used": 0.1,
+ "hover_thr_source": "hte",
+ "stick": {
+  "mode": "stabilized",
+  "main_mode": 7,
+  "params": {
+   "MPC_VEL_MANUAL": 10.0,
+   "COM_RC_IN_MODE": 1,
+   "COM_RCL_EXCEPT": 7,
+   "MPC_Z_VEL_MAX_UP": 3.0,
+   "MPC_Z_VEL_MAX_DN": 3.0,
+   "MAN_DEADZONE": 0,
+   "MPC_THR_CURVE": 0,
+   "MPC_MANTHR_MIN": 0.08,
+   "MPC_THR_MAX": 1.0
+  },
+  "hover_thr_used": 0.1,
+  "pilot": {
+   "mode": "stabilized",
+   "thr0": 0.1,
+   "kp": 0.0412491111564387,
+   "ki": 0.01580340299709471,
+   "kd": 0.03202438994485009,
+   "k_level": 1.5,
+   "bandwidth_hz": 0.25,
+   "damping": 0.8,
+   "i_lim": 0.1,
+   "thr_min": 0.08,
+   "thr_max": 1.0,
+   "acro_r_max_rad_s": 1.7453292519943295,
+   "acro_p_max_rad_s": 1.7453292519943295
+  },
+  "t0_us": 58763000,
+  "dur_s": 18.0,
+  "traj": {
+   "shape": "zmulti",
+   "harm": [
+    1
+   ],
+   "amps": [
+    1.0
+   ],
+   "w": 1.5707963267948966,
+   "laps": 4,
+   "ramp_s": 2.0
+  }
+ },
+ "t_offboard_sent_s": 52.002,
+ "t_offboard_us": 52763000,
+ "offboard_custom_mode": [
+  7,
+  0
+ ],
+ "t_window_start_us": 55763000,
+ "erpm_frozen": {
+  "duration_s": 1.0,
+  "motor": 1,
+  "start": "stick",
+  "start_offset_s": 4.634931,
+  "on_us": 63402000,
+  "off_us": 64403000
+ },
+ "t_window_end_us": 79775000,
+ "t_land_cmd_us": 83783000,
+ "traceback": "Traceback (most recent call last):\n  File \"/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/run_scenario.py\", line 1356, in main\n    sim.run(None, sp=pos_sp if a.stick_mode else None, until=lambda: not sim.armed,\n  File \"/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/run_scenario.py\", line 470, in run\n    raise RunError(f\"wall timeout ({wall_timeout:.0f}s) in phase '{what}' (sim t={self.t:.2f})\")\nRunError: wall timeout (240s) in phase 'land' (sim t=323.37)\n",
+ "ulog": "flight.ulg",
+ "sticks_csv": "sticks.csv",
+ "wall_time_s": 327.1,
+ "metrics_status": "ok",
+ "g3_outcome": "aborted"
+}
