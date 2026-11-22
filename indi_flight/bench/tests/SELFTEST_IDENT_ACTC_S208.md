@@ -44,3 +44,27 @@ Done on a scratch copy, not the repository file, which was never modified; the r
   (candidates tried: SIM_GZ_RPM_MAX, MC_INDI_RPM_MAX, ESC_RPM_MAX), so --rpm-max is effectively required.
 - Delay is integer samples of the log period (1.25 ms); fractional delays not fitted.
 - Closed-loop case uses one gain (1.5) and one noise level.
+
+## Fix S208
+Second key item 2 (sub-sample delay biased tau up to -16 %) fixed in `ident_actc.py`: the delay d is now fractional (linear
+interpolation of the delayed command, `_stats`/`_residual`), integer-d grid search then pattern search with d continuous (step
+1 sample, halved with the tau steps to ~0.01). tau_at_bound uses `np.isclose` (MINOR b). Command topic uses `timestamp` for
+both topics (MINOR a). Self-test gained 11 off-grid cases (`plant_sub`, 0.125 ms sub-stepped, `FRAC_CASES`: 0.625 ms 33/33,
+33/99, 99/33; 0.3, 3.3+1 frame, 7.3, 6.275, 7.6+2 frames, 9.7+3 frames, 4.4+1 frame at tau 16.5).
+Self-test: all pass (`python3 test_ident_actc.py`, 511 s). Worst tau error: off-grid noise-free 0.38 % (limit 2 %), off-grid
+noisy 0.72 % (limit 10 %), on-grid noise-free 0.19 %, noisy 0.67 %, closed loop 1.37 % (not worse than before).
+
+| Key-2 indep3.py, noise-free, 0.625 ms off grid (tau up/down, ms) | true | before | after |
+|---|---|---|---|
+| 33/99 | 33/99 | 30.4/94.6 (-8 %) | 32.8/99.3 (-0.6 %/+0.3 %) |
+| 33/33 | 33/33 | 27.7/27.7 (-16 %, fail) | 32.8/32.8 (-0.6 %, pass) |
+| 99/33 | 99/33 | 92.3/29.4 (-7 %, fail) | 99.7/33.1 (+0.7 %/+0.3 %, pass) |
+Delay estimate 10.62 ms vs true 10.625 (before 11.25). On-grid control (0.0075 + 2 frames): unchanged, 32.9/99.0.
+Invocation (not given in KEY2, reconstructed): `python3 key2_ident_actc_s208/indep3.py 0 0.03 0.008125` (noise std 0, amp 0.03,
+plant delay 8.125 ms + 2 frames); before numbers reproduced the key-2 report exactly using HEAD's estimator.
+indep.py (noisy 30 rpm, closed loop K=1.5, interpolated-u plant): taus 32.4-33.0 / 97.1-99.2 / 99.5-100.2 (all within 2 %,
+key 2 saw 3-7 % low); but 5 of 6 cells flag residual_high (SNR at that excitation, as in key-2 item 3), delay reads 9.4-9.5 vs 10.
+Real log pos0 (--t0 21 --t1 78 --rpm-max 25783, 44 s): PASS, tau_up 33.9, tau_down 32.3, tau_sym 33.1 ms (before 34.8/33.1/33.9),
+delay 3.01 ms, resid 0.064.
+Unverified: indep2.py not rerun; the indep.py "before" under identical seeds not rerun (key-2 figures quoted); no SITL/real
+delay off-grid beyond synthetic; curvature step for d stays 1 sample (se_delay not re-validated beyond the self-test).

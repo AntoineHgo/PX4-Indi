@@ -123,6 +123,61 @@ def test_noisy():
     return worst
 
 
+SUB = 10   # sub-steps per sample for the continuous-time-delay plant
+
+
+def plant_sub(tau_up, tau_down, delay_ms, frames, seed=0, noise=True, amp=0.025):
+    """Independent plant for off-grid delays: command held (ZOH) per sample, lag integrated in SUB sub-steps per
+    sample, delay applied in continuous time (resolution DT/SUB = 0.125 ms), rpm noisy/quantised, `frames` of telemetry."""
+    n = int(TLEN * FS)
+    r = np.random.default_rng(seed + 1000)
+    ms = multisine(n, seed, amp)
+    u = HOVER + ms
+    ds = int(round(delay_ms * 1e-3 * FS * SUB))
+    au, ad = 1 - np.exp(-DT / SUB / tau_up), 1 - np.exp(-DT / SUB / tau_down)
+    y, x = np.zeros(n), HOVER
+    for k in range(n):
+        for j in range(SUB):
+            m = (k * SUB + j - ds) // SUB
+            ud = u[m] if m >= 0 else HOVER
+            x += (au if ud > x else ad) * (ud - x)
+        y[k] = ICPT + GAIN * x
+    rpm = np.sqrt(np.maximum(y, 0)) * RPM_MAX
+    if noise:
+        rpm = np.round((rpm + r.normal(0, 25.0, n)) / 20.0) * 20.0
+    rpm = np.concatenate([np.full(frames, rpm[0]), rpm[: n - frames]])
+    return np.arange(n) * DT, u, rpm
+
+
+FRAC_CASES = ((0.033, 0.033, 0.625, 0), (0.033, 0.099, 7.6, 2), (0.099, 0.033, 7.6, 2), (0.033, 0.033, 3.3, 1),
+              (0.0165, 0.0165, 4.4, 1), (0.033, 0.033, 0.3, 0), (0.099, 0.099, 9.7, 3),
+              (0.033, 0.033, 7.3, 0), (0.033, 0.033, 6.275, 0), (0.033, 0.099, 0.625, 0), (0.099, 0.033, 0.625, 0))
+
+
+def _frac(noise, limit):
+    worst = 0.0
+    for tu, td, dly, fr in FRAC_CASES:
+        t, u, rpm = plant_sub(tu, td, dly, fr, noise=noise, seed=3)
+        m = ia.identify(t, u[:, None], t, rpm[:, None], RPM_MAX)["motors"][0]
+        dtrue = dly + fr * 1.25
+        e = max(err(m["tau_up"], tu), err(m["tau_down"], td))
+        worst = max(worst, e)
+        LINES.append(("frac-noisy" if noise else "frac-free", tu, td, dly, fr, m, dtrue))
+        assert e <= limit, (tu, td, dly, fr, m["tau_up"], m["tau_down"])
+        if not noise:
+            assert abs(m["delay_ms"] - dtrue) <= 0.25 * 1.25 + 1e-9, (tu, td, dly, fr, m["delay_ms"], dtrue)
+        assert m["pass_"], (tu, td, dly, fr, m["flags"])
+    return worst
+
+
+def test_fractional_delay_noise_free():
+    return _frac(False, 0.02)
+
+
+def test_fractional_delay_noisy():
+    return _frac(True, 0.10)
+
+
 def test_closed_loop():
     worst = 0.0
     for slow in SLOW:
@@ -181,7 +236,7 @@ def main():
             print(f"{name}: ok  worst tau error {100*w:.2f} %  ({time.time()-t1:.0f} s)" if w is not None else f"{name}: ok ({time.time()-t1:.0f} s)")
     print("rows: kind tau_up tau_down delay frames | est up down delay_ms resid se_tau")
     for k, tu, td, dly, fr, m, dtrue in LINES:
-        print(f"{k:12s} {1e3*tu:6.1f} {1e3*td:6.1f} {dly:3d} {fr} | {1e3*m['tau_up']:6.1f} {1e3*m['tau_down']:6.1f} "
+        print(f"{k:12s} {1e3*tu:6.1f} {1e3*td:6.1f} {dly:5.2f} {fr} | {1e3*m['tau_up']:6.1f} {1e3*m['tau_down']:6.1f} "
               f"{m['delay_ms']:5.2f} (true {dtrue:5.2f}) resid {m['residual']:.3f} struct {m['structure']:.3f} se {m['se_ln_tau_up']:.3f}/{m['se_ln_tau_down']:.3f}/"
               f"{m['se_delay_samples']:.2f} {'PASS' if m['pass_'] else 'FAIL ' + ','.join(m['flags'])}")
     print(f"total {time.time()-t0:.0f} s")

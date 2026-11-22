@@ -2,9 +2,10 @@
 """Motor time-constant identification (ACT_TC) by output error, one ulg or arrays.
 
 Per motor: y = (rpm / rpm_max)^2 against the command u = actuator_motors.control[i].
-Model: x = asymmetric first-order lag of u delayed by d samples (tau_up while the delayed command is above x,
+Model: x = asymmetric first-order lag of u delayed by d samples, d fractional (linear interpolation of the command) (tau_up while the delayed command is above x,
 tau_down otherwise, exact discretisation alpha = 1 - exp(-dt/tau)); y_hat = a + b x, (a, b) by linear least squares
-given x. (d, tau_up, tau_down) by a vectorised grid search, then a local pattern-search refinement (no scipy needed).
+given x. (d, tau_up, tau_down) by a vectorised integer-d grid search, then a local pattern-search refinement
+(d continuous, step halved down to ~0.01 sample) (no scipy needed).
 A symmetric fit (tau_up = tau_down) is reported as tau_sym.
 
 Alignment: both signals go onto one uniform grid of the median esc_status period. Each grid point takes the latest
@@ -58,16 +59,18 @@ def _x0(u, dt):
 
 def _stats(u, y, valid, d, tu, td, dt):
     """Sufficient statistics of the LS fit y ~ a + b x for a batch of (d, tau_up, tau_down); returns SSE, a, b."""
-    d, tu, td = (np.atleast_1d(np.asarray(v)) for v in (d, tu, td))
-    d = d.astype(int)
+    d, tu, td = (np.atleast_1d(np.asarray(v, float)) for v in (d, tu, td))
+    di = np.floor(d).astype(int)            # fractional delay: linear interpolation between u[k-di] and u[k-di-1]
+    fr = d - di
     au, ad = 1 - np.exp(-dt / tu), 1 - np.exp(-dt / td)
     n = len(u)
-    pad = int(d.max())
+    pad = int(di.max()) + 1
     up = np.concatenate([np.full(pad, u[0]), u])
     x = np.full(len(d), _x0(u, dt))
     s1 = sx = sxx = sxy = 0.0
     for k in range(n):
-        ud = up[pad + k - d]
+        i0 = pad + k - di
+        ud = (1 - fr) * up[i0] + fr * up[i0 - 1]
         x = x + np.where(ud > x, au, ad) * (ud - x)
         if valid[k]:
             s1 += 1.0
@@ -86,9 +89,12 @@ def _stats(u, y, valid, d, tu, td, dt):
 def _residual(u, y, valid, d, tu, td, dt, a, b):
     """Residual y - (a + b x) at the fitted parameters, valid samples only, in time order."""
     au, ad = 1 - np.exp(-dt / tu), 1 - np.exp(-dt / td)
+    di = int(np.floor(d))
+    fr = d - di
     x, xs = _x0(u, dt), np.empty(len(u))
     for k in range(len(u)):
-        ud = u[k - d] if k >= d else u[0]
+        k0 = k - di
+        ud = u[0] if k0 < 0 else (u[k0] if k0 == 0 else (1 - fr) * u[k0] + fr * u[k0 - 1])
         x += (au if ud > x else ad) * (ud - x)
         xs[k] = x
     return (y - (a + b * xs))[valid]
@@ -105,13 +111,15 @@ def structure(res, dt):
 
 
 def _refine(u, y, valid, dt, d0, tu0, td0, sym, force_d, ratio=1.25):
-    """Pattern search on (ln tu, ln td, d); each iteration evaluates the 27 neighbours in one batch."""
-    d, ltu, ltd, step = d0, np.log(tu0), np.log(td0), np.log(ratio)
-    dmax = int(round(D_MAX_S / dt))
+    """Pattern search on (ln tu, ln td, d) with d a continuous number of samples (linear interpolation of the
+    delayed command); each iteration evaluates the 27 neighbours in one batch. d steps 1 sample, halved with tau's."""
+    d, ltu, ltd, step = float(d0), np.log(tu0), np.log(td0), np.log(ratio)
+    dstep = 1.0
+    dmax = D_MAX_S / dt
     ds = [0] if force_d is not None else [-1, 0, 1]
     for _ in range(60):
         offs = [(i, j, k) for i in (-1, 0, 1) for j in (-1, 0, 1) for k in ds if not (sym and i != j)]
-        dd = np.array([min(max(d + k, 0), dmax) for _, _, k in offs])
+        dd = np.array([min(max(d + k * dstep, 0.0), dmax) for _, _, k in offs])
         lu = np.array([ltu + i * step for i, _, _ in offs])
         ld = np.array([ltd + j * step for _, j, _ in offs])
         lu, ld = np.clip(lu, np.log(TAU_MIN_S / 2), np.log(TAU_MAX_S * 2)), np.clip(ld, np.log(TAU_MIN_S / 2), np.log(TAU_MAX_S * 2))
@@ -119,10 +127,11 @@ def _refine(u, y, valid, dt, d0, tu0, td0, sym, force_d, ratio=1.25):
         m = int(np.argmin(sse))
         if sse[m] >= sse[offs.index((0, 0, 0))]:     # centre wins ties (clipped neighbours repeat it)
             step *= 0.5
+            dstep *= 0.5
             if step < 0.002:
                 break
         else:
-            d, ltu, ltd = int(dd[m]), float(lu[m]), float(ld[m])
+            d, ltu, ltd = float(dd[m]), float(lu[m]), float(ld[m])
     return d, float(np.exp(ltu)), float(np.exp(ltd))
 
 
@@ -137,7 +146,7 @@ def _grid(u, y, valid, dt, sym, force_d):
         D, TU, TD = (m.ravel() for m in np.meshgrid(ds, taus, taus, indexing="ij"))
     sse = _stats(u, y, valid, D, TU, TD, dt)[0]
     m = int(np.argmin(sse))
-    return int(D[m]), float(TU[m]), float(TD[m])
+    return float(D[m]), float(TU[m]), float(TD[m])
 
 
 def _fit(u, y, valid, dt, sym, force_d):
@@ -153,11 +162,11 @@ def _curvature(u, y, valid, dt, d, tu, td, sse, force_d, h=0.1):
     sig2 = max(sse / max(n - 4, 1), 1e-300)
     free = [0, 1] if force_d is not None else [0, 1, 2]
     steps = np.array([h, h, 1.0])
-    dmax = int(round(D_MAX_S / dt))
+    dmax = D_MAX_S / dt
 
     def pts(dl):
         th = np.array([np.log(tu), np.log(td), float(d)]) + dl
-        return min(max(int(round(th[2])), 0), dmax), np.exp(th[0]), np.exp(th[1])
+        return min(max(th[2], 0.0), dmax), np.exp(th[0]), np.exp(th[1])
 
     offs, keys = [np.zeros(3)], [("c",)]
     for i in free:
@@ -230,10 +239,10 @@ def identify_motor(t, u, rpm, rpm_max, dt, force_delay=None):
             flags.append("tau_poorly_identified")
         if se[2] > MAX_SE_DELAY_SAMPLES:
             flags.append("delay_poorly_identified")
-    dmax = int(round(D_MAX_S / dt))
-    if force_delay is None and d == dmax:
+    dmax = D_MAX_S / dt
+    if force_delay is None and d >= dmax - 1e-9:
         flags.append("delay_at_grid_edge")
-    if tu in (TAU_MIN_S / 2, TAU_MAX_S * 2) or td in (TAU_MIN_S / 2, TAU_MAX_S * 2):
+    if any(np.isclose(v, b, rtol=1e-6) for v in (tu, td) for b in (TAU_MIN_S / 2, TAU_MAX_S * 2)):
         flags.append("tau_at_bound")
     res.update(tau_up=tu, tau_down=td, tau_sym=tsym, delay_samples=d, delay_ms=1e3 * d * dt, gain=b, intercept=a,
                residual=norm, residual_rms=rms, structure=st, se_ln_tau_up=None if se is None else float(se[0]),
@@ -266,8 +275,8 @@ def load_ulg(path, rpm_max=None):
     inst = max(d.multi_id for d in u.data_list if d.name == "esc_status")
     esc = u.get_dataset("esc_status", inst).data
     am = u.get_dataset("actuator_motors").data
-    ke = "timestamp_sample" if "timestamp_sample" in esc else "timestamp"
-    kc = "timestamp_sample" if "timestamp_sample" in am else "timestamp"
+    # same field for both topics: EscStatus has only `timestamp`, so ActuatorMotors uses `timestamp` too
+    ke = kc = "timestamp"
     n = sum(1 for k in am if k.startswith("control[") and k[8:-1].isdigit())
     n = min(n, 4)
     cmd = np.stack([am[f"control[{i}]"] for i in range(n)], 1).astype(float)
@@ -290,7 +299,7 @@ def main(argv=None):
     ap.add_argument("ulg")
     ap.add_argument("--t0", type=float, default=-np.inf, help="window start, log seconds")
     ap.add_argument("--t1", type=float, default=np.inf)
-    ap.add_argument("--rpm-max", type=float, default=None, help="rotor speed for y = (rpm/rpm_max)^2; default from log params")
+    ap.add_argument("--rpm-max", type=float, default=None, help="rotor speed in rpm (the unit of esc_status esc_rpm) for y = (rpm/rpm_max)^2; default from log params")
     ap.add_argument("--json", default=None)
     a = ap.parse_args(argv)
     tc, cmd, tr, rpm, rpm_max = load_ulg(a.ulg, a.rpm_max)
