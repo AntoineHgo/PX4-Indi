@@ -30,7 +30,8 @@ DEFAULT_DIR=indi_flight/results/g3_campaign_f10
 # campaign definition (results/g3_pretest_q24_s197/fly_all.sh)
 SEED=173
 N=300
-PARAMS=indi_flight/results/g5_freeze_s157/params.params
+PARAMS_DEFAULT=indi_flight/results/g5_freeze_s157/params.params
+PARAMS=${G3_PARAMS:-$PARAMS_DEFAULT} # repo-relative; G3_PARAMS overrides at the first start of a DIR, then pinned in DIR/chain_params
 FLIGHT_TIMEOUT_S=1700 # host timeout around run.sh
 CONTAINER_TIMEOUT_S=1500
 RUN_TIMEOUT_S=1200 # g3_run.py --timeout-s
@@ -173,6 +174,7 @@ st.update({
     "done": done, "failed": failed, "remaining": remaining,
     "outcomes": outcomes, "scored": scored, "score_pending": pending_score, "key1_pass": k1, "key2_pass": k2,
     "binary_sha256": open(freeze).read().split()[0] if os.path.exists(freeze) else None,
+    "params": open(os.path.join(d, "chain_params")).read().strip() if os.path.exists(os.path.join(d, "chain_params")) else None,
     "speed": float(open(speed).read()) if os.path.exists(speed) else None,
     "started": started or st.get("started"), "updated": time.strftime("%F %T"),
     "mean_cycle_s": round(mean, 1),
@@ -255,7 +257,20 @@ pin_freeze() { # first start in DIR only: binary (verified by the caller, first 
 		frozen_build_files | sort -u | xargs -d '\n' sha256sum
 	} >"$D/chain_freeze.sha256" || die "cannot hash the frozen inputs"
 	image_id >"$D/chain_image_id"
+	echo "$PARAMS" >"$D/chain_params"
 	[ -s "$D/chain_image_id" ] || die "docker image $IMAGE not found"
+}
+
+# params file of DIR: pinned in chain_params at the first start (DIR without the file = default params file)
+select_params() {
+	local pinned=$PARAMS_DEFAULT
+	[ -s "$D/chain_params" ] && pinned=$(cat "$D/chain_params")
+	if [ -f "$D/chain_freeze.sha256" ] || [ -s "$D/chain_params" ]; then
+		[ -z "${G3_PARAMS:-}" ] || [ "$G3_PARAMS" = "$pinned" ] || die "refused: G3_PARAMS $G3_PARAMS differs from the params file pinned in $DREL ($pinned)"
+		PARAMS=$pinned
+	fi
+	[ -f "$REPO/$PARAMS" ] || die "params file $PARAMS missing"
+	FROZEN_INPUTS[0]=$PARAMS
 }
 
 pinned_sha() { head -1 "$D/chain_freeze.sha256" | cut -d' ' -f1; }
@@ -774,6 +789,7 @@ cmd_start() {
 	command -v docker >/dev/null || die "docker not found"
 	[ -n "$(image_id)" ] || die "docker image $IMAGE not found"
 
+	select_params
 	# freeze: the binary must be the FREEZE-10 gate binary (or the explicit override), and match the pins of DIR
 	local cur
 	cur=$(binary_sha)
@@ -927,6 +943,7 @@ rescore)
 _run) # internal: the detached chain
 	resolve_dir "$2"
 	SPEED=$(cat "$D/chain_speed")
+	select_params
 	run_chain
 	;;
 *)
