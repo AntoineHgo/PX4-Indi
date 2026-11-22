@@ -14,6 +14,8 @@ serially by the detached flight chain `bench/g3_chain.sh`, independently of any 
   --timeout-s 1200 --speed 1.0`. g3_run.py passes `--speed` on to run_scenario.py only when it is not 1.0, so at 1.0
   the flown command is the pre-test one. The chain option `start --speed F` (default 1.0) is pinned per directory in
   `chain_speed` and reported in `chain_status.json`. The wall-clock timeouts (1700/1500/1200 s) are not scaled with F.
+- **This campaign flies at speed 4** (owner decision 2026-11-22, evidence `speed_check/README.md`): first start
+  `bash indi_flight/bench/g3_chain.sh start indi_flight/results/g3_campaign_f10 0 299 --speed 4`.
 - Freeze: FREEZE-10 firmware, gate binary sha256 d220e19315c2798aa18a1bab6ce7300cd0f6eff14d43273d5064c06009d46076 (as in
   every pre-test run, `run.json` `provenance.binary_sha256`), config `g5_freeze_s157/params.params`. At the first start
   the chain pins the binary, the runner/scorer/model inputs, `build/px4_sitl_default/etc`, the gz plugins, `gz_env.sh`
@@ -88,5 +90,9 @@ serially by the detached flight chain `bench/g3_chain.sh`, independently of any 
 After `CHAIN_FINISHED`: rescore if any run is unscored, then the GATES "Campaign pass" rule (0 LOC, 0 sustained
 oscillation, items 3-6 in >= 95 % of valid runs, every miss explained; Q24 B rule for draws shared with PID).
 Key 2 column 5 (G4 command chatter) is not part of the G3 verdict.
+Speed rule (speed 4, `speed_check/README.md`): every item 1-2 failure, and every item 3-6 miss within the speed-1
+same-seed spread of its threshold (altitude mean: up to 1.0 x the limit; horizontal RMS 0.16; roll/pitch mean 0.26),
+is re-flown at speed 1 on the same index (its own chain dir, after CHAIN_FINISHED or with the campaign stopped) before
+it is classified; report both flights, and classify on the speed-1 flight.
 Every `FAULTS.tsv` row with the `no ATTITUDE for 10 s wall` stall needs a host cause in the evidence (suspend, load,
 docker): a PX4 hang gives the same row.

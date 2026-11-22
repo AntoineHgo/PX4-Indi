@@ -7,7 +7,9 @@
 - Gates: see GATE_STATUS.tsv. G1, G2, G4, G5 PASSED (G5 S198).
 - G3 campaign: detached flight chain `bench/g3_chain.sh` (owner-built), 300 runs seed 173 idx 0-299 at FREEZE-10
   into results/g3_campaign_f10 (README there), both keys per run. Start/resume:
-  `bash indi_flight/bench/g3_chain.sh start indi_flight/results/g3_campaign_f10 0 299`; `status`, `stop`, `rescore`.
+  `bash indi_flight/bench/g3_chain.sh start indi_flight/results/g3_campaign_f10 0 299 --speed 4` (launched by owner
+  session 2026-11-22); `status`, `stop`, `rescore`. Speed 4 evidence + speed-1 re-fly rule for failures:
+  results/g3_campaign_f10/speed_check/README.md (also A-4 evidence for the G3 set-up).
 - Owner answers Q24 B and Q25 B (2026-11-22) acted on S197: GATES "Owner amendments S197", D-OWNER-Q24, D-OWNER-Q25,
   design/airframe_requirements.md (F-3 list + bring-up items). FREEZE-10 stands.
 - Owner rule F-10 (2026-11-22): delivered code short needed comments, no project ids/paths, explicit names, PX4
