@@ -35,7 +35,8 @@
    owner question with G3 verdict data.
 5. G7 (stage 7, not before G2/G4/G5 verdicts): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site
    (K128 MAJOR), D-JFF-SOURCE case, D-OFFB-POSVEL wiring test, omega_ff step on offboard entry (key2_jffoffb MINOR),
-   checker self-tests passthrough_check/offb_vel_check, g511 yaw p95 subtraction test (g511_check.py:184), g510
+   checker self-tests passthrough/offb_vel DONE S194 (defects listed in bench/tests/SELFTEST_G7_S194.md: no verdict,
+   no LOC check in offb_vel_check, IndexError on empty topic; confirm which script scored G5.5 offb_vel_step), g511 yaw p95 subtraction test (g511_check.py:184), g510
    MPC_TILTMAX_AIR log-read branch (g510_check.py:115-119); ACT_TC/W_MAX firmware vs bench (lesson 12); guard
    params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
 Deferred to before G6: yaw fit fix (r regressor + matched grid = probe V3, K126 MAJORs, A-44).
@@ -63,7 +64,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | Q10 | FREEZE-10 re-fly queue: ENDED 01:14 S194, all 4 steps rc 0 | - | results/freeze10_s193/ | - |
-| S194d | G7 checker self-tests passthrough_check / offb_vel_check (sonnet) | agent | bench/tests/test_passthrough_check.py, test_offb_vel_check.py, SELFTEST_G7_S194.md | if absent or uncommitted: check files, run tests, commit |
+(none; S194 checker self-tests committed: bench/tests/test_passthrough_check.py, test_offb_vel_check.py)
 (S189 agents done and committed. Build probes: guard denies a segment naming indi_project with
 rm/tee/git apply etc.; run each run.sh call alone, redirect only into indi_flight/.)
 
