@@ -1247,3 +1247,32 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
 - Rows invalidated: none (comments, descriptions, headers; no default, name or code path changes). Check:
   DEFAULTS_DIFF re-run identical, unit tests pass, astyle clean. Alternative: defer to after verdicts (rejected:
   text edits are independent of Q24/Q25). Overturn if a diff touches a default, a name or an executable line.
+
+## D-OWNER-Q24 (S197, 2026-11-22): G3 GNSS mismatch range +-50 ms, pre-test re-run plan
+- Owner answer Q24 B (GATES "Owner amendments S197"). Sampler change: `bench/g3_sample.py` GNSS_MISMATCH
+  (-100, 100) -> (-50, 50). The offset is `lin(u["gnss_off"], ...)` of a uniform variate drawn in the same order, so
+  under the same seed every other factor of every draw is unchanged and each mismatched offset is halved; C4
+  (gnss_off = 0) moves to -50 ms by the same line.
+- Plan: re-draw the seed-173 pre-test table with the new range and diff it against the freeze-10 table; a draw whose
+  only difference is none (matched) keeps its freeze-10 flight and scores; every draw whose plant changed is re-flown
+  at FREEZE-10 and scored with both keys. If the diff shows any other changed factor, re-fly all 20. The 16/20 result
+  under the old range stays in the evidence. 03 (key 1) and 08 are reported as shared with PID, not counted.
+- Then the 300-run campaign with the new range (same scripts, both keys).
+- Alternatives: re-fly all 20 (costs CPU for identical plants, G1 determinism already holds); a new seed (loses the
+  link to the 16/20 evidence). Overturn: the draw diff shows other factors moved, or a re-flown matched draw differs.
+
+## D-OWNER-Q25 (S197, 2026-11-22): G5.5 horizontal limit from trajectory speed and attitude time constant
+- Owner answer Q25 B. H_lim = max(0.5 m, tau_att x v_rms) per `o1`-`o7` row (GATES "Owner amendments S197").
+- Derivation. Both stacks change the direction of horizontal acceleration only by tilting, through the stock attitude
+  loop (mc_att_control, P on attitude error, gain MC_ROLL_P = MC_PITCH_P = 8.0 1/s in `4040_gz_quad5in`, set at
+  stage 1). Its response to an attitude command is first order with tau_att = 1/8.0 = 0.125 s, so the achieved
+  acceleration lags the commanded one by about tau_att. A follower with exact feed-forward and that lag holds a
+  position error about v x tau_att for omega x tau_att << 1 (o2: 1 rad/s x 0.125 = 0.125; lemniscate y harmonic 1.70
+  x 0.125 = 0.21). The 0.5 m floor keeps the G3 steady limit where the reference does not move (z-sine rows).
+- Sources: trajectory constants `bench/scenarios.py:27-29` (o2 r 5 m, omega 1 rad/s -> 5 m/s; lemniscate 6 m/s peak,
+  4.24 m/s RMS); MC_ROLL_P in the airframe file. No score was used; PID o2 1.14-1.16 m and INDI 0.49-0.50 m were known
+  but the formula depends on neither.
+- Alternatives: v / MPC_XY_P (stock position-loop following error without feed-forward, 4.2 m on o2: too loose to
+  matter); a fixed metre value (not sourced); the INDI loop's own G2 bandwidth (ties the limit to the tested design).
+  Overturn: a sourced attitude time constant different from 1/MC_ROLL_P for this airframe (e.g. a measured attitude
+  step response on the PID reference).

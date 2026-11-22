@@ -286,12 +286,12 @@ Each run uses a distinct sampler seed and a gz seed from the sampler; the sample
 | telemetry dropout / total loss / frozen | dropout 0-20 %; loss 2 s on one motor; frozen 1 s | dropout 40 %; loss 20 %; frozen 20 % of runs | start drawn inside the hold segments |
 | vibration | x[1, 5] of the x1 point 1.0 m/s^2, 0.05 rad/s per rotor | log-uniform | x1 SOURCED `scenarios.py:166` / 3; G4 typical profile is added underneath |
 | GNSS latency | 80-250 ms | uniform | MISSING hook |
-| EKF GNSS delay param | matched (= latency) in 50 %; mismatched (latency + U[-100, +100] ms, min 0) in 50 % | | `SENS_GNSS0_DELAY` |
+| EKF GNSS delay param | matched (= latency) in 50 %; mismatched (latency + U[-50, +50] ms, min 0) in 50 % (Q24 B, S197; was U[-100, +100]) | | `SENS_GNSS0_DELAY` |
 | wind | steady 0-5 m/s plus the existing gust profile, peak 3-9 m/s | uniform | direction uniform; 9 m/s peak = 10 % W (t132) |
 
 Corners (PROPOSED, 10 runs each, every other factor drawn): C1 controller G1 x2 vs plant, tau x3, delay 10 ms (phase worst);
 C2 controller G1 x0.5, mass +30 %, thrust 0.7, inertia +30 % (gain worst); C3 saturation corner 2.0 x hover, gust 9 m/s,
-mass +30 %; C4 GNSS 250 ms mismatched -100 ms, wind 5 m/s plus gust, G1 x2; C5 vibration x5, telemetry frozen, dropout 20 %,
+mass +30 %; C4 GNSS 250 ms mismatched -50 ms (Q24 B, S197; was -100), wind 5 m/s plus gust, G1 x2; C5 vibration x5, telemetry frozen, dropout 20 %,
 tau x0.5; C6 weak motor 0.7 on tau x3 and delay 10 ms. Signs of mismatch both ways are covered by C1/C2 and by the draw.
 
 **Flight per run** (PROPOSED, 100 s sim): arm, take-off to 3 m; hover 25 s (window last 10 s); `step_roll` 15 deg sequence;
@@ -683,3 +683,21 @@ yaw <= 1196 of 1350). Evidence limits carried as freeze-9: (1) key2 BLOCKED on 3
 keys above the limits in each (pt1_ax1_r800_s1 PM 71.3/67.8; pt1_ax3_r400_s2 PM 58.7/58.2, GM key2 only 16.3;
 pt1_ax3_r800_s2 GM 22.4/17.8); (2) rate and attitude spot margins thin (+1.9/+3.0 deg); (3) 3 rate x-check groups and
 A-51 as Q16 A. 250 Hz not measured.
+
+## Owner amendments S197 (2026-11-22): Q24 B and Q25 B test-definition fixes (owner answers, QUESTIONS.md)
+- **G3 GNSS delay mismatch (Q24 B).** The EKF GNSS delay draw is latency + U[-50, +50] ms (min 0) in the mismatched
+  50 % (was U[-100, +100]); corner C4 uses -50 ms. Reason: +-100 ms exceeds what a correct bring-up leaves; the S192
+  matched-GNSS probe shows draws 02/05 pass. New F-3 requirement and bring-up item: EKF2/SENS GNSS delay set within
+  50 ms of the measured GNSS latency (design/airframe_requirements.md). Draws 08 and 03 (key 1), which fail with PID
+  on the same draws, are reported in the G3 evidence as scenario properties shared with PID, not counted against
+  INDI. The freeze-10 pre-test result under the old range (16/20 both keys) stays in the evidence. Re-run plan:
+  D-OWNER-Q24. No firmware or config change; FREEZE-10, G2 and G4 verdicts stand.
+- **G5.5 horizontal trajectory limit (Q25 B).** The absolute 0.5 m horizontal RMS limit is a steady-state hover
+  limit and a test defect on moving trajectories. For each `o1`-`o7` row the horizontal limit is
+  H_lim = max(0.5 m, tau_att x v_rms), v_rms = RMS of the analytic reference horizontal speed over the same
+  trajectory segments as the error RMS, tau_att = 1 / MC_ROLL_P of the reference airframe = 1 / 8.0 = 0.125 s
+  (`4040_gz_quad5in`, MC_ROLL_P = MC_PITCH_P = 8.0, set at stage 1). Derivation and sources: D-OWNER-Q25; written
+  before any re-score, from scenario and airframe constants only. Expected values: o2 about 0.62 m (5 m/s),
+  lemniscate rows about 0.53 m (4.24 m/s RMS), z-sine rows 0.5 m (floor); the scorer tables the exact values. The same
+  limit applies to the PID reference; both stacks are reported against it. Vertical 0.3 m and the `offb_vel_step`
+  rows are unchanged. Re-score only, no re-fly.
