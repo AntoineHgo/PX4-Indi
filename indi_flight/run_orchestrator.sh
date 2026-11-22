@@ -147,6 +147,14 @@ while [ ! -f indi_flight/DONE ] && [ ! -f indi_flight/STOP ]; do
 		continue
 	fi
 	waiting_logged=
+	# the detached G3 flight chain holds this lock while it flies: no session meanwhile (sequential rule, freeze)
+	if [ -f "$LOG_DIR/flight_chain.lock" ] && ! flock -n "$LOG_DIR/flight_chain.lock" true 9>&-; then
+		[ -n "${chain_logged:-}" ] || log "G3 flight chain flying ($(cat "$LOG_DIR/flight_chain.dir" 2>/dev/null)), no session until it stops"
+		chain_logged=1
+		sleep 60 9>&-
+		continue
+	fi
+	chain_logged=
 	# --- usage gate: launch only within the orchestrator's share of the owner's usage ---
 	now=$(date +%s)
 	rl=$(probe_usage)
@@ -233,20 +241,22 @@ while [ ! -f indi_flight/DONE ] && [ ! -f indi_flight/STOP ]; do
 $dirty_dirs"
 		log "run $runs: indi_flight/results has $n_dirty dirty paths, the orchestrator is told to commit or ignore them"
 	fi
-	# detached G3 flight chain (indi_flight/bench/g3_chain.sh): a running chain holds its lock
-	chain_lock=$LOG_DIR/flight_chain.lock
+	# detached G3 flight chain (indi_flight/bench/g3_chain.sh), not running here (the loop idles while it flies)
 	chain_dir=$(cat "$LOG_DIR/flight_chain.dir" 2>/dev/null)
-	if [ -f "$chain_lock" ] && ! flock -n "$chain_lock" true 9>&-; then
+	if [ -n "$chain_dir" ] && [ -f "$chain_dir/chain_status.json" ]; then
+		if [ -f "$chain_dir/CHAIN_FINISHED" ]; then
+			chain_line="- G3 chain $chain_dir finished: commit its runs, g3_chain.sh rescore if any run is unscored, then the G3 verdict per GATES (skip if written)."
+		else
+			chain_line="- G3 chain $chain_dir is not running and unfinished: do not modify files listed in its chain_freeze.sha256 or switch branches over them. Commit its finished runs."
+			if [ -f "$chain_dir/CHAIN_HALTED" ]; then
+				chain_line="$chain_line It halted: $chain_dir/CHAIN_HALTED gives the reason; diagnosing it is the first task."
+			else
+				chain_line="$chain_line Run bash indi_flight/bench/g3_chain.sh status; unless STATE.md says it was stopped on purpose, start resumes it."
+			fi
+		fi
 		prompt="$prompt
-- The G3 flight chain is flying in ${chain_dir:-?} (bash indi_flight/bench/g3_chain.sh status). While it runs: no
-  gate flights, no docker builds, no firmware rebuild. Commit its finished runs (run_NNN with g3_done.json). When
-  CHAIN_FINISHED appears: score any unscored runs (g3_chain.sh rescore), then the G3 verdict per GATES."
-		log "run $runs: G3 flight chain running in ${chain_dir:-?}"
-	fi
-	if [ -n "$chain_dir" ] && [ -f "$chain_dir/CHAIN_HALTED" ]; then
-		prompt="$prompt
-- The G3 flight chain halted: $chain_dir/CHAIN_HALTED gives the reason. Diagnosing it is the first task."
-		log "run $runs: G3 flight chain halted ($chain_dir/CHAIN_HALTED)"
+$chain_line"
+		log "run $runs: G3 chain $chain_dir not running ($(jq -r .state "$chain_dir/chain_status.json" 2>/dev/null))"
 	fi
 	# gate progress is measured on indi_flight/GATE_STATUS.tsv, not on self-reported journal lines (owner, 2026-11-21)
 	stale=$(cat "$LOG_DIR/gate_status.stale" 2>/dev/null || echo 0)
