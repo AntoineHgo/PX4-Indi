@@ -66,3 +66,18 @@ Options.
  For 08 (and 03 key 1): count as a scenario property shared with PID (reported, not an INDI failure), or count.
 Recommendation: A for 02/05/03 (honest fix, config only); 08 reported as shared with PID, not counted against INDI.
 Meanwhile: the queue (G5, G4, G2 outer) runs on; no G3 re-fly, re-score or note until answered. Not blocked overall.
+
+## Q25 (S194, 2026-11-22): G5.5 o2_circle_z s1 fails by 3 mm, PID fails by 0.65 m (BLOCKING for G5 only)
+Context. FREEZE-10 G5 re-fly (results/freeze10_s193/G5_SCORES.md): every flown G5 row passes both keys except G5.5
+o2_circle_z s1: horizontal RMS truth vs analytic reference 0.5027 m, limit 0.5 m (both keys agree; s2 0.491, s3
+0.496; freeze-9 0.488/0.497/0.499 PASS). PID reference, same scenario, seeds and nominal plant
+(results/freeze10_s193/g55_pid_ref/README.md): 1.157/1.144/1.146 m, no LOC. The 0.5 m limit is the G3 steady-state
+xy limit applied to a moving trajectory (GATES l.462); Q11 B kept it. Coupling: Q24 option A (lower XY gains for the
+GNSS-mismatch draws) would most likely raise o2 tracking error further.
+Options.
+ A. Keep 0.5 m: G5 NOT PASSED on one cell (0.6 % over), all other rows pass; stated as a limit in the report.
+ B. Declare the row a test defect (absolute 0.5 m on a circle no reference stack meets) and set a trajectory limit
+    sourced from the scenario (e.g. speed x one outer-loop time constant); re-score only, no re-fly.
+ C. Keep 0.5 m and accept a tuning change (config) that improves o2 tracking, folded into a FREEZE-11 with Q24.
+Recommendation: A (no threshold change after the test to pass a row by 3 mm); B only if you judge the limit wrong
+for both stacks. Meanwhile: no G5 re-fly, re-score or note; G2 verdict proceeds. Not blocked overall.
