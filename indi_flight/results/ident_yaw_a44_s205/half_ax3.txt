@@ -1,0 +1,20 @@
+axis yaw window 22.1-76.0 s taps 15 decim 2 n 21520
+G1 208.13 rad/s^2 per unit  95% CI +-3.25 (1.6 %)
+G2 26.874 (rad/s^2 per unit/s, firmware units)  95% CI +-0.052 (0.2 %)
+Dr 1.462 1/s  95% CI +-0.101
+first stage SW F classical 1155.8 41306.8 1363.9  HAC effective 751.2 22272.2 909.2
+OLS 209.460 26.778 -1.509
+Hansen J 60.2 (df 23) intercept -0.001 shift 1 samples
+J curve -2:490 -1:487 0:472 1:105 2:483 3:488 4:487 5:486 6:484 7:482 8:478 9:473 10:469 11:469 12:473
+PASS  SW effective first-stage F (G1) >= 10  (value 751.2)
+PASS  SW effective first-stage F (G2) >= 10  (value 2.227e+04)
+PASS  SW effective first-stage F (Dr) >= 10  (value 909.2)
+PASS  Hansen df = rank(Z) - npar >= 1 (MAJOR-2)  (value 23)
+PASS  J/df <= 20 (uncalibrated diagnostic threshold, D-IDENT-J)  (value 2.616)
+PASS  J curve finite on the whole shift scan  (value 1)
+PASS  latency shift interior to scan [-2,12]  (value 1)
+PASS  95% CI/|G1| <= 0.15  (value 0.01564)
+PASS  95% CI/|G2| <= 0.5  (value 0.001917)
+PASS  filter-chain gain match (G1 column) <= 0.01  (value 0.0002814)
+PASS  excluded fraction <= 0.25  (value 0)
+IDENT PASS
