@@ -1276,3 +1276,8 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   matter); a fixed metre value (not sourced); the INDI loop's own G2 bandwidth (ties the limit to the tested design).
   Overturn: a sourced attitude time constant different from 1/MC_ROLL_P for this airframe (e.g. a measured attitude
   step response on the PID reference).
+- S197 result note: the formula as written (v_rms over the scorers' whole `traj` segment, ramps included) gives o2
+  4.548 m/s -> 0.5685 m and lemniscate 3.711 m/s -> 0.464 -> floor 0.5 m; the "expected" 0.62/0.53 m in the GATES
+  amendment were cruise-speed estimates (self-test reproduces 5.0 and 4.243 m/s without ramps). The written formula
+  governs; it is the tighter reading. Re-score results/freeze10_s193/G5_5_RESCORE_Q25.md: INDI 24/24 both keys
+  (tightest o3 +0.043 m), PID o2 1.14-1.16 m and o1 0.79/1.04 m fail; no PID refs for o3-o7.
