@@ -38,6 +38,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <math.h>
 #include <string.h>
 
 #include "IndiInjectionStep.hpp"
@@ -267,4 +268,71 @@ TEST(IndiInjectionStepTest, RateSetpointBreakGateClosingRestartsSequence)
 
 		EXPECT_GT(peak_after, 0.05f) << "v " << v;
 	}
+}
+
+// G7(b) break-check additions (S196)
+
+TEST(IndiInjectionStepTest, TorqueBreakNotInjectedWhileDisarmedOrLanded)
+{
+	// PT 0: the generator gets the real armed/landed flags (header of IndiInjection::update: zero when disarmed or landed)
+	IndiRateControl law = makeLaw();
+	IndiInjection inj;
+	setup(inj, 1);
+	const Vector3f rates(0.1f, 0.f, 0.f), sp(0.2f, 0.f, 0.f), z;
+	IndiInjectionStepOut out{};
+
+	runIndiInjectionStep(law, inj, stepIn(0, kT0), rates, sp, z, z, out); // origin
+	runIndiInjectionStep(law, inj, stepIn(0, kT0 + 3700000), rates, sp, z, z, out);
+	EXPECT_GT(fabsf(out.torque_inject(0)), 0.01f); // active: 0.1 * 0.1196 / 0.02 = 0.598
+
+	IndiInjectionStepIn in = stepIn(0, kT0 + 3800000);
+	in.armed = false;
+	runIndiInjectionStep(law, inj, in, rates, sp, z, z, out);
+	EXPECT_EQ(out.torque_inject(0), 0.f);
+	EXPECT_EQ(out.torque_sp(0), out.torque_pre_inject(0));
+
+	// disarm restarted the sequence: new origin at the next armed cycle, active again 3.7 s later
+	const uint64_t t1 = kT0 + 10000000;
+	runIndiInjectionStep(law, inj, stepIn(0, t1), rates, sp, z, z, out);
+	runIndiInjectionStep(law, inj, stepIn(0, t1 + 3700000), rates, sp, z, z, out);
+	EXPECT_GT(fabsf(out.torque_inject(0)), 0.01f);
+
+	in = stepIn(0, t1 + 3800000);
+	in.landed = true;
+	runIndiInjectionStep(law, inj, in, rates, sp, z, z, out);
+	EXPECT_EQ(out.torque_inject(0), 0.f);
+}
+
+TEST(IndiInjectionStepTest, ReusedOutputHasNoStaleFieldsAcrossBreakPoints)
+{
+	// the module keeps the output struct between cycles: the fields of the inactive break point must be cleared
+	IndiRateControl law = makeLaw();
+	IndiInjection inj;
+	setup(inj, 1);
+	const Vector3f rates(0.1f, 0.f, 0.f), sp(0.2f, 0.f, 0.f), z;
+	IndiInjectionStepOut out{};
+
+	runIndiInjectionStep(law, inj, stepIn(0, kT0), rates, sp, z, z, out);
+	runIndiInjectionStep(law, inj, stepIn(0, kT0 + 3700000), rates, sp, z, z, out);
+	ASSERT_GT(fabsf(out.torque_inject(0)), 0.01f);
+
+	// PT 1 after PT 0: torque injection must read zero, rate setpoint fields filled
+	runIndiInjectionStep(law, inj, stepIn(1, kT0 + 3800000), rates, sp, z, z, out);
+	EXPECT_EQ(out.torque_inject(0), 0.f);
+	EXPECT_EQ(out.torque_sp(0), out.torque_pre_inject(0));
+	ASSERT_GT(fabsf(out.rates_sp_inject(0)), 1e-4f);
+	EXPECT_EQ(out.rates_sp_pre_inject(0), sp(0));
+
+	// PT 0 after PT 1: rate setpoint fields must read zero again
+	runIndiInjectionStep(law, inj, stepIn(0, kT0 + 3900000), rates, sp, z, z, out);
+	EXPECT_EQ(out.rates_sp_pre_inject(0), 0.f);
+	EXPECT_EQ(out.rates_sp_inject(0), 0.f);
+	EXPECT_EQ(out.rates_sp_applied(0), 0.f);
+	EXPECT_GT(fabsf(out.torque_inject(0)), 0.01f);
+
+	// injection switched off with the same stale output: torque injection reads zero
+	setup(inj, 0);
+	runIndiInjectionStep(law, inj, stepIn(0, kT0 + 4000000), rates, sp, z, z, out);
+	EXPECT_EQ(out.torque_inject(0), 0.f);
+	EXPECT_EQ(out.torque_sp(0), out.torque_pre_inject(0));
 }

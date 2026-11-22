@@ -39,6 +39,8 @@
 
 #include <gtest/gtest.h>
 
+#include <math.h>
+
 #include "IndiInjection.hpp"
 
 TEST(IndiInjectionTest, OffIsExactZero)
@@ -99,4 +101,135 @@ TEST(IndiInjectionTest, ComponentLimit)
 	inj.setParameters(1, 0.02f, 100.f, 0.01f, 200.f, 1, 0.f);
 	EXPECT_LE(inj.numComponents(), IndiInjection::MAX_COMPONENTS);
 	EXPECT_GT(inj.numComponents(), 0);
+}
+
+// G7(b) break-check additions (S196): behaviour the header states that no test pinned down
+
+TEST(IndiInjectionTest, AxisOutOfRangeIsOff)
+{
+	// header: axis 0 off, 1..3 an axis, anything else off
+	IndiInjection inj;
+	inj.setParameters(4, 0.02f, 10.f, 1.f, 60.f, 2, 0.f);
+	EXPECT_EQ(inj.axis(), -1);
+	EXPECT_EQ(inj.numComponents(), 0);
+	EXPECT_EQ(inj.update(5000000, true, false), 0.f);
+
+	inj.setParameters(-1, 0.02f, 10.f, 1.f, 60.f, 2, 0.f);
+	EXPECT_EQ(inj.axis(), -1);
+	EXPECT_EQ(inj.numComponents(), 0);
+
+	inj.setParameters(3, 0.02f, 10.f, 1.f, 60.f, 2, 0.f);
+	EXPECT_EQ(inj.axis(), 2);
+}
+
+TEST(IndiInjectionTest, DelayHoldsOffTheStart)
+{
+	// origin = first airborne cycle + delay: exactly zero for the whole 2 s delay, then the waveform from its own t = 0
+	IndiInjection inj;
+	inj.setParameters(3, 0.02f, 10.f, 1.f, 60.f, 2, 2.f);
+
+	const uint64_t t0 = 1000000;
+	EXPECT_EQ(inj.update(t0, true, false), 0.f);
+	EXPECT_EQ(inj.update(t0 + 1000000, true, false), 0.f);
+	EXPECT_EQ(inj.update(t0 + 1900000, true, false), 0.f);
+	EXPECT_NEAR(inj.update(t0 + 2000000 + 3700000, true, false), 0.11957619297037093, 1e-6);
+	// the window is n_periods * period = 20 s long from the origin, not from the first cycle
+	EXPECT_NEAR(inj.update(t0 + 2000000 + 19900000, true, false), inj.waveform(19.9), 1e-6);
+	EXPECT_EQ(inj.update(t0 + 2000000 + 20000000, true, false), 0.f);
+}
+
+TEST(IndiInjectionTest, InvalidRangeOrCountIsOff)
+{
+	// axis selected but the spectrum is not defined: no components, exact zero
+	IndiInjection inj;
+	inj.setParameters(1, 0.02f, 10.f, 60.f, 60.f, 2, 0.f); // f_max == f_min
+	EXPECT_EQ(inj.numComponents(), 0);
+	EXPECT_EQ(inj.update(5000000, true, false), 0.f);
+
+	inj.setParameters(1, 0.02f, 10.f, 60.f, 1.f, 2, 0.f); // f_max < f_min
+	EXPECT_EQ(inj.numComponents(), 0);
+
+	inj.setParameters(1, 0.02f, 10.f, 0.f, 60.f, 2, 0.f); // f_min == 0
+	EXPECT_EQ(inj.numComponents(), 0);
+
+	inj.setParameters(1, 0.02f, 0.f, 1.f, 60.f, 2, 0.f); // period == 0
+	EXPECT_EQ(inj.numComponents(), 0);
+
+	inj.setParameters(1, 0.02f, 10.f, 1.f, 60.f, 0, 0.f); // no period flown
+	EXPECT_EQ(inj.numComponents(), 0);
+	EXPECT_EQ(inj.update(5000000, true, false), 0.f);
+
+	inj.setParameters(1, 0.02f, 10.f, 1.f, 60.f, 1, 0.f); // valid again
+	EXPECT_EQ(inj.numComponents(), 18);
+}
+
+TEST(IndiInjectionTest, BinsAreUniqueForShortPeriod)
+{
+	// Tp = 0.1 s: df = 10 Hz, the 19 log spaced candidates 1 .. 63 Hz collapse onto the bins k = 1 .. 6 (10 .. 60 Hz),
+	// each kept once (hand derivation: candidates 5.0 .. 12.6 Hz -> k=1, 15.8 / 19.95 -> 2, 25.1 / 31.6 -> 3, 39.8 -> 4,
+	// 50.1 -> 5, 63.1 -> 6 and 6 * 10 <= 60 + 5; below 5 Hz k = 0 is dropped)
+	IndiInjection inj;
+	inj.setParameters(1, 0.3f, 0.1f, 1.f, 60.f, 1, 0.f);
+	ASSERT_EQ(inj.numComponents(), 6);
+
+	// equal power: one period holds each bin with amplitude 0.3
+	const int n = 1000;
+	const double dt = 0.1 / n;
+	double re = 0.0;
+	double im = 0.0;
+
+	for (int i = 0; i < n; i++) {
+		const double w = inj.waveform(i * dt);
+		const double a = 2.0 * M_PI * 3 * i / n;
+		re += w * cos(a);
+		im -= w * sin(a);
+	}
+
+	EXPECT_NEAR(2.0 * sqrt(re * re + im * im) / n, 0.3, 1e-3);
+}
+
+TEST(IndiInjectionTest, ParameterChangeRestartsOriginUnchangedKeepsIt)
+{
+	IndiInjection inj;
+	inj.setParameters(3, 0.02f, 10.f, 1.f, 60.f, 1, 0.f);
+
+	const uint64_t t0 = 1000000;
+	EXPECT_NEAR(inj.update(t0, true, false), 0.f, 1e-9f); // origin t0
+
+	// same values again: nothing rebuilt, origin kept
+	inj.setParameters(3, 0.02f, 10.f, 1.f, 60.f, 1, 0.f);
+	EXPECT_NEAR(inj.update(t0 + 3700000, true, false), 0.11957619297037093, 1e-6);
+
+	// a changed amplitude restarts the origin at the next cycle and scales the waveform
+	inj.setParameters(3, 0.04f, 10.f, 1.f, 60.f, 1, 0.f);
+	const uint64_t t1 = t0 + 5000000;
+	EXPECT_NEAR(inj.update(t1, true, false), 0.f, 1e-9f);
+	EXPECT_NEAR(inj.update(t1 + 3700000, true, false), 2.0 * 0.11957619297037093, 1e-6);
+
+	// only n_periods changed (1 -> 3): the window is rebuilt and now covers 25 s after the new origin
+	EXPECT_EQ(inj.update(t1 + 25000000, true, false), 0.f); // one period only: over
+	inj.setParameters(3, 0.04f, 10.f, 1.f, 60.f, 3, 0.f);
+	const uint64_t t2 = t1 + 30000000;
+	EXPECT_NEAR(inj.update(t2, true, false), 0.f, 1e-9f);
+	EXPECT_NEAR(inj.update(t2 + 25000000, true, false), inj.waveform(25.0), 1e-6);
+	EXPECT_GT(fabs(inj.waveform(25.0)), 1e-3);
+}
+
+TEST(IndiInjectionTest, DisarmedUpdateRestartsWindow)
+{
+	// a disarmed update() is the disarm edge: the next arm starts a new window after its own delay
+	IndiInjection inj;
+	inj.setParameters(3, 0.02f, 10.f, 1.f, 60.f, 1, 2.f);
+
+	const uint64_t t0 = 1000000;
+	EXPECT_EQ(inj.update(t0, true, false), 0.f);
+	EXPECT_NEAR(inj.update(t0 + 2000000 + 3700000, true, false), 0.11957619297037093, 1e-6);
+	EXPECT_EQ(inj.update(t0 + 20000000, true, false), 0.f); // window over
+
+	EXPECT_EQ(inj.update(t0 + 21000000, false, false), 0.f); // disarmed
+
+	const uint64_t t1 = 100000000;
+	EXPECT_EQ(inj.update(t1, true, false), 0.f);
+	EXPECT_EQ(inj.update(t1 + 1000000, true, false), 0.f);
+	EXPECT_NEAR(inj.update(t1 + 2000000 + 3700000, true, false), 0.11957619297037093, 1e-6);
 }
