@@ -1226,3 +1226,11 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   binary build/px4_sitl_default is not rebuilt for this; any FREEZE-11 rebuild includes it.
 - Alternatives: leave it for the firmware-only branch (rejected: G7(e) needs it now and the branch must equal tested
   code). Overturn if: a substitution changes a value on a reachable path (unit test or review shows a difference).
+
+## D-G7-DEFAULTS (S195): what "firmware defaults are a validated configuration" means for INDI
+- Physical parameters (W_MAX, ACT_TC) are per airframe: set in the airframe file 4040, not as firmware defaults.
+  Gains: firmware yaml defaults equal the flown set (results/g7_s195/DEFAULTS_DIFF.md, 0 gain mismatches).
+- MC_INDI_ID_OK stays 0 everywhere: the un-identified state (gains 0.5x, D-IDENT) is a validated configuration only
+  once G6 flies it; until then G7(c) is open on that point. Enable switches stay 0 (PID default).
+- Alternative: ID_OK 1 in 4040 (rejected: claims identification the user has not run). Overturn if G6 shows the
+  0.5x pre-identification state does not fly the G6 set.

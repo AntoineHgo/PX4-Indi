@@ -84,3 +84,10 @@ Unverified: "equal" uses numeric comparison against the yaml default; the valida
 ## Verdict
 
 G7(c) would pass on the class (i) criterion (0 class (i) mismatches; 3 class ii physical/identification, 2 class iii switches), with the 4040 ACT_TC / ID_OK caveat above.
+
+## S195 follow-up (orchestrator)
+- MC_INDI_ACT_TC 0.033 added to airframe 4040 (commit "fix(airframes): set the INDI motor time constant"). Gate
+  flights unaffected: the runner sets 0.033 from the params file.
+- MC_INDI_ID_OK stays 0 in firmware and 4040 by design (D-G7-DEFAULTS): it is the pre-identification state (D-IDENT,
+  gains at 0.5x) that G6 must validate; the validated identified set is 4040 + ID_OK 1 after identification.
+- MC_INDI_EN / MC_INDI_POS_EN stay 0: PID is the default (deliverable 1).
