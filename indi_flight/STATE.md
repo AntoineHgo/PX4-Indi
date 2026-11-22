@@ -28,12 +28,14 @@
    Pre-test 17/20 (results/g3_pretest_q24_s197). 02 item-3 miss (0.318 m, +48 ms) is a quota item, not a chase.
 2. G5 PASSED at freeze-10 (S198). A firmware change after the freeze re-opens the rows it touches (freeze rule).
    Trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
-3. G7 open items: (f) F-10 clean-up per results/g7_s198/F10_PLAN.md, D-F10-NEUTRAL; unit 1 done S200 (ef748da3ce,
-   F10_UNIT1.md: separate build dir build/f10_sitl, objdump identical; two "INDI stage" log strings left). Next unit 2
-   (re-use the unit 1 brief). One unit per session, never during gate flights; public renames listed, not done.
+3. G7 open items: (f) F-10 clean-up per results/g7_s198/F10_PLAN.md, D-F10-NEUTRAL; units 1-2 done (ef748da3ce, 21737adf53;
+   F10_UNIT1/2.md: build dir build/f10_sitl, unit tests in build/px4_sitl_test, objdump identical; two "INDI stage"
+   log strings left). Next unit 3 (re-use the unit 2 brief, scope from F10_PLAN section 2). One unit per session, never during gate flights; public renames listed, not done.
    (g) build check of indi-fw-pr with the worktree OUTSIDE the repo (re-run make_fw_branch.sh --force-recreate after
    any firmware commit; quad5in model lives in indi_flight/sim, not in the branch). v6x flash overflow 23.5 kB ->
    report/upstream note. Tests build in px4-indi-sim (px4-dev fails protobuf).
+   Dead path (S201 report draft): IndiAccelControl K_pos/K_vel cascade unused (module always accel_only,
+   McIndiPosControl.cpp:315): remove after the freeze decision (behaviour change review) or justify.
    Harness extraction (D-G7-HARNESS, firmware refactor) after the G3/G5 verdicts, with its re-fly named. Older list:
    MC_INDI_ID_OK call site (K128 MAJOR), D-JFF-SOURCE case, D-OFFB-POSVEL wiring test, omega_ff step on offboard
    entry (key2_jffoffb MINOR); checker defects in bench/tests/SELFTEST_G7_S194.md (no verdict, no LOC check in
@@ -42,7 +44,12 @@
    (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
 4. G6: before it, yaw fit fix (r regressor + matched grid = probe V3, K126 MAJORs, A-44). ID_OK 0 waits for G6
    (D-G7-DEFAULTS).
-5. G8: report and docs/en page (bring-up items in design/airframe_requirements.md).
+5. G8: report, then docs/en page finish. Outer-loop chapter draft report/02_outer_loop_design.md (S201; Unverified
+   list at its end: MPC_* from yaml not a freeze dump, MPC_THR_MAX note inconsistent). Next: inner-loop chapter
+   after Q26. Draft committed S201 (docs/en/config_mc/indi_control.md, fceaa3ebd5); open
+   items in report/DOCS_DRAFT_S201.md: no arming refusal without eRPM in code (airframe_requirements says refuse:
+   check, G7 item or reword), identification user steps undefined (G6), limits TODO waits for Q26, yaml text fixes
+   (LND_SLEW unit, PINJ_* long text) go into F-10 unit 8. Not run: prettier/link check/docs build.
 Rules: 1 session per inner-loop law change; parallel docker streams only for tolerance-insensitive probes, never gate
   evidence, never a docker build during gate flights; G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1. Next RC:
   S209 (RC194 done).
@@ -74,7 +81,6 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | - | none | - | - | - |
-
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.

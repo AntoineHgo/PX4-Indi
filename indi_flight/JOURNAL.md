@@ -1595,3 +1595,8 @@ offboard trajectories (a steady-state hover limit; no reference stack meets it o
   model; no fixed ACT_TC covers the G3 tau box. Q26 addendum with option C (tau box = identification error) + A for
   264. D-F10-NEUTRAL written; F-10 unit 1 (McIndiPosControl.cpp) committed, objects identical. Gate progress: G7(f)
   unit 1 of 9 done; G3 failures 245/239 explained on the model (verdict unchanged, Q26 open).
+- S201 (2026-11-22): G3 chain item already closed (runs committed 83f98905e5, verdict S199; 3 unscored = explained
+  aborts 039/245/264). Q26 still unanswered. F-10 unit 2 committed (21737adf53, objects identical, unit-IndiStageMode
+  15/15). docs/en INDI page first draft (fceaa3ebd5, open items report/DOCS_DRAFT_S201.md). Outer-loop report chapter
+  draft (report/02_outer_loop_design.md). Gate progress: G7(f) unit 2 of 9 done; G8 docs page and outer-loop chapter
+  drafted.
