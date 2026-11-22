@@ -26,4 +26,4 @@ systemd-run --user --unit=indi-orch -p MemoryMax=20G -p OOMPolicy=continue --wor
 The supervisor creates and switches to `feat/indi-flight`; the orchestrator's first session commits this folder.
 Stop with `touch indi_flight/STOP`. When the orchestrator needs you it writes to `indi_flight/QUESTIONS.md`; if it
 is blocked it also creates `indi_flight/WAIT_OWNER` and the supervisor pauses: write your answer under the question
-and remove that file. Follow progress in `indi_flight/STATE.md` or with `indi_flight/logview.py --dashboard` (status screen) or `--last --follow` (live transcript).
+and remove that file. Follow progress in `indi_flight/STATE.md` or with `indi_flight/logview.py --dashboard` (status screen: owner decisions and blockers, gates, usage against targets, supervisor, agents, flights) or `--last --follow` (live transcript).

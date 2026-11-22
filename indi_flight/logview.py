@@ -6,7 +6,10 @@
   indi_flight/logview.py RUN.jsonl            one session as a transcript
   indi_flight/logview.py --last               the most recent session
   indi_flight/logview.py --last --follow      the most recent session, live (Ctrl-C to quit)
-  indi_flight/logview.py --dashboard          live status screen: run state, usage, supervisor, recent events
+  indi_flight/logview.py --dashboard          live project status: owner decisions and blockers, gates, usage
+                                              against its targets, supervisor actions, session agents, flights;
+                                              full screen, scroll with arrows/PgUp/PgDn/Home/End or the wheel, q quits
+  indi_flight/logview.py --dashboard --once   the same, printed once (no colors, no refresh)
   indi_flight/logview.py --export OUTDIR [--dir DIR]   one Markdown transcript per session plus INDEX.md
 
 Colors are on when stdout is a terminal (--color always|never to force). Options for a transcript: --subs shows what subagents did step by step (default: only their launch and result),
@@ -276,143 +279,723 @@ def latest(directory):
     return files[-1] if files else None
 
 
-COLORS = [(r"^\S+\s+(?:\[[^]]*\]\s+)?ERROR|> ERROR", "31"), (r">>> LAUNCH", "35"), (r"<<<", "35"),
-          (r"ORCHESTRATOR", "1;36"), (r"SESSION END", "1;32"), (r"\[usage", "2")]
+# ---------------------------------------------------------------------------------------------------------------
+# Status dashboard (--dashboard): what the owner needs at a glance. Supervisor actions, session and agents, flights
+# and simulations running, gates, usage against its targets, and anything that waits on the owner or blocks.
+# Reads only: supervisor.log, the latest run-*.jsonl, STATE.md, QUESTIONS.md, MISSION.md, GATE_STATUS.tsv, the
+# control files (WAIT_OWNER, STOP, DONE, BYPASS_*) and /proc for the flights and simulators that are running.
+
+REPO = os.path.dirname(HERE)
+ANSI = re.compile(r"(\033\[[0-9;]*m)")
+GREEN, YELLOW, RED, CYAN, MAGENTA, DIM, BOLD = "32", "33", "31", "36", "35", "2", "1"
 
 
-def paint(line, color):
-    if not color:
-        return line
-    for pat, code in COLORS:
-        if re.search(pat, line):
-            return f"\033[{code}m{line}\033[0m"
-    return line
+class Paint:
+    def __init__(self, on):
+        self.on = on
+
+    def __call__(self, code, s):
+        return f"\033[{code}m{s}\033[0m" if self.on and code else str(s)
 
 
-def usage_line(path):
-    """Latest rate-limit windows seen in the run, with their reset time."""
-    w = None
-    for e in events(path):
-        if e.get("type") == "rate_limit_event":
-            w = (e.get("rate_limit_info") or {}).get("unifiedWindows") or w
-    if not w:
-        return "usage: n/a"
-    parts = []
-    for k, v in w.items():
-        if isinstance(v, dict) and "utilization" in v:
-            reset = ""
-            if v.get("resetsAt"):
-                reset = " (resets " + datetime.fromtimestamp(v["resetsAt"]).strftime("%a %H:%M") + ")"
-            parts.append(f"{k.replace('_', '-')} {round(100 * v['utilization'])} %{reset}")
-    return "usage: " + "   ".join(parts)
+def clip(line, n):
+    """Cut a line to n visible characters, ANSI codes kept."""
+    out, vis = [], 0
+    for part in ANSI.split(line):
+        if ANSI.fullmatch(part or "x"):
+            out.append(part)
+            continue
+        if vis + len(part) > n:
+            out.append(part[: max(n - vis - 1, 0)] + "…" + ("\033[0m" if ANSI.search(line) else ""))
+            return "".join(out)
+        out.append(part)
+        vis += len(part)
+    return "".join(out)
 
 
-def chain_lines(directory, cols):
-    """G3 flight chain panel (bench/g3_chain.sh): state, counts, ETA, failing indices, last progress lines."""
+def read(path, tail=None):
     try:
-        with open(os.path.join(directory, "flight_chain.dir")) as f:
-            cdir = f.read().strip()
+        with open(path, errors="replace") as f:
+            if tail:
+                f.seek(max(os.path.getsize(path) - tail, 0))
+            return f.read()
     except OSError:
-        return []
-    if not os.path.isabs(cdir):
-        cdir = os.path.join(os.path.dirname(HERE), cdir)
-    try:
-        with open(os.path.join(cdir, "chain_status.json")) as f:
-            s = json.load(f)
-    except (OSError, ValueError):
-        return [f"G3 chain: {cdir} (no status yet)"]
-    held = False
+        return ""
+
+
+def lock_held(path):
     try:
         import fcntl
-        with open(os.path.join(directory, "flight_chain.lock")) as lk:
+        with open(path) as lk:
             try:
                 fcntl.flock(lk, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 fcntl.flock(lk, fcntl.LOCK_UN)
+                return False
             except OSError:
-                held = True
+                return True
     except (OSError, ImportError):
-        pass
-    state = s.get("state", "?")
-    if state == "running" and not held:
-        state = "DEAD (status says running, lock free)"
-    for m in ("CHAIN_HALTED", "CHAIN_FINISHED"):
-        if os.path.exists(os.path.join(cdir, m)):
-            state += f"  [{m}]"
-    first, last = s.get("idx_first", 0), s.get("idx_last", 0)
-    total = last - first + 1
-    done = s.get("done", 0)
-    pct = 100 * done / total if total else 0
-    bar_w = max(min(cols, WIDTH) - 60, 10)
-    bar = "#" * round(bar_w * pct / 100) + "." * (bar_w - round(bar_w * pct / 100))
-    out = [f"G3 chain {os.path.basename(cdir)}: {state}   idx {s.get('current_idx')} {s.get('phase', '')}   "
-           f"speed {s.get('speed')}   ETA {s.get('eta', '?')}",
-           f"  [{bar}] {done}/{total} ({pct:.0f} %)   failed {s.get('failed', 0)}   outcomes {s.get('outcomes', {})}",
-           f"  scored {s.get('scored', 0)} (pending {s.get('score_pending', 0)}):   key 1 pass {s.get('key1_pass', 0)}"
-           f"   key 2 pass {s.get('key2_pass', 0)}   mean cycle {s.get('mean_cycle_s', '?')} s   "
-           f"updated {s.get('updated', '?')}"]
+        return False
+
+
+def hhmm(t):
+    return datetime.fromtimestamp(t).strftime("%H:%M") if t else "--:--"
+
+
+def ago(t):
+    s = max(int(time.time() - t), 0)
+    return f"{s}s" if s < 90 else f"{s // 60} min" if s < 5400 else f"{s / 3600:.1f} h"
+
+
+def bar(frac, width, target=None):
+    frac = min(max(frac, 0.0), 1.0)
+    cells = ["█" if i < round(frac * width) else "░" for i in range(width)]
+    if target is not None and target < 1:
+        cells[min(int(target * width), width - 1)] = "│"
+    return "".join(cells)
+
+
+# --- supervisor.log -------------------------------------------------------------------------------------------
+
+def _min(s):
+    return f"{round(int(s) / 60)} min"
+
+
+def _at(s):
     try:
-        with open(os.path.join(cdir, "progress.txt"), errors="replace") as f:
-            prog = [l.rstrip() for l in f]
-    except OSError:
-        prog = []
-    fails = [m.group(1) for l in prog for m in [re.search(r"idx=(\d+) score .*(?:FAIL|fail)", l)] if m]
-    if fails:
-        out.append("  scoring fails (idx): " + " ".join(dict.fromkeys(fails)))
-    out += ["  " + one_line(l, cols - 4) for l in prog[-3:]]
+        return datetime.strptime(s.strip()[:19], "%Y-%m-%d %H:%M:%S").strftime("%a %H:%M")
+    except ValueError:
+        return s
+
+
+# regex -> (text, color); text None hides the line (repeated or covered by another panel)
+SUP_RULES = [
+    (r"^preflight ok: .*model (\S+), effort (\w+)", lambda m: (f"supervisor started ({m[1]}, effort {m[2]})", GREEN)),
+    (r"^usage: 5-hour ([\d.]+), weekly ([\d.]+), headroom \$(-?[\d.]+)",
+     lambda m: (f"usage check: 5 h {float(m[1]):.0%}, week {float(m[2]):.0%}, headroom ${float(m[3]):.1f}", DIM)),
+    (r"^run (\d+): launching orchestrator with a \$([\d.]+) cap",
+     lambda m: (f"launched session {m[1]} (cap ${float(m[2]):.0f})", "1;36")),
+    (r"^run (\d+): exit (\d+) after (\d+)s, result (\S+), cost \$([\d.]+|\?)",
+     lambda m: (f"session {m[1]} ended: {'ok' if m[4] == 'success' else m[4]}, {_min(m[3])}, "
+                f"${float(m[5]) if m[5] != '?' else 0:.2f}", GREEN if m[4] == "success" else RED)),
+    (r"^run \d+: indi_flight/results has (\d+) dirty", lambda m: (f"told: tidy {m[1]} uncommitted results", YELLOW)),
+    (r"^run \d+: left (\d+) dirty", lambda m: (f"{m[1]} uncommitted results left", YELLOW)),
+    (r"^run \d+: GATE_STATUS.tsv unchanged for (\d+)",
+     lambda m: (f"told: route check (gates unchanged {m[1]} sessions)", YELLOW)),
+    (r"^run \d+: GATE_STATUS.tsv changed: (G\d)\t([^\t]+)", lambda m: (f"GATE CHANGE: {m[1]} -> {m[2]}", "1;32")),
+    (r"^run \d+: STATE.md is (\d+) bytes", lambda m: ("told: trim STATE.md", YELLOW)),
+    (r"^run \d+: G3 chain", lambda m: (None, None)),
+    (r"^calibration: .*about \$([\d.]+)", lambda m: (f"calibrated: ${float(m[1]):.1f} per 5-hour window", DIM)),
+    (r"^relaunching in (\d+)s", lambda m: (f"next launch in {m[1]} s", DIM)),
+    (r"^waiting for the owner", lambda m: ("WAITING FOR OWNER (QUESTIONS.md)", "1;31")),
+    (r"^stopped by", lambda m: ("stopped by indi_flight/STOP", "1;31")),
+    (r"^orchestrator reported completion", lambda m: ("DONE reported", "1;32")),
+    (r"^ABORT: (.*)", lambda m: (f"ABORT: {m[1]}", "1;31")),
+    (r"^G3 flight chain flying", lambda m: ("idle: flight chain holds the lock", YELLOW)),
+    (r"^G3 flight chain holds its lock", lambda m: ("flight chain stuck > 1 h: session to diagnose", RED)),
+    (r"^weekly window at ([\d.]+) >= share ([\d.]+), waiting for its reset at (.*)",
+     lambda m: (f"paused: weekly target {float(m[2]):.0%} reached, until {_at(m[3])}", "1;33")),
+    (r"^weekly window at .* lifted", lambda m: (None, None)),
+    (r"^5-hour headroom below .*last stretch before its reset at (.*)",
+     lambda m: (f"paused: 5 h headroom low, until {_at(m[1])}", YELLOW)),
+    (r"^5-hour headroom below .*reset at (.*)", lambda m: (f"paused: 5 h headroom low, until {_at(m[1])}", YELLOW)),
+    (r"^a usage window is exhausted, waiting until (.*)", lambda m: (f"paused: usage limit hit, until {_at(m[1])}", RED)),
+    (r"^usage probe failed", lambda m: ("usage probe failed, retry in 30 min", YELLOW)),
+]
+
+
+def supervisor_events(text):
+    """[(epoch, raw message, short text, color)] for each supervisor.log line."""
+    out = []
+    for line in text.splitlines():
+        m = re.match(r"^\[(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)\] (.*)", line)
+        if not m:
+            continue
+        t = datetime.strptime(m[1], "%Y-%m-%d %H:%M:%S").timestamp()
+        msg = m[2]
+        for pat, fmt in SUP_RULES:
+            mm = re.match(pat, msg)
+            if mm:
+                text_, code = fmt(mm)
+                break
+        else:
+            text_, code = one_line(msg, 90), DIM
+        out.append((t, msg, text_, code))
     return out
 
 
-def dashboard(directory, interval=2.0):
-    color = sys.stdout.isatty()
-    sup = os.path.join(directory, "supervisor.log")
+# --- latest session log, read incrementally --------------------------------------------------------------------
+
+class SessionWatch:
+    """Agents, background tasks, cost, usage and last words of one run-*.jsonl, fed as the file grows."""
+
+    def __init__(self, path):
+        self.path, self.pos = path, 0
+        self.ts = None                # latest event timestamp seen (system events carry none)
+        self.tasks = {}               # task_id -> dict
+        self.order = []
+        self.agent_model = {}         # Agent tool_use id -> model
+        self.cost = None
+        self.say = None               # (epoch, text) of the orchestrator's latest message
+        self.windows = None           # latest rate-limit windows
+        self.start = None
+
+    def update(self):
+        try:
+            with open(self.path, errors="replace") as f:
+                f.seek(self.pos)
+                while True:
+                    line = f.readline()
+                    if not line.endswith("\n"):
+                        break
+                    self.pos = f.tell()
+                    try:
+                        self.feed(json.loads(line))
+                    except (ValueError, AttributeError, TypeError):
+                        continue
+        except OSError:
+            pass
+
+    def epoch(self):
+        try:
+            return datetime.fromisoformat(self.ts.replace("Z", "+00:00")).timestamp()
+        except (AttributeError, ValueError):
+            return time.time()
+
+    def feed(self, e):
+        t = e.get("type")
+        if e.get("timestamp"):
+            self.ts = e["timestamp"]
+            self.start = self.start or self.epoch()
+        if t == "rate_limit_event":
+            self.windows = (e.get("rate_limit_info") or {}).get("unifiedWindows") or self.windows
+        elif t == "result":
+            c = e.get("total_cost_usd")
+            if c is not None:
+                self.cost = max(self.cost or 0, c)
+        elif t == "assistant" and not e.get("parent_tool_use_id"):
+            for b in (e.get("message") or {}).get("content") or []:
+                if b.get("type") == "text" and b.get("text", "").strip():
+                    self.say = (self.epoch(), b["text"])
+                elif b.get("type") == "tool_use" and b.get("name") in ("Agent", "Task"):
+                    self.agent_model[b.get("id")] = (b.get("input") or {}).get("model") or "default"
+        elif t == "user" and not e.get("parent_tool_use_id"):
+            # a foreground agent ends with its tool result (background ones with a task_notification)
+            for b in (e.get("message") or {}).get("content") or []:
+                if isinstance(b, dict) and b.get("type") == "tool_result":
+                    txt = result_text(b)
+                    for k in self.tasks.values():
+                        if k["tuid"] == b.get("tool_use_id") and not txt.startswith(("Async agent launched",
+                                                                                      "Command running in background")):
+                            self._end(k, "failed" if b.get("is_error") else "completed", txt)
+        elif t == "system":
+            st, tid = e.get("subtype"), e.get("task_id")
+            if st == "task_started" and tid:
+                self.tasks[tid] = dict(desc=e.get("description") or "?", kind=e.get("task_type") or "?",
+                                       sub=bool(e.get("owned_by_subagent")), tuid=e.get("tool_use_id"),
+                                       start=self.epoch(), end=None, status="running", tools=0, last="", summary="")
+                self.order.append(tid)
+            elif tid in self.tasks:
+                k = self.tasks[tid]
+                if st == "task_progress":
+                    k["tools"] = (e.get("usage") or {}).get("tool_uses", k["tools"])
+                    k["last"] = e.get("last_tool_name") or k["last"]
+                elif st == "task_updated":
+                    s = (e.get("patch") or {}).get("status")
+                    if s and s != "running":
+                        self._end(k, s, "", (e.get("patch") or {}).get("end_time"))
+                elif st == "task_notification":
+                    self._end(k, e.get("status") or "completed", e.get("summary") or "")
+
+    def _end(self, k, status, summary, end_ms=None):
+        k["status"] = status
+        k["summary"] = summary or k["summary"]
+        k["end"] = k["end"] or (end_ms / 1000 if end_ms else self.epoch())
+
+    def model(self, k):
+        return self.agent_model.get(k["tuid"], "agent") if k["kind"] == "local_agent" else "watch"
+
+
+# --- project files -----------------------------------------------------------------------------------------------
+
+def gate_names():
+    names = {}
+    for m in re.finditer(r"^- \*\*(G\d) ([^.*]+)\.", read(os.path.join(HERE, "MISSION.md")), re.M):
+        names[m[1]] = m[2].strip()
+    return names
+
+
+def gate_refs(text):
+    """Gates a stage paragraph names: "Gate G1" or a list "G2, G3" (a lone G1 is the control-effectiveness gain)."""
+    refs = re.findall(r"\bGates? (G\d(?:(?:, | and )G\d)*)", text) + re.findall(r"\b(G\d(?:, G\d)+)", text)
+    return sorted(set(re.findall(r"G\d", " ".join(refs))))
+
+
+def stages():
+    """[(number, name, [gates])] from MISSION.md "Order of work" (**Stage N, name.** paragraphs)."""
+    txt = read(os.path.join(HERE, "MISSION.md"))
+    out = []
+    for m in re.finditer(r"^\*\*Stage (\d+), (.+?)\.\*\*(.*?)(?=^\*\*Stage |^## |\Z)", txt, re.S | re.M):
+        out.append((int(m[1]), m[2][0].upper() + m[2][1:], gate_refs(m[3])))
+    return out
+
+
+def state_status():
+    """(stage sentence, [(gates, question)] waits, [sentences that say blocked])"""
+    txt = read(os.path.join(HERE, "STATE.md"))
+    m = re.search(r"^## Status\n(.*?)(?=^## )", txt, re.S | re.M)
+    body = " ".join(m[1].split()) if m else ""
+    stage = ""
+    ms = re.search(r"Stage: ([^.]+\.(?: ?FREEZE-\d+)?)", body)
+    if ms:
+        stage = ms[1]
+    waits = []
+    for mw in re.finditer(r"((?:G\d(?:, | and |,? ?))+)[^.;]*?\bwait(?:s|ing)? on (Q\d+)", body):
+        waits.append((re.findall(r"G\d", mw[1]), mw[2]))
+    blocked = [s.strip() for s in re.split(r"(?<=\.) ", body) if re.search(r"\bBLOCKED\b", s)]
+    return stage, waits, blocked
+
+
+def questions():
+    """[(id, title, answered)] for the Q sections still in QUESTIONS.md."""
+    out = []
+    txt = read(os.path.join(HERE, "QUESTIONS.md"))
+    for m in re.finditer(r"^## (Q\d+) \(([^)]*)\): (.*?)$(.*?)(?=^## |\Z)", txt, re.S | re.M):
+        answered = bool(re.search(rf"\*\*Owner answer {m[1]}\b", m[4]))
+        out.append((m[1], m[3].strip(), answered))
+    return out
+
+
+def gates():
+    rows = []
+    for line in read(os.path.join(HERE, "GATE_STATUS.tsv")).splitlines()[1:]:
+        f = line.split("\t")
+        if len(f) >= 4 and re.match(r"G\d", f[0]):
+            rows.append((f[0], f[1], f[3]))
+    return rows
+
+
+# --- flights and simulators: /proc ------------------------------------------------------------------------------
+
+def processes():
     try:
-        while True:
-            cols, rows = shutil.get_terminal_size((WIDTH, 40))
-            path = latest(directory)
-            buf = io.StringIO()
-            head = []
-            if path:
-                tr = Transcript(buf, subs=True, results=0)
-                for e in events(path):
-                    tr.feed(e)
-                st = tr.stats
-                end = st["result"] is not None
-                state = f"ended: {st['result']}" if end else "RUNNING"
-                try:
-                    a = datetime.fromisoformat(st["start"].replace("Z", "+00:00"))
-                    b = datetime.now(a.tzinfo) if not end else datetime.fromisoformat(st["end"].replace("Z", "+00:00"))
-                    el = f"{round((b - a).total_seconds() / 60)} min"
-                except (AttributeError, ValueError):
-                    el = "?"
-                cost = f"${st['cost']:.2f}" if st["cost"] is not None else "running"
-                age = round(time.time() - os.path.getmtime(path))
-                head += [f"{os.path.basename(path)}   {state}   elapsed {el}   cost {cost}   "
-                         f"{st['tools']} tools, {st['agents']} agents   last write {age}s ago",
-                         usage_line(path)]
+        btime = int(re.search(r"^btime (\d+)", read("/proc/stat"), re.M)[1])
+        hz = os.sysconf("SC_CLK_TCK")
+    except (TypeError, ValueError, OSError):
+        btime, hz = None, 100
+    out = []
+    for pid in os.listdir("/proc"):
+        if not pid.isdigit():
+            continue
+        try:
+            with open(f"/proc/{pid}/cmdline", "rb") as f:
+                args = [a.decode(errors="replace") for a in f.read().split(b"\0") if a]
+            with open(f"/proc/{pid}/stat") as f:
+                start = int(f.read().rsplit(")", 1)[1].split()[19])
+        except (OSError, IndexError, ValueError):
+            continue
+        if args:
+            out.append(dict(pid=int(pid), args=args, start=btime + start / hz if btime else None))
+    return out
+
+
+def arg(args, flag):
+    try:
+        return args[args.index(flag) + 1]
+    except (ValueError, IndexError):
+        return None
+
+
+def results_group(path):
+    """Top directory under indi_flight/results that a path belongs to, or None."""
+    m = re.search(r"indi_flight/results/([^/\s'\"]+)", path or "")
+    return m[1] if m else None
+
+
+def flights():
+    """One entry per results directory with a flight chain, batch or simulator running."""
+    groups = {}
+
+    def g(name):
+        return groups.setdefault(name, dict(name=name, chains=set(), sims=[], start=None))
+
+    for p in processes():
+        a = p["args"]
+        exe = os.path.basename(a[0])
+        if "claude" in exe or any(len(x) > 400 for x in a):
+            continue
+        if "g3_chain.sh" in " ".join(a[:3]) and "_run" in a:
+            d = arg(a, "_run")
+            name = results_group(d)
+            if name:
+                gr = g(name)
+                gr["chains"].add(d if os.path.isabs(d) else os.path.join(REPO, d))
+                gr["start"] = min(filter(None, [gr["start"], p["start"]]), default=None)
+        elif exe.startswith("python") and len(a) > 1 and a[1].endswith("run_scenario.py"):
+            out = arg(a, "--out") or ""
+            name = results_group(out) or "(outside results/)"
+            g(name)["sims"].append(dict(scenario=arg(a, "--scenario"), ctrl=arg(a, "--controller"),
+                                        model=arg(a, "--model"), rate=arg(a, "--rate-hz"),
+                                        run=os.path.basename(out.rstrip("/")), start=p["start"]))
+    # batch scripts between two chains: progress.txt with a live BATCH_START pid
+    for d in glob.glob(os.path.join(HERE, "results", "*", "progress.txt")):
+        m = None
+        for m in re.finditer(r"BATCH_START pid=(\d+)", read(d, tail=20000)):
+            pass
+        if m and os.path.exists(f"/proc/{m[1]}"):
+            g(os.path.basename(os.path.dirname(d)))
+    return list(groups.values())
+
+
+def batch_progress(gdir):
+    """(done, total, current) from a batch progress.txt (BATCH_START indices/sets, then start/end/skip lines)."""
+    txt = read(os.path.join(gdir, "progress.txt"))
+    starts = list(re.finditer(r"BATCH_START.*indices: ([\d ]+?)\s+sets: ([\w ]+)", txt))
+    if not starts:
+        return None
+    m = starts[-1]
+    total = len(m[1].split()) * len(m[2].split())
+    rest = txt[m.end():]
+    done = {(s, i) for s, i in re.findall(r"set=(\S+) idx=(\S+) (?:end|skip)", rest)}
+    cur = re.findall(r"set=(\S+) idx=(\S+) start", rest)
+    return len(done), total, (f"set {cur[-1][0]} idx {cur[-1][1]}" if cur else "")
+
+
+def purpose(gdir):
+    txt = read(os.path.join(gdir, "README.md"))
+    title = re.search(r"^# (.+)$", txt, re.M)
+    why = re.search(r"^Purpose: (.+)$", txt, re.M)
+    return (title[1] if title else ""), (why[1] if why else "")
+
+
+# --- screen ------------------------------------------------------------------------------------------------------
+
+def _git_head():
+    try:
+        import subprocess
+        r = subprocess.run(["git", "-C", REPO, "log", "-1", "--format=%ct%x09%s"], capture_output=True, text=True,
+                           timeout=5)
+        t, s = r.stdout.strip().split("\t", 1)
+        return int(t), s
+    except (OSError, ValueError, Exception):
+        return None
+
+
+class Dashboard:
+    def __init__(self, directory, color):
+        self.dir, self.c = directory, Paint(color)
+        self.watch = None
+        self.git, self.git_t = None, 0
+
+    def section(self, title, cols, note=""):
+        c = self.c
+        head = f"── {title} "
+        tail = f" {note} ──" if note else ""
+        return c("1;34", head + "─" * max(cols - len(head) - len(tail), 3)) + c(DIM, tail)
+
+    def screen(self, cols):
+        c, now = self.c, time.time()
+        L = []
+        flags = {n: os.path.exists(os.path.join(HERE, n)) for n in ("WAIT_OWNER", "STOP", "DONE", "BYPASS_5H",
+                                                                      "BYPASS_7D")}
+        sup_txt = read(os.path.join(self.dir, "supervisor.log"), tail=400000)
+        sup = supervisor_events(sup_txt)
+        sup_alive = lock_held(os.path.join(self.dir, ".lock"))
+
+        # current session: the last launch without a matching exit
+        run_file, run_no, run_t, running, last_exit = None, None, None, False, None
+        for t, msg, *_ in sup:
+            m = re.match(r"run (\d+): launching .*\(log: (\S+)\)", msg)
+            if m:
+                run_no, run_file, run_t, running = m[1], os.path.join(REPO, m[2]), t, True
+            elif re.match(r"run (\d+): exit", msg):
+                running, last_exit = False, (t, msg)
+        running = running and sup_alive
+        path = run_file if run_file and os.path.exists(run_file) else latest(self.dir)
+        if path and (self.watch is None or self.watch.path != path):
+            self.watch = SessionWatch(path)
+        if self.watch:
+            self.watch.update()
+        w = self.watch
+
+        # targets from the latest preflight line; live usage from the session log, else the supervisor probe
+        share5, stretch, share7 = 0.8, 3600, 0.7
+        for t, msg, *_ in sup:
+            m = re.search(r"shares 5h ([\d.]+) \(1\.0 in the last (\d+)s.*?/ weekly ([\d.]+)", msg)
+            if m:
+                share5, stretch, share7 = float(m[1]), int(m[2]), float(m[3])
+        u5 = u7 = r5 = r7 = None
+        probe_t = 0
+        for t, msg, *_ in sup:
+            m = re.match(r"usage: 5-hour ([\d.]+), weekly ([\d.]+)", msg)
+            if m:
+                u5, u7, probe_t = float(m[1]), float(m[2]), t
+        if w and w.windows:
+            five, seven = w.windows.get("five_hour") or {}, w.windows.get("seven_day") or {}
+            r5, r7 = five.get("resetsAt"), seven.get("resetsAt")
+            if running or os.path.getmtime(w.path) > probe_t:
+                u5, u7 = five.get("utilization", u5), seven.get("utilization", u7)
+        if r5 and r5 < now:
+            u5, r5 = 0.0, None     # window reset since the last reading
+        if r7 and r7 < now:
+            u7, r7 = 0.0, None
+        tgt5 = 1.0 if flags["BYPASS_5H"] or (r5 and r5 - now <= stretch) else share5
+        tgt7 = None if flags["BYPASS_7D"] else share7
+
+        qs = questions()
+        stage, waits, blocked = state_status()
+        g_rows = gates()
+        stale = int(read(os.path.join(self.dir, "gate_status.stale")).strip() or 0) if read(
+            os.path.join(self.dir, "gate_status.stale")).strip().isdigit() else 0
+        fl = flights()
+
+        # ---- header
+        if now - self.git_t > 30:
+            self.git, self.git_t = _git_head(), now
+        L.append(c("1;37", "INDI flight · project status") + "   " + c(DIM, datetime.now().strftime("%a %Y-%m-%d %H:%M:%S")))
+        if self.git:
+            L.append(c(DIM, f"last commit {hhmm(self.git[0])} ({ago(self.git[0])} ago): {self.git[1]}"))
+
+        # ---- attention: owner decisions and blockers first
+        att = []
+        open_q = [q for q in qs if not q[2]]
+        if flags["DONE"]:
+            att.append((GREEN, "DONE: the orchestrator reports the project complete (STATE.md opens with the summary)"))
+        if flags["WAIT_OWNER"]:
+            which = ", ".join(q[0] for q in open_q) or "see QUESTIONS.md"
+            att.append(("1;37;41", f" OWNER DECISION WANTED: {which} · answer in indi_flight/QUESTIONS.md, "
+                                   f"then rm indi_flight/WAIT_OWNER "))
+        for q in open_q:
+            att.append((RED if flags["WAIT_OWNER"] else YELLOW, f"open question {q[0]}: {q[1]}"))
+        if flags["STOP"]:
+            att.append(("1;31", "STOPPED: indi_flight/STOP present (rm it, then start run_orchestrator.sh)"))
+        elif not sup_alive and not flags["DONE"]:
+            att.append(("1;31", "SUPERVISOR NOT RUNNING: start indi_flight/run_orchestrator.sh"))
+        asked = {q[0] for q in qs}
+        for gs, q in waits:
+            state = "not yet asked, orchestrator preparing it" if q not in asked else (
+                "answered, being acted on" if any(x[0] == q and x[2] for x in qs) else "awaiting owner")
+            att.append((YELLOW, f"waiting on {q} ({state}): {', '.join(gs)} verdicts"))
+        for s in blocked[-2:]:
+            att.append((RED, "BLOCKED: " + s))
+        if sup:
+            t, msg, txt, code = sup[-1]
+            if txt and txt.startswith("paused"):
+                att.append((YELLOW if code != RED else RED, txt))
+        if tgt7 is not None and u7 is not None and u7 >= tgt7:
+            att.append(("1;33", f"weekly usage {u7:.0%} at its {tgt7:.0%} target: no launch before the weekly reset"))
+        for gr in fl:
+            for d in gr["chains"]:
+                if os.path.exists(os.path.join(d, "CHAIN_HALTED")):
+                    att.append((RED, f"flight chain halted: {os.path.relpath(d, HERE)} (CHAIN_HALTED gives the reason)"))
+        if stale >= 2:
+            att.append((YELLOW, f"no gate moved for {stale} sessions (GATE_STATUS.tsv): route check ordered"))
+        L.append(self.section("ATTENTION", cols))
+        if not att:
+            L.append("  " + c(GREEN, "nothing waits on the owner, nothing blocks"))
+        for code, txt in att:
+            L.append("  " + c(code, "▶ " + txt))
+
+        # ---- project: stage and gates, compact
+        n_pass = sum(1 for g_ in g_rows if g_[1].upper() == "PASSED")
+        st_list = stages()
+        cur = re.match(r"(\d+)", stage or "")
+        cur = int(cur[1]) if cur else None
+        L.append(self.section("PROJECT", cols, f"{n_pass}/{len(g_rows) or 8} gates passed"))
+        g_state = {g_[0]: g_[1].upper() for g_ in g_rows}
+
+        def gcode(gid):
+            up = g_state.get(gid, "?")
+            return GREEN if up == "PASSED" else RED if "NOT" in up or "FAIL" in up else YELLOW
+
+        by_n = {n: (name, gs) for n, name, gs in st_list}
+        line = "  " + c(BOLD, "stage ")
+        if cur in by_n:
+            fr = re.search(r"FREEZE-\d+", stage)
+            line += c("1;36", f"▶ {cur}/{len(st_list)} {by_n[cur][0]}") + (c(DIM, f" ({fr[0]})") if fr else "")
+            if cur + 1 in by_n:
+                nx = by_n[cur + 1]
+                line += c(DIM, f"   next {cur + 1} {nx[0]}" + (f" ({', '.join(nx[1])})" if nx[1] else ""))
+        else:
+            line += stage or "?"
+        if qs:
+            line += "   " + c(BOLD, "owner ") + " ".join(
+                c(GREEN, f"{q[0]} answered") if q[2] else c("1;31", f"{q[0]} AWAITING ANSWER") for q in qs)
+        L.append(line)
+        sym = {GREEN: "✔", RED: "✘", YELLOW: "○"}
+        tags = " ".join(c(gcode(g_[0]), f"{g_[0]}{sym[gcode(g_[0])]}") for g_ in g_rows)
+        wait_q = {}
+        for gs, q in waits:
+            wait_q.setdefault(q, []).extend(gs)
+        tags += "".join(c(YELLOW, f"   ⏸ {' '.join(dict.fromkeys(gs))} wait on {q}") for q, gs in wait_q.items())
+        L.append("  " + c(BOLD, "gates ") + tags)
+        names = gate_names()
+        for gid, st, note in g_rows:
+            if gcode(gid) == RED:
+                L.append(f"    {c(RED, '✘ ' + gid + ' ' + names.get(gid, ''))}: " + c(DIM, one_line(note, cols - 30)))
+
+        # ---- usage against its targets
+        wusd = read(os.path.join(self.dir, "window_usd")).strip()
+        L.append(self.section("USAGE", cols, f"≈ ${wusd} per 5-hour window" if wusd else ""))
+        for label, u, tgt, reset, why in (
+                ("5-hour", u5, tgt5, r5, "BYPASS_5H" if flags["BYPASS_5H"] else
+                 "last hour before reset" if tgt5 == 1.0 and tgt5 != share5 else ""),
+                ("weekly", u7, tgt7, r7, "BYPASS_7D, no limit" if flags["BYPASS_7D"] else "")):
+            if u is None:
+                L.append(f"  {label:<7} n/a")
+                continue
+            lim = tgt if tgt is not None else 1.0
+            code = RED if u >= lim else YELLOW if u >= lim - 0.1 else GREEN
+            tgt_s = f"target {tgt:.0%}" if tgt is not None else "no target"
+            if why:
+                tgt_s += f" ({why})"
+            rs = f"resets {datetime.fromtimestamp(reset).strftime('%a %H:%M')}" if reset else ""
+            L.append(f"  {label:<7} {c(code, bar(u, 30, tgt))} {c(code, f'{u:>4.0%}')}  {tgt_s}   {c(DIM, rs)}")
+        try:
+            hd = f"headroom in this 5-hour window ≈ ${(tgt5 - u5) * float(wusd):.2f} · "
+        except (TypeError, ValueError):
+            hd = ""
+        today = datetime.now().strftime("%Y-%m-%d")
+        spent = [float(m[1]) for line in sup_txt.splitlines() if line.startswith(f"[{today}")
+                 for m in [re.search(r"run \d+: exit .*cost \$([\d.]+)", line)] if m]
+        L.append(c(DIM, f"  {hd}today {len(spent)} sessions, ${sum(spent):.2f}"))
+
+        # ---- supervisor: state in the title, last actions below
+        state = ("waiting for the owner" if flags["WAIT_OWNER"] else "session running" if running else
+                 "stopped" if flags["STOP"] else "not running" if not sup_alive else
+                 (sup[-1][2] if sup and sup[-1][2] else "between sessions"))
+        L.append(self.section("SUPERVISOR", cols, state))
+        acts, last = [], None
+        for t, msg, txt, code in sup:
+            if not txt or code == DIM:      # routine lines (usage checks, relaunch timers) left out
+                continue
+            if last and last[1] == txt:
+                last[3] += 1
+                continue
+            last = [t, txt, code, 1]
+            acts.append(last)
+        for t, txt, code, n in acts[-3:]:
+            L.append(f"  {c(DIM, hhmm(t))}  {c(code, txt)}" + (c(DIM, f"  ×{n}") if n > 1 else ""))
+
+        # ---- session and agents
+        if w:
+            name = os.path.basename(w.path)[:-6]
+            if running:
+                el = ago(run_t or w.start or now)
+                note = f"running {el} · ≥ ${w.cost or 0:.2f} spent"
             else:
-                head.append(f"no run-*.jsonl in {directory} yet")
-            try:
-                with open(sup, errors="replace") as f:
-                    sup_lines = [l.rstrip() for l in f.readlines()[-3:]]
-            except OSError:
-                sup_lines = []
-            head += ["supervisor:"] + ["  " + one_line(l, cols - 4) for l in sup_lines]
-            head += chain_lines(directory, cols)
-            head.append("-" * min(cols, WIDTH))
-            body = [l for l in buf.getvalue().splitlines() if l.strip()]
-            for i, l in enumerate(body):    # the final report is long: keep its first 3 lines
-                if l.startswith("SESSION END"):
-                    body = body[:i + 4] + (["  …  (full text: logview.py --last)"] if len(body) > i + 4 else [])
-                    break
-            body = [one_line(l, cols - 1) if len(l) > cols - 1 else l for l in body]
-            room = max(rows - len(head) - 2, 5)
-            out = "\033[H\033[2J" if color else ""
-            out += "\n".join(paint(l, color) for l in head[:-1]) + "\n" + head[-1] + "\n"
-            out += "\n".join(paint(l, color) for l in body[-room:]) + "\n"
-            print(out, end="", flush=True)
-            time.sleep(interval)
+                note = "ended" + (f" {hhmm(last_exit[0])}" if last_exit else "")
+            L.append(self.section("SESSION " + name, cols, note))
+            if w.say:
+                L.append(f"  {c(DIM, hhmm(w.say[0]))}  {c(CYAN, 'orchestrator:')} {one_line(w.say[1], cols - 25)}")
+            ks = [w.tasks[i] for i in w.order]
+            top = [k for k in ks if not k["sub"]]
+            act = [k for k in top if k["status"] == "running"] if running else []
+            done = [k for k in top if k["status"] != "running" and k["kind"] == "local_agent"]
+            n_ag = sum(1 for k in top if k["kind"] == "local_agent")
+            sub_bg = sum(1 for k in ks if k["sub"] and k["status"] == "running") if running else 0
+            n_run = sum(1 for k in act if k["kind"] == "local_agent")
+            n_watch = len(act) - n_run
+            L.append(f"  agents: {c('1;32' if n_run else DIM, f'{n_run} running')}, {n_ag} launched this session"
+                     + (f", {n_watch} background wait{'s' if n_watch > 1 else ''}" if n_watch else "")
+                     + (c(DIM, f" · {sub_bg} subagent background commands") if sub_bg else ""))
+            for k in act:
+                is_agent = k["kind"] == "local_agent"
+                extra = f"{k['tools']} tools, last {k['last']}" if is_agent and k["tools"] else ""
+                L.append(f"  {c(GREEN if is_agent else DIM, '●' if is_agent else '◌')} {c(MAGENTA, f'{w.model(k):<7}')} "
+                         f"{one_line(k['desc'], 44):<44} {c(DIM, 'since ' + hhmm(k['start']) + '  ' + extra)}")
+            for k in done[-4:]:
+                ok = k["status"] == "completed"
+                L.append(f"  {c(GREEN if ok else RED, '✓' if ok else '✗')} {c(DIM, f'{w.model(k):<7}')} "
+                         f"{one_line(k['desc'], 44):<44} " + c(DIM, f"{hhmm(k['end'])}  {one_line(k['summary'], 70)}"))
+        else:
+            L.append(self.section("SESSION", cols))
+            L.append("  no session log yet")
+
+        # ---- flights and simulations
+        n_sim = sum(len(gr["sims"]) for gr in fl)
+        L.append(self.section("FLIGHTS / SIMULATIONS", cols, f"{n_sim} simulator{'s' if n_sim != 1 else ''} up"))
+        if not fl:
+            L.append("  " + c(DIM, "nothing flying"))
+        for gr in fl:
+            gdir = os.path.join(HERE, "results", gr["name"])
+            title, why = purpose(gdir)
+            L.append(f"  {c('1;32', '✈')} {c(BOLD, gr['name'])}" + (f"  {title}" if title else ""))
+            if why:
+                L.append("      " + c(CYAN, "why: ") + one_line(why, cols - 14))
+            bp = batch_progress(gdir)
+            if bp:
+                done_n, total, cur = bp
+                L.append(f"      batch {c(GREEN, bar(done_n / total if total else 0, 24))} {done_n}/{total} done"
+                         + (f"   now {cur}" if cur else ""))
+            for d in sorted(gr["chains"]):
+                try:
+                    s = json.loads(read(os.path.join(d, "chain_status.json")) or "{}")
+                except ValueError:
+                    s = {}
+                eta = s.get("eta", "")
+                eta = eta[11:16] if isinstance(eta, str) and len(eta) >= 16 else eta
+                L.append(f"      chain {os.path.relpath(d, gdir)}: {s.get('state', '?')}, idx {s.get('current_idx')} "
+                         f"{s.get('phase', '')}, {s.get('done', 0)}/{s.get('idx_last', 0) - s.get('idx_first', 0) + 1}"
+                         f" flown, failed {s.get('failed', 0)}, ETA {eta}")
+            for sm in gr["sims"]:
+                L.append(f"      sim {sm['scenario']} · {sm['ctrl']} · {sm['model']} @ {sm['rate']} Hz · {sm['run']}"
+                         + c(DIM, f"   up {ago(sm['start'])}" if sm["start"] else ""))
+        return [clip(l, cols) for l in L]
+
+
+KEYS = [(r"\033\[A|k", -1), (r"\033\[B|j", 1), (r"\033\[5~|b", "-page"), (r"\033\[6~| ", "page"),
+        (r"\033\[H|\033\[1~|g", "home"), (r"\033\[F|\033\[4~|G", "end"),
+        (r"\033\[<64;\d+;\d+[Mm]", -3), (r"\033\[<65;\d+;\d+[Mm]", 3), (r"q|Q", "quit")]
+
+
+def dashboard(directory, interval=3.0, once=False):
+    """Full-screen status, scrollable: arrows or j/k, PgUp/PgDn or b/space, Home/End or g/G, mouse wheel; q quits."""
+    interactive = sys.stdout.isatty() and sys.stdin.isatty() and not once
+    d = Dashboard(directory, interactive)
+    if not interactive:
+        print("\n".join(d.screen(min(shutil.get_terminal_size((WIDTH, 50))[0], 160))))
+        return
+    import select
+    import termios
+    import tty
+    fd = sys.stdin.fileno()
+    saved = termios.tcgetattr(fd)
+    off, lines, due = 0, [], 0.0
+    pat = re.compile("|".join(f"({p})" for p, _ in KEYS))
+    try:
+        tty.setcbreak(fd)
+        # alternate screen, hidden cursor, mouse wheel reporting (SGR); all undone on exit
+        sys.stdout.write("\033[?1049h\033[?25l\033[?1000h\033[?1006h")
+        while True:
+            cols, rows = shutil.get_terminal_size((WIDTH, 50))
+            if time.time() >= due:
+                lines, due = d.screen(min(cols, 160)), time.time() + interval
+            view = max(rows - 1, 1)
+            off = min(max(off, 0), max(len(lines) - view, 0))
+            shown = lines[off:off + view]
+            below = len(lines) - off - len(shown)
+            foot = (f" ▼ {below} more lines below" if below else " (end)") + (f" · ▲ {off} above" if off else "")
+            foot += " · scroll: ↑↓ PgUp PgDn Home End, wheel · q quits "
+            out = "\033[H" + "\n".join(l + "\033[K" for l in shown) + "\033[J"
+            out += f"\033[{rows};1H\033[7m" + clip(foot, cols - 1) + "\033[0m\033[K"
+            sys.stdout.write(out)
+            sys.stdout.flush()
+            r, _, _ = select.select([fd], [], [], min(max(due - time.time(), 0.05), 0.5))
+            if not r:
+                continue
+            data = os.read(fd, 256).decode(errors="ignore")
+            for m in pat.finditer(data):
+                act = KEYS[m.lastindex - 1][1]
+                if act == "quit":
+                    return
+                off = {"page": off + view - 1, "-page": off - view + 1, "home": 0,
+                       "end": len(lines)}.get(act, off + act if isinstance(act, int) else off)
     except KeyboardInterrupt:
         pass
+    finally:
+        sys.stdout.write("\033[?1006l\033[?1000l\033[?25h\033[?1049l")
+        sys.stdout.flush()
+        termios.tcsetattr(fd, termios.TCSADRAIN, saved)
 
 
 def main():
@@ -426,6 +1009,8 @@ def main():
     ap.add_argument("--thinking", action="store_true")
     ap.add_argument("--results", type=int, default=3)
     ap.add_argument("--dashboard", action="store_true")
+    ap.add_argument("--once", action="store_true", help="--dashboard: print the status once and exit")
+    ap.add_argument("--interval", type=float, default=3.0, help="--dashboard: refresh period in seconds")
     ap.add_argument("--color", choices=["auto", "always", "never"], default="auto",
                     help="ANSI colors for a transcript (auto: only on a terminal)")
     ap.add_argument("--export", metavar="OUTDIR")
@@ -433,7 +1018,7 @@ def main():
     kw = dict(subs=a.subs, results=a.results, thinking=a.thinking)
     color = a.color == "always" or (a.color == "auto" and sys.stdout.isatty())
     if a.dashboard:
-        dashboard(a.dir)
+        dashboard(a.dir, a.interval, a.once)
         return
     if a.export:
         os.makedirs(a.export, exist_ok=True)
