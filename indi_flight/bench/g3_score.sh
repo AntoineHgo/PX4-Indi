@@ -7,7 +7,15 @@
 # --mode position for o1_lemniscate, attitude for stick runs (acro: roll/pitch gate not defined, UNVERIFIED).
 # needs scipy: run inside Docker, see bench/g3_score_docker.sh
 D=$(cd "${1:?usage: g3_score.sh RESULTS_DIR (holds run_NNN/)}" && pwd); B=$(cd "$(dirname "$0")" && pwd)
+# Q27 item 8: a harness-aborted run (g3_run_status.py) is INVALID (re-fly), never scored: g3_checks.json {"invalid": true, "pass": null}.
+# Q27 item 6 (S208): key 1 always passes --skip-nav-change to g3_checks.py (item 2 skips windows within 3 s after a nav_state change).
 for r in "$D"/run_*; do
+  if bad=$(python3 "$B/g3_run_status.py" "$r"); then :; else
+    echo "$(basename "$r") $bad"
+    printf '{"invalid": true, "invalid_reason": %s, "pass": null}\n' "$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$bad")" > "$r/g3_checks.json"
+    echo "$bad" > "$r/g3_checks.txt"
+    continue
+  fi
   args=$(python3 - "$r" <<'PY'
 import json, sys
 r = sys.argv[1]
@@ -26,5 +34,5 @@ print(a)
 PY
 )
   echo "$(basename "$r") $args"
-  python3 "$B/g3_checks.py" "$r/flight.ulg" $args --json "$r/g3_checks.json" > "$r/g3_checks.txt" 2>&1
+  python3 "$B/g3_checks.py" "$r/flight.ulg" $args --skip-nav-change --json "$r/g3_checks.json" > "$r/g3_checks.txt" 2>&1
 done

@@ -4,6 +4,8 @@ Item 2 = no sustained oscillation on p, q, r, position (GATES.md line 304). Comm
 top-level "g4_command_chatter_sustained" for G4 (GATES.md line ~361, Q14 A line ~553); it does not decide item 2 or the G3 "pass"."""
 import sys, json, os, glob
 import numpy as np
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import g3_run_status
 FS = 800.0
 DSHOT_STEP = 5e-4  # Q14 A: line RMS floor = one DShot step (full scale 1)
 LAND_NAV = (5, 18, 20)   # vehicle_status nav_state: AUTO_RTL, AUTO_LAND, AUTO_PRECLAND
@@ -284,6 +286,14 @@ if __name__ == "__main__":
     t0, t1, mode = opt("--t0"), opt("--t1"), opt("--mode", str)
     wind, sag = "--wind" in a, "--sag" in a; a = [x for x in a if x not in ("--wind", "--sag")]
     for d in (x for pat in a for x in sorted(glob.glob(pat)) if os.path.isdir(x)):
+        bad = g3_run_status.invalid_reason(d)  # Q27 item 8: a harness-aborted run is INVALID (re-fly), never PASS
+        if bad:
+            r = {"invalid": True, "invalid_reason": bad, "pass": None}
+            if out:
+                os.makedirs(out, exist_ok=True); fn = os.path.join(out, os.path.basename(d.rstrip("/")) + ".json")
+                if os.path.exists(fn): sys.exit("exists, not overwriting: " + fn)
+            else: fn = os.path.join(d, "g3_checks_key2.json")
+            json.dump(r, open(fn, "w"), indent=1); print(os.path.basename(d.rstrip("/")), "INVALID", bad); continue
         kw, maxdt = load_run(d, t0, t1, mode, wind, sag); r = analyse(**kw); r["max_dt_s"] = maxdt
         if out:
             os.makedirs(out, exist_ok=True); fn = os.path.join(out, os.path.basename(d.rstrip("/")) + ".json")

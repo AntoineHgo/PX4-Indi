@@ -1353,7 +1353,15 @@ def main():
         sim.wd_on = False
         meta["t_land_cmd_us"] = int(sim.t * 1e6)  # sim time (= ULog absolute timestamp) of the NAV_LAND; NOT ulog-start relative
         sim.cmd(21, 0, 0, 0, float("nan"), float("nan"), float("nan"), 0)
-        sim.run(None, sp=pos_sp if a.stick_mode else None, until=lambda: not sim.armed,
+        # Q27 item 8 / S208: after NAV_LAND keep the manual sticks EXACTLY at the last sample sent (no re-centre, no pilot
+        # altitude correction): any stick change (e.g. altitude pilot at z 400 -> neutral 500, run 039) is a pilot override
+        # (COM_RC_OVERRIDE) that leaves LAND for POSCTL and the vehicle hovers until the wall timeout.
+        land_sp = None
+        if a.stick_mode and sim.sticks:
+            _l = sim.sticks[-1]
+            _hold = {"x": _l[1], "y": _l[2], "z": _l[3], "r": _l[4], "throttle": _l[5], "vz_up_demand": _l[6]}
+            land_sp = lambda: sim.send_stick(_hold)  # noqa: E731
+        sim.run(None, sp=land_sp, until=lambda: not sim.armed,
                 wall_timeout=120 + 120 / a.speed, what="land")
         sim.run(2.0, what="post_disarm")
         ok = True

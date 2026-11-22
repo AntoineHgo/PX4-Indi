@@ -504,6 +504,9 @@ score() {
 		run_bg "${CONTAINER_PREFIX}k2" "$d/chain_key2.txt" \
 			timeout 600 indi_project/docker/run.sh -n "${CONTAINER_PREFIX}k2" -t 500 -- \
 			python3 indi_flight/bench/g3_checks_key2.py "$DREL/$r" $args --out "$DREL/key2"
+	elif grep -qE "^$r INVALID" "$d/chain_key1.txt"; then
+		# harness abort: key 2 writes its own INVALID json (window args are not used for an invalid run)
+		python3 indi_flight/bench/g3_checks_key2.py "$DREL/$r" --t0 0 --t1 1 --out "$DREL/key2" >"$d/chain_key2.txt" 2>&1
 	else
 		echo "no key-1 argument line for $r (see chain_key1.txt): key 2 not run" >"$d/chain_key2.txt"
 	fi
@@ -533,9 +536,10 @@ if missing:
     sys.exit(0)
 items = ("item1_loc", "item2_oscillation", "item3_steady_state")
 fail = lambda j: [k.split("_")[0] for k in items if not j.get(k, {}).get("pass")]
-s = {"idx": idx, "outcome": outcome, "key1": "pass" if k1.get("pass") else "FAIL", "key1_failing": fail(k1),
-     "key2": "pass" if k2.get("pass") else "FAIL", "key2_failing": fail(k2),
-     "key2_col5_g4_chatter_pass": k2.get("chatter", {}).get("pass"), "score_args": args,
+lab = lambda j: "INVALID" if j.get("invalid") else ("pass" if j.get("pass") else "FAIL")  # INVALID = harness abort, re-fly (Q27 item 8)
+s = {"idx": idx, "outcome": outcome, "key1": lab(k1), "key1_failing": [] if k1.get("invalid") else fail(k1),
+     "key2": lab(k2), "key2_failing": [] if k2.get("invalid") else fail(k2),
+     "key2_col5_g4_chatter_pass": None if k2.get("invalid") else k2.get("chatter", {}).get("pass"), "score_args": args,
      "scored": time.strftime("%F %T")}
 tmp = os.path.join(rd, "chain_score.json.tmp")
 with open(tmp, "w") as fh:
