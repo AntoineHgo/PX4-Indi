@@ -33,7 +33,11 @@
    19 = key 1 scores the land pulse (key 2 stops at land): scope, not osc. 03 PID q 2.5 Hz key 1 only; 08 PID p
    11 Hz vs INDI q 10.75 Hz. GATES l.555 Q15 A nav-change skip is filed under G4 item 2, not G3. Shared 03/08 ->
    owner question with G3 verdict data.
-5. G7 (stage 7, not before G2/G4/G5 verdicts): module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site
+5. G7: S195 done (a)(c)(d)(e), see GATE_STATUS. e9e85e395d (fminf, NuttX) + 39c1700523 (4040 ACT_TC) are after
+   FREEZE-10: behaviour-neutral, no row invalidated (D-G7-NUTTX-BUILD); gate binary not rebuilt. Open: (b) break
+   audit survivors -> tests; (g) firmware-only branch; (f) checklist; v6x flash overflow -> report/upstream note.
+   Harness extraction (firmware refactor) waits: fold into FREEZE-11 if Q24 A, else after verdicts with re-fly named.
+   Older list: module harness (D-G7-HARNESS) incl. MC_INDI_ID_OK call site
    (K128 MAJOR), D-JFF-SOURCE case, D-OFFB-POSVEL wiring test, omega_ff step on offboard entry (key2_jffoffb MINOR),
    checker self-tests passthrough/offb_vel DONE S194 (defects listed in bench/tests/SELFTEST_G7_S194.md: no verdict,
    no LOC check in offb_vel_check, IndexError on empty topic; confirm which script scored G5.5 offb_vel_step), g511 yaw p95 subtraction test (g511_check.py:184), g510
@@ -64,8 +68,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | Q10 | FREEZE-10 re-fly queue: ENDED 01:14 S194, all 4 steps rc 0 | - | results/freeze10_s193/ | - |
-| S195a | G7(d) check_format + G7(e) NuttX flash/RAM (no source change) | sonnet | results/g7_s195/FORMAT_SIZE.md | relaunch brief |
-| S195b | G7(c) firmware defaults vs validated params table | sonnet | results/g7_s195/DEFAULTS_DIFF.md | relaunch brief |
+| S195d | G7(b) break-check audit of INDI unit tests (libs + extracted helpers) | sonnet | results/g7_s195/BREAK_AUDIT.md | relaunch brief; `git diff --stat src` must be empty after |
 (none; S194 checker self-tests committed: bench/tests/test_passthrough_check.py, test_offb_vel_check.py)
 (S189 agents done and committed. Build probes: guard denies a segment naming indi_project with
 rm/tee/git apply etc.; run each run.sh call alone, redirect only into indi_flight/.)
