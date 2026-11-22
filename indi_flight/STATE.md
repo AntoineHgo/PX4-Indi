@@ -5,18 +5,19 @@
   firmware defaults 1.2/2.4). Later commits e9e85e395d, 39c1700523 behaviour-neutral (D-G7-NUTTX-BUILD); gate binary
   built 22:38 after 7fe6206fcc, not rebuilt.
 - Gates: see GATE_STATUS.tsv. G1, G2, G4, G5 PASSED (G5 S198).
-- WAIT_OWNER (S198): G3 set-up fixed, ready for flight chain. Owner builds the detached chain for the 300-run G3
-  campaign at FREEZE-10 (seed/cmd as results/g3_pretest_q24_s197/fly_all.sh, scoring score_all.sh, both keys).
+- G3 campaign: detached flight chain `bench/g3_chain.sh` (owner-built), 300 runs seed 173 idx 0-299 at FREEZE-10
+  into results/g3_campaign_f10 (README there), both keys per run. Start/resume:
+  `bash indi_flight/bench/g3_chain.sh start indi_flight/results/g3_campaign_f10 0 299`; `status`, `stop`, `rescore`.
 - Owner answers Q24 B and Q25 B (2026-11-22) acted on S197: GATES "Owner amendments S197", D-OWNER-Q24, D-OWNER-Q25,
   design/airframe_requirements.md (F-3 list + bring-up items). FREEZE-10 stands.
 - Owner rule F-10 (2026-11-22): delivered code short needed comments, no project ids/paths, explicit names, PX4
   style. Brief every coder with F-10. Clean-up = separate behaviour-neutral commits, independent review.
 
 ## Next actions (each names its gate item)
-1. G3: pre-test under Q24 B done (results/g3_pretest_q24_s197/README.md, 17/20 both keys, 0 LOC; only GNSS keys
-   changed, no new pre-test needed). G3 set-up fixed, ready for flight chain: the owner builds the detached chain
-   (WAIT_OWNER), then the 300-run campaign at FREEZE-10, both keys. 02 item-3 miss (0.318 m, +48 ms mismatch) is a
-   quota item: explain with the campaign's GNSS-mismatch sensitivity, not a chase.
+1. G3: campaign chain (Status). While it flies (lock held): no gate flights, docker builds or rebuilds; commit
+   finished runs. On CHAIN_HALTED: diagnose first. After CHAIN_FINISHED: rescore unscored, then the verdict per GATES
+   "Campaign pass" (items 1-2 zero, 3-6 >= 95 % valid, misses explained, Q24 B shared-with-PID rule; key 2 col 5 is G4).
+   Pre-test 17/20 (results/g3_pretest_q24_s197). 02 item-3 miss (0.318 m, +48 ms) is a quota item, not a chase.
 2. G5 PASSED at freeze-10 (S198). A firmware change after the freeze re-opens the rows it touches (freeze rule).
    Trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
 3. G7 open items: (f) F-10 clean-up per results/g7_s198/F10_PLAN.md (159 hit lines, 9 work units worst first,
@@ -64,7 +65,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | | | |
+| chain | G3 campaign 0-299 (g3_chain.sh) | detached, pid in chain_status.json (fill at launch) | results/g3_campaign_f10 | `g3_chain.sh status`, then `start` resumes |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
