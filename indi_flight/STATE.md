@@ -20,7 +20,8 @@ CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older 
    estimator + synthetic self-test (asym tau, delay, closed loop) -> second key -> offline error grid -> few SITL
    confirmation flights -> bound -> capped/two-sided ACT_TC rule with model margins on corners -> GATES G3 box
    draft -> Q28. Gate criteria for the error measurement go into GATES G6 before the estimator is built.
-   G3 harness before the next campaign: 039 fix + aborts INVALID + key 1 --skip-nav-change (H039 task).
+   G3 harness done S208 (86539dac11: LAND holds last stick, aborts INVALID both keys, key 1 --skip-nav-change);
+   039 lands at speed 1 (results/harness_039_s208). PID not re-flown on 039; self-test synthetic only.
    Next G3 scoring also: re-fly the 15 freeze-10 item-3 misses at speed 1; table class C skipped lines both stacks.
 2. G5 PASSED at freeze-10 (S198). A firmware change after the freeze re-opens the rows it touches.
    Trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
@@ -77,9 +78,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| RC208 | route check after Q27 answer | sonnet | design/route_check_208.md | re-launch brief |
-| H039 | Q27 item 8: runner LAND/stick defect, harness abort = invalid | sonnet | results/harness_039_s208/README.md | re-launch brief |
-| ACTS | Q27 item 1 survey: ACT_TC ident tooling and plan | sonnet | design/actc_ident_survey_s208.md | re-launch brief |
+| ACTI | ident_actc.py + self-test (GATES 6c) | sonnet | bench/tests/SELFTEST_IDENT_ACTC_S208.md | check README, commit, then second key |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
