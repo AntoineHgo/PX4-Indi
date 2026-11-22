@@ -1605,3 +1605,9 @@ offboard trajectories (a steady-state hover limit; no reference stack meets it o
   finished (session cut). Q26 still unanswered. Gate progress: G7(f) units 3-7 of 9 done.
 - S203 (2026-11-22): STATE trimmed (S199/S200 cause-search history kept in CAUSE_S199.md, MARGINS_S200.md and the
   S199-S200 journal lines; Q24/Q25 history in S197 line). G3 chain item already closed (runs committed S199/S201).
+- S204-S205 (2026-11-22): yaw fit second key (928fe49fc6: code matches spec, CI gate untested MAJOR); route check
+  RC205 (710c2cf03f). Gate progress: none (G6 pre-item only; verdicts wait on Q26).
+- S206 (2026-11-22): yaw fit test fix verified (14/14, mutants M8/M6/M10 killed; c7ec0740be); A-44 closing run on
+  axyaw/half_ax3 G1 207.5/208.1 vs 205.3 (f686875ca7), A-44 closed (V0 597 left unexplained, method removed). RC205
+  stands for the supervisor route-check trigger. All work allowed before Q26 done: WAIT_OWNER. Gate progress: none
+  (G6 yaw identification pre-item keyed and closed; no gate row scored, G3/G6/G7/G8 verdicts wait on Q26).

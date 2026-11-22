@@ -4,8 +4,9 @@
 - Stage: 6 (validation). FREEZE-10 (D-FREEZE-10): firmware 7fe6206fcc, config g5_freeze_s157 params (XY gains at
   firmware defaults 1.2/2.4). Later firmware commits behaviour-neutral (D-G7-NUTTX-BUILD, D-F10-NEUTRAL).
 - Gates: see GATE_STATUS.tsv. G1, G2, G4, G5 PASSED; G3 NOT PASSED at freeze-10 (S199). Q26 open (A / B / C).
-- Blocker: G3, G6, G7, G8 verdicts all wait on Q26 (RC202). Allowed meanwhile: G6 yaw fit fix, F-10 units 8-9 and
-  the F-10 review. When those are done: WAIT_OWNER.
+- Blocker: G3, G6, G7, G8 verdicts all wait on Q26 (RC202). S206: the last allowed item (G6 yaw fit key 2 + A-44
+  closing run) is done; WAIT_OWNER set. Route check for the "GATE_STATUS unchanged 6 sessions" trigger: RC205
+  (S205) stands, nothing changed since; its (6) acted on this session.
 - Owner rule F-10 (2026-11-22): brief every coder with F-10. Clean-up = separate behaviour-neutral commits,
   independent review.
 
@@ -38,8 +39,9 @@ CUT RC203 (design/route_check_203.md): F-10 unit 9 and the whole-branch F-10 rev
    omega_ff step on offboard entry; checker defects in bench/tests/SELFTEST_G7_S194.md (no verdict, no LOC check in
    offb_vel_check, IndexError on empty topic); g511_check.py:184; g510_check.py:115-119; ACT_TC/W_MAX firmware vs
    bench (lesson 12); guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
-4. G6: yaw fit fix key 1 committed (57e80feac8; results/ident_yaw_fix_s202). Second key in flight; then A-44
-   closing run (production logs axyaw/half_ax3, within 3 % of 205). ID_OK 0 waits for G6 (D-G7-DEFAULTS).
+4. G6: yaw fit keyed (57e80feac8 + test fix c7ec0740be), A-44 closed (207.5/208.1 vs 205.3,
+   results/ident_yaw_a44_s205). G6 runs (GATES section 6) wait on Q26 (ACT_TC identified or not). ID_OK 0 waits for
+   G6 (D-G7-DEFAULTS).
 CUT RC204 (design/route_check_204.md): after the yaw fit is keyed, nothing advances a gate without Q26: WAIT_OWNER.
 CUT RC205 (design/route_check_205.md): same; only G6 yaw key 2 then A-44 closing run (existing logs
   results/ident_m3a_s123/{axyaw,half_ax3}, commands in fit_yaw_s125.md, no flights) before WAIT_OWNER. F-10 unit 9,
@@ -75,8 +77,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| YAW-K2 | G6: second key of ident_fit_yaw.py (key 1 done 57e80feac8, 12/12 tests); S204 run cut, relaunched S205 | sonnet | design/key2_ident_fit_yaw_s204.md | re-launch brief (code vs spec + K126, break-checks in scratchpad copy) |
-| RC205 | route check (supervisor: GATE_STATUS unchanged 5 sessions) | sonnet | design/route_check_205.md | re-launch brief |
+| - | none | - | - | - |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

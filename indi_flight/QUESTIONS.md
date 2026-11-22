@@ -92,3 +92,5 @@ the nominal G2 roll cell within 1 deg / 1 dB):
 S202 reminder (route check design/route_check_202.md): G6, G7 and G8 verdicts all wait on Q26 (G6 scope depends on
 whether ACT_TC becomes an identified parameter; G7 and G8 depend on whether FREEZE-11 changes firmware). Meanwhile:
 G6 yaw fit fix, F-10 clean-up units, no firmware law change, no G3 re-fly. Not blocked yet; blocked once that work is done.
+S206: that work is done (yaw fit keyed, A-44 closed; F-10 unit 9 and the F-10 review deferred until after your answer,
+since FREEZE-11 may change the code they touch). BLOCKED on Q26 for G3, G6, G7, G8: WAIT_OWNER set.
