@@ -16,7 +16,7 @@
 # No git, no Claude. See results/g3_campaign_f10/README.md.
 #
 # TEST HOOK (smoke tests only): G3_CHAIN_TEST_FLIGHT_CMD="false" replaces the flight command by that shell command.
-# It is refused unless DIR's name contains "smoke". Smoke directories are not recorded in logs/flight_chain.dir.
+# It is refused unless DIR's name contains "smoke". Only the campaign DIR is recorded in logs/flight_chain.dir.
 set -u
 export LC_NUMERIC=C
 
@@ -24,7 +24,7 @@ REPO=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../.." && pwd) || exi
 cd "$REPO" || exit 1
 SELF=$REPO/indi_flight/bench/g3_chain.sh
 LOCK=$REPO/indi_flight/logs/flight_chain.lock
-DIRFILE=$REPO/indi_flight/logs/flight_chain.dir # repo-relative DIR of the last started (non-smoke) chain
+DIRFILE=$REPO/indi_flight/logs/flight_chain.dir # repo-relative DIR, written only for the campaign DEFAULT_DIR
 DEFAULT_DIR=indi_flight/results/g3_campaign_f10
 
 # campaign definition (results/g3_pretest_q24_s197/fly_all.sh)
@@ -54,16 +54,25 @@ FROZEN_INPUTS=(
 )
 # plus every file of $BUILD/etc (PX4 start-up scripts and airframes) and the gz plugins (frozen_build_files)
 
-# g3_run "aborted" (run.json exit_status failed) is a flight result only for the run_scenario.py O-12 flight
-# watchdogs (WatchdogTrip reasons, run_scenario.py wd_check). Every other abort (runner/host faults: gz or px4 exited,
-# no heartbeat, wall timeouts, "no ATTITUDE for 10 s wall", rejected commands, exceptions) is re-flown.
+# A g3_run "aborted" run (run.json exit_status failed) is a FLIGHT RESULT (kept, counted) unless its error is on the
+# INFRA whitelist below (runner/host faults of run_scenario.py before or outside the flight): those are moved to
+# partial/ and flown again. Never extend the whitelist to a failure the controller could cause: a failure is excluded
+# only by the gate's class (a) with proof on the log, never by the chain.
+#   flight watchdog: the O-12 watchdogs (run_scenario.py wd_check), take-off end to land command
 FLIGHT_WATCHDOGS='^(non-finite attitude or rate|tilt > [0-9.]+ deg for [0-9.]+ s|height < [0-9.]+ m|> [0-9.]+ m below hold altitude for [0-9.]+ s)$'
+#   infra: matched on run.json "error" up to the first " | " (TypeName: message, run_scenario.py main)
+INFRA_ERRORS='^(RunError: px4 exited early \(rc=-?[0-9]+\) while waiting for .*|RunError: timeout \([0-9.]+s wall\) waiting for .Startup script returned successfully. in .*|RunError: gz sim exited early|RunError: timeout waiting for gz world|RunError: gz unpause failed:.*|RunError: param (set|show) .* failed:.*|RunError: no MAVLink heartbeat in 60 s|WatchdogTrip: watchdog: no ATTITUDE for [0-9]+ s wall in phase .*)$'
+#   any exception other than the runner's own RunError / WatchdogTrip (a runner bug or host error), and an abort with
+#   no error text but no ulog, are infra too (classify_done)
 
-MAX_CONSECUTIVE_BAD=3 # circuit breaker: failed (after retry) or void indices in a row
+MAX_CONSECUTIVE_BAD=3   # circuit breaker: failed (infra after retry) or void indices in a row
+MAX_CONSECUTIVE_OTHER=5 # aborted-other flight results in a row: kept as results, but the chain stops for a look
+DOCKER_TIMEOUT_S=60     # docker CLI calls of the chain itself (stop, rm, ps, inspect)
 MIN_FREE_GB=5
 CONTAINER_PREFIX=g3c_ # containers px4-indi-g3c_NNN (flight), px4-indi-g3c_k1 / g3c_k2 (scoring)
 
 ts() { date '+%F %T'; }
+dk() { timeout "$DOCKER_TIMEOUT_S" docker "$@"; }
 die() {
 	echo "g3_chain: $*" >&2
 	exit 1
@@ -111,17 +120,25 @@ try:
     st = json.load(open(path))
 except (OSError, ValueError):
     st = {}
-a, b = (int(x) for x in open(os.path.join(d, "chain_range")).read().split())
-done = failed = pending_score = k1 = k2 = scored = 0
+try:
+    a, b = (int(x) for x in open(os.path.join(d, "chain_range")).read().split())
+except (OSError, ValueError):  # directory from before chain_range existed
+    a, b = st.get("idx_first", 0), st.get("idx_last", 299)
+fa = int(fa) if fa else st.get("fly_first", a)
+fb = int(fb) if fb else st.get("fly_last", b)
+done = failed = pending_score = k1 = k2 = scored = left_fly = 0
 outcomes = {}
 for i in range(a, b + 1):
     r = os.path.join(d, f"run_{i:03d}")
     if os.path.exists(os.path.join(r, "g3_done.json")):
         done += 1
-        try:
-            o = json.load(open(os.path.join(r, "g3_done.json"))).get("outcome", "?")
-        except ValueError:
-            o = "?"
+        try:  # chain class (ok, flight, other, void) when the chain has classified the run, else the runner outcome
+            o = open(os.path.join(r, "chain_class.txt")).read().split()[0]
+        except (OSError, IndexError):
+            try:
+                o = json.load(open(os.path.join(r, "g3_done.json"))).get("outcome", "?")
+            except ValueError:
+                o = "?"
         outcomes[o] = outcomes.get(o, 0) + 1
         try:
             s = json.load(open(os.path.join(r, "chain_score.json")))
@@ -134,6 +151,8 @@ for i in range(a, b + 1):
             pending_score += 1
     elif os.path.exists(os.path.join(r, "CHAIN_FAILED")):
         failed += 1
+    elif fa <= i <= fb:
+        left_fly += 1
 remaining = (b - a + 1) - done - failed
 cycles = []
 try:
@@ -149,14 +168,14 @@ speed = os.path.join(d, "chain_speed")
 st.update({
     "state": state, "pid": int(pid) if pid else st.get("pid"), "current_idx": int(cur) if cur else None,
     "phase": phase or None, "idx_first": a, "idx_last": b,
-    "fly_first": int(fa) if fa else st.get("fly_first"), "fly_last": int(fb) if fb else st.get("fly_last"),
+    "fly_first": fa, "fly_last": fb, "remaining_in_fly_range": left_fly,
     "done": done, "failed": failed, "remaining": remaining,
     "outcomes": outcomes, "scored": scored, "score_pending": pending_score, "key1_pass": k1, "key2_pass": k2,
     "binary_sha256": open(freeze).read().split()[0] if os.path.exists(freeze) else None,
     "speed": float(open(speed).read()) if os.path.exists(speed) else None,
     "started": started or st.get("started"), "updated": time.strftime("%F %T"),
     "mean_cycle_s": round(mean, 1),
-    "eta": time.strftime("%F %T", time.localtime(time.time() + remaining * mean)) if state == "running" else None,
+    "eta": time.strftime("%F %T", time.localtime(time.time() + left_fly * mean)) if state == "running" else None,
 })
 tmp = path + ".tmp"
 with open(tmp, "w") as fh:
@@ -207,7 +226,7 @@ progress() { echo "$(ts) $*" >>"$D/progress.txt"; }
 # freeze guard
 # ---------------------------------------------------------------------------------------------------------------
 binary_sha() { sha256sum "$BINARY" 2>/dev/null | cut -d' ' -f1; }
-image_id() { docker image inspect "$IMAGE" -f '{{.Id}}' 2>/dev/null; }
+image_id() { dk image inspect "$IMAGE" -f '{{.Id}}' 2>/dev/null; }
 frozen_build_files() {
 	find "$BUILD/etc" -type f
 	find "$BUILD/src/modules/simulation/gz_plugins" -maxdepth 1 -type f -name '*.so'
@@ -249,7 +268,7 @@ STOP_NOW=0
 
 kill_current() {
 	if [ -n "$CUR_CONTAINER" ]; then
-		docker stop -t 10 "$CUR_CONTAINER" >/dev/null 2>&1
+		dk stop -t 10 "$CUR_CONTAINER" >/dev/null 2>&1
 	fi
 	if [ -n "$CUR_PID" ] && kill -0 "$CUR_PID" 2>/dev/null; then
 		kill -TERM "$CUR_PID" 2>/dev/null
@@ -264,11 +283,11 @@ on_signal() {
 # remove leftover chain containers (a chain killed with -9 leaves its flight container running)
 kill_orphans() {
 	local ids
-	ids=$(docker ps -aq --filter "name=^px4-indi-${CONTAINER_PREFIX}" 2>/dev/null)
+	ids=$(dk ps -aq --filter "name=^px4-indi-${CONTAINER_PREFIX}" 2>/dev/null)
 	[ -z "$ids" ] && return
-	progress "removing leftover containers: $(docker ps -a --filter "name=^px4-indi-${CONTAINER_PREFIX}" --format '{{.Names}}' | paste -sd' ')"
+	progress "removing leftover containers: $(dk ps -a --filter "name=^px4-indi-${CONTAINER_PREFIX}" --format '{{.Names}}' | paste -sd' ')"
 	# shellcheck disable=SC2086
-	docker rm -f $ids >/dev/null 2>&1
+	dk rm -f $ids >/dev/null 2>&1
 }
 
 # run_bg CONTAINER_NAME OUTFILE CMD...: run in the background so a signal can interrupt it; sets RC
@@ -280,7 +299,7 @@ run_bg() {
 		return
 	fi
 	CUR_CONTAINER=px4-indi-$name
-	docker rm -f "$CUR_CONTAINER" >/dev/null 2>&1
+	dk rm -f "$CUR_CONTAINER" >/dev/null 2>&1
 	"$@" >"$out" 2>&1 </dev/null 8>&- &
 	CUR_PID=$!
 	[ "$STOP_NOW" = 1 ] && kill_current # signal during the launch (trap ran with CUR_PID empty)
@@ -294,16 +313,17 @@ run_bg() {
 	CUR_CONTAINER=
 }
 
-# move_partial IDX: move run_NNN aside to partial/ (never deleted); prints the new path
+# move_partial IDX: move run_NNN aside to partial/ (never deleted); prints the new path; non-zero if it fails
+# (callers run it in $(...), so they halt: p=$(move_partial I) || halt ...)
 move_partial() {
 	local r d p
 	r=$(runname "$1")
 	d=$D/$r
 	[ -e "$d" ] || return 0
-	mkdir -p "$D/partial"
+	mkdir -p "$D/partial" || return 1
 	p=$D/partial/$r.$(date +%Y%m%d-%H%M%S)
 	[ -e "$p" ] && p=$p.$$.$RANDOM
-	mv "$d" "$p" || halt "cannot move $d aside"
+	mv "$d" "$p" || return 1
 	echo "${p#"$D"/}"
 }
 
@@ -314,13 +334,15 @@ halt() { # halt REASON...: write CHAIN_HALTED, state halted, exit
 		echo "chain.log, stream_NNN.txt), fix it, then rm CHAIN_HALTED and restart: bash indi_flight/bench/g3_chain.sh start $DREL"
 	} >"$D/CHAIN_HALTED"
 	progress "HALT $*"
+	scores_tsv
 	write_status halted
 	exit 2
 }
 
-# classify_done FILE -> "ok", "flight <watchdog>", "void <problems>", or "infra <error>" (one line)
+# classify_done FILE -> one line: "ok", "flight watchdog: <reason>", "other <error>" (aborted, kept as a flight
+# result), "void <problems>", or "infra <error>" (runner/host fault, flown again)
 classify_done() {
-	python3 - "$1" "$FLIGHT_WATCHDOGS" 8>&- <<'PY'
+	python3 - "$1" "$FLIGHT_WATCHDOGS" "$INFRA_ERRORS" 8>&- <<'PY'
 import json, re, sys
 try:
     j = json.load(open(sys.argv[1]))
@@ -335,10 +357,19 @@ elif o == "void":
     print("void " + one("; ".join((j.get("validity") or {}).get("problems") or ["validity failed"])))
 elif o == "aborted":
     wd = (j.get("watchdog") or {}).get("reason") or ""
+    err = j.get("error") or ""
+    first = err.split(" | ")[0].strip()
+    etype = first.split(":")[0] if re.match(r"^[A-Za-z_][A-Za-z0-9_.]*: ", first) else ""
     if wd and re.match(sys.argv[2], wd):
         print("flight watchdog: " + one(wd))
+    elif re.match(sys.argv[3], first):
+        print("infra " + one(err))
+    elif etype and etype not in ("RunError", "WatchdogTrip"):
+        print("infra runner exception: " + one(err))
+    elif not first and "no ulog" in err:
+        print("infra no ulog and no error: " + one(err))
     else:
-        print("infra aborted: " + one(j.get("error") or "no error text"))
+        print("other " + one(err or "aborted, no error text"))
 else:
     print(f"infra outcome {o!r}")
 PY
@@ -352,7 +383,7 @@ check_binary() {
 	got=$(jq -r '.provenance.binary_sha256 // empty' "$d/run.json" 2>/dev/null)
 	[ -n "$got" ] || halt "$r has g3_done.json but no provenance.binary_sha256 in run.json: binary unknown (not moved)"
 	if [ "$got" != "$(pinned_sha)" ]; then
-		p=$(move_partial "$1")
+		p=$(move_partial "$1") || halt "$r flew binary $got (pinned $(pinned_sha)) and cannot be moved aside"
 		halt "$r flew binary ${got:0:12}, pinned $(pinned_sha | cut -c1-12) (firmware rebuilt mid-campaign); run moved to $p"
 	fi
 }
@@ -363,11 +394,29 @@ scored_ok() { # 0 if run_NNN has a parseable chain_score.json and no SCORE_PENDI
 	[ ! -f "$d/SCORE_PENDING" ] && jq -e '.key1 and .key2' "$d/chain_score.json" >/dev/null 2>&1
 }
 
-fly() { # fly IDX ATTEMPT -> RESULT (ok|flight|void|failed|interrupted), WHY, RC, DUR
+# fault IDX ATTEMPT RC PARTIAL WHY: one FAULTS.tsv row; the moved attempt keeps a small chain_fault.txt (evidence to
+# commit: g3_stdout.txt and the stream are ignored by pattern, so their tails are copied here)
+fault() {
+	local idx=$1 attempt=$2 rc=$3 p=$4 why=$5 f
+	[ -s "$D/FAULTS.tsv" ] || printf 'time\tidx\tattempt\trc\tpartial\twhy\n' >"$D/FAULTS.tsv"
+	printf '%s\t%03d\t%s\t%s\t%s\t%s\n' "$(ts)" "$idx" "$attempt" "$rc" "${p:--}" "$why" >>"$D/FAULTS.tsv"
+	[ -n "$p" ] && [ -d "$D/$p" ] || return 0
+	f=$D/$p/chain_fault.txt
+	{
+		echo "$(ts) idx=$idx attempt=$attempt rc=$rc: $why"
+		echo "--- tail of g3_stdout.txt"
+		tail -n 40 "$D/$p/g3_stdout.txt" 2>/dev/null | cut -c1-400
+		echo "--- tail of stream_$(printf %03d "$idx").txt"
+		tail -n 20 "$D/stream_$(printf %03d "$idx").txt" 2>/dev/null | cut -c1-400
+	} >"$f"
+}
+
+fly() { # fly IDX ATTEMPT -> RESULT (ok|flight|other|void|failed|interrupted), WHY, RC, DUR
 	local idx=$1 attempt=$2 r d t0 c cls p
 	r=$(runname "$idx")
 	d=$D/$r
-	p=$(move_partial "$idx") # partial run of a killed or failed flight: kept aside, flown into a clean directory
+	# partial run of a killed or failed flight: kept aside, flown into a clean directory
+	p=$(move_partial "$idx") || halt "cannot move $r aside"
 	[ -n "$p" ] && progress "idx=$idx moved leftover directory to $p"
 	t0=$(date +%s)
 	if [ -n "${G3_CHAIN_TEST_FLIGHT_CMD:-}" ]; then # TEST HOOK, see header
@@ -388,18 +437,21 @@ fly() { # fly IDX ATTEMPT -> RESULT (ok|flight|void|failed|interrupted), WHY, RC
 	cls=${c%% *}
 	WHY=${c#* }
 	[ "$WHY" = "$c" ] && WHY=
-	if [ "$STOP_NOW" = 1 ] && [ "$cls" != ok ] && [ "$cls" != flight ]; then
-		RESULT=interrupted
-	elif [ "$cls" = ok ] || [ "$cls" = flight ] || [ "$cls" = void ]; then
-		RESULT=$cls
-	else
-		RESULT=failed # runner/host fault: rc != 0, timeout, g3_run "incomplete", or a non-flight abort
-	fi
+	case "$cls" in
+	ok | flight) RESULT=$cls ;;
+	other | void) # a kill can end a flight early: then it is an interruption, not a result
+		if [ "$STOP_NOW" = 1 ]; then RESULT=interrupted; else RESULT=$cls; fi ;;
+	*) if [ "$STOP_NOW" = 1 ]; then RESULT=interrupted; else RESULT=failed; fi ;; # infra, or no g3_done.json
+	esac
+	p=
 	if [ "$RESULT" = failed ] || [ "$RESULT" = interrupted ]; then
-		p=$(move_partial "$idx")
+		p=$(move_partial "$idx") || halt "cannot move $r aside"
 		[ -n "$p" ] && WHY="$WHY; moved to $p"
+	else
+		echo "$c" >"$d/chain_class.txt"
 	fi
 	progress "idx=$idx attempt=$attempt rc=$RC dur=${DUR}s result=$RESULT${WHY:+ ($WHY)}"
+	[ "$RESULT" = failed ] && fault "$idx" "$attempt" "$RC" "$p" "$c"
 }
 
 # score IDX: key 1 (g3_score.sh on a one-run directory) and key 2 (g3_checks_key2.py), args as score_all.sh
@@ -485,7 +537,16 @@ for rd in sorted(glob.glob(os.path.join(d, "run_[0-9][0-9][0-9]"))):
     try:
         o = json.load(open(os.path.join(rd, "g3_done.json"))).get("outcome")
     except (OSError, ValueError):
+        if os.path.exists(os.path.join(rd, "CHAIN_FAILED")):  # infra fault twice (FAULTS.tsv has every attempt)
+            why = " ".join(open(os.path.join(rd, "CHAIN_FAILED")).read().split())[:300]
+            rows.append("\t".join([idx, "CHAIN_FAILED: " + why, "-", "-", "-", "-", "-"]))
         continue
+    try:
+        c = " ".join(open(os.path.join(rd, "chain_class.txt")).read().split())
+        if c and c != "ok":
+            o = f"{o} ({c[len(o) + 1:] if c.startswith(o + ' ') else c})"
+    except OSError:
+        pass
     try:
         if os.path.exists(os.path.join(rd, "SCORE_PENDING")):
             raise ValueError
@@ -510,17 +571,18 @@ close_inherited_fds() { # everything above stderr except the file bash reads thi
 	done
 }
 
-# skip_done IDX: a finished run is kept only if it is a flight result on the pinned binary; it is scored if needed.
+# skip_done IDX: a finished run is kept unless it is an infra fault; binary checked; scored if needed.
 # Returns 0 if kept (skip it), 1 if it must be flown.
 skip_done() {
 	local idx=$1 d c p
 	d=$D/$(runname "$idx")
 	c=$(classify_done "$d/g3_done.json")
 	case "${c%% *}" in
-	ok | flight | void) ;;
-	*) # e.g. a flight finished by an orphan after a kill -9, or a run written before this classification
-		p=$(move_partial "$idx")
-		progress "idx=$idx finished run is not a flight result (${c#* }): moved to $p, flown again"
+	ok | flight | other | void) [ "$(cat "$d/chain_class.txt" 2>/dev/null)" = "$c" ] || echo "$c" >"$d/chain_class.txt" ;;
+	*) # e.g. a flight finished by an orphan after a kill -9
+		p=$(move_partial "$idx") || halt "cannot move $(runname "$idx") aside"
+		progress "idx=$idx finished run is an infra fault (${c#* }): moved to $p, flown again"
+		fault "$idx" skip "-" "$p" "$c"
 		return 1
 		;;
 	esac
@@ -536,7 +598,7 @@ run_chain() {
 		echo "$(ts) lock busy, another chain runs: exit"
 		exit 1
 	}
-	is_smoke || echo "$DREL" >"$DIRFILE"
+	[ "$DREL" = "$DEFAULT_DIR" ] && echo "$DREL" >"$DIRFILE"
 	CHAIN_PID=$$
 	STARTED=$(ts)
 	trap on_signal TERM INT
@@ -545,7 +607,7 @@ run_chain() {
 	kill_orphans
 	progress "START pid=$$ range=$RANGE_A-$RANGE_B campaign=$CAMP_A-$CAMP_B speed=$SPEED binary=$(pinned_sha | cut -c1-12)${G3_CHAIN_TEST_FLIGHT_CMD:+ TEST_FLIGHT_CMD=$G3_CHAIN_TEST_FLIGHT_CMD}"
 	write_status running
-	local idx r d i bad=0 streak=() c0 avail reason p
+	local idx r d i bad=0 other=0 streak=() c0 avail reason p
 	for idx in $(seq "$RANGE_A" "$RANGE_B"); do
 		r=$(runname "$idx")
 		d=$D/$r
@@ -566,6 +628,7 @@ run_chain() {
 			if [ -f "$D/STOP_CHAIN" ]; then
 				RESULT=interrupted # stop requested: no retry, the index stays unmarked and is flown on the next start
 			else
+				write_status running "$idx" "flying (attempt 2)"
 				fly "$idx" 2
 			fi
 		fi
@@ -575,7 +638,8 @@ run_chain() {
 		fi
 		if [ "$RESULT" = failed ]; then
 			mkdir -p "$d"
-			echo "$(ts) failed twice: $WHY (rc $RC; attempts in partial/, see progress.txt)" >"$d/CHAIN_FAILED"
+			echo "$(ts) infra fault twice: $WHY (rc $RC; attempts in partial/, FAULTS.tsv)" >"$d/CHAIN_FAILED"
+			fault "$idx" CHAIN_FAILED "$RC" "" "infra fault on both attempts, last: $WHY"
 			bad=$((bad + 1))
 			streak+=("$idx")
 		else
@@ -587,11 +651,15 @@ run_chain() {
 				bad=0
 				streak=()
 			fi
+			if [ "$RESULT" = other ]; then other=$((other + 1)); else other=0; fi
 			score "$idx"
 			[ "$STOP_NOW" = 1 ] && break
 		fi
 		progress "idx=$idx cycle=$(($(date +%s) - c0))s"
 		write_status running "$idx" flown
+		if [ "$other" -ge "$MAX_CONSECUTIVE_OTHER" ]; then # the runs stay counted as results
+			halt "$other consecutive aborted-other flight results (last idx $idx: ${WHY:-see progress.txt}); they are kept as results, check the set-up before going on"
+		fi
 		if [ "$bad" -ge "$MAX_CONSECUTIVE_BAD" ]; then
 			# most likely docker/host trouble: clear the streak so a restart flies it again
 			for i in "${streak[@]}"; do
@@ -600,11 +668,11 @@ run_chain() {
 					rm -f "$d/CHAIN_FAILED"
 					rmdir "$d" 2>/dev/null
 				else
-					p=$(move_partial "$i") # void run
+					p=$(move_partial "$i") || halt "cannot move void $(runname "$i") aside"
 					progress "idx=$i void run moved to $p (breaker)"
 				fi
 			done
-			halt "$bad consecutive failed or void indices (${streak[*]}): host/docker/set-up trouble suspected, not a controller result; these indices were cleared (void runs moved to partial/) so a restart flies them again"
+			halt "$bad consecutive infra-failed or void indices (${streak[*]}): host/docker/set-up trouble suspected, not a controller result; these indices were cleared (void runs moved to partial/) so a restart flies them again"
 		fi
 	done
 	if [ "$STOP_NOW" = 1 ] || [ -f "$D/STOP_CHAIN" ]; then
@@ -719,7 +787,7 @@ cmd_start() {
 		awk "BEGIN { printf \"%.6g\n\", ${speed:-1.0} }" >"$D/chain_speed"
 	fi
 	[ -s "$D/chain_range" ] || echo "$CAMP_A $CAMP_B" >"$D/chain_range"
-	[ -f "$D/.gitignore" ] || printf '# chain scratch: partial runs of killed flights, scoring link directory\npartial/\n.score_tmp/\n*.tmp\n' >"$D/.gitignore"
+	[ -f "$D/.gitignore" ] || printf '# chain scratch: scoring link directory, temporary files (partial/ is evidence: big files are ignored by the repo patterns)\n.score_tmp/\n*.tmp\n' >"$D/.gitignore"
 	rm -f "$D/STOP_CHAIN"
 
 	local inhibit=()
@@ -754,6 +822,10 @@ cmd_start() {
 	fi
 }
 
+stop_chain_containers() {
+	dk ps -q --filter "name=^px4-indi-${CONTAINER_PREFIX}" | xargs -r timeout "$DOCKER_TIMEOUT_S" docker stop -t 10 >/dev/null
+}
+
 cmd_stop() {
 	local now=0 pos=() pid
 	for a in "$@"; do
@@ -772,7 +844,7 @@ cmd_stop() {
 			kill -TERM "$pid"
 		fi
 		# chain already dead (kill -9): its flight container may still run
-		lock_held || docker ps -q --filter "name=^px4-indi-${CONTAINER_PREFIX}" | xargs -r docker stop -t 10 >/dev/null
+		lock_held || stop_chain_containers
 	fi
 	if ! lock_held; then
 		rm -f "$D/STOP_CHAIN"
@@ -790,6 +862,7 @@ cmd_stop() {
 		sleep 1
 	done
 	lock_held && die "chain still holds the lock after 60 s"
+	stop_chain_containers # anything a dying chain left behind
 	echo "g3_chain: stopped"
 	print_status
 }

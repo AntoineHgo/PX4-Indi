@@ -49,6 +49,7 @@ LIMIT_WAIT="${LIMIT_WAIT:-1800}"           # fallback wait after a failed or ver
 TOOLS="${TOOLS:-Bash,Read,Edit,Write,Task,Monitor,TaskStop,SendMessage,Skill,ToolSearch,WebSearch,WebFetch}"
 STATE_MAX_BYTES="${STATE_MAX_BYTES:-8000}" # bytes; the session prompt asks for a trim above it
 MAX_RUNS="${MAX_RUNS:-300}"
+CHAIN_DIR=indi_flight/results/g3_campaign_f10 # the G3 campaign of indi_flight/bench/g3_chain.sh (lock in $LOG_DIR)
 mkdir -p "$LOG_DIR"
 
 log() { echo "[$(date '+%F %T')] $*" | tee -a "$LOG_DIR/supervisor.log"; }
@@ -147,12 +148,20 @@ while [ ! -f indi_flight/DONE ] && [ ! -f indi_flight/STOP ]; do
 		continue
 	fi
 	waiting_logged=
-	# the detached G3 flight chain holds this lock while it flies: no session meanwhile (sequential rule, freeze)
+	# the detached G3 flight chain holds this lock while it flies: no session meanwhile (sequential rule, freeze),
+	# unless the campaign chain's status has not been updated for an hour (stuck: a session diagnoses it)
+	chain_stuck=
 	if [ -f "$LOG_DIR/flight_chain.lock" ] && ! flock -n "$LOG_DIR/flight_chain.lock" true 9>&-; then
-		[ -n "${chain_logged:-}" ] || log "G3 flight chain flying ($(cat "$LOG_DIR/flight_chain.dir" 2>/dev/null)), no session until it stops"
-		chain_logged=1
-		sleep 60 9>&-
-		continue
+		chain_upd=$(jq -r 'select(.state == "running") | .updated // empty' "$CHAIN_DIR/chain_status.json" 2>/dev/null)
+		[ -n "$chain_upd" ] && chain_upd=$(date -d "$chain_upd" +%s 2>/dev/null)
+		if [ -z "$chain_upd" ] || [ $(($(date +%s) - chain_upd)) -lt 3600 ]; then
+			[ -n "${chain_logged:-}" ] || log "G3 flight chain flying, no session until it stops"
+			chain_logged=1
+			sleep 60 9>&-
+			continue
+		fi
+		chain_stuck=1
+		log "G3 flight chain holds its lock but $CHAIN_DIR/chain_status.json is over 1 h old: launching a session to diagnose"
 	fi
 	chain_logged=
 	# --- usage gate: launch only within the orchestrator's share of the owner's usage ---
@@ -241,11 +250,13 @@ while [ ! -f indi_flight/DONE ] && [ ! -f indi_flight/STOP ]; do
 $dirty_dirs"
 		log "run $runs: indi_flight/results has $n_dirty dirty paths, the orchestrator is told to commit or ignore them"
 	fi
-	# detached G3 flight chain (indi_flight/bench/g3_chain.sh), not running here (the loop idles while it flies)
-	chain_dir=$(cat "$LOG_DIR/flight_chain.dir" 2>/dev/null)
-	if [ -n "$chain_dir" ] && [ -f "$chain_dir/chain_status.json" ]; then
-		if [ -f "$chain_dir/CHAIN_FINISHED" ]; then
-			chain_line="- G3 chain $chain_dir finished: commit its runs, g3_chain.sh rescore if any run is unscored, then the G3 verdict per GATES (skip if written)."
+	# G3 campaign chain (indi_flight/bench/g3_chain.sh): the loop idles while it flies; other chain dirs are ignored
+	chain_dir=$CHAIN_DIR
+	if [ -f "$chain_dir/chain_status.json" ]; then
+		if [ -n "$chain_stuck" ]; then
+			chain_line="- G3 chain $chain_dir holds its lock but its chain_status.json is over 1 h old: run bash indi_flight/bench/g3_chain.sh status, diagnose (stuck flight or scorer), stop --now if needed."
+		elif [ -f "$chain_dir/CHAIN_FINISHED" ]; then
+			chain_line="- G3 chain $chain_dir finished: commit its runs, g3_chain.sh rescore (in the background) if any run is unscored, then the G3 verdict per GATES (skip if written)."
 		else
 			chain_line="- G3 chain $chain_dir is not running and unfinished: do not modify files listed in its chain_freeze.sha256 or switch branches over them. Commit its finished runs."
 			if [ -f "$chain_dir/CHAIN_HALTED" ]; then
@@ -256,7 +267,7 @@ $dirty_dirs"
 		fi
 		prompt="$prompt
 $chain_line"
-		log "run $runs: G3 chain $chain_dir not running ($(jq -r .state "$chain_dir/chain_status.json" 2>/dev/null))"
+		log "run $runs: G3 chain $chain_dir: $(jq -r .state "$chain_dir/chain_status.json" 2>/dev/null)${chain_stuck:+ (stuck)}"
 	fi
 	# gate progress is measured on indi_flight/GATE_STATUS.tsv, not on self-reported journal lines (owner, 2026-11-21)
 	stale=$(cat "$LOG_DIR/gate_status.stale" 2>/dev/null || echo 0)
