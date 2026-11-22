@@ -1281,3 +1281,18 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   amendment were cruise-speed estimates (self-test reproduces 5.0 and 4.243 m/s without ramps). The written formula
   governs; it is the tighter reading. Re-score results/freeze10_s193/G5_5_RESCORE_Q25.md: INDI 24/24 both keys
   (tightest o3 +0.043 m), PID o2 1.14-1.16 m and o1 0.79/1.04 m fail; no PID refs for o3-o7.
+
+## D-F10-NEUTRAL (S200, 2026-11-22): F-10 clean-up is behaviour-neutral by construction and shown per unit
+- Decision. The F-10 comment and naming clean-up (results/g7_s198/F10_PLAN.md, 9 units) changes only comments,
+  description text and private/local/test names. Each unit is one `refactor(indi)`/`docs(indi)` commit, never mixed
+  with a behaviour change, and is shown neutral before commit: (i) source level, comment-stripped preprocessed
+  tokens identical except the listed renames; (ii) object level, the INDI objects of a SITL build in a separate
+  build directory (`build/f10_sitl`, so the gate binary in `build/px4_sitl_default` is untouched) disassemble
+  identically (addresses and symbol names stripped), equal `.text` sizes; (iii) unit tests pass with the same count.
+- Consequence. Under this check no gate row of FREEZE-10 (G2, G4, G5 PASSED; G3 evidence) is invalidated; no re-fly.
+  A unit that fails (ii) is reverted, not explained away.
+- Alternatives: one big clean-up commit (unreviewable, a slip hides among 159 lines); re-fly after the clean-up
+  (hours of CPU for a change that by construction does not reach the binary); defer to the firmware-only branch
+  (the gate commit and the delivered code would differ in text, two histories to keep aligned).
+- Overturn: a unit whose objects differ beyond symbol names, or a public name (parameter, uORB field, topic) that must
+  change; public renames are listed in F10_PLAN 1b and need their own decision and re-fly.
