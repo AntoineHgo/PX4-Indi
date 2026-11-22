@@ -64,6 +64,8 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | Q10 | FREEZE-10 re-fly queue: ENDED 01:14 S194, all 4 steps rc 0 | - | results/freeze10_s193/ | - |
+| S195a | G7(d) check_format + G7(e) NuttX flash/RAM (no source change) | sonnet | results/g7_s195/FORMAT_SIZE.md | relaunch brief |
+| S195b | G7(c) firmware defaults vs validated params table | sonnet | results/g7_s195/DEFAULTS_DIFF.md | relaunch brief |
 (none; S194 checker self-tests committed: bench/tests/test_passthrough_check.py, test_offb_vel_check.py)
 (S189 agents done and committed. Build probes: guard denies a segment naming indi_project with
 rm/tee/git apply etc.; run each run.sh call alone, redirect only into indi_flight/.)

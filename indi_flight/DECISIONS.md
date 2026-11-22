@@ -1215,3 +1215,14 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   sensitivity, rests on D-OFFB-POSVEL bandwidth. Decide at the freeze-10 pre-test: if 02/05 fail again, re-open
   D-OFFB-POSVEL (lower XY_P/VP) or ask owner on the mismatch range; no firmware change before that re-fly.
 - Overturn: any invalidated row FAILs at freeze-10 with a log-shown INDI cause.
+
+## D-G7-NUTTX-BUILD (S195): NuttX compile fix under FREEZE-10
+- Fact (results/g7_s195/FORMAT_SIZE.md, build log): with CONFIG_MODULES_MC_INDI_POS_CONTROL=y, px4_fmu-v6x stops at
+  IndiStageMode.hpp:107 `std::fmin` not in NuttX's std (cmath included). G7(e) cannot be measured; no upstream PR
+  can build. A G7 gate test failure with its cause shown on a log.
+- Decision: replace NuttX-missing std:: calls by semantically identical ones (fminf/fmaxf or math::constrain on
+  finite floats), compile errors only, no other edit. SITL unit tests must pass unchanged.
+- Rows invalidated: none (identical float semantics on the paths reached; isfinite guard precedes). The gate
+  binary build/px4_sitl_default is not rebuilt for this; any FREEZE-11 rebuild includes it.
+- Alternatives: leave it for the firmware-only branch (rejected: G7(e) needs it now and the branch must equal tested
+  code). Overturn if: a substitution changes a value on a reachable path (unit test or review shows a difference).
