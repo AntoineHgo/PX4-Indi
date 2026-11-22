@@ -13,6 +13,10 @@
   style. Brief every coder with F-10. Clean-up = separate behaviour-neutral commits, independent review.
 
 ## Next actions (each names its gate item)
+CUT RC202 (design/route_check_202.md): no further 283/264 modelling; G8 report/docs drafting paused until Q26;
+  G7 older list justified in writing (not fixed) except MC_INDI_ID_OK call site (firmware: after Q26) and the
+  offb_vel_check checker defects; F-10 units merged in pairs (3+4, 5+6, 7+8). G6/G7/G8 verdicts all wait on Q26;
+  work allowed meanwhile: G6 yaw fit fix + identification sequence skeleton (ACT_TC step left open), F-10 units.
 1. G3 NOT PASSED at freeze-10 (S199, GATES "G3 verdict at freeze-10"; FAILS_S199.md, g3_refly_s199/SUMMARY.md).
    Q26 open (A: cause search then FREEZE-11 with G2/G4/G5/G3 re-fly; B: close as limit). Meanwhile, the one-session
    cause search (needed under A and B): 245 (C1 2 Hz pitch divergence), 239 (class B 2 Hz), 283 (class A 10.75 Hz q),
@@ -52,7 +56,7 @@
    (LND_SLEW unit, PINJ_* long text) go into F-10 unit 8. Not run: prettier/link check/docs build.
 Rules: 1 session per inner-loop law change; parallel docker streams only for tolerance-insensitive probes, never gate
   evidence, never a docker build during gate flights; G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1. Next RC:
-  S209 (RC194 done).
+  S217 (RC202 done).
 STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 margin): A-39 / yaw measured-path chase,
   PID M1 hook, hooks without a consumer, stand-alone anomaly chases, --sched-anchor and set_param fixes, EdgeState
   design, more PID G5.10 runs.
@@ -80,7 +84,9 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | - | - | - |
+| RC202 | route check (GATE_STATUS unchanged 2 sessions) | sonnet | design/route_check_202.md | re-launch brief |
+| YAW-FIT | G6 pre-item: ident_fit_yaw.py r regressor + matched grid, K126 MAJORs (key 1) | sonnet | results/ident_yaw_fix_s202/README.md | re-launch brief |
+| F10-U3 | F-10 unit 3 indi_accel_control.cpp/.hpp | sonnet | results/g7_s198/F10_UNIT3.md | re-launch unit 2 brief, scope unit 3 |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.

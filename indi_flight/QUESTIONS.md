@@ -89,3 +89,6 @@ the nominal G2 roll cell within 1 deg / 1 dB):
 - Updated recommendation: C for the tau factor plus A for 264 only (one fix probe on the weak-motor recovery), then
   FREEZE-11 with the re-flies named above if the probe works. Note that C changes a gate after its first test and
   narrows a factor PID passes at full width: your call, not mine.
+S202 reminder (route check design/route_check_202.md): G6, G7 and G8 verdicts all wait on Q26 (G6 scope depends on
+whether ACT_TC becomes an identified parameter; G7 and G8 depend on whether FREEZE-11 changes firmware). Meanwhile:
+G6 yaw fit fix, F-10 clean-up units, no firmware law change, no G3 re-fly. Not blocked yet; blocked once that work is done.
