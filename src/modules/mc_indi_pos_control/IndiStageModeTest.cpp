@@ -44,7 +44,7 @@ TEST(IndiStageModeTest, ComputeWantIndi)
 	EXPECT_FALSE(computeWantIndi(true, false, false, false)); // manual / stabilized / acro: pass-through
 }
 
-// D-F7-GROUND: the landed / ramp case must use the modelled specific force, never the measured one
+// Landed / ramp case must use the modelled specific force, never the measured one
 TEST(IndiStageModeTest, GroundAndRampUseModelledForce)
 {
 	EXPECT_TRUE(useModelledForce(false, false, false)); // takeoff state < flight (ground, rampup)
@@ -87,7 +87,7 @@ TEST(IndiStageModeTest, ZeroStockThrustIsStraightUpInZOnly)
 	EXPECT_TRUE(isZeroThrustDir(0.f, 0.f, -0.f));
 	EXPECT_FALSE(isZeroThrustDir(0.f, 0.f, -0.1f)); // a real direction is kept
 	EXPECT_FALSE(isZeroThrustDir(0.01f, 0.f, 0.f));
-	EXPECT_FALSE(isZeroThrustDir(NAN, 0.f, 0.f));   // non-finite still goes to the D-STAGE-STALE hold
+	EXPECT_FALSE(isZeroThrustDir(NAN, 0.f, 0.f));   // non-finite still goes to the hold
 }
 
 TEST(IndiStageModeTest, HoldFallbackNeverHoverThrustOnGround)
@@ -112,7 +112,7 @@ TEST(IndiStageModeTest, HoldToRunEdgeRequestsReset)
 	EXPECT_FALSE(shouldResetOnHoldToRun(true, false));
 }
 
-TEST(IndiStageModeTest, SampleIntervalGate)
+TEST(IndiStageModeTest, SampleIntervalLimitsHoldAndClamp)
 {
 	// 0.3 s (3.3 Hz): hold; 0.1 s: run with the true dt; 0.001 s: lower clamp
 	EXPECT_FALSE(stageIntervalOk(0.3f));

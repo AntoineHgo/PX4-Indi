@@ -109,7 +109,7 @@ private:
 
 	void Run() override;
 
-	/** Poll the attitude and specific-force inputs of the INDI stage. */
+	/** Poll the attitude and specific-force inputs of the INDI loop. */
 	void pollStageInputs();
 
 	/** Read the latest vehicle_acceleration sample (called on every wakeup) and feed the native-rate force filter. */
@@ -118,20 +118,20 @@ private:
 
 	static constexpr hrt_abstime kStageMaxAge{20_ms};
 
-	/** INDI stage after PositionControl::update (architecture A). Modifies att_sp / local_pos_sp when active. */
+	/** INDI loop after PositionControl::update. Modifies att_sp / local_pos_sp when active. */
 	void runIndiStage(float dt, hrt_abstime now, bool want_active, bool model_force, bool flying, float tilt_limit_rad, float ht,
 			  vehicle_local_position_setpoint_s &local_pos_sp, vehicle_attitude_setpoint_s &att_sp);
 
-	/** Arm/disarm edge: clear blend b, held setpoint, stale latch and request a filter/differencing reset. */
+	/** Arm/disarm edge: clear blend, held setpoint, stale latch and request a filter/differencing reset. */
 	void resetStageState();
 
-	/** Remember the attitude setpoint and thrust for the hold mode (D-STAGE-STALE b). */
+	/** Remember the attitude setpoint and thrust for the hold mode. */
 	void storeHeld(const vehicle_attitude_setpoint_s &att_sp, const vehicle_local_position_setpoint_s &local_pos_sp);
 
-	/** Warn once per episode when a degraded stage mode lasts > 0.5 s. */
+	/** Warn once per episode when a degraded mode lasts > 0.5 s. */
 	void trackDegraded(StageMode mode, hrt_abstime now);
 
-	IndiAccelControl _indi;
+	IndiAccelControl _accel_control;
 	IndiPosInjection _injection; ///< bench loop-break excitation of the commanded acceleration (MC_INDI_PINJ_*), off by default
 	uORB::Subscription _attitude_sub{ORB_ID(vehicle_attitude)};
 	uORB::SubscriptionCallbackWorkItem _acceleration_sub{this, ORB_ID(vehicle_acceleration)}; ///< also schedules the module: every sample feeds the native-rate force filter
@@ -139,14 +139,14 @@ private:
 	uORB::Subscription _thrust_setpoint_sub{ORB_ID(vehicle_thrust_setpoint)};
 	uORB::Subscription _alloc_status_sub{ORB_ID(control_allocator_status)};
 	matrix::Quatf _q{};
-	matrix::Vector3f _f_b{};
-	float _mean_u{NAN};
-	bool _mean_u_valid{false};
+	matrix::Vector3f _specific_force_body_mps2{};
+	float _mean_rotor_thrust{NAN};
+	bool _mean_rotor_thrust_valid{false};
 	hrt_abstime _acc_sample_time{0};
 	hrt_abstime _q_time{0}, _acc_time{0}, _esc_time{0}, _thr_time{0};
 	float _coll_meas{NAN};		///< latest vehicle_thrust_setpoint collective
 	hrt_abstime _acc_fresh_since{0};	///< start of the current continuous fresh-acceleration run
-	bool _acc_stale_latched{false};	///< D-STAGE-STALE hysteresis: modelled acceleration until fresh for kAccRecoverTime
+	bool _acc_stale_latched{false};	///< hysteresis: modelled acceleration until fresh for kAccRecoverTime
 	static constexpr hrt_abstime kAccRecoverTime{20_ms};
 	float _last_thrust{0.f};	///< last published collective
 	float _hte{NAN};
@@ -156,12 +156,12 @@ private:
 	float _held_thrust_body[3] {};
 	float _held_thrust_ned[3] {};
 	bool _held_valid{false};
-	bool _pos_entry_pending{false};	///< F3: position control re-entered, restart the stage and refresh the held setpoint
-	bool _stage_was_hold{false};	///< F3: previous stage cycle was a Hold
+	bool _pos_entry_pending{false};	///< position control re-entered: restart the INDI state and refresh the held setpoint
+	bool _stage_was_hold{false};	///< previous cycle was a Hold
 	hrt_abstime _degraded_since{0};
 	bool _degraded_warned{false};
-	int _stage_reason{-1};		///< last reported stage condition bitmask (instrument)
-	int _stage_reports{0};		///< number of stage reports printed (capped)
+	int _stage_reason{-1};		///< last reported degraded-condition bitmask
+	int _stage_reports{0};		///< number of condition reports printed (capped)
 	float _filter_hz{0.f};
 	int _rate_dev_count{0};	///< consecutive cycles with a rate deviation > 20 % (filter re-config hysteresis)
 	bool _alloc_saturated{false};	///< latest control_allocator_status reports saturation
@@ -323,13 +323,13 @@ private:
 	uint8_t _xy_reset_counter{0};
 	uint8_t _z_reset_counter{0};
 	uint8_t _heading_reset_counter{0};
-	EkfResetDetector _indi_reset_detector{}; /**< T10: estimator reset seen by the INDI stage */
+	EkfResetDetector _indi_reset_detector{}; /**< estimator reset seen by the INDI loop */
 	bool _indi_reset_pending{false};
-	bool _indi_jerk_reset_pending{false}; ///< estimator reset: clear the jerk history only (D-T10-RESET)
+	bool _indi_jerk_reset_pending{false}; ///< estimator reset: clear the jerk history only
 
-	// A18: feed-forward acceleration of the trajectory setpoint of this cycle (source of the jerk feed-forward,
-	// D-JFF-SOURCE), and the omega_ff the stage produced (valid only on an active INDI cycle), published every cycle
-	matrix::Vector3f _a_ff{NAN, NAN, NAN};
+	// Feed-forward acceleration of the trajectory setpoint of this cycle (source of the jerk feed-forward), and the
+	// rotor-speed feed-forward the INDI loop produced (valid only on an active INDI cycle), published every cycle
+	matrix::Vector3f _accel_feedforward_mps2{NAN, NAN, NAN};
 	matrix::Vector3f _omega_ff_out{};
 	bool _omega_ff_valid{false};
 
