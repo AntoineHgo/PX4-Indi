@@ -202,11 +202,11 @@ TEST(IndiInjectionStepTest, OffIsBitIdentical)
 	}
 }
 
-TEST(IndiInjectionStepTest, RateSetpointBreakGating)
+TEST(IndiInjectionStepTest, RateSetpointBreakNeedsAllEnableConditions)
 {
 	const Vector3f z, sp(0.2f, 0.1f, 0.f);
 
-	// each gate alone must give d == 0 and a law input equal to y, in a window where d would be non zero
+	// each condition alone must give d == 0 and a law input equal to y, in a window where d would be non zero
 	for (int g = 0; g < 4; g++) {
 		IndiRateControl law = makeLaw();
 		IndiInjection inj;
@@ -228,14 +228,14 @@ TEST(IndiInjectionStepTest, RateSetpointBreakGating)
 			EXPECT_GT(peak, 0.05f);
 
 		} else {
-			EXPECT_EQ(peak, 0.f) << "gate " << g;
+			EXPECT_EQ(peak, 0.f) << "condition " << g;
 		}
 	}
 }
 
-// A gate that closes in flight (v 0: stale or ACRO, v 1: law fault on the previous cycle) zeroes d and restarts the
-// sequence from its beginning when it reopens: d then equals a fresh generator started at the reopening cycle.
-TEST(IndiInjectionStepTest, RateSetpointBreakGateClosingRestartsSequence)
+// A break enable condition that turns false in flight (v 0: stale or ACRO, v 1: law fault on the previous cycle) zeroes d and restarts the
+// sequence from its beginning when it turns true again: d then equals a fresh generator started at the reopening cycle.
+TEST(IndiInjectionStepTest, RateSetpointBreakDisabledInFlightRestartsSequence)
 {
 	const Vector3f z, sp(0.2f, 0.1f, 0.f);
 	const Vector3f nan_rates(NAN, 0.f, 0.f);
@@ -269,8 +269,6 @@ TEST(IndiInjectionStepTest, RateSetpointBreakGateClosingRestartsSequence)
 		EXPECT_GT(peak_after, 0.05f) << "v " << v;
 	}
 }
-
-// G7(b) break-check additions (S196)
 
 TEST(IndiInjectionStepTest, TorqueBreakNotInjectedWhileDisarmedOrLanded)
 {

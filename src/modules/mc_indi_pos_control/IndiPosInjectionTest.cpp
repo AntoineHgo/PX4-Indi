@@ -34,7 +34,7 @@
 /**
  * @file IndiPosInjectionTest.cpp
  *
- * The excitation must reproduce indi_flight/bench/margins_est.py log_bins() and multisine().
+ * The excitation must reproduce the log-spaced bins and Schroeder phases of the reference multisine.
  */
 
 #include <gtest/gtest.h>
@@ -51,9 +51,9 @@ TEST(IndiPosInjectionTest, OffIsExactZero)
 	EXPECT_EQ(inj.update(5000000, true, false), 0.f);
 }
 
-TEST(IndiPosInjectionTest, MatchesMarginsEst)
+TEST(IndiPosInjectionTest, MatchesReferenceMultisine)
 {
-	// margins_est.log_bins(1, 60, 10) = 10, 13, ... 501 (18 bins), multisine amplitude 0.02, Schroeder phases
+	// reference bins for 1..60 Hz with Tp = 10 s: 10, 13, ... 501 (18 bins), multisine amplitude 0.02, Schroeder phases
 	IndiPosInjection inj;
 	inj.setParameters(1, 0.02f, 10.f, 1.f, 60.f, 2, 0.f);
 	EXPECT_EQ(inj.axis(), 0);
@@ -64,7 +64,7 @@ TEST(IndiPosInjectionTest, MatchesMarginsEst)
 	EXPECT_NEAR(inj.waveform(3.7), 0.11957619297037093, 1e-6);
 	EXPECT_NEAR(inj.waveform(12.34), -0.021955507529366248, 1e-6);
 
-	// bin count with the default frequency range and a long period (margins_est.log_bins(0.5, 60, 20) has 21)
+	// bin count with the default frequency range and a long period (0.5..60 Hz with Tp = 20 s gives 21 bins)
 	IndiPosInjection inj2;
 	inj2.setParameters(2, 0.02f, 20.f, 0.5f, 60.f, 3, 0.f);
 	EXPECT_EQ(inj2.axis(), 1);
@@ -165,7 +165,7 @@ TEST(IndiPosInjectionTest, BinContent)
 	EXPECT_GT(on_bins, 10);
 }
 
-// G7(b) break-check additions (S196): behaviour the header states that no test pinned down
+// behaviour stated in the header
 
 TEST(IndiPosInjectionTest, AxisOutOfRangeIsOff)
 {

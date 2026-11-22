@@ -254,7 +254,7 @@ TEST_F(IndiMeasuredTorqueTest, DisabledWithoutRotorSpeedMax)
 	EXPECT_FALSE(_model.compute(2000).valid);
 }
 
-// frozen rotor speed detection (decision D-S3-FROZEN)
+// frozen (stuck) rotor speed detection
 class IndiFrozenRpmTest : public IndiMeasuredTorqueTest
 {
 public:
