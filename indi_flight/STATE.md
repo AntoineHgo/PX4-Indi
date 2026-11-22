@@ -14,8 +14,12 @@
 1. G3: pre-test re-run per D-OWNER-Q24 (generator range +-50 ms keeping RNG order; diff draw table; re-fly only the
    draws whose plant changed; score both keys; keep the 16/20 result). 03 key 1 and 08 reported as shared with PID.
    Then the 300-run campaign at FREEZE-10 (pre-test of ~20 first if the generator changed anything else).
-2. G5: re-score G5.5 o1-o7 INDI (results/freeze10_s193) and PID refs against the D-OWNER-Q25 limit
-   (max(0.5 m, tau_att x RMS reference speed), tau_att = 1/MC_ROLL_P of 4040 = 0.125 s), both keys. Then G5 verdict.
+2. G5: G5.5 PASS 24/24 both keys under Q25 limit (G5_5_RESCORE_Q25.md, limit keyed G5_5_LIMIT_KEY2.md). Audit
+   results/freeze10_s193/G5_VERDICT_AUDIT.md: gaps before the verdict = (A) G5.11 yaw/xy, G5.8 hover, G5.9a-d have
+   seed 1 only at freeze-10 (G5.11 states 3 seeds): fly events seeds 2 and 3 at FREEZE-10; (B) G5.8 at 3 m/s never
+   flown at a freeze (S147 probe only): fly `--moving` events, 3 seeds. One agent, after the G3 flights end (no
+   parallel gate flights), both keys (key2_g511 prints the obsolete 1 deg xy tilt rule: read xy on Q12 B excursion).
+   Then G5 verdict. Mission/RTL key 1 only (no key-2 script, as freeze-9): state it in the verdict.
 3. G7 open items: (f) F-10 clean-up of every firmware-branch file (~118 id/doc hits at 2026-11-22, worst
    indi_rate_control_test.cpp, McIndiPosControl.cpp, lib headers; comments 15-29 % of lines) folded with D-G7-F-TEXT
    (S196e partial patch results/g7_s196/F_TEXT_PARTIAL_S196e.patch, unreviewed); plan first, one task per session.
