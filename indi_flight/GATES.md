@@ -701,3 +701,23 @@ A-51 as Q16 A. 250 Hz not measured.
   lemniscate rows about 0.53 m (4.24 m/s RMS), z-sine rows 0.5 m (floor); the scorer tables the exact values. The same
   limit applies to the PID reference; both stacks are reported against it. Vertical 0.3 m and the `offb_vel_step`
   rows are unchanged. Re-score only, no re-fly.
+
+## G5 verdict at freeze-10 (S198, 2026-11-22): PASSED
+Evidence: `results/freeze10_s193/G5_SCORES.md`, `G5_5_RESCORE_Q25.md` (+ `G5_5_LIMIT_KEY2.md`), `G5_VERDICT_AUDIT.md`
+(row table), `g5_gaps_s198/README.md` (events seeds 2-3), `g5_gaps_s198/moving/G58_KEY1.md` and `G58_KEY2.md`
+(G5.8 at 3 m/s). All flights on the FREEZE-10 binary (7fe6206fcc, built 2026-11-21 22:38), INDI stack, 3 seeds per row.
+- G5.1 acro/stab, G5.2 altctl/posctl, G5.3 hold, G5.4 take-off/land, G5.5 o1-o7 (Q25 B limit) and offb_vel_step,
+  G5.7, G5.10 stabilized full-scale: PASS 3/3 per row, both keys (G5_VERDICT_AUDIT.md table).
+- G5.8 hover rc/link/offboard loss: PASS 9/9 (entry <= 0.51 s after timeout, excursion <= 0.121 m). G5.8 at 3 m/s
+  (Q8 add.3 (i), scorer two independent keys written S198): PASS 9/9, hold entered on every event, excursion
+  0.16-0.25 m (limit 1 m), keys within 0.012 m; PID reference seed 1 0.46-0.51 m.
+- G5.9a-d kill / re-arm: PASS 3/3 each (kill outputs 0 within 1.25 ms of the kill rise; re-arm states zero; first
+  second <= 0.01 %; take-off after re-arm step 4.0-4.7 % of hover, dip 0 m).
+- G5.11 ekf_yaw (excess <= 0.12 deg over no-event p95) and ekf_xy (truth excursion <= 0.248 m, Q12 B): PASS 3/3.
+- F-7: no thrust step at the ramp -> flight edge beyond the G5.4 limit (edge step <= 10 % of hover in every take-off).
+Read on the gate definitions, not on legacy script prints: key-2 G5.9a uses the switch reference (+6.25/+10 ms, value
+after the kill rise is 0-1.25 ms); key-2 G5.11 raw 1 deg rule (s3 1.003 deg raw, excess 0.06 deg) and obsolete xy tilt
+rule; key-2 G5.9b/9c print no verdict, values inside the limits. Limits of the evidence: G5.3 mission and G5.4 RTL have
+key 1 only (no key-2 script exists; as at freeze-9); mission waypoint margin 0.03 m (worst 0.970 m vs 1.0 m).
+Not tested: G5.6 and G5.11 z reset (owner Q8(b), S175); accel-only offboard and take-off on an offboard setpoint alone
+(owner decision F-8); G5.10 SAT part dropped (Q21: no stack reaches 4 motors >= 0.99 for 1 s).

@@ -4,25 +4,24 @@
 - Stage: 6 (validation). FREEZE-10 (D-FREEZE-10): firmware 7fe6206fcc, config g5_freeze_s157 params (XY gains at
   firmware defaults 1.2/2.4). Later commits e9e85e395d, 39c1700523 behaviour-neutral (D-G7-NUTTX-BUILD); gate binary
   built 22:38 after 7fe6206fcc, not rebuilt.
-- Gates: see GATE_STATUS.tsv. G1, G2, G4 PASSED. Blocker: none.
+- Gates: see GATE_STATUS.tsv. G1, G2, G4, G5 PASSED (G5 S198).
+- WAIT_OWNER (S198): G3 set-up fixed, ready for flight chain. Owner builds the detached chain for the 300-run G3
+  campaign at FREEZE-10 (seed/cmd as results/g3_pretest_q24_s197/fly_all.sh, scoring score_all.sh, both keys).
 - Owner answers Q24 B and Q25 B (2026-11-22) acted on S197: GATES "Owner amendments S197", D-OWNER-Q24, D-OWNER-Q25,
   design/airframe_requirements.md (F-3 list + bring-up items). FREEZE-10 stands.
 - Owner rule F-10 (2026-11-22): delivered code short needed comments, no project ids/paths, explicit names, PX4
   style. Brief every coder with F-10. Clean-up = separate behaviour-neutral commits, independent review.
 
 ## Next actions (each names its gate item)
-1. G3: pre-test re-run per D-OWNER-Q24 (generator range +-50 ms keeping RNG order; diff draw table; re-fly only the
-   draws whose plant changed; score both keys; keep the 16/20 result). 03 key 1 and 08 reported as shared with PID.
-   Then the 300-run campaign at FREEZE-10 (pre-test of ~20 first if the generator changed anything else).
-2. G5: G5.5 PASS 24/24 both keys under Q25 limit (G5_5_RESCORE_Q25.md, limit keyed G5_5_LIMIT_KEY2.md). Audit
-   results/freeze10_s193/G5_VERDICT_AUDIT.md: gaps before the verdict = (A) G5.11 yaw/xy, G5.8 hover, G5.9a-d have
-   seed 1 only at freeze-10 (G5.11 states 3 seeds): fly events seeds 2 and 3 at FREEZE-10; (B) G5.8 at 3 m/s never
-   flown at a freeze (S147 probe only): fly `--moving` events, 3 seeds. One agent, after the G3 flights end (no
-   parallel gate flights), both keys (key2_g511 prints the obsolete 1 deg xy tilt rule: read xy on Q12 B excursion).
-   Then G5 verdict. Mission/RTL key 1 only (no key-2 script, as freeze-9): state it in the verdict.
-3. G7 open items: (f) F-10 clean-up of every firmware-branch file (~118 id/doc hits at 2026-11-22, worst
-   indi_rate_control_test.cpp, McIndiPosControl.cpp, lib headers; comments 15-29 % of lines) folded with D-G7-F-TEXT
-   (S196e partial patch results/g7_s196/F_TEXT_PARTIAL_S196e.patch, unreviewed); plan first, one task per session.
+1. G3: pre-test under Q24 B done (results/g3_pretest_q24_s197/README.md, 17/20 both keys, 0 LOC; only GNSS keys
+   changed, no new pre-test needed). G3 set-up fixed, ready for flight chain: the owner builds the detached chain
+   (WAIT_OWNER), then the 300-run campaign at FREEZE-10, both keys. 02 item-3 miss (0.318 m, +48 ms mismatch) is a
+   quota item: explain with the campaign's GNSS-mismatch sensitivity, not a chase.
+2. G5 PASSED at freeze-10 (S198). A firmware change after the freeze re-opens the rows it touches (freeze rule).
+   Trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
+3. G7 open items: (f) F-10 clean-up per results/g7_s198/F10_PLAN.md (159 hit lines, 9 work units worst first,
+   objdump/.text check; S196e patch folds into unit 8 after rework). One unit per session, never during gate flights
+   (builds); write the D-F10-NEUTRAL decision with unit 1; public renames (MC_INDI_*, uORB) listed, not done.
    (g) build check of indi-fw-pr with the worktree OUTSIDE the repo (re-run make_fw_branch.sh --force-recreate after
    any firmware commit; quad5in model lives in indi_flight/sim, not in the branch). v6x flash overflow 23.5 kB ->
    report/upstream note. Tests build in px4-indi-sim (px4-dev fails protobuf).
@@ -65,8 +64,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S197a | G3 pre-test re-run per D-OWNER-Q24 (sampler +-50, re-fly changed draws, both keys) | sonnet | results/g3_pretest_q24_s197/README.md | re-brief from D-OWNER-Q24; check README partial state |
-| S197b | G5.5 re-score vs D-OWNER-Q25 limit (bench/g55_traj_limit.py + self-test), host python | sonnet | results/freeze10_s193/G5_5_RESCORE_Q25.md | re-brief from D-OWNER-Q25 |
+| - | none | | | |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

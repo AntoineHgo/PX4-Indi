@@ -1581,3 +1581,7 @@ offboard trajectories (a steady-state hover limit; no reference stack meets it o
 2. Apply the same limit to every G5.5 row and to the PID reference; report both stacks against it.
 3. Re-score only, no re-fly. Vertical 0.3 m and the offb_vel_step rows are unchanged.
 
+- S198 (2026-11-22): G3 pre-test under Q24 B finished (14 changed draws re-flown, 17/20 both keys, 0 LOC; 03/08 shared
+  with PID, 02 item-3 quota miss 0.318 m) -> set-up fixed, WAIT_OWNER for the flight chain. G5 audit gaps closed: events
+  seeds 2-3 pass; G5.8 at 3 m/s scorer written with two independent keys, 9/9 PASS; G5 verdict PASSED. G7(f) F-10 plan
+  (results/g7_s198/F10_PLAN.md). Gate progress: G5 PASSED (verdict written); G3 pre-test re-scored 16 -> 17/20 under Q24 B.
