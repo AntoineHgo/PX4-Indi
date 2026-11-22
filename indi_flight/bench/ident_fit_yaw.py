@@ -28,22 +28,34 @@ GATE2 = dict(base.GATE, g2_ci_rel_max=0.5)
 
 
 def _prepare2(t_gyro, omega, t_u, u, t_z, z, t0, t1, sat, t_sat, ntaps, fs):
-    """y = F[D w]; x1 = F[C u]; x2 = F[D u] (true-derivative gain sinc(w dt), same as the D in y, so the G2 term
-    enters y and x2 with the same gain); instruments z1 = F[C z], z2 = F[D z]. Held regressor rows are interpolated
-    between the true updates as in ident_fit._prepare."""
+    """Matched-grid preparation (probe a43 V3, K126 MAJOR-3). Every signal (gyro, instrument, u) goes through the SAME
+    operator: sampled at the true update stamps tc of u (the samples where u changes), then linearly interpolated to the
+    fs grid. So y, x1, x2, z1, z2 and the rate regressor all carry the same interpolation gain/phase; no 400 Hz topic is
+    interpolated against a native 800 Hz signal.
+    y = F[D w]; x1 = F[C u]; x2 = F[D u]; xr = F[C w] (rate regressor, alpha term -Dr*w, Dr = -beta3);
+    z1 = F[C z], z2 = F[D z]. C = ident_fit.CENTRAL_DIFF_MATCH (matches the gain of D), F = smooth_taps(ntaps)."""
     dt = 1.0 / fs
     t_grid = np.arange(t0, t1, dt)
     taps = iv.smooth_taps(ntaps)
-    w = iv.resample_to_grid(t_gyro, omega, t_grid)
-    y = iv.apply_taps(np.gradient(w, dt), taps)
     t_u = np.asarray(t_u, float)
     u = np.asarray(u, float)
     chg = np.concatenate([[True], np.diff(u) != 0])
-    xg = np.interp(t_grid, t_u[chg], u[chg])
+    tc = t_u[chg]
+
+    def mgrid(t, v):
+        vc = iv.resample_to_grid(t, v, tc)
+        ok = np.isfinite(vc)
+        g = np.interp(t_grid, tc[ok], vc[ok])
+        g[(t_grid < tc[ok][0]) | (t_grid > tc[ok][-1])] = np.nan
+        return g
+    w = mgrid(t_gyro, omega)
+    y = iv.apply_taps(np.gradient(w, dt), taps)
+    xg = np.interp(t_grid, tc, u[chg])
     xg[(t_grid < t_u[0]) | (t_grid > t_u[-1])] = np.nan
     x1 = iv.apply_taps(iv.apply_taps(xg, base.CENTRAL_DIFF_MATCH), taps)
     x2 = iv.apply_taps(np.gradient(xg, dt), taps)
-    zg = iv.resample_to_grid(t_z, z, t_grid)
+    xr = iv.apply_taps(iv.apply_taps(w, base.CENTRAL_DIFF_MATCH), taps)
+    zg = mgrid(t_z, z)
     z1 = iv.apply_taps(iv.apply_taps(zg, base.CENTRAL_DIFF_MATCH), taps)
     z2 = iv.apply_taps(np.gradient(zg, dt), taps)
     excl = np.zeros(len(t_grid), bool)
@@ -52,7 +64,7 @@ def _prepare2(t_gyro, omega, t_u, u, t_z, z, t0, t1, sat, t_sat, ntaps, fs):
         idx = np.clip(np.searchsorted(ts, t_grid, side="right") - 1, 0, len(ts) - 1)
         s = np.asarray(sat, bool)[idx].astype(float)
         excl |= np.convolve(s, np.ones(len(taps)), mode="same") > 0
-    return y, np.column_stack([x1, x2]), z1, z2, excl
+    return y, np.column_stack([x1, x2, xr]), z1, z2, excl
 
 
 def _eff_f(xt, Zf, y_ok_keep, hac_lags):
@@ -90,11 +102,7 @@ def _iv2_keep(y, X, Zraw, keep, hac_lags, with_f):
     res = y - Xf @ beta
     A = np.linalg.inv(Xh.T @ Xh)
     se = np.sqrt(np.diag(A @ iv._hac(Xh * res[:, None], hac_lags) @ A))
-    g = Zf * res[:, None]
-    S = iv._hac(g, hac_lags)
-    gm = g.sum(0)
-    j = float(gm @ np.linalg.pinv(S, rcond=1e-10) @ gm)
-    df = int(np.linalg.matrix_rank(S, tol=1e-10 * np.linalg.norm(S, 2))) - Xf.shape[1]
+    j, df = _gmm_j(y, Xf, Zf, res, hac_lags)
     ols, *_ = np.linalg.lstsq(Xf, y, rcond=None)
     out = dict(beta=beta[1:], se=se[1:], intercept=float(beta[0]), j=j, j_df=df, n=int(n), ols=ols[1:])
     if with_f:
@@ -103,7 +111,7 @@ def _iv2_keep(y, X, Zraw, keep, hac_lags, with_f):
         for jx in range(k):
             oth = [i for i in range(k) if i != jx]
             xj = X[:, jx]
-            xo_hat = proj(X[:, oth])  # fitted values of the other endogenous regressors
+            xo_hat = proj(X[:, oth]) if oth else np.zeros((n, 0))  # fitted values of the other endogenous regressors
             Ho = np.hstack([one, xo_hat])
             gam, *_ = np.linalg.lstsq(Ho, xj, rcond=None)
             xt = xj - xo_hat @ gam[1:]  # Sanderson-Windmeijer: remove the part explained by the other fitted regressors
@@ -117,8 +125,26 @@ def _iv2_keep(y, X, Zraw, keep, hac_lags, with_f):
     return out
 
 
-def _lead2(X, k):
-    return np.column_stack([base._lead(X[:, i], k) for i in range(X.shape[1])])
+def _gmm_j(y, Xf, Zf, res_2sls, hac_lags):
+    """Hansen J from two-step efficient GMM (K126 MAJOR-1). Step 1: 2SLS residuals e1 give S1 = HAC(Zf e1) and the
+    weight W = pinv(S1). Step 2: b2 = (Xf'Zf W Zf'Xf)^-1 Xf'Zf W Zf'y, e2 = y - Xf b2, S2 = HAC(Zf e2),
+    J = gbar' pinv(S2) gbar with gbar = sum(Zf e2) (sums, not means: S is the long-run covariance of the sum, so J is
+    chi2(df) under the null of valid instruments, df = rank(Zf) - number of parameters). Reported beta stays 2SLS."""
+    W = np.linalg.pinv(iv._hac(Zf * res_2sls[:, None], hac_lags), rcond=1e-10)
+    A = Xf.T @ Zf
+    b2 = np.linalg.solve(A @ W @ A.T, A @ W @ (Zf.T @ y))
+    e2 = y - Xf @ b2
+    g = Zf * e2[:, None]
+    S = iv._hac(g, hac_lags)
+    gm = g.sum(0)
+    j = float(gm @ np.linalg.pinv(S, rcond=1e-10) @ gm)
+    df = int(np.linalg.matrix_rank(Zf, tol=1e-9 * np.linalg.norm(Zf, 2))) - Xf.shape[1]
+    return j, df
+
+
+def _lead2(X, k, nlead=2):
+    """Latency lead k on the first nlead columns (u regressors); the rate column (gyro) is not shifted."""
+    return np.column_stack([base._lead(X[:, i], k) if i < nlead else X[:, i] for i in range(X.shape[1])])
 
 
 def _build_Z(z1, z2, sl, lags1, lags2, m):
@@ -129,17 +155,20 @@ def _build_Z(z1, z2, sl, lags1, lags2, m):
 
 def fit_yaw(t_gyro, omega, t_u, u, t_z, z, t0, t1, sat=None, t_sat=None, ntaps=15, fs=800.0, lags1=None, lags2=None,
             hac_lags=400, scan_hac_lags=80, shift_range=None, compensate_latency=True, gate=None, with_g2=True,
-            _x2_taps=None):
-    """Returns dict with g1, g2, se, ci95, f (SW), j, shift, verdict. with_g2=False fits G1 only (the S124 model, for
-    contrast). `_x2_taps` is a TEST HOOK: different FIR length on the regressors only (deliberate mismatch)."""
+            with_rate=True, _x2_taps=None):
+    """Model alpha = G1 u + G2 du/dt - Dr w + c. Returns dict with g1, g2, dr (damping Dr, rate regressor; NaN if
+    with_rate=False), se, ci, f_eff, j, j_df, shift, verdict. with_g2=False drops the du/dt column, with_rate=False drops
+    the rate column (contrasts). `_x2_taps` is a TEST HOOK: other FIR length on the regressors only."""
     g = dict(GATE2, **(gate or {}))
     _, m = base.update_rate(u, g["held_frac_min"])
-    lags1 = list(range(0, 33, 2)) if lags1 is None else list(lags1)
-    lags2 = list(range(0, 33, 4)) if lags2 is None else list(lags2)
+    # instrument lags (800 Hz samples) span 0..64 = 80 ms (S202: 0..32 left a weak G1/Dr first stage, CI 7-9 and +3/+7 %)
+    lags1 = list(range(0, 65, 4)) if lags1 is None else list(lags1)
+    lags2 = list(range(0, 65, 8)) if lags2 is None else list(lags2)
     y, X, z1, z2, excl = _prepare2(t_gyro, omega, t_u, u, t_z, z, t0, t1, sat, t_sat, ntaps, fs)
     if _x2_taps is not None:  # mismatch hook: re-filter the regressors with another moving average
         tp = iv.smooth_taps(_x2_taps)
-        X = np.column_stack([iv.apply_taps(X[:, i], tp) for i in range(2)])
+        X = np.column_stack([iv.apply_taps(X[:, i], tp) for i in range(X.shape[1])])
+    cols = [0] + ([1] if with_g2 else []) + ([2] if with_rate else [])
     lo, hi = shift_range if shift_range is not None else (base.SHIFT_MIN, base.SHIFT_MAX)
     cand = list(range(lo, hi + 1)) if compensate_latency else [0]
     sl = slice(None, None, m)
@@ -148,32 +177,40 @@ def fit_yaw(t_gyro, omega, t_u, u, t_z, z, t0, t1, sat=None, t_sat=None, ntaps=1
     hf = max(1, hac_lags // m)
 
     def run(k, hl, with_f):
-        Xs = _lead2(X, k)[sl]
-        Xs = Xs if with_g2 else Xs[:, :1]
-        ok = np.isfinite(y[sl]) & np.isfinite(Xs).all(1) & np.isfinite(Zr).all(1) & ~excl[sl]
-        if not with_g2:  # G1-only: reuse the same machinery with a single regressor
-            return _fit1(y[sl], Xs, Zr, ok, hl)
+        Xs = _lead2(X, k)[sl][:, cols]
+        ek = np.nan_to_num(base._lead(excl.astype(float), k), nan=1.0) > 0  # MINOR-4: exclusion follows the lead
+        ex = (excl | ek)[sl]
+        ok = np.isfinite(y[sl]) & np.isfinite(Xs).all(1) & np.isfinite(Zr).all(1) & ~ex
         r = _iv2_keep(y[sl], Xs, Zr, ok, hl, with_f)
-        r["excl_frac"] = float(excl[sl][np.isfinite(y[sl])].mean())
+        r["excl_frac"] = float(ex[np.isfinite(y[sl])].mean())
         return r
     curve = [(k, run(k, hs, False)) for k in cand]
     jv = np.array([r["j"] for _, r in curve])
-    i = int(np.argmin(jv))
+    jfinite = bool(np.isfinite(jv).all())  # MINOR-6
+    i = int(np.nanargmin(jv))
     r = run(cand[i], hf, True)
     r.update(j_curve=[(k, float(j)) for (k, _), j in zip(curve, jv)], shift_samples=cand[i], shift_s=cand[i] / fs,
              at_boundary=bool(compensate_latency and i in (0, len(cand) - 1)), decim=m, update_frac=1.0 / m)
-    r["g1"], r["se1"] = float(r["beta"][0]), float(r["se"][0])
+    bet, se = list(r["beta"]), list(r["se"])
+    r["g1"], r["se1"] = float(bet[0]), float(se[0])
     r["ci1"] = 1.96 * r["se1"]
+    r["g2"] = r["se2"] = r["ci2"] = r["dr"] = r["se_dr"] = r["ci_dr"] = float("nan")
+    p = 1
     if with_g2:
-        r["g2"], r["se2"] = float(r["beta"][1]), float(r["se"][1])
+        r["g2"], r["se2"] = float(bet[p]), float(se[p])
         r["ci2"] = 1.96 * r["se2"]
+        p += 1
+    if with_rate:
+        r["dr"], r["se_dr"] = -float(bet[p]), float(se[p])
+        r["ci_dr"] = 1.96 * r["se_dr"]
     cm = base.chain_mismatch(ntaps, ntaps, fs=fs)
-    jr = r["j"] / max(r["j_df"], 1)
+    jr = r["j"] / r["j_df"] if r["j_df"] >= 1 else float("inf")
     crit = []
-    if with_g2:
-        for nm, fv in zip(("G1", "G2"), r["f_eff"]):
-            crit.append(("SW effective first-stage F (%s) >= %g" % (nm, g["f_min"]), float(fv), fv >= g["f_min"]))
-    crit += [("Hansen J/df <= %g" % g["j_ratio_max"], jr, jr <= g["j_ratio_max"]),
+    for nm, fv in zip([("G1", "G2", "Dr")[c] for c in cols], r["f_eff"]):
+        crit.append(("SW effective first-stage F (%s) >= %g" % (nm, g["f_min"]), float(fv), fv >= g["f_min"]))
+    crit += [("Hansen df = rank(Z) - npar >= 1 (MAJOR-2)", r["j_df"], r["j_df"] >= 1),
+             ("J/df <= %g (uncalibrated diagnostic threshold, D-IDENT-J)" % g["j_ratio_max"], jr, jr <= g["j_ratio_max"]),
+             ("J curve finite on the whole shift scan", float(jfinite), jfinite),
              ("latency shift interior to scan [%d,%d]" % (lo, hi), cand[i], not r["at_boundary"]),
              ("95%% CI/|G1| <= %g" % g["ci_rel_max"], r["ci1"] / abs(r["g1"]), r["ci1"] / abs(r["g1"]) <= g["ci_rel_max"])]
     if with_g2:
@@ -189,26 +226,6 @@ def fit_yaw(t_gyro, omega, t_u, u, t_z, z, t0, t1, sat=None, t_sat=None, ntaps=1
     return r
 
 
-def _fit1(y, X1, Zr, ok, hl):
-    """G1-only 2SLS with the full instrument set (contrast: the S124 model)."""
-    yy, x, Z = y[ok], X1[ok], Zr[ok]
-    n = len(yy)
-    one = np.ones((n, 1))
-    Xf, Zf = np.hstack([one, x]), np.hstack([one, Z])
-    Xh = Zf @ (np.linalg.pinv(Zf, rcond=1e-10) @ Xf)
-    b = np.linalg.solve(Xh.T @ Xf, Xh.T @ yy)
-    res = yy - Xf @ b
-    A = np.linalg.inv(Xh.T @ Xh)
-    se = np.sqrt(np.diag(A @ iv._hac(Xh * res[:, None], hl) @ A))
-    g = Zf * res[:, None]
-    S = iv._hac(g, hl)
-    gm = g.sum(0)
-    j = float(gm @ np.linalg.pinv(S, rcond=1e-10) @ gm)
-    df = int(np.linalg.matrix_rank(S, tol=1e-10 * np.linalg.norm(S, 2))) - Xf.shape[1]
-    return dict(beta=b[1:], se=se[1:], j=j, j_df=df, n=n, intercept=float(b[0]), excl_frac=0.0,
-                f_eff=np.array([np.nan]))
-
-
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("ulg")
@@ -216,7 +233,8 @@ def main(argv=None):
     ap.add_argument("--t0", type=float, required=True)
     ap.add_argument("--t1", type=float, required=True)
     ap.add_argument("--ntaps", type=int, default=15)
-    ap.add_argument("--g1-only", action="store_true", help="contrast: drop the du/dt regressor (S124 model)")
+    ap.add_argument("--g1-only", action="store_true", help="contrast: drop du/dt and rate regressors (S124 model)")
+    ap.add_argument("--no-rate", action="store_true", help="contrast: drop the rate (damping) regressor")
     a = ap.parse_args(argv)
     D = base.load(a.ulg, a.axis)
     t0l = D.pop("t_log0")
@@ -224,7 +242,7 @@ def main(argv=None):
         D[key] = D[key] - t0l
     try:
         r = fit_yaw(D["t_gyro"], D["omega"], D["t_u"], D["u"], D["t_z"], D["z"], a.t0, a.t1, sat=D["sat"],
-                    t_sat=D["t_sat"], ntaps=a.ntaps, with_g2=not a.g1_only)
+                    t_sat=D["t_sat"], ntaps=a.ntaps, with_g2=not a.g1_only, with_rate=not (a.g1_only or a.no_rate))
     except base.HeldRegressorError as e:
         print(f"FAIL  regressor held: {e}")
         return 1
@@ -232,8 +250,11 @@ def main(argv=None):
     print(f"G1 {r['g1']:.2f} rad/s^2 per unit  95% CI +-{r['ci1']:.2f} ({100*r['ci1']/abs(r['g1']):.1f} %)")
     if not a.g1_only:
         print(f"G2 {r['g2']:.3f} (rad/s^2 per unit/s, firmware units)  95% CI +-{r['ci2']:.3f} ({100*r['ci2']/abs(r['g2']):.1f} %)")
-        print(f"first stage SW F classical {r['f_sw'][0]:.1f} {r['f_sw'][1]:.1f}  HAC effective {r['f_eff'][0]:.1f} {r['f_eff'][1]:.1f}")
-        print(f"OLS G1 {r['ols'][0]:.2f} G2 {r['ols'][1]:.3f}")
+    if not (a.g1_only or a.no_rate):
+        print(f"Dr {r['dr']:.3f} 1/s  95% CI +-{r['ci_dr']:.3f}")
+    if not a.g1_only:
+        print("first stage SW F classical " + " ".join(f"{v:.1f}" for v in r["f_sw"]) + "  HAC effective " + " ".join(f"{v:.1f}" for v in r["f_eff"]))
+    print("OLS " + " ".join(f"{v:.3f}" for v in r["ols"]))
     print(f"Hansen J {r['j']:.1f} (df {r['j_df']}) intercept {r['intercept']:.3f} shift {r['shift_samples']} samples")
     print("J curve " + " ".join(f"{k}:{j:.0f}" for k, j in r["j_curve"]))
     for name, val, ok in r["verdict"]["criteria"]:
