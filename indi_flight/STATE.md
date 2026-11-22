@@ -72,7 +72,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| PRE | ACT_TC grid driver bench/actc_grid.py + 2-flight pre-test (design/actc_ident_s208.md "SITL error measurement") | sonnet | results/actc_grid_s209/PRETEST.md | read PRETEST.md; if driver ok, launch the 30-flight grid detached |
+| GRID | ACT_TC 30-cell grid, detached (frames labelled not applied, A-59) | haiku launches | results/actc_grid_s209/GRID.tsv, grid.log | resumable: `python3 indi_flight/bench/actc_grid.py --out indi_flight/results/actc_grid_s209` via agent; then table of ratios -> bound -> Q28 |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
