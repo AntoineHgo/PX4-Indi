@@ -74,7 +74,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 |---|---|---|---|---|
 | Q10 | FREEZE-10 re-fly queue: ENDED 01:14 S194, all 4 steps rc 0 | - | results/freeze10_s193/ | - |
 | S196c | G7(g) build + tests of indi-fw-pr in px4-indi-sim (sonnet) | - | results/g7_s196/FW_BRANCH_BUILD.md | re-brief; remove stray worktree first (`git worktree list`) |
-| S196d | G7(f) instructions/nav-terms checklist on indi-fw-pr (sonnet) | - | results/g7_s196/INSTRUCTIONS_CHECKLIST.md | re-brief |
+| S196e | G7(f) text-only fixes per D-G7-F-TEXT (sonnet), uncommitted src edits | - | results/g7_s196/F_TEXT_FIXES.md | check `git diff --stat -- src msg ROMFS`, re-brief or `git checkout` |
 (S195 agents done and committed: results/g7_s195/.)
 (none; S194 checker self-tests committed: bench/tests/test_passthrough_check.py, test_offb_vel_check.py)
 (S189 agents done and committed. Build probes: guard denies a segment naming indi_project with

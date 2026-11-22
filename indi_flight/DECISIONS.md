@@ -1234,3 +1234,16 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   once G6 flies it; until then G7(c) is open on that point. Enable switches stay 0 (PID default).
 - Alternative: ID_OK 1 in 4040 (rejected: claims identification the user has not run). Overturn if G6 shows the
   0.5x pre-identification state does not fly the G6 set.
+
+## D-G7-F-TEXT (S196): G7(f) checklist findings, text-only firmware edits under FREEZE-10
+- Source: results/g7_s196/INSTRUCTIONS_CHECKLIST.md (53 rows, 2 MAJOR, 19 MINOR).
+- MAJOR 1 (MC_INDI_XY_P/XY_VP "duplicate" MPC_XY_P/MPC_XY_VEL_P_ACC): kept as separate parameters. The rule
+  (parameters.instructions.md l.11) asks to split a shared concept, each named for its own role: these are the
+  bandwidths of the INDI acceleration-reference loop (no velocity integrator, flown 1.2/2.4 vs PID 0.95/1.8), not
+  the PID gains. Fix = descriptions state their own role, no "Replaces MPC_*" wording.
+- MAJOR 2 (mid-sentence newlines in `long`), msg headers/units/frames, license headers, wrong publisher in
+  IndiRateStatus.msg, 4040 comments citing indi_flight/: fixed as text only.
+- Not changed: SIM_GZ_GPS_DLY name (sim hook, bench runner depends on it; MINOR, listed for the PR); clang-tidy.
+- Rows invalidated: none (comments, descriptions, headers; no default, name or code path changes). Check:
+  DEFAULTS_DIFF re-run identical, unit tests pass, astyle clean. Alternative: defer to after verdicts (rejected:
+  text edits are independent of Q24/Q25). Overturn if a diff touches a default, a name or an executable line.
