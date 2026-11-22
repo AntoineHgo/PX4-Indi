@@ -302,7 +302,7 @@ TEST_F(IndiAccelControlTest, ResetGivesZeroIncrementOnFirstCycle)
 
 TEST_F(IndiAccelControlTest, ResetJerkHistoryKeepsMeasuredFilters)
 {
-	// D-T10-RESET: an estimator reset must not re-seed the measured force / collective filters with a raw sample
+	// an estimator reset must not re-seed the measured force / collective filters with a raw sample
 	_ctrl.setFilter(100.f, 10.f);
 	IndiAccelControl::Input in = hoverInput();
 	_ctrl.reset(in.f_b, in.mean_u, in.mean_u);
@@ -403,7 +403,7 @@ TEST_F(IndiAccelControlTest, InvalidMeanUUsesPreviousThrustCommand)
 
 TEST_F(IndiAccelControlTest, InvalidFbConvergesToModelInversionWithDelay)
 {
-	// D-STAGE-STALE (a): f_b replaced by the delayed modelled specific force: t_c = a_ref - g, no recursion
+	// f_b replaced by the delayed modelled specific force: t_c = a_ref - g, no recursion
 	for (int delay = 2; delay <= 3; delay++) {
 		_ctrl.setFilter(100.f, 10.f);
 		_ctrl.setMeasurementDelay(delay);
@@ -458,7 +458,7 @@ TEST_F(IndiAccelControlTest, InvalidFbStepInARefIsBounded)
 
 TEST_F(IndiAccelControlTest, AppliedThrustSetsModelPath)
 {
-	// stage-output loop break: with invalid telemetry the model path must follow the applied collective, not t_c
+	// with invalid telemetry the model path must follow the applied collective, not t_c
 	_ctrl.setThrustModel(kGt, 1.2f);
 	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
 	IndiAccelControl::Input in = hoverInput();
@@ -663,7 +663,7 @@ TEST_F(IndiAccelControlTest, JerkFeedforwardCoordinatedTurn)
 
 TEST_F(IndiAccelControlTest, ResetJerkHistoryForgetsDifference)
 {
-	// D-T10-RESET: a step of a_ff right after resetJerkHistory() is not differentiated into jerk
+	// a step of a_ff right after resetJerkHistory() is not differentiated into jerk
 	IndiAccelControl::Input in = hoverInput();
 	in.j_ref = Vector3f(kNaN, kNaN, kNaN);
 	IndiAccelControl::Output out;
@@ -751,7 +751,7 @@ TEST_F(IndiAccelControlTest, JerkDifferenceFiltered)
 
 TEST_F(IndiAccelControlTest, OmegaFfIndependentOfYawRate)
 {
-	// A-9 guard: the attitude controller already feeds the yaw rate forward (AttitudeControl, _omega_command), so
+	// the attitude controller already feeds the yaw rate forward (AttitudeControl, _omega_command), so
 	// omega_ff must carry the jerk term only. Same tilted state and jerk, yaw rate 0 vs 1 rad/s: identical omega_ff.
 	for (const float tilt_deg : {0.f, 15.f, 30.f}) {
 		const float a_h = kG * tanf(math::radians(tilt_deg));
@@ -775,7 +775,7 @@ TEST_F(IndiAccelControlTest, OmegaFfIndependentOfYawRate)
 	}
 }
 
-// ---- D-GAP collective blend ----
+// ---- collective blend ----
 
 namespace
 {
@@ -827,7 +827,7 @@ protected:
 		ASSERT_GT(_ctrl.blend(), 0.01f);
 	}
 
-	/// the first free-running cycle after a freeze must not jump b to the instantaneous gap
+	/// the first free-running cycle after a hold must not jump b to the instantaneous gap
 	void expectNoStepAfter(float b0)
 	{
 		ASSERT_TRUE(step());
@@ -953,7 +953,7 @@ TEST_F(IndiAccelBlendTest, FrozenWhileCollectiveClamped)
 	EXPECT_GE(_ctrl.blend(), b0 - 1e-6f);
 }
 
-TEST_F(IndiAccelBlendTest, FrozenAtBypassA3A8)
+TEST_F(IndiAccelBlendTest, FrozenAtBypass)
 {
 	// bypass: the module sets the hold flag and calls reset() with the stock thrust, update() is not called
 	warmUp();
@@ -988,7 +988,7 @@ TEST_F(IndiAccelBlendTest, NoDriftAfterResetWithoutHold)
 	EXPECT_LT(fabsf(_ctrl.blend() - b0), 2e-4f);
 }
 
-TEST_F(IndiAccelBlendTest, FrozenAtE7EdgeSingleCycle)
+TEST_F(IndiAccelBlendTest, FrozenAtHoldReleaseSingleCycle)
 {
 	warmUp();
 	_ctrl.setBlendHold(true);
@@ -1028,7 +1028,7 @@ TEST_F(IndiAccelBlendTest, ThrustContinuousAtTelemetryLossAndRecovery)
 {
 	// steady gap, b converged (u_meas + b = u_model): the loss and the recovery must not step the collective.
 	// Filter and delay as in flight: without them the measured path follows its input in one sample and the
-	// test cannot see what is fed while the telemetry is invalid (S96 second key T202: vacuous otherwise)
+	// test cannot see what is fed while the telemetry is invalid (vacuous otherwise)
 	_ctrl.setFilter(100.f, 10.f);
 	_ctrl.setMeasurementDelay(3);
 	startBlend(1.f);
@@ -1092,7 +1092,7 @@ TEST_F(IndiAccelBlendTest, SetFilterReconfigDoesNotStepThrust)
 	EXPECT_LT(fabsf(_u_cmd - c), 0.01f);
 }
 
-// ---- D-ALTCTL-Z: z_only (collective INDI, stock direction) ----
+// ---- z_only (collective INDI, stock direction) ----
 
 namespace
 {
@@ -1226,8 +1226,6 @@ TEST_F(IndiAccelZOnlyTest, ClosedLoopCollectiveRemovesVerticalError)
 	EXPECT_NEAR(az, a_ref_z, 0.05f);
 	EXPECT_NEAR(Vector2f(out.t_c(0), out.t_c(1)).norm(), 0.f, 1e-6f);
 }
-
-// T206: coverage added after the T205 second-key review (each test was break-checked against a library mutation)
 
 TEST_F(IndiAccelZOnlyTest, TiltedClosedLoopStateConsistentWithNorm)
 {
@@ -1384,9 +1382,9 @@ TEST_F(IndiAccelZOnlyTest, VerticalDemandNotLimitedByThreeAxisTiltLimit)
 	EXPECT_NEAR(out_z.t_c(2), out_3.t_c(2), 1e-4f);
 }
 
-// ---- A18: jerk feed-forward from the feed-forward acceleration only ----
+// ---- jerk feed-forward from the feed-forward acceleration only ----
 
-TEST_F(IndiAccelControlTest, A18CircleAnalyticBodyRates)
+TEST_F(IndiAccelControlTest, JerkCircleAnalyticBodyRates)
 {
 	// constant-speed circle, R = 3 m, w = 1 rad/s: a = -A (cos, sin), j = A w (sin, -cos), A = w^2 R = 3
 	// Reference: body rates from a finite difference of the desired z axis (flat vehicle, constant |t|):
@@ -1422,7 +1420,7 @@ TEST_F(IndiAccelControlTest, A18CircleAnalyticBodyRates)
 	}
 }
 
-TEST_F(IndiAccelControlTest, A18StepThenHoldGivesZeroJerk)
+TEST_F(IndiAccelControlTest, JerkStepThenHoldGivesZero)
 {
 	_ctrl.setFilter(100.f, 10.f);
 	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
@@ -1446,7 +1444,7 @@ TEST_F(IndiAccelControlTest, A18StepThenHoldGivesZeroJerk)
 	EXPECT_NEAR(out.j_used(0), 0.f, 1e-3f);
 }
 
-TEST_F(IndiAccelControlTest, A18FeedbackOnlyChangeGivesNoJerk)
+TEST_F(IndiAccelControlTest, JerkFeedbackOnlyChangeGivesNone)
 {
 	IndiAccelControl::Input in = hoverInput();
 	in.j_ref = Vector3f(kNaN, kNaN, kNaN);
@@ -1461,7 +1459,7 @@ TEST_F(IndiAccelControlTest, A18FeedbackOnlyChangeGivesNoJerk)
 	}
 }
 
-TEST_F(IndiAccelControlTest, A18ResetMidRampGivesNoPulse)
+TEST_F(IndiAccelControlTest, JerkResetMidRampGivesNoPulse)
 {
 	IndiAccelControl::Input in = hoverInput();
 	in.j_ref = Vector3f(kNaN, kNaN, kNaN);
@@ -1487,20 +1485,20 @@ namespace
 {
 
 constexpr float kNativeHz = 267.f;
-constexpr int kDecim = 3; // 267 Hz force, stage at 89 Hz
-constexpr float kStageHz = kNativeHz / kDecim;
+constexpr int kDecim = 3; // 267 Hz force, control loop at 89 Hz
+constexpr float kLoopHz = kNativeHz / kDecim;
 constexpr float kVibHz = 95.73f;
-constexpr float kAliasHz = kVibHz - kStageHz; // 6.73 Hz
+constexpr float kAliasHz = kVibHz - kLoopHz; // 6.73 Hz
 
 } // namespace
 
-/// D-AF-ALIAS: a vibration line above the stage rate must be removed at the force rate, not fold into the control band
+/// a vibration line above the control rate must be removed at the force rate, not fold into the control band
 TEST_F(IndiAccelControlTest, NativeRateFilterRejectsAliasedVibration)
 {
-	_ctrl.setFilter(kStageHz, 10.f);
+	_ctrl.setFilter(kLoopHz, 10.f);
 	_ctrl.reset(Vector3f(0.f, 0.f, -kG), kG / kGt, kG / kGt);
 	IndiAccelControl::Input in = hoverInput();
-	in.dt = 1.f / kStageHz;
+	in.dt = 1.f / kLoopHz;
 	IndiAccelControl::Output out;
 	double re = 0., im = 0.;
 	int n = 0;
@@ -1511,7 +1509,7 @@ TEST_F(IndiAccelControlTest, NativeRateFilterRejectsAliasedVibration)
 		_ctrl.sampleSpecificForce(f, 1.f / kNativeHz);
 
 		if (k % kDecim == kDecim - 1) {
-			in.f_b = f; // the module hands the latest sample to the stage
+			in.f_b = f; // the module hands the latest sample to the controller
 			ASSERT_TRUE(_ctrl.update(in, out));
 
 			if (k > 600) {
@@ -1529,7 +1527,7 @@ TEST_F(IndiAccelControlTest, NativeRateFilterRejectsAliasedVibration)
 
 TEST_F(IndiAccelControlTest, NativeRateFilterResetReseedsWithoutStep)
 {
-	_ctrl.setFilter(kStageHz, 10.f);
+	_ctrl.setFilter(kLoopHz, 10.f);
 
 	for (int k = 0; k < 50; k++) {
 		_ctrl.sampleSpecificForce(Vector3f(1.f, 0.f, -kG), 1.f / kNativeHz);
@@ -1539,7 +1537,7 @@ TEST_F(IndiAccelControlTest, NativeRateFilterResetReseedsWithoutStep)
 	_ctrl.reset(f_new, kG / kGt, kG / kGt);
 	IndiAccelControl::Input in = hoverInput();
 	in.f_b = f_new;
-	in.dt = 1.f / kStageHz;
+	in.dt = 1.f / kLoopHz;
 	IndiAccelControl::Output out;
 	ASSERT_TRUE(_ctrl.update(in, out));
 	EXPECT_NEAR(out.a_f(0), 0.f, 1e-4f);
@@ -1552,9 +1550,9 @@ TEST_F(IndiAccelControlTest, NativeRateFilterResetReseedsWithoutStep)
 
 TEST_F(IndiAccelControlTest, NativeRateFilterValidToInvalidSwitchHasNoStep)
 {
-	_ctrl.setFilter(kStageHz, 10.f);
+	_ctrl.setFilter(kLoopHz, 10.f);
 	IndiAccelControl::Input in = hoverInput();
-	in.dt = 1.f / kStageHz;
+	in.dt = 1.f / kLoopHz;
 	IndiAccelControl::Output out;
 	// non finite samples are ignored
 	_ctrl.sampleSpecificForce(Vector3f(NAN, 0.f, -kG), 1.f / kNativeHz);
@@ -1579,12 +1577,12 @@ TEST_F(IndiAccelControlTest, NativeRateFilterValidToInvalidSwitchHasNoStep)
 	EXPECT_LT(fabsf(out.a_f(1)), 0.05f);
 }
 
-/// M1: invalid -> valid with no native samples during the gap: no step, then convergence to the measured force
+/// invalid -> valid with no native samples during the gap: no step, then convergence to the measured force
 TEST_F(IndiAccelControlTest, NativeRateFilterInvalidToValidHasNoStep)
 {
-	_ctrl.setFilter(kStageHz, 10.f);
+	_ctrl.setFilter(kLoopHz, 10.f);
 	IndiAccelControl::Input in = hoverInput();
-	in.dt = 1.f / kStageHz;
+	in.dt = 1.f / kLoopHz;
 	IndiAccelControl::Output out;
 	const Vector3f f_meas(0.5f, 0.f, -kG); // offset from the modelled hover force (0, 0, -g)
 
@@ -1599,7 +1597,7 @@ TEST_F(IndiAccelControlTest, NativeRateFilterInvalidToValidHasNoStep)
 
 	EXPECT_NEAR(out.a_f(0), 0.5f, 1e-3f);
 
-	// gap: stage runs on the modelled path, no native samples
+	// gap: the controller runs on the modelled path, no native samples
 	in.f_b_valid = false;
 	in.f_b = Vector3f(NAN, NAN, NAN);
 
@@ -1629,7 +1627,7 @@ TEST_F(IndiAccelControlTest, NativeRateFilterInvalidToValidHasNoStep)
 	EXPECT_NEAR(out.a_f(0), 0.5f, 1e-3f);
 }
 
-// asserts (G7(b) A14): dt outside [kMinDt, kMaxDt] (header) is rejected with the output untouched, both edges; the
+// dt outside [kMinDt, kMaxDt] (header) is rejected with the output untouched, both edges; the
 // limits themselves are accepted
 TEST_F(IndiAccelControlTest, DtOutsideValidRangeReturnsFalseAndLeavesOutputUntouched)
 {
