@@ -19,8 +19,10 @@
    264 (C3 saturation + weak motor tilt). Raw ulg in g3_campaign_f10/run_NNN and g3_refly_s199/indi_NNN, PID twins in
    g3_refly_s199/pid_NNN. Suspects: fixed ACT_TC vs drawn tau (slow/asymmetric), delay absent from the modelled
    state, rate gain with controller G1 below plant at high delay (margins measured only at nominal plant), allocation
-   under saturation with a weak motor. Use margins_models.py with the drawn plant. No firmware change before the Q26
-   answer. Side defect: key 1 (g3_score.sh) scores landing windows that key 2 skips (class C, 25 runs).
+   under saturation with a weak motor. First pass done (g3_refly_s199/CAUSE_S199.md): rate-loop phase margin with
+   drawn tau x3 (245/239) or x0.5 + delay (283), saturation after growth; 264 weak-motor yaw collapse, PID recovers.
+   Next: show it on margins_models.py with the drawn tau/delay/G1 (|L| near -1?) and a nominal-ACT_TC sweep, then
+   one fix-probe idea per mechanism for Q26 A. No firmware change before the Q26 answer. Side defect: key 1 (g3_score.sh) scores landing windows that key 2 skips (class C, 25 runs).
    Pre-test 17/20 (results/g3_pretest_q24_s197). 02 item-3 miss (0.318 m, +48 ms) is a quota item, not a chase.
 2. G5 PASSED at freeze-10 (S198). A firmware change after the freeze re-opens the rows it touches (freeze rule).
    Trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.

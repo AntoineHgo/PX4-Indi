@@ -69,3 +69,7 @@ Options.
   weak motor) as a limit and a bring-up requirement in the report; go on to G6-G8.
 Meanwhile: the cause search (needed under A and B, every failure must be explained); no firmware change until you
 answer. Blocked: only for the firmware change and the re-flies.
+S199 cause search, first pass (results/g3_refly_s199/CAUSE_S199.md, describing-function estimates, not yet checked
+on the linear model): 245, 239, 283 point to a rate loop with little phase margin when the drawn motor tau departs
+from the controller's fixed 0.033 s (x3 slow: 245, 239; x0.5 fast + 10 ms delay: 283); saturation follows the growth.
+264: both stacks see the weak-motor yaw collapse; PID recovers, INDI hits its 220 dps rate limit and tilts over.
