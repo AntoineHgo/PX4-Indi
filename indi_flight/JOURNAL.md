@@ -1590,3 +1590,8 @@ offboard trajectories (a steady-state hover limit; no reference stack meets it o
   94.95 %, 039 harness. Speed-1 re-fly + PID reference of 8 draws (g3_refly_s199): both LOC and A/B lines reproduce,
   PID no LOC and passes 283/239. G3 verdict NOT PASSED at freeze-10; Q26 (step back A vs close as limit B). Gate
   progress: G3 verdict written, NOT PASSED.
+- S200 (2026-11-22): G3 chain already committed and verdict written S199 (skipped). Cause search closed on the linear
+  model (MARGINS_S200.md): 245/239 2 Hz = rate+attitude cascade at plant tau x3, PM 6/13 deg; 283 GM gap outside the
+  model; no fixed ACT_TC covers the G3 tau box. Q26 addendum with option C (tau box = identification error) + A for
+  264. D-F10-NEUTRAL written; F-10 unit 1 (McIndiPosControl.cpp) committed, objects identical. Gate progress: G7(f)
+  unit 1 of 9 done; G3 failures 245/239 explained on the model (verdict unchanged, Q26 open).

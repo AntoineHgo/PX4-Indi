@@ -21,14 +21,16 @@
    state, rate gain with controller G1 below plant at high delay (margins measured only at nominal plant), allocation
    under saturation with a weak motor. First pass done (g3_refly_s199/CAUSE_S199.md): rate-loop phase margin with
    drawn tau x3 (245/239) or x0.5 + delay (283), saturation after growth; 264 weak-motor yaw collapse, PID recovers.
-   Next: show it on margins_models.py with the drawn tau/delay/G1 (|L| near -1?) and a nominal-ACT_TC sweep, then
-   one fix-probe idea per mechanism for Q26 A. No firmware change before the Q26 answer. Side defect: key 1 (g3_score.sh) scores landing windows that key 2 skips (class C, 25 runs).
+   Linear model done S200 (MARGINS_S200.md): 245/239 = rate+attitude cascade at tau x3, PM 6/13 deg (shown); 283 GM
+   gap outside model; no fixed ACT_TC covers the box (best 0.05, worst PM 15 deg). Q26 addendum: option C (tau box =
+   identification error) + A for 264 only. Cause search closed; wait for Q26, no firmware change before it. Side
+   defect: key 1 (g3_score.sh) scores landing windows that key 2 skips (class C, 25 runs).
    Pre-test 17/20 (results/g3_pretest_q24_s197). 02 item-3 miss (0.318 m, +48 ms) is a quota item, not a chase.
 2. G5 PASSED at freeze-10 (S198). A firmware change after the freeze re-opens the rows it touches (freeze rule).
    Trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
-3. G7 open items: (f) F-10 clean-up per results/g7_s198/F10_PLAN.md (159 hit lines, 9 work units worst first,
-   objdump/.text check; S196e patch folds into unit 8 after rework). One unit per session, never during gate flights
-   (builds); write the D-F10-NEUTRAL decision with unit 1; public renames (MC_INDI_*, uORB) listed, not done.
+3. G7 open items: (f) F-10 clean-up per results/g7_s198/F10_PLAN.md, D-F10-NEUTRAL; unit 1 done S200 (ef748da3ce,
+   F10_UNIT1.md: separate build dir build/f10_sitl, objdump identical; two "INDI stage" log strings left). Next unit 2
+   (re-use the unit 1 brief). One unit per session, never during gate flights; public renames listed, not done.
    (g) build check of indi-fw-pr with the worktree OUTSIDE the repo (re-run make_fw_branch.sh --force-recreate after
    any firmware commit; quad5in model lives in indi_flight/sim, not in the branch). v6x flash overflow 23.5 kB ->
    report/upstream note. Tests build in px4-indi-sim (px4-dev fails protobuf).
@@ -71,8 +73,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S200a | G3 cause search: drawn-plant margins + ACT_TC sweep (sonnet) | - | results/g3_refly_s199/MARGINS_S200.md | re-brief from STATE action 1 |
-| S200b | G7(f) F-10 unit 1 McIndiPosControl.cpp (sonnet) | - | results/g7_s198/F10_UNIT1.md | re-brief from F10_PLAN unit 1 |
+| - | none | - | - | - |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
