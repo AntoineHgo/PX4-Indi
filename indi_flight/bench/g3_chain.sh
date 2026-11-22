@@ -62,11 +62,12 @@ FROZEN_INPUTS=(
 FLIGHT_WATCHDOGS='^(non-finite attitude or rate|tilt > [0-9.]+ deg for [0-9.]+ s|height < [0-9.]+ m|> [0-9.]+ m below hold altitude for [0-9.]+ s)$'
 #   infra: matched on run.json "error" up to the first " | " (TypeName: message, run_scenario.py main)
 INFRA_ERRORS='^(RunError: px4 exited early \(rc=-?[0-9]+\) while waiting for .*|RunError: timeout \([0-9.]+s wall\) waiting for .Startup script returned successfully. in .*|RunError: gz sim exited early|RunError: timeout waiting for gz world|RunError: gz unpause failed:.*|RunError: param (set|show) .* failed:.*|RunError: no MAVLink heartbeat in 60 s|WatchdogTrip: watchdog: no ATTITUDE for [0-9]+ s wall in phase .*)$'
-#   any exception other than the runner's own RunError / WatchdogTrip (a runner bug or host error), and an abort with
-#   no error text but no ulog, are infra too (classify_done)
+#   host exception types are infra too (OSError and subclasses, subprocess errors, JSONDecodeError), and an abort
+#   with no error text but no ulog; any other exception (ValueError, KeyError, ...) is "other": a controller NaN can
+#   surface that way in run_scenario.py main() (classify_done)
 
 MAX_CONSECUTIVE_BAD=3   # circuit breaker: failed (infra after retry) or void indices in a row
-MAX_CONSECUTIVE_OTHER=5 # aborted-other flight results in a row: kept as results, but the chain stops for a look
+MAX_CONSECUTIVE_OTHER=10 # aborted-other flight results in a row: kept as results, but the chain stops for a look
 DOCKER_TIMEOUT_S=60     # docker CLI calls of the chain itself (stop, rm, ps, inspect)
 MIN_FREE_GB=5
 CONTAINER_PREFIX=g3c_ # containers px4-indi-g3c_NNN (flight), px4-indi-g3c_k1 / g3c_k2 (scoring)
@@ -343,7 +344,15 @@ halt() { # halt REASON...: write CHAIN_HALTED, state halted, exit
 # result), "void <problems>", or "infra <error>" (runner/host fault, flown again)
 classify_done() {
 	python3 - "$1" "$FLIGHT_WATCHDOGS" "$INFRA_ERRORS" 8>&- <<'PY'
-import json, re, sys
+import builtins, json, re, sys
+HOST_EXC = {"CalledProcessError", "TimeoutExpired", "SubprocessError", "JSONDecodeError", "gaierror", "herror"}
+
+
+def host_exception(name):  # OSError family (builtins) or the named subprocess/json/socket errors
+    t = getattr(builtins, name, None)
+    return name in HOST_EXC or (isinstance(t, type) and issubclass(t, OSError))
+
+
 try:
     j = json.load(open(sys.argv[1]))
 except (OSError, ValueError) as e:
@@ -364,8 +373,8 @@ elif o == "aborted":
         print("flight watchdog: " + one(wd))
     elif re.match(sys.argv[3], first):
         print("infra " + one(err))
-    elif etype and etype not in ("RunError", "WatchdogTrip"):
-        print("infra runner exception: " + one(err))
+    elif etype and host_exception(etype):
+        print("infra host exception: " + one(err))
     elif not first and "no ulog" in err:
         print("infra no ulog and no error: " + one(err))
     else:

@@ -69,14 +69,16 @@ serially by the detached flight chain `bench/g3_chain.sh`, independently of any 
 - Infra faults (moved to `partial/`, flown once more, then `CHAIN_FAILED`; counted by the breaker): rc != 0, timeout or
   no `g3_done.json`; unreadable `g3_done.json`; aborts whose `error` is `px4 exited early ...`, `timeout ... waiting for
   'Startup script returned successfully'`, `gz sim exited early`, `timeout waiting for gz world`, `gz unpause failed`,
-  `param set/show ... failed`, `no MAVLink heartbeat in 60 s`, the `no ATTITUDE for 10 s wall` stall watchdog, any
-  exception other than the runner's RunError/WatchdogTrip, or no ulog with no error. Every attempt is in `FAULTS.tsv`.
+  `param set/show ... failed`, `no MAVLink heartbeat in 60 s`, the `no ATTITUDE for 10 s wall` stall watchdog, host
+  exceptions raised by the runner (OSError and subclasses, subprocess errors, JSONDecodeError), or no ulog with no
+  error. Any other exception (ValueError, ZeroDivisionError, KeyError, ...) is "other": a controller NaN can surface
+  that way. Every attempt is in `FAULTS.tsv`.
 - A void run is kept, not retried (GATES: re-fly, not a failure; the orchestrator decides); it counts for the breaker.
 - On every start, finished runs are checked before being skipped: an infra fault is moved to `partial/` and flown
   again, a wrong or missing binary halts, an unscored run is scored.
 - Circuit breaker: 3 infra-failed or void indices in a row halt the chain (most likely docker/host trouble, not a
   controller result); their `CHAIN_FAILED` markers are removed and void runs moved to `partial/`, so a restart flies
-  them again. 5 "other" aborts in a row also halt the chain for a look (those runs stay counted as results). Also halts
+  them again. 10 "other" aborts in a row (more than one 10-run corner block) also halt the chain for a look (those runs stay counted as results). Also halts
   on a freeze mismatch and on free disk < 5 GB (one run is ~130 MB, 300 runs ~40 GB).
 - On `CHAIN_HALTED`: read it and `progress.txt`, `FAULTS.tsv`, `stream_NNN.txt` of the last indices, fix the cause,
   `rm CHAIN_HALTED`, start again. To re-fly a `CHAIN_FAILED` index: remove that marker (and `CHAIN_FINISHED`), start
@@ -86,3 +88,5 @@ serially by the detached flight chain `bench/g3_chain.sh`, independently of any 
 After `CHAIN_FINISHED`: rescore if any run is unscored, then the GATES "Campaign pass" rule (0 LOC, 0 sustained
 oscillation, items 3-6 in >= 95 % of valid runs, every miss explained; Q24 B rule for draws shared with PID).
 Key 2 column 5 (G4 command chatter) is not part of the G3 verdict.
+Every `FAULTS.tsv` row with the `no ATTITUDE for 10 s wall` stall needs a host cause in the evidence (suspend, load,
+docker): a PX4 hang gives the same row.

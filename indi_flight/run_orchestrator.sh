@@ -149,11 +149,16 @@ while [ ! -f indi_flight/DONE ] && [ ! -f indi_flight/STOP ]; do
 	fi
 	waiting_logged=
 	# the detached G3 flight chain holds this lock while it flies: no session meanwhile (sequential rule, freeze),
-	# unless the campaign chain's status has not been updated for an hour (stuck: a session diagnoses it)
+	# unless the campaign chain is alive but its status is over an hour old (stuck: a session diagnoses it)
 	chain_stuck=
 	if [ -f "$LOG_DIR/flight_chain.lock" ] && ! flock -n "$LOG_DIR/flight_chain.lock" true 9>&-; then
-		chain_upd=$(jq -r 'select(.state == "running") | .updated // empty' "$CHAIN_DIR/chain_status.json" 2>/dev/null)
-		[ -n "$chain_upd" ] && chain_upd=$(date -d "$chain_upd" +%s 2>/dev/null)
+		# stuck = the campaign chain itself is alive, says running, and has not updated its status for an hour
+		chain_upd=$(jq -r 'select(.state == "running") | "\(.pid) \(.updated)"' "$CHAIN_DIR/chain_status.json" 2>/dev/null)
+		if [ -n "$chain_upd" ] && kill -0 "${chain_upd%% *}" 2>/dev/null; then
+			chain_upd=$(date -d "${chain_upd#* }" +%s 2>/dev/null)
+		else
+			chain_upd= # another chain (or a rescore) holds the lock: idle
+		fi
 		if [ -z "$chain_upd" ] || [ $(($(date +%s) - chain_upd)) -lt 3600 ]; then
 			[ -n "${chain_logged:-}" ] || log "G3 flight chain flying, no session until it stops"
 			chain_logged=1
