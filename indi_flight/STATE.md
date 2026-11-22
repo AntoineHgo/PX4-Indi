@@ -3,28 +3,25 @@
 ## Status
 - Stage: 6 (validation). FREEZE-10 (D-FREEZE-10): firmware 7fe6206fcc, config g5_freeze_s157 params (XY gains at
   firmware defaults 1.2/2.4). Later firmware commits behaviour-neutral (D-G7-NUTTX-BUILD, D-F10-NEUTRAL).
-- Gates: see GATE_STATUS.tsv. G1, G2, G4, G5 PASSED; G3 NOT PASSED at freeze-10 (S199). Q26 open (A / B / C).
-- Q26 closed S207: items 1-4 done (results/q26_actc_s207, q26_kscale_s207, q26_264_s207); Q27 asked (box C1/C2/B,
-  K fixed, 264 K probe, pre-ID G6 item). No box, gate text or firmware change before its answer. G3, G6, G7, G8
-  verdicts wait on Q27: WAIT_OWNER set S207. On answer: act per Q27 (C1 = G3 campaign re-fly with controller ACT_TC
-  drawn in U[1,1.5] x tau_slow, g3_chain.sh G3_PARAMS / g3_run tooling; class C rule into GATES if accepted).
-- CUT RC207 (design/route_check_207.md): until Q27 is answered only Q26 items 1-5; next action 3 (f)(g) and the
-  older G7 list, next action 5 (G8 drafting) and the g3_score key-1 fix stay deferred.
+- Gates: see GATE_STATUS.tsv. G1, G2, G4, G5 PASSED; G3 NOT PASSED at freeze-10 (S199). No open question.
+- Q27 closed S208 (D-OWNER-Q27, GATES "Owner amendments S208"): identify ACT_TC first; G3 controller-ACT_TC box written
+  from the measured ident error bound, then Q28 to the owner with bound + box, then G3 re-fly (300) and G6 item 7.
+  FREEZE-10 stays; a firmware change needed by the identification is asked first. S53 round-up rule overturned.
+- RC208 (design/route_check_208.md): long pole = ACT_TC ident + error table; offline error grid first, few
+  confirmation flights; reuse ident chain, new code = sweep driver only. G7 (g), F-10 unit 9/review, harness
+  extraction, dead-path removal stay deferred (firmware may change). Only G7 unit 8 and G8 text may run alongside.
 - Owner rule F-10 (2026-11-22): brief every coder with F-10. Clean-up = separate behaviour-neutral commits,
   independent review.
 
 ## Next actions (each names its gate item)
-CUT RC202 (design/route_check_202.md): no further 283/264 modelling; G8 report/docs drafting paused until Q26;
-  G7 older list justified in writing (not fixed) except MC_INDI_ID_OK call site (firmware: after Q26) and the
-  offb_vel_check checker defects; F-10 units merged in pairs. No firmware law change, no G3 re-fly before Q26.
-CUT RC203 (design/route_check_203.md): F-10 unit 9 and the whole-branch F-10 review deferred until after Q26 (one
-  batch after the freeze decision); no new work after YAW-FIT and F10-U8: then WAIT_OWNER. Not taken: the RC203
-  proposal of a default answer B to Q26 by S206 (Q26 decides a gate verdict: blocking, owner's call only).
-1. G3 NOT PASSED (GATES "G3 verdict at freeze-10"; FAILS_S199.md, g3_refly_s199/SUMMARY.md, CAUSE_S199.md,
-   MARGINS_S200.md). Cause search closed. Under A/C: FREEZE-11 re-flies G2, G4, G5, G3 (tooling: bench/g3_chain.sh,
-   README in results/g3_campaign_f10, speed-1 rule in its speed_check/README.md; refly list with PID twins:
-   results/g3_refly_s199/refly_all.sh). Side defect: key 1 (g3_score.sh) scores landing windows that key 2 skips
-   (class C, 25 runs): fix before any G3 re-score.
+CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older G7 list stay deferred until the ACT_TC
+  ident decides whether firmware changes. G8 drafting only after the Q28 answer.
+1. G3/G6 ACT_TC identification (Q27 item 1): survey design/actc_ident_survey_s208.md -> one-page design note ->
+   estimator + synthetic self-test (asym tau, delay, closed loop) -> second key -> offline error grid -> few SITL
+   confirmation flights -> bound -> capped/two-sided ACT_TC rule with model margins on corners -> GATES G3 box
+   draft -> Q28. Gate criteria for the error measurement go into GATES G6 before the estimator is built.
+   G3 harness before the next campaign: 039 fix + aborts INVALID + key 1 --skip-nav-change (H039 task).
+   Next G3 scoring also: re-fly the 15 freeze-10 item-3 misses at speed 1; table class C skipped lines both stacks.
 2. G5 PASSED at freeze-10 (S198). A firmware change after the freeze re-opens the rows it touches.
    Trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
 3. G7 open items: (f) F-10 clean-up per results/g7_s198/F10_PLAN.md; units 1-7 done (F10_UNIT1..7.md: build dir
@@ -80,7 +77,9 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | - | - | - |
+| RC208 | route check after Q27 answer | sonnet | design/route_check_208.md | re-launch brief |
+| H039 | Q27 item 8: runner LAND/stick defect, harness abort = invalid | sonnet | results/harness_039_s208/README.md | re-launch brief |
+| ACTS | Q27 item 1 survey: ACT_TC ident tooling and plan | sonnet | design/actc_ident_survey_s208.md | re-launch brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

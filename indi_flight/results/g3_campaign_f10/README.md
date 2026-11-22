@@ -88,7 +88,7 @@ serially by the detached flight chain `bench/g3_chain.sh`, independently of any 
 
 ## Verdict
 After `CHAIN_FINISHED`: rescore if any run is unscored, then the GATES "Campaign pass" rule (0 LOC, 0 sustained
-oscillation, items 3-6 in >= 95 % of valid runs, every miss explained; Q24 B rule for draws shared with PID).
+oscillation, items 3-6 met in every valid run, no quota (GATES S94 decision 5; wording corrected S208, owner Q27 item 5); Q24 B rule for draws shared with PID).
 Key 2 column 5 (G4 command chatter) is not part of the G3 verdict.
 Speed rule (speed 4, `speed_check/README.md`): every item 1-2 failure, and every item 3-6 miss within the speed-1
 same-seed spread of its threshold (altitude mean: up to 1.0 x the limit; horizontal RMS 0.16; roll/pitch mean 0.26),

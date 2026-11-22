@@ -313,8 +313,8 @@ profile always on. Cost: 300 x 100 s at speed 4 is about 2.1 h sim wall, one run
    and no re-excursion > 0.3 m for 5 s (five times the 1 s G2 settle scale, outer loop).
 6. Rate mode (10 % of runs): body rate RMS <= 5 deg/s over the last 20 s with zero sticks (no oscillation, no drift in rate).
 
-**Campaign pass**: 0 LOC, 0 sustained oscillation, items 3-6 met in >= 95 % of valid runs with each miss explained
-(quota never applies to items 1-2). 300 valid runs with 0 safety failures bound the failure rate below 1 % at 95 %
+**Campaign pass**: 0 LOC, 0 sustained oscillation, items 3-6 met in every valid run (no quota: S94 decision 5;
+corrected S208, owner Q27 item 5; the earlier ">= 95 %" text here contradicted decision 5). 300 valid runs with 0 safety failures bound the failure rate below 1 % at 95 %
 (rule of three, SOURCED standard result). Excluded runs (class (a)) <= 5 % of the total, else the harness is not good enough.
 Reported, not pass: per-factor sensitivity of items 3-5; PID on 60 of the same seeds.
 Scripts: `bench/g3_sample.py`, `bench/g3_checks.py` (LOC, detector, steady-state) with a second key by a second writer
@@ -740,3 +740,28 @@ draws, campaign speed rule and reference-before-cause rule).
   timeout, re-flown at speed 1), not a control failure.
 The remaining 77 item-2 indices were not re-flown at speed 1: the verdict does not depend on them (item 1 fails on two
 confirmed, INDI-specific runs). Step back: QUESTIONS.md Q26.
+
+## Owner amendments S208 (2026-11-22): Q27 test-definition changes after the first G3 test (owner answer, QUESTIONS.md)
+- **G3 controller ACT_TC (Q27 item 1).** The plant motor tau stays drawn x[0.5, 3] with up/down asymmetry (owner range).
+  The controller `MC_INDI_ACT_TC` is drawn as identification error, like the controller G1 error: its box is written
+  here from the measured error bound of the ACT_TC identification step (G6, D-OWNER-Q27), before any G3 flight. Until
+  then no G3 flight. The freeze-10 campaign (controller ACT_TC 0.033 fixed, ID_OK 1) stays as evidence, NOT PASSED.
+- **Items 3-6 (Q27 item 5).** No quota (S94 decision 5); the "Campaign pass" text above is corrected. Every item 3-6
+  miss in a valid run is a failure after the speed-1 re-fly rule. The 15 freeze-10 misses are re-flown at speed 1
+  when the next G3 campaign is scored.
+- **Class C (Q27 item 6).** Q15 A (skip item-2 windows overlapping the 3 s after a `nav_state` change) applies to G3
+  item 2 on both keys (key 1 `g3_score.sh --skip-nav-change`). Change after the first test: key 2 had applied it
+  without this text. The G3 evidence tables the skipped land-entry lines for both stacks and the PID result on the
+  class C draws. G5 flies the nominal plant only and is not claimed to cover these windows.
+- **Harness aborts (Q27 item 8).** A harness abort (wall or land timeout, runner exception, LAND overridden by the
+  stick re-centre as in 039) is an invalid run, scored INVALID by both keys and re-flown; never PASS. Class (a) limit
+  (<= 5 % excluded) unchanged.
+- **G6 un-identified state (Q27 item 7).** New G6 item: about 100 Latin-hypercube runs over the full G3 box (plant tau
+  x0.5..3) plus the box corners, flown at `MC_INDI_ID_OK` 0 (gains x0.5, ACT_TC 0.05). Pass: item 1 (no LOC) in every
+  valid run, item 2 (no sustained oscillation) inside the identification-manoeuvre window. Item 2 elsewhere and items
+  3-6 reported. The freeze-10 x0.5..3 result (ID_OK 1, ACT_TC 0.033) is never labelled "the unidentified limit".
+- **Model margin limit (Q27 item 3).** K fixed 20, no 1/tau_c scaling. The report (G8) states the model margins over
+  the realised G3 box (best rule about 36 deg PM / 5-7 dB GM, below G2's 45 deg / 6 dB, which is measured on the
+  nominal plant) as a limit, with the 3 dB model optimism seen on 283.
+- **264 (Q27 item 4).** Reported as a limit (CW rotor-speed collapse hits both stacks; INDI applies 55-80 % of PID's
+  counter-torque for 0.2 s and tilts over, PID recovers; origin of the collapse untraced). No K change for it.

@@ -1702,3 +1702,76 @@ the owner's call; the x0.5..3 result is reported as is in either case.
    2), K scaling, the pre-identification requirement (note point 4) and FREEZE-11. No box change, no gate text change
    and no firmware change before my answer to Q27. G6-G8 stay as they are until then.
 - S207 (2026-11-22): Q26 owner answer acted on. RC207 filed (cuts: G7 (f)(g), G8 drafting, key-1 fix stay deferred). Item 1: 16 INDI re-flies (results/q26_actc_s207): ACT_TC = tau clears 245, 239, 283; 1.5 tau clears 245, 239, keeps 283/008 10.75 Hz; 264 LOC in both. Item 2 (q26_kscale_s207): K scaled with 1/tau_c worse than fixed K; matched ACT_TC worst PM 5.7 -> 35.9 deg. Item 3 (q26_264_s207): CW rotor collapse, INDI counter-torque about half of PID (likely). Item 4: class C = Q15 A skip missing from G3 key 1. Q27 asked, WAIT_OWNER. Gate progress: none (G3 check data for Q27; no gate row scored, verdicts wait on Q27).
+- S208 (2026-11-22): Q27 closed. Question and owner answer as asked:
+  ## Q27 (S207, 2026-11-22): Q26 check results; choose the tau box, K rule, pre-identification item, FREEZE-11
+  BLOCKING for G3 (box and test text), and through it for G6, G7, G8. Results: results/q26_actc_s207/README.md (table),
+  results/q26_kscale_s207/README.md, results/q26_264_s207/README.md. FREEZE-10 binary throughout, params overrides only.
+  1. Re-fly, 8 S199 draws at speed 1 (S199 INDI -> set a ACT_TC = drawn tau_slow -> set b 1.5 x tau_slow), keys k1/k2:
+     245 (C1, LOC) ABORT -> PASS/PASS -> PASS/PASS; 239 (B) FAIL 2 Hz 76 dps -> PASS/PASS -> PASS/PASS;
+     283 (A: fast motor, 10 ms) FAIL 10.75 Hz 18 dps -> PASS/PASS -> FAIL/FAIL 10.75 Hz 9-13 dps (PID passes);
+     008 (A) FAIL 10.75 Hz -> k1 FAIL 2.0 Hz 10.5, k2 PASS -> FAIL/FAIL 10.75 Hz 6-7 (PID fails it harder, 161-207 dps);
+     046 (D) FAIL both -> k2 FAIL 2.0 Hz 13.4 -> PASS/PASS; 240 (class C) k1 FAIL -> k1 FAIL -> PASS/PASS;
+     039 land wall timeout (harness, both stacks) in every set, scored PASS; 264 ABORT tilt > 60 deg in both sets.
+     So an identified ACT_TC removes the slow-motor LOC and the 2 Hz class B; the round-up end (x1.5) keeps the
+     fast-motor class A line (lower RMS).
+  2. Model (MARGINS_S200 method, worst over the realised G3-box corners, PM deg / GM dB): ACT_TC 0.033 fixed 5.7 / 3.1;
+     ACT_TC = tau, K 20: 35.9 / 6.8; ACT_TC = 1.5 tau, K 20: 36.2 / 5.3. K scaled with 1/tau_c: 13.8 / 1.4 (a), 33.3 / 3.1 (b),
+     worse in both (K reaches 40 on fast motors; 283 GM 9.5 -> 3.2 dB). No rule gives PM 45 on every corner (binding:
+     tau x3 + 10 ms + G1 error 1.2). G2 is measured on the nominal plant and is not affected.
+  3. 264 (log only): a 20 ms collapse of both CW rotor speeds (11600 -> 7000 rpm, command flat) hits both stacks; no
+     saturation, no unallocated torque. INDI's pitch/roll counter-torque is 55-80 % of PID's for 0.2 s; the rate setpoint
+     reaches 220 dps; tilt > 60 deg. Likely (not shown): low rate-loop gain against a large disturbance. Unexplained: why
+     the rotors collapse (injector or Gazebo model at speed scale 0.351; not traced).
+  4. Class C: Q15 A (skip windows overlapping the 3 s after a nav_state change) is written for G4 only; G3 key 2 applies
+     it, key 1 (g3_score.sh) does not. Proposed rule: Q15 A applies to G3 item 2 for both keys (transitions are judged by
+     G5); key 1 re-scored with its existing --skip-nav-change. Freeze-10 item 2 drops from 79 to at most 54 runs:
+     verdict unchanged (NOT PASSED).
+  Options and recommendation:
+  - C1 (recommended): tau becomes identification error, one-sided ACT_TC / tau_slow in U[1, 1.5] with up/down asymmetry
+    kept; K fixed 20 (no 1/tau_c scaling: the model rejects it); x0.5..3 result reported as the unidentified limit. No
+    firmware change, so FREEZE-10 and G2, G4, G5 stand; only the 300-run G3 campaign is re-flown (tooling: draw the
+    controller ACT_TC like the controller G1 error, about 8 h CPU), with the class C rule above. Risk, stated now: class A
+    draws near the x1.5 end may still fail item 2 (283, 008 set b), and 264 still fails item 1.
+  - C2: as C1 with [1, 1.2] (tighter identification claim). Removes 283 at the cost of a stronger bring-up requirement.
+  - B: close G3 NOT PASSED as written, report this check as the path; go to G6-G8.
+  264 (needs your call whatever the box): (i, recommended) one session: confirm the rotor collapse is the drawn fault,
+  then a params-only probe of MC_INDI_K_R/P 30 and 40 on 264 with model margins; if it recovers with margins kept, the
+  new default is FREEZE-11 (firmware default change, re-flies G2, G4, G5 and G3); (ii) report 264 as a limit.
+  Pre-identification state (ID_OK 0, gains x0.5, ACT_TC 0.05): recommend a G6 item "flies the x0.5..3 tau box without
+  LOC" on a reduced set (the 8 draws plus the 16 box corners, item 2 reported, not required), not a second 300-run campaign.
+  Meanwhile: nothing (route check 207: every gate item waits on this answer). Blocked: yes, WAIT_OWNER.
+  **Owner answer Q27 (2026-11-22, with an independent review in the owner's session): identify first, no box change now.**
+  1. tau box: none of C1, C2, B as written. No ACT_TC identification with a measured error exists, so no box can be
+     justified yet; C2 ([1, 1.2], chosen because 283 fails at 1.5) is rejected as fitting the test to the result. Next:
+     build and validate the ACT_TC identification step (decision 3, G6 work), and measure its error over plant tau
+     x0.5..3 (up/down asymmetry kept, and whether it returns tau_slow or a mean), delay 0-10 ms and telemetry frames 0-3.
+     Then write the G3 tau box from that measured bound, in GATES.md, before any G3 flight. Plant tau in G3 stays drawn
+     x0.5..3 (owner range); only the controller ACT_TC is drawn as identification error. G3 stands NOT PASSED as written
+     until then.
+  2. S53 rule (D-RATE-LEAD addendum 2, "identification errs high, round up"): record it as overturned. 283 (tau 16.5 ms,
+     10 ms delay) fails at ACT_TC x1.5 and x2 and passes at x1, which meets its own overturn clause. Replace it with a
+     capped or two-sided rule derived from the identification bound of item 1 and the delay, with model margins on the
+     box corners.
+  3. K: fixed K 20 stays; no 1/tau_c scaling (rejected by the model with MC_ROLL/PITCH_P 8 held; scaling the attitude
+     gain too was not checked and is not asked for now). Report the model margins on the realised box (best rule about
+     36 deg PM / 5-7 dB GM, below G2's 45 deg / 6 dB) as a stated limit for G8, with the 3 dB model optimism seen on 283.
+  4. 264: report as a limit (option ii). The report states what is shown (both stacks get the CW rotor-speed collapse;
+     INDI applies 55-80 % of PID's counter-torque and tilts over, PID recovers) and what is not (origin of the collapse,
+     possibly the gz rotor model at speed scale 0.351, untraced). No K change, no FREEZE-11 for 264.
+  5. Items 3-6: decision 5 of G3-G8 FINAL S94 (GATES.md line 231, no quota) governs. Correct the contradicting test text
+     (GATES.md line 316, "items 3-6 met in >= 95 %") and the campaign README verdict wording. Every item 3-6 miss in a
+     valid run is a failure after the speed-1 re-fly rule; the 15 freeze-10 misses are re-flown at speed 1 when the next
+     G3 campaign is scored, not now.
+  6. Class C: accepted with conditions. Q15 A (skip windows overlapping the 3 s after a nav_state change) applies to G3
+     item 2 on both keys, recorded in GATES as a test-definition change after the first test (key 2 applied it without
+     the text allowing it). Report the skipped land-entry lines for both stacks, and check PID on the class C draws
+     (240 PID also shows a key 1 line). Do not claim that G5 covers these windows: G5 flies the nominal plant only.
+  7. Un-identified state (ID_OK 0, gains x0.5, ACT_TC 0.05): a G6 item of about 100 Latin-hypercube runs over the full
+     G3 box (tau x0.5..3) plus the box corners, flown at ID_OK 0. LOC required; item 2 required at least during the
+     identification manoeuvre (an oscillation there corrupts the fit), reported elsewhere. The freeze-10 x0.5..3 result
+     was flown at ID_OK 1 with ACT_TC 0.033: never label it "the unidentified limit".
+  8. Harness, before any new campaign: 039 (LAND overridden by the stick re-centre, wall timeout) is an invalid run,
+     not a PASS; fix the runner defect and score harness aborts as invalid (re-flown), per the existing failure rule.
+  9. Order: items 2-6 and 8 are text and tooling (no flight beyond checks); then item 1 (identification and its error
+     measurement) and item 7 inside G6. FREEZE-10 stays; no firmware change unless the identification needs one, and then
+     ask first. Come back with a question when the identification bound is measured and the G3 box is proposed.

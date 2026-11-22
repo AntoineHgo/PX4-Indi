@@ -282,7 +282,7 @@ Opus review `design/rate_lead_review_r1.md`: law verified against code for roll/
 at K_R 20 with ACT_TC overestimated by 40 % (model predicts ~5 dB at K40) -> default MC_INDI_LEAD < 1 or a lower bound
 on identified tau_c. Lead is feedback-only (setpoint path keeps the actuator lag); feedforward is a separate later option.
 
-### D-RATE-LEAD addendum 2 (S53): defaults MC_INDI_LEAD 1, MC_INDI_ACT_TC 0.05; identification errs high
+### D-RATE-LEAD addendum 2 (S53): defaults MC_INDI_LEAD 1, MC_INDI_ACT_TC 0.05; identification errs high [(c) OVERTURNED S208, D-OWNER-Q27]
 Evidence: `results/stage3_s53/act_tc_sweep/README.md` (roll M3a, 800 Hz, plant tau 0.033): ACT_TC x0.5 PM 36/GM 5.1,
 x0.6 PM 42/GM 7.9 (fail G2); x1 PM 59/GM 14; x1.5 PM 86/GM 11; x2 PM 75/GM 10 (2 seeds). Tolerance is one-sided.
 Choice: (a) MC_INDI_LEAD default 1 (lead 0 gives PM 26 at the stock MC_ROLL_P 8). (b) MC_INDI_ACT_TC default 0.05:
@@ -1296,3 +1296,20 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   (the gate commit and the delivered code would differ in text, two histories to keep aligned).
 - Overturn: a unit whose objects differ beyond symbol names, or a public name (parameter, uORB field, topic) that must
   change; public renames are listed in F10_PLAN 1b and need their own decision and re-fly.
+
+## D-OWNER-Q27 (S208, 2026-11-22): identify ACT_TC first; S53 round-up rule overturned
+- Owner answer to Q27 (full text JOURNAL.md S208; gate text GATES "Owner amendments S208"). Decided by the owner, not
+  re-opened: no G3 box until an ACT_TC identification step exists and its error is measured over plant tau x0.5..3
+  (asymmetry kept; report whether it returns tau_slow, tau_fast or a mean), delay 0-10 ms, telemetry 0-3 frames; the
+  controller ACT_TC box is written from that bound. K fixed 20 (1/tau_c scaling rejected by the model). 264 reported as
+  a limit. Class C rule for G3 item 2, both keys. Harness aborts INVALID. G6 un-identified item (~100 LHS runs, ID_OK 0).
+- **D-RATE-LEAD addendum 2 (c) overturned** ("identification errs high, round ACT_TC up"): 283 (tau 16.5 ms, 10 ms delay)
+  fails item 2 at ACT_TC x1.5 and x2 and passes at x1 (results/q26_actc_s207), which meets its own overturn clause
+  (the S53 sweep was one plant tau, 0.033, no added delay). Replacement: a capped or two-sided ACT_TC rule derived from
+  the identification bound and the loop delay, with model margins (margins_models.py) on the box corners; written with
+  the bound, before the G3 box.
+- Order: text and tooling (items 2-6, 8) S208; then the ACT_TC identification step and its error sweep (G6 work);
+  then a question to the owner with the bound and the proposed box. FREEZE-10 stays; a firmware change needed by the
+  identification is asked first.
+- Overturn: none of mine (owner decision); a measured bound too wide for any box that holds model margins goes back
+  to the owner.

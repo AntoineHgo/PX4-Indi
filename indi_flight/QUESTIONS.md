@@ -54,40 +54,5 @@ design/airframe_requirements.md; full text in JOURNAL.md S197).
 Q26 closed S207 (owner answer: check first, C not chosen; items 1-4 done, results and recommendation in Q27;
 full text in JOURNAL.md S207).
 
-## Q27 (S207, 2026-11-22): Q26 check results; choose the tau box, K rule, pre-identification item, FREEZE-11
-BLOCKING for G3 (box and test text), and through it for G6, G7, G8. Results: results/q26_actc_s207/README.md (table),
-results/q26_kscale_s207/README.md, results/q26_264_s207/README.md. FREEZE-10 binary throughout, params overrides only.
-1. Re-fly, 8 S199 draws at speed 1 (S199 INDI -> set a ACT_TC = drawn tau_slow -> set b 1.5 x tau_slow), keys k1/k2:
-   245 (C1, LOC) ABORT -> PASS/PASS -> PASS/PASS; 239 (B) FAIL 2 Hz 76 dps -> PASS/PASS -> PASS/PASS;
-   283 (A: fast motor, 10 ms) FAIL 10.75 Hz 18 dps -> PASS/PASS -> FAIL/FAIL 10.75 Hz 9-13 dps (PID passes);
-   008 (A) FAIL 10.75 Hz -> k1 FAIL 2.0 Hz 10.5, k2 PASS -> FAIL/FAIL 10.75 Hz 6-7 (PID fails it harder, 161-207 dps);
-   046 (D) FAIL both -> k2 FAIL 2.0 Hz 13.4 -> PASS/PASS; 240 (class C) k1 FAIL -> k1 FAIL -> PASS/PASS;
-   039 land wall timeout (harness, both stacks) in every set, scored PASS; 264 ABORT tilt > 60 deg in both sets.
-   So an identified ACT_TC removes the slow-motor LOC and the 2 Hz class B; the round-up end (x1.5) keeps the
-   fast-motor class A line (lower RMS).
-2. Model (MARGINS_S200 method, worst over the realised G3-box corners, PM deg / GM dB): ACT_TC 0.033 fixed 5.7 / 3.1;
-   ACT_TC = tau, K 20: 35.9 / 6.8; ACT_TC = 1.5 tau, K 20: 36.2 / 5.3. K scaled with 1/tau_c: 13.8 / 1.4 (a), 33.3 / 3.1 (b),
-   worse in both (K reaches 40 on fast motors; 283 GM 9.5 -> 3.2 dB). No rule gives PM 45 on every corner (binding:
-   tau x3 + 10 ms + G1 error 1.2). G2 is measured on the nominal plant and is not affected.
-3. 264 (log only): a 20 ms collapse of both CW rotor speeds (11600 -> 7000 rpm, command flat) hits both stacks; no
-   saturation, no unallocated torque. INDI's pitch/roll counter-torque is 55-80 % of PID's for 0.2 s; the rate setpoint
-   reaches 220 dps; tilt > 60 deg. Likely (not shown): low rate-loop gain against a large disturbance. Unexplained: why
-   the rotors collapse (injector or Gazebo model at speed scale 0.351; not traced).
-4. Class C: Q15 A (skip windows overlapping the 3 s after a nav_state change) is written for G4 only; G3 key 2 applies
-   it, key 1 (g3_score.sh) does not. Proposed rule: Q15 A applies to G3 item 2 for both keys (transitions are judged by
-   G5); key 1 re-scored with its existing --skip-nav-change. Freeze-10 item 2 drops from 79 to at most 54 runs:
-   verdict unchanged (NOT PASSED).
-Options and recommendation:
-- C1 (recommended): tau becomes identification error, one-sided ACT_TC / tau_slow in U[1, 1.5] with up/down asymmetry
-  kept; K fixed 20 (no 1/tau_c scaling: the model rejects it); x0.5..3 result reported as the unidentified limit. No
-  firmware change, so FREEZE-10 and G2, G4, G5 stand; only the 300-run G3 campaign is re-flown (tooling: draw the
-  controller ACT_TC like the controller G1 error, about 8 h CPU), with the class C rule above. Risk, stated now: class A
-  draws near the x1.5 end may still fail item 2 (283, 008 set b), and 264 still fails item 1.
-- C2: as C1 with [1, 1.2] (tighter identification claim). Removes 283 at the cost of a stronger bring-up requirement.
-- B: close G3 NOT PASSED as written, report this check as the path; go to G6-G8.
-264 (needs your call whatever the box): (i, recommended) one session: confirm the rotor collapse is the drawn fault,
-then a params-only probe of MC_INDI_K_R/P 30 and 40 on 264 with model margins; if it recovers with margins kept, the
-new default is FREEZE-11 (firmware default change, re-flies G2, G4, G5 and G3); (ii) report 264 as a limit.
-Pre-identification state (ID_OK 0, gains x0.5, ACT_TC 0.05): recommend a G6 item "flies the x0.5..3 tau box without
-LOC" on a reduced set (the 8 draws plus the 16 box corners, item 2 reported, not required), not a second 300-run campaign.
-Meanwhile: nothing (route check 207: every gate item waits on this answer). Blocked: yes, WAIT_OWNER.
+Q27 closed S208 (owner answer: identify ACT_TC first, no box change now; acted on in GATES "Owner amendments S208",
+DECISIONS D-OWNER-Q27; full text in JOURNAL.md S208).
