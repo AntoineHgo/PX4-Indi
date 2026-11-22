@@ -71,9 +71,8 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| RC203 | route check addendum to RC202 (GATE_STATUS unchanged 3 sessions) | sonnet | design/route_check_203.md | re-launch brief |
-| YAW-FIT | G6: finish ident_fit_yaw.py r regressor + matched grid, K126 MAJORs (key 1) | sonnet | results/ident_yaw_fix_s202/README.md | re-launch brief |
-| F10-U8 | F-10 unit 8 yaml/msg/ROMFS/Kconfig | sonnet | results/g7_s198/F10_UNIT8.md | re-launch unit 7 brief, scope unit 8 |
+| RC204 | route check addendum (GATE_STATUS unchanged 4 sessions) | sonnet | design/route_check_204.md | re-launch brief |
+| YAW-FIT | G6: finish ident_fit_yaw.py key 1 (full self-test run, README final) | sonnet | results/ident_yaw_fix_s202/README.md | re-launch brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
