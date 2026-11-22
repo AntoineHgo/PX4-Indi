@@ -1313,3 +1313,16 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   identification is asked first.
 - Overturn: none of mine (owner decision); a measured bound too wide for any box that holds model margins goes back
   to the owner.
+
+## D-ACTC-IDENT (S208): ACT_TC identified by an output-error per-motor fit on the existing multisine manoeuvre
+- Choice: `design/actc_ident_s208.md`. Output-error fit of (rpm/rpm_max)^2 against the motor command, asymmetric
+  first-order lag (tau_up, tau_down) with delay, gain and intercept; symmetric tau_sym reported as the value the
+  firmware takes. Data from the hover + `MC_INDI_INJ_*` multisine already flown by G1/G2_Y identification; no firmware
+  change. D-IDENT-STOP is lifted by its own condition (stage-5 multi-mode code exists) and by the owner's Q27 item 1.
+- Alternatives: equation-error regression of d(y)/dt split by sign (survey plan; biased by the derivative of quantised
+  eRPM and by the closed loop); extend `a51_motor_latency.py` (symmetric only, read 41-45 ms against 33 ms, unkeyed);
+  a dedicated collective-step manoeuvre (new firmware or runner hook; steps show asymmetry best but add a manoeuvre,
+  F-9); online estimation in firmware (firmware change after the freeze, ask first).
+- Overturn: the self-test cannot reach 10 % with telemetry frames and delay (then a step manoeuvre, asked first);
+  seed spread > 10 % on SITL cells; tau_up and tau_down not separable at the injector amplitude (raise
+  `MC_INDI_INJ_AMP` within its range first, params only).

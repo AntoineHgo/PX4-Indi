@@ -765,3 +765,18 @@ confirmed, INDI-specific runs). Step back: QUESTIONS.md Q26.
   nominal plant) as a limit, with the 3 dB model optimism seen on 283.
 - **264 (Q27 item 4).** Reported as a limit (CW rotor-speed collapse hits both stacks; INDI applies 55-80 % of PID's
   counter-torque for 0.2 s and tilts over, PID recovers; origin of the collapse untraced). No K change for it.
+
+### 6c. ACT_TC identification error (S208, written before the estimator is built; Q27 item 1, D-ACTC-IDENT)
+Procedure: `design/actc_ident_s208.md`. Estimator `bench/ident_actc.py`, output-error fit per motor of
+(rpm/rpm_max)^2 against the motor command with tau_up, tau_down, delay, gain, intercept, plus a symmetric tau_sym.
+- Estimator acceptance (before any SITL use): synthetic self-test passes (noise-free: each tau within 2 %, delay within
+  one sample; with eRPM quantisation, noise, telemetry 0-3 frames, delay 0-10 ms and a closed-loop case: within
+  10 %; a forced 10 ms delay mismatch and an unexcited command each fail the fit-quality check), and a second key.
+- SITL measurement: the 30-flight grid of the design note (plant tau_slow x{0.5, 1, 2, 3}, asymmetry {1, 3 down-slow,
+  3 up-slow}, (delay, telemetry frames) {(0, 0), (10 ms, 3)}, seed repeats and marginals), ID_OK 0 configuration,
+  after a 2-flight pre-test. Valid identification: fit-quality check passed and seed-to-seed spread of tau_sym
+  <= 10 % on the repeated cells (D-IDENT condition (i) tolerance). A cell that fails is a failed identification,
+  counted and reported, never dropped.
+- Result: the table of estimate / truth and min / max / 95 % of tau_sym_hat / tau_slow and tau_sym_hat / tau_mean
+  over valid cells. This is the measured bound. The G3 controller-ACT_TC box and the ACT_TC rule are proposed from
+  it to the owner (Q28) and written in this file before any G3 flight. No threshold on the bound is set here.
