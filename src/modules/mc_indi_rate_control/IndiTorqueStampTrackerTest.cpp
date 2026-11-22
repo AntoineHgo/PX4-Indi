@@ -90,3 +90,28 @@ TEST(IndiTorqueStampTrackerTest, OldOwnStampStillMatchesWithinRing)
 	t.recordOwn(500);
 	EXPECT_TRUE(t.checkReceived(100)); // pushed out of the ring
 }
+
+TEST(IndiTorqueStampTrackerTest, ZeroTimestampIsForeign)
+{
+	// a message without a timestamp cannot be one of the module's own: a fresh (zero initialised) ring must not match
+	TorqueStampTracker t;
+	EXPECT_TRUE(t.checkReceived(0));
+	EXPECT_TRUE(t.foreignDetected());
+}
+
+TEST(IndiTorqueStampTrackerTest, FlagStaysUntilClearCountOwnMessages)
+{
+	// header: cleared after CLEAR_COUNT consecutive own messages, so still set after CLEAR_COUNT - 1
+	TorqueStampTracker t;
+	EXPECT_TRUE(t.checkReceived(99));
+
+	for (int i = 0; i < TorqueStampTracker::CLEAR_COUNT - 1; i++) {
+		t.recordOwn(5000 + i);
+		EXPECT_FALSE(t.checkReceived(5000 + i));
+		EXPECT_TRUE(t.foreignDetected()) << i;
+	}
+
+	t.recordOwn(9000);
+	EXPECT_FALSE(t.checkReceived(9000));
+	EXPECT_FALSE(t.foreignDetected());
+}

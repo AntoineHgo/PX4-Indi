@@ -199,6 +199,49 @@ TEST_F(IndiMeasuredTorqueTest, RotorSpeedsGiveAllocatedTorque)
 	EXPECT_FALSE(_model.compute(now).valid);
 }
 
+TEST_F(IndiMeasuredTorqueTest, NegativeRotorSpeedIsInvalid)
+{
+	// header: u_valid means finite, non negative and plausible. A negative rpm of plausible magnitude (-0.5 omega_max,
+	// squared it would give u = 0.25) must not be used, the motor is not valid and the torque is not valid
+	const uint64_t now = 1000000;
+
+	for (int motor = 0; motor < kNumRotors; motor++) {
+		_model.setMotorSample(motor, rpmFromThrust(0.25f), 0, now - 1000);
+	}
+
+	ASSERT_TRUE(_model.compute(now).valid);
+
+	_model.setMotorSample(1, -rpmFromThrust(0.25f), 0, now);
+	const IndiMeasuredTorque::Result result = _model.compute(now);
+	EXPECT_FALSE(result.valid);
+	EXPECT_EQ(result.motor_valid_mask, 0x0D);
+}
+
+TEST_F(IndiMeasuredTorqueTest, DroppedFrameKeepsPreviousSampleValueAndTime)
+{
+	// header of setMotorSample: on an error count increment the previous sample and its time are kept, so a run of
+	// dropped frames ages it out. The frame carries a very different rpm and a fresh time: neither may be used
+	const uint64_t t0 = 1000000;
+
+	for (int motor = 0; motor < kNumRotors; motor++) {
+		_model.setMotorSample(motor, rpmFromThrust(0.25f), 0, t0);
+	}
+
+	const IndiMeasuredTorque::Result before = _model.compute(t0);
+	ASSERT_TRUE(before.valid);
+
+	_model.setMotorSample(0, rpmFromThrust(1.f), 1, t0 + 15000);
+	const IndiMeasuredTorque::Result after = _model.compute(t0 + 15000);
+	EXPECT_TRUE(after.valid);
+	EXPECT_EQ(after.timestamp_sample, t0); // not t0 + 15000
+	EXPECT_EQ(after.torque[0], before.torque[0]);
+	EXPECT_EQ(after.torque[1], before.torque[1]);
+	EXPECT_EQ(after.torque[2], before.torque[2]);
+
+	// the kept sample ages out although a (dropped) frame arrived recently
+	EXPECT_FALSE(_model.compute(t0 + IndiMeasuredTorque::SAMPLE_MAX_AGE_US + 1).valid);
+}
+
 TEST_F(IndiMeasuredTorqueTest, DisabledWithoutRotorSpeedMax)
 {
 	_model.setRotorSpeedMax(0.f);
