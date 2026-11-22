@@ -307,6 +307,61 @@ def usage_line(path):
     return "usage: " + "   ".join(parts)
 
 
+def chain_lines(directory, cols):
+    """G3 flight chain panel (bench/g3_chain.sh): state, counts, ETA, failing indices, last progress lines."""
+    try:
+        with open(os.path.join(directory, "flight_chain.dir")) as f:
+            cdir = f.read().strip()
+    except OSError:
+        return []
+    if not os.path.isabs(cdir):
+        cdir = os.path.join(os.path.dirname(HERE), cdir)
+    try:
+        with open(os.path.join(cdir, "chain_status.json")) as f:
+            s = json.load(f)
+    except (OSError, ValueError):
+        return [f"G3 chain: {cdir} (no status yet)"]
+    held = False
+    try:
+        import fcntl
+        with open(os.path.join(directory, "flight_chain.lock")) as lk:
+            try:
+                fcntl.flock(lk, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                fcntl.flock(lk, fcntl.LOCK_UN)
+            except OSError:
+                held = True
+    except (OSError, ImportError):
+        pass
+    state = s.get("state", "?")
+    if state == "running" and not held:
+        state = "DEAD (status says running, lock free)"
+    for m in ("CHAIN_HALTED", "CHAIN_FINISHED"):
+        if os.path.exists(os.path.join(cdir, m)):
+            state += f"  [{m}]"
+    first, last = s.get("idx_first", 0), s.get("idx_last", 0)
+    total = last - first + 1
+    done = s.get("done", 0)
+    pct = 100 * done / total if total else 0
+    bar_w = max(min(cols, WIDTH) - 60, 10)
+    bar = "#" * round(bar_w * pct / 100) + "." * (bar_w - round(bar_w * pct / 100))
+    out = [f"G3 chain {os.path.basename(cdir)}: {state}   idx {s.get('current_idx')} {s.get('phase', '')}   "
+           f"speed {s.get('speed')}   ETA {s.get('eta', '?')}",
+           f"  [{bar}] {done}/{total} ({pct:.0f} %)   failed {s.get('failed', 0)}   outcomes {s.get('outcomes', {})}",
+           f"  scored {s.get('scored', 0)} (pending {s.get('score_pending', 0)}):   key 1 pass {s.get('key1_pass', 0)}"
+           f"   key 2 pass {s.get('key2_pass', 0)}   mean cycle {s.get('mean_cycle_s', '?')} s   "
+           f"updated {s.get('updated', '?')}"]
+    try:
+        with open(os.path.join(cdir, "progress.txt"), errors="replace") as f:
+            prog = [l.rstrip() for l in f]
+    except OSError:
+        prog = []
+    fails = [m.group(1) for l in prog for m in [re.search(r"idx=(\d+) score .*(?:FAIL|fail)", l)] if m]
+    if fails:
+        out.append("  scoring fails (idx): " + " ".join(dict.fromkeys(fails)))
+    out += ["  " + one_line(l, cols - 4) for l in prog[-3:]]
+    return out
+
+
 def dashboard(directory, interval=2.0):
     color = sys.stdout.isatty()
     sup = os.path.join(directory, "supervisor.log")
@@ -342,6 +397,7 @@ def dashboard(directory, interval=2.0):
             except OSError:
                 sup_lines = []
             head += ["supervisor:"] + ["  " + one_line(l, cols - 4) for l in sup_lines]
+            head += chain_lines(directory, cols)
             head.append("-" * min(cols, WIDTH))
             body = [l for l in buf.getvalue().splitlines() if l.strip()]
             for i, l in enumerate(body):    # the final report is long: keep its first 3 lines
