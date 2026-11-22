@@ -19,19 +19,15 @@ CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older 
 1. G3/G6 ACT_TC identification (Q27 item 1): survey design/actc_ident_survey_s208.md -> one-page design note ->
    estimator + synthetic self-test (asym tau, delay, closed loop) -> second key -> offline error grid -> few SITL
    confirmation flights -> bound -> capped/two-sided ACT_TC rule with model margins on corners -> GATES G3 box
-   draft -> Q28. Done S208: GATES 6c, design note, estimator key 1 (78387a01da, self-test all 6c limits met).
-   Next: close KEY2 findings -> 2-flight pre-test -> 30-flight grid (g3_run/run_scenario hooks, ID_OK 0, injector
-   roll then pitch). Synthetic: tau_sym = 0.61 x tau_slow, 0.92 x tau_mean at asym 3 (input to the ACT_TC rule:
-   the firmware's one tau sits below tau_slow on asymmetric motors). rpm_max only scales y (gain), not tau.
+   draft -> Q28. Next: FRD fix (sub-sample delay bias) checked against key-2 indep*.py -> 2-flight pre-test ->
+   30-flight grid (g3_run/run_scenario hooks, ID_OK 0, injector roll then pitch). Synthetic: tau_sym = 0.61 x
+   tau_slow, 0.92 x tau_mean at asym 3 (input to the ACT_TC rule). rpm_max only scales y (gain), not tau.
    Quality thresholds set on synthetic noise: check against SITL residuals in the pre-test before the grid.
-   G3 harness done S208 (86539dac11: LAND holds last stick, aborts INVALID both keys, key 1 --skip-nav-change);
-   039 lands at speed 1 (results/harness_039_s208). PID not re-flown on 039; self-test synthetic only.
    Next G3 scoring also: re-fly the 15 freeze-10 item-3 misses at speed 1; table class C skipped lines both stacks.
-2. G5 PASSED at freeze-10 (S198). A firmware change after the freeze re-opens the rows it touches.
-   Trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
-3. G7 open items: (f) F-10 clean-up per results/g7_s198/F10_PLAN.md; units 1-7 done (F10_UNIT1..7.md: build dir
-   build/f10_sitl, unit tests in build/px4_sitl_test, objdump identical; two "INDI stage" log strings left). Next
-   unit 8 (yaml/msg/ROMFS/Kconfig, param-metadata diff check; yaml text fixes LND_SLEW unit, PINJ_* long text from
+   g3_campaign_f10 chain: committed, verdict written S199 (GATES "G3 verdict at freeze-10"); nothing to rescore.
+2. G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
+3. G7 open items: (f) F-10 clean-up per results/g7_s198/F10_PLAN.md (build dir build/f10_sitl, unit tests in
+   build/px4_sitl_test). Next unit 8 (yaml/msg/ROMFS/Kconfig, param-metadata diff check; yaml text fixes LND_SLEW unit, PINJ_* long text from
    report/DOCS_DRAFT_S201.md), then unit 9 (public renames listed in F10_UNIT2..7 "not renamed"), then the
    independent F-10 review over the whole branch + id grep. Never during gate flights.
    (g) build check of indi-fw-pr with the worktree OUTSIDE the repo (re-run make_fw_branch.sh --force-recreate after
@@ -44,14 +40,8 @@ CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older 
    omega_ff step on offboard entry; checker defects in bench/tests/SELFTEST_G7_S194.md (no verdict, no LOC check in
    offb_vel_check, IndexError on empty topic); g511_check.py:184; g510_check.py:115-119; ACT_TC/W_MAX firmware vs
    bench (lesson 12); guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
-4. G6: yaw fit keyed (57e80feac8 + test fix c7ec0740be), A-44 closed (207.5/208.1 vs 205.3,
-   results/ident_yaw_a44_s205). G6 runs (GATES section 6) wait on Q26 (ACT_TC identified or not). ID_OK 0 waits for
-   G6 (D-G7-DEFAULTS).
-CUT RC204 (design/route_check_204.md): after the yaw fit is keyed, nothing advances a gate without Q26: WAIT_OWNER.
-CUT RC205 (design/route_check_205.md): same; only G6 yaw key 2 then A-44 closing run (existing logs
-  results/ident_m3a_s123/{axyaw,half_ax3}, commands in fit_yaw_s125.md, no flights) before WAIT_OWNER. F-10 unit 9,
-  F-10 review, G8 drafting, g3_score key-1 fix stay deferred.
-5. G8 (paused until Q26): drafts report/02_outer_loop_design.md and docs/en/config_mc/indi_control.md; open items in
+4. G6: runs (GATES section 6) wait on the ACT_TC ident and Q28. ID_OK 0 waits for G6 (D-G7-DEFAULTS).
+5. G8 (paused until Q28): drafts report/02_outer_loop_design.md and docs/en/config_mc/indi_control.md; open items in
    report/DOCS_DRAFT_S201.md (arming refusal without eRPM: check code or reword; identification user steps = G6).
 Rules: 1 session per inner-loop law change; parallel docker streams only for tolerance-insensitive probes, never gate
   evidence, never a docker build during gate flights; G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1. Next RC:
@@ -82,7 +72,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| K2A | second key of ident_actc.py (code vs design note, independent plant, real-log smoke run) | sonnet | bench/tests/KEY2_IDENT_ACTC_S208.md | read KEY2 file; if missing re-launch brief |
+| FRD | fractional-delay fix of ident_actc.py (KEY2 item 2 + MINORs) | sonnet | bench/tests/SELFTEST_IDENT_ACTC_S208.md "Fix S208" | S209: code edits left uncommitted, no section; FRD2 agent verifies + writes section, then commit |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
