@@ -14,13 +14,12 @@
    verdicts. Queue ENDED 01:14 S194. G4 PASSED at freeze-10 (S194). G3 pre-test 16/20 both keys (fails
    02/03/05/08): Q24 blocks G3. G5 scored (results/freeze10_s193/G5_SCORES.md): all rows pass both keys except
    G5.5 o2_circle_z s1 0.5027 m (limit 0.5); PID ref 1.14-1.16 m (g55_pid_ref/): Q25 blocks the G5 verdict.
-   G5.9a key2 reference-definition difference as freeze-8/9 (key 1 PASS). G2: scored (G2_SCORES.md), S194c
-   re-flies hole cell pt1_ax2_r400_s2 + key2 BLOCKED check -> then write G2 verdict.
+   G5.9a key2 reference-definition difference as freeze-8/9 (key 1 PASS). G2 PASSED at freeze-10 (S194).
+   Next: act on Q24/Q25 answers when present; otherwise G7 items (item 5) one task per session.
    Binary built 22:38 after 7fe6206fcc, no src commit since (checked). G7 harness starts after the queue ends
    (RC194 item 6 asked parallel; not done: a docker build during gate flights risks the binary and timing).
-1. G2 PASSED at freeze-9 (S184); outer cells invalidated by FREEZE-10, re-fly in item 0.
-2. G4 PASSED at freeze-9 under Q20 (S187); invalidated by FREEZE-10, re-fly in item 0 (probe cruise_typ_s1 PASS).
-3. G5: freeze-9 (G5_SCORES.md) every flown row PASS both keys; G5.5 worst H 0.499 m (o2 s3, limit 0.5: thin, no
+1-2. G2 and G4 PASSED at freeze-10 (S194, GATES.md verdicts). A FREEZE-11 (Q24 A) would invalidate them again.
+3. G5 history: freeze-9 (G5_SCORES.md) every flown row PASS both keys; G5.5 worst H 0.499 m (o2 s3, limit 0.5: thin, no
    chase). G5.10 (SAT dropped Q21) stabilized part PASS 3/3 both keys (freeze9_s183/g510_stab, S188).
    D-FREEZE-9-GAP re-fly (S188, freeze9_s183/g5_modes): G5.1 6/6 and G5.2 6/6 PASS both keys; G5.7 FAIL 3/3 both
    keys on hold-edge tracking lag (freeze-9). FREEZE-10 probe: G5.7 PASS 3/3 (worst 3.61 deg); score in item 0.
@@ -64,7 +63,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | Q10 | FREEZE-10 re-fly queue: ENDED 01:14 S194, all 4 steps rc 0 | - | results/freeze10_s193/ | - |
-| S194c | G2 hole cell re-fly pt1_ax2_r400_s2 (orig in g2o/orig_s194/) + key2 BLOCKED values | agent | G2_SCORES.md "Re-score S194" | `queue.sh 4` flies missing cells |
+| S194d | G7 checker self-tests passthrough_check / offb_vel_check (sonnet) | agent | bench/tests/test_passthrough_check.py, test_offb_vel_check.py, SELFTEST_G7_S194.md | if absent or uncommitted: check files, run tests, commit |
 (S189 agents done and committed. Build probes: guard denies a segment naming indi_project with
 rm/tee/git apply etc.; run each run.sh call alone, redirect only into indi_flight/.)
 
