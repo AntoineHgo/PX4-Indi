@@ -14,8 +14,8 @@
   style. Brief every coder with F-10. Clean-up = separate behaviour-neutral commits, independent review.
 
 ## Next actions (each names its gate item)
-1. G3: campaign chain (Status). While it flies (lock held): no gate flights, docker builds or rebuilds; commit
-   finished runs. On CHAIN_HALTED: diagnose first. After CHAIN_FINISHED: rescore unscored, then the verdict per GATES
+1. G3: campaign chain (Status). The supervisor launches no session while it flies (lock held). Until
+   CHAIN_FINISHED: no edit of files in its chain_freeze.sha256, no rebuild, no branch switch; commit finished runs. On CHAIN_HALTED: diagnose first. After CHAIN_FINISHED: rescore unscored, then the verdict per GATES
    "Campaign pass" (items 1-2 zero, 3-6 >= 95 % valid, misses explained, Q24 B shared-with-PID rule; key 2 col 5 is G4).
    Pre-test 17/20 (results/g3_pretest_q24_s197). 02 item-3 miss (0.318 m, +48 ms) is a quota item, not a chase.
 2. G5 PASSED at freeze-10 (S198). A firmware change after the freeze re-opens the rows it touches (freeze rule).

@@ -11,40 +11,57 @@ serially by the detached flight chain `bench/g3_chain.sh`, independently of any 
 - Command per index i (repo root), as `../g3_pretest_q24_s197/fly_all.sh`:
   `timeout 1700 indi_project/docker/run.sh -n g3c_NNN -t 1500 -- python3 indi_flight/bench/g3_run.py --seed 173 --n 300
   --start i --stop i --base-params indi_flight/results/g5_freeze_s157/params.params --out-root indi_flight/results/g3_campaign_f10
-  --timeout-s 1200 --speed 1.0` (`--speed 1.0` leaves the runner argv unchanged; the chain option `--speed F` is
-  pinned per directory in `chain_speed` and reported in `chain_status.json`).
+  --timeout-s 1200 --speed 1.0`. g3_run.py passes `--speed` on to run_scenario.py only when it is not 1.0, so at 1.0
+  the flown command is the pre-test one. The chain option `start --speed F` (default 1.0) is pinned per directory in
+  `chain_speed` and reported in `chain_status.json`. The wall-clock timeouts (1700/1500/1200 s) are not scaled with F.
 - Freeze: FREEZE-10 firmware, gate binary sha256 d220e19315c2798aa18a1bab6ce7300cd0f6eff14d43273d5064c06009d46076 (as in
   every pre-test run, `run.json` `provenance.binary_sha256`), config `g5_freeze_s157/params.params`. At the first start
-  the chain pins the binary, the runner/scorer inputs and the docker image (`chain_freeze.sha256`, `chain_image_id`); a
-  change before a flight, or a run whose `run.json` records another binary, halts the chain.
+  the chain pins the binary, the runner/scorer/model inputs, `build/px4_sitl_default/etc`, the gz plugins, `gz_env.sh`
+  and the docker image (`chain_freeze.sha256`, `chain_image_id`). A change before a flight halts the chain; a run whose
+  `run.json` records another binary (or none) is moved to `partial/` and halts it.
+- **Until CHAIN_FINISHED, do not modify any file listed in `chain_freeze.sha256`, do not rebuild, and do not switch
+  branches or check out over them**, even while the chain is stopped.
 
 ## Operate (any cwd, from the repo root shown)
-- Start or resume: `bash indi_flight/bench/g3_chain.sh start indi_flight/results/g3_campaign_f10 0 299`
-  (later starts reuse the range). Refuses if a chain runs, if `CHAIN_HALTED` exists, or if the binary is not the gate
+- Start or resume: `bash indi_flight/bench/g3_chain.sh start indi_flight/results/g3_campaign_f10 0 299`.
+  The first start's range is the campaign range (`chain_range`); a later start may give a sub-range of it, and
+  `CHAIN_FINISHED` is written only when the whole campaign range is finished. Refuses if a chain runs, if `CHAIN_HALTED` exists, or if the binary is not the gate
   binary (`--allow-binary SHA` overrides on a fresh directory only).
 - Status: `bash indi_flight/bench/g3_chain.sh status` (lock held = flying; "DEAD" = status says running, no lock).
 - Stop after the current run and its scoring: `... stop`; at once (kills the flight and its container): `... stop --now`.
   The interrupted index is flown again from scratch on the next start (its partial directory goes to `partial/`).
 - Score runs that have no score (scoring failed or interrupted): `... rescore` (refused while the chain flies).
 - The chain ignores `indi_flight/STOP` (supervisor stop file) and never runs git: the orchestrator commits finished runs.
+  The supervisor launches no session while the chain holds its lock; when it is free, the session prompt names the
+  chain state (halted, finished, or stopped/died).
 
 ## Files
-- `run_NNN/`: runner output (`g3_done.json` = finished: outcome ok, aborted = flight failure, void = validity failed),
+- `run_NNN/`: runner output (`g3_done.json`: outcome ok, aborted, or void = validity failed),
   `chain_key1.txt`, `g3_checks.json` (key 1, `bench/g3_score.sh` / `g3_checks.py`), `chain_key2.txt`, `key2/run_NNN.json`
   (key 2, `bench/g3_checks_key2.py`, same per-run args), `chain_score.json` (both verdicts and failing items),
   `SCORE_PENDING` (scoring missing, re-run `rescore`), `CHAIN_FAILED` (no finished run after 2 attempts).
 - `SCORES.tsv`: one line per finished run (idx, outcome, key 1, key 2, failing items, key 2 col 5).
 - `progress.txt` (append-only: attempts with rc and duration, scores, cycle time, start/stop/halt/finish),
-  `chain_status.json` (state, pid, counts, key pass counts, binary, ETA), `chain.log`, `stream_N.txt` (ignored).
+  `chain_status.json` (state, pid, counts, key pass counts, binary, ETA), `chain.log`, `stream_NNN.txt` (ignored).
+- Key 1 runs `g3_score.sh` on `.score_tmp/` holding a symlink to the one run, so the `log` field of `g3_checks.json`
+  reads `.../g3_campaign_f10/.score_tmp/run_NNN/flight.ulg` (same file as `run_NNN/flight.ulg`; the link is removed after
+  scoring). The scorer is unchanged.
 - `CHAIN_HALTED` (reason; the chain stopped itself), `CHAIN_FINISHED` (every index finished or CHAIN_FAILED).
 - `partial/`, `.score_tmp/` are scratch (ignored, not evidence).
 
 ## Failure handling
-- A flight with rc != 0, a timeout or no `g3_done.json` is retried once; then `CHAIN_FAILED` and the next index. An
-  aborted run is a flight result, not retried. A void run is not retried (GATES: re-fly, not a failure; the
-  orchestrator decides).
+- Flight results (kept, counted): outcome ok, and outcome aborted whose `watchdog.reason` is one of the run_scenario.py
+  O-12 flight watchdogs: `non-finite attitude or rate`, `tilt > 60 deg for 0.5 s`, `height < 0.3 m`,
+  `> 3.0 m below hold altitude for 1.0 s`. Every other abort (`error` such as gz/px4 exited early, no MAVLink heartbeat,
+  timeouts waiting for gz/px4, wall timeout in a phase, `no ATTITUDE for 10 s wall`, rejected arm/take-off/commands,
+  climb not finished, runner exceptions), rc != 0, a timeout or no `g3_done.json` is a runner/host fault: the run is
+  moved to `partial/` and flown once more; then `CHAIN_FAILED` (reason inside) and the next index. A repeatable
+  non-watchdog abort therefore shows as `CHAIN_FAILED` (and in `partial/`), never as a pass: each must be explained.
+- On every start, finished runs are checked before being skipped: a non-flight abort is moved to `partial/` and
+  flown again, a wrong or missing binary halts, an unscored run is scored.
+- A void run is kept, not retried (GATES: re-fly, not a failure; the orchestrator decides); it counts for the breaker.
 - Circuit breaker: 3 failed or void indices in a row halt the chain (most likely docker/host trouble, not a controller
-  result); their `CHAIN_FAILED` markers are removed so a restart flies them again. Also halts on a freeze mismatch and on
+  result); their `CHAIN_FAILED` markers are removed and void runs moved to `partial/`, so a restart flies them again. Also halts on a freeze mismatch and on
   free disk < 5 GB (one run is ~130 MB, 300 runs ~40 GB).
 - On `CHAIN_HALTED`: read it and `progress.txt`/`stream_N.txt` of the last indices, fix the cause, `rm CHAIN_HALTED`,
   start again. To re-fly a `CHAIN_FAILED` index: remove that marker (and `CHAIN_FINISHED`), start again.
