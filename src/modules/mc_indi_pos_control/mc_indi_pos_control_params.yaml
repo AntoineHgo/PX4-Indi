@@ -5,14 +5,18 @@ parameters:
     MC_INDI_POS_EN:
       description:
         short: Start mc_indi_pos_control instead of mc_pos_control
-        long: Start the INDI outer loop (stock position control plus an acceleration INDI stage) instead of the stock mc_pos_control.
+        long: >-
+          Start the INDI outer loop (stock position control plus an acceleration INDI stage) instead of the stock
+          mc_pos_control.
       type: boolean
       default: 0
       reboot_required: true
     MC_INDI_POS_LPF:
       description:
         short: Acceleration and thrust filter cut-off
-        long: Cut-off of the identical second order low pass filters on the accelerometer and on the measured mean rotor thrust. Set to 0 to disable both.
+        long: >-
+          Cut-off of the identical second order low pass filters on the accelerometer and on the measured mean rotor
+          thrust. Set to 0 to disable both.
       type: float
       unit: Hz
       min: 0
@@ -23,7 +27,9 @@ parameters:
     MC_INDI_POS_DLY:
       description:
         short: Measured thrust delay
-        long: Delay of the ESC based mean rotor thrust in controller cycles, to match its latency to that of the accelerometer.
+        long: >-
+          Delay of the ESC based mean rotor thrust in controller cycles, to match its latency to that of the
+          accelerometer.
       type: int32
       min: 0
       max: 4
@@ -31,7 +37,9 @@ parameters:
     MC_INDI_POS_TB:
       description:
         short: Collective blend time constant
-        long: Time constant of the blend that restores the thrust model at low frequency so that a thrust gap (weak motor, battery sag) is removed. Set to 0 to disable.
+        long: >-
+          Time constant of the blend that restores the thrust model at low frequency so that a thrust gap (weak motor,
+          battery sag) is removed. Set to 0 to disable.
       type: float
       unit: s
       min: 0
@@ -42,7 +50,7 @@ parameters:
     MC_INDI_XY_P:
       description:
         short: Horizontal position gain
-        long: Replaces MPC_XY_P when the INDI position module runs.
+        long: Velocity setpoint per unit of position error. Used instead of MPC_XY_P while mc_indi_pos_control runs.
       type: float
       unit: 1/s
       min: 0
@@ -53,7 +61,8 @@ parameters:
     MC_INDI_XY_VP:
       description:
         short: Horizontal velocity P gain
-        long: Acceleration per unit of velocity error. Replaces MPC_XY_VEL_P_ACC when the INDI position module runs.
+        long: >-
+          Acceleration per unit of velocity error. Used instead of MPC_XY_VEL_P_ACC while mc_indi_pos_control runs.
       type: float
       unit: 1/s
       min: 0
@@ -64,7 +73,10 @@ parameters:
     MC_INDI_PINJ_AX:
       description:
         short: INDI outer-loop bench excitation axis
-        long: "Bench and system identification only. Adds a multisine to the commanded acceleration of the selected axis and also feeds it back to the INDI stage. It runs while armed and not landed, for MC_INDI_PINJ_NP periods after MC_INDI_PINJ_DLY, and starts again at each arm."
+        long: >-
+          Bench and system identification only. Adds a multisine to the commanded acceleration of the selected axis and
+          also feeds it back to the INDI stage. It runs while armed and not landed, for MC_INDI_PINJ_NP periods after
+          MC_INDI_PINJ_DLY, and starts again at each arm.
       type: enum
       values:
         0: Off
@@ -75,6 +87,9 @@ parameters:
     MC_INDI_PINJ_AMP:
       description:
         short: Excitation amplitude per sine component
+        long: >-
+          Bench and system identification only. Amplitude of each sine component of the commanded acceleration. Only
+          used when MC_INDI_PINJ_AX is not 0.
       type: float
       unit: m/s^2
       min: 0
@@ -85,6 +100,9 @@ parameters:
     MC_INDI_PINJ_TP:
       description:
         short: Excitation multisine period
+        long: >-
+          Bench and system identification only. Period of the multisine, the frequencies are integer multiples of
+          1/period. Only used when MC_INDI_PINJ_AX is not 0.
       type: float
       unit: s
       min: 1
@@ -95,6 +113,9 @@ parameters:
     MC_INDI_PINJ_FLO:
       description:
         short: Excitation lowest frequency
+        long: >-
+          Bench and system identification only. Lowest frequency of the multisine, about 10 components per decade up to
+          MC_INDI_PINJ_FHI. Only used when MC_INDI_PINJ_AX is not 0.
       type: float
       unit: Hz
       min: 0.05
@@ -105,6 +126,9 @@ parameters:
     MC_INDI_PINJ_FHI:
       description:
         short: Excitation highest frequency
+        long: >-
+          Bench and system identification only. Highest frequency of the multisine. Only used when MC_INDI_PINJ_AX is
+          not 0.
       type: float
       unit: Hz
       min: 0.1
@@ -115,6 +139,9 @@ parameters:
     MC_INDI_PINJ_NP:
       description:
         short: Excitation number of periods
+        long: >-
+          Bench and system identification only. Number of periods of the multisine after it starts, then it stops. Only
+          used when MC_INDI_PINJ_AX is not 0.
       type: int32
       min: 1
       max: 20
@@ -122,7 +149,10 @@ parameters:
     MC_INDI_PINJ_PT:
       description:
         short: Excitation injection point
-        long: "Bench and system identification only. Stage input measures the velocity and position loop with the INDI acceleration loop closed. Stage output adds the excitation to the thrust vector sent to the attitude setpoint, which breaks the loop at the plant input. Only used when MC_INDI_PINJ_AX is not 0."
+        long: >-
+          Bench and system identification only. Stage input measures the velocity and position loop with the INDI
+          acceleration loop closed. Stage output adds the excitation to the thrust vector sent to the attitude setpoint,
+          which breaks the loop at the plant input. Only used when MC_INDI_PINJ_AX is not 0.
       type: enum
       values:
         0: Stage input

@@ -5,21 +5,20 @@ parameters:
     MC_INDI_EN:
       description:
         short: Use the INDI multicopter rate controller
-        long: |-
-          Start mc_indi_rate_control (incremental nonlinear dynamic inversion, see the MC_INDI_* parameters)
-          instead of the PID based mc_rate_control. Only one of the two runs, selected at boot.
+        long: >-
+          Start mc_indi_rate_control (incremental nonlinear dynamic inversion, see the MC_INDI_* parameters) instead of
+          the PID based mc_rate_control. Only one of the two runs, selected at boot.
       type: boolean
       default: 0
       reboot_required: true
     MC_INDI_W_MAX:
       description:
         short: Rotor speed at full thrust (for the measured actuator torque)
-        long: |-
-          Rotor speed at which a motor produces its full normalised thrust (1.0), in rad/s. Used with ESC rpm
-          telemetry to compute the torque the rotors actually produce (topic actuator_torque_measured),
-          assuming normalised thrust = (omega / MC_INDI_W_MAX)^2.
-
-          Zero disables the measured torque, INDI then uses its actuator model.
+        long: >-
+          Rotor speed at which a motor produces its full normalised thrust (1.0). Used with ESC rpm telemetry to compute
+          the torque the rotors actually produce (topic actuator_torque_measured), assuming that the normalised thrust
+          grows with the square of the rotor speed. Zero disables the measured torque, INDI then uses its actuator
+          model.
       type: float
       unit: rad/s
       min: 0
@@ -31,6 +30,7 @@ parameters:
         short: INDI roll control effectiveness
         long: Roll angular acceleration in rad/s^2 per unit of normalised torque.
       type: float
+      unit: rad/s^2
       default: 1757.0
       min: 0.001
       max: 5000
@@ -41,6 +41,7 @@ parameters:
         short: INDI pitch control effectiveness
         long: Pitch angular acceleration in rad/s^2 per unit of normalised torque.
       type: float
+      unit: rad/s^2
       default: 1640.0
       min: 0.001
       max: 5000
@@ -49,8 +50,11 @@ parameters:
     MC_INDI_G1_Y:
       description:
         short: INDI yaw control effectiveness
-        long: Yaw angular acceleration in rad/s^2 per unit of normalised torque. The default is the reference 5-inch quadcopter value.
+        long: >-
+          Yaw angular acceleration in rad/s^2 per unit of normalised torque. The default is the reference 5-inch
+          quadcopter value.
       type: float
+      unit: rad/s^2
       default: 205.0
       min: 0.001
       max: 5000
@@ -59,8 +63,14 @@ parameters:
     MC_INDI_G2_Y:
       description:
         short: INDI yaw rotor spin-up term
-        long: Yaw rotor spin-up term, the yaw angular acceleration from the rotor inertia reaction per unit of normalised torque rate (rad/s^2 per 1/s). G2 / MC_INDI_G1_Y is a time in seconds that is not the motor time constant (reference 5-inch quadcopter 27 / 205 = 0.13 s). It sets a first order low pass of time constant G2 / G1 on the yaw torque increment, with unchanged steady state gain. Set to 0 to disable. Under-estimating G2 is benign, over-estimating it is the weak side of the margin.
+        long: >-
+          Yaw rotor spin-up term, the yaw angular acceleration from the rotor inertia reaction per unit of normalised
+          torque rate (rad/s^2 per 1/s). This parameter divided by MC_INDI_G1_Y is a time that is not the motor time
+          constant (about 0.13 s for the reference 5-inch quadcopter). It sets a first order low pass of that time
+          constant on the yaw torque increment, with unchanged steady state gain. Set to 0 to disable. Too small a
+          value is harmless, too large a value reduces the stability margin.
       type: float
+      unit: rad/s
       default: 27.0
       min: 0.0
       max: 1000
@@ -70,7 +80,7 @@ parameters:
       description:
         short: INDI physical parameters identified
         long: |-
-          0: Not identified yet, the rate bandwidth gains MC_INDI_K_R, MC_INDI_K_P and MC_INDI_K_Y are applied at 0.5x (conservative identification configuration).
+          0: Not identified yet, MC_INDI_K_R, MC_INDI_K_P and MC_INDI_K_Y are applied at half their value.
           1: Identified, the gains are applied as set.
       type: int32
       default: 0
@@ -79,7 +89,7 @@ parameters:
     MC_INDI_K_R:
       description:
         short: INDI roll rate bandwidth
-        long: Closed loop roll rate tracking bandwidth.
+        long: Bandwidth of the closed loop roll rate tracking. Applied at half its value while MC_INDI_ID_OK is 0.
       type: float
       default: 20.0
       min: 1.0
@@ -90,7 +100,7 @@ parameters:
     MC_INDI_K_P:
       description:
         short: INDI pitch rate bandwidth
-        long: Closed loop pitch rate tracking bandwidth.
+        long: Bandwidth of the closed loop pitch rate tracking. Applied at half its value while MC_INDI_ID_OK is 0.
       type: float
       default: 20.0
       min: 1.0
@@ -101,7 +111,7 @@ parameters:
     MC_INDI_K_Y:
       description:
         short: INDI yaw rate bandwidth
-        long: Closed loop yaw rate tracking bandwidth.
+        long: Bandwidth of the closed loop yaw rate tracking. Applied at half its value while MC_INDI_ID_OK is 0.
       type: float
       default: 20.0
       min: 1.0
@@ -112,10 +122,10 @@ parameters:
     MC_INDI_ACT_TC:
       description:
         short: INDI actuator time constant
-        long: |-
-          Time constant of the first order actuator model, also used by the rate lead (MC_INDI_LEAD).
-          With the lead, an over-estimate up to 2x the true motor time constant keeps the stability margins,
-          an under-estimate does not: when unsure, round up.
+        long: >-
+          Time constant of the first order actuator model, also used by the rate lead (MC_INDI_LEAD). With the lead, an
+          over-estimate up to twice the true motor time constant keeps the stability margins, an under-estimate does
+          not: when unsure, round up.
       type: float
       default: 0.05
       min: 0.001
@@ -126,7 +136,10 @@ parameters:
     MC_INDI_LEAD:
       description:
         short: INDI rate lead scale
-        long: Scales the rate prediction lead that cancels the actuator lag in the rate loop, by adding the factor of this scale times MC_INDI_K_R, MC_INDI_K_P or MC_INDI_K_Y times MC_INDI_ACT_TC (at most 2) to the angular acceleration feedback gain. Set to 0 to disable. Raises motor command noise.
+        long: >-
+          Scales the rate prediction lead that cancels the actuator lag in the rate loop, by adding the factor of this
+          scale times MC_INDI_K_R, MC_INDI_K_P or MC_INDI_K_Y times MC_INDI_ACT_TC (at most 2) to the angular
+          acceleration feedback gain. Set to 0 to disable. Raises motor command noise.
       type: float
       default: 1
       min: 0
@@ -144,7 +157,9 @@ parameters:
     MC_INDI_ERPM_DLY:
       description:
         short: INDI measured torque delay
-        long: Pure delay applied to the torque measured from the ESC rpm (actuator_torque_measured), in controller cycles, to match its latency to that of the filtered angular acceleration. Only used when MC_INDI_W_MAX is set.
+        long: >-
+          Pure delay applied to the torque measured from the ESC rpm (actuator_torque_measured), in controller cycles,
+          to match its latency to that of the filtered angular acceleration. Only used when MC_INDI_W_MAX is set.
       type: int32
       default: 1
       min: 0
@@ -152,7 +167,9 @@ parameters:
     MC_INDI_ERPM_TO:
       description:
         short: INDI measured torque timeout
-        long: Age of the oldest ESC sample behind the measured torque above which it is not used and INDI falls back to its actuator model. Only used when MC_INDI_W_MAX is set.
+        long: >-
+          Age of the oldest ESC sample behind the measured torque above which it is not used and INDI falls back to its
+          actuator model. Only used when MC_INDI_W_MAX is set.
       type: float
       default: 0.02
       min: 0.001
@@ -163,7 +180,11 @@ parameters:
     MC_INDI_ACT_BLD:
       description:
         short: INDI actuator state blend time constant
-        long: Time constant of the complementary blend between the measured (high frequency) and the modelled (low frequency) actuator torque. Restores the integral action of the model state against a steady command/output gap. Only used when MC_INDI_W_MAX is set. Set to 0 to disable (measured torque only), which removes the integral action against a weak motor or a thrust-map error.
+        long: >-
+          Time constant of the complementary blend between the measured (high frequency) and the modelled (low
+          frequency) actuator torque. Restores the integral action of the model state against a steady command/output
+          gap. Only used when MC_INDI_W_MAX is set. Set to 0 to disable (measured torque only), which removes the
+          integral action against a weak motor or a thrust-map error.
       type: float
       default: 1.0
       min: 0.0
@@ -174,7 +195,7 @@ parameters:
     MC_INDI_DT_MAX:
       description:
         short: INDI maximum torque increment
-        long: Limit of the torque increment per cycle and axis.
+        long: Limit of the torque increment per cycle and axis, in normalised torque.
       type: float
       default: 1.0
       min: 0.01
@@ -184,9 +205,12 @@ parameters:
     MC_INDI_LND_SLEW:
       description:
         short: INDI landed feedback torque slew
-        long: Slew rate of the feedback torque on both edges of the landed flag (take-off and touch-down),
-          normalised torque per second. The torque is ramped instead of stepped. maybe_landed alone does not slew.
+        long: >-
+          Slew rate of the feedback torque on both edges of the landed flag (take-off and touch-down), in normalised
+          torque per second. The torque is ramped instead of stepped. A change of the maybe landed state alone does not
+          start the ramp.
       type: float
+      unit: 1/s
       default: 5.0
       min: 0.5
       max: 100
@@ -195,8 +219,9 @@ parameters:
     MC_INDI_ERPM_FRZ:
       description:
         short: INDI frozen rotor speed detection time
-        long: A motor whose reported rpm is bit-identical for this time while armed and whose command varied by
-          more than 0.02 in the same window is treated as offline for the measured torque path (modelled fallback).
+        long: >-
+          A motor whose reported rpm is bit-identical for this time while armed and whose command varied by more than
+          0.02 in the same window is treated as offline for the measured torque path (modelled fallback).
       type: float
       unit: s
       default: 0.5
@@ -207,7 +232,8 @@ parameters:
     MC_INDI_SP_TO:
       description:
         short: INDI rate setpoint timeout
-        long: When no rate setpoint arrives for this time while armed, the rate setpoint is set to zero and the thrust
+        long: >-
+          When no rate setpoint arrives for this time while armed, the rate setpoint is set to zero and the thrust
           setpoint is held. Not used in acro mode.
       type: float
       unit: s
@@ -219,7 +245,9 @@ parameters:
     MC_INDI_YAW_CUT:
       description:
         short: INDI yaw feedback low-pass cutoff
-        long: Extra low-pass on the yaw angular acceleration and torque feedback, and on the yaw rate error (setpoint included) used in the desired angular acceleration. Set to 0 to disable.
+        long: >-
+          Extra low-pass on the yaw angular acceleration and torque feedback, and on the yaw rate error (setpoint
+          included) used in the desired angular acceleration. Set to 0 to disable.
       type: float
       default: 0
       min: 0
@@ -230,10 +258,10 @@ parameters:
     MC_INDI_INJ_AX:
       description:
         short: INDI bench excitation axis
-        long: |-
-          Bench and system identification only. Adds a multisine excitation d to the INDI torque setpoint of one axis
-          (u = c + d, also fed back to the INDI actuator model) while armed and not landed, for MC_INDI_INJ_NP
-          periods from the first such cycle. 0 disables it, the torque setpoint is then unchanged.
+        long: >-
+          Bench and system identification only. Adds a multisine excitation to the INDI torque setpoint of one axis (the
+          excitation is also fed back to the INDI actuator model) while armed and not landed, for MC_INDI_INJ_NP periods
+          from the first such cycle. Off leaves the torque setpoint unchanged.
       type: enum
       values:
         0: Off
@@ -244,7 +272,7 @@ parameters:
     MC_INDI_INJ_AMP:
       description:
         short: INDI bench excitation amplitude
-        long: Bench and system identification only. Amplitude of each sine component of the excitation, in normalised torque.
+        long: Bench and system identification only. Amplitude of each sine component, in normalised torque.
       type: float
       default: 0.02
       min: 0
@@ -254,7 +282,9 @@ parameters:
     MC_INDI_INJ_TP:
       description:
         short: INDI bench excitation period
-        long: Bench and system identification only. Period of the multisine excitation, the frequencies are integer multiples of 1/period.
+        long: >-
+          Bench and system identification only. Period of the multisine excitation, the frequencies are integer
+          multiples of 1/period.
       type: float
       default: 20
       min: 1
@@ -265,7 +295,9 @@ parameters:
     MC_INDI_INJ_FMIN:
       description:
         short: INDI bench excitation lowest frequency
-        long: Bench and system identification only. Lowest frequency of the excitation, about 10 components per decade up to MC_INDI_INJ_FMAX (at most 64, the highest ones are dropped).
+        long: >-
+          Bench and system identification only. Lowest frequency of the excitation, about 10 components per decade up to
+          MC_INDI_INJ_FMAX (at most 64, the highest ones are dropped).
       type: float
       default: 0.5
       min: 0.01
@@ -287,7 +319,8 @@ parameters:
     MC_INDI_INJ_NP:
       description:
         short: INDI bench excitation periods
-        long: Bench and system identification only. Number of periods of the excitation after it starts, then it stops.
+        long: >-
+          Bench and system identification only. Number of periods of the excitation after it starts, then it stops.
       type: int32
       default: 3
       min: 1
@@ -295,7 +328,9 @@ parameters:
     MC_INDI_INJ_DLY:
       description:
         short: INDI bench excitation start delay
-        long: Bench and system identification only. Time from the first armed, airborne cycle to the start of the excitation.
+        long: >-
+          Bench and system identification only. Time from the first armed, airborne cycle to the start of the
+          excitation.
       type: float
       unit: s
       default: 5.0
@@ -305,11 +340,11 @@ parameters:
     MC_INDI_INJ_PT:
       description:
         short: INDI bench excitation break point
-        long: |-
-          Bench and system identification only. Where the MC_INDI_INJ_AX excitation enters. The torque setpoint
-          break uses MC_INDI_INJ_AMP; the rate setpoint break (attitude loop) uses MC_INDI_INJ_RAMP and is zero
-          unless an attitude controlled mode is active, the rate setpoint is fresh and the law has no fault; the
-          sequence restarts when that gate reopens or this parameter changes.
+        long: >-
+          Bench and system identification only. Where the MC_INDI_INJ_AX excitation enters. The torque setpoint break
+          uses MC_INDI_INJ_AMP. The rate setpoint break (attitude loop) uses MC_INDI_INJ_RAMP and is zero unless an
+          attitude controlled mode is active, the rate setpoint is fresh and the INDI controller reports no fault. The
+          sequence restarts when those conditions are met again or this parameter changes.
       type: enum
       values:
         0: Torque setpoint
