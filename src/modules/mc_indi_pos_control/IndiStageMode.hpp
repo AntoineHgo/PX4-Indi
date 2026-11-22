@@ -104,5 +104,5 @@ inline bool stageIntervalOk(float raw_dt)
 /** The dt the library sees: the true interval, lower-clamped (and capped at kStageDtMax; longer intervals hold). */
 inline float stageDt(float raw_dt)
 {
-	return std::isfinite(raw_dt) ? std::fmin(std::fmax(raw_dt, kStageDtMin), kStageDtMax) : kStageDtMax;
+	return std::isfinite(raw_dt) ? fminf(fmaxf(raw_dt, kStageDtMin), kStageDtMax) : kStageDtMax;
 }
