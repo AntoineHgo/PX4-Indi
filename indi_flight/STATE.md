@@ -68,7 +68,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| chain | G3 campaign 0-299 (g3_chain.sh) | detached, pid in chain_status.json (fill at launch) | results/g3_campaign_f10 | `g3_chain.sh status`, then `start` resumes |
+| chain | G3 campaign 0-299 (g3_chain.sh) | detached, pid 2727913, started 2026-11-22 14:25 speed 4, ETA ~18:05 | results/g3_campaign_f10 | `g3_chain.sh status`, then `start` resumes |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
