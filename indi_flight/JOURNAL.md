@@ -1775,3 +1775,4 @@ the owner's call; the x0.5..3 result is reported as is in either case.
   9. Order: items 2-6 and 8 are text and tooling (no flight beyond checks); then item 1 (identification and its error
      measurement) and item 7 inside G6. FREEZE-10 stays; no firmware change unless the identification needs one, and then
      ask first. Come back with a question when the identification bound is measured and the G3 box is proposed.
+- S208 (2026-11-22): Q27 acted on (GATES "Owner amendments S208", D-OWNER-Q27, S53 rule overturned); RC208 filed; G3 harness fixed (039 lands, aborts INVALID, key 1 skip-nav-change); ACT_TC ident: survey, design note, GATES 6c, D-ACTC-IDENT, estimator key 1 with self-test (all 6c synthetic limits met; tau_sym 0.61 x tau_slow at asym 3); key 2 launched. Gate progress: G3 test text amended per Q27 and harness ready for the re-fly; G6 6c criteria written, estimator key 1 passed its self-test.

@@ -19,7 +19,11 @@ CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older 
 1. G3/G6 ACT_TC identification (Q27 item 1): survey design/actc_ident_survey_s208.md -> one-page design note ->
    estimator + synthetic self-test (asym tau, delay, closed loop) -> second key -> offline error grid -> few SITL
    confirmation flights -> bound -> capped/two-sided ACT_TC rule with model margins on corners -> GATES G3 box
-   draft -> Q28. Gate criteria for the error measurement go into GATES G6 before the estimator is built.
+   draft -> Q28. Done S208: GATES 6c, design note, estimator key 1 (78387a01da, self-test all 6c limits met).
+   Next: close KEY2 findings -> 2-flight pre-test -> 30-flight grid (g3_run/run_scenario hooks, ID_OK 0, injector
+   roll then pitch). Synthetic: tau_sym = 0.61 x tau_slow, 0.92 x tau_mean at asym 3 (input to the ACT_TC rule:
+   the firmware's one tau sits below tau_slow on asymmetric motors). rpm_max only scales y (gain), not tau.
+   Quality thresholds set on synthetic noise: check against SITL residuals in the pre-test before the grid.
    G3 harness done S208 (86539dac11: LAND holds last stick, aborts INVALID both keys, key 1 --skip-nav-change);
    039 lands at speed 1 (results/harness_039_s208). PID not re-flown on 039; self-test synthetic only.
    Next G3 scoring also: re-fly the 15 freeze-10 item-3 misses at speed 1; table class C skipped lines both stacks.
@@ -78,7 +82,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| ACTI | ident_actc.py + self-test (GATES 6c) | sonnet | bench/tests/SELFTEST_IDENT_ACTC_S208.md | check README, commit, then second key |
+| K2A | second key of ident_actc.py (code vs design note, independent plant, real-log smoke run) | sonnet | bench/tests/KEY2_IDENT_ACTC_S208.md | read KEY2 file; if missing re-launch brief |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
