@@ -70,7 +70,7 @@ bool IndiRateControl::paramsValid() const
 			return false;
 		}
 
-		if (!(_gain_k(i) >= 0.f) || !PX4_ISFINITE(_gain_k(i))) {
+		if (!(_rate_bandwidth_gain(i) >= 0.f) || !PX4_ISFINITE(_rate_bandwidth_gain(i))) {
 			return false;
 		}
 	}
@@ -99,13 +99,13 @@ void IndiRateControl::designSyncFilters(float sample_freq, bool reset_states)
 		}
 
 		if (reset_states) {
-			_lpf[i].reset(_t_act(i));
-			_alpha[i].reset(_t_act(i));
-			_meas_lpf[i].reset(_t_act(i));
-			_meas_alpha[i].reset(_t_act(i));
+			_lpf[i].reset(_torque_actuator_model(i));
+			_alpha[i].reset(_torque_actuator_model(i));
+			_meas_lpf[i].reset(_torque_actuator_model(i));
+			_meas_alpha[i].reset(_torque_actuator_model(i));
 
 		} else {
-			_lpf[i].reset(_t_lpf(i));
+			_lpf[i].reset(_torque_lowpass_state(i));
 			_meas_lpf[i].reset(_meas_t_lpf(i));
 		}
 	}
@@ -137,8 +137,8 @@ void IndiRateControl::designYawFilters(float sample_freq)
 
 void IndiRateControl::resetStates()
 {
-	_t_act.zero();
-	_t_lpf.zero();
+	_torque_actuator_model.zero();
+	_torque_lowpass_state.zero();
 
 	for (int i = 0; i < kDelayBufferSize; i++) {
 		_t_delay_buffer[i].zero();
@@ -227,7 +227,7 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	const bool meas_valid = _meas_valid_pending && _tau_meas.isAllFinite();
 	_meas_valid_pending = false;
 
-	// 1. validate inputs and parameters, a rejected cycle leaves the states untouched
+	// validate inputs and parameters, a rejected cycle leaves the states untouched
 	const bool dt_valid = math::isFinite(dt) && (dt >= kMinDt) && (dt <= kMaxDt);
 	const bool inputs_valid = rate.isAllFinite() && rate_sp.isAllFinite() && angular_accel.isAllFinite()
 				  && torque_allocated_prev.isAllFinite();
@@ -239,7 +239,7 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 		return faultOutput(false);
 	}
 
-	// 2. (re)design the synchronisation filters on a low-passed sample rate, as the gyro chain designs on its
+	// (re)design the synchronisation filters on a low-passed sample rate, as the gyro chain designs on its
 	// nominal rate: a jittery dt must neither trigger a redesign nor reset the feedback pair
 	const float sample_freq = 1.f / dt;
 	_sample_freq_filtered = (_sample_freq_filtered > 0.f)
@@ -259,8 +259,8 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 		designYawFilters(_design_sample_freq);
 	}
 
-	// 3. actuator model, the allocated torque is normalised so bound it to guard the filter against overflow.
-	// Steps 3-5 also run while landed, so that the modelled torque follows the torque actually applied and its
+	// actuator model, the allocated torque is normalised so bound it to guard the filter against overflow.
+	// This also runs while landed, so that the modelled torque follows the torque actually applied and its
 	// filter chain stays synchronised with the gyro derivative chain, which runs on every cycle
 	Vector3f t_alloc;
 
@@ -269,9 +269,9 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	}
 
 	const float actuator_alpha = 1.f - expf(-dt / _actuator_tc);
-	_t_act += actuator_alpha * (t_alloc - _t_act);
+	_torque_actuator_model += actuator_alpha * (t_alloc - _torque_actuator_model);
 
-	// 4. delay: ring buffer, _delay_head holds the newest sample. A delay change moves one sample per cycle: up
+	// delay: ring buffer, _delay_head holds the newest sample. A delay change moves one sample per cycle: up
 	// holds t_del for a cycle, down skips one sample
 	if (_delay_samples < _delay_samples_target) {
 		_delay_samples++;
@@ -281,21 +281,21 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	}
 
 	_delay_head = (_delay_head + 1) % kDelayBufferSize;
-	_t_delay_buffer[_delay_head] = _t_act;
+	_t_delay_buffer[_delay_head] = _torque_actuator_model;
 	const int delay_index = (_delay_head + kDelayBufferSize - _delay_samples) % kDelayBufferSize;
 	const Vector3f t_del = _t_delay_buffer[delay_index];
 
-	// 5. synchronisation filter H, same order as the gyro derivative chain: LPF2p then alpha filter
+	// synchronisation filter H, same order as the gyro derivative chain: LPF2p then alpha filter
 	Vector3f t_f_model;
 
 	for (int i = 0; i < 3; i++) {
-		_t_lpf(i) = _lpf[i].apply(t_del(i));
-		t_f_model(i) = _alpha[i].update(_t_lpf(i));
+		_torque_lowpass_state(i) = _lpf[i].apply(t_del(i));
+		t_f_model(i) = _alpha[i].update(_torque_lowpass_state(i));
 	}
 
-	// 5b. measurement path, same steps as 3-5 on the measured torque. While it is invalid it is fed the modelled
+	// measurement path, same steps on the measured torque. While it is invalid it is fed the modelled
 	// torque so that its filters stay near the right value and the return to the measurement is bumpless
-	Vector3f t_meas_in = _t_act;
+	Vector3f t_meas_in = _torque_actuator_model;
 
 	if (meas_valid) {
 		for (int i = 0; i < 3; i++) {
@@ -322,19 +322,19 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 		t_f_meas(i) = _meas_alpha[i].update(_meas_t_lpf(i));
 	}
 
-	// 5c. source selection: the measurement only after kMeasValidCycles consecutive valid cycles, any invalid cycle
+	// source selection: the measurement only after kMeasValidCycles consecutive valid cycles, any invalid cycle
 	// drops back to the model at once. No per axis mixing, model and measurement differ in lag and units
 	_meas_valid_cycles = meas_valid ? math::min(_meas_valid_cycles + 1, kMeasValidCycles) : 0;
 	_meas_in_use = (_meas_valid_cycles >= kMeasValidCycles);
 	Vector3f t_f = t_f_model;
 
-	// 5d. complementary blend: the measurement carries the high frequencies, the model the low ones, so a steady gap
+	// complementary blend: the measurement carries the high frequencies, the model the low ones, so a steady gap
 	// between command and output keeps its integral action. It tracks the difference (bumpless) while the
 	// measurement is not in use, the blend is disabled or on ground
 	const Vector3f t_gap = t_f_model - t_f_meas;
 
 	if (_meas_in_use && (_blend_tc > 0.f) && !landed) {
-		// maybe_landed freezes the slow integrator only (D-S3-LANDED), the rest of the law keeps running
+		// maybe_landed holds the slow integrator only, the rest of the law keeps running
 		if (!maybe_landed) {
 			const float blend_alpha = dt / (_blend_tc + dt);
 			_blend += blend_alpha * (t_gap - _blend);
@@ -361,7 +361,7 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 		_yaw_filter_reset_pending = true;
 	}
 
-	// 6b. optional yaw low pass on both members of the feedback pair, same coefficients so they stay synchronised
+	// optional yaw low pass on both members of the feedback pair, same coefficients so they stay synchronised
 	Vector3f a_f = angular_accel;
 	// rate error used in nu, its yaw component (setpoint included) is filtered like the feedback pair, as the PID
 	// yaw torque output filter does for the whole yaw command
@@ -382,7 +382,7 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 		rate_error(2) = _yaw_error_lpf.apply(rate_error(2)); // inputs were validated as finite above
 	}
 
-	// 6c. rate setpoint derivative for the lead on the setpoint path: first order low pass of (sp - sp_prev)/dt, then
+	// rate setpoint derivative for the lead on the setpoint path: first order low pass of (sp - sp_prev)/dt, then
 	// the magnitude clamp. Yaw differentiates the setpoint as it enters the filtered yaw error. Zero on the first
 	// cycle, after resetSetpointLead() and on ground (sp_prev follows the setpoint, so take-off starts at 0)
 	Vector3f rate_sp_eff = rate_sp;
@@ -407,17 +407,17 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 
 	_rate_sp_prev = rate_sp_eff;
 
-	// 7. desired angular acceleration
-	const Vector3f nu = _gain_k.emult(rate_error);
+	// desired angular acceleration
+	const Vector3f nu = _rate_bandwidth_gain.emult(rate_error);
 
-	// 7b. on ground the measured acceleration carries no information about the torque: hold the feedback torque
+	// on ground the measured acceleration carries no information about the torque: hold the feedback torque
 	// out of the law so that no increment can accumulate. At takeoff the law steps by the modelled torque, the
 	// filtered landed output, which the maximum increment bounds like any in-flight increment
 	const Vector3f t_fb_target = landed ? Vector3f() : t_f;
 	Vector3f t_fb = t_fb_target;
 
-	// on both edges of landed the feedback torque is ramped with the landed slew instead of stepping (decision
-	// D-S3-LANDED); in flight, also while only maybe_landed is set, there is no slew limit
+	// on both edges of landed the feedback torque is ramped with the landed slew instead of stepping;
+	// in flight, also while only maybe_landed is set, there is no slew limit
 	if (landed != _landed_prev) {
 		_landed_ramp = true;
 	}
@@ -439,9 +439,9 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 
 	_t_fb_prev = t_fb;
 
-	// 8. incremental inversion, only yaw has the spin-up term (g2 / dt = 0 for roll and pitch). Yaw uses the backward
+	// incremental inversion, only yaw has the spin-up term (g2 / dt = 0 for roll and pitch). Yaw uses the backward
 	// Euler form of (G1 + G2 s) Delta = nu - (1 + c) a_f, a low pass of time constant G2 / G1 on the increment, with
-	// Delta_k-1 the increment applied in the previous cycle (decision D-YAW-INV option c)
+	// Delta_k-1 the increment applied in the previous cycle
 	Vector3f dt_cmd;
 
 	// rate prediction lead: c_i = lead_scale K_i tau_c cancels the actuator lag in the feedback path, bounded
@@ -449,7 +449,7 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	Vector3f lead_gain;
 
 	for (int i = 0; i < 3; i++) {
-		lead_gain(i) = landed ? 0.f : math::min(_lead_scale * _gain_k(i) * _actuator_tc, kMaxLeadGain);
+		lead_gain(i) = landed ? 0.f : math::min(_lead_scale * _rate_bandwidth_gain(i) * _actuator_tc, kMaxLeadGain);
 	}
 
 	for (int i = 0; i < 3; i++) {
@@ -464,7 +464,7 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 		return faultOutput(true);
 	}
 
-	// 9. bound the increment and the output
+	// bound the increment and the output
 	Vector3f t_cmd;
 
 	for (int i = 0; i < 3; i++) {
@@ -480,7 +480,7 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp, 
 	_fault_cycles = 0;
 	_t_cmd_last = t_cmd;
 
-	// 10. logging values
+	// logging values
 	_nu = nu;
 	_a_f = a_f;
 	_lead_gain = lead_gain;

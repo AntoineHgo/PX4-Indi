@@ -36,7 +36,7 @@
  *
  * INDI (Incremental Nonlinear Dynamic Inversion) 3 axis angular rate control.
  *
- * Control law in normalised torque space (see indi_project/plan/architecture.md):
+ * Control law in normalised torque space:
  *
  *   nu     = K .* (rate_sp - rate)                 desired angular acceleration
  *   t_act  = first order lag of the allocated torque (actuator model)
@@ -47,7 +47,7 @@
  *   dt_cmd = G1^-1 (nu - (1 + c) angular_accel + c r_dot)   roll, pitch
  *   t_cmd  = t_f + dt_cmd                          bounded to [-1, 1]
  *
- * The same prediction on the setpoint path (decision D-S3-ATT-STEP) gives nu_eff = K (1 + tau_c s)(rate_sp - rate), so a
+ * The same prediction on the setpoint path gives nu_eff = K (1 + tau_c s)(rate_sp - rate), so a
  * rate setpoint that moves (attitude loop output) is not followed with the actuator lag; no extra parameter,
  * MC_INDI_LEAD = 0 turns both terms off. r_dot is 0 at the first cycle, after reset() and resetSetpointLead(), on
  * ground and on rejected cycles, so that no derivative impulse enters the law.
@@ -63,7 +63,7 @@
  * DC gain 1/G1, time constant G2/G1, independent of dt. G2 is the rotor inertia reaction per unit torque rate,
  * so G2/G1 is not the motor time constant.
  *
- * Measured torque path (optional, decision D-omega2): setMeasuredTorque() supplies tau_meas = B u from the ESC
+ * Measured torque path (optional): setMeasuredTorque() supplies tau_meas = B u from the ESC
  * rotor speeds. It runs through its own delay and its own copy of H in parallel to the model, and replaces
  * the modelled t_f after kMeasValidCycles consecutive valid cycles. Any invalid cycle falls back to the model
  * at once. While invalid, the measurement path is fed the model's t_act so that the switch back is bumpless.
@@ -102,7 +102,7 @@ public:
 	 * @param gain_k per axis closed loop bandwidth in rad/s, >= 0 (0 stops rate tracking on that axis, the law
 	 *        then only drives the angular acceleration to zero), negative or non finite values fault update()
 	 */
-	void setGainK(const matrix::Vector3f &gain_k) { _gain_k = gain_k; }
+	void setGainK(const matrix::Vector3f &gain_k) { _rate_bandwidth_gain = gain_k; }
 
 	/**
 	 * Set the control effectiveness.
@@ -149,7 +149,7 @@ public:
 	/**
 	 * Set the cutoffs of the synchronisation filter H, mirroring IMU_GYRO_CUTOFF (second order
 	 * low pass) and IMU_DGYRO_CUTOFF (first order low pass). A value <= 0 or non finite
-	 * makes the stage pass-through, as in the sensor chain.
+	 * makes the filter pass-through, as in the sensor chain.
 	 */
 	void setFilterCutoffs(float gyro_cutoff_hz, float dgyro_cutoff_hz);
 
@@ -181,7 +181,7 @@ public:
 	 * update()) for the next update() call only. Validity must be supplied every cycle: a cycle without a call
 	 * counts as invalid, as does a non finite torque, which never enters the filters. The model path keeps
 	 * running either way, the measurement replaces the modelled torque in the law after kMeasValidCycles
-	 * consecutive valid cycles and is dropped at the first invalid one (decision D-omega2).
+	 * consecutive valid cycles and is dropped at the first invalid one.
 	 */
 	void setMeasuredTorque(const matrix::Vector3f &tau_meas, bool valid)
 	{
@@ -242,7 +242,7 @@ public:
 	 *        model and its filters keep running); the feedback torque is ramped with the landed slew on both
 	 *        edges of this flag instead of stepping
 	 * @param maybe_landed true if ground contact is possible: the law runs in full, only the slow blend
-	 *        integrator is frozen (no output slew limit, like the stock PID freezing only its integrator)
+	 *        integrator is held (no output slew limit, like the stock PID holding only its integrator)
 	 * @return [-1,1] normalised torque vector to apply to the vehicle. On invalid inputs the last valid output is
 	 *         held for kFaultHoldCycles consecutive cycles, then the states are reset and the output is zero
 	 */
@@ -315,7 +315,7 @@ private:
 	matrix::Vector3f faultOutput(bool states_corrupted);
 
 	// Parameters
-	matrix::Vector3f _gain_k{20.f, 20.f, 10.f};
+	matrix::Vector3f _rate_bandwidth_gain{20.f, 20.f, 10.f};
 	matrix::Vector3f _g1{100.f, 100.f, 20.f};
 	float _g2_yaw{0.f};
 	float _actuator_tc{0.02f};
@@ -343,9 +343,9 @@ private:
 	bool _yaw_filter_reset_pending{false}; ///< settle the yaw low pass at the next unfiltered values
 
 	// States
-	matrix::Vector3f _t_act;   ///< actuator model output
-	matrix::Vector3f _t_lpf;   ///< last output of the H low pass, restores it on a sample rate redesign
-	matrix::Vector3f _t_delay_buffer[kDelayBufferSize]; ///< ring buffer of past _t_act
+	matrix::Vector3f _torque_actuator_model;   ///< actuator model output
+	matrix::Vector3f _torque_lowpass_state;   ///< last output of the H low pass, restores it on a sample rate redesign
+	matrix::Vector3f _t_delay_buffer[kDelayBufferSize]; ///< ring buffer of past _torque_actuator_model
 	int _delay_head{0};        ///< index of the most recent sample in the ring buffer
 	int _delay_samples{0};     ///< delay in use, slewed toward _delay_samples_target by one sample per cycle
 	math::LowPassFilter2p<float> _lpf[3];
@@ -387,7 +387,7 @@ private:
 
 /**
  * Rate bandwidth gains K applied by the loop: the set gains while the physical parameters are identified,
- * half of them before (conservative identification configuration, D-DEFAULTS-FW).
+ * half of them before (conservative gains until identification).
  */
 inline matrix::Vector3f indiEffectiveGainK(const matrix::Vector3f &k_set, bool identified)
 {
