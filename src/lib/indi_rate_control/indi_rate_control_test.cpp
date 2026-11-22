@@ -386,7 +386,7 @@ TEST(IndiRateControlTest, DtJitterWithRampingTorqueKeepsOutputContinuous)
 TEST(IndiRateControlTest, PassThroughFiltersAndDelay)
 {
 	IndiRateControl ctrl = makeController();
-	ctrl.setFilterCutoffs(0.f, 0.f); // both stages pass-through
+	ctrl.setFilterCutoffs(0.f, 0.f); // both filters pass-through
 	ctrl.setActuatorTimeConstant(0.001f);
 	ctrl.setDelaySamples(2);
 
@@ -703,7 +703,7 @@ TEST(IndiRateControlTest, LandedYawOutputUnaffectedByYawCutoff)
 	// takeoff: the first airborne cycle adds the modelled torque, settled at the landed output, to the same
 	// increment, the yaw filters continue from the landed values
 	const Vector3f airborne = ctrl.update(Vector3f(), Vector3f(0.f, 0.f, 0.5f), Vector3f(), torque, kDt, false);
-	// the feedback torque is ramped (D-S3-LANDED): one slew step of the modelled torque
+	// the feedback torque is ramped: one slew step of the modelled torque
 	EXPECT_NEAR(airborne(2), 0.1f + 5.f * kDt, 0.01f);
 }
 
@@ -1251,7 +1251,7 @@ TEST(IndiRateControlBlendTest, LandedBlendTracksWithoutAccumulating)
 
 	ASSERT_TRUE(ctrl.measurementInUse());
 
-	// the first airborne feedback torque is one slew step of the ramp (D-S3-LANDED), the blend has no memory of
+	// the first airborne feedback torque is one slew step of the ramp, the blend has no memory of
 	// its own: it has moved by one cycle only from the tracked gap
 	const float gap = ctrl.getFilteredModelTorque()(0) - ctrl.getFilteredMeasuredTorque()(0);
 	ctrl.setMeasuredTorque(Vector3f(0.35f, 0.f, 0.f), true);
@@ -1260,7 +1260,7 @@ TEST(IndiRateControlBlendTest, LandedBlendTracksWithoutAccumulating)
 	EXPECT_NEAR(ctrl.getActuatorBlend()(0), gap, 1e-3f);
 }
 
-// asserts (G7(b) M7): the blend is a first order low pass of the gap with time constant Tb sampled at dt. After the gap
+// asserts: the blend is a first order low pass of the gap with time constant Tb sampled at dt. After the gap
 // has settled to a constant g, the distance to it shrinks per cycle by the closed form factor Tb/(Tb+dt) (backward
 // Euler step of Tb*db/dt = g - b), so d_N = d_0 (Tb/(Tb+dt))^N within 1%
 TEST(IndiRateControlBlendTest, BlendFollowsFirstOrderStepResponse)
@@ -1285,34 +1285,34 @@ TEST(IndiRateControlBlendTest, BlendFollowsFirstOrderStepResponse)
 	EXPECT_NEAR(dn, expected, 0.01f * fabsf(expected));
 }
 
-// asserts (G7(b) M19): maybe_landed freezes the slow blend integrator (header, D-S3-LANDED): the blend is bit
+// asserts: maybe_landed holds the slow blend integrator: the blend is bit
 // identical across a maybe_landed stretch while the gap is still moving it in the free running control
-TEST(IndiRateControlBlendTest, MaybeLandedFreezesBlend)
+TEST(IndiRateControlBlendTest, MaybeLandedHoldsBlend)
 {
 	const Vector3f alloc(0.5f, 0.f, 0.f);
-	IndiRateControl frozen = makeController();
+	IndiRateControl held = makeController();
 	IndiRateControl free_run = makeController();
-	frozen.setActuatorBlendTimeConstant(0.3f);
+	held.setActuatorBlendTimeConstant(0.3f);
 	free_run.setActuatorBlendTimeConstant(0.3f);
-	runConstantMeasurement(frozen, alloc, Vector3f(0.35f, 0.f, 0.f), 1200);
+	runConstantMeasurement(held, alloc, Vector3f(0.35f, 0.f, 0.f), 1200);
 	runConstantMeasurement(free_run, alloc, Vector3f(0.35f, 0.f, 0.f), 1200);
-	runConstantMeasurement(frozen, alloc, Vector3f(0.65f, 0.f, 0.f), 40);
+	runConstantMeasurement(held, alloc, Vector3f(0.65f, 0.f, 0.f), 40);
 	runConstantMeasurement(free_run, alloc, Vector3f(0.65f, 0.f, 0.f), 40);
-	ASSERT_EQ(frozen.getActuatorBlend(), free_run.getActuatorBlend());
-	const float before = frozen.getActuatorBlend()(0);
+	ASSERT_EQ(held.getActuatorBlend(), free_run.getActuatorBlend());
+	const float before = held.getActuatorBlend()(0);
 
 	for (int i = 0; i < 100; i++) {
-		frozen.setMeasuredTorque(Vector3f(0.65f, 0.f, 0.f), true);
-		frozen.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, false, true);
-		ASSERT_EQ(frozen.getActuatorBlend()(0), before) << "cycle " << i;
+		held.setMeasuredTorque(Vector3f(0.65f, 0.f, 0.f), true);
+		held.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, false, true);
+		ASSERT_EQ(held.getActuatorBlend()(0), before) << "cycle " << i;
 	}
 
 	runConstantMeasurement(free_run, alloc, Vector3f(0.65f, 0.f, 0.f), 100);
-	ASSERT_TRUE(frozen.measurementInUse());
-	EXPECT_GT(fabsf(free_run.getActuatorBlend()(0) - before), 0.01f); // the freeze was not trivially satisfied
+	ASSERT_TRUE(held.measurementInUse());
+	EXPECT_GT(fabsf(free_run.getActuatorBlend()(0) - before), 0.01f); // the hold was not trivially satisfied
 }
 
-// asserts (G7(b) M20): the blend state is bounded by kMaxBlend per axis (header: both torques are within [-1, 1], so
+// asserts: the blend state is bounded by kMaxBlend per axis (both torques are within [-1, 1], so
 // a gap beyond +-2 is not physical). A model at +1 against a measurement at -1 with a very fast blend leaves a gap of
 // 2 plus the filter overshoot of the measurement path, the blend must not exceed kMaxBlend
 TEST(IndiRateControlBlendTest, BlendIsBoundedByMaxBlend)
@@ -1337,7 +1337,7 @@ TEST(IndiRateControlBlendTest, BlendIsBoundedByMaxBlend)
 	EXPECT_LE(max_blend, kMaxBlend);
 }
 
-// asserts (G7(b) M21): the allocated torque is normalised and bounded to [-1, 1] before the actuator model, so an
+// asserts: the allocated torque is normalised and bounded to [-1, 1] before the actuator model, so an
 // out of range input gives the same modelled torque as the bound itself
 TEST(IndiRateControlBlendTest, AllocatedTorqueIsBoundedBeforeActuatorModel)
 {
@@ -1383,7 +1383,7 @@ void blendCycle(IndiRateControl &ctrl, const Vector3f &alloc, const Vector3f &me
 
 } // namespace
 
-// S77: telemetry loss and recovery with a standing gap (measured = 0.8 x model) must not step the fed back torque.
+// telemetry loss and recovery with a standing gap (measured = 0.8 x model) must not step the fed back torque.
 // Tolerance 1e-3 normalised: 0.2 % of the 0.5 torque, 100x below the 0.1 gap that a snap failure would expose.
 TEST(IndiRateControlBlendTest, TelemetryRecoveryWithSteadyGapHasNoStep)
 {
@@ -1419,7 +1419,7 @@ TEST(IndiRateControlBlendTest, TelemetryRecoveryWithSteadyGapHasNoStep)
 	EXPECT_NEAR(tf, tf_converged, 2e-3f);
 }
 
-// S77: landed -> airborne with a standing gap: the blend holds the tracked gap, no step beyond the D-S3-LANDED ramp.
+// landed -> airborne with a standing gap: the blend holds the tracked gap, no step beyond the landed ramp.
 TEST(IndiRateControlBlendTest, LandedToAirborneWithSteadyGapHasNoBlendStep)
 {
 	const Vector3f alloc(0.5f, 0.f, 0.f);
@@ -1511,7 +1511,7 @@ float weakMotorRateError(float blend_tc)
 
 } // namespace
 
-// S77 (lesson 9): the measured actuator state already contains the weak motor, so without the blend the INDI
+// the measured actuator state already contains the weak motor, so without the blend the INDI
 // increment cancels the integral action and leaves a standing rate error. With tb = 1 s the model carries the low
 // frequencies and the error vanishes.
 TEST(IndiRateControlBlendClosedLoopTest, WeakMotorStandingErrorRemovedByBlend)
@@ -1524,7 +1524,7 @@ TEST(IndiRateControlBlendClosedLoopTest, WeakMotorStandingErrorRemovedByBlend)
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// Rate prediction lead (D-RATE-LEAD): num_i = nu_i - (1 + c_i) a_f_i + ..., c_i = lead K_i tau_c, 0 on ground, <= 2
+// Rate prediction lead: num_i = nu_i - (1 + c_i) a_f_i + ..., c_i = lead K_i tau_c, 0 on ground, <= 2
 // ---------------------------------------------------------------------------------------------------------------
 
 namespace
@@ -1996,7 +1996,7 @@ TEST(IndiRateControlYawInvTest, FirstLandedCycleIgnoresTheFlightIncrement)
 
 	const float t_fb_flight = ctrl.getFilteredTorque()(2);
 	const Vector3f landed = ctrl.update(Vector3f(), Vector3f(0.f, 0.f, 0.1f), Vector3f(0.f, 0.f, 3.f), prev, kDt, true);
-	// the yaw increment of the flight is ignored; the feedback torque ramps to zero by one slew step (D-S3-LANDED)
+	// the yaw increment of the flight is ignored; the feedback torque ramps to zero by one slew step
 	const float ramp_step = 5.f * kDt;
 	const float t_fb = t_fb_flight + math::constrain(-t_fb_flight, -ramp_step, ramp_step);
 	EXPECT_NEAR(landed(2), expected + t_fb, 1e-6f);
@@ -2058,7 +2058,7 @@ Vector3f stepSteady(IndiRateControl &ctrl, bool landed, bool maybe_landed)
 }
 
 // asserts: output with a 50 cycle maybe_landed pulse equals the run without it within 1e-6 on every cycle (the
-// blend gap is converged, so the frozen blend integrator does not change the value); no output slew limit is applied
+// blend gap is converged, so the held blend integrator does not change the value); no output slew limit is applied
 TEST(IndiRateControlLandedTest, MaybeLandedPulseNoStep)
 {
 	IndiRateControl a = makeController();
@@ -2142,7 +2142,7 @@ TEST(IndiRateControlLandedTest, TouchdownRamp)
 	EXPECT_LT(reach_time, 0.5f);
 }
 
-// ---- rate setpoint lead (decision D-S3-ATT-STEP) ----
+// ---- rate setpoint lead ----
 
 namespace
 {
