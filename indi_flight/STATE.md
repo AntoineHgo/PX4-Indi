@@ -16,10 +16,11 @@
   style. Brief every coder with F-10. Clean-up = separate behaviour-neutral commits, independent review.
 
 ## Next actions (each names its gate item)
-1. G3: campaign chain (Status). The supervisor launches no session while it flies (lock held). Until
-   CHAIN_FINISHED: no edit of files in its chain_freeze.sha256, no rebuild, no branch switch; commit finished runs. Run
-   `g3_chain.sh rescore` in the background (can exceed 10 min). On CHAIN_HALTED: diagnose first. After CHAIN_FINISHED: rescore unscored, then the verdict per GATES
-   "Campaign pass" (items 1-2 zero, 3-6 >= 95 % valid, misses explained, Q24 B shared-with-PID rule; key 2 col 5 is G4).
+1. G3: campaign CHAIN_FINISHED 18:08, committed 83f98905e5: 297 ok + 3 aborted (039 land wall timeout, 245
+   watchdog height, 264 watchdog tilt; unscored by design). Key 1 218/297 pass (73 item2, 15 item3), key 2 246/297
+   (45 item2, 15 item3). Item 2 has no quota: verdict needs the speed-1 re-fly of every item 1-2 failure (campaign
+   README "Verdict") and PID reference of the same draws (reference-before-cause rule), then an owner question if
+   shared with PID. Then the verdict per GATES "Campaign pass" (key 2 col 5 is G4).
    Pre-test 17/20 (results/g3_pretest_q24_s197). 02 item-3 miss (0.318 m, +48 ms) is a quota item, not a chase.
 2. G5 PASSED at freeze-10 (S198). A firmware change after the freeze re-opens the rows it touches (freeze rule).
    Trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
@@ -68,7 +69,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| chain | G3 campaign 0-299 (g3_chain.sh) | detached, pid 2727913, started 2026-11-22 14:25 speed 4, ETA ~18:05 | results/g3_campaign_f10 | `g3_chain.sh status`, then `start` resumes |
+| refly | G3 subset re-fly: INDI speed 1 + PID speed 1 on 245,264,008,240,283,239,046,039 (S199) | detached wrapper pid 3600096, start 18:18, ETA ~19:15 | results/g3_refly_s199 (dirty while flying; DONE at end) | `bash indi_flight/results/g3_refly_s199/refly_all.sh` resumes (README) |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
