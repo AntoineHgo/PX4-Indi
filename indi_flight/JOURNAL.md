@@ -1600,3 +1600,8 @@ offboard trajectories (a steady-state hover limit; no reference stack meets it o
   15/15). docs/en INDI page first draft (fceaa3ebd5, open items report/DOCS_DRAFT_S201.md). Outer-loop report chapter
   draft (report/02_outer_loop_design.md). Gate progress: G7(f) unit 2 of 9 done; G8 docs page and outer-loop chapter
   drafted.
+- S202 (2026-11-22): route check RC202 (588efaa409, scope cut: G6/G7/G8 verdicts wait on Q26). F-10 units 3-7
+  committed (912f60cc64 .. feb9bf288b, objects identical, unit tests pass). Yaw fit fix (G6 pre-item) started, not
+  finished (session cut). Q26 still unanswered. Gate progress: G7(f) units 3-7 of 9 done.
+- S203 (2026-11-22): STATE trimmed (S199/S200 cause-search history kept in CAUSE_S199.md, MARGINS_S200.md and the
+  S199-S200 journal lines; Q24/Q25 history in S197 line). G3 chain item already closed (runs committed S199/S201).
