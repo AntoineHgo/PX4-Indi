@@ -36,6 +36,7 @@
     - [Filter/Control Latency Tuning](config_mc/filter_tuning.md)
     - [PID Tuning (Manual/Basic)](config_mc/pid_tuning_guide_multicopter_basic.md)
     - [PID Tuning Guide (Manual/Advanced)](config_mc/pid_tuning_guide_multicopter.md)
+    - [INDI Controllers (Advanced)](config_mc/indi_control.md)
     - [Setpoint Tuning (Trajectory Generator)](config_mc/mc_trajectory_tuning.md)
       - [Jerk-limited Type Trajectory](config_mc/mc_jerk_limited_type_trajectory.md)
     - [Racer Setup](config_mc/racer_setup.md)
