@@ -41,14 +41,14 @@ void runIndiInjectionStep(IndiRateControl &indi, IndiInjection &injection, const
 	const bool rate_sp_break = (in.point == 1) && (axis >= 0);
 
 	if (rate_sp_break) {
-		// x = y + d on one axis, the other two components are y itself. d is gated before the law runs
+		// x = y + d on one axis, the other two components are y itself. d is zero unless the break is enabled
 		matrix::Vector3f rates_sp_applied = rates_sp;
 		matrix::Vector3f rates_sp_inject{};
 
-		// the generator runs every cycle; a closed gate acts as a disarm, so the sequence restarts from zero after its
-		// delay when the gate reopens (no step into the multisine, no partial window, disarm reset never skipped)
-		const bool gate_open = in.rate_sp_break_allowed && !indi.getFault();
-		rates_sp_inject(axis) = injection.update(in.timestamp_sample, in.armed && gate_open, in.landed);
+		// the generator runs every cycle; a disabled break acts as a disarm, so the sequence restarts from zero after its
+		// delay when it is enabled again (no step into the multisine, no partial window, disarm reset never skipped)
+		const bool break_enabled = in.rate_sp_break_allowed && !indi.getFault();
+		rates_sp_inject(axis) = injection.update(in.timestamp_sample, in.armed && break_enabled, in.landed);
 		rates_sp_applied(axis) = rates_sp(axis) + rates_sp_inject(axis);
 
 		out.torque_pre_inject = indi.update(rates, rates_sp_applied, angular_accel, torque_allocated_prev, in.dt, in.landed,

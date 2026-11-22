@@ -155,7 +155,7 @@ private:
 	vehicle_control_mode_s	_vehicle_control_mode{};
 	vehicle_status_s	_vehicle_status{};
 
-	indi_rate_feedforward_s _omega_ff_msg{}; ///< last indi_rate_feedforward from the outer loop (A18)
+	indi_rate_feedforward_s _omega_ff_msg{}; ///< last indi_rate_feedforward from the outer loop
 	matrix::Vector3f _omega_ff_applied{};    ///< gated omega_ff added to the rate setpoint this cycle, zero when gated off
 
 	RateSetpointWatchdog _rate_sp_watchdog;

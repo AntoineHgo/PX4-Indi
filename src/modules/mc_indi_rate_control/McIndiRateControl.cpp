@@ -381,8 +381,8 @@ McIndiRateControl::Run()
 							_vehicle_control_mode.flag_armed, !acro_branch && _vehicle_control_mode.flag_control_rates_enabled);
 		_rate_sp_stale = wd.stale;
 
-		// A18: outer-loop jerk feed-forward (roll, pitch), added to the setpoint at use, never stored in it.
-		// Evaluated before the source check: a gate flip steps the effective setpoint, so it restarts the lead too
+		// Outer-loop jerk feed-forward (roll, pitch), added to the setpoint at use, never stored in it.
+		// Evaluated before the source check: a change of the enable condition steps the effective setpoint, so it restarts the lead too
 		_indi_rate_feedforward_sub.update(&_omega_ff_msg);
 		_omega_ff_applied.zero();
 

@@ -37,7 +37,7 @@
  * Bench-only loop-break excitation of mc_indi_pos_control (system identification, off by default).
  * A Schroeder-phase multisine d on one NED acceleration axis, added to the commanded acceleration c (u = c + d).
  * Copy of mc_indi_rate_control/IndiInjection (that class is module-local), renamed to avoid a duplicate symbol.
- * Frequencies and phases are those of indi_flight/bench/margins_est.py log_bins() and multisine().
+ * Frequencies are log-spaced (10 per decade) integer multiples of 1/Tp, phases are Schroeder phases for equal power.
  */
 
 #pragma once
@@ -77,7 +77,7 @@ public:
 	/** Restart the time origin: the next armed, airborne cycle starts a new window. Called on the disarm edge. */
 	void reset() { _started = false; }
 
-	/** Multisine at time t (s) after the origin, no gating */
+	/** Multisine at time t (s) after the origin, without the enable logic of update() */
 	double waveform(double t) const;
 
 private:

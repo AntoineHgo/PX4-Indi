@@ -36,7 +36,7 @@
 #include <stdint.h>
 
 /**
- * Gate of the outer-loop rate feed-forward omega_ff (A18). Pure logic, times are microseconds.
+ * Enable condition of the outer-loop rate feed-forward omega_ff. Pure logic, times are microseconds.
  * The feed-forward is added to the rate setpoint only when the message is valid, younger than the maximum age,
  * the vehicle is not landed, the rate setpoint is not the manual/acro one and the setpoint watchdog is not tripped.
  */

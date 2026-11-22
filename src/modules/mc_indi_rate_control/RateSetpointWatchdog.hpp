@@ -36,7 +36,7 @@
 #include <stdint.h>
 
 /**
- * Rate setpoint timeout (D-S3-SPTO). Pure logic, times are microseconds.
+ * Rate setpoint timeout. Pure logic, times are microseconds.
  * Stale while armed and the rate setpoint is used and none arrived for longer than the timeout
  * (or none ever arrived). While stale the caller zeroes the rate setpoint and holds the thrust setpoint.
  */

@@ -62,7 +62,7 @@ void IndiInjection::setParameters(int axis, float amplitude, float period, float
 		return;
 	}
 
-	// margins_est.log_bins(fmin, fmax, Tp, per_decade=10): integer bins k, f = k / Tp, ~10 per decade
+	// log-spaced bins, 10 per decade, rounded to integer multiples k of the base frequency 1 / Tp
 	const double df = 1.0 / (double)period;
 	const int per_decade = 10;
 	const int n = (int)ceil(log10((double)f_max / (double)f_min) * per_decade) + 1;
@@ -81,7 +81,7 @@ void IndiInjection::setParameters(int axis, float amplitude, float period, float
 		_freq[_num++] = k * df;
 	}
 
-	// margins_est.multisine, equal power p = 1 / K: phi_k = -2 pi sum_{l<k} (k - l) p_l  (k = 0 .. K - 1)
+	// Schroeder phases for equal power p = 1 / K: phi_k = -2 pi sum_{l<k} (k - l) p_l  (k = 0 .. K - 1)
 	for (int k = 0; k < _num; k++) {
 		double s = 0.0;
 

@@ -36,7 +36,7 @@
  *
  * Bench-only loop-break excitation of mc_indi_rate_control (system identification, off by default).
  * A Schroeder-phase multisine d on one torque axis, added to the controller output c (u = c + d).
- * Frequencies and phases are those of indi_flight/bench/margins_est.py log_bins() and multisine().
+ * Frequencies are log-spaced (10 per decade) integer multiples of 1/Tp, phases are Schroeder phases for equal power.
  */
 
 #pragma once
@@ -76,7 +76,7 @@ public:
 	/** Restart the sequence (delay first) at the next update, e.g. when the break point changes */
 	void restart() { _started = false; }
 
-	/** Multisine at time t (s) after the origin, no gating */
+	/** Multisine at time t (s) after the origin, without the enable logic of update() */
 	double waveform(double t) const;
 
 private:
