@@ -1,0 +1,11 @@
+# G7 checker self-tests (S194): passthrough_check.py, offb_vel_check.py
+1. Both checkers are print-only scripts (no functions, no verdict, no exit code). Tests replace pyulog by a fake module, run the script with runpy, parse the printed numbers and judge them against the GATES limits.
+2. test_offb_vel_check.py: nominal pass; RMS(vx-2) last 3 s 0.21 fails / 0.19 passes; end |vx| 0.11 fails / 0.09 passes (both signs); max |dz| 0.31 fails / 0.29 passes (both signs); first-2 s rise error ignored; criteria independent.
+3. test_passthrough_check.py (criterion from design/impl_s133: window exists, 0 att_sp and 0 indi_pos_status samples while pos/vel/alt all off): nominal pass; 1 stray att_sp or indi_pos_status sample fails; window edges (5.000/4.995/14.995/15.000 s); each single flag blocks the window; no window is not a pass; ABSENT topic reported.
+4. Mutations on COPIES of the checkers (temp dir, real files untouched; git diff --stat bench/*.py empty). Each is built into the tests (test_mutations_detected / main).
+5. offb_vel: ref 2.0->2.1, last-3 s window widened, end sample [-1]->[0], dz reference +0.1, abs dropped: 5/5 detected.
+6. passthrough: off=~pv inverted, searchsorted right->left, OR of 3 flags reduced to position only, pos_status index shifted: 4/4 detected (the flag mutation was first missed, a test for each single flag was added, then detected).
+7. Run: python3 -I indi_flight/bench/tests/test_X.py -> both print OK. pytest is not installed on the host; tests are plain python (main) and also pytest-collectable.
+8. Whole bench/tests dir, plain python per file: 47 of 54 files pass; 7 fail for environment reasons seen: scipy missing (test_g3_checks, test_g3_checks_key2_q14_q15, test_g3_excursion_s186, test_g4_chatter_skip_key1), pytest missing/slow (test_ident_fit_yaw, test_ident_iv, test_margins_selftest timed out at 8-100 s). Not caused by this work.
+9. Checker defects (not fixed): no verdict/exit code in either script; offb_vel never checks LOC; its "time to 90%" prints 0.00 s if vx never exceeds 1.8 (argmax of all-False); final |vx| is one sample, not a mean; passthrough_check crashes (IndexError) on an empty topic and prints "all off 0" without flagging that pass-through never engaged.
+10. Not committed.
