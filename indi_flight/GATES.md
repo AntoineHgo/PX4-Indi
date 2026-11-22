@@ -670,3 +670,16 @@ chatter, item 2: 18/18 both keys, no key disagreement; Q20 guard 54 transitions 
 narrow RMS 3.46e-4 < 5e-4; guard self-tests 8/8 and 9/9. Nearest limit: K1 chatter line 4.12e-4 (cruise_harsh_s2).
 Limits carried as at freeze-9: harsh-cruise rate flags informational (S183); cruise item-3 |dz| 0.135-0.333 m (fz9
 0.10-0.22) is read in a window after AUTO_LAND (RECONCILE_S180 task 2, both stacks), not a G4 row.
+
+## G2 verdict at freeze-10 (S194, 2026-11-22): PASSED
+Evidence: `results/freeze10_s193/G2_SCORES.md` (outer table, spot cells, G2-STEP, section "Re-score S194" after the
+hole re-fly; keyed scorers as freeze-9, `g2o/key2.md`). Firmware 7fe6206fcc (FREEZE-10). Outer 24/24 meet the limits:
+PM >= 49.1 deg (pt0_ax2_r400_s2), xy GM >= 13.5 dB, plateau GM >= 12.9 dB, DM >= 229 ms (pt1_ax3_r800_s1); holes
+24/24 PASS after re-flying pt1_ax2_r400_s2 once (single 22.5 ms setpoint gap; re-fly PM 56.9, GM 13.9, holes PASS;
+original kept in g2o/orig_s194/). Spot (Q16 A): rate roll800_fwdef_s2 PM 46.9, GM 15.7, DM 75.5 ms, holes PASS;
+attitude ax2_r400_s1 PM 48.0, GM 13.7 dB, DM 93.5 ms, holes PASS; its -180 crossing at 0.237 Hz with |L| 7.3 is a
+gain-reduction margin of 17.3 dB >= 6 dB under Q13 A. G2-STEP 9/9 both keys (roll/pitch settle <= 347.5 of 450 ms,
+yaw <= 1196 of 1350). Evidence limits carried as freeze-9: (1) key2 BLOCKED on 3 cells on key agreement only, both
+keys above the limits in each (pt1_ax1_r800_s1 PM 71.3/67.8; pt1_ax3_r400_s2 PM 58.7/58.2, GM key2 only 16.3;
+pt1_ax3_r800_s2 GM 22.4/17.8); (2) rate and attitude spot margins thin (+1.9/+3.0 deg); (3) 3 rate x-check groups and
+A-51 as Q16 A. 250 Hz not measured.
