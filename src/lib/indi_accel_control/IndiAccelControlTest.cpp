@@ -1628,3 +1628,30 @@ TEST_F(IndiAccelControlTest, NativeRateFilterInvalidToValidHasNoStep)
 
 	EXPECT_NEAR(out.a_f(0), 0.5f, 1e-3f);
 }
+
+// asserts (G7(b) A14): dt outside [kMinDt, kMaxDt] (header) is rejected with the output untouched, both edges; the
+// limits themselves are accepted
+TEST_F(IndiAccelControlTest, DtOutsideValidRangeReturnsFalseAndLeavesOutputUntouched)
+{
+	const float bad_dt[] = {IndiAccelControl::kMaxDt * 1.1f, 10.f *IndiAccelControl::kMaxDt,
+				IndiAccelControl::kMinDt * 0.9f
+			       };
+
+	for (const float dt : bad_dt) {
+		IndiAccelControl::Input in = hoverInput();
+		in.dt = dt;
+		IndiAccelControl::Output out;
+		out.thrust = 123.f;
+		out.t_c = Vector3f(1.f, 2.f, 3.f);
+		EXPECT_FALSE(_ctrl.update(in, out)) << "dt " << dt;
+		EXPECT_EQ(out.thrust, 123.f) << "dt " << dt;
+		EXPECT_EQ(out.t_c(1), 2.f) << "dt " << dt;
+	}
+
+	for (const float dt : {IndiAccelControl::kMinDt, IndiAccelControl::kMaxDt}) {
+		IndiAccelControl::Input in = hoverInput();
+		in.dt = dt;
+		IndiAccelControl::Output out;
+		EXPECT_TRUE(_ctrl.update(in, out)) << "dt " << dt;
+	}
+}

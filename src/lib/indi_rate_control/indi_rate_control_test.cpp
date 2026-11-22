@@ -1260,6 +1260,101 @@ TEST(IndiRateControlBlendTest, LandedBlendTracksWithoutAccumulating)
 	EXPECT_NEAR(ctrl.getActuatorBlend()(0), gap, 1e-3f);
 }
 
+// asserts (G7(b) M7): the blend is a first order low pass of the gap with time constant Tb sampled at dt. After the gap
+// has settled to a constant g, the distance to it shrinks per cycle by the closed form factor Tb/(Tb+dt) (backward
+// Euler step of Tb*db/dt = g - b), so d_N = d_0 (Tb/(Tb+dt))^N within 1%
+TEST(IndiRateControlBlendTest, BlendFollowsFirstOrderStepResponse)
+{
+	const float tb = 0.1f;
+	const Vector3f alloc(0.5f, 0.f, 0.f);
+	IndiRateControl ctrl = makeController();
+	ctrl.setActuatorBlendTimeConstant(tb);
+	runConstantMeasurement(ctrl, alloc, Vector3f(0.35f, 0.f, 0.f), 1200);
+
+	// measured torque steps, the gap jumps by -0.3 once the (fast) measurement filters have settled
+	runConstantMeasurement(ctrl, alloc, Vector3f(0.65f, 0.f, 0.f), 80);
+	const float gap = ctrl.getFilteredModelTorque()(0) - ctrl.getFilteredMeasuredTorque()(0);
+	ASSERT_NEAR(gap, -0.15f, 2e-3f);
+	const float d0 = gap - ctrl.getActuatorBlend()(0);
+	ASSERT_GT(fabsf(d0), 0.01f); // the blend is still on its way
+
+	const int n = 100;
+	runConstantMeasurement(ctrl, alloc, Vector3f(0.65f, 0.f, 0.f), n);
+	const float dn = gap - ctrl.getActuatorBlend()(0);
+	const float expected = d0 * powf(tb / (tb + kDt), static_cast<float>(n));
+	EXPECT_NEAR(dn, expected, 0.01f * fabsf(expected));
+}
+
+// asserts (G7(b) M19): maybe_landed freezes the slow blend integrator (header, D-S3-LANDED): the blend is bit
+// identical across a maybe_landed stretch while the gap is still moving it in the free running control
+TEST(IndiRateControlBlendTest, MaybeLandedFreezesBlend)
+{
+	const Vector3f alloc(0.5f, 0.f, 0.f);
+	IndiRateControl frozen = makeController();
+	IndiRateControl free_run = makeController();
+	frozen.setActuatorBlendTimeConstant(0.3f);
+	free_run.setActuatorBlendTimeConstant(0.3f);
+	runConstantMeasurement(frozen, alloc, Vector3f(0.35f, 0.f, 0.f), 1200);
+	runConstantMeasurement(free_run, alloc, Vector3f(0.35f, 0.f, 0.f), 1200);
+	runConstantMeasurement(frozen, alloc, Vector3f(0.65f, 0.f, 0.f), 40);
+	runConstantMeasurement(free_run, alloc, Vector3f(0.65f, 0.f, 0.f), 40);
+	ASSERT_EQ(frozen.getActuatorBlend(), free_run.getActuatorBlend());
+	const float before = frozen.getActuatorBlend()(0);
+
+	for (int i = 0; i < 100; i++) {
+		frozen.setMeasuredTorque(Vector3f(0.65f, 0.f, 0.f), true);
+		frozen.update(Vector3f(), Vector3f(), Vector3f(), alloc, kDt, false, true);
+		ASSERT_EQ(frozen.getActuatorBlend()(0), before) << "cycle " << i;
+	}
+
+	runConstantMeasurement(free_run, alloc, Vector3f(0.65f, 0.f, 0.f), 100);
+	ASSERT_TRUE(frozen.measurementInUse());
+	EXPECT_GT(fabsf(free_run.getActuatorBlend()(0) - before), 0.01f); // the freeze was not trivially satisfied
+}
+
+// asserts (G7(b) M20): the blend state is bounded by kMaxBlend per axis (header: both torques are within [-1, 1], so
+// a gap beyond +-2 is not physical). A model at +1 against a measurement at -1 with a very fast blend leaves a gap of
+// 2 plus the filter overshoot of the measurement path, the blend must not exceed kMaxBlend
+TEST(IndiRateControlBlendTest, BlendIsBoundedByMaxBlend)
+{
+	const float kMaxBlend = 2.f; // IndiRateControl::kMaxBlend is private
+	IndiRateControl ctrl = makeController();
+	ctrl.setFilterCutoffs(180.f, 180.f);
+	ctrl.setActuatorBlendTimeConstant(1e-4f);
+	runConstantMeasurement(ctrl, Vector3f(1.f, 0.f, 0.f), Vector3f(1.f, 0.f, 0.f), 600);
+	float max_gap = 0.f;
+	float max_blend = 0.f;
+
+	for (int i = 0; i < 600; i++) {
+		ctrl.setMeasuredTorque(Vector3f(-1.f, 0.f, 0.f), true);
+		ctrl.update(Vector3f(), Vector3f(), Vector3f(), Vector3f(1.f, 0.f, 0.f), kDt, false);
+		max_gap = fmaxf(max_gap, fabsf(ctrl.getFilteredModelTorque()(0) - ctrl.getFilteredMeasuredTorque()(0)));
+		max_blend = fmaxf(max_blend, fabsf(ctrl.getActuatorBlend()(0)));
+	}
+
+	ASSERT_TRUE(ctrl.measurementInUse());
+	EXPECT_GT(max_gap, kMaxBlend); // the scenario really exceeds the bound
+	EXPECT_LE(max_blend, kMaxBlend);
+}
+
+// asserts (G7(b) M21): the allocated torque is normalised and bounded to [-1, 1] before the actuator model, so an
+// out of range input gives the same modelled torque as the bound itself
+TEST(IndiRateControlBlendTest, AllocatedTorqueIsBoundedBeforeActuatorModel)
+{
+	IndiRateControl out_of_range = makeController();
+	IndiRateControl at_bound = makeController();
+
+	for (int i = 0; i < 200; i++) {
+		const float s = (i < 100) ? 1.f : -1.f;
+		out_of_range.update(Vector3f(), Vector3f(), Vector3f(), Vector3f(5.f * s, -5.f * s, 100.f * s), kDt, false);
+		at_bound.update(Vector3f(), Vector3f(), Vector3f(), Vector3f(s, -s, s), kDt, false);
+		ASSERT_EQ(out_of_range.getFilteredModelTorque(), at_bound.getFilteredModelTorque()) << "cycle " << i;
+		ASSERT_LE(fabsf(out_of_range.getFilteredModelTorque()(0)), 1.1f) << "cycle " << i;
+	}
+
+	EXPECT_GT(fabsf(at_bound.getFilteredModelTorque()(0)), 0.1f); // the model is actually excited
+}
+
 namespace
 {
 
