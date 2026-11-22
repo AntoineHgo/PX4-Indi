@@ -327,6 +327,8 @@ def main():
     ap.add_argument("--timeout-s", type=float, default=1800.0, help="wall-clock timeout per run")
     ap.add_argument("--override-gnss-matched", action="store_true",
                     help="probe: set --gnss-delay equal to the drawn GNSS latency (all other factors unchanged)")
+    ap.add_argument("--speed", type=float, default=1.0,
+                    help="sim speed factor passed to run_scenario.py --speed (1.0: not passed, argv unchanged)")
     a = ap.parse_args()
     global GNSS_MATCHED
     GNSS_MATCHED = a.override_gnss_matched
@@ -342,6 +344,8 @@ def main():
     for d in sel:
         out = os.path.join(a.out_root, f"run_{d['run_index']:03d}")
         r = build_run(d, a.base_params, out)
+        if a.speed != 1.0:
+            r["argv"] += ["--speed", _num(a.speed)]
         cmd = command(r["argv"])
         if a.dry_run:
             print(" ".join(cmd))
