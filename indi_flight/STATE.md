@@ -61,7 +61,8 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | - | - | - |
+| S197a | G3 pre-test re-run per D-OWNER-Q24 (sampler +-50, re-fly changed draws, both keys) | sonnet | results/g3_pretest_q24_s197/README.md | re-brief from D-OWNER-Q24; check README partial state |
+| S197b | G5.5 re-score vs D-OWNER-Q25 limit (bench/g55_traj_limit.py + self-test), host python | sonnet | results/freeze10_s193/G5_5_RESCORE_Q25.md | re-brief from D-OWNER-Q25 |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
