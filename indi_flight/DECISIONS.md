@@ -1327,6 +1327,14 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   seed spread > 10 % on SITL cells; tau_up and tau_down not separable at the injector amplitude (raise
   `MC_INDI_INJ_AMP` within its range first, params only).
 
+## D-G6-ITEM7-SET (S212, 2026-11-23): G6 item 7 flies the 60 corners un-identified: ID_OK 0, ACT_TC 0.05, no r
+- GATES l. 760 defines item 7 as the un-identified state (gains x0.5, ACT_TC 0.05); the S211 r draw is the identified
+  state, so it is not applied. Plant draws = freeze-10 corners 240-299 (seed 173). No --halt-on-fail (S211b fail-fast
+  is written for G3 only). No identification manoeuvre in these flights: item 2 scored over the whole flight (stricter
+  than "inside the identification-manoeuvre window"); a failure outside any such window goes to the owner.
+- Alternative: per-run r ACT_TC (agent first draft) rejected: it tests the identified state twice.
+- Overturn: owner reading of S211 "one chain" as per-run r for item 7.
+
 ## D-OWNER-Q29 (S211, 2026-11-23): G3 re-fly 300 fail-fast; G6 item 7 corners only
 - Owner answer to Q29 (full text JOURNAL.md S211; gate text GATES "Owner amendment S211b"). Critical block first
   (60 corners + 50 freeze-10 LHS fail/abort draws), halt on a confirmed item 1-2 failure, else complete 300. Reduced

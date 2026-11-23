@@ -19,7 +19,8 @@
    both keys at speed 4 -> speed-1 rule). On CHAIN_HALTED: read HALT_ON_FAIL.json; item 2 -> speed-1 re-fly of that
    run (S208 rule) before declaring; item 1 / abort_flight -> PID reference same draw, then NOT PASSED to owner
    (GATES S211b). On CHAIN_FINISHED: commit runs, speed-1 rule on item-3 misses, verdict per GATES. Then G6 item 7
-   chain (60 corners C1-C6 at MC_INDI_ID_OK 0): needs a samples dir of the corners + ID_OK override (agent task).
+   chain (60 corners, un-identified ID_OK 0 + ACT_TC 0.05, D-G6-ITEM7-SET): ready, launch cmd in
+   results/g6_item7_s212/PREP.md (G3_PARAMS=... start ... 240 299 --speed 4); pre-test its first run before the rest.
 CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older G7 list stay deferred until the ACT_TC
   ident decides whether firmware changes. G8 drafting may resume (Q28 answered).
 1. G3/G6 ACT_TC identification (Q27 item 1): survey design/actc_ident_survey_s208.md -> one-page design note ->
