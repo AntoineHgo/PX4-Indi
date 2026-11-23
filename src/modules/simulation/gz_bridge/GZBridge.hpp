@@ -146,7 +146,9 @@ private:
 	void addGpsNoise(double &latitude, double &longitude, double &altitude,
 			 float &vel_north, float &vel_east, float &vel_down, uint8_t instance_index);
 
-	uORB::SubscriptionInterval                    _parameter_update_sub{ORB_ID(parameter_update), 1_s};
+	// no rate limit: simulator parameters (SIM_GZ_EC_*, SIM_GZ_THR_SC) are fault injectors, and a 1 s interval
+	// applied a multi-motor write in two steps 1 s apart (only the first write passed, the rest waited a full interval)
+	uORB::Subscription                            _parameter_update_sub{ORB_ID(parameter_update)};
 
 	// simulated sensors using the general-purpose driver wrappers
 	static constexpr uint8_t _MAX_GNSS_SENSORS = 2;
