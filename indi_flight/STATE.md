@@ -45,7 +45,10 @@ CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older 
 5. G8: drafts report/02_outer_loop_design.md and docs/en/config_mc/indi_control.md; open items in
    report/DOCS_DRAFT_S201.md (S213: code items resolved; identification user steps = G6; prettier/link check open).
    S213 finding: airframe requirement R1 (refuse to arm without eRPM) is not enforced by code (modelled fallback
-   only): G7/G8 decide enforce (firmware, after Q31) or reword R1.
+   only): G7/G8 decide enforce (firmware, after Q31) or reword R1. S215 drafts: report/01_inner_loop_design.md,
+   06_bringup_checklist.md (their "Unverified" sections are open G8 items). Missing: ch.3+ validation, limits, history
+   appendix (after Q31). G7 parameter pass: MC_INDI_ACT_TC yaml still says "round up" (overturned, D-OWNER-Q27);
+   pos module reads esc_status instance 0 only, no frozen/error-count check, 100 ms ESC age vs 20 ms in rate module.
 Rules: 1 session per inner-loop law change; parallel docker streams only for tolerance-insensitive probes, never gate
   evidence, never a docker build during gate flights; G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1. Next RC:
   S218 (RC203).
