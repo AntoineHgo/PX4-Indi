@@ -79,6 +79,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | - | none in flight. C212 halted at run 024 (committed 976c893cd8); do not resume before Q31 | - | results/g3_refly_actc_s212/ | - |
+| S215c | G7 checker defects (SELFTEST_G7_S194 item 9, g511:184, g510:115-119) + re-score | sonnet | results/g7_checkers_s215/README.md | re-brief from README |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
