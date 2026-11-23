@@ -15,6 +15,8 @@ GRID_noframes.tsv (2 earlier cells) is excluded from all statistics.
 | asym 3 down-slow | 14 | 0.599 / 0.651 / 0.646 | 0.899 / 0.977 / 0.969 |
 | asym 3 up-slow | 8 | 0.623 / 0.657 / 0.652 | 0.934 / 0.985 / 0.979 |
 
+NOTE S211: the numbers in this file fit the SITL truth instance; the bound used for Q28 is REFIT_INST0.md (telemetry
+instance 0: tau <= 3.9 %, r_mean up to 1.0039, delay offset +2.9 / +6.7 ms) and Q28_REVIEW.md.
 Per-motor time constants, max |est/true - 1| over 30 cells: tau_up 3.7 % (est biased high, +1.2..+3.7 %),
 tau_down 3.6 % (est biased low, -0.8..-3.6 %). Error grows with tau_slow (largest at tau_slow 3x0.033 s).
 tau_sym_hat sits near the harmonic-like mean of the two: about 0.6 tau_slow and 0.9-0.98 tau_mean at asym 3.

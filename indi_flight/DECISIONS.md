@@ -1328,7 +1328,8 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   `MC_INDI_INJ_AMP` within its range first, params only).
 
 ## D-ACTC-RULE (S209, proposal pending Q28): ACT_TC = identified tau_sym, G3 box r x tau_mean, r [0.88, 1.02]
-- Evidence: results/actc_grid_s209 (README: 0/30 failed, tau_up/down <= 3.7 %, tau_sym/tau_mean 0.90-1.00, never above);
+- Evidence: results/actc_grid_s209 (REFIT_INST0 on telemetry instance 0: 0/30 failed, tau_up/down <= 3.9 %, median-of-4
+  tau_sym/tau_mean 0.898-1.004, up to 0.4 % high; single motors 0.843-1.040; seed spread <= 2.0 %; Q28_REVIEW.md);
   BOX_MARGINS.md (box worst rate 30.6 deg / 3.4 dB, rate+att 19.9 deg at tau_mean x3 + 10 ms; fixed 0.033 unstable there).
 - Alternatives: r from the asym-dependent relation (B); ACT_TC = tau_slow (C, errs high, the side 283 failed on);
   rounding up (S53 rule, overturned by D-OWNER-Q27).

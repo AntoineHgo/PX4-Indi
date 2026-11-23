@@ -89,3 +89,13 @@ this question. This also explains A-59 (the delayed telemetry was never fitted).
 RESOLVED S209: refit on telemetry instance 0 (results/actc_grid_s209/REFIT_INST0.md, --esc-instance 0 now default):
 0/30 failed, tau_up/down <= 3.9 %, r_mean 0.898-1.004 (each bound within 0.003 of the truth fit), frames 3 seen
 (+3.8 ms delay). Box r [0.88, 1.02] and BOX_MARGINS unchanged. Q28 stands as written above; A-59 closed (hook works).
+CORRECTION S211 (independent review, results/actc_grid_s209/Q28_REVIEW.md): the box stands, the wording above does not.
+On telemetry instance 0: tau_up/down <= 3.9 % (not 3.7); delay offset +2.9 ms at frames 0 and +6.7 ms at frames 3 (not
++1.75); tau_sym (median of 4 motors) reaches 1.0039 x tau_mean on symmetric plants, so "never exceeds tau_mean by more
+than 0.2 %" and option A's "never errs high" are false: it errs high by up to 0.4 %. The upper edge 1.02 is the measured
+max + 1.6 %, not + 2 %; the lower edge 0.8983 x 0.98 = 0.880 holds. Limits added: the bound holds for the median of 4
+only (single motors 0.843-1.040, split by diagonal pair on the roll injector); the 2 % allowance equals the largest
+seed spread seen (2.0 %, 4 pairs), no slack; the linear model is flat in r from 1.02 to 1.05
+(box_margins_r_upper.tsv), so the upper edge rests on flight evidence only (283 fails at x1.5); delay_hat on instance 0
+includes telemetry delay and is never fed to a delay parameter. Review verdicts: A agree with these changes, box
+agree, B and C rejected.
