@@ -1,0 +1,62 @@
+{
+ "cell": "t0.5_a1_d0f0_s1",
+ "spec": {
+  "tau": 0.5,
+  "asym": 1,
+  "dir": "-",
+  "dly": 0,
+  "frames": 0,
+  "seed": 1
+ },
+ "true": {
+  "tau_up": 0.0165,
+  "tau_down": 0.0165
+ },
+ "run_cmd": [
+  "indi_project/docker/run.sh",
+  "-n",
+  "actcgrid_t0p5_a1_d0f0_s1",
+  "-t",
+  "420",
+  "--",
+  "python3",
+  "indi_flight/bench/run_scenario.py",
+  "--scenario",
+  "hover",
+  "--controller",
+  "indi_m3a",
+  "--model",
+  "quad5in",
+  "--seed",
+  "1",
+  "--sim-seed",
+  "1",
+  "--speed",
+  "4.0",
+  "--sim",
+  "v2",
+  "--params",
+  "indi_flight/results/actc_grid_s209/t0.5_a1_d0f0_s1/inj.params",
+  "--out",
+  "indi_flight/results/actc_grid_s209/t0.5_a1_d0f0_s1",
+  "--model-variant",
+  "tau_up=0.5,tau_down=0.5"
+ ],
+ "ident_cmd": [
+  "python3",
+  "indi_flight/bench/ident_actc.py",
+  "indi_flight/results/actc_grid_s209/t0.5_a1_d0f0_s1/flight.ulg",
+  "--json",
+  "indi_flight/results/actc_grid_s209/t0.5_a1_d0f0_s1/ident.json",
+  "--rpm-max",
+  "25783",
+  "--t0=24.0",
+  "--t1=76.0"
+ ],
+ "status": "done",
+ "t_start": 1795390879.9366522,
+ "run_rc": 0,
+ "wall_s": 41.36356234550476,
+ "ident_rc": 0,
+ "ident_out": "ACTC PASS  tau_up 16.8 ms  tau_down 16.2 ms  tau_sym 16.5 ms  delay 1.72 ms  gain 1.000  resid 0.038\n"
+}
