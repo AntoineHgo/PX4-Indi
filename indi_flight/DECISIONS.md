@@ -1332,6 +1332,7 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   BOX_MARGINS.md (box worst rate 30.6 deg / 3.4 dB, rate+att 19.9 deg at tau_mean x3 + 10 ms; fixed 0.033 unstable there).
 - Alternatives: r from the asym-dependent relation (B); ACT_TC = tau_slow (C, errs high, the side 283 failed on);
   rounding up (S53 rule, overturned by D-OWNER-Q27).
-- Frames 0-3 not in the grid (A-59 hook inert); 10 ms delay cells stand in. Owner decides the box (Q28, blocking G3).
-- Overturn: a G3 or G6 run whose failure is caused by r at a box edge (shown on a log); frames cells (after A-59 fix)
-  moving tau_sym by > 4 %.
+- Fit on telemetry instance 0 (REFIT_INST0.md; first pass read the truth instance, bounds within 0.003). Frames 3 applied
+  (+3.8 ms delay). Owner decides the box (Q28, blocking G3).
+- Overturn: a G3 or G6 run whose failure is caused by r at a box edge (shown on a log); a seed-2 or pitch-axis repeat moving
+  tau_sym by > 4 %.

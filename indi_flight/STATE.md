@@ -15,19 +15,15 @@
   independent review.
 
 ## Next actions (each names its gate item)
-0. G3 factor "telemetry latency 0-3 frames" (A-59): likely the fit read the truth instance, hook fine; but g3_run sets
-   SIM_GZ_ERPM_LAT by params file, read only in the constructor (GZMixingInterfaceESC.hpp:66) -> G3 frames inert.
-   One session, simplest injector, two keys (owner note 2026-11-21 point 2 style); if it does not fly, owner question
-   to drop the frames factor. Check: fitted delay +1.25 ms/frame with ident_actc on a hover (actc_grid.py cell d0f3).
-   Then G7 unit 8 alongside while Q28 is open.
+0. While Q28 is open: G7 (f) unit 8 (item 3 below) is the only unblocked gate work. If Q28 is still open after
+   unit 8 and its review, create WAIT_OWNER.
 CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older G7 list stay deferred until the ACT_TC
   ident decides whether firmware changes. G8 drafting only after the Q28 answer.
 1. G3/G6 ACT_TC identification (Q27 item 1): survey design/actc_ident_survey_s208.md -> one-page design note ->
    estimator + synthetic self-test (asym tau, delay, closed loop) -> second key -> offline error grid -> few SITL
    confirmation flights -> bound -> capped/two-sided ACT_TC rule with model margins on corners -> GATES G3 box
-   draft -> Q28. S209: grid flown + table + BOX_MARGINS + Q28 (rule A), BUT ident_actc.py:275 fitted the SITL TRUTH
-   esc_status instance (A59_CAUSE.md). NEXT: --esc-instance 0 (telemetry) fit on the 30 logs (task REFIT), re-table,
-   re-run box_margins.py if r range moves, update Q28 + G6 row. Then WAIT Q28: GATES box, G3 re-fly, G6 item 7.
+   draft -> Q28. DONE S209 (results/actc_grid_s209: README, REFIT_INST0 on telemetry instance 0, BOX_MARGINS; Q28
+   written, rule A). WAITS Q28: GATES G3 box text, G3 re-fly (300, frames hook works), G6 item 7.
    MAX_STRUCTURE 0.08 would fail SITL data if norm residual > 0.05 (PRETEST.md): revisit before G6 noisy runs.
    Next G3 scoring also: re-fly the 15 freeze-10 item-3 misses at speed 1; table class C skipped lines both stacks.
    g3_campaign_f10 chain: committed, verdict written S199 (GATES "G3 verdict at freeze-10"); nothing to rescore.
@@ -78,7 +74,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| REFIT | ident_actc --esc-instance 0 refit of 30 grid logs | sonnet | results/actc_grid_s209/REFIT_INST0.md, GRID_inst0.tsv | read REFIT_INST0.md; if missing re-launch |
+| - | none | | | |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
