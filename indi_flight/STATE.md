@@ -49,8 +49,8 @@ CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older 
    report/DOCS_DRAFT_S201.md (S213: code items resolved; identification user steps = G6; prettier/link check open).
    S213 finding: airframe requirement R1 (refuse to arm without eRPM) is not enforced by code (modelled fallback
    only): G7/G8 decide enforce (firmware, after Q31) or reword R1. S215 drafts: report/01_inner_loop_design.md,
-   06_bringup_checklist.md (their "Unverified" sections are open G8 items). Missing: ch.3+ validation, limits, history
-   appendix (after Q31). G7 parameter pass: MC_INDI_ACT_TC yaml still says "round up" (overturned, D-OWNER-Q27);
+   06_bringup_checklist.md, S216 A_history_errata.md (their "Unverified" sections are open G8 items). Missing: ch.3 G3/G6
+   sections and limits (after Q31); numbers in ch.3 follow any re-fly a Q31 fix causes. G7 parameter pass: MC_INDI_ACT_TC yaml still says "round up" (overturned, D-OWNER-Q27);
    pos module reads esc_status instance 0 only, no frozen/error-count check, 100 ms ESC age vs 20 ms in rate module.
 Rules: 1 session per inner-loop law change; parallel docker streams only for tolerance-insensitive probes, never gate
   evidence, never a docker build during gate flights; G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1. Next RC:
@@ -82,6 +82,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | - | none in flight. C212 halted at run 024 (committed 976c893cd8); do not resume before Q31 | - | results/g3_refly_actc_s212/ | - |
+| S216 | G8 ch.3 validation draft, passed gates G1/G2/G4/G5 only | sonnet | report/03_validation.md | re-brief from the file's "Status" line |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
