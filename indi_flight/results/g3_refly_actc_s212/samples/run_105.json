@@ -1,0 +1,237 @@
+{
+ "actc": {
+  "actc_ratio": 1.002981,
+  "mc_indi_act_tc": 0.017086,
+  "tau_mean": 0.516232
+ },
+ "airframe": "quad5in",
+ "block": 1,
+ "factors": {
+  "g1_ctrl_mult": {
+   "i_scale": {
+    "pitch": 1.28733,
+    "roll": 1.180841,
+    "yaw": 1.010686
+   },
+   "nominal": 1.0,
+   "pitch": 0.669879,
+   "roll": 0.924395,
+   "unit": "k = e / I_scale(axis): multiplier on nominal controller G1 (plant G1 ~ G1_nom / I_scale)",
+   "yaw": 0.986126
+  },
+  "g1_err": {
+   "nominal": 1.0,
+   "pitch": 0.862355,
+   "roll": 1.091563,
+   "unit": "e = realised controller G1 / plant G1 (alias of g1_ratio)",
+   "yaw": 0.996664
+  },
+  "g1_ratio": {
+   "nominal": 1.0,
+   "pitch": 0.862355,
+   "roll": 1.091563,
+   "unit": "e, log-uniform [0.8, 1.2] (Q22), controller G1 / plant G1",
+   "yaw": 0.996664
+  },
+  "gnss": {
+   "ekf_delay_ms": 86,
+   "latency_ms": 86,
+   "matched": true,
+   "mismatch_offset_ms": 0,
+   "nominal": 0,
+   "unit": "ms (SENS_GNSS0_DELAY = ekf_delay_ms; None = stock)"
+  },
+  "inertia_scale": {
+   "ixx": 1.180841,
+   "iyy": 1.28733,
+   "izz": 1.010686,
+   "nominal": 1.0,
+   "unit": "x nominal diag inertia"
+  },
+  "loop_delay": {
+   "act_ms": 4.375,
+   "imu_ms": 4.375,
+   "nominal": 0.0,
+   "steps": 7,
+   "total_ms": 8.75,
+   "unit": "ms, 1.25 ms steps, 50 % actuator path / 50 % IMU path"
+  },
+  "mass_scale": {
+   "nominal": 1.0,
+   "unit": "x nominal mass",
+   "value": 0.924965
+  },
+  "saturation": {
+   "hover_margin": 2.0,
+   "nominal": 1.0,
+   "on": false,
+   "scale": 1.0,
+   "unit": "available thrust scale = 0.27 x mass_scale (2.0 x hover thrust); replaces sag"
+  },
+  "tau_asym": {
+   "drawn_ratio": 1.788368,
+   "inverted": true,
+   "nominal": 1.0,
+   "unit": "realised tau_down / tau_up (after the 0.5 floor on the fast side)",
+   "value": 0.939029
+  },
+  "tau_down": {
+   "nominal": 1.0,
+   "unit": "x nominal timeConstantDown, in [0.5, 3]",
+   "value": 0.5
+  },
+  "tau_scale": {
+   "nominal": 1.0,
+   "unit": "x nominal motor tau of the SLOW direction (Q22)",
+   "value": 0.532465
+  },
+  "tau_up": {
+   "nominal": 1.0,
+   "unit": "x nominal timeConstantUp, in [0.5, 3]",
+   "value": 0.532465
+  },
+  "tel_dropout": {
+   "nominal": 0.0,
+   "on": false,
+   "prob": 0.0,
+   "unit": "probability of a dropped eRPM frame, whole flight"
+  },
+  "tel_frozen": {
+   "duration_s": 1.0,
+   "motor": 2,
+   "nominal": null,
+   "on": true,
+   "start_offset_s": 4.193813,
+   "unit": "s after anchor (main-segment start); rpm bit-identical for 1 s on one motor"
+  },
+  "tel_latency": {
+   "frames": 0,
+   "nominal": 0,
+   "unit": "eRPM frames"
+  },
+  "tel_loss": {
+   "duration_s": 2.0,
+   "motor": 2,
+   "nominal": null,
+   "on": false,
+   "start_offset_s": null,
+   "unit": "s after anchor (main-segment start); total eRPM loss on one motor"
+  },
+  "thrust_sag": {
+   "nominal": 1.0,
+   "on": true,
+   "ramp_s": 10.0,
+   "scale": 0.709869,
+   "unit": "available thrust scale, uniform, all motors"
+  },
+  "vibration": {
+   "acc_ms2": 1.36772,
+   "gyr_rads": 0.068386,
+   "mult": 1.36772,
+   "nominal": 1.0,
+   "unit": "x the x1 point per rotor",
+   "x1_point": {
+    "acc_ms2": 1.0,
+    "gyr_rads": 0.05,
+    "status": "provisional (S94 dec. 1)"
+   }
+  },
+  "weak_motor": {
+   "motor": 3,
+   "nominal": 1.0,
+   "on": true,
+   "scale": 0.913098,
+   "unit": "one motor available thrust scale"
+  },
+  "wind": {
+   "dir_deg": 236.505037,
+   "gust_amp_ms": 3.480988,
+   "gust_offset_s": 0.0,
+   "gust_peak_total_ms": 5.530785,
+   "nominal": 0.0,
+   "steady_ms": 2.049797,
+   "unit": "m/s, direction = where the air moves to; gust added on the steady wind"
+  }
+ },
+ "flight_s": 100.0,
+ "g4_typical_noise": {
+  "profile": null,
+  "status": "placeholder: G4 typical profile does not exist yet"
+ },
+ "gz_seed": 306288518,
+ "hooks": {
+  "disturbance": {
+   "dir_deg": 236.505037,
+   "gust_amp_ms": 3.480988,
+   "profile": "gust_x (needs parametrised steady/peak/direction)",
+   "start": "anchor (main-segment start); gust_offset_s not used (fixed profile timing)",
+   "steady_ms": 2.049797
+  },
+  "model_variant": {
+   "ixx": 1.180841,
+   "iyy": 1.28733,
+   "izz": 1.010686,
+   "mass": 0.924965,
+   "tau": 0.532465,
+   "tau_down": 0.939029,
+   "tau_up": 1.0
+  },
+  "px4_params": {
+   "MC_INDI_G1_P": {
+    "x_nominal": 0.669879
+   },
+   "MC_INDI_G1_R": {
+    "x_nominal": 0.924395
+   },
+   "MC_INDI_G1_Y": {
+    "x_nominal": 0.986126
+   },
+   "SIM_GZ_ERPM_LAT": 0
+  },
+  "run_scenario_args": {
+   "--dly-act": 4.375,
+   "--dly-imu": 4.375,
+   "--erpm-drop": 0.0,
+   "--gnss-delay": 86,
+   "--gps-dly": 86,
+   "--imu-noise-scale": null,
+   "--model": "quad5in",
+   "--sim": "v2",
+   "--sim-seed": 306288518,
+   "--vib-acc": 1.36772,
+   "--vib-gyr": 0.068386
+  },
+  "timed": [
+   {
+    "hook": "SIM_GZ_THR_SC",
+    "ramp_s": 10.0,
+    "ramp_to": 0.709869,
+    "t0": "anchor (main-segment start)"
+   },
+   {
+    "hook": "SIM_GZ_EC_MAX{motor+1} scaled (motor_fault)",
+    "motor": 3,
+    "t0": "anchor (main-segment start)",
+    "thrust_scale": 0.913098
+   },
+   {
+    "duration_s": 1.0,
+    "hook": "SIM_GZ_ERPM_FRZ bit",
+    "motor": 2,
+    "t_after_anchor_s": 4.193813
+   }
+  ]
+ },
+ "kind": "lhs",
+ "master_seed": 173,
+ "mode": "position",
+ "run_index": 105,
+ "sampler_seed": 5103137971790461977,
+ "schema": 1,
+ "source_run": 220,
+ "timeline": {
+  "hold_s": 20.0,
+  "hold_start_nominal_s": 80.0,
+  "note": "event offsets are seconds after the main-segment (traj/stick) anchor"
+ }
+}
