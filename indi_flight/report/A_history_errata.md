@@ -95,7 +95,7 @@ not controller code (A.6).
 | Q3 | S25, answered S50 | G1.6(a) mode-instant wording restated, since 2.5 ms cannot be met without lockstep gz |
 | Q4 | S32, answered S50 | G1 frozen with written evidence limits so stage 2 could start; new G1.7 provenance item |
 | Q6 | S119 | identification flown by INDI itself in a conservative configuration (answer B) |
-| Q8-Q15 | S143-S174, acted S175 | test-defect fixes after the first G5 and G4 tests (D-OWNER-Q8-Q15); individual answers not read, see Unverified |
+| Q8-Q15 | S143-S174, acted S175 | test-defect fixes after the first G5 and G4 tests (D-OWNER-Q8-Q15); answers in `DECISIONS.md` D-OWNER-Q8-Q15 (l.950-961), D-OWNER-Q17-Q18 (l.1042), D-OWNER-Q20-Q22 (l.1143-1147) |
 | Q17, Q18 | S178-S180 | G5.10 stabilized recovery criterion and G4 chatter windows containing touchdown redefined (D-OWNER-Q17-Q18) |
 | Q19, Q20 | S183, S184-S187 | G4 chatter check skips 3 s after a mode change, with a PID guard; Q20 fixed which RMS the guard compares; G4 PASSED under it S187 |
 | Q21, Q22 | S185-S187 | G5.10 SAT set-up; G3 error box narrowed, attitude P not changed (P 4.7 breaks G2-STEP and outer xy phase margin) |
@@ -167,16 +167,10 @@ open and blocks G3 and G6 (`indi_flight/QUESTIONS.md` line 69). No outcome is st
 
 ## Unverified
 
-- Freeze numbers 1 to 5 were not found; the first recorded freeze is D-FREEZE-6 (stage-6 freeze). Whether earlier
-  numbering existed was not checked.
 - Exact first session of stages 5, 6 and 7 as defined by the journal was not found by keyword; the ranges in A.2 come
-  from the dated entries cited, and stage 1 and 2 ends from JOURNAL lines 184-185 only.
-- Q8-Q15, Q17, Q18 and Q21 individual answers were not read; only their decision headings (D-OWNER-Q8-Q15,
-  D-OWNER-Q17-Q18) are cited.
+  from the dated entries cited, and stage 1 and 2 ends from JOURNAL lines 184-185 only. [open: needs journal read]
 - `indi_flight/LESSONS.md` lesson 1 labels the 5 Hz metric defect "Stage 1"; the review places it in the archive's
-  `bench/metrics.py` (stage 8 trajectory metric). The archive-1 row follows the review.
-- `indi_flight/results/errata.md` E-1 itself marks the x500 scope (T6, T7, H2, H3) as UNVERIFIED against the archived
-  run log. Only E-1 exists in that file.
-- Whether this project re-scored any archive result with the corrected metric was not checked.
-- G1 first-test session (S19-S24) is inferred from JOURNAL lines 73-75 and Q2 (S24).
-- Q31 outcome is not known and not stated.
+  `bench/metrics.py` (stage 8 trajectory metric). The archive-1 row follows the review. [open: S217 `LESSONS.md:10` indeed labels it "Stage 1"; conflict with the review stays, owner/archive check needed]
+- Whether this project re-scored any archive result with the corrected metric was not checked. [open: not checked]
+- G1 first-test session (S19-S24) is inferred from JOURNAL lines 73-75 and Q2 (S24). [open: needs journal read]
+- Q31 outcome is not known and not stated. [open: waits Q31]

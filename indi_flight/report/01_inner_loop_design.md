@@ -316,24 +316,25 @@ flown on the frozen pair (g2_margins.md 2.2, section 4). The model-only fallback
 ## Unverified
 
 - Margin numbers come from `g2_margins.md` and `GATES.md`, not from the result folders; the pre-freeze rows used
-  binaries other than FREEZE-10 and are listed as trend only.
+  binaries other than FREEZE-10 and are listed as trend only. [open: needs re-scoring of result folders]
 - The G3 C3 corner description is taken from the S213 verdict text; the "mass 1.3" figure has no unit in the source and
-  is not interpreted.
+  is not interpreted. [open: waits Q31 (G3 verdict); unit of mass 1.3 not stated in source]
 - `J_r = 5e-6` (rotor inertia) behind `G2_Y = 27` is assumed in D-G2Y-DERIVE; the IV fit of `G1_Y` (163 to 166) disagrees with
-  the derived 205 (Q:10 comment, A-43/A-44 unresolved).
+  the derived 205 (Q:10 comment, A-43/A-44 unresolved). [open: needs identification; A-43/A-44 unresolved]
 - `MC_INDI_ACT_TC = 0.033` equals the quad5in model time constant. The identification grid
   (`results/actc_grid_s209/README.md`, symmetric cells) returns `tau_sym` within 0.4 % of the true value on this plant,
-  so the quad5in value agrees with D-ACTC-RULE in simulation. The params file comment (Q:20) still reads UNVERIFIED.
+  so the quad5in value agrees with D-ACTC-RULE in simulation. The params file comment (Q:20) still reads UNVERIFIED. [open: hardware; S217: params comment `bench/params/quad5in_indi_defaults.params:20` still reads UNVERIFIED]
 - `MC_INDI_DELAY = 0` is computed from the bench filter configuration (Q:24); valid for other `IMU_*` cutoffs is
-  UNVERIFIED (Q:24).
-- Where the control allocator saturates and which axis it favours was not read in this chapter (stock allocator).
-- The cause of the lower freeze-10 spot PM compared with the pre-freeze rows is not established here.
+  UNVERIFIED (Q:24). [open: needs flight with other IMU_* cutoffs]
+- Where the control allocator saturates and which axis it favours was not read in this chapter (stock allocator). [open: stock allocator out of scope]
+- The cause of the lower freeze-10 spot PM compared with the pre-freeze rows is not established here. [open: needs cause search or flight]
 - Exact filter orders of the sensor chain are taken from the library header text (LH:150-153) and the module, not from
-  `src/modules/sensors`.
-- Whether ID_OK was 1 in every G2 and G5 flight: stated from the bench-run note in Q:16, not checked per run.
+  `src/modules/sensors`. [open: `src/modules/sensors` not read]
+- Whether ID_OK was 1 in every G2 and G5 flight: stated from the bench-run note in Q:16, not checked per run. [open: needs per-run param check of run logs]
 - Line numbers refer to the working tree at HEAD; unit tests (`indi_rate_control_test.cpp`, module test files) were not
   read. Headers for `RateSetpointWatchdog` and the feed-forward gate were read only through their `.cpp` and one
-  constant each.
+  constant each. [open: unit tests not read]
 - The module yaml `MC_INDI_ACT_TC` text claims margins hold up to twice the true time constant with the lead; this is
-  the S53 rule overturned by D-OWNER-Q27. Checked S215: the yaml still says "when unsure, round up" (module.yaml:127-128);
-  the text is corrected in the G7 parameter pass.
+  the S53 rule overturned by D-OWNER-Q27. Checked S215 and S217: the yaml still says "when unsure, round up"
+  (`src/modules/mc_indi_rate_control/mc_indi_rate_control_params.yaml:126-128`; the earlier citation "module.yaml:127-128" was a wrong path);
+  default there is 0.05. [open: waits the G7 parameter pass]

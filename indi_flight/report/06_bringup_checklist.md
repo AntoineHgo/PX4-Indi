@@ -26,7 +26,7 @@ Parameters are cited as `file:line` of their definition in the yaml (the `defaul
 | `MC_INDI_ACT_BLD` | 1.0 s (yaml:180) | blend measured/modelled actuator torque |
 | pos module ESC age | 100 ms, hard-coded `kEscMaxAge` (PC/McIndiPosControl.cpp:117, 213) | measured collective thrust freshness |
 | `MC_INDI_POS_DLY` | 1 cycle (PC/mc_indi_pos_control_params.yaml:27) | delay on the ESC based thrust |
-| pole count | `DSHOT_MOT_POL<n>`, code fallback 14 (DS/DShot.cpp:1023-1027); esc_rpm = erpm / (pole_count / 2) (DS/DShot.cpp:793, 803) | mechanical rpm used by INDI |
+| pole count | `DSHOT_MOT_POL<n>`, default 14 (src/drivers/dshot/module.yaml:87; code fallback 14, DS/DShot.cpp:1023-1027); esc_rpm = erpm / (pole_count / 2) (DS/DShot.cpp:793, 803) | mechanical rpm used by INDI |
 | start | `MC_INDI_EN`, `MC_INDI_POS_EN` select the modules at boot (ROMFS/px4fmu_common/init.d/rc.mc_apps:17-22, 57-62) | no stock fallback |
 
 Behaviour to know before reading the checks:
@@ -117,10 +117,10 @@ SITL validated the estimators only (D-IDENT); identification on a real log is un
 
 ## 6.7 Unverified
 
-- Required telemetry rate (B3), acceptable telemetry latency in ms (B4; G2 value "not found", g2_margins.md:9-10) and the minimum loop rate and CPU load (B8).
-- Tolerance of `esc_rpm` against a tachometer (B5), and the real trip time of the frozen detector (A-57 open).
-- Whether the real DShot driver repeats a stale `esc_rpm`, zeroes it or clears `esc_online_flags` on telemetry loss: read the driver only for pole count and publish path; the loss behaviour is the thing B6 measures.
-- Behaviour of a second `esc_status` instance on a real board.
-- Whether the guard parameters `ERPM_TO`, `ERPM_FRZ`, `SP_TO`, `DT_MAX` are tuned for real hardware.
-- Whether `MC_INDI_ACT_TC` yaml text (yaml:126-128) is to be updated; `ident_actc.py` use on a hardware log (written for sim logs).
-- Default values quoted here were read from the yaml; the `default:` line numbers were not individually cited. `DSHOT_MOT_POL` default 14 is a code fallback, the parameter's own default was not read.
+- Required telemetry rate (B3), acceptable telemetry latency in ms (B4; G2 value "not found", g2_margins.md:9-10) and the minimum loop rate and CPU load (B8). [open: needs flight/hardware]
+- Tolerance of `esc_rpm` against a tachometer (B5), and the real trip time of the frozen detector (A-57 open). [open: needs tachometer test]
+- Whether the real DShot driver repeats a stale `esc_rpm`, zeroes it or clears `esc_online_flags` on telemetry loss: read the driver only for pole count and publish path; the loss behaviour is the thing B6 measures. [open: needs hardware (B6)]
+- Behaviour of a second `esc_status` instance on a real board. [open: needs real board]
+- Whether the guard parameters `ERPM_TO`, `ERPM_FRZ`, `SP_TO`, `DT_MAX` are tuned for real hardware. [open: needs hardware flight]
+- Whether `MC_INDI_ACT_TC` yaml text (yaml:126-128) is to be updated; `ident_actc.py` use on a hardware log (written for sim logs). [open: waits G7 parameter pass (yaml:126-128 unchanged at S217); `ident_actc.py` on hardware needs a flight]
+- Default values quoted here were read from the yaml; the `default:` line numbers were not individually cited. [open: line numbers] (Closed S217: `DSHOT_MOT_POL` default 14 is also the parameter default, `src/drivers/dshot/module.yaml:87`.)

@@ -216,8 +216,8 @@ Result per row (`F10/G5_VERDICT_AUDIT.md` row table; rows complete at S198 per `
 | G5.9c first second | command change <= 5 % of full scale | <= 0.01 % | 0.93-1.02 % |
 | G5.9d take-off after re-arm | handover step <= 10 % hover, dip <= 0.3 m | 4.0-4.7 %, dip 0 m | PASS |
 | G5.10 stabilized full-scale | no LOC; tilt <= MPC_MAN_TILT_MAX + 5 deg; att err <= 5 deg 1 s after centre | 3/3 (tilt 35.50, err 0.24) | 3/3 |
-| G5.11 ekf_yaw | excess <= 0.12 deg over no-event p95 per the verdict text; excursion <= 0.5 m | 3/3 (s2 excess -0.33 deg, s3 +0.12 deg, s3 excursion 0.040 m) | see limits |
-| G5.11 ekf_xy | truth excursion <= 0.248 m per the verdict text (Q12 B limit in the audit: 0.5 m) | 3/3, 0.234-0.248 m | excursion PASS |
+| G5.11 ekf_yaw | excess <= 1 deg over no-event p95; excursion <= 0.5 m (`F10/G5_SCORES.md:160`) | 3/3 (s2 excess -0.33 deg, s3 +0.12 deg, s3 excursion 0.040 m) | see limits |
+| G5.11 ekf_xy | truth excursion <= 0.5 m, no oscillation (Q12 B; `F10/G5_SCORES.md:160`) | 3/3, 0.234-0.248 m | excursion PASS |
 | F-7 | edge step <= 10 % of hover in every take-off | no thrust step at ramp to flight edge | |
 
 Worst-case details (`F10/G5_5_RESCORE_Q25.md`): G5.5 worst INDI margin to H_lim o1 +0.049, o2 +0.066, o3 +0.043, o4
@@ -258,13 +258,7 @@ pending: see GATE_STATUS.tsv
 
 ## Unverified
 
-- `report/g2_margins.md` was only cited for method; its S-era margin tables were not compared with the FREEZE-10 values.
-- G2 limits: the Q13, Q16, Q19 amendment text was read through `F10/G2_SCORES.md`, not in `GATES.md` directly. The DM wording "never binding" is the scorer's.
-- G4 thresholds for effort are the PROPOSED table in `GATES.md` section 4; I did not confirm it was not changed by the S175 amendments (Q8-Q15) beyond the chatter and item 2 changes found.
-- G4 item 1 and item 2 definitions were not read; only their results (PASS) are quoted.
-- G5 table: the G5.11 limits differ in two places. The verdict text says "excess <= 0.12 deg" (ekf_yaw) and "truth excursion <= 0.248 m" (ekf_xy), which read as measured worst values rather than limits; the audit states the limits as 1 deg excess and 0.5 m. I report the audit limits in 3.5 above only where unambiguous; the two cells written with "per the verdict text" should be checked.
-- G5 rows G5.1-G5.7 results come from the audit table written S197 before the S198 gap flights; the S198 verdict says they are unchanged.
-- G5 G5.10 PID flight values are not given in the sources read.
-- Reproduce commands for G1.1 (`bench/gate_g1.sh`) and G4 (`bench/gate_g4.sh`) come from `GATES.md` definitions, not from the FREEZE-10 evidence; the S193 G4 scoring command was not found in `F10/G4_SCORES.md`.
-- `results/g5_gaps_s198/` named in `GS` does not exist at that path; it is `results/freeze10_s193/g5_gaps_s198/`.
-- Hole-rate numbers for the G2 and G4 flights are not tabulated here beyond the re-fly cell.
+- `report/g2_margins.md` was only cited for method; its S-era margin tables were not compared with the FREEZE-10 values. [open: not compared]
+- G5 rows G5.1-G5.7 results come from the audit table written S197 before the S198 gap flights; the S198 verdict says they are unchanged. [open: needs re-read of the S197 audit versus S198 verdict]
+- Reproduce commands for G1.1 (`bench/gate_g1.sh`) and G4 (`bench/gate_g4.sh`) come from `GATES.md` definitions, not from the FREEZE-10 evidence; the S193 G4 scoring command was not found in `F10/G4_SCORES.md`. [open: `results/freeze10_s193/g4_score.sh` exists (S217 ls) but was not read to confirm it is the S193 scoring command]
+- Hole-rate numbers for the G2 and G4 flights are not tabulated here beyond the re-fly cell. [open: not tabulated]
