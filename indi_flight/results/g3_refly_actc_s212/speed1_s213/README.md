@@ -51,3 +51,34 @@ Wind 1.66 m/s steady + gust amp 7.34 m/s (peak 9.0 m/s), towards 164.9 deg. Thru
 - Key-1 RMS numbers use `max_rms_ratio_flagged`; if the S199 convention was another field the key-1 number may differ.
 - One flight per stack; INDI s1 vs s4 difference is one sample each, run-to-run spread at speed 1 not measured.
 - Not committed.
+
+## idx 024 / draw 264 (S213, abort_flight halt of C212)
+Run as for 022: `g3_chain.sh start .../indi_024 24 24 --samples .../samples --speed 1` and `fly_pid_run.py 24` (dry run: argv equal to speed-4 run_024
+and to the speed-1 INDI run). One attempt each, no retry. Draw, g3_params.txt and g3_scenario_overrides.json of indi_024 and pid_024 equal `../run_024`
+(MC_INDI_ACT_TC 0.017749 in all).
+
+Plant check vs freeze-10 draw 264 (`g3_campaign_f10/run_264/g3_draw.json`): `factors`, `hooks`, `gz_seed` identical (same plant, wind, delays, vibration,
+weak motor, saturation). Only `actc`, block, run_index and source_run differ. ACT_TC: freeze-10 0.033 s (params file); C212 run_024 0.017749 s
+(r = 0.9755 x tau_mean 0.5513 x 0.033; fast plant, tau_up 0.5 / tau_down 0.603).
+
+Weak motor: index 3 (4th motor, 0-based `weak_motor.motor` 3), available thrust scale 0.709 (-29.1 %). Saturation: available thrust scale 0.351
+(2.0 x hover margin, 0.27 x mass 1.3); motor command saturates at 1.0, so the weak motor's effective ceiling is 0.351 x 0.709 = 0.249 of nominal max thrust.
+Other draw values: mass x1.3, inertia ixx 1.165 iyy 1.167 izz 0.815, delays 5 steps (act and IMU).
+
+| | INDI s4 freeze-10 (S199 campaign, ACT_TC 0.033) | INDI s1 S199 (ACT_TC 0.033) | INDI s4 C212 (ACT_TC 0.017749) | INDI s1 C212 (this) | PID s1 (this) |
+|---|---|---|---|---|---|
+| outcome | ABORT tilt > 60 deg at 60.67 s | ABORT tilt > 60 deg at 60.91 s | ABORT tilt > 60 deg 0.5 s at 60.78 s (74.4 deg) | ABORT tilt > 60 deg 0.5 s at 61.03 s (114 deg) | flies, no LOC; item 1 PASS tilt max 40.4 deg, height drop 0.0 m (k1 and k2) |
+| scoring | unscored | unscored | INVALID/INVALID | INVALID/INVALID | k1 FAIL item 2 p 2.0 Hz 21.3 dps (item 3 PASS 0.136); k2 FAIL item 2 p 2.0 Hz 22.1 dps (item 3 k2 ungated, mode trajectory, 2.448 m, as in 022) |
+
+The tilt watchdog trips within 0.4 s in all four INDI flights (60.67-61.03 s): the loss of control happens at the same point of the trajectory for both
+ACT_TC values and both speeds. PID on the same draw does not lose control.
+
+INDI, last 2 s before the abort (pyulog, actuator_motors and vehicle_angular_velocity, 0.25 s bins; log time, the log ends at the abort):
+- s1 C212: max motor command 1.00, reached only by motor index 3 (the weak one); the others peak 0.69-0.70. Motor 3 is >= 0.99 in 15 % of the samples of the
+  last 2 s, so 1 motor at the cap at any time. Rates are calm until 1.2 s before the end (max 16-54 dps), then pitch rate q reaches 195-206 dps first
+  (p 95, r 153 in the same bin), motor 3 at 1.0 from about 0.5 s before the end. First diverging axis: pitch (q), yaw rate rising at the same time.
+- s4 C212: max command 1.00 (motor 3, 26 % of samples >= 0.99, others <= 0.77). Already oscillating at the start of the window (p 179, q 156 dps, then r 147,
+  q 180 dps): first diverging axis not readable from a 2 s window.
+- "At the cap" is read as command >= 0.99; 0.351 is a thrust scale, not a command level.
+Unverified: the first-axis call for s1 rests on one 0.25 s bin where p, q and r grow together; no longer window or setpoint comparison was done.
+The ulog script was kept in the session scratchpad only, not in the repo.
