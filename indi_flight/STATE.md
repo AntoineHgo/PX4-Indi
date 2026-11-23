@@ -15,8 +15,8 @@
   independent review.
 
 ## Next actions (each names its gate item)
-0. While Q28 is open: G7 (f) unit 8 (item 3 below) is the only unblocked gate work. If Q28 is still open after
-   unit 8 and its review, create WAIT_OWNER.
+0. Q28 open, unit 8 done (b34adf0c95) and reviewed (F10_UNIT8_REVIEW.md, PASS with MINORs): no unblocked gate
+   work -> WAIT_OWNER (S210). On the answer: act on Q28 first.
 CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older G7 list stay deferred until the ACT_TC
   ident decides whether firmware changes. G8 drafting only after the Q28 answer.
 1. G3/G6 ACT_TC identification (Q27 item 1): survey design/actc_ident_survey_s208.md -> one-page design note ->
@@ -26,11 +26,11 @@ CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older 
    written, rule A). WAITS Q28: GATES G3 box text, G3 re-fly (300, frames hook works), G6 item 7.
    MAX_STRUCTURE 0.08 would fail SITL data if norm residual > 0.05 (PRETEST.md): revisit before G6 noisy runs.
    Next G3 scoring also: re-fly the 15 freeze-10 item-3 misses at speed 1; table class C skipped lines both stacks.
-   g3_campaign_f10 chain: committed, verdict written S199 (GATES "G3 verdict at freeze-10"); nothing to rescore.
+   g3_campaign_f10 chain: committed, 297 scored + 3 aborts (039/245/264), verdict written S199; re-checked S210.
 2. G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
 3. G7 open items: (f) F-10 clean-up per results/g7_s198/F10_PLAN.md (build dir build/f10_sitl, unit tests in
-   build/px4_sitl_test). Next unit 8 (yaml/msg/ROMFS/Kconfig, param-metadata diff check; yaml text fixes LND_SLEW unit, PINJ_* long text from
-   report/DOCS_DRAFT_S201.md), then unit 9 (public renames listed in F10_UNIT2..7 "not renamed"), then the
+   build/px4_sitl_test). Units 1-8 done; unit 8 review MINORs (wording, F10_UNIT8_REVIEW.md) go into the
+   whole-branch pass. Then unit 9 (public renames listed in F10_UNIT2..7 "not renamed"), then the
    independent F-10 review over the whole branch + id grep. Never during gate flights.
    (g) build check of indi-fw-pr with the worktree OUTSIDE the repo (re-run make_fw_branch.sh --force-recreate after
    any firmware commit; quad5in model lives in indi_flight/sim, not in the branch). v6x flash overflow 23.5 kB ->
