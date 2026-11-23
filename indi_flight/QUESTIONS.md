@@ -90,3 +90,14 @@ Options:
   probe. That costs more sessions.
 Meanwhile: nothing flies. G8 drafting continues (not decided by Q30/Q31); G6 item 7 waits. Q30 stays open for the next campaign.
 Blocked: G3, G6. Not blocked: G8 drafting, G7 items that do not touch firmware.
+ADDENDUM S214 (owner interactive session, owner allowed a stock-PX4 change for the injector; not an answer):
+results/q31_injector_fix_s214/README.md. (1) The simulator bridge applied SIM_GZ_EC_MAX writes at most once per
+second, so every C3 flight before S214 (freeze-10 264, C212 run 024 and their speed-1 re-flies) got a CCW-only limit
+for 1 s, then a sudden CW limit: GATES 2 run validity fails on them; the "CW rotor-speed collapse" of Q27 item 4 is this
+artefact. Fixed in f110361a33 (sim only); binary 903eae63 = FREEZE-10 sources + fix, only GZBridge symbols differ, the
+other frozen build files match. (2) On the fixed binary draw 264 still loses control for INDI (tilt 60 deg at 59.9 s)
+and PID flies it (37 deg): the LOC is real and INDI-specific. (3) Yaw is no longer involved (yaw torque sp <= 0.06), so
+roll/pitch-over-yaw priority is not the mechanism; INDI's pitch rate overshoots (+194 dps) and the measured torque
+then lags the commanded torque (-0.02..-0.04 vs -0.09) until the tilt is lost. Inferred: the nominal W_MAX
+normalisation of the measured torque after a max-rotor-speed loss. Factor restoration (option B) can now run on a
+valid fault. Open for the owner: which binary G3 uses from now on (g3_chain.sh still pins d220e193).

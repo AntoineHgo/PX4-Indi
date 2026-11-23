@@ -16,6 +16,9 @@
   independent review.
 
 ## Next actions (each names its gate item)
+-1. S214: build/px4_sitl_default/bin/px4 is now 903eae63 (FREEZE-10 sources + GZBridge param fix f110361a33; old
+   binary kept as px4.freeze10_d220e193). Do NOT rebuild it from HEAD. g3_chain.sh pins d220e193: which binary G3 uses
+   is in Q31 (addendum). Pre-S214 C3 runs fail GATES 2 validity (results/q31_injector_fix_s214/README.md).
 0. G3/G6: Q31 OPEN (A stop + limit, B factor restoration on draw 264 then one fix probe, C saturation design)
    blocks G3 and G6; act on the answer first. If B: sonnet agent restores draw-264 factors/hooks to nominal one at
    a time at speed 1 (single-index chain dirs as speed1_s213, method in speed1_s213/README.md), writes

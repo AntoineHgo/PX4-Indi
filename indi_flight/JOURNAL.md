@@ -1910,3 +1910,4 @@ the owner's call; the x0.5..3 result is reported as is in either case.
   pass). G7 checker defects closed: offb_vel/passthrough verdict, LOC, empty-topic INVALID, 8 break-checked tests,
   re-score of G5.5 seeds 1-3 and S133 logs unchanged (results/g7_checkers_s215). Gate progress: G7 open-items list
   (checker defects closed), G8 chapters 1 and 6 drafted.
+- S214 (2026-11-23, owner interactive): Q31 cause search. Simulator injector defect found and fixed (GZBridge 1 s param interval split multi-motor EC_MAX writes 1 s apart; f110361a33, owner allowed the stock change); binary 903eae63 (FREEZE-10 sources + fix) built and checked; draw 264 re-flown s1 on it: INDI LOC, PID 37 deg. Evidence results/q31_injector_fix_s214/README.md; Q31 addendum. Gate progress: G3 C3 fault now applied as drawn; pre-S214 C3 runs fail GATES 2 validity; the 264 LOC is real.
