@@ -56,3 +56,28 @@ full text in JOURNAL.md S207).
 
 Q27 closed S208 (owner answer: identify ACT_TC first, no box change now; acted on in GATES "Owner amendments S208",
 DECISIONS D-OWNER-Q27; full text in JOURNAL.md S208).
+
+## Q28 (S209, 2026-11-23): G3 controller-ACT_TC box and ACT_TC rule from the measured identification bound. BLOCKING for G3 (test definition) and for G6 item 7 ordering
+Context (Q27 item 1, GATES 6c):
+- Estimator `bench/ident_actc.py` (two keys; off-grid delay fix 2dd2110a0c) flown on the 30-cell grid of 6c
+  (`results/actc_grid_s209/README.md`): plant tau_slow x0.5..3 of 33 ms, asym 1 / 3 down-slow / 3 up-slow, delay 0 / 10 ms.
+- 0/30 failed identifications. Per motor tau_up and tau_down within 3.7 %; delay recovered within 0.1 ms (+1.75 ms offset).
+- The single tau the firmware takes (symmetric fit tau_sym) returns a mean, never tau_slow: tau_sym / tau_mean = 0.996-1.002
+  (asym 1), 0.90-0.98 (asym 3); tau_sym / tau_slow = 0.60-0.66 at asym 3. It never exceeds tau_mean by more than 0.2 %.
+- Limits: telemetry frames 0-3 NOT applied (simulator hook inert, A-59; the 10 ms delay cells cover more delay than
+  3 frames); one seed except 4 corners; roll injector only; sim speed 4.
+- Model margins at the box corners (`results/actc_grid_s209/BOX_MARGINS.md`, same method as Q27, 800 Hz, worst over
+  G1 x0.8/1.2): proposed box rate 30.6 deg / 3.4 dB / 10.4 ms, rate+att 19.9 deg / 3.2 dB (corner tau_mean x3, 10 ms,
+  asym 3); fixed 0.033 (freeze-10 campaign) rate+att UNSTABLE at the same corner. Symmetric plants: box rate+att 32 deg
+  vs fixed 5.7 deg. Below G2's 45 deg / 6 dB at the slow + 10 ms corners: reported as a limit per Q27 item 3.
+Options:
+- A (recommended). Rule: MC_INDI_ACT_TC = median over motors of the identified tau_sym, no rounding, no cap (the
+  estimator never errs high; 283 showed erring high is the harmful side). G3 box: controller ACT_TC = r x plant tau_mean,
+  r drawn uniform [0.88, 1.02] (measured 0.90-1.00 plus 2 % estimator error each side), independent of the other draws.
+- B. Same rule, r drawn from the asymmetry-dependent measured relation (r = 1 at asym 1, 0.90-0.98 at asym 3) plus
+  +-4 %. Closer to reality, harder to explain; margins nearly the same.
+- C. Rule ACT_TC = identified tau_slow (from tau_up/tau_down). Matches the slow motor but the controller then runs
+  above the mean on asymmetric motors, the side 283 failed on.
+Meanwhile (not decided by this question): fix the telemetry-latency hook (A-59, one session, simplest injector, two
+keys; if it does not fly after that session, I ask to drop the frames factor), and G7 unit 8. No G3 or G6 item-7 flight.
+Blocked: G3 re-fly and G6 item 7 only.

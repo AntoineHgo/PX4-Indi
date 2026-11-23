@@ -3,7 +3,8 @@
 ## Status
 - Stage: 6 (validation). FREEZE-10 (D-FREEZE-10): firmware 7fe6206fcc, config g5_freeze_s157 params (XY gains at
   firmware defaults 1.2/2.4). Later firmware commits behaviour-neutral (D-G7-NUTTX-BUILD, D-F10-NEUTRAL).
-- Gates: see GATE_STATUS.tsv. G1, G2, G4, G5 PASSED; G3 NOT PASSED at freeze-10 (S199). No open question.
+- Gates: see GATE_STATUS.tsv. G1, G2, G4, G5 PASSED; G3 NOT PASSED at freeze-10 (S199). Q28 open (blocks G3
+  re-fly and G6 item 7 only).
 - Q27 closed S208 (D-OWNER-Q27, GATES "Owner amendments S208"): identify ACT_TC first; G3 controller-ACT_TC box written
   from the measured ident error bound, then Q28 to the owner with bound + box, then G3 re-fly (300) and G6 item 7.
   FREEZE-10 stays; a firmware change needed by the identification is asked first. S53 round-up rule overturned.
@@ -14,15 +15,18 @@
   independent review.
 
 ## Next actions (each names its gate item)
+0. G3 factor "telemetry latency 0-3 frames": A-59 hook inert (params file AND scenario sim_params give no delay rise).
+   One session, simplest injector, two keys (owner note 2026-11-21 point 2 style); if it does not fly, owner question
+   to drop the frames factor. Check: fitted delay +1.25 ms/frame with ident_actc on a hover (actc_grid.py cell d0f3).
+   Then G7 unit 8 alongside while Q28 is open.
 CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older G7 list stay deferred until the ACT_TC
   ident decides whether firmware changes. G8 drafting only after the Q28 answer.
 1. G3/G6 ACT_TC identification (Q27 item 1): survey design/actc_ident_survey_s208.md -> one-page design note ->
    estimator + synthetic self-test (asym tau, delay, closed loop) -> second key -> offline error grid -> few SITL
    confirmation flights -> bound -> capped/two-sided ACT_TC rule with model margins on corners -> GATES G3 box
-   draft -> Q28. FRD fix done 2dd2110a0c (off-grid bias -16 % -> -0.6 %). Next: 2-flight pre-test ->
-   30-flight grid (g3_run/run_scenario hooks, ID_OK 0, injector roll then pitch). Synthetic: tau_sym = 0.61 x
-   tau_slow, 0.92 x tau_mean at asym 3 (input to the ACT_TC rule). rpm_max only scales y (gain), not tau.
-   Quality thresholds set on synthetic noise: check against SITL residuals in the pre-test before the grid.
+   draft -> Q28. DONE S209: grid flown + table (results/actc_grid_s209 README, BOX_MARGINS), Q28 written (rule A:
+   ACT_TC = tau_sym, box r x tau_mean, r [0.88, 1.02]). WAITS Q28: GATES box text, G3 re-fly (300), G6 item 7.
+   MAX_STRUCTURE 0.08 would fail SITL data if norm residual > 0.05 (PRETEST.md): revisit before G6 noisy runs.
    Next G3 scoring also: re-fly the 15 freeze-10 item-3 misses at speed 1; table class C skipped lines both stacks.
    g3_campaign_f10 chain: committed, verdict written S199 (GATES "G3 verdict at freeze-10"); nothing to rescore.
 2. G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
@@ -72,7 +76,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| GRID | ACT_TC 30-cell grid, detached (frames labelled not applied, A-59) | haiku launches | results/actc_grid_s209/GRID.tsv, grid.log | resumable: `python3 indi_flight/bench/actc_grid.py --out indi_flight/results/actc_grid_s209` via agent; then table of ratios -> bound -> Q28 |
+| - | none | | | |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

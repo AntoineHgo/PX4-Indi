@@ -1326,3 +1326,12 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
 - Overturn: the self-test cannot reach 10 % with telemetry frames and delay (then a step manoeuvre, asked first);
   seed spread > 10 % on SITL cells; tau_up and tau_down not separable at the injector amplitude (raise
   `MC_INDI_INJ_AMP` within its range first, params only).
+
+## D-ACTC-RULE (S209, proposal pending Q28): ACT_TC = identified tau_sym, G3 box r x tau_mean, r [0.88, 1.02]
+- Evidence: results/actc_grid_s209 (README: 0/30 failed, tau_up/down <= 3.7 %, tau_sym/tau_mean 0.90-1.00, never above);
+  BOX_MARGINS.md (box worst rate 30.6 deg / 3.4 dB, rate+att 19.9 deg at tau_mean x3 + 10 ms; fixed 0.033 unstable there).
+- Alternatives: r from the asym-dependent relation (B); ACT_TC = tau_slow (C, errs high, the side 283 failed on);
+  rounding up (S53 rule, overturned by D-OWNER-Q27).
+- Frames 0-3 not in the grid (A-59 hook inert); 10 ms delay cells stand in. Owner decides the box (Q28, blocking G3).
+- Overturn: a G3 or G6 run whose failure is caused by r at a box edge (shown on a log); frames cells (after A-59 fix)
+  moving tau_sym by > 4 %.
