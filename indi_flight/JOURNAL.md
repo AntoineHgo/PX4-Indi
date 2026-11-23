@@ -1866,3 +1866,6 @@ the owner's call; the x0.5..3 result is reported as is in either case.
   ITEM3_DECOMP.md shows settling inside a 3 s window opening 0.5 s after arrival, not a steady gap; the scorer's 3 s
   window deviates from the GATES "last 10 s of a hold >= 20 s" and was never recorded -> Q30 to the owner, blocking
   item 3. Gate progress: G3 run 022 item 2 resolved (not confirmed), item 3 window question Q30.
+- S213 (cont.): chain halted again at run 024 (draw 264, C3): INDI LOC (tilt > 60 deg) at 60.8 s speed 4 and 61.0 s
+  speed 1 with ACT_TC 0.0177, same as freeze-10 at ACT_TC 0.033; PID no LOC. G3 verdict NOT PASSED written (GATES
+  S213 section); Q31 (route A/B/C) to the owner, blocking G3 and G6. Gate progress: G3 re-fly verdict NOT PASSED.

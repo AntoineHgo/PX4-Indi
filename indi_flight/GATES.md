@@ -804,3 +804,15 @@ Procedure: `design/actc_ident_s208.md`. Estimator `bench/ident_actc.py`, output-
   flown at ACT_TC 0.033; misses of the new campaign go through the speed-1 rule.
 - **G6 item 7 (S208 amendment) reduced to the 60 corners** C1-C6 at `MC_INDI_ID_OK` 0, pass as written there. The
   ~100 LHS runs are dropped; G8 reports the reduced coverage as a limit.
+
+## G3 verdict, re-fly with drawn controller ACT_TC (S213, 2026-11-23): NOT PASSED (campaign halted)
+Evidence: `results/g3_refly_actc_s212/` (chain C212, freeze-10 firmware and params, controller ACT_TC drawn in the S211
+box; SCORES.tsv, progress.txt, HALT_ON_FAIL.json) and `speed1_s213/README.md` (speed-1 and PID reference flights).
+- 25 runs flown (block 1, critical first). Halt 1, run 022 (draw 262, C3): item 2 FAIL on both keys at speed 4, not
+  reproduced at speed 1 (S208 rule), so not counted; the chain resumed. PID on the same draw fails item 2 (2.0 Hz).
+- Halt 2, run 024 (draw 264, C3: thrust scale 0.351, motor 3 at 0.709, mass 1.3): item 1 loss of control, tilt > 60 deg
+  at 60.78 s (speed 4) and 61.03 s (speed 1), controller ACT_TC 0.0177. The freeze-10 flights of the same plant
+  (ACT_TC 0.033) lost control at 60.67 s and 60.91 s: the failure does not depend on ACT_TC. PID flies the draw without
+  loss of control (tilt max 40 deg). Under S211b a halted campaign is NOT PASSED; under the failure-explanation rule
+  this is an INDI-specific failure, class (b) or (c) still to be shown by factor restoration (Q31).
+- Item 3 is not scored for the verdict: its window is open in Q30 (run 022 0.308 m at speed 1 against 0.30 m).

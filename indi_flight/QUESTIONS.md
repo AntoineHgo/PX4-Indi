@@ -88,3 +88,28 @@ Options:
   chosen after seeing the data.
 Meanwhile: chain C212 flies for items 1 and 2, and its item-3 scores are not read or re-flown. G8 drafting continues.
 Blocked: G3 item 3 rows only.
+
+## Q31 (S213, 2026-11-23): G3 halted on an INDI loss of control at corner C3. BLOCKING for G3 and G6
+Question: after the second G3 NOT PASSED, which route do we take?
+Context:
+- Chain C212 (ACT_TC drawn in the S211 box) halted at run 024, draw 264, corner C3: thrust scale 0.351 on all motors,
+  motor 3 further x0.709 (ceiling 0.249), mass x1.3. INDI tilts past 60 deg at 60.8 s (speed 4) and 61.0 s (speed 1).
+  The same plant at freeze-10 (ACT_TC 0.033) lost control at the same time: identifying ACT_TC did not change it.
+  PID flies the draw (tilt max 40 deg). Verdict written: GATES "G3 verdict, re-fly ... (S213)".
+- Mechanism on the S199 logs (`results/g3_refly_s199/CAUSE_S199.md`): at the fault both stacks spin up in yaw (weak CW
+  rotors). PID recovers roll/pitch, but INDI's pitch rate runs against its setpoint and every rate setpoint reaches the
+  220 dps limit. Motor 3 saturates only after the tilt is lost. Shown on the log: yaw first, then INDI fails to recover.
+  Inferred, not tested: why INDI fails to recover (no roll/pitch-over-yaw priority in the increment, or the measured
+  torque gap from the unknown weak motor).
+- The GATES failure-explanation rule (restore drawn factors one at a time) has not been run on 264.
+Options:
+- A. Stop G3 here. G3 is NOT PASSED, and the C3 corner (saturation plus weak motor) is a stated limit in G8. G6 item 7
+  and G7/G8 go ahead on freeze-10, and G6 is reported as not passable because it requires G3.
+- B. (recommended) One session of factor restoration on 264 (data only, about 10 speed-1 flights). Then, only if a fix
+  probe removes the loss of control on the log, one firmware fix (freeze discipline). The rows it invalidates are
+  named and re-flown (G2/G4/G5 subsets), then the G3 campaign restarts critical first. If the restoration shows
+  beyond-range physics (class b), the result comes back to you.
+- C. Re-open the outer/inner-loop saturation design (yaw priority in the INDI increment) as a design step before any
+  probe. That costs more sessions.
+Meanwhile: nothing flies. G8 drafting continues (not decided by Q30/Q31); G6 item 7 waits. Q30 stays open for the next campaign.
+Blocked: G3, G6. Not blocked: G8 drafting, G7 items that do not touch firmware.
