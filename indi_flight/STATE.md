@@ -3,22 +3,16 @@
 ## Status
 - Stage: 6 (validation). FREEZE-10 (D-FREEZE-10): firmware 7fe6206fcc, config g5_freeze_s157 params (XY gains at
   firmware defaults 1.2/2.4). Later firmware commits behaviour-neutral (D-G7-NUTTX-BUILD, D-F10-NEUTRAL).
-- Gates: see GATE_STATUS.tsv. G1, G2, G4, G5 PASSED; G3 NOT PASSED at freeze-10 (S199) and again in the ACT_TC re-fly
-  (S213, C3 LOC draw 264); Q31 open; Q30 closed S214 (D-OWNER-Q30). Q28 closed S211
-  (D-OWNER-Q28, GATES "Owner amendment S211"): rule A, G3 box r [0.88, 1.02] x tau_mean.
-- Q27 closed S208 (D-OWNER-Q27, GATES "Owner amendments S208"): identify ACT_TC first; G3 controller-ACT_TC box written
-  from the measured ident error bound, then Q28 to the owner with bound + box, then G3 re-fly (300) and G6 item 7.
-  FREEZE-10 stays; a firmware change needed by the identification is asked first. S53 round-up rule overturned.
-- RC208 (design/route_check_208.md): long pole = ACT_TC ident + error table; offline error grid first, few
-  confirmation flights; reuse ident chain, new code = sweep driver only. G7 (g), F-10 unit 9/review, harness
-  extraction, dead-path removal stay deferred (firmware may change). Only G7 unit 8 and G8 text may run alongside.
+- Gates: see GATE_STATUS.tsv. G3 NOT PASSED twice (S199, S213 C3 LOC draw 264). Q31 OPEN (blocks G3, G6).
+  Controller ACT_TC box r [0.88, 1.02] x tau_mean (D-OWNER-Q28). FREEZE-10 stays; firmware change only per Q31.
+- RC208 (design/route_check_208.md): G7 (g), F-10 unit 9/review, harness extraction, dead-path removal deferred
+  (firmware may change). Only G8 text may run alongside.
 - Owner rule F-10 (2026-11-22): brief every coder with F-10. Clean-up = separate behaviour-neutral commits,
   independent review.
 
 ## Next actions (each names its gate item)
--1. S214: build/px4_sitl_default/bin/px4 is now 903eae63 (FREEZE-10 sources + GZBridge param fix f110361a33; old
-   binary kept as px4.freeze10_d220e193). Do NOT rebuild it from HEAD. g3_chain.sh pins d220e193: which binary G3 uses
-   is in Q31 (addendum). Pre-S214 C3 runs fail GATES 2 validity (results/q31_injector_fix_s214/README.md).
+-1. build/px4_sitl_default/bin/px4 = 903eae63 (FREEZE-10 + GZBridge fix f110361a33; old binary
+   px4.freeze10_d220e193). Do NOT rebuild from HEAD. g3_chain.sh pins d220e193; which binary G3 uses is in Q31.
 0. G3/G6: Q31 OPEN (A stop + limit, B factor restoration on draw 264 then one fix probe, C saturation design)
    blocks G3 and G6; act on the answer first. If B: sonnet agent restores draw-264 factors/hooks to nominal one at
    a time at speed 1 (single-index chain dirs as speed1_s213, method in speed1_s213/README.md), writes
@@ -81,7 +75,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none in flight. C212 halted at run 024 (committed 976c893cd8); do not resume before Q31 | - | results/g3_refly_actc_s212/ | - |
+| - | none in flight. C212 halted at run 024; do not resume before Q31 | - | results/g3_refly_actc_s212/ | - |
 Next session if Q31 still open: one haiku/sonnet task closes the "Unverified" items of report/01, 03, 06, A drafts
 (G8); after that no unblocked work remains: commit, create WAIT_OWNER.
 ## Open problems
