@@ -15,10 +15,11 @@
   independent review.
 
 ## Next actions (each names its gate item)
-0. Q29 answered A (D-OWNER-Q29: 300 fail-fast, corners+S199 LHS fails first; no 15 re-flies; G6 item 7 = 60
-   corners). G3 re-fly prep (Q28 answered S211): g3_sample.py draws r U[0.88, 1.02] (own dim, independent), runner sets
-   MC_INDI_ACT_TC = r x (tau_up + tau_down)/2 x 0.033 per run; independent review; then one chain: G3 300 runs
-   (speed 4, S208 rules, order and halt per GATES S211b) + G6 item 7 (60 corners, ID_OK 0).
+0. G3 re-fly chain C212 flying (tooling 77572243f5, reviewed REVIEW_S212.md; pre-test 110-111 OK, 111 item 3 FAIL
+   both keys at speed 4 -> speed-1 rule). On CHAIN_HALTED: read HALT_ON_FAIL.json; item 2 -> speed-1 re-fly of that
+   run (S208 rule) before declaring; item 1 / abort_flight -> PID reference same draw, then NOT PASSED to owner
+   (GATES S211b). On CHAIN_FINISHED: commit runs, speed-1 rule on item-3 misses, verdict per GATES. Then G6 item 7
+   chain (60 corners C1-C6 at MC_INDI_ID_OK 0): needs a samples dir of the corners + ID_OK override (agent task).
 CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older G7 list stay deferred until the ACT_TC
   ident decides whether firmware changes. G8 drafting may resume (Q28 answered).
 1. G3/G6 ACT_TC identification (Q27 item 1): survey design/actc_ident_survey_s208.md -> one-page design note ->
@@ -76,7 +77,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | | | |
+| C212 | G3 re-fly chain, 300 runs, speed 4, --halt-on-fail, started 2026-11-23 19:42 (chain pid 588997, waiter 588990) | detached | results/g3_refly_actc_s212/ | `bash indi_flight/bench/g3_chain.sh status indi_flight/results/g3_refly_actc_s212`; resume = start cmd in PREP.md |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

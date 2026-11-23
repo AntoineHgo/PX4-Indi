@@ -1856,3 +1856,7 @@ the owner's call; the x0.5..3 result is reported as is in either case.
   Owner answer (2026-11-23, S211): A, with the two proposed cuts (no speed-1 re-fly of the 15 freeze-10 item-3
   misses; G6 item 7 = the 60 corners at ID_OK 0). Relaunch the orchestrator with WEEKLY_SHARE 0.9.
 - S211: Q29 acted on (GATES "Owner amendment S211b", D-OWNER-Q29); supervisor restarted with WEEKLY_SHARE 0.9. Gate progress: G3 re-fly order and G6 item 7 size fixed; next is the sampler r draw + review, then the chain.
+- S212: G3 re-fly tooling (r draw, per-run ACT_TC, critical-first order, --halt-on-fail; 77572243f5) reviewed
+  independently (results/g3_refly_actc_s212/REVIEW_S212.md, 2 halt gaps closed); pre-test runs 110-111 OK (ULog ACT_TC
+  equals sample); chain C212 (300 runs, speed 4) launched 2026-11-23 19:42. Gate progress: G3 re-fly flying (tooling
+  keyed, pre-test passed).
