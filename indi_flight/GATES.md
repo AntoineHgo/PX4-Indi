@@ -829,3 +829,16 @@ box; SCORES.tsv, progress.txt, HALT_ON_FAIL.json) and `speed1_s213/README.md` (s
 - **Correction (GATES 3 "Flight per run").** Gust and faults are injected at the start of the main segment (`traj` /
   `stick`), not at the start of the hold, as the runner has always done.
 - C212 (3 s window) stays as items 1-2 evidence; its item-3 scores are not used. Restart is decided by Q31.
+
+## Owner amendment S218 (2026-11-23): Q31 route and gate binary (owner answer B, D-OWNER-Q31, D-BINARY-GZFIX)
+- **Gate binary.** SITL binary sha256 903eae63ceb1bf019215076650cf02fb38cac8534618530410506f6a505f6d62 (FREEZE-10
+  sources + GZBridge parameter fix f110361a33; results/q31_injector_fix_s214/README.md) replaces d220e193 for every gate
+  flight from S218. Controller code identical (only GZBridge symbols differ; other frozen build files unchanged).
+- **Validity of earlier runs.** Every pre-S214 run with a multi-motor SIM_GZ_EC_* write (saturation draws: C3 corners,
+  freeze-10 and C212) fails GATES 2 run validity (motors limited ~1 s apart); weak-motor-only runs had the step up to
+  1 s late; the sag staircase moved in 1 s steps. Earlier verdicts stand only on their other runs; C3 results are
+  re-flown on the new binary, never used as failures or passes.
+- **Route on draw 264 (C212 idx 24).** (1) Factor restoration at speed 1 (GATES 2 "Failure explanation"), then one
+  fix probe if a cause is shown on the log; class (b) goes to the owner. (2) If the LOC persists: two independent
+  investigation agents in parallel (opus, effort high), separate reports; then one solving agent (opus, high) and an
+  independent review agent (pre-approved). (3) If it still persists: owner question, continue or stop.

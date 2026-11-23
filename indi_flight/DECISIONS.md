@@ -1335,6 +1335,24 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
 - Alternative: per-run r ACT_TC (agent first draft) rejected: it tests the identified state twice.
 - Overturn: owner reading of S211 "one chain" as per-run r for item 7.
 
+## D-OWNER-Q31 (S218, 2026-11-23): draw-264 factor restoration with an escalation route
+- Owner answer to Q31 (full text JOURNAL.md S218; gate text GATES "Owner amendment S218"). B first; if the LOC
+  persists, two parallel opus/high investigators with separate reports, then an opus/high solver and an independent
+  reviewer (pre-approved); if still unresolved, an owner question (continue or stop). A (stop + limit) and C
+  (saturation design first) not chosen. Evidence: results/q31_injector_fix_s214 (LOC real on a valid fault; PID 37 deg;
+  yaw priority ruled out on the log).
+- Overturn: none of mine (owner decision).
+
+## D-BINARY-GZFIX (S218, 2026-11-23): gate binary 903eae63 = FREEZE-10 sources + GZBridge parameter fix
+- Owner decision (Q31 answer). The simulator bridge's 1 s parameter_update interval split multi-motor fault writes
+  (f110361a33 removes it; owner allowed this stock-PX4 change exceptionally, sim only). Built from the c0b733e677
+  versions of the 32 firmware files changed since (restored to HEAD after the build), in px4-indi-sim. Check: only
+  GZBridge symbols change size among 14017; 200 frozen build files match the C212 pins. FREEZE-10 controller unchanged.
+- `bench/g3_chain.sh` FREEZE_BINARY_SHA -> 903eae63. Old binary kept: build/px4_sitl_default/bin/px4.freeze10_d220e193.
+- Rebuild rule: never rebuild build/px4_sitl_default from HEAD (F-10 commits change the binary); a rebuild repeats
+  the S214 method (results/q31_injector_fix_s214/README.md section 2).
+- Overturn: a controller-symbol difference found against d220e193.
+
 ## D-OWNER-Q30 (S214, 2026-11-23): G3 item 3 on the written window, >= 20 s hold, last 10 s
 - Owner answer to Q30 (full text JOURNAL.md S214; gate text GATES "Owner amendment S214"), after an independent review
   (results/g3_refly_actc_s212/Q30_REVIEW.md). A (keep the undocumented 3 s window) and C (window chosen after the data)

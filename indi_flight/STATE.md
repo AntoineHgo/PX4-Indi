@@ -3,7 +3,7 @@
 ## Status
 - Stage: 6 (validation). FREEZE-10 (D-FREEZE-10): firmware 7fe6206fcc, config g5_freeze_s157 params (XY gains at
   firmware defaults 1.2/2.4). Later firmware commits behaviour-neutral (D-G7-NUTTX-BUILD, D-F10-NEUTRAL).
-- Gates: see GATE_STATUS.tsv. G3 NOT PASSED twice (S199, S213 C3 LOC draw 264). Q31 OPEN (blocks G3, G6).
+- Gates: see GATE_STATUS.tsv. G3 NOT PASSED twice (S199, S213 C3 LOC draw 264). Q31 answered S218 (route B+).
   Controller ACT_TC box r [0.88, 1.02] x tau_mean (D-OWNER-Q28). FREEZE-10 stays; firmware change only per Q31.
 - RC208 (design/route_check_208.md): G7 (g), F-10 unit 9/review, harness extraction, dead-path removal deferred
   (firmware may change). Only G8 text may run alongside.
@@ -11,18 +11,20 @@
   independent review.
 
 ## Next actions (each names its gate item)
--1. build/px4_sitl_default/bin/px4 = 903eae63 (FREEZE-10 + GZBridge fix f110361a33; old binary
-   px4.freeze10_d220e193). Do NOT rebuild from HEAD. g3_chain.sh pins d220e193; which binary G3 uses is in Q31.
-0. G3/G6: Q31 OPEN (A stop + limit, B factor restoration on draw 264 then one fix probe, C saturation design)
-   blocks G3 and G6; act on the answer first. If B: sonnet agent restores draw-264 factors/hooks to nominal one at
-   a time at speed 1 (single-index chain dirs as speed1_s213, method in speed1_s213/README.md), writes
-   results/g3_refly_actc_s212/restore264/README.md. Before the next G3 campaign: Q30 tooling (GATES "Owner
+-1. Gate binary = 903eae63 (D-BINARY-GZFIX; FREEZE-10 + GZBridge fix f110361a33; old px4.freeze10_d220e193;
+   g3_chain.sh pins it). Do NOT rebuild build/px4_sitl_default from HEAD. Pre-S214 C3 runs: GATES 2 invalid.
+0. G3/G6: Q31 answered S218 (D-OWNER-Q31, GATES "Owner amendment S218"). Step 1 (B): sonnet agent restores
+   draw-264 factors/hooks to nominal one at a time at speed 1 on 903eae63 (single-index chain dirs, method in
+   speed1_s213/README.md; base evidence results/q31_injector_fix_s214), writes
+   results/g3_refly_actc_s212/restore264/README.md; then one fix probe if a cause is shown. If the LOC persists:
+   2 parallel opus/high investigators (separate reports) -> 1 opus/high solver + independent reviewer
+   (pre-approved); still LOC -> owner question (continue or stop). Before the next G3 campaign: Q30 tooling (GATES "Owner
    amendment S214": G3 scenarios with 20 s hold, scorer t0, key-2 window, items 5-6). G6 item 7 chain (60 corners,
    D-G6-ITEM7-SET): launch cmd in results/g6_item7_s212/PREP.md; pre-test its first run.
    MAX_STRUCTURE 0.08 fails SITL data if norm residual > 0.05 (actc_grid_s209 PRETEST.md): revisit before G6 noisy
-   runs. Next G3 scoring: re-fly the 15 freeze-10 item-3 misses at speed 1; class C skipped lines both stacks.
-CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older G7 list stay deferred until Q31
-  decides whether firmware changes. G8 drafting continues.
+   runs. Next G3 scoring: class C skipped lines both stacks (15 old item-3 re-flies dropped, D-OWNER-Q29).
+CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older G7 list stay deferred until the Q31
+  route decides whether firmware changes. G8 drafting continues.
 2. G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
 3. G7 open items: (f) F-10 clean-up per results/g7_s198/F10_PLAN.md (build dir build/f10_sitl, unit tests in
    build/px4_sitl_test). Units 1-8 done; unit 8 review MINORs (wording, F10_UNIT8_REVIEW.md) go into the

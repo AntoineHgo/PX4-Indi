@@ -44,8 +44,9 @@ CONTAINER_TIMEOUT_S=1500
 RUN_TIMEOUT_S=1200 # g3_run.py --timeout-s
 BUILD=build/px4_sitl_default
 BINARY=$BUILD/bin/px4
-# FREEZE-10 gate binary: provenance.binary_sha256 of every run in results/g3_pretest_q24_s197/run_*/run.json
-FREEZE_BINARY_SHA=d220e19315c2798aa18a1bab6ce7300cd0f6eff14d43273d5064c06009d46076
+# gate binary (D-BINARY-GZFIX, S218): FREEZE-10 sources + GZBridge parameter fix f110361a33. Was d220e193 (FREEZE-10,
+# results/g3_pretest_q24_s197): its multi-motor SIM_GZ_EC_* faults were applied ~1 s apart (results/q31_injector_fix_s214)
+FREEZE_BINARY_SHA=903eae63ceb1bf019215076650cf02fb38cac8534618530410506f6a505f6d62
 IMAGE=${PX4_INDI_IMAGE:-px4-indi-sim}
 # inputs pinned at the first start (with the binary): a change mid-campaign would mix set-ups, so the chain halts
 FROZEN_INPUTS=(
