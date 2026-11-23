@@ -1901,3 +1901,7 @@ the owner's call; the x0.5..3 result is reported as is in either case.
   hold, item 6 = last 20 s, each key computes its own window; GATES 3 text corrected (events start at the main
   segment, not the hold). C212 stays halted (Q31); the next campaign uses the new scenarios.
 - S214: Q30 acted on (GATES "Owner amendment S214", D-OWNER-Q30, review Q30_REVIEW.md; ITEM3_DECOMP gust-timing line corrected there: gust ends ~5 s before the 022 window, mixed time bases). Gate progress: G3 item 3 window fixed for the next campaign; tooling (G3 scenarios, scorer t0, key-2 window, items 5-6) to build after Q31.
+- S215 (trim): STATE next action 1 history moved here: ACT_TC identification chain (survey s208 -> estimator, self-test,
+  second key, offline grid, confirmation flights, bound) DONE S209 in results/actc_grid_s209 (README, REFIT_INST0,
+  BOX_MARGINS); Q28 answered A S211, box in GATES. g3_campaign_f10 chain committed, 297 scored + 3 aborts
+  (039/245/264), verdict written S199, re-checked S210 and S215 (nothing uncommitted, no re-score needed).

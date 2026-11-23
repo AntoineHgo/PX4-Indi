@@ -16,25 +16,16 @@
   independent review.
 
 ## Next actions (each names its gate item)
-0. G3 re-fly C212 HALTED and declared NOT PASSED S213 (run 024, draw 264, C3 LOC, INDI-only, ACT_TC-independent;
-   GATES "G3 verdict, re-fly ... (S213)"). Q31 OPEN (route: A stop + limit, B factor restoration on 264 then one
-   fix probe, C saturation design) blocks G3 and G6. Q30 answered B (GATES S214): G3 scenario/scorer
-   tooling per that text before the next campaign. Act on the answers first.
-   If B: sonnet agent restores draw-264 factors/hooks to nominal one at a time at speed 1 (single-index chain dirs
-   as speed1_s213), writes results/g3_refly_actc_s212/restore264/README.md. Speed-1 re-fly method for any halt: see
-   speed1_s213/README.md. Then G6 item 7
-   chain (60 corners, un-identified ID_OK 0 + ACT_TC 0.05, D-G6-ITEM7-SET): ready, launch cmd in
-   results/g6_item7_s212/PREP.md (G3_PARAMS=... start ... 240 299 --speed 4); pre-test its first run before the rest.
-CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older G7 list stay deferred until the ACT_TC
-  ident decides whether firmware changes. G8 drafting may resume (Q28 answered).
-1. G3/G6 ACT_TC identification (Q27 item 1): survey design/actc_ident_survey_s208.md -> one-page design note ->
-   estimator + synthetic self-test (asym tau, delay, closed loop) -> second key -> offline error grid -> few SITL
-   confirmation flights -> bound -> capped/two-sided ACT_TC rule with model margins on corners -> GATES G3 box
-   draft -> Q28. DONE S209 (results/actc_grid_s209: README, REFIT_INST0 on telemetry instance 0, BOX_MARGINS; Q28
-   answered A S211, box written in GATES). Remaining: G3 re-fly (300, frames hook works), G6 item 7 (action 0).
-   MAX_STRUCTURE 0.08 would fail SITL data if norm residual > 0.05 (PRETEST.md): revisit before G6 noisy runs.
-   Next G3 scoring also: re-fly the 15 freeze-10 item-3 misses at speed 1; table class C skipped lines both stacks.
-   g3_campaign_f10 chain: committed, 297 scored + 3 aborts (039/245/264), verdict written S199; re-checked S210.
+0. G3/G6: Q31 OPEN (A stop + limit, B factor restoration on draw 264 then one fix probe, C saturation design)
+   blocks G3 and G6; act on the answer first. If B: sonnet agent restores draw-264 factors/hooks to nominal one at
+   a time at speed 1 (single-index chain dirs as speed1_s213, method in speed1_s213/README.md), writes
+   results/g3_refly_actc_s212/restore264/README.md. Before the next G3 campaign: Q30 tooling (GATES "Owner
+   amendment S214": G3 scenarios with 20 s hold, scorer t0, key-2 window, items 5-6). G6 item 7 chain (60 corners,
+   D-G6-ITEM7-SET): launch cmd in results/g6_item7_s212/PREP.md; pre-test its first run.
+   MAX_STRUCTURE 0.08 fails SITL data if norm residual > 0.05 (actc_grid_s209 PRETEST.md): revisit before G6 noisy
+   runs. Next G3 scoring: re-fly the 15 freeze-10 item-3 misses at speed 1; class C skipped lines both stacks.
+CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older G7 list stay deferred until Q31
+  decides whether firmware changes. G8 drafting continues.
 2. G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
 3. G7 open items: (f) F-10 clean-up per results/g7_s198/F10_PLAN.md (build dir build/f10_sitl, unit tests in
    build/px4_sitl_test). Units 1-8 done; unit 8 review MINORs (wording, F10_UNIT8_REVIEW.md) go into the
