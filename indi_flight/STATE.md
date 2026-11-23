@@ -38,8 +38,8 @@ CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older 
    remove after Q26 (behaviour change review) or justify.
    Harness extraction (D-G7-HARNESS, firmware refactor) after Q26, with its re-fly named. Older list (justify in
    writing): MC_INDI_ID_OK call site (K128 MAJOR, fix after Q26), D-JFF-SOURCE case, D-OFFB-POSVEL wiring test,
-   omega_ff step on offboard entry; checker defects in bench/tests/SELFTEST_G7_S194.md (no verdict, no LOC check in
-   offb_vel_check, IndexError on empty topic); g511_check.py:184; g510_check.py:115-119; ACT_TC/W_MAX firmware vs
+   omega_ff step on offboard entry; g510 LOC on one sample (stricter than GATES 0.2 s,
+   results/g7_checkers_s215/README.md: justify or align); ACT_TC/W_MAX firmware vs
    bench (lesson 12); guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
 4. G6: item 7 runs in the action-0 chain. ID_OK 0 waits for G6 (D-G7-DEFAULTS).
 5. G8: drafts report/02_outer_loop_design.md and docs/en/config_mc/indi_control.md; open items in
@@ -79,8 +79,6 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | - | none in flight. C212 halted at run 024 (committed 976c893cd8); do not resume before Q31 | - | results/g3_refly_actc_s212/ | - |
-| S215c | G7 checker defects (SELFTEST_G7_S194 item 9, g511:184, g510:115-119) + re-score | sonnet | results/g7_checkers_s215/README.md | re-brief from README |
-
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.

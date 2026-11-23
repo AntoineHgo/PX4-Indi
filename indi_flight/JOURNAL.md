@@ -1905,3 +1905,8 @@ the owner's call; the x0.5..3 result is reported as is in either case.
   second key, offline grid, confirmation flights, bound) DONE S209 in results/actc_grid_s209 (README, REFIT_INST0,
   BOX_MARGINS); Q28 answered A S211, box in GATES. g3_campaign_f10 chain committed, 297 scored + 3 aborts
   (039/245/264), verdict written S199, re-checked S210 and S215 (nothing uncommitted, no re-score needed).
+- S215: Q31 still open (G3, G6 blocked). STATE trimmed. G8 drafts report/01_inner_loop_design.md and
+  06_bringup_checklist.md (sonnet; Unverified sections open; ACT_TC yaml "round up" text confirmed stale, G7 param
+  pass). G7 checker defects closed: offb_vel/passthrough verdict, LOC, empty-topic INVALID, 8 break-checked tests,
+  re-score of G5.5 seeds 1-3 and S133 logs unchanged (results/g7_checkers_s215). Gate progress: G7 open-items list
+  (checker defects closed), G8 chapters 1 and 6 drafted.
