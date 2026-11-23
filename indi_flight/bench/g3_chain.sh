@@ -2,6 +2,7 @@
 # Detached, resumable, serial flight chain for the G3 campaign (seed 173, n 300, FREEZE-10).
 #
 #   bash indi_flight/bench/g3_chain.sh start   [DIR] [IDX_FIRST IDX_LAST] [--allow-binary SHA256] [--speed F]
+#                                              [--samples SAMPLE_DIR] [--halt-on-fail]
 #   bash indi_flight/bench/g3_chain.sh status  [DIR]
 #   bash indi_flight/bench/g3_chain.sh stop    [DIR] [--now]
 #   bash indi_flight/bench/g3_chain.sh rescore [DIR]
@@ -13,10 +14,16 @@
 # The chain holds indi_flight/logs/flight_chain.lock while it runs: a held lock means "gate flights in progress".
 # It ignores indi_flight/STOP (the supervisor's stop file): the chain flies across supervisor stops.
 # Per run, same command as results/g3_pretest_q24_s197/fly_all.sh, then both scoring keys as in score_all.sh.
+# --samples SAMPLE_DIR (S212 re-fly, first start only, pinned in DIR/chain_samples and in the freeze hashes): the draws come
+# from SAMPLE_DIR (g3_sample.py refly: run_NNN.json + index.json, with the S211 `actc` block) instead of the seed's
+# campaign; g3_run.py is called with --samples and --require-actc. Without it the campaign is unchanged.
+# --halt-on-fail (pinned in DIR/chain_halt_on_fail): after both keys score a run, the chain halts (CHAIN_HALTED, state
+# halted, HALT_ON_FAIL.json) when item 1 or item 2 is FAIL on BOTH keys. Resume: rm CHAIN_HALTED HALT_ON_FAIL.json, start.
 # No git, no Claude. See results/g3_campaign_f10/README.md.
 #
-# TEST HOOK (smoke tests only): G3_CHAIN_TEST_FLIGHT_CMD="false" replaces the flight command by that shell command.
-# It is refused unless DIR's name contains "smoke". Only the campaign DIR is recorded in logs/flight_chain.dir.
+# TEST HOOK (smoke tests only): G3_CHAIN_TEST_FLIGHT_CMD="false" replaces the flight command by that shell command;
+# G3_CHAIN_TEST_SCORE_CMD replaces the docker scoring (env OUT=run dir, IDX; it writes chain_score.json itself).
+# Both are refused unless DIR's name contains "smoke". Only the campaign DIR is recorded in logs/flight_chain.dir.
 set -u
 export LC_NUMERIC=C
 
@@ -255,10 +262,19 @@ pin_freeze() { # first start in DIR only: binary (verified by the caller, first 
 		sha256sum "$BINARY"
 		sha256sum "${FROZEN_INPUTS[@]}"
 		frozen_build_files | sort -u | xargs -d '\n' sha256sum
+		[ -z "$SAMPLES" ] || find "$SAMPLES" -type f | sort | xargs -d '\n' sha256sum
 	} >"$D/chain_freeze.sha256" || die "cannot hash the frozen inputs"
 	image_id >"$D/chain_image_id"
 	echo "$PARAMS" >"$D/chain_params"
+	[ -z "$SAMPLES" ] || echo "$SAMPLES" >"$D/chain_samples"
 	[ -s "$D/chain_image_id" ] || die "docker image $IMAGE not found"
+}
+
+# samples dir of DIR (S212 re-fly): repo-relative, pinned in chain_samples at the first start; empty = the seed's own campaign
+select_samples() {
+	SAMPLES=
+	[ -s "$D/chain_samples" ] && SAMPLES=$(cat "$D/chain_samples")
+	[ -z "$SAMPLES" ] || [ -f "$REPO/$SAMPLES/index.json" ] || die "samples dir $SAMPLES (pinned in $DREL) has no index.json"
 }
 
 # params file of DIR: pinned in chain_params at the first start (DIR without the file = default params file)
@@ -450,7 +466,8 @@ fly() { # fly IDX ATTEMPT -> RESULT (ok|flight|other|void|failed|interrupted), W
 		run_bg "${CONTAINER_PREFIX}$(printf %03d "$idx")" "$D/stream_$(printf %03d "$idx").txt" \
 			timeout "$FLIGHT_TIMEOUT_S" indi_project/docker/run.sh -n "${CONTAINER_PREFIX}$(printf %03d "$idx")" -t "$CONTAINER_TIMEOUT_S" -- \
 			python3 indi_flight/bench/g3_run.py --seed "$SEED" --n "$N" --start "$idx" --stop "$idx" \
-			--base-params "$PARAMS" --out-root "$DREL" --timeout-s "$RUN_TIMEOUT_S" --speed "$SPEED"
+			--base-params "$PARAMS" --out-root "$DREL" --timeout-s "$RUN_TIMEOUT_S" --speed "$SPEED" \
+			${SAMPLES:+--samples "$SAMPLES" --require-actc}
 	fi
 	DUR=$(($(date +%s) - t0))
 	if [ -f "$d/g3_done.json" ]; then
@@ -489,6 +506,13 @@ score() {
 	tmp=$D/.score_tmp
 	rm -rf "$tmp"
 	mkdir -p "$tmp" && ln -s "../$r" "$tmp/$r"
+	if [ -n "${G3_CHAIN_TEST_SCORE_CMD:-}" ]; then # TEST HOOK, see header: no docker, the command writes chain_score.json
+		OUT="$d" IDX="$idx" bash -c "$G3_CHAIN_TEST_SCORE_CMD" 8>&-
+		rm -rf "$tmp"
+		scored_ok "$idx" && progress "idx=$idx score (test hook) key1=$(jq -r .key1 "$d/chain_score.json") key2=$(jq -r .key2 "$d/chain_score.json")"
+		scores_tsv
+		return
+	fi
 	run_bg "${CONTAINER_PREFIX}k1" "$d/chain_key1.txt" \
 		timeout 1000 indi_project/docker/run.sh -n "${CONTAINER_PREFIX}k1" -t 900 -- bash indi_flight/bench/g3_score.sh "$DREL/.score_tmp"
 	rm -rf "$tmp"
@@ -615,8 +639,36 @@ skip_done() {
 		;;
 	esac
 	check_binary "$idx"
-	scored_ok "$idx" || score "$idx"
+	# a run scored here (not before the restart) is judged by --halt-on-fail like a freshly flown one; a run that was
+	# already scored, such as the halting run after the operator removed CHAIN_HALTED, is not judged again
+	scored_ok "$idx" || {
+		score "$idx"
+		[ "$STOP_NOW" = 1 ] || halt_on_fail_check "$idx"
+	}
 	return 0
+}
+
+# halt_on_fail_check IDX: with --halt-on-fail, halt when item 1 or item 2 is FAIL on both scoring keys of a scored run
+halt_on_fail_check() {
+	local idx=$1 d items src
+	[ -f "$D/chain_halt_on_fail" ] || return 0
+	d=$D/$(runname "$idx")
+	case "$(cat "$d/chain_class.txt" 2>/dev/null)" in
+	flight* | other*) # aborted run that is a flight result (O-12 watchdog or other), not infra: loss of control
+		src=$(jq -r '.draw.source_run // "-"' "$d/g3_draw.json" 2>/dev/null)
+		printf '{"status": "halted", "reason": "abort_flight", "idx": %d, "items": "abort_flight", "source_run": "%s", "time": "%s"}\n' "$idx" "$src" "$(ts)" >"$D/HALT_ON_FAIL.json"
+		halt "HALT_ON_FAIL $(runname "$idx") (source run $src): abort_flight ($(cat "$d/chain_class.txt")); confirm by hand, then rm CHAIN_HALTED HALT_ON_FAIL.json to resume"
+		;;
+	esac
+	if ! scored_ok "$idx"; then # SCORE_PENDING or no score file: the run cannot be judged, do not fly on
+		printf '{"status": "halted", "reason": "score_pending", "idx": %d, "items": "score_pending", "source_run": "-", "time": "%s"}\n' "$idx" "$(ts)" >"$D/HALT_ON_FAIL.json"
+		halt "HALT_ON_FAIL $(runname "$idx"): score_pending (see $(runname "$idx")/SCORE_PENDING, chain_key*.txt); rescore, then rm CHAIN_HALTED HALT_ON_FAIL.json to resume"
+	fi
+	items=$(jq -r '[.key1_failing, .key2_failing] | (.[0] - (.[0] - .[1])) | map(select(. == "item1" or . == "item2")) | join(",")' "$d/chain_score.json")
+	[ -n "$items" ] || return 0
+	src=$(jq -r '.draw.source_run // "-"' "$d/g3_draw.json" 2>/dev/null)
+	printf '{"status": "halted", "idx": %d, "items": "%s", "source_run": "%s", "time": "%s"}\n' "$idx" "$items" "$src" "$(ts)" >"$D/HALT_ON_FAIL.json"
+	halt "HALT_ON_FAIL $(runname "$idx") (source run $src): $items FAIL on both keys; confirm by hand (item 2: speed-1 re-fly), then rm CHAIN_HALTED HALT_ON_FAIL.json to resume"
 }
 
 run_chain() {
@@ -682,6 +734,7 @@ run_chain() {
 			if [ "$RESULT" = other ]; then other=$((other + 1)); else other=0; fi
 			score "$idx"
 			[ "$STOP_NOW" = 1 ] && break
+			halt_on_fail_check "$idx"
 		fi
 		progress "idx=$idx cycle=$(($(date +%s) - c0))s"
 		write_status running "$idx" flown
@@ -728,7 +781,7 @@ run_chain() {
 # commands
 # ---------------------------------------------------------------------------------------------------------------
 cmd_start() {
-	local allow="" pos=() a speed=""
+	local allow="" pos=() a speed="" samples="" haltfail=0
 	while [ $# -gt 0 ]; do
 		case "$1" in
 		--allow-binary)
@@ -742,6 +795,15 @@ cmd_start() {
 				die "--speed needs a positive number"
 			fi
 			shift 2
+			;;
+		--samples)
+			samples=${2:-}
+			[ -n "$samples" ] || die "--samples needs a directory"
+			shift 2
+			;;
+		--halt-on-fail)
+			haltfail=1
+			shift
 			;;
 		-*) die "unknown option $1" ;;
 		*)
@@ -782,8 +844,8 @@ cmd_start() {
 		D=$D_SAVE
 		exit 1
 	fi
-	if [ -n "${G3_CHAIN_TEST_FLIGHT_CMD:-}" ]; then
-		is_smoke || die "G3_CHAIN_TEST_FLIGHT_CMD is a test hook, refused outside a *smoke* directory"
+	if [ -n "${G3_CHAIN_TEST_FLIGHT_CMD:-}${G3_CHAIN_TEST_SCORE_CMD:-}" ]; then
+		is_smoke || die "G3_CHAIN_TEST_FLIGHT_CMD / G3_CHAIN_TEST_SCORE_CMD are test hooks, refused outside a *smoke* directory"
 	fi
 	[ -f "$D/CHAIN_HALTED" ] && {
 		cat "$D/CHAIN_HALTED" >&2
@@ -793,6 +855,22 @@ cmd_start() {
 	command -v docker >/dev/null || die "docker not found"
 	[ -n "$(image_id)" ] || die "docker image $IMAGE not found"
 
+	# samples dir: given at the first start of DIR, then pinned (a later start gives the same one, or none)
+	if [ -n "$samples" ]; then
+		local sabs
+		sabs=$(cd "$OLDCWD" && realpath -m -- "$samples")
+		case "$sabs" in
+		"$REPO"/indi_flight/results/?*) samples=${sabs#"$REPO"/} ;;
+		*) die "--samples must be under $REPO/indi_flight/results (got $sabs)" ;;
+		esac
+		[ -f "$REPO/$samples/index.json" ] || die "--samples $samples has no index.json"
+	fi
+	select_samples
+	if [ -f "$D/chain_freeze.sha256" ]; then
+		[ -z "$samples" ] || [ "$samples" = "$SAMPLES" ] || die "refused: --samples ${samples} differs from the samples pinned in $DREL (${SAMPLES:-none})"
+	else
+		SAMPLES=$samples
+	fi
 	select_params
 	# freeze: the binary must be the FREEZE-10 gate binary (or the explicit override), and match the pins of DIR
 	local cur
@@ -817,6 +895,7 @@ cmd_start() {
 	fi
 	[ -s "$D/chain_range" ] || echo "$CAMP_A $CAMP_B" >"$D/chain_range"
 	[ -f "$D/.gitignore" ] || printf '# chain scratch: scoring link directory, temporary files (partial/ is evidence: big files are ignored by the repo patterns)\n.score_tmp/\n*.tmp\n' >"$D/.gitignore"
+	[ "$haltfail" = 0 ] || echo "item 1 or item 2 FAIL on both keys halts the chain" >"$D/chain_halt_on_fail"
 	rm -f "$D/STOP_CHAIN"
 
 	local inhibit=()
@@ -947,6 +1026,7 @@ rescore)
 _run) # internal: the detached chain
 	resolve_dir "$2"
 	SPEED=$(cat "$D/chain_speed")
+	select_samples
 	select_params
 	run_chain
 	;;

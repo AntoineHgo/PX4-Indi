@@ -35,6 +35,7 @@ END_SEGMENT = "hold"
 OVERRIDES_NAME = "g3_scenario_overrides.json"
 GNSS_MATCHED = False  # set by --override-gnss-matched (S191 probe): EKF GNSS delay compensation := drawn latency
 RATE_HZ = 800
+REQUIRE_ACTC = False  # --require-actc: a draw without the S211 `actc` block is refused
 G1_PARAMS = (("roll", "MC_INDI_G1_R"), ("pitch", "MC_INDI_G1_P"), ("yaw", "MC_INDI_G1_Y"))
 NOMINAL_EPS = 1e-9
 
@@ -108,6 +109,18 @@ def build_run(draw, base_params_path, out_dir):
         applied["g1_ctrl_mult"] = {ax: mult[ax] for ax, _ in G1_PARAMS}
         applied["g1_err"] = "via g1_ctrl_mult: PX4 params MC_INDI_G1_R/P/Y = base x k"
         applied["g1_ratio"] = "alias of g1_err, via g1_ctrl_mult"
+
+    # controller ACT_TC (S211 Q28): the draw's value replaces the params-file value; draws without `actc` are unchanged
+    ac = draw.get("actc")
+    if ac is not None:
+        want = g3_sample.actc_block(f, ac["actc_ratio"])  # re-derive from the drawn plant, refuse a stale value
+        if abs(want["mc_indi_act_tc"] - ac["mc_indi_act_tc"]) > 2e-6 or abs(want["tau_mean"] - ac["tau_mean"]) > 1e-5:
+            raise AssertionError(f"actc block does not match the drawn tau: {ac} vs {want}")
+        params["MC_INDI_ACT_TC"] = ac["mc_indi_act_tc"]
+        applied["actc"] = {**ac, "base_params_value": base.get("MC_INDI_ACT_TC"),
+                           "via": "param MC_INDI_ACT_TC (replaces the params-file value)"}
+    elif REQUIRE_ACTC:
+        raise AssertionError("--require-actc: draw has no `actc` block")
 
     # model variant -----------------------------------------------------------------------------------------------
     mv = draw["hooks"]["model_variant"]
@@ -284,7 +297,7 @@ def check_validity(out):
     return run_validity.check_run(ulg, read_params(pp), CONTROLLER, expected_rate_hz=RATE_HZ)
 
 
-def finalize(out, status):
+def finalize(out, status, extra=None):
     """Record the outcome in g3_done.json (and in run.json as g3_outcome). An aborted run is a finished FAILURE: it gets
     the done marker (outcome 'aborted', not retried, counted as a failure by the campaign). Only an incomplete run
     (timeout, no run.json) gets g3_failed.json and no done marker, so it is retried on the next invocation."""
@@ -304,6 +317,8 @@ def finalize(out, status):
         status["metrics_status"] = rj.get("metrics_status")
     if rj is not None:
         rj["g3_outcome"] = outcome
+        if extra:
+            rj.update(extra)
         with open(os.path.join(out, "run.json"), "w") as fh:
             json.dump(rj, fh, indent=1)
     if outcome in ("ok", "aborted", "void"):
@@ -329,11 +344,14 @@ def main():
                     help="probe: set --gnss-delay equal to the drawn GNSS latency (all other factors unchanged)")
     ap.add_argument("--speed", type=float, default=1.0,
                     help="sim speed factor passed to run_scenario.py --speed (1.0: not passed, argv unchanged)")
+    ap.add_argument("--samples", help="directory of run_NNN.json draws (g3_sample.py refly) instead of the seed's campaign")
+    ap.add_argument("--require-actc", action="store_true", help="refuse a draw without the S211 `actc` block")
     a = ap.parse_args()
-    global GNSS_MATCHED
+    global GNSS_MATCHED, REQUIRE_ACTC
     GNSS_MATCHED = a.override_gnss_matched
+    REQUIRE_ACTC = a.require_actc
 
-    draws = g3_sample.campaign(a.seed, a.n)
+    draws = g3_sample.load_samples(a.samples, a.seed, a.n) if a.samples else g3_sample.campaign(a.seed, a.n)
     sel = [d for d in draws if d["run_index"] >= a.start and (a.stop is None or d["run_index"] <= a.stop)]
     bad = unapplied(sel, a.base_params, a.out_root)
     if bad:  # set-up fault: abort before anything is flown or written
@@ -368,7 +386,8 @@ def main():
             status = {"returncode": p.returncode}
         except subprocess.TimeoutExpired:
             status = {"returncode": None, "timeout_s": a.timeout_s}
-        finalize(out, status)
+        extra = {"g3_actc_applied": r["applied"]["actc"]} if "actc" in r["applied"] else None
+        finalize(out, status, extra)
         print(f"run_{d['run_index']:03d}: {status}", flush=True)
 
 

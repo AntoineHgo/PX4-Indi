@@ -3,6 +3,7 @@
 
     python3 bench/g3_sample.py campaign MASTER_SEED --n 300 --out DIR
     python3 bench/g3_sample.py pretest  MASTER_SEED --out DIR
+    python3 bench/g3_sample.py refly    MASTER_SEED --scores SCORES.tsv --out DIR [--n 300] [--expect-block1 50]
 
 Writes run_000.json ... and index.json. Pure stdlib, deterministic: same master seed -> byte-identical files.
 Design notes and the factor -> hook map: design/g3_sampler_s108.md. No hook is applied here; each run JSON carries a
@@ -400,15 +401,97 @@ def write(runs, out, master, what):
         fh.write(json.dumps(index, indent=1, sort_keys=True) + "\n")
 
 
+# S211/S212 G3 re-fly (GATES "Owner amendment S211" Q28, "S211b" Q29) ----------------------------------------------
+ACTC_NOMINAL_S = 0.033                 # nominal controller MC_INDI_ACT_TC = model motor time constant
+ACTC_R = (0.88, 1.02)                  # r = controller ACT_TC / (tau_mean x 0.033), uniform, independent of every factor
+ACTC_PARAM_RANGE = (0.001, 0.2)        # firmware yaml min / max of MC_INDI_ACT_TC
+
+
+def actc_ratio(master, source_idx):
+    """r for the draw of freeze-10 index source_idx: own sha256-seeded stream, independent of every sampler stream."""
+    h = hashlib.sha256(f"{master}:actc_r:{source_idx}".encode()).digest()
+    return random.Random(int.from_bytes(h[:8], "big")).uniform(*ACTC_R)
+
+
+def actc_block(f, r):
+    """The controller ACT_TC of a draw: r x tau_mean x 0.033 s, tau_mean = (tau_up + tau_down) / 2 (x nominal)."""
+    tau_mean = (f["tau_up"]["value"] + f["tau_down"]["value"]) / 2
+    val = round(r * tau_mean * ACTC_NOMINAL_S, 6)
+    if not ACTC_PARAM_RANGE[0] <= val <= ACTC_PARAM_RANGE[1]:
+        raise ValueError(f"ACT_TC {val} outside the firmware range {ACTC_PARAM_RANGE}")
+    return {"actc_ratio": r6(r), "tau_mean": r6(tau_mean), "mc_indi_act_tc": val}
+
+
+def critical_lhs(scores_text, kinds):
+    """Source indices of LHS draws that failed or aborted on item 1, 2 or 3 of the freeze-10 campaign: SCORES.tsv rows
+    whose outcome is not 'ok' (aborted / void) or whose key 1 or key 2 is FAIL (the failing columns list items 1-3 only)."""
+    out = []
+    for line in scores_text.splitlines()[1:]:
+        c = line.split("\t")
+        i = int(c[0])
+        if kinds[i] == "lhs" and (not c[1].startswith("ok") or "FAIL" in (c[2], c[3])):
+            out.append(i)
+    return sorted(out)
+
+
+def refly(master, n, scores_text, expect_block1=None):
+    """The freeze-10 draws unchanged (same master seed), renumbered: block 1 = corners then the critical LHS draws, block 2
+    = the other LHS draws; each run gets `actc`, `source_run`, `block`. Same inputs -> same runs."""
+    src = campaign(master, n)
+    kinds = {d["run_index"]: ("lhs" if d["kind"] == "lhs" else "corner") for d in src}
+    crit = critical_lhs(scores_text, kinds)
+    if expect_block1 is not None and len(crit) != expect_block1:
+        raise SystemExit(f"refly: {len(crit)} critical LHS draws, expected {expect_block1}: {crit}")
+    corners = [i for i in sorted(kinds) if kinds[i] == "corner"]
+    rest = [i for i in sorted(kinds) if kinds[i] == "lhs" and i not in set(crit)]
+    order = [(i, 1) for i in corners + crit] + [(i, 2) for i in rest]
+    runs = []
+    for new, (i, block) in enumerate(order):
+        d = json.loads(json.dumps(src[i]))
+        d["run_index"] = new
+        d["source_run"] = i
+        d["block"] = block
+        d["actc"] = actc_block(d["factors"], actc_ratio(master, i))
+        runs.append(d)
+    return runs
+
+
+def load_samples(path, master, n):
+    """Run draws of a sample directory written by write(): index.json order, checked against the pinned seed and count."""
+    idx = json.load(open(os.path.join(path, "index.json")))
+    if idx["master_seed"] != master or idx["n"] != n or len(idx["runs"]) != n:
+        raise SystemExit(f"samples {path}: master_seed {idx['master_seed']} n {idx['n']} differ from --seed {master} --n {n}")
+    runs = [json.load(open(os.path.join(path, e["file"]))) for e in idx["runs"]]
+    if [d["run_index"] for d in runs] != list(range(n)):
+        raise SystemExit(f"samples {path}: run_index is not 0..{n - 1} in order")
+    return runs
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("what", choices=("campaign", "pretest"))
+    ap.add_argument("what", choices=("campaign", "pretest", "refly"))
     ap.add_argument("master_seed", type=int)
     ap.add_argument("--n", type=int, default=300)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--scores", help="refly: SCORES.tsv of the campaign to re-fly (freeze-10)")
+    ap.add_argument("--expect-block1", type=int, help="refly: required number of critical LHS draws (else stop)")
     a = ap.parse_args()
-    runs = campaign(a.master_seed, a.n) if a.what == "campaign" else pretest(a.master_seed)
+    if a.what == "refly":
+        if not a.scores:
+            ap.error("refly needs --scores")
+        text = open(a.scores).read()
+        runs = refly(a.master_seed, a.n, text, a.expect_block1)
+    else:
+        runs = campaign(a.master_seed, a.n) if a.what == "campaign" else pretest(a.master_seed)
     write(runs, a.out, a.master_seed, a.what)
+    if a.what == "refly":  # source and block in the index, SCORES.tsv hash as provenance
+        p = os.path.join(a.out, "index.json")
+        index = json.load(open(p))
+        for e, r in zip(index["runs"], runs):
+            e["source_run"], e["block"], e["mc_indi_act_tc"] = r["source_run"], r["block"], r["actc"]["mc_indi_act_tc"]
+        index["scores_sha256"] = hashlib.sha256(text.encode()).hexdigest()
+        with open(p, "w") as fh:
+            fh.write(json.dumps(index, indent=1, sort_keys=True) + "\n")
     print(f"{a.what}: {len(runs)} runs -> {a.out}")
 
 
