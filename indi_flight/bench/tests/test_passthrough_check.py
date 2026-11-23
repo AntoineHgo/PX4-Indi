@@ -3,7 +3,8 @@
 
   python3 -I indi_flight/bench/tests/test_passthrough_check.py     (numpy only; exit 0 = pass, 1 = failure)
 
-The checker is a print-only script (no verdict). Its pass criterion (design/impl_s133_offboard_passthrough.md, ACRO row):
+S215: the checker now prints a verdict and exits 0 PASS / 1 FAIL / 2 INVALID (absent or empty required topic); no window = FAIL
+"never engaged"; tests for these are the last three of CASES (they fail on the S194 checker). Older text: print-only script (no verdict). Its pass criterion (design/impl_s133_offboard_passthrough.md, ACRO row):
 the pass-through window (pos/vel/alt control flags all off) exists, and 0 vehicle_attitude_setpoint samples and 0
 indi_pos_status samples fall inside it. pyulog is replaced by a fake module, the script is run with runpy, the printed
 counts are parsed and judged here. Mutation checks run the cases against mutated COPIES of the checker.
@@ -53,6 +54,9 @@ def make(att_in_off=(), pos_in_off=(), always_off=False, drop_pos=False, keep_on
     return L
 
 
+LAST_CODE = [None]
+
+
 def run(logs):
     fake = types.ModuleType("pyulog")
 
@@ -63,9 +67,12 @@ def run(logs):
     old_mod, old_argv = sys.modules.get("pyulog"), sys.argv
     sys.modules["pyulog"], sys.argv = fake, [CHECKER[0], "x.ulg"]
     buf = io.StringIO()
+    LAST_CODE[0] = None
     try:
         with contextlib.redirect_stdout(buf):
             runpy.run_path(CHECKER[0], run_name="__main__")
+    except SystemExit as e:
+        LAST_CODE[0] = e.code
     finally:
         sys.argv = old_argv
         if old_mod is None:
@@ -138,17 +145,48 @@ def test_whole_run_off_counts_everything():
 
 def test_absent_status_reported():
     out = run(make(drop_pos=True))
-    assert "indi_pos_status ABSENT" in out and verdict(out)["pos"] is None, out
+    assert "indi_pos_status ABSENT" in out, out          # S215: still reported, and now INVALID (exit 2), see below
+
+
+def test_verdict_and_exit_code():              # S215: S194 checker printed no verdict, no exit code
+    out = run(make())
+    assert LAST_CODE[0] == 0 and "RESULT PASS" in out, (LAST_CODE[0], out)
+    for kw in ({"att_in_off": [10.005]}, {"pos_in_off": [10.005]}):
+        out = run(make(**kw))
+        assert LAST_CODE[0] == 1 and "RESULT FAIL" in out, (kw, LAST_CODE[0], out)
+
+
+def test_never_engaged_is_a_fail():            # S215: "all off 0" was printed without flagging it
+    logs = make()
+    for f in ("flag_control_position_enabled", "flag_control_velocity_enabled", "flag_control_altitude_enabled"):
+        logs["vehicle_control_mode"][f] = np.ones(2000, bool)
+    out = run(logs)
+    assert LAST_CODE[0] == 1 and "never engaged" in out, (LAST_CODE[0], out)
+
+
+def test_empty_or_absent_topic_is_invalid():   # S215: IndexError
+    logs = make()
+    logs["vehicle_attitude_setpoint"]["timestamp"] = us([])
+    try:
+        out = run(logs)
+    except IndexError as e:
+        raise AssertionError("IndexError on empty topic: %s" % e)
+    assert LAST_CODE[0] == 2 and "INVALID" in out, (LAST_CODE[0], out)
+    out = run(make(drop_pos=True))
+    assert LAST_CODE[0] == 2 and "INVALID" in out, (LAST_CODE[0], out)
 
 
 CASES = [test_nominal_passes, test_att_sp_in_window_fails, test_pos_status_in_window_fails, test_window_edges,
-         test_no_window_is_not_a_pass, test_any_single_flag_blocks_window, test_whole_run_off_counts_everything, test_absent_status_reported]
+         test_no_window_is_not_a_pass, test_any_single_flag_blocks_window, test_whole_run_off_counts_everything, test_absent_status_reported,
+         test_verdict_and_exit_code, test_never_engaged_is_a_fail, test_empty_or_absent_topic_is_invalid]
 
 MUTATIONS = [
     ("off = ~pv -> off = pv (inverted window)", "off = ~pv", "off = pv"),
-    ("att_sp window lookup side=right -> left", "idx = np.searchsorted(t, ts, side=\"right\") - 1\n    idx = np.clip(idx, 0, len(t) - 1)\n    print(\"att_sp", "idx = np.searchsorted(t, ts, side=\"left\") - 1\n    idx = np.clip(idx, 0, len(t) - 1)\n    print(\"att_sp"),
+    ("att_sp window lookup side=right -> left", "idx = np.searchsorted(t, ts, side=\"right\") - 1\n    idx = np.clip(idx, 0, len(t) - 1)\n    n_att", "idx = np.searchsorted(t, ts, side=\"left\") - 1\n    idx = np.clip(idx, 0, len(t) - 1)\n    n_att"),
     ("pos/vel/alt OR -> only position flag", "pv = (vc[\"flag_control_position_enabled\"] | vc[\"flag_control_velocity_enabled\"] | vc[\"flag_control_altitude_enabled\"])", "pv = (vc[\"flag_control_position_enabled\"])"),
-    ("indi_pos_status count uses att_sp mask index shifted +1000", "int(off[idx].sum()), \"of\", len(ts))\n", "int(off[np.clip(idx + 1000, 0, len(t) - 1)].sum()), \"of\", len(ts))\n"),
+    ("exit code of FAIL -> 0", "sys.exit(0 if res else 1)", "sys.exit(0)"),
+    ("window_exists check dropped", "bool(off.any())", "True"),
+    ("indi_pos_status count uses att_sp mask index shifted +1000", "n_pos = int(off[idx].sum());", "n_pos = int(off[np.clip(idx + 1000, 0, len(t) - 1)].sum());"),
 ]
 
 
