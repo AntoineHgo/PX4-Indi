@@ -51,7 +51,9 @@ CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older 
    bench (lesson 12); guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
 4. G6: item 7 runs in the action-0 chain. ID_OK 0 waits for G6 (D-G7-DEFAULTS).
 5. G8: drafts report/02_outer_loop_design.md and docs/en/config_mc/indi_control.md; open items in
-   report/DOCS_DRAFT_S201.md (arming refusal without eRPM: check code or reword; identification user steps = G6).
+   report/DOCS_DRAFT_S201.md (S213: code items resolved; identification user steps = G6; prettier/link check open).
+   S213 finding: airframe requirement R1 (refuse to arm without eRPM) is not enforced by code (modelled fallback
+   only): G7/G8 decide enforce (firmware, after Q31) or reword R1.
 Rules: 1 session per inner-loop law change; parallel docker streams only for tolerance-insensitive probes, never gate
   evidence, never a docker build during gate flights; G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1. Next RC:
   S218 (RC203).
