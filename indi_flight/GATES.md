@@ -780,3 +780,17 @@ Procedure: `design/actc_ident_s208.md`. Estimator `bench/ident_actc.py`, output-
 - Result: the table of estimate / truth and min / max / 95 % of tau_sym_hat / tau_slow and tau_sym_hat / tau_mean
   over valid cells. This is the measured bound. The G3 controller-ACT_TC box and the ACT_TC rule are proposed from
   it to the owner (Q28) and written in this file before any G3 flight. No threshold on the bound is set here.
+
+## Owner amendment S211 (2026-11-23): Q28 G3 controller-ACT_TC box and ACT_TC rule (owner answer A, D-OWNER-Q28)
+- **ACT_TC rule.** `MC_INDI_ACT_TC` = median over the 4 motors of the identified tau_sym (`bench/ident_actc.py`,
+  telemetry esc_status instance 0), no rounding, no cap. The identified delay (actuator plus telemetry) is not fed
+  to any delay parameter.
+- **G3 controller-ACT_TC box.** Per run, controller `MC_INDI_ACT_TC` = r x plant tau_mean x 0.033 s, tau_mean =
+  (tau_up + tau_down) / 2 of the drawn plant, r uniform [0.88, 1.02], drawn independently of the other factors.
+  Basis: 6c bound on instance 0 (median-of-4 r_mean 0.898-1.004) +-2 % estimator allowance (upper edge = max + 1.6 %);
+  results/actc_grid_s209 (REFIT_INST0.md, BOX_MARGINS.md, Q28_REVIEW.md). Replaces the freeze-10 fixed 0.033.
+- **Limits reported with the G3 result.** Bound valid for the median of 4 only (single motors 0.843-1.040 on the roll
+  injector); 2 % allowance equals the largest seed spread seen (4 pairs); one seed, roll injector, sim speed 4; the
+  linear model is flat in r above 1.02, the upper edge rests on flight evidence (283 fails at x1.5).
+- **Order.** G3 re-fly (300 runs, S208 amendments apply) and G6 item 7 in one chain, after the sampler draws r and the
+  runner sets the controller ACT_TC from it (reviewed before any flight).

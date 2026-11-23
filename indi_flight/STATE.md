@@ -3,8 +3,8 @@
 ## Status
 - Stage: 6 (validation). FREEZE-10 (D-FREEZE-10): firmware 7fe6206fcc, config g5_freeze_s157 params (XY gains at
   firmware defaults 1.2/2.4). Later firmware commits behaviour-neutral (D-G7-NUTTX-BUILD, D-F10-NEUTRAL).
-- Gates: see GATE_STATUS.tsv. G1, G2, G4, G5 PASSED; G3 NOT PASSED at freeze-10 (S199). Q28 open (blocks G3
-  re-fly and G6 item 7 only).
+- Gates: see GATE_STATUS.tsv. G1, G2, G4, G5 PASSED; G3 NOT PASSED at freeze-10 (S199). Q28 closed S211
+  (D-OWNER-Q28, GATES "Owner amendment S211"): rule A, G3 box r [0.88, 1.02] x tau_mean.
 - Q27 closed S208 (D-OWNER-Q27, GATES "Owner amendments S208"): identify ACT_TC first; G3 controller-ACT_TC box written
   from the measured ident error bound, then Q28 to the owner with bound + box, then G3 re-fly (300) and G6 item 7.
   FREEZE-10 stays; a firmware change needed by the identification is asked first. S53 round-up rule overturned.
@@ -15,15 +15,16 @@
   independent review.
 
 ## Next actions (each names its gate item)
-0. Q28 open, unit 8 done (b34adf0c95) and reviewed (F10_UNIT8_REVIEW.md, PASS with MINORs): no unblocked gate
-   work -> WAIT_OWNER (S210). On the answer: act on Q28 first.
+0. G3 re-fly prep (Q28 answered S211): g3_sample.py draws r U[0.88, 1.02] (own dim, independent), runner sets
+   MC_INDI_ACT_TC = r x (tau_up + tau_down)/2 x 0.033 per run; independent review; then one chain: G3 300 runs
+   (speed 4, S208 rules, 15 item-3 misses re-flown at speed 1) + G6 item 7 (~100 LHS, ID_OK 0).
 CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older G7 list stay deferred until the ACT_TC
-  ident decides whether firmware changes. G8 drafting only after the Q28 answer.
+  ident decides whether firmware changes. G8 drafting may resume (Q28 answered).
 1. G3/G6 ACT_TC identification (Q27 item 1): survey design/actc_ident_survey_s208.md -> one-page design note ->
    estimator + synthetic self-test (asym tau, delay, closed loop) -> second key -> offline error grid -> few SITL
    confirmation flights -> bound -> capped/two-sided ACT_TC rule with model margins on corners -> GATES G3 box
    draft -> Q28. DONE S209 (results/actc_grid_s209: README, REFIT_INST0 on telemetry instance 0, BOX_MARGINS; Q28
-   written, rule A). WAITS Q28: GATES G3 box text, G3 re-fly (300, frames hook works), G6 item 7.
+   answered A S211, box written in GATES). Remaining: G3 re-fly (300, frames hook works), G6 item 7 (action 0).
    MAX_STRUCTURE 0.08 would fail SITL data if norm residual > 0.05 (PRETEST.md): revisit before G6 noisy runs.
    Next G3 scoring also: re-fly the 15 freeze-10 item-3 misses at speed 1; table class C skipped lines both stacks.
    g3_campaign_f10 chain: committed, 297 scored + 3 aborts (039/245/264), verdict written S199; re-checked S210.
@@ -42,8 +43,8 @@ CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older 
    omega_ff step on offboard entry; checker defects in bench/tests/SELFTEST_G7_S194.md (no verdict, no LOC check in
    offb_vel_check, IndexError on empty topic); g511_check.py:184; g510_check.py:115-119; ACT_TC/W_MAX firmware vs
    bench (lesson 12); guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
-4. G6: runs (GATES section 6) wait on the ACT_TC ident and Q28. ID_OK 0 waits for G6 (D-G7-DEFAULTS).
-5. G8 (paused until Q28): drafts report/02_outer_loop_design.md and docs/en/config_mc/indi_control.md; open items in
+4. G6: item 7 runs in the action-0 chain. ID_OK 0 waits for G6 (D-G7-DEFAULTS).
+5. G8: drafts report/02_outer_loop_design.md and docs/en/config_mc/indi_control.md; open items in
    report/DOCS_DRAFT_S201.md (arming refusal without eRPM: check code or reword; identification user steps = G6).
 Rules: 1 session per inner-loop law change; parallel docker streams only for tolerance-insensitive probes, never gate
   evidence, never a docker build during gate flights; G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1. Next RC:

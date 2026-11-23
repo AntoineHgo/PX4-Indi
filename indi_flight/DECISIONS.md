@@ -1327,13 +1327,19 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   seed spread > 10 % on SITL cells; tau_up and tau_down not separable at the injector amplitude (raise
   `MC_INDI_INJ_AMP` within its range first, params only).
 
-## D-ACTC-RULE (S209, proposal pending Q28): ACT_TC = identified tau_sym, G3 box r x tau_mean, r [0.88, 1.02]
+## D-OWNER-Q28 (S211, 2026-11-23): ACT_TC rule A and G3 controller-ACT_TC box r [0.88, 1.02] x tau_mean
+- Owner answer to Q28 (full text JOURNAL.md S211; gate text GATES "Owner amendment S211"), after an independent review
+  (results/actc_grid_s209/Q28_REVIEW.md). D-ACTC-RULE accepted as written below, with the S211 wording corrections.
+  B (asym-dependent r) and C (ACT_TC = tau_slow, errs high like 283 at x1.5) rejected.
+- Overturn: none of mine (owner decision); the D-ACTC-RULE overturn conditions go back to the owner.
+
+## D-ACTC-RULE (S209, accepted S211 by D-OWNER-Q28): ACT_TC = identified tau_sym, G3 box r x tau_mean, r [0.88, 1.02]
 - Evidence: results/actc_grid_s209 (REFIT_INST0 on telemetry instance 0: 0/30 failed, tau_up/down <= 3.9 %, median-of-4
   tau_sym/tau_mean 0.898-1.004, up to 0.4 % high; single motors 0.843-1.040; seed spread <= 2.0 %; Q28_REVIEW.md);
   BOX_MARGINS.md (box worst rate 30.6 deg / 3.4 dB, rate+att 19.9 deg at tau_mean x3 + 10 ms; fixed 0.033 unstable there).
 - Alternatives: r from the asym-dependent relation (B); ACT_TC = tau_slow (C, errs high, the side 283 failed on);
   rounding up (S53 rule, overturned by D-OWNER-Q27).
 - Fit on telemetry instance 0 (REFIT_INST0.md; first pass read the truth instance, bounds within 0.003). Frames 3 applied
-  (+3.8 ms delay). Owner decides the box (Q28, blocking G3).
+  (+3.8 ms delay). Owner decided the box S211 (D-OWNER-Q28).
 - Overturn: a G3 or G6 run whose failure is caused by r at a box edge (shown on a log); a seed-2 or pitch-axis repeat moving
   tau_sym by > 4 %.
