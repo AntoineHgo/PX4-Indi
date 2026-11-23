@@ -794,3 +794,13 @@ Procedure: `design/actc_ident_s208.md`. Estimator `bench/ident_actc.py`, output-
   linear model is flat in r above 1.02, the upper edge rests on flight evidence (283 fails at x1.5).
 - **Order.** G3 re-fly (300 runs, S208 amendments apply) and G6 item 7 in one chain, after the sampler draws r and the
   runner sets the controller ACT_TC from it (reviewed before any flight).
+
+## Owner amendment S211b (2026-11-23): Q29 G3 re-fly order and G6 item 7 size (owner answer A, D-OWNER-Q29)
+- **G3 re-fly: 300 valid runs kept (floor and < 1 % claim unchanged), flown critical first.** Block 1: the 60 corners
+  C1-C6 and the 50 freeze-10 LHS draws that failed or aborted (same sampler seeds, plus the S211 r draw). Block 2: the
+  other 190 LHS draws. The chain halts on the first item 1 or item 2 failure confirmed on both keys (after the
+  speed-1 rule for item 2); a halted campaign is NOT PASSED and goes to the owner. Order changes no pass criterion.
+- **Freeze-10 item-3 misses.** The speed-1 re-fly of the 15 freeze-10 misses (S208 amendment) is dropped: they were
+  flown at ACT_TC 0.033; misses of the new campaign go through the speed-1 rule.
+- **G6 item 7 (S208 amendment) reduced to the 60 corners** C1-C6 at `MC_INDI_ID_OK` 0, pass as written there. The
+  ~100 LHS runs are dropped; G8 reports the reduced coverage as a limit.

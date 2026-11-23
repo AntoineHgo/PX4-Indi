@@ -59,3 +59,6 @@ DECISIONS D-OWNER-Q27; full text in JOURNAL.md S208).
 
 Q28 closed S211 (owner answer A, box r [0.88, 1.02] x tau_mean; GATES "Owner amendment S211", DECISIONS
 D-OWNER-Q28; full text in JOURNAL.md S211).
+
+Q29 closed S211 (owner answer A + both cuts: G3 300 fail-fast, G6 item 7 corners only; GATES "Owner amendment
+S211b", DECISIONS D-OWNER-Q29; full text in JOURNAL.md S211).

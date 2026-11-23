@@ -1327,6 +1327,13 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   seed spread > 10 % on SITL cells; tau_up and tau_down not separable at the injector amplitude (raise
   `MC_INDI_INJ_AMP` within its range first, params only).
 
+## D-OWNER-Q29 (S211, 2026-11-23): G3 re-fly 300 fail-fast; G6 item 7 corners only
+- Owner answer to Q29 (full text JOURNAL.md S211; gate text GATES "Owner amendment S211b"). Critical block first
+  (60 corners + 50 freeze-10 LHS fail/abort draws), halt on a confirmed item 1-2 failure, else complete 300. Reduced
+  options B (160 runs, < 3 %) and C (~110, no bound) rejected. The 15 freeze-10 item-3 re-flies dropped; G6 item 7 = 60
+  corners. Evidence: freeze-10 item 1-2 failures in every tau/delay quadrant (5/66 in the mildest).
+- Overturn: none of mine (owner decision).
+
 ## D-OWNER-Q28 (S211, 2026-11-23): ACT_TC rule A and G3 controller-ACT_TC box r [0.88, 1.02] x tau_mean
 - Owner answer to Q28 (full text JOURNAL.md S211; gate text GATES "Owner amendment S211"), after an independent review
   (results/actc_grid_s209/Q28_REVIEW.md). D-ACTC-RULE accepted as written below, with the S211 wording corrections.

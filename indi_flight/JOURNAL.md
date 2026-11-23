@@ -1828,3 +1828,31 @@ the owner's call; the x0.5..3 result is reported as is in either case.
   rounding, no cap. G3 box: controller ACT_TC = r x plant tau_mean (tau_mean = (tau_up + tau_down) / 2), r uniform
   [0.88, 1.02], independent of the other draws. Box kept at 1.02 with the S211 wording corrections and limits.
 - S211 (2026-11-23): Q28 wording corrected from an independent review (2c94a727ca: telemetry-instance numbers, tau_sym up to 0.4 % high, upper edge = max + 1.6 %, median-of-4 and no-slack limits); owner answer A recorded (GATES "Owner amendment S211", D-OWNER-Q28, D-ACTC-RULE accepted). Gate progress: G3 controller-ACT_TC box written; G3 re-fly and G6 item 7 unblocked (sampler draw of controller ACT_TC not yet built).
+- S211 (2026-11-23): Q29 closed. Question and owner answer as asked:
+  ## Q29 (S211, 2026-11-23): reduce the G3 re-fly and G6 item 7 to the critical runs? BLOCKING for the G3 / G6 chain size
+  Context: Q28 answered (box r [0.88, 1.02] x tau_mean). Planned chain: G3 300 runs (240 LHS + 60 corners C1-C6, owner
+  floor, GATES 3), the 15 freeze-10 item-3 misses re-flown at speed 1 (S208), G6 item 7 ~100 LHS + corners at ID_OK 0.
+  About 45 s per run at speed 4: G3 ~3.8 h, G6 ~1.3 h, plus scoring (both keys) and classification.
+  Where freeze-10 failed (results/g3_campaign_f10/SCORES.tsv, any key or abort, 87/300):
+  - Corners: C1 10/10, C6 10/10, C4 8/10, C5 5/10, C3 4/10, C2 0/10. Both LOC were corners (245 C1, 264 C3).
+  - LHS 50/240. Item 1-2 fails by quadrant: tau >= 1.5 & delay >= 5 ms 19/52; tau >= 1.5 & < 5 ms 9/41;
+    tau < 1.5 & >= 5 ms 14/81; tau < 1.5 & < 5 ms 5/66. Failures are not confined to an obvious critical region.
+  - The 300-run floor is what bounds the safety-failure rate below 1 % at 95 % (rule of three, GATES 3 "Campaign pass").
+  Options (G3):
+  - A (recommended). Keep 300, fly critical first and stop early: corners (60) and the 50 S199 LHS fail/abort draws
+    (same seeds, new r draw) first; halt the chain on the first item 1 or 2 failure confirmed on both keys, otherwise
+    finish the remaining 190 LHS. Same gate claim (< 1 %); saves ~2.5 h only when it fails, as freeze-10 did.
+  - B. 160 runs: 60 corners + 100 fresh LHS, plus the 50 S199 LHS fail draws as targeted evidence (not counted). Bound
+    becomes < 3 % at 95 % from the 100 LHS (corners are not distribution samples). Needs the GATES 3 floor changed.
+  - C. Critical only: corners + the S199 fail/abort draws (~110 runs). No rate bound: shows the observed failures are
+    fixed, not that G3 holds; G3 could not be marked PASSED under the current text.
+  Also proposed (all options):
+  - Drop the speed-1 re-fly of the 15 freeze-10 item-3 misses: they were flown at the old ACT_TC 0.033; every miss of
+    the new campaign goes through the speed-1 rule anyway.
+  - G6 item 7: fly the 60 corners only (pass = item 1, no LOC; item 2 inside the ident window). Both freeze-10 LOC were
+    corners, and ID_OK 0 (gains x0.5, ACT_TC 0.05) is the conservative state. Cuts ~100 runs to 60. The ~100 LHS
+    (Q27 item 7, owner text) is dropped; G8 states the reduced coverage as a limit.
+  Not affected: the sampler r draw and its review (needed in every option); no firmware change.
+  Owner answer (2026-11-23, S211): A, with the two proposed cuts (no speed-1 re-fly of the 15 freeze-10 item-3
+  misses; G6 item 7 = the 60 corners at ID_OK 0). Relaunch the orchestrator with WEEKLY_SHARE 0.9.
+- S211: Q29 acted on (GATES "Owner amendment S211b", D-OWNER-Q29); supervisor restarted with WEEKLY_SHARE 0.9. Gate progress: G3 re-fly order and G6 item 7 size fixed; next is the sampler r draw + review, then the chain.

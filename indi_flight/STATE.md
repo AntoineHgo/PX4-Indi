@@ -15,9 +15,10 @@
   independent review.
 
 ## Next actions (each names its gate item)
-0. G3 re-fly prep (Q28 answered S211): g3_sample.py draws r U[0.88, 1.02] (own dim, independent), runner sets
+0. Q29 answered A (D-OWNER-Q29: 300 fail-fast, corners+S199 LHS fails first; no 15 re-flies; G6 item 7 = 60
+   corners). G3 re-fly prep (Q28 answered S211): g3_sample.py draws r U[0.88, 1.02] (own dim, independent), runner sets
    MC_INDI_ACT_TC = r x (tau_up + tau_down)/2 x 0.033 per run; independent review; then one chain: G3 300 runs
-   (speed 4, S208 rules, 15 item-3 misses re-flown at speed 1) + G6 item 7 (~100 LHS, ID_OK 0).
+   (speed 4, S208 rules, order and halt per GATES S211b) + G6 item 7 (60 corners, ID_OK 0).
 CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older G7 list stay deferred until the ACT_TC
   ident decides whether firmware changes. G8 drafting may resume (Q28 answered).
 1. G3/G6 ACT_TC identification (Q27 item 1): survey design/actc_ident_survey_s208.md -> one-page design note ->
