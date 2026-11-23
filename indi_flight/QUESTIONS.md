@@ -86,3 +86,6 @@ SITL is the simulator's TRUE rotor speed (gz_bridge truth publisher), not the te
 grid numbers above therefore measure the fit on true rotor speed: they are a best case, not the bound. Do not answer
 from them yet. Next session: fit instance 0 on the same 30 logs (no flight), re-table, re-run box margins, and update
 this question. This also explains A-59 (the delayed telemetry was never fitted).
+RESOLVED S209: refit on telemetry instance 0 (results/actc_grid_s209/REFIT_INST0.md, --esc-instance 0 now default):
+0/30 failed, tau_up/down <= 3.9 %, r_mean 0.898-1.004 (each bound within 0.003 of the truth fit), frames 3 seen
+(+3.8 ms delay). Box r [0.88, 1.02] and BOX_MARGINS unchanged. Q28 stands as written above; A-59 closed (hook works).
