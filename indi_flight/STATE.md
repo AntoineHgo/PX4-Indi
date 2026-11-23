@@ -76,8 +76,8 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | - | none in flight. C212 halted at run 024; do not resume before Q31 | - | results/g3_refly_actc_s212/ | - |
-Next session if Q31 still open: one haiku/sonnet task closes the "Unverified" items of report/01, 03, 06, A drafts
-(G8); after that no unblocked work remains: commit, create WAIT_OWNER.
+S217: report Unverified pass done (report/UNVERIFIED_S217.md, 34 items open: flights, Q31, G7 pass). No unblocked
+work remains while Q31 is open: WAIT_OWNER set. On the answer, start at next action 0.
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
