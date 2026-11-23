@@ -263,7 +263,7 @@ def identify(t_cmd, cmd, t_rpm, rpm, rpm_max, t0=-np.inf, t1=np.inf, force_delay
     return dict(motors=motors, median=med, rpm_max=rpm_max)
 
 
-def load_ulg(path, rpm_max=None):
+def load_ulg(path, rpm_max=None, esc_instance=0):
     from pyulog import ULog
     u = ULog(path, ["esc_status", "actuator_motors"])
     ts0 = u.start_timestamp
@@ -272,8 +272,7 @@ def load_ulg(path, rpm_max=None):
             if p in u.initial_parameters:
                 rpm_max = float(u.initial_parameters[p])
                 break
-    inst = max(d.multi_id for d in u.data_list if d.name == "esc_status")
-    esc = u.get_dataset("esc_status", inst).data
+    esc = u.get_dataset("esc_status", esc_instance).data
     am = u.get_dataset("actuator_motors").data
     # same field for both topics: EscStatus has only `timestamp`, so ActuatorMotors uses `timestamp` too
     ke = kc = "timestamp"
@@ -300,9 +299,10 @@ def main(argv=None):
     ap.add_argument("--t0", type=float, default=-np.inf, help="window start, log seconds")
     ap.add_argument("--t1", type=float, default=np.inf)
     ap.add_argument("--rpm-max", type=float, default=None, help="rotor speed in rpm (the unit of esc_status esc_rpm) for y = (rpm/rpm_max)^2; default from log params")
+    ap.add_argument("--esc-instance", type=int, default=0, help="esc_status multi_id; 0 = telemetry (SITL: simulated DShot telemetry), highest = simulator truth")
     ap.add_argument("--json", default=None)
     a = ap.parse_args(argv)
-    tc, cmd, tr, rpm, rpm_max = load_ulg(a.ulg, a.rpm_max)
+    tc, cmd, tr, rpm, rpm_max = load_ulg(a.ulg, a.rpm_max, a.esc_instance)
     if rpm_max is None:
         ap.error("--rpm-max is required: no rpm_max parameter in the log (%s)" % ", ".join(RPM_MAX_PARAMS))
     r = identify(tc, cmd, tr, rpm, rpm_max, a.t0, a.t1)
