@@ -11,8 +11,12 @@ Two modules are provided:
 
 - `mc_indi_rate_control` replaces the PID rate controller (`mc_rate_control`).
 - `mc_indi_pos_control` replaces the position controller (`mc_pos_control`) in every flight mode that uses it.
+  It runs the stock position control followed by an INDI acceleration stage.
 
 Each module is enabled by its own parameter, and an INDI module is never started together with its stock counterpart.
+The two modules are started independently: you can enable the INDI rate controller with the stock position controller, or the INDI position controller with the stock rate controller.
+They are designed to be used together.
+Only multicopters are supported: the start script does not start the INDI modules for VTOL vehicles, and the rate controller only runs while the vehicle is a multicopter.
 
 ## Overview
 
@@ -31,11 +35,12 @@ The vehicle must be a multicopter with a configured [control allocator](../conce
 
 - **Rotor-speed telemetry on every motor.**
   Use an ESC protocol that reports rotor speed to the flight controller, for example bidirectional DShot.
-  The INDI controllers are designed to refuse to arm without it.
+  The INDI controllers do not block arming if it is missing.
+  If the rotor speed of a motor is missing or stale, the controllers use the actuator model instead (see [Overview](#overview)), which is less accurate.
 - **Rotor geometry in the `CA_*` parameters.**
   The rotor positions, spin directions, and thrust and moment coefficients must be configured, because the measured torque is computed with the control allocation library.
   See [Actuator Configuration](../config/actuators.md).
-- **Both INDI modules start before the first arm.**
+- **Each enabled INDI module starts before the first arm.**
   One controller must run from arming to disarming.
   There is no stock controller to fall back to if an INDI module fails to start.
 - **A correct GNSS delay.**
@@ -45,7 +50,8 @@ The vehicle must be a multicopter with a configured [control allocator](../conce
 ## Enabling the Controllers
 
 The modules are not included in every board configuration.
-To build them, enable these options in the board configuration (for example with `make <target> boardconfig`):
+Of the boards in the PX4 source tree, only the simulation target `px4_sitl_default` builds them.
+For any other board, enable these options in the board configuration (for example with `make <target> boardconfig`):
 
 - `CONFIG_MODULES_MC_INDI_RATE_CONTROL` (requires `CONFIG_MODULES_CONTROL_ALLOCATOR`)
 - `CONFIG_MODULES_MC_INDI_POS_CONTROL` (requires `CONFIG_MODULES_MC_POS_CONTROL`)
@@ -58,6 +64,8 @@ To enable the controllers:
 1. Set [MC_INDI_POS_EN](../advanced_config/parameter_reference.md#MC_INDI_POS_EN) to `1` to use the INDI position controller.
 1. Reboot the vehicle (both parameters require a reboot).
 
+The INDI rate controller refuses to start if another controller is already publishing `vehicle_torque_setpoint`.
+
 :::info
 [Autotune](../config/autotune_mc.md) identifies and writes the PID rate gains, so it is not started when the INDI rate controller is enabled.
 :::
@@ -65,7 +73,7 @@ To enable the controllers:
 ## Physical Parameters
 
 The INDI rate controller needs a few physical parameters of the airframe.
-The defaults are the values of a reference 5-inch quadcopter.
+The defaults of the control effectiveness and yaw spin-up parameters (`MC_INDI_G1_*` and `MC_INDI_G2_Y`) are the values of a reference 5-inch quadcopter.
 They are not a substitute for values that match your vehicle.
 
 | Parameter                                                                                  | Meaning                                                          |
@@ -115,7 +123,8 @@ Leave the remaining `MC_INDI_*` parameters (delays, timeouts, filter and blend c
 Before the first flight with the INDI controllers, check the following on the bench (propellers removed):
 
 1. **Both modules run.**
-   Check that `mc_indi_rate_control` and `mc_indi_pos_control` are running (for example with the `status` command of each module in the MAVLink shell).
+   Check that each enabled module is running: run `mc_indi_rate_control status` and `mc_indi_pos_control status` in the MAVLink shell.
+   The command only reports whether the module is running (it prints no further statistics).
    There is no stock fallback, so a module that failed to start means that the vehicle has no rate or position controller.
 1. **Rotor-speed telemetry rate and latency.**
    Check that every motor reports rotor speed at a rate consistent with the controller rate, and with a latency that is small and similar across motors.
@@ -132,8 +141,10 @@ Before the first flight with the INDI controllers, check the following on the be
 
 - The INDI controllers replace the stock controllers in every flight mode, and there is no PID fallback in flight.
 - Autotune is not available with the INDI rate controller.
-- Every motor must provide rotor-speed telemetry.
+- Every motor should provide rotor-speed telemetry: arming is not blocked without it, and the controllers then use the less accurate actuator model.
 - The INDI rate controller does not start if another controller already publishes `vehicle_torque_setpoint`.
+  If another publisher appears while it is running, it logs an error but keeps running.
+- Only multicopters are supported; VTOL vehicles are not.
 
 :::warning
 TODO(owner): robustness limits pending.
@@ -165,7 +176,7 @@ Search for `MC_INDI_` to find the groups _Multicopter INDI Rate Control_ and _Mu
 | [MC_INDI_ERPM_FRZ][MC_INDI_ERPM_FRZ] | 0.5     | s     | Frozen rotor speed detection time                        |
 | [MC_INDI_ACT_BLD][MC_INDI_ACT_BLD]   | 1.0     | s     | Actuator state blend time constant                       |
 | [MC_INDI_DT_MAX][MC_INDI_DT_MAX]     | 1.0     |       | Maximum torque increment per cycle                       |
-| [MC_INDI_LND_SLEW][MC_INDI_LND_SLEW] | 5.0     |       | Landed feedback torque slew (normalised torque per second) |
+| [MC_INDI_LND_SLEW][MC_INDI_LND_SLEW] | 5.0     | 1/s   | Landed feedback torque slew (normalised torque per second) |
 | [MC_INDI_SP_TO][MC_INDI_SP_TO]       | 0.5     | s     | Rate setpoint timeout                                    |
 | [MC_INDI_YAW_CUT][MC_INDI_YAW_CUT]   | 0       | Hz    | Yaw feedback low-pass cut-off                            |
 | [MC_INDI_POS_LPF][MC_INDI_POS_LPF]   | 10.0    | Hz    | Acceleration and thrust filter cut-off                   |
