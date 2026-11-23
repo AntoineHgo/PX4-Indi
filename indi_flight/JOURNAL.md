@@ -1869,3 +1869,35 @@ the owner's call; the x0.5..3 result is reported as is in either case.
 - S213 (cont.): chain halted again at run 024 (draw 264, C3): INDI LOC (tilt > 60 deg) at 60.8 s speed 4 and 61.0 s
   speed 1 with ACT_TC 0.0177, same as freeze-10 at ACT_TC 0.033; PID no LOC. G3 verdict NOT PASSED written (GATES
   S213 section); Q31 (route A/B/C) to the owner, blocking G3 and G6. Gate progress: G3 re-fly verdict NOT PASSED.
+- S214 (2026-11-23, owner interactive session): Q30 closed. Question and owner answer as asked:
+  ## Q30 (S213, 2026-11-23): G3 item 3 window. BLOCKING for G3 item 3 (not for items 1, 2, 4-6)
+  Question: which window scores G3 item 3 (steady-state horizontal RMS <= 0.30 m with wind)?
+  Context:
+  - GATES (line ~255) defines it as "last 10 s of a hold >= 20 s after the last transient, truth". The scorer
+    `bench/g3_score.sh` (header "DEVIATION, stand-in scenarios have no 20 s hold") scores the final 3 s hold segment,
+    which starts about 0.5 s after the arrival from the trajectory. This deviation was never written in GATES or
+    DECISIONS. It also scored the freeze-10 campaign (15 item-3 misses, then under a 95 % quota).
+  - Chain C212 run 022 (draw 262, corner C3, thrust 0.351, wind 1.7 m/s) item 3: INDI 0.317 m (speed 4), 0.308 m
+    (speed 1, both keys) -> a confirmed miss under the S208 no-quota rule. PID, same draw, speed 1: 0.138 m.
+  - Decomposition (`results/g3_refly_actc_s212/speed1_s213/ITEM3_DECOMP.md`): mean offset INDI 0.10-0.13 m, PID 0.12 m
+    (no steady gap); the excess is INDI settling from 0.6 to 0.15 m in about 2 s inside the window (PID about 0.5 s).
+    Over the last 1.5 s of the window: INDI 0.13-0.19 m, PID 0.08 m. Item 3 here measures settling, not steady state.
+    Item 5 (recovery <= 5 s) is the row that covers settling.
+  - Item 2 at speed 1 passes for INDI on run 022 (PID fails item 2 on the same draw), so the halt was not confirmed and
+    the chain resumed on 2026-11-23 at 20:10 for items 1 and 2.
+  Options:
+  - A. Keep the 3 s window (write the deviation into GATES). Run 022 fails item 3, so G3 is NOT PASSED for this campaign.
+  - B. (recommended) Apply the written rule: lengthen the final hold of the G3 scenarios to >= 20 s, score its last
+    10 s. Only the scenario timing changes, no threshold changes. The campaign restarts (CPU only, about +5 s wall per
+    run at speed 4). The current chain keeps flying meanwhile as early item 1 and 2 evidence. A confirmed item 1 or 2
+    failure there still ends G3 as NOT PASSED.
+  - C. Keep the flights and score item 3 on the last 1.5 s of the 3 s hold. Not recommended: the window would be
+    chosen after seeing the data.
+  Meanwhile: chain C212 flies for items 1 and 2, and its item-3 scores are not read or re-flown. G8 drafting continues.
+  Blocked: G3 item 3 rows only.
+  Owner answer (2026-11-23, S214): B, with the independent review's changes (results/g3_refly_actc_s212/Q30_REVIEW.md):
+  dedicated G3 scenarios with a >= 20 s final hold (o1_lemniscate and stick_zsine_o6 left untouched for G5), steady
+  wind kept to the end (no wrench clear in the hold), sag ramp fixed at its drawn length, window = last 10 s of the
+  hold, item 6 = last 20 s, each key computes its own window; GATES 3 text corrected (events start at the main
+  segment, not the hold). C212 stays halted (Q31); the next campaign uses the new scenarios.
+- S214: Q30 acted on (GATES "Owner amendment S214", D-OWNER-Q30, review Q30_REVIEW.md; ITEM3_DECOMP gust-timing line corrected there: gust ends ~5 s before the 022 window, mixed time bases). Gate progress: G3 item 3 window fixed for the next campaign; tooling (G3 scenarios, scorer t0, key-2 window, items 5-6) to build after Q31.

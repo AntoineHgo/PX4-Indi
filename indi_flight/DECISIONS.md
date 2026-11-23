@@ -1335,6 +1335,12 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
 - Alternative: per-run r ACT_TC (agent first draft) rejected: it tests the identified state twice.
 - Overturn: owner reading of S211 "one chain" as per-run r for item 7.
 
+## D-OWNER-Q30 (S214, 2026-11-23): G3 item 3 on the written window, >= 20 s hold, last 10 s
+- Owner answer to Q30 (full text JOURNAL.md S214; gate text GATES "Owner amendment S214"), after an independent review
+  (results/g3_refly_actc_s212/Q30_REVIEW.md). A (keep the undocumented 3 s window) and C (window chosen after the data)
+  rejected. The 3 s window measured settling on draw 262 (INDI 2 s vs PID 0.5 s), which item 5 covers.
+- Overturn: none of mine (owner decision).
+
 ## D-OWNER-Q29 (S211, 2026-11-23): G3 re-fly 300 fail-fast; G6 item 7 corners only
 - Owner answer to Q29 (full text JOURNAL.md S211; gate text GATES "Owner amendment S211b"). Critical block first
   (60 corners + 50 freeze-10 LHS fail/abort draws), halt on a confirmed item 1-2 failure, else complete 300. Reduced

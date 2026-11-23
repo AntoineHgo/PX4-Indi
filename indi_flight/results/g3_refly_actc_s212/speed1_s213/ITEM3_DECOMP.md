@@ -1,7 +1,7 @@
 # Item 3 decomposition, draw 262 (C3: sat 0.351 all motors, wind 1.66 m/s steady from 164.9 deg, sag)
 Error = truth xy minus trajectory_setpoint median over window (g3_checks.load, same as scorer). Windows differ per log
 (own chain_key1): s4 54.422, INDI s1 60.231, PID s1 60.711 (+3 s). Script: scratchpad it3.py.
-Weak motor 2 thrust 0.990 (negligible, saturation scale 0.351 dominates). Gust onset 58.12/58.91/58.83 s = after window.
+Weak motor 2 thrust 0.990 (negligible, saturation scale 0.351 dominates). Gust onset 58.12/58.91/58.83 s = after window. [CORRECTED S214, Q30_REVIEW.md: mixed time bases; 58.12 is the PX4-time onset of the gust_x profile at traj start, the gust itself runs onset+12..13 s = ~5 s BEFORE the window, inside traj.]
 Steady wind present, gust not. Max actuator_motors in window 0.52 (no motor >= 0.99, no saturation); no sat flag read.
 
 | log | window mean err (x,y) / mag m | fluct RMS m | total RMS m | max tilt deg | pre-10 s mean mag / fluct RMS |

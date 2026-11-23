@@ -816,3 +816,16 @@ box; SCORES.tsv, progress.txt, HALT_ON_FAIL.json) and `speed1_s213/README.md` (s
   loss of control (tilt max 40 deg). Under S211b a halted campaign is NOT PASSED; under the failure-explanation rule
   this is an INDI-specific failure, class (b) or (c) still to be shown by factor restoration (Q31).
 - Item 3 is not scored for the verdict: its window is open in Q30 (run 022 0.308 m at speed 1 against 0.30 m).
+
+## Owner amendment S214 (2026-11-23): Q30 G3 steady-state window (owner answer B, D-OWNER-Q30)
+- **Window.** Every G3 scenario ends with a hold of >= 20 s that starts at the arrival from the main segment. All
+  injected events (fault steps, eRPM loss/frozen, gust) end before that hold; the steady wind stays on and the sag stays
+  at its final value to the end of the run (no wrench clear, no ramp inside the hold). Item 3 window = last 10 s of that
+  hold, so it starts >= 10 s after the last transient (item 5: 5 s recovery + 5 s no re-excursion). Item 6 uses the last
+  20 s of the same hold. Thresholds unchanged. Replaces the 3 s stand-in window of `bench/g3_score.sh`.
+- **Implementation.** Dedicated G3 scenarios in `scenarios.py` (position and stick), not edits to `o1_lemniscate` /
+  `stick_zsine_o6` (used by G5). Steady wind held to the scenario end; sag ramp fixed at the drawn length. Key 1 and key 2
+  each derive the window from `run.json` (key 2 no longer takes key 1's t0/t1). Items 5 and 6 implemented in both keys.
+- **Correction (GATES 3 "Flight per run").** Gust and faults are injected at the start of the main segment (`traj` /
+  `stick`), not at the start of the hold, as the runner has always done.
+- C212 (3 s window) stays as items 1-2 evidence; its item-3 scores are not used. Restart is decided by Q31.

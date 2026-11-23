@@ -4,7 +4,7 @@
 - Stage: 6 (validation). FREEZE-10 (D-FREEZE-10): firmware 7fe6206fcc, config g5_freeze_s157 params (XY gains at
   firmware defaults 1.2/2.4). Later firmware commits behaviour-neutral (D-G7-NUTTX-BUILD, D-F10-NEUTRAL).
 - Gates: see GATE_STATUS.tsv. G1, G2, G4, G5 PASSED; G3 NOT PASSED at freeze-10 (S199) and again in the ACT_TC re-fly
-  (S213, C3 LOC draw 264); Q30, Q31 open. Q28 closed S211
+  (S213, C3 LOC draw 264); Q31 open; Q30 closed S214 (D-OWNER-Q30). Q28 closed S211
   (D-OWNER-Q28, GATES "Owner amendment S211"): rule A, G3 box r [0.88, 1.02] x tau_mean.
 - Q27 closed S208 (D-OWNER-Q27, GATES "Owner amendments S208"): identify ACT_TC first; G3 controller-ACT_TC box written
   from the measured ident error bound, then Q28 to the owner with bound + box, then G3 re-fly (300) and G6 item 7.
@@ -18,7 +18,8 @@
 ## Next actions (each names its gate item)
 0. G3 re-fly C212 HALTED and declared NOT PASSED S213 (run 024, draw 264, C3 LOC, INDI-only, ACT_TC-independent;
    GATES "G3 verdict, re-fly ... (S213)"). Q31 OPEN (route: A stop + limit, B factor restoration on 264 then one
-   fix probe, C saturation design) and Q30 OPEN (item 3 window): both block G3 and G6. Act on the answers first.
+   fix probe, C saturation design) blocks G3 and G6. Q30 answered B (GATES S214): G3 scenario/scorer
+   tooling per that text before the next campaign. Act on the answers first.
    If B: sonnet agent restores draw-264 factors/hooks to nominal one at a time at speed 1 (single-index chain dirs
    as speed1_s213), writes results/g3_refly_actc_s212/restore264/README.md. Speed-1 re-fly method for any halt: see
    speed1_s213/README.md. Then G6 item 7
