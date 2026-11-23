@@ -81,3 +81,8 @@ Options:
 Meanwhile (not decided by this question): fix the telemetry-latency hook (A-59, one session, simplest injector, two
 keys; if it does not fly after that session, I ask to drop the frames factor), and G7 unit 8. No G3 or G6 item-7 flight.
 Blocked: G3 re-fly and G6 item 7 only.
+CORRECTION S209 (same session, before any answer): `ident_actc.py:275` reads the highest esc_status instance, which in
+SITL is the simulator's TRUE rotor speed (gz_bridge truth publisher), not the telemetry instance 0 a vehicle has. The
+grid numbers above therefore measure the fit on true rotor speed: they are a best case, not the bound. Do not answer
+from them yet. Next session: fit instance 0 on the same 30 logs (no flight), re-table, re-run box margins, and update
+this question. This also explains A-59 (the delayed telemetry was never fitted).
