@@ -1860,3 +1860,9 @@ the owner's call; the x0.5..3 result is reported as is in either case.
   independently (results/g3_refly_actc_s212/REVIEW_S212.md, 2 halt gaps closed); pre-test runs 110-111 OK (ULog ACT_TC
   equals sample); chain C212 (300 runs, speed 4) launched 2026-11-23 19:42. Gate progress: G3 re-fly flying (tooling
   keyed, pre-test passed).
+- S213 (2026-11-23): chain C212 halted at run 022 (draw 262, C3) on item 2 both keys; runs 000-022 committed. Speed-1
+  re-fly (results/g3_refly_actc_s212/speed1_s213/): INDI item 2 passes both keys, PID fails item 2 (p/q 2.0 Hz) on the
+  same draw -> halt not confirmed, chain resumed 20:10. INDI item 3 0.308 m vs 0.30 at speed 1 (PID 0.138):
+  ITEM3_DECOMP.md shows settling inside a 3 s window opening 0.5 s after arrival, not a steady gap; the scorer's 3 s
+  window deviates from the GATES "last 10 s of a hold >= 20 s" and was never recorded -> Q30 to the owner, blocking
+  item 3. Gate progress: G3 run 022 item 2 resolved (not confirmed), item 3 window question Q30.

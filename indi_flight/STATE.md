@@ -15,10 +15,12 @@
   independent review.
 
 ## Next actions (each names its gate item)
-0. G3 re-fly chain C212 flying (tooling 77572243f5, reviewed REVIEW_S212.md; pre-test 110-111 OK, 111 item 3 FAIL
-   both keys at speed 4 -> speed-1 rule). On CHAIN_HALTED: read HALT_ON_FAIL.json; item 2 -> speed-1 re-fly of that
-   run (S208 rule) before declaring; item 1 / abort_flight -> PID reference same draw, then NOT PASSED to owner
-   (GATES S211b). On CHAIN_FINISHED: commit runs, speed-1 rule on item-3 misses, verdict per GATES. Then G6 item 7
+0. G3 re-fly chain C212 flying for items 1-2 (resumed S213 after run 022 halt: item 2 not reproduced at speed 1,
+   results/g3_refly_actc_s212/speed1_s213/). Q30 OPEN (item 3 window, blocking item 3 only): do not read, re-fly or
+   note item-3 scores until answered; if answer B, scenario hold >= 20 s and campaign restart. On CHAIN_HALTED: read
+   HALT_ON_FAIL.json; item 2 -> speed-1 re-fly of that run (agent brief as S213: single-index chain dirs indi_NNN,
+   pid_NNN) before declaring; item 1 / abort_flight -> PID reference same draw, then NOT PASSED to owner
+   (GATES S211b). On CHAIN_FINISHED: commit runs, verdict items 1-2 per GATES. Then G6 item 7
    chain (60 corners, un-identified ID_OK 0 + ACT_TC 0.05, D-G6-ITEM7-SET): ready, launch cmd in
    results/g6_item7_s212/PREP.md (G3_PARAMS=... start ... 240 299 --speed 4); pre-test its first run before the rest.
 CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older G7 list stay deferred until the ACT_TC
@@ -78,7 +80,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| C212 | G3 re-fly chain, 300 runs, speed 4, --halt-on-fail, started 2026-11-23 19:42 (chain pid 588997, waiter 588990) | detached | results/g3_refly_actc_s212/ | `bash indi_flight/bench/g3_chain.sh status indi_flight/results/g3_refly_actc_s212`; resume = start cmd in PREP.md |
+| C212 | G3 re-fly chain, resumed 2026-11-23 20:10 (chain pid 684144, waiter systemd-inhibit 684137); runs 000-022 committed 303ca48449; dir stays dirty while flying | detached | results/g3_refly_actc_s212/ | `bash indi_flight/bench/g3_chain.sh status indi_flight/results/g3_refly_actc_s212`; resume = start cmd in PREP.md |
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
