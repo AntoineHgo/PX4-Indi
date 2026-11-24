@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Per-factor restoration copies of the S212 samples dir: only run_024.json (draw 264) differs, one factor to nominal.
-Usage: make_variants.py <samples_src> <out_root>.  Nominal values = the factor's own "nominal" field in the draw
+Usage: make_variants.py <samples_src> <out_root> [NAME...].  Nominal values = the factor's own "nominal" field in the draw
 (g3_sample.py decode), g1: e=1 (controller G1 = plant G1, k = 1/I_scale), inertia: 1, ACT_TC: 0.033 (ACTC_NOMINAL_S)."""
 import copy, json, os, shutil, sys
 src, out = sys.argv[1:3]
@@ -103,9 +103,16 @@ def v_gnss(d):
     d["hooks"]["run_scenario_args"].update({"--gps-dly": 0, "--gnss-delay": 0})
 
 
+def v_joint(d):  # every factor nominal EXCEPT saturation and weak_motor (kept as drawn)
+    for fn in (v_tau, v_actc, v_delay, v_tel, v_inertia, v_g1, v_mass, v_vib, v_wind, v_gnss):
+        fn(d)
+
+
 V = dict(sat=v_sat, weak=v_weak, tau=v_tau, actc=v_actc, delay=v_delay, tel=v_tel, g1=v_g1, inertia=v_inertia,
-         mass=v_mass, vib=v_vib, wind=v_wind, gnss=v_gnss)
+         mass=v_mass, vib=v_vib, wind=v_wind, gnss=v_gnss, joint=v_joint)
 for name, fn in V.items():
+    if sys.argv[3:] and name not in sys.argv[3:]:
+        continue
     dst = os.path.join(out, "samples_" + name)
     shutil.rmtree(dst, ignore_errors=True)
     shutil.copytree(src, dst)
