@@ -25,6 +25,9 @@
    Before the next G3 campaign: Q30 tooling (GATES "Owner amendment S214"). Class C skipped lines both stacks.
 1. G6 item 7 chain (60 corners, results/g6_item7_s212/PREP.md): CUT RC221 until the Q31 route ends (a firmware
    fix would invalidate it). MAX_STRUCTURE 0.08 vs norm residual > 0.05 (actc_grid_s209 PRETEST.md) revisited then.
+S222 route check (supervisor, GATE_STATUS unchanged 4 sessions): RC221 (S221) still current, no new RC filed.
+  Only blocker of the next verdict change = G3 item 1 Q31 route (action 0). g3_campaign_f10 committed, verdict
+  written (GATES 725). Extra cut: G8 drafting paused until the Q31 route decides firmware (budget to action 0 only).
 CUT RC208/RC221: action 3 (f) unit 9, (g), harness extraction, dead path, older G7 list deferred until the Q31
   route decides whether firmware changes. Saturation sweep only if an investigator asks. G8 drafting continues.
 2. G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
@@ -79,7 +82,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | - | - | - |
+| S222-P | Q31 falsifier probes P1 ACT_BLD 0.15, P2 measured feedback off (joint) | sonnet | results/g3_refly_actc_s212/restore264/falsifier_s222/README.md | re-brief from next action 0 if README missing |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
