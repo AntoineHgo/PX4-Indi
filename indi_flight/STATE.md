@@ -13,22 +13,16 @@
 ## Next actions (each names its gate item)
 -1. Gate binary = 903eae63 (D-BINARY-GZFIX; FREEZE-10 + GZBridge fix f110361a33; old px4.freeze10_d220e193;
    g3_chain.sh pins it). Do NOT rebuild build/px4_sitl_default from HEAD. Pre-S214 C3 runs: GATES 2 invalid.
-0. G3 item 1 (D-OWNER-Q31): step B DONE S220, LOC persists. NEXT SESSION FIRST: 2 parallel opus/high investigators
-   (separate reports restore264/INVESTIGATION_A.md, _B.md; brief: minimal case = restore264 joint variant, INDI LOC
-   at fault+1.1 s, PID survives (pid_joint); "why PID survives" first; read-only, logs + firmware source, no fix)
-   -> 1 opus/high solver + independent reviewer (pre-approved); fix probe on joint, then draw 264; firmware change
-   names re-flown rows (freeze discipline). Still LOC -> owner question (continue or stop, incl. RC220 option). Before the next G3 campaign: Q30 tooling (GATES "Owner
-   amendment S214": G3 scenarios with 20 s hold, scorer t0, key-2 window, items 5-6). G6 item 7 chain (60 corners,
-   D-G6-ITEM7-SET): launch cmd in results/g6_item7_s212/PREP.md; pre-test its first run.
-   MAX_STRUCTURE 0.08 fails SITL data if norm residual > 0.05 (actc_grid_s209 PRETEST.md): revisit before G6 noisy
-   runs. Next G3 scoring: class C skipped lines both stacks (15 old item-3 re-flies dropped, D-OWNER-Q29).
-RC220 (design/route_check_220.md) acted on S220: one-factor sweeps ended (restore264/README.md, 14 rows: sat, weak
-  or mass restored alone remove the LOC; joint = only sat 0.351 + weak 0.709 drawn, all else nominal -> INDI LOC). Next G3 step = Q31 escalation: 2 parallel opus/high investigators, FIRST question "why does
-  PID survive draw 264", inputs restore264/README.md + q31_injector_fix_s214; fresh session (needs ~2x their cost).
-  Saturation sweep 0.35-0.5 only if an investigator asks for it. G6 item 7 chain may run once no G3 docker runs.
-  Owner question (if solver fails) includes option "264 = documented feasibility limit" (RC220 item 6).
-CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older G7 list stay deferred until the Q31
-  route decides whether firmware changes. G8 drafting continues.
+0. G3 item 1 (D-OWNER-Q31 escalation): minimal case = results/g3_refly_actc_s212/restore264 joint variant (sat 0.351
+   + weak 0.709, rest nominal): INDI LOC at fault+1.1 s, PID survives (pid_joint). Step: 2 opus/high investigators
+   (restore264/INVESTIGATION_A.md, _B.md; "why PID survives" first; read-only, no fix) -> opus/high solver +
+   independent reviewer (pre-approved) -> fix probe on joint, then draw 264; a firmware change names re-flown rows.
+   Still LOC -> owner question (continue / stop, incl. "264 = documented feasibility limit", RC220 item 6).
+   Before the next G3 campaign: Q30 tooling (GATES "Owner amendment S214"). Class C skipped lines both stacks.
+1. G6 item 7 chain (60 corners, results/g6_item7_s212/PREP.md): CUT RC221 until the Q31 route ends (a firmware
+   fix would invalidate it). MAX_STRUCTURE 0.08 vs norm residual > 0.05 (actc_grid_s209 PRETEST.md) revisited then.
+CUT RC208/RC221: action 3 (f) unit 9, (g), harness extraction, dead path, older G7 list deferred until the Q31
+  route decides whether firmware changes. Saturation sweep only if an investigator asks. G8 drafting continues.
 2. G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
 3. G7 open items: (f) F-10 clean-up per results/g7_s198/F10_PLAN.md (build dir build/f10_sitl, unit tests in
    build/px4_sitl_test). Units 1-8 done; unit 8 review MINORs (wording, F10_UNIT8_REVIEW.md) go into the
@@ -81,7 +75,8 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | - | - | - |
+| A | Q31 investigator A (why PID survives draw 264 joint) | opus/high | restore264/INVESTIGATION_A.md | re-brief from the file if partial |
+| B | Q31 investigator B (independent, same question) | opus/high | restore264/INVESTIGATION_B.md | idem; must not read _A |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
