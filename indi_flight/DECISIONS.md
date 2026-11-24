@@ -1382,3 +1382,18 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   (+3.8 ms delay). Owner decided the box S211 (D-OWNER-Q28).
 - Overturn: a G3 or G6 run whose failure is caused by r at a box edge (shown on a log); a seed-2 or pitch-axis repeat moving
   tau_sym by > 4 %.
+
+## D-RATE-BLD-2 (S223, PROPOSED; re-opens D-RATE-BLD under D-OWNER-Q31): rate-loop gap remover after the draw-264 LOC
+- Evidence: restore264 INVESTIGATION_A/_B, falsifier_s222: weak-motor trim grows with collective, 1 s blend lags it,
+  INDI LOC; tb 0.15 s and model-only (W_MAX 0) remove LOC (max tilt 53.5 / 45.3 deg vs PID 30).
+- Note: t_fb = t_meas + LPF_tb(t_model - t_meas) = LPF_tb(t_model) + HPF_tb(t_meas): the blend already is a
+  commanded-torque anchor below 1/(2 pi tb); tb is the only knob of that structure.
+- Alternatives: (i) lower the MC_INDI_ACT_BLD default (parameter, no new code; S76/S77 margins showed no tb effect
+  at 0.1-1.0 s, 400/800 Hz roll); (ii) per-motor command-to-omega^2 correction (learns 0.709 multiplicatively, no lag
+  as collective grows; new estimator, two keys, landed/telemetry edges); (iii) explicit bounded rate integrator with
+  allocator-saturation anti-windup; (iv) outer demand capped to available thrust (secondary: saturation came after
+  the divergence, INVESTIGATION_A Q2).
+- Choice pending S223 probes (blend_s223: tb 0.10 / 0.05 on joint) and the item 2 pre/post-fault split
+  (item2_split_s223). Lean (i) if a tb removes LOC with tilt margin and no INDI-only post-fault item 2 failure; else (ii).
+- Cost of (i): default change after FREEZE-10 invalidates G2 rate/att cells, G3, G4, G5, G6 rows (all re-flown).
+- Overturn: (i) fails draw 264 itself, or rate-loop margins at the new tb below G2 thresholds -> (ii).
