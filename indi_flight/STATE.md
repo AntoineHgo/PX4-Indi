@@ -77,9 +77,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none in flight. C212 halted at run 024; do not resume before Q31 | - | results/g3_refly_actc_s212/ | - |
-S217: report Unverified pass done (report/UNVERIFIED_S217.md, 34 items open: flights, Q31, G7 pass). No unblocked
-work remains while Q31 is open: WAIT_OWNER set. On the answer, start at next action 0.
+| R264 | S219 draw-264 factor restoration speed 1, 903eae63 (G3 item 1) | sonnet | results/g3_refly_actc_s212/restore264/README.md | re-brief from README progress table |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
