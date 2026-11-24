@@ -77,7 +77,8 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| R264 | S219 draw-264 factor restoration speed 1, 903eae63 (G3 item 1) | sonnet | results/g3_refly_actc_s212/restore264/README.md | re-brief from README progress table |
+| R264b | S220 fly wind/vib/mass/gnss restorations + README (9 flown S219: only sat restore passes, weak restore no LOC item3 FAIL, 7 others LOC) (G3 item 1) | sonnet | results/g3_refly_actc_s212/restore264/README.md | scripts/batch.sh NAME...; batch.log |
+| RC220 | route check (G3 blocks) | sonnet | design/route_check_220.md | re-brief |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
