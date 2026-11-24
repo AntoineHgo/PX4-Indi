@@ -18,10 +18,12 @@
    (restore264/INVESTIGATION_A.md, _B.md agree): no saturation before LOC; weak motor = torque bias growing with
    collective; measured-torque anchor leaks (eff 0.351), only integral left is the 1 s blend (MC_INDI_ACT_BLD,
    indi_rate_control.cpp:336-357) -> INDI P 0.011 vs PID 0.03 + integrator. Re-opens decision 2 (gap remover).
-   NEXT: param-only falsifier probes on joint (sonnet, existing runner): ACT_BLD 0.15; measured feedback off.
-   Survive -> opus/high solver + independent reviewer (pre-approved): fix design (commanded-torque anchor or fast
-   gap fold-in; outer demand capped to available thrust), fix probe on joint, then draw 264; names re-flown rows.
-   Still LOC -> owner question (continue / stop, incl. "264 = documented feasibility limit", RC220 item 6).
+   Falsifier probes DONE S222 (restore264/falsifier_s222/README.md): P1 ACT_BLD 0.15 no LOC (tilt 53.5 deg), P2
+   MC_INDI_W_MAX 0 (model only) no LOC (45.3 deg); both FAIL G3 item 2 (key1+key2) -> integral-action cause
+   supported. NEXT (session start, needs ~$1): first a haiku check whether pid_joint passes item 2 (if PID fails
+   item 2 too, item 2 on joint is not INDI-specific). Then opus/high solver + independent reviewer (pre-approved):
+   fix design for decision 2 (commanded-torque anchor or fast gap fold-in; outer demand capped to available
+   thrust) that removes LOC AND item 2 on joint; fix probe on joint, then draw 264; name re-flown rows.
    Before the next G3 campaign: Q30 tooling (GATES "Owner amendment S214"). Class C skipped lines both stacks.
 1. G6 item 7 chain (60 corners, results/g6_item7_s212/PREP.md): CUT RC221 until the Q31 route ends (a firmware
    fix would invalidate it). MAX_STRUCTURE 0.08 vs norm residual > 0.05 (actc_grid_s209 PRETEST.md) revisited then.
@@ -82,7 +84,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S222-P | Q31 falsifier probes P1 ACT_BLD 0.15, P2 measured feedback off (joint) | sonnet | results/g3_refly_actc_s212/restore264/falsifier_s222/README.md | re-brief from next action 0 if README missing |
+| - | none | - | - | - |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
