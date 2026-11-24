@@ -22,3 +22,7 @@ P2 switch: `MC_INDI_W_MAX` (rotor speed at full thrust). Yaml: "Zero disables th
 | P2 | -0.24 / 0.68 | -0.28 / 0.88 | -0.0026 / 0.0113 | -0.0024 / 0.0134 |
 
 Caveats: the original joint window already contains the divergence (its 1 s window, fault 58.23, ends near the 86.7 deg tilt), so its errors are partly a consequence of the LOC, not only a cause. Fault times differ by 0.6 s between joint and the probes (cause not checked, as in ../README.md). Single flights, no repeat, so flight-to-flight variation is unknown. Neither probe passes G3 keys (item2 fails); only the LOC question was tested.
+
+## PID joint scored (S222)
+
+Rescore of `pid_joint/run_024` (PID reference, draw 264 joint, no flight) with `g3_chain.sh rescore`; `chain_range` copied from p1_bld015. Key 1: FAIL (item2 only; item1 pass, item3 pass). Key 2: pass (all items pass; chatter False is not G3). Item 2 key 1, max_ratio / rms_at_max_ratio / max_rms_ratio_flagged, sustained: p 5.8e6 / 2.44 / 11.2 no; q 1.3e7 / 2.59 / 22.0 yes (2.0 Hz line from 21 s, 3 windows); r 3.4e5 / 0.65 / 6.0 no. p1_bld015 key 1 (item2 FAIL): p 6.0e7 / 14.5 / 15.5 yes (2.0 Hz line from 23 s, 3 windows); q 1.5e6 / 7.7 / 28.8 no; r 5.6e7 / 13.2 / 14.1 no. p2_nomeas key 1 (item2 FAIL): p 5.4e7 / 11.8 / 24.3 yes (2.0 Hz line from 29 s, 3 windows); q 4.4e7 / 11.0 / 32.2 yes (2.0 Hz lines from 22 s and 29 s); r 9.9e6 / 2.6 / 5.7 no. Key 2 item2: pass on PID, FAIL on p1 and p2.
