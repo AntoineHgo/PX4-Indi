@@ -20,8 +20,9 @@
    indi_rate_control.cpp:336-357) -> INDI P 0.011 vs PID 0.03 + integrator. Re-opens decision 2 (gap remover).
    Falsifier probes DONE S222 (restore264/falsifier_s222/README.md): P1 ACT_BLD 0.15 no LOC (tilt 53.5 deg), P2
    MC_INDI_W_MAX 0 (model only) no LOC (45.3 deg); both FAIL G3 item 2 (key1+key2) -> integral-action cause
-   supported. NEXT (session start, needs ~$1): first a haiku check whether pid_joint passes item 2 (if PID fails
-   item 2 too, item 2 on joint is not INDI-specific). Then opus/high solver + independent reviewer (pre-approved):
+   supported. pid_joint scored S222: item 2 key1 FAIL (2 Hz q, rms 2.6), key2 pass; probes fail both keys, rms
+   11-15. Detector flags 2 Hz from 21-29 s, BEFORE the ~58.8 s fault: solver checks whether item 2 is pre-fault
+   (scenario/sat from start), not the weak motor. NEXT (session start, needs ~$1): opus/high solver + independent reviewer (pre-approved):
    fix design for decision 2 (commanded-torque anchor or fast gap fold-in; outer demand capped to available
    thrust) that removes LOC AND item 2 on joint; fix probe on joint, then draw 264; name re-flown rows.
    Before the next G3 campaign: Q30 tooling (GATES "Owner amendment S214"). Class C skipped lines both stacks.
