@@ -13,16 +13,20 @@
 ## Next actions (each names its gate item)
 -1. Gate binary = 903eae63 (D-BINARY-GZFIX; FREEZE-10 + GZBridge fix f110361a33; old px4.freeze10_d220e193;
    g3_chain.sh pins it). Do NOT rebuild build/px4_sitl_default from HEAD. Pre-S214 C3 runs: GATES 2 invalid.
-0. G3/G6: Q31 answered S218 (D-OWNER-Q31, GATES "Owner amendment S218"). Step 1 (B): sonnet agent restores
-   draw-264 factors/hooks to nominal one at a time at speed 1 on 903eae63 (single-index chain dirs, method in
-   speed1_s213/README.md; base evidence results/q31_injector_fix_s214), writes
-   results/g3_refly_actc_s212/restore264/README.md; then one fix probe if a cause is shown. If the LOC persists:
-   2 parallel opus/high investigators (separate reports) -> 1 opus/high solver + independent reviewer
-   (pre-approved); still LOC -> owner question (continue or stop). Before the next G3 campaign: Q30 tooling (GATES "Owner
+0. G3 item 1 (D-OWNER-Q31): step B DONE S220, LOC persists. NEXT SESSION FIRST: 2 parallel opus/high investigators
+   (separate reports restore264/INVESTIGATION_A.md, _B.md; brief: minimal case = restore264 joint variant, INDI LOC
+   at fault+1.1 s, PID survives (pid_joint); "why PID survives" first; read-only, logs + firmware source, no fix)
+   -> 1 opus/high solver + independent reviewer (pre-approved); fix probe on joint, then draw 264; firmware change
+   names re-flown rows (freeze discipline). Still LOC -> owner question (continue or stop, incl. RC220 option). Before the next G3 campaign: Q30 tooling (GATES "Owner
    amendment S214": G3 scenarios with 20 s hold, scorer t0, key-2 window, items 5-6). G6 item 7 chain (60 corners,
    D-G6-ITEM7-SET): launch cmd in results/g6_item7_s212/PREP.md; pre-test its first run.
    MAX_STRUCTURE 0.08 fails SITL data if norm residual > 0.05 (actc_grid_s209 PRETEST.md): revisit before G6 noisy
    runs. Next G3 scoring: class C skipped lines both stacks (15 old item-3 re-flies dropped, D-OWNER-Q29).
+RC220 (design/route_check_220.md) acted on S220: one-factor sweeps ended (restore264/README.md, 14 rows: sat, weak
+  or mass restored alone remove the LOC; joint = only sat 0.351 + weak 0.709 drawn, all else nominal -> INDI LOC). Next G3 step = Q31 escalation: 2 parallel opus/high investigators, FIRST question "why does
+  PID survive draw 264", inputs restore264/README.md + q31_injector_fix_s214; fresh session (needs ~2x their cost).
+  Saturation sweep 0.35-0.5 only if an investigator asks for it. G6 item 7 chain may run once no G3 docker runs.
+  Owner question (if solver fails) includes option "264 = documented feasibility limit" (RC220 item 6).
 CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older G7 list stay deferred until the Q31
   route decides whether firmware changes. G8 drafting continues.
 2. G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
@@ -50,7 +54,7 @@ CUT RC208: next actions 3 (f) unit 9, (g), harness extraction, dead path, older 
    pos module reads esc_status instance 0 only, no frozen/error-count check, 100 ms ESC age vs 20 ms in rate module.
 Rules: 1 session per inner-loop law change; parallel docker streams only for tolerance-insensitive probes, never gate
   evidence, never a docker build during gate flights; G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1. Next RC:
-  S218 (RC203).
+  S235 (last RC220).
 STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 margin): A-39 / yaw measured-path chase,
   PID M1 hook, hooks without a consumer, stand-alone anomaly chases, --sched-anchor and set_param fixes, EdgeState
   design, more PID G5.10 runs.
@@ -77,8 +81,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| R264b | S220 fly wind/vib/mass/gnss restorations + README (9 flown S219: only sat restore passes, weak restore no LOC item3 FAIL, 7 others LOC) (G3 item 1) | sonnet | results/g3_refly_actc_s212/restore264/README.md | scripts/batch.sh NAME...; batch.log |
-| RC220 | route check (G3 blocks) | sonnet | design/route_check_220.md | re-brief |
+| - | none | - | - | - |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.

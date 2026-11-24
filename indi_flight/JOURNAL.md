@@ -1959,3 +1959,9 @@ the owner's call; the x0.5..3 result is reported as is in either case.
   Binary: 903eae63 (FREEZE-10 sources + GZBridge fix f110361a33) is the gate binary from now on; pre-S214 C3 runs
   (saturation draws) fail GATES 2 validity.
 - S218: Q31 acted on (GATES "Owner amendment S218", D-OWNER-Q31, D-BINARY-GZFIX; g3_chain.sh pin -> 903eae63). Gate progress: G3 binary and C3 validity fixed; draw-264 restoration (B) unblocked.
+- S219-S220: Q31 route B done (results/g3_refly_actc_s212/restore264/README.md, 14 rows): restoring saturation, weak
+  motor or mass alone removes the draw-264 LOC; the other 10 single restorations do not. Joint probe (only saturation
+  0.351 + weak motor 0.709 drawn, rest nominal): INDI LOC 1.1 s after the fault, PID survives (38 deg max tilt) ->
+  INDI-specific, minimal reproduction. Route check 220 filed (design/route_check_220.md), acted on (sweeps ended).
+  Next: Q31 escalation (2 opus investigators). Gate progress: G3 item 1 cause isolated to saturation + weak motor
+  (INDI-specific); no GATE_STATUS row changed (no new scored evidence).
