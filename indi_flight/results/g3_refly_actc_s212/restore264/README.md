@@ -37,3 +37,9 @@ Fault time and max tilt for `weak`: `tilt.py` reported fault t 0.00 (no matching
 - `joint` (everything nominal except saturation 0.351 and weak motor 3 at 0.709) still loses control (tilt > 60 deg, 60.05 s), so saturation plus weak motor alone reproduce the LOC on this draw.
 - Not established by this table: why mass restoration helps (it was not isolated from the saturation scale being tied to mass in the draw, 0.27 x 1.3 = 0.351, which stays as drawn here; unverified), and whether the no-LOC flights of weak and mass would pass G3 (they fail key1/key2 items).
 - Single runs per variant; no repeat for flight-to-flight variation was done.
+
+## PID reference on joint
+
+- One PID (pid_default) flight of `joint` (draw 264, all nominal except saturation 0.351 and weak motor 3 at 0.709), speed 1, argv identical to the INDI joint run except the controller (`scripts/fly_pid_variant.py joint`, output `pid_joint/run_024`). Outcome: ok, no error, no watchdog (full flight, ends 97.87 s).
+- Max tilt after fault (fault t 58.89 s): 38.1 deg at 66.36 s, never above 60 deg. INDI joint: fault 58.23 s, 86.7 deg at 59.98 s, tilt > 60 deg at 59.33 s, flight ended 60.07 s.
+- PID survives the same saturation + weak motor fault that INDI loses control on. Single run, no repeat. G3 key checks of the PID flight not evaluated here (unverified). The fault times differ by 0.66 s between the two runs (cause not checked).
