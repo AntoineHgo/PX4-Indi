@@ -448,6 +448,7 @@ class SessionWatch:
         self.order = []
         self.agent_model = {}         # Agent tool_use id -> model
         self.agent_purpose = {}       # Agent tool_use id -> "Purpose:" line of its brief (MISSION.md rule)
+        self.agent_effort = {}        # Agent tool_use id -> effort passed at launch (None: the agent's default)
         self.agent_parent = {}        # nested Agent tool_use id -> tool_use id of the agent that launched it
         self.purpose = None           # the orchestrator's latest "Purpose:" line
         self.cost = None
@@ -498,6 +499,7 @@ class SessionWatch:
                     inp = b.get("input") or {}
                     self.agent_model[b.get("id")] = inp.get("model") or "default"
                     self.agent_purpose[b.get("id")] = purpose_line(inp.get("prompt") or "")
+                    self.agent_effort[b.get("id")] = inp.get("effort")
                     if parent:
                         self.agent_parent[b.get("id")] = parent
         elif t == "user" and not e.get("parent_tool_use_id"):
@@ -535,6 +537,9 @@ class SessionWatch:
 
     def why(self, k):
         return self.agent_purpose.get(k["tuid"])
+
+    def effort(self, k):
+        return self.agent_effort.get(k["tuid"]) or "default"
 
     def model(self, k):
         return self.agent_model.get(k["tuid"], "agent") if k["kind"] == "local_agent" else "watch"
@@ -921,8 +926,16 @@ class Dashboard:
             else:
                 note = "ended" + (f" {hhmm(last_exit[0])}" if last_exit else "")
             L.append(self.section("SESSION " + name, cols, note))
-            if w.purpose:
-                L.append(f"  {c(CYAN, 'orchestrator')} {c(CYAN, 'why:')} {one_line(w.purpose, cols - 21)}")
+            # the orchestrator in the agents' layout: model on its row, effort under it, then its purpose
+            o_model, o_effort = "?", "?"
+            for t, msg, *_ in sup:
+                m = re.match(r"preflight ok: .*model (\S+), effort (\w+)", msg)
+                if m:
+                    o_model, o_effort = m[1], m[2]
+            o_model = (re.match(r"claude-([a-z]+)", o_model) or [None, o_model])[1]
+            L.append(f"  {c('1;36', '◆')} {c(MAGENTA, f'{o_model:<7}')} {c(DIM, '|')} {c(CYAN, 'orchestrator')}")
+            L.append(f"    {c(DIM, f'{o_effort:<7}')} {c(DIM, '|')} " + (f"{c(CYAN, 'why: ')}{one_line(w.purpose, cols - 20)}"
+                                                                if w.purpose else ""))
             if w.say:
                 L.append(f"  {c(DIM, hhmm(w.say[0]))}  {c(CYAN, 'orchestrator:')} {one_line(w.say[1], cols - 25)}")
             ks = [w.tasks[i] for i in w.order]
@@ -934,8 +947,10 @@ class Dashboard:
                     kids.setdefault(w.agent_parent[k["tuid"]], []).append(k)
 
             def why_line(k, depth):
-                if w.why(k):
-                    L.append(" " * (10 + 4 * depth) + c(CYAN, "why: ") + one_line(w.why(k), cols - 16 - 4 * depth))
+                # effort under the model column, then the purpose of the brief
+                ind = 4 if depth == 0 else 6 + 4 * depth   # column of the model on the agent's own row
+                why = (c(CYAN, "why: ") + one_line(w.why(k), cols - ind - 16)) if w.why(k) else ""
+                L.append(" " * ind + c(DIM, f"{w.effort(k):<7}") + " " + c(DIM, "|") + " " + why)
 
             def nested(k, depth=1):
                 for s_ in kids.get(k["tuid"], []):
@@ -943,8 +958,8 @@ class Dashboard:
                     ok = s_["status"] in ("running", "completed")
                     mark = c(GREEN, "●") if live else c(GREEN if ok else RED, "✓" if ok else "✗")
                     when = ("since " + hhmm(s_["start"])) if live else hhmm(s_["end"] or s_["start"])
-                    L.append(" " * (2 + 4 * depth) + f"└ {mark} {c(MAGENTA if live else DIM, f'{w.model(s_):<7}')} "
-                             f"{one_line(s_['desc'], 40 - 4 * depth):<{40 - 4 * depth}} {c(DIM, when)}")
+                    L.append(" " * (2 + 4 * depth) + f"└ {mark} {c(MAGENTA if live else DIM, f'{w.model(s_):<7}')} {c(DIM, '|')} "
+                             f"{one_line(s_['desc'], 38 - 4 * depth):<{38 - 4 * depth}} {c(DIM, when)}")
                     why_line(s_, depth)
                     nested(s_, depth + 1)
 
@@ -960,8 +975,8 @@ class Dashboard:
             for k in act:
                 is_agent = k["kind"] == "local_agent"
                 extra = f"{k['tools']} tools, last {k['last']}" if is_agent and k["tools"] else ""
-                L.append(f"  {c(GREEN if is_agent else DIM, '●' if is_agent else '◌')} {c(MAGENTA, f'{w.model(k):<7}')} "
-                         f"{one_line(k['desc'], 44):<44} {c(DIM, 'since ' + hhmm(k['start']) + '  ' + extra)}")
+                L.append(f"  {c(GREEN if is_agent else DIM, '●' if is_agent else '◌')} {c(MAGENTA, f'{w.model(k):<7}')} {c(DIM, '|')} "
+                         f"{one_line(k['desc'], 42):<42} {c(DIM, 'since ' + hhmm(k['start']) + '  ' + extra)}")
                 if is_agent:
                     why_line(k, 0)
                     nested(k)
@@ -969,8 +984,8 @@ class Dashboard:
                 ok = k["status"] == "completed"
                 # with a purpose line the agent's purpose replaces the clipped start of its report
                 tail = "" if w.why(k) else "  " + one_line(k["summary"], 70)
-                L.append(f"  {c(GREEN if ok else RED, '✓' if ok else '✗')} {c(DIM, f'{w.model(k):<7}')} "
-                         f"{one_line(k['desc'], 44):<44} " + c(DIM, f"{hhmm(k['end'])}{tail}"))
+                L.append(f"  {c(GREEN if ok else RED, '✓' if ok else '✗')} {c(DIM, f'{w.model(k):<7}')} {c(DIM, '|')} "
+                         f"{one_line(k['desc'], 42):<42} " + c(DIM, f"{hhmm(k['end'])}{tail}"))
                 why_line(k, 0)
                 nested(k)
         else:

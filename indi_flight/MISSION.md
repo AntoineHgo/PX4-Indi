@@ -321,8 +321,16 @@ returns the numbers in a few lines. Your own shell use is limited to `git`, shor
 yet, an agent writes one with a self-test, so the next session reuses it.
 
 - Always pass `model` explicitly: `haiku` for search, log processing, running batches and mechanical edits; `sonnet`
-  for code reading, implementation, tests, analysis scripts and reviews of them; `fable` (or `opus`) only for the
-  independent review of a control-law design or of a gate result.
+  for code reading, implementation, tests, analysis scripts and reviews of them; `opus` only for the
+  independent review of a control-law design or of a gate result (no `fable`).
+- **Always pass `effort` explicitly too (owner, 2026-11-24)**, chosen per task, never left to the default: `low` for
+  search, running a script and relaying numbers; `medium` for mechanical edits, log processing, result notes and
+  routine implementation; `high` for new analysis or metric scripts, firmware or control-law code, investigations
+  and reviews. Use only `low`, `medium` and `high`. The one
+  exception is a very, very difficult task that `high` has already failed at (a failed `high` attempt is on record
+  in `STATE.md` or `JOURNAL.md`), where one `xhigh` agent may be launched; name the task and why `high` was not
+  enough in `DECISIONS.md` first. Never `max`. Effort drives the agent's cost: the cheapest level that does the task
+  reliably. The owner's dashboard shows each agent's model and effort.
 - One task per agent, sized for about 30 tool calls, with: the goal and what it serves, what is known, what done
   looks like, constraints, and the file where it writes as it goes. It returns a short summary with anything
   unverified flagged. At most 3 at a time.
