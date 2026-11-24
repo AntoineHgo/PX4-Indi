@@ -14,9 +14,13 @@
 -1. Gate binary = 903eae63 (D-BINARY-GZFIX; FREEZE-10 + GZBridge fix f110361a33; old px4.freeze10_d220e193;
    g3_chain.sh pins it). Do NOT rebuild build/px4_sitl_default from HEAD. Pre-S214 C3 runs: GATES 2 invalid.
 0. G3 item 1 (D-OWNER-Q31 escalation): minimal case = results/g3_refly_actc_s212/restore264 joint variant (sat 0.351
-   + weak 0.709, rest nominal): INDI LOC at fault+1.1 s, PID survives (pid_joint). Step: 2 opus/high investigators
-   (restore264/INVESTIGATION_A.md, _B.md; "why PID survives" first; read-only, no fix) -> opus/high solver +
-   independent reviewer (pre-approved) -> fix probe on joint, then draw 264; a firmware change names re-flown rows.
+   + weak 0.709, rest nominal): INDI LOC at fault+1.1 s, PID survives (pid_joint). Investigators DONE S221
+   (restore264/INVESTIGATION_A.md, _B.md agree): no saturation before LOC; weak motor = torque bias growing with
+   collective; measured-torque anchor leaks (eff 0.351), only integral left is the 1 s blend (MC_INDI_ACT_BLD,
+   indi_rate_control.cpp:336-357) -> INDI P 0.011 vs PID 0.03 + integrator. Re-opens decision 2 (gap remover).
+   NEXT: param-only falsifier probes on joint (sonnet, existing runner): ACT_BLD 0.15; measured feedback off.
+   Survive -> opus/high solver + independent reviewer (pre-approved): fix design (commanded-torque anchor or fast
+   gap fold-in; outer demand capped to available thrust), fix probe on joint, then draw 264; names re-flown rows.
    Still LOC -> owner question (continue / stop, incl. "264 = documented feasibility limit", RC220 item 6).
    Before the next G3 campaign: Q30 tooling (GATES "Owner amendment S214"). Class C skipped lines both stacks.
 1. G6 item 7 chain (60 corners, results/g6_item7_s212/PREP.md): CUT RC221 until the Q31 route ends (a firmware
@@ -75,8 +79,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| A | Q31 investigator A (why PID survives draw 264 joint) | opus/high | restore264/INVESTIGATION_A.md | re-brief from the file if partial |
-| B | Q31 investigator B (independent, same question) | opus/high | restore264/INVESTIGATION_B.md | idem; must not read _A |
+| - | none | - | - | - |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
