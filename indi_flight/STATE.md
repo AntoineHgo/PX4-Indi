@@ -20,9 +20,14 @@
    / 0.05 no LOC on joint (tilt 52.4 / 45.4 deg), item 2 FAIL both keys. item2_split_s223/README.md: pre-fault clean
    on all runs (sat/weak start at the fault, segment traj); "21 s" lines = 4 s windows straddling the fault
    transient (lowest band bin 2 Hz, maybe band edge); PID key1 fail = straddle + post-fault position limit cycle;
-   p2 (model only) keeps 2 Hz post-fault. NEXT: S223c draw-264 full-plant probes tb 0.10/0.05 (gate scoring) ->
-   if no LOC: G2 rate/att margin spot cells at chosen tb, then accept (i) and name re-flown rows. If item 2 fails
-   only via fault-straddling windows in both stacks: owner question (test defect?), blocking G3 item 2.
+   p2 (model only) keeps 2 Hz post-fault. S223c blend264_s223/README.md (draw 264 full plant, binary 903eae63):
+   tb 0.10 / 0.05 no LOC (tilt 48.5 / 47.9 deg), item 1 PASS, item 2 FAIL post-fault (2 Hz p/q from fault+3-5 s,
+   rms 11-28 dps, both keys), item 3 FAIL (0.371 / 0.362 m vs 0.30). CAVEAT: S213 LOC baseline flew d220e193, not
+   903eae63. NEXT (one sonnet agent, 2 flights): draw 264 on 903eae63 with tb 1.0 (does LOC hold on the gate
+   binary?) and PID draw 264 on 903eae63 scored items 2/3 + item2_split (reference flight rule). If PID fails
+   items 2/3 too -> owner question (blocking G3 items 2/3). If INDI-only: one session of cause search on the
+   post-fault 2 Hz (candidate D-RATE-BLD-2 (iv), outer demand capped to available thrust), then G2 margin spot
+   cells at the chosen tb and accept (i) naming re-flown rows.
    Before the next G3 campaign: Q30 tooling (GATES "Owner amendment S214").
 1. G6 item 7 chain (60 corners, results/g6_item7_s212/PREP.md): CUT until the Q31 route ends (firmware fix would
    invalidate it). MAX_STRUCTURE 0.08 vs norm residual > 0.05 (actc_grid_s209 PRETEST.md) revisited then.
@@ -80,7 +85,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S223c | draw-264 full plant, ACT_BLD 0.10 / 0.05 (G3 item 1) | sonnet | restore264/blend264_s223/README.md | g3_chain.sh status on blend264_s223/*; if empty re-launch |
+| - | none | - | - | - |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
