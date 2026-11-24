@@ -6,6 +6,7 @@
 # indi_flight/QUESTIONS.md; the owner answers there and removes the file).
 # Lift the 5-hour usage share on demand with: touch indi_flight/BYPASS_5H (rm it to restore)
 # Lift the weekly usage share the same way with: touch indi_flight/BYPASS_7D (rm it to restore)
+# Change the usage targets without a restart by editing indi_flight/USAGE_TARGETS (owner only, see below).
 set -u
 export LC_NUMERIC=C # decimal point in awk and printf, whatever the host locale
 cd "$(dirname "$0")/.."
@@ -27,11 +28,26 @@ BRANCH="${BRANCH:-feat/indi-flight}"
 EXPECTED_ORIGIN="${EXPECTED_ORIGIN:-AntoineHgo/PX4-Indi}"
 # Share of the owner's usage the orchestrator may take. Before each launch a tiny Haiku call
 # (~$0.002) reads the current utilization of the 5-hour and weekly windows; the orchestrator
-# only launches below these shares, and its spend cap is the headroom left in the 5-hour share.
+# only launches below these shares, and its spend cap is the smaller of the headroom left in the
+# 5-hour share, the headroom left under the weekly limit, and MAX_BUDGET_USD.
+# The values below are defaults (environment variables override them). The owner's file
+# indi_flight/USAGE_TARGETS overrides both; it is re-read before every launch and every minute while
+# the supervisor waits, so a change applies without a restart. One key=value per line, # comments:
+#   five_hour=0.8          share of each 5-hour window (FIVE_HOUR_SHARE)
+#   weekly=0.9             share of the weekly window (WEEKLY_SHARE)
+#   max_session_usd=6      spend cap of one session (MAX_BUDGET_USD)
+#   weekly_pacing=on       on: the weekly limit grows with the week (WEEKLY_PACING)
+#   pace_slack=0.15        pacing lead, as a fraction of the week (PACE_SLACK)
+# With pacing on, the weekly limit at a time t is weekly x min(1, elapsed fraction of the week + slack),
+# so the orchestrator cannot use the whole weekly share early and leave the owner nothing for the
+# remaining days. Invalid values are ignored (logged) and the previous value is kept.
 FIVE_HOUR_SHARE="${FIVE_HOUR_SHARE:-0.8}"  # leave the top 20 % of every 5-hour window to the owner
 WEEKLY_SHARE="${WEEKLY_SHARE:-0.7}"        # stop launching once the weekly window is 70 % used
+WEEKLY_PACING="${WEEKLY_PACING:-on}"
+PACE_SLACK="${PACE_SLACK:-0.15}"           # about one day ahead of an even spread
 MIN_BUDGET_USD="${MIN_BUDGET_USD:-1}"      # below this headroom a session is mostly start-up cost: wait instead
 MAX_BUDGET_USD="${MAX_BUDGET_USD:-6}"     # bounds what one cut-off session can lose
+TARGETS_FILE=indi_flight/USAGE_TARGETS
 # Usage left in a 5-hour window is lost at its reset, so in its last FINAL_STRETCH_S seconds the
 # orchestrator may use the whole window (share 1.0). The owner can lift the 5-hour share at any
 # time with `touch indi_flight/BYPASS_5H` (remove the file to restore it); the supervisor checks
@@ -42,6 +58,9 @@ FINAL_STRETCH_S="${FINAL_STRETCH_S:-3600}"
 BYPASS_FILE=indi_flight/BYPASS_5H
 BYPASS_7D_FILE=indi_flight/BYPASS_7D
 WINDOW_USD_DEFAULT=9                       # $ per full 5-hour window, measured on session 1; recalibrated each run
+WEEK_USD_DEFAULT=140                       # $ per full weekly window (2026-11-23: ~$13 of sessions for 0.81 -> 0.90);
+                                           # recalibrated from the runs of each weekly window
+WEEK_S=604800
 LIMIT_WAIT="${LIMIT_WAIT:-1800}"           # fallback wait after a failed or very short run
 # Token economy: every API turn re-reads the whole context. The session gets only the tools the
 # orchestrator uses (the full default set and its descriptions took the start-up context to ~45k
@@ -55,16 +74,22 @@ mkdir -p "$LOG_DIR"
 log() { echo "[$(date '+%F %T')] $*" | tee -a "$LOG_DIR/supervisor.log"; }
 die() { log "ABORT: $*"; exit 1; }
 
+# signature of the owner's targets file: changes when it is created, edited or removed
+targets_sig() { stat -c '%Y %s' "$TARGETS_FILE" 2>/dev/null || echo absent; }
+
 # sleep until an epoch time by wall clock (bash sleep stops counting during a suspend);
-# returns early if STOP or DONE appears, or if BYPASS_5H or BYPASS_7D appears while it was absent
+# returns early if STOP or DONE appears, if BYPASS_5H or BYPASS_7D appears while it was absent,
+# or if the owner changes USAGE_TARGETS (the loop then re-reads it and re-checks the gate)
 wait_until() {
-	local bypass_at_start=0 bypass7_at_start=0
+	local bypass_at_start=0 bypass7_at_start=0 sig_at_start
 	[ -f "$BYPASS_FILE" ] && bypass_at_start=1
 	[ -f "$BYPASS_7D_FILE" ] && bypass7_at_start=1
+	sig_at_start=$(targets_sig)
 	while [ "$(date +%s)" -lt "$1" ]; do
 		{ [ -f indi_flight/DONE ] || [ -f indi_flight/STOP ]; } && return
 		[ "$bypass_at_start" -eq 0 ] && [ -f "$BYPASS_FILE" ] && return
 		[ "$bypass7_at_start" -eq 0 ] && [ -f "$BYPASS_7D_FILE" ] && return
+		[ "$(targets_sig)" != "$sig_at_start" ] && { log "$TARGETS_FILE changed, re-checking the usage gate"; return; }
 		sleep 60 9>&-
 	done
 }
@@ -72,6 +97,94 @@ wait_until() {
 # floating-point helpers
 fcalc() { awk "BEGIN { printf \"%.2f\", $1 }"; }
 fge() { awk "BEGIN { exit !($1 >= $2) }"; }
+isnum() { [[ $1 =~ ^[0-9]+([.][0-9]+)?$|^[.][0-9]+$ ]]; }
+
+# effective targets: defaults (environment) overlaid with the owner's USAGE_TARGETS; sets T5, T7,
+# TMAX, TPACE, TSLACK and logs them whenever they change (warnings once per file version)
+T5=$FIVE_HOUR_SHARE T7=$WEEKLY_SHARE TMAX=$MAX_BUDGET_USD TPACE=$WEEKLY_PACING TSLACK=$PACE_SLACK
+targets_logged=''
+targets_warned=''
+load_targets() {
+	local sig key val ok line src=defaults warn=""
+	T5=$FIVE_HOUR_SHARE T7=$WEEKLY_SHARE TMAX=$MAX_BUDGET_USD TPACE=$WEEKLY_PACING TSLACK=$PACE_SLACK
+	sig=$(targets_sig)
+	if [ -f "$TARGETS_FILE" ]; then
+		src=$TARGETS_FILE
+		while IFS= read -r line || [ -n "$line" ]; do
+			line=${line%%#*}
+			[[ $line =~ ^[[:space:]]*$ ]] && continue
+			if ! [[ $line =~ ^[[:space:]]*([a-z_0-9]+)[[:space:]]*=[[:space:]]*([^[:space:]]+)[[:space:]]*$ ]]; then
+				warn="$warn; unreadable line '$line'"
+				continue
+			fi
+			key=${BASH_REMATCH[1]} val=${BASH_REMATCH[2]} ok=
+			case "$key" in
+			five_hour) isnum "$val" && fge "$val" 0.01 && fge 1 "$val" && T5=$val ok=1 ;;
+			weekly) isnum "$val" && fge "$val" 0.01 && fge 1 "$val" && T7=$val ok=1 ;;
+			max_session_usd) isnum "$val" && fge "$val" "$MIN_BUDGET_USD" && fge 100 "$val" && TMAX=$val ok=1 ;;
+			weekly_pacing) [[ $val == on || $val == off ]] && TPACE=$val ok=1 ;;
+			pace_slack) isnum "$val" && fge 1 "$val" && TSLACK=$val ok=1 ;;
+			*) warn="$warn; unknown key $key" ok=skip ;;
+			esac
+			[ -z "$ok" ] && warn="$warn; invalid $key=$val (default kept)"
+		done <"$TARGETS_FILE"
+	fi
+	if [ -n "$warn" ] && [ "$targets_warned" != "$sig" ]; then
+		log "WARNING $TARGETS_FILE: ${warn#; }"
+	fi
+	targets_warned=$sig
+	local now_t="targets: 5h $T5, weekly $T7, pacing $TPACE (slack $TSLACK), session cap \$$TMAX (from $src)"
+	[ "$now_t" = "$targets_logged" ] || log "$now_t"
+	targets_logged=$now_t
+}
+
+# weekly limit now: T7, or with pacing T7 x min(1, elapsed fraction of the week + slack); $1 = weekly reset epoch
+weekly_limit() {
+	if [ "$TPACE" = on ]; then
+		awk -v t="$T7" -v s="$TSLACK" -v r="$1" -v n="$(date +%s)" -v w="$WEEK_S" \
+			'BEGIN { f = 1 - (r - n) / w; if (f < 0) f = 0; f += s; if (f > 1) f = 1; printf "%.3f", t * f }'
+	else
+		echo "$T7"
+	fi
+}
+
+# epoch at which the paced weekly limit reaches utilization $1 (reset epoch $2); empty if only the reset will do
+pace_reaches() {
+	awk -v u="$1" -v t="$T7" -v s="$TSLACK" -v r="$2" -v w="$WEEK_S" \
+		'BEGIN { if (u > t) exit; f = u / t - s; if (f < 0) f = 0; if (f >= 1) exit; printf "%d", r - w + f * w }'
+}
+
+week_usd() {
+	local w
+	w=$(cat "$LOG_DIR/week_usd" 2>/dev/null)
+	echo "${w:-$WEEK_USD_DEFAULT}"
+}
+
+# after a run: $ per weekly window. Weekly utilization comes in steps of 0.01 and one run moves it by
+# about 0.02, so runs of the same weekly window are summed (logs/week_calib: resetsAt cost_sum du_sum runs)
+# and the ratio is written once their sum reaches 0.05. Only the runs' own spans count (not the owner's use between them).
+calibrate_week() {
+	local f=$1 cost=$2 first last r du
+	first=$(jq -c 'select(.type=="rate_limit_event") | .rate_limit_info.unifiedWindows.seven_day // empty' "$f" | head -1)
+	last=$(jq -c 'select(.type=="rate_limit_event") | .rate_limit_info.unifiedWindows.seven_day // empty' "$f" | tail -1)
+	[ -n "$first" ] && [ -n "$last" ] && isnum "$cost" || return
+	r=$(jq -r .resetsAt <<<"$first")
+	[ "$r" = "$(jq -r .resetsAt <<<"$last")" ] || return
+	du=$(awk -v a="$(jq -r .utilization <<<"$first")" -v b="$(jq -r .utilization <<<"$last")" 'BEGIN { printf "%.4f", b - a }')
+	local cr='' cs ds n
+	[ -f "$LOG_DIR/week_calib" ] && read -r cr cs ds n <"$LOG_DIR/week_calib"
+	[ "${cr:-}" = "$r" ] || { cs=0 ds=0 n=0; }
+	cs=$(awk -v a="$cs" -v b="$cost" 'BEGIN { printf "%.4f", a + b }')
+	ds=$(awk -v a="$ds" -v b="$du" 'BEGIN { printf "%.4f", a + b }')
+	n=$((n + 1))
+	echo "$r $cs $ds $n" >"$LOG_DIR/week_calib"
+	fge "$ds" 0.05 || return
+	local w
+	w=$(fcalc "$cs / $ds")
+	fge "$w" 30 && fge 2000 "$w" || return
+	echo "$w" >"$LOG_DIR/week_usd"
+	log "calibration: a weekly window holds about \$$w ($n runs of this week used $ds of it for \$$cs)"
+}
 
 # last rate_limit_info of a tiny Haiku call: current utilization of every usage window
 probe_usage() {
@@ -136,6 +249,7 @@ if [ "$(git branch --show-current)" != "$BRANCH" ]; then
 	git switch "$BRANCH" 2>/dev/null || git switch -c "$BRANCH" || die "cannot switch to $BRANCH"
 fi
 log "preflight ok: branch $BRANCH, model $MODEL, effort $EFFORT, shares 5h $FIVE_HOUR_SHARE (1.0 in the last ${FINAL_STRETCH_S}s or with $BYPASS_FILE) / weekly $WEEKLY_SHARE (lifted with $BYPASS_7D_FILE), cap \$$MIN_BUDGET_USD-$MAX_BUDGET_USD/session, $(claude --version 2>/dev/null)"
+load_targets # logs the effective targets (USAGE_TARGETS overrides the defaults above)
 
 # --- supervise ---
 runs=0
@@ -170,6 +284,7 @@ while [ ! -f indi_flight/DONE ] && [ ! -f indi_flight/STOP ]; do
 	fi
 	chain_logged=
 	# --- usage gate: launch only within the orchestrator's share of the owner's usage ---
+	load_targets
 	now=$(date +%s)
 	rl=$(probe_usage)
 	if [ -z "$rl" ]; then
@@ -183,7 +298,8 @@ while [ ! -f indi_flight/DONE ] && [ ! -f indi_flight/STOP ]; do
 	r7=$(jq -r ".unifiedWindows.seven_day.resetsAt // $((now + LIMIT_WAIT))" <<<"$rl")
 	rejected=$(jq -r '[.unifiedWindows // {} | to_entries[] | select(.value.status == "rejected") | .value.resetsAt] | max // empty' <<<"$rl")
 	w=$(window_usd)
-	share=$FIVE_HOUR_SHARE
+	wk=$(week_usd)
+	share=$T5
 	share_why=""
 	if [ -f "$BYPASS_FILE" ]; then
 		share=1
@@ -193,17 +309,34 @@ while [ ! -f indi_flight/DONE ] && [ ! -f indi_flight/STOP ]; do
 		share_why=", last $((FINAL_STRETCH_S / 60)) min before the reset: full window"
 	fi
 	headroom=$(fcalc "($share - $u5) * $w")
-	log "usage: 5-hour $u5, weekly $u7, headroom \$$headroom (window \$$w, share $share$share_why)"
+	lim7=$(weekly_limit "$r7")
+	if [ -f "$BYPASS_7D_FILE" ]; then
+		headroom7=
+		lim_why="lifted by $BYPASS_7D_FILE"
+	else
+		headroom7=$(fcalc "($lim7 - $u7) * $wk")
+		lim_why="target $T7$([ "$TPACE" = on ] && echo ", paced")"
+	fi
+	log "usage: 5-hour $u5, weekly $u7, headroom \$$headroom (window \$$w, share $share$share_why); weekly limit $lim7 ($lim_why), weekly headroom \$${headroom7:-none} (week \$$wk)"
 	if [ -n "$rejected" ]; then
 		log "a usage window is exhausted, waiting until $(date -d "@$rejected" '+%F %T')"
 		wait_until $((rejected + 120))
 		continue
 	fi
 	if [ -f "$BYPASS_7D_FILE" ]; then
-		log "weekly window at $u7, share $WEEKLY_SHARE lifted by $BYPASS_7D_FILE"
-	elif fge "$u7" "$WEEKLY_SHARE"; then
-		log "weekly window at $u7 >= share $WEEKLY_SHARE, waiting for its reset at $(date -d "@$r7" '+%F %T')"
-		wait_until $((r7 + 120))
+		log "weekly window at $u7, share $T7 lifted by $BYPASS_7D_FILE"
+	elif ! fge "$headroom7" "$MIN_BUDGET_USD"; then
+		# with pacing, wait until the limit has grown by at least the minimum session; else for the reset
+		pace_t=
+		[ "$TPACE" = on ] && pace_t=$(pace_reaches "$(awk -v u="$u7" -v m="$MIN_BUDGET_USD" -v k="$wk" 'BEGIN { printf "%.4f", u + m / k }')" "$r7")
+		if [ -n "$pace_t" ] && [ "$pace_t" -lt "$r7" ]; then
+			[ "$pace_t" -gt "$now" ] || pace_t=$((now + 60))
+			log "weekly window at $u7 >= paced limit $lim7 (target $T7), waiting for the pace until $(date -d "@$pace_t" '+%F %T')"
+			wait_until $((pace_t + 60))
+		else
+			log "weekly window at $u7 >= share $T7, waiting for its reset at $(date -d "@$r7" '+%F %T')"
+			wait_until $((r7 + 120))
+		fi
 		continue
 	fi
 	if ! fge "$headroom" "$MIN_BUDGET_USD"; then
@@ -217,8 +350,10 @@ while [ ! -f indi_flight/DONE ] && [ ! -f indi_flight/STOP ]; do
 		fi
 		continue
 	fi
+	# spend cap: the smallest of the 5-hour headroom, the weekly headroom and the session cap
 	budget=$headroom
-	fge "$budget" "$MAX_BUDGET_USD" && budget=$MAX_BUDGET_USD
+	[ -n "$headroom7" ] && fge "$budget" "$headroom7" && budget=$headroom7
+	fge "$budget" "$TMAX" && budget=$TMAX
 
 	runs=$((runs + 1))
 	[ "$runs" -le "$MAX_RUNS" ] || die "reached MAX_RUNS=$MAX_RUNS"
@@ -306,6 +441,7 @@ $chain_line"
 		awk '!seen[$1]++ {n++; if (n == 1) f = $2; if ($2 > m) m = $2} END {if (n) printf "%dk start, %dk max, %d turns", f/1000, m/1000, n}')
 	log "run $runs: exit $rc after ${elapsed}s, result $subtype, cost \$${cost:-?}, session $session, context ${ctx:-?}"
 	calibrate_window "$LOG_DIR/run-$ts.jsonl" "${cost:-?}"
+	calibrate_week "$LOG_DIR/run-$ts.jsonl" "${cost:-?}"
 	# agent ledger written by the supervisor from the session log (the orchestrator no longer edits LEDGER.md)
 	jq -r --arg ts "$ts" 'select(.type=="assistant" and .parent_tool_use_id==null) | .message.content[]? |
 		select(.type=="tool_use" and (.name=="Agent" or .name=="Task")) |

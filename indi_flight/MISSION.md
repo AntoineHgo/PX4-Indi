@@ -326,6 +326,12 @@ yet, an agent writes one with a self-test, so the next session reuses it.
 - One task per agent, sized for about 30 tool calls, with: the goal and what it serves, what is known, what done
   looks like, constraints, and the file where it writes as it goes. It returns a short summary with anything
   unverified flagged. At most 3 at a time.
+- **Purpose line (owner, 2026-11-24).** The first line of every brief is `Purpose: <one sentence>`: what the agent
+  is for and what it serves, in plain words the owner understands without the brief, under about 100 characters
+  (e.g. `Purpose: find which saturation path makes INDI lose control on G3 draw 264.`). If a brief lets the agent
+  launch agents of its own, it tells the agent to start their briefs with a purpose line too. Likewise, start your
+  first message of each session with `Purpose: <one sentence>` naming what this session is for, and write a new one
+  whenever that aim changes. The owner's dashboard shows these lines.
 - Subagent output is evidence to check. Two keys (lesson 17) for firmware changes (control law, simulator hooks),
   identification code, and a new metric script before its first use as gate evidence: a second agent that has not
   seen the first one's reasoning reviews or re-implements it before the result is used. No second key for

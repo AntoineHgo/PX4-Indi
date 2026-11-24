@@ -384,7 +384,7 @@ SUP_RULES = [
     (r"^run \d+: GATE_STATUS.tsv changed: (G\d)\t([^\t]+)", lambda m: (f"GATE CHANGE: {m[1]} -> {m[2]}", "1;32")),
     (r"^run \d+: STATE.md is (\d+) bytes", lambda m: ("told: trim STATE.md", YELLOW)),
     (r"^run \d+: G3 chain", lambda m: (None, None)),
-    (r"^calibration: .*about \$([\d.]+)", lambda m: (f"calibrated: ${float(m[1]):.1f} per 5-hour window", DIM)),
+    (r"^calibration: a 5-hour window holds about \$([\d.]+)", lambda m: (f"calibrated: ${float(m[1]):.1f} per 5-hour window", DIM)),
     (r"^relaunching in (\d+)s", lambda m: (f"next launch in {m[1]} s", DIM)),
     (r"^waiting for the owner", lambda m: ("WAITING FOR OWNER (QUESTIONS.md)", "1;31")),
     (r"^stopped by", lambda m: ("stopped by indi_flight/STOP", "1;31")),
@@ -392,6 +392,13 @@ SUP_RULES = [
     (r"^ABORT: (.*)", lambda m: (f"ABORT: {m[1]}", "1;31")),
     (r"^G3 flight chain flying", lambda m: ("idle: flight chain holds the lock", YELLOW)),
     (r"^G3 flight chain holds its lock", lambda m: ("flight chain stuck > 1 h: session to diagnose", RED)),
+    (r"^targets: (.*)", lambda m: (f"usage targets: {m[1]}", "1;36")),
+    (r"^WARNING indi_flight/USAGE_TARGETS: (.*)", lambda m: (f"USAGE_TARGETS ignored: {m[1]}", RED)),
+    (r"^indi_flight/USAGE_TARGETS changed", lambda m: (None, None)),
+    (r"^calibration: a weekly window holds about \$([\d.]+)",
+     lambda m: (f"calibrated: ${float(m[1]):.0f} per weekly window", DIM)),
+    (r"^weekly window at ([\d.]+) >= paced limit ([\d.]+) \(target ([\d.]+)\), waiting for the pace until (.*)",
+     lambda m: (f"paused: weekly pace limit {float(m[2]):.0%} reached, until {_at(m[4])}", YELLOW)),
     (r"^weekly window at ([\d.]+) >= share ([\d.]+), waiting for its reset at (.*)",
      lambda m: (f"paused: weekly target {float(m[2]):.0%} reached, until {_at(m[3])}", "1;33")),
     (r"^weekly window at .* lifted", lambda m: (None, None)),
@@ -423,6 +430,12 @@ def supervisor_events(text):
     return out
 
 
+def purpose_line(text):
+    """The one-sentence "Purpose: ..." line (MISSION.md, "How to work with subagents"), if the text has one."""
+    m = re.search(r"^[ \t*_>#-]*Purpose:\**[ \t]*(\S.*)$", text, re.M)
+    return m[1].strip(" *_") if m else None
+
+
 # --- latest session log, read incrementally --------------------------------------------------------------------
 
 class SessionWatch:
@@ -434,6 +447,9 @@ class SessionWatch:
         self.tasks = {}               # task_id -> dict
         self.order = []
         self.agent_model = {}         # Agent tool_use id -> model
+        self.agent_purpose = {}       # Agent tool_use id -> "Purpose:" line of its brief (MISSION.md rule)
+        self.agent_parent = {}        # nested Agent tool_use id -> tool_use id of the agent that launched it
+        self.purpose = None           # the orchestrator's latest "Purpose:" line
         self.cost = None
         self.say = None               # (epoch, text) of the orchestrator's latest message
         self.windows = None           # latest rate-limit windows
@@ -472,12 +488,18 @@ class SessionWatch:
             c = e.get("total_cost_usd")
             if c is not None:
                 self.cost = max(self.cost or 0, c)
-        elif t == "assistant" and not e.get("parent_tool_use_id"):
+        elif t == "assistant":
+            parent = e.get("parent_tool_use_id")
             for b in (e.get("message") or {}).get("content") or []:
-                if b.get("type") == "text" and b.get("text", "").strip():
+                if b.get("type") == "text" and b.get("text", "").strip() and not parent:
                     self.say = (self.epoch(), b["text"])
+                    self.purpose = purpose_line(b["text"]) or self.purpose
                 elif b.get("type") == "tool_use" and b.get("name") in ("Agent", "Task"):
-                    self.agent_model[b.get("id")] = (b.get("input") or {}).get("model") or "default"
+                    inp = b.get("input") or {}
+                    self.agent_model[b.get("id")] = inp.get("model") or "default"
+                    self.agent_purpose[b.get("id")] = purpose_line(inp.get("prompt") or "")
+                    if parent:
+                        self.agent_parent[b.get("id")] = parent
         elif t == "user" and not e.get("parent_tool_use_id"):
             # a foreground agent ends with its tool result (background ones with a task_notification)
             for b in (e.get("message") or {}).get("content") or []:
@@ -510,6 +532,9 @@ class SessionWatch:
         k["status"] = status
         k["summary"] = summary or k["summary"]
         k["end"] = k["end"] or (end_ms / 1000 if end_ms else self.epoch())
+
+    def why(self, k):
+        return self.agent_purpose.get(k["tuid"])
 
     def model(self, k):
         return self.agent_model.get(k["tuid"], "agent") if k["kind"] == "local_agent" else "watch"
@@ -718,11 +743,15 @@ class Dashboard:
         w = self.watch
 
         # targets from the latest preflight line; live usage from the session log, else the supervisor probe
-        share5, stretch, share7 = 0.8, 3600, 0.7
+        # (the "targets:" line is logged at start and whenever indi_flight/USAGE_TARGETS changes them)
+        share5, stretch, share7, pace, slack = 0.8, 3600, 0.7, False, 0.0
         for t, msg, *_ in sup:
             m = re.search(r"shares 5h ([\d.]+) \(1\.0 in the last (\d+)s.*?/ weekly ([\d.]+)", msg)
             if m:
-                share5, stretch, share7 = float(m[1]), int(m[2]), float(m[3])
+                share5, stretch, share7, pace, slack = float(m[1]), int(m[2]), float(m[3]), False, 0.0
+            m = re.match(r"targets: 5h ([\d.]+), weekly ([\d.]+), pacing (on|off) \(slack ([\d.]+)\)", msg)
+            if m:
+                share5, share7, pace, slack = float(m[1]), float(m[2]), m[3] == "on", float(m[4])
         u5 = u7 = r5 = r7 = None
         probe_t = 0
         for t, msg, *_ in sup:
@@ -740,6 +769,9 @@ class Dashboard:
             u7, r7 = 0.0, None
         tgt5 = 1.0 if flags["BYPASS_5H"] or (r5 and r5 - now <= stretch) else share5
         tgt7 = None if flags["BYPASS_7D"] else share7
+        lim7 = tgt7         # paced weekly limit now (same formula as weekly_limit in run_orchestrator.sh)
+        if tgt7 is not None and pace and r7:
+            lim7 = tgt7 * min(1.0, max(0.0, 1 - (r7 - now) / 604800) + slack)
 
         qs = questions()
         stage, waits, blocked = state_status()
@@ -783,6 +815,9 @@ class Dashboard:
                 att.append((YELLOW if code != RED else RED, txt))
         if tgt7 is not None and u7 is not None and u7 >= tgt7:
             att.append(("1;33", f"weekly usage {u7:.0%} at its {tgt7:.0%} target: no launch before the weekly reset"))
+        elif lim7 is not None and u7 is not None and u7 >= lim7:
+            att.append(("1;33", f"weekly usage {u7:.0%} ahead of its pace (limit now {lim7:.0%}, target {tgt7:.0%}): "
+                                f"launches resume as the week goes on"))
         for gr in fl:
             for d in gr["chains"]:
                 if os.path.exists(os.path.join(d, "CHAIN_HALTED")):
@@ -839,7 +874,8 @@ class Dashboard:
         for label, u, tgt, reset, why in (
                 ("5-hour", u5, tgt5, r5, "BYPASS_5H" if flags["BYPASS_5H"] else
                  "last hour before reset" if tgt5 == 1.0 and tgt5 != share5 else ""),
-                ("weekly", u7, tgt7, r7, "BYPASS_7D, no limit" if flags["BYPASS_7D"] else "")):
+                ("weekly", u7, lim7, r7, "BYPASS_7D, no limit" if flags["BYPASS_7D"] else
+                 f"paced, weekly target {tgt7:.0%}" if lim7 is not None and lim7 < tgt7 - 1e-9 else "")):
             if u is None:
                 L.append(f"  {label:<7} n/a")
                 continue
@@ -885,14 +921,37 @@ class Dashboard:
             else:
                 note = "ended" + (f" {hhmm(last_exit[0])}" if last_exit else "")
             L.append(self.section("SESSION " + name, cols, note))
+            if w.purpose:
+                L.append(f"  {c(CYAN, 'orchestrator')} {c(CYAN, 'why:')} {one_line(w.purpose, cols - 21)}")
             if w.say:
                 L.append(f"  {c(DIM, hhmm(w.say[0]))}  {c(CYAN, 'orchestrator:')} {one_line(w.say[1], cols - 25)}")
             ks = [w.tasks[i] for i in w.order]
             top = [k for k in ks if not k["sub"]]
+            # agents launched by an agent, listed under it
+            kids = {}
+            for k in ks:
+                if k["sub"] and k["kind"] == "local_agent" and w.agent_parent.get(k["tuid"]):
+                    kids.setdefault(w.agent_parent[k["tuid"]], []).append(k)
+
+            def why_line(k, depth):
+                if w.why(k):
+                    L.append(" " * (10 + 4 * depth) + c(CYAN, "why: ") + one_line(w.why(k), cols - 16 - 4 * depth))
+
+            def nested(k, depth=1):
+                for s_ in kids.get(k["tuid"], []):
+                    live = s_["status"] == "running" and running
+                    ok = s_["status"] in ("running", "completed")
+                    mark = c(GREEN, "●") if live else c(GREEN if ok else RED, "✓" if ok else "✗")
+                    when = ("since " + hhmm(s_["start"])) if live else hhmm(s_["end"] or s_["start"])
+                    L.append(" " * (2 + 4 * depth) + f"└ {mark} {c(MAGENTA if live else DIM, f'{w.model(s_):<7}')} "
+                             f"{one_line(s_['desc'], 40 - 4 * depth):<{40 - 4 * depth}} {c(DIM, when)}")
+                    why_line(s_, depth)
+                    nested(s_, depth + 1)
+
             act = [k for k in top if k["status"] == "running"] if running else []
             done = [k for k in top if k["status"] != "running" and k["kind"] == "local_agent"]
             n_ag = sum(1 for k in top if k["kind"] == "local_agent")
-            sub_bg = sum(1 for k in ks if k["sub"] and k["status"] == "running") if running else 0
+            sub_bg = sum(1 for k in ks if k["sub"] and k["kind"] != "local_agent" and k["status"] == "running") if running else 0
             n_run = sum(1 for k in act if k["kind"] == "local_agent")
             n_watch = len(act) - n_run
             L.append(f"  agents: {c('1;32' if n_run else DIM, f'{n_run} running')}, {n_ag} launched this session"
@@ -903,10 +962,17 @@ class Dashboard:
                 extra = f"{k['tools']} tools, last {k['last']}" if is_agent and k["tools"] else ""
                 L.append(f"  {c(GREEN if is_agent else DIM, '●' if is_agent else '◌')} {c(MAGENTA, f'{w.model(k):<7}')} "
                          f"{one_line(k['desc'], 44):<44} {c(DIM, 'since ' + hhmm(k['start']) + '  ' + extra)}")
+                if is_agent:
+                    why_line(k, 0)
+                    nested(k)
             for k in done[-4:]:
                 ok = k["status"] == "completed"
+                # with a purpose line the agent's purpose replaces the clipped start of its report
+                tail = "" if w.why(k) else "  " + one_line(k["summary"], 70)
                 L.append(f"  {c(GREEN if ok else RED, '✓' if ok else '✗')} {c(DIM, f'{w.model(k):<7}')} "
-                         f"{one_line(k['desc'], 44):<44} " + c(DIM, f"{hhmm(k['end'])}  {one_line(k['summary'], 70)}"))
+                         f"{one_line(k['desc'], 44):<44} " + c(DIM, f"{hhmm(k['end'])}{tail}"))
+                why_line(k, 0)
+                nested(k)
         else:
             L.append(self.section("SESSION", cols))
             L.append("  no session log yet")

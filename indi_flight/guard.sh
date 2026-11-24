@@ -29,7 +29,7 @@ path_allowed() {
 	"$REPO"/indi_project | "$REPO"/indi_project/*) return 1 ;;
 	"$REPO"/indi_flight/guard.sh | "$REPO"/indi_flight/claude_settings.json) return 1 ;;
 	"$REPO"/indi_flight/run_orchestrator.sh | "$REPO"/indi_flight/MISSION.md | "$REPO"/indi_flight/MISSION_ARCHIVE.md) return 1 ;;
-	"$REPO"/indi_flight/LESSONS.md | "$REPO"/indi_flight/BYPASS_5H | "$REPO"/indi_flight/BYPASS_7D) return 1 ;;
+	"$REPO"/indi_flight/LESSONS.md | "$REPO"/indi_flight/BYPASS_5H | "$REPO"/indi_flight/BYPASS_7D | "$REPO"/indi_flight/USAGE_TARGETS) return 1 ;;
 	"$REPO"/* | /tmp/* | "$HOME"/.claude/projects/*) return 0 ;;
 	*) return 1 ;;
 	esac
@@ -56,7 +56,7 @@ Bash | Monitor)
 	has '(\.ssh|\.gnupg|\.gitconfig|\.bashrc|\.zshrc|\.zshenv|\.profile|\.claude/settings|\.claude\.json|\.config/gh)' && deny "no access to credentials or shell/tool configuration"
 	# supervisor files and git hooks may be read, never modified
 	while IFS= read -r seg; do
-		grep -Eq '(guard\.sh|claude_settings\.json|run_orchestrator\.sh|MISSION\.md|MISSION_ARCHIVE\.md|LESSONS\.md|BYPASS_5H|BYPASS_7D|\.git/hooks)' <<<"$seg" || continue
+		grep -Eq '(guard\.sh|claude_settings\.json|run_orchestrator\.sh|MISSION\.md|MISSION_ARCHIVE\.md|LESSONS\.md|BYPASS_5H|BYPASS_7D|USAGE_TARGETS|\.git/hooks)' <<<"$seg" || continue
 		grep -Eq '(>|(^|[^[:alnum:]_.-])(tee|mv|cp|rm|ln|touch|chmod|chown|truncate|install|dd|patch)([[:space:]]|$)|(sed|perl)[[:space:]]+[^;|&]*-[[:alnum:]]*i|git[[:space:]]+(checkout|restore|rm|mv|apply|stash)|open\(|write)' <<<"$seg" &&
 			deny "supervisor files and git hooks may be read but not modified"
 	done < <(tr ';|&\n' '\n\n\n\n' <<<"$cmd")
