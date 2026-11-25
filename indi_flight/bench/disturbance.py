@@ -233,6 +233,7 @@ def main():
     ap.add_argument("--add-system", choices=("auto", "yes", "no"), default="auto",
                     help="auto: add ApplyLinkWrench at runtime only if the gz server config lacks it (A-31)")
     ap.add_argument("--wall-timeout", type=float, default=900.0)
+    ap.add_argument("--duration", type=float, default=None, help="profile length in s (default: the profile's own, 28 s for gust_x)")
     ap.add_argument("--wind-steady", type=float, default=None, help="gust_x only: steady wind m/s (default 3)")
     ap.add_argument("--wind-peak", type=float, default=None, help="gust_x only: peak TOTAL wind m/s in the gust (default 9)")
     ap.add_argument("--wind-dir", type=float, default=None,
@@ -266,6 +267,8 @@ def main():
 
     node = Node()
     fn, dur = PROFILES[a.profile]
+    if a.duration is not None:  # S214 G3 scenarios: steady wind held to the scenario end (no clear at the profile's own end)
+        dur = a.duration
     wind_given = any(x is not None for x in (a.wind_steady, a.wind_peak, a.wind_dir))
     if wind_given and a.profile != "gust_x":
         print("--wind-* only for --profile gust_x", file=sys.stderr)

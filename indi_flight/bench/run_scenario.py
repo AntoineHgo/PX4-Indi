@@ -1223,7 +1223,7 @@ def main():
             meta["erpm_frozen"] = dict(frz)
         sag = sc.get("thrust_sag")  # dict(scale): available thrust ramps linearly 1 -> scale over the window
         if sag:
-            sag_t0, sag_dur = sim.t, sum(d for _, d, _ in sc["segments"])
+            sag_t0, sag_dur = sim.t, sag.get("ramp_s", sum(d for _, d, _ in sc["segments"]))  # ramp_s: S214 fixed ramp, constant after
             sag_state = {"next": sim.t, "steps": []}
             meta["thrust_sag"] = {**sag, "t0_us": int(sag_t0 * 1e6), "dur_s": sag_dur, "steps": sag_state["steps"]}
 

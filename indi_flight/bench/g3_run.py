@@ -25,12 +25,20 @@ TYPICAL_VIB_ACC, TYPICAL_VIB_GYR, TYPICAL_IMU_NSC = 10.0, 0.0, 4.0
 
 RUN_SCENARIO = os.path.join(HERE, "run_scenario.py")
 CONTROLLER = "indi"
-# UNVERIFIED: no G3 scenario with the "take-off, hover, step_roll, lemniscate, hold" timeline exists in scenarios.py yet;
-# o1_lemniscate (trajectory, --sched) is a stand-in. Stick modes use stick_zsine_o6 + --stick-mode.
-SCENARIO_POSITION = "o1_lemniscate"
-SCENARIO_STICK = "stick_zsine_o6"
+# S214 (Q30 B): dedicated G3 scenarios, main segment of o1_lemniscate / stick_zsine_o6 then a hold of scenarios.G3_HOLD_S;
+# steady wind and sag held to the end (wind hold_to_end, sag ramp_s). The stand-ins stay selectable (--legacy-scenarios) for
+# runs flown before S214 and for the tests of the old behaviour.
+SCENARIO_POSITION_LEGACY = "o1_lemniscate"
+SCENARIO_STICK_LEGACY = "stick_zsine_o6"
+SCENARIO_POSITION_G3 = "g3_lemniscate"
+SCENARIO_STICK_G3 = "g3_stick_zsine"
+LEGACY_SCENARIOS = False  # set by --legacy-scenarios
+SCENARIO_POSITION = SCENARIO_POSITION_G3
+SCENARIO_STICK = SCENARIO_STICK_G3
+G3_SCENARIOS = (SCENARIO_POSITION_G3, SCENARIO_STICK_G3)
 # main flight segment (start of the fault / wind window) and the segment that ends an eRPM loss, per scenario
-MAIN_SEGMENT = {SCENARIO_POSITION: "traj", SCENARIO_STICK: "stick"}
+MAIN_SEGMENT = {SCENARIO_POSITION_LEGACY: "traj", SCENARIO_STICK_LEGACY: "stick", SCENARIO_POSITION_G3: "traj", SCENARIO_STICK_G3: "stick"}
+POSITION_SCENARIOS = (SCENARIO_POSITION_LEGACY, SCENARIO_POSITION_G3)  # position mode: the horizontal gates apply (keys 1 and 2)
 END_SEGMENT = "hold"
 OVERRIDES_NAME = "g3_scenario_overrides.json"
 GNSS_MATCHED = False  # set by --override-gnss-matched (S191 probe): EKF GNSS delay compensation := drawn latency
@@ -83,12 +91,13 @@ def build_run(draw, base_params_path, out_dir):
 
     # fixed set-up ------------------------------------------------------------------------------------------------
     mode = draw["mode"]
+    hold = not LEGACY_SCENARIOS  # S214 scenarios: hold to the end, steady wind and final sag held
     if mode == "position":
-        scenario = SCENARIO_POSITION
+        scenario = SCENARIO_POSITION_G3 if hold else SCENARIO_POSITION_LEGACY
         sched = ["--sched"]
         stick = []
     else:
-        scenario = SCENARIO_STICK
+        scenario = SCENARIO_STICK_G3 if hold else SCENARIO_STICK_LEGACY
         sched = []
         stick = ["--stick-mode", mode] + (["--stick-pilot"] if mode in ("stabilized", "acro") else [])
     params_path = os.path.join(out_dir, "g3_params.txt")
@@ -204,9 +213,15 @@ def build_run(draw, base_params_path, out_dir):
     # thrust: sag (ramp over the window), saturation (all motors step), weak motor (one motor step) -------------------------
     sg, sat, wk = f["thrust_sag"], f["saturation"], f["weak_motor"]
     if sg["on"]:
-        ov["thrust_sag"] = {"scale": sg["scale"]}
-        applied["thrust_sag"] = {"scale": sg["scale"], "via": "scenario-overrides thrust_sag (linear ramp over the whole window)"}
-        notes["thrust_sag"] = f"ramp length is the scenario window, not the drawn ramp_s {sg.get('ramp_s')}"
+        if hold:  # S214: ramp fixed at the drawn length from the scenario start, then constant to the end
+            ov["thrust_sag"] = {"scale": sg["scale"], "ramp_s": float(sg["ramp_s"])}
+            applied["thrust_sag"] = {"scale": sg["scale"], "ramp_s": sg["ramp_s"],
+                                     "via": "scenario-overrides thrust_sag ramp_s (linear ramp over the drawn length, then constant)"}
+            notes["thrust_sag"] = f"ramp {sg['ramp_s']} s from the scenario start, final value held to the end (S214)"
+        else:
+            ov["thrust_sag"] = {"scale": sg["scale"]}
+            applied["thrust_sag"] = {"scale": sg["scale"], "via": "scenario-overrides thrust_sag (linear ramp over the whole window)"}
+            notes["thrust_sag"] = f"ramp length is the scenario window, not the drawn ramp_s {sg.get('ramp_s')}"
     else:
         applied["thrust_sag"] = {"on": False}
     faults = []
@@ -232,10 +247,13 @@ def build_run(draw, base_params_path, out_dir):
         ov["disturbance"] = "gust_x"
         ov["dist_segment"] = main_seg
         ov["wind"] = {"steady": w["steady_ms"], "peak": w["gust_peak_total_ms"], "dir_deg": w["dir_deg"]}
+        if hold:  # S214: steady wind to the scenario end (gust at +12 s of the main segment, ends before the hold)
+            ov["wind"]["hold_to_end"] = True
         applied["wind"] = {"steady_ms": w["steady_ms"], "gust_peak_total_ms": w["gust_peak_total_ms"], "dir_deg": w["dir_deg"],
                            "via": f"scenario-overrides wind, profile starts at '{main_seg}'"}
-        notes["wind"] = ("gust_x timing is fixed (2 s ramp, 10 s hold, 1 s gust, 15 s hold, 28 s) from the segment start; the drawn "
-                         f"gust_offset_s {w.get('gust_offset_s')} is not used")
+        notes["wind"] = ("gust_x timing is fixed (2 s ramp, 10 s hold, 1 s gust, then steady) from the segment start; the drawn "
+                         f"gust_offset_s {w.get('gust_offset_s')} is not used"
+                         + ("; steady wind held to the scenario end (S214)" if hold else "; profile cleared at 28 s"))
 
     if ov:
         argv += ["--scenario-overrides", os.path.join(out_dir, OVERRIDES_NAME)]
@@ -345,9 +363,12 @@ def main():
     ap.add_argument("--speed", type=float, default=1.0,
                     help="sim speed factor passed to run_scenario.py --speed (1.0: not passed, argv unchanged)")
     ap.add_argument("--samples", help="directory of run_NNN.json draws (g3_sample.py refly) instead of the seed's campaign")
+    ap.add_argument("--legacy-scenarios", action="store_true",
+                    help="pre-S214 stand-in scenarios (o1_lemniscate / stick_zsine_o6, 3 s hold, wind cleared at 28 s, sag over the window)")
     ap.add_argument("--require-actc", action="store_true", help="refuse a draw without the S211 `actc` block")
     a = ap.parse_args()
-    global GNSS_MATCHED, REQUIRE_ACTC
+    global GNSS_MATCHED, REQUIRE_ACTC, LEGACY_SCENARIOS
+    LEGACY_SCENARIOS = a.legacy_scenarios
     GNSS_MATCHED = a.override_gnss_matched
     REQUIRE_ACTC = a.require_actc
 

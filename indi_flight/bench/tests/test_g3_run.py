@@ -177,7 +177,8 @@ def test_overrides_applied_and_valid():
             seen[k] += k in ov
         assert ("thrust_sag" in ov) == f["thrust_sag"]["on"] and ("erpm_loss" in ov) == f["tel_loss"]["on"]
         if f["thrust_sag"]["on"]:
-            assert ov["thrust_sag"]["scale"] == f["thrust_sag"]["scale"] and "thrust_sag" in b["applied"] and "thrust_sag" not in b["not_applied"]
+            assert ov["thrust_sag"] == {"scale": f["thrust_sag"]["scale"], "ramp_s": f["thrust_sag"]["ramp_s"]}  # S214: drawn ramp, then constant
+            assert "thrust_sag" in b["applied"] and "thrust_sag" not in b["not_applied"]
         mf = ov.get("motor_fault")
         mf = [] if mf is None else (mf if isinstance(mf, list) else [mf])
         assert len(mf) == f["saturation"]["on"] + f["weak_motor"]["on"]
@@ -190,7 +191,7 @@ def test_overrides_applied_and_valid():
             assert "weak_motor" in b["applied"] and "weak_motor" not in b["not_applied"]
         w = f["wind"]
         if w["steady_ms"] or w["gust_amp_ms"]:
-            assert ov["wind"] == {"steady": w["steady_ms"], "peak": w["gust_peak_total_ms"], "dir_deg": w["dir_deg"]}
+            assert ov["wind"] == {"steady": w["steady_ms"], "peak": w["gust_peak_total_ms"], "dir_deg": w["dir_deg"], "hold_to_end": True}  # S214
             assert "wind" in b["applied"] and "wind" not in b["not_applied"]
         else:
             assert "wind" not in ov
@@ -302,3 +303,47 @@ def test_check_validity_exception_is_void():  # K122 #3
         r.check_validity = orig
     done = json.load(open(os.path.join(d, "g3_done.json")))
     assert done["outcome"] == "void" and "boom" in done["validity"]["problems"][0]
+
+
+def test_s214_scenarios_and_legacy_switch():
+    """S214: default scenarios are the dedicated G3 ones (25 s hold, wind to the end, sag ramp fixed); --legacy-scenarios restores the old."""
+    import scenario_overrides as so
+    from scenarios import SCENARIOS, G3_HOLD_S
+    assert G3_HOLD_S >= 20.0
+    for nm, old in (("g3_lemniscate", "o1_lemniscate"), ("g3_stick_zsine", "stick_zsine_o6")):
+        segs = SCENARIOS[nm]["segments"]
+        assert [x[0] for x in segs][-1] == "hold" and segs[-1][1] == G3_HOLD_S and segs[:-1] == SCENARIOS[old]["segments"][:-1]
+        assert SCENARIOS[old]["segments"][-1][1] == 3.0           # G5 scenarios untouched
+    seen = set()
+    try:
+        for legacy in (False, True):
+            r.LEGACY_SCENARIOS = legacy
+            for d in draws():
+                b = r.build_run(d, BASE, OUT)
+                sc_name = b["applied"]["mode"]["scenario"]
+                assert (sc_name in r.G3_SCENARIOS) == (not legacy)
+                ov = b["overrides"]
+                if ov:
+                    so.merge(SCENARIOS[sc_name], ov)
+                if legacy:
+                    assert "hold_to_end" not in ov.get("wind", {}) and "ramp_s" not in ov.get("thrust_sag", {})
+                elif "wind" in ov:
+                    flags = so.wind_flags(so.merge(SCENARIOS[sc_name], ov))
+                    dur = float(flags[flags.index("--duration") + 1])
+                    seg0 = so._seg_start(SCENARIOS[sc_name], r.MAIN_SEGMENT[sc_name])
+                    assert abs(dur - (so._total(SCENARIOS[sc_name]) - seg0 + so.WIND_TAIL_S)) < 1e-9 and dur > 28.0
+                    seen.add("wind")
+                if not legacy and "thrust_sag" in ov:
+                    assert ov["thrust_sag"]["ramp_s"] < SCENARIOS[sc_name]["segments"][0][1] + SCENARIOS[sc_name]["segments"][1][1]  # ends before the hold
+                    seen.add("sag")
+                # every timed event ends before the hold (main segment start + offset + duration <= main segment end)
+                for k in ("erpm_loss", "erpm_frozen"):
+                    if k in ov and not legacy:
+                        main = [x for x in SCENARIOS[sc_name]["segments"] if x[0] == r.MAIN_SEGMENT[sc_name]][0]
+                        assert ov[k]["start_offset_s"] + ov[k]["duration_s"] <= main[1]
+                        seen.add(k)
+                if "wind" in ov and not legacy:
+                    assert 13.0 <= so.WIND_PROFILE_S + 0.0 <= SCENARIOS[sc_name]["segments"][1][1]   # gust over before the hold
+    finally:
+        r.LEGACY_SCENARIOS = False
+    assert seen == {"wind", "sag", "erpm_loss", "erpm_frozen"}, seen

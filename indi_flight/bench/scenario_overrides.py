@@ -23,6 +23,9 @@ import math
 
 ALLOWED = ("thrust_sag", "motor_fault", "erpm_loss", "erpm_frozen", "wind", "disturbance", "dist_segment")
 WIND_KEYS = ("steady", "peak", "dir_deg")
+WIND_TAIL_S = 2.0  # hold_to_end: the profile runs this long past the scenario end (inside the runner's 4 s recover phase)
+# S214 (G3 hold): thrust_sag may carry ramp_s (fixed ramp from the scenario start, then constant to the end); wind may carry
+# hold_to_end true (steady wind held to the scenario end, disturbance.py --duration). Without them the old behaviour.
 N_MOTORS = 4
 WIND_PROFILE_S = 13.0  # gust_x up to the end of the gust (2 ramp + 10 hold + 1 gust); its 15 s tail (28 s total) may run past the window
 
@@ -94,10 +97,14 @@ def validate(sc, ov):
         if k not in ALLOWED:
             raise ValueError(f"unknown override key {k!r}, allowed {list(ALLOWED)}")
     if "thrust_sag" in ov:
-        _dict_keys("thrust_sag", ov["thrust_sag"], ("scale",), ("scale",))
+        _dict_keys("thrust_sag", ov["thrust_sag"], ("scale", "ramp_s"), ("scale",))
         s = ov["thrust_sag"]["scale"]
         if not _num(s) or not 0.0 < s <= 1.0:
             raise ValueError(f"override thrust_sag: scale {s!r} must be a number in (0, 1]")
+        if "ramp_s" in ov["thrust_sag"]:
+            rs = ov["thrust_sag"]["ramp_s"]
+            if not _num(rs) or not 0.0 < rs <= _total(sc):
+                raise ValueError(f"override thrust_sag: ramp_s {rs!r} must be a number in (0, scenario length {_total(sc)}]")
     if "motor_fault" in ov:
         mf = ov["motor_fault"]
         if isinstance(mf, list) and not mf:
@@ -143,12 +150,14 @@ def validate(sc, ov):
         raise ValueError("override disturbance: expected a profile name")
     if "wind" in ov:
         w = ov["wind"]
-        _dict_keys("wind", w, WIND_KEYS)
+        _dict_keys("wind", w, WIND_KEYS + ("hold_to_end",))
+        if "hold_to_end" in w and not isinstance(w["hold_to_end"], bool):
+            raise ValueError(f"override wind: hold_to_end {w['hold_to_end']!r} must be true or false")
         if sc.get("disturbance") != "gust_x":
             raise ValueError(f"override wind: needs disturbance 'gust_x', scenario has {sc.get('disturbance')!r} "
                              "(add 'disturbance': 'gust_x' and 'dist_segment' to the overrides)")
         for k, v in w.items():
-            if not _num(v):
+            if k != "hold_to_end" and not _num(v):
                 raise ValueError(f"override wind: {k} {v!r} is not a finite number")
         if w.get("steady", 3.0) < 0.0:
             raise ValueError("override wind: steady must be >= 0")
@@ -176,4 +185,7 @@ def wind_flags(sc):
     """Extra disturbance.py arguments of the merged scenario's `wind` dict ([] without one)."""
     w = sc.get("wind") or {}
     flag = {"steady": "--wind-steady", "peak": "--wind-peak", "dir_deg": "--wind-dir"}
-    return [x for k in WIND_KEYS if k in w for x in (flag[k], repr(float(w[k])))]
+    out = [x for k in WIND_KEYS if k in w for x in (flag[k], repr(float(w[k])))]
+    if w.get("hold_to_end"):  # S214: profile runs from the dist segment start to the scenario end (+ WIND_TAIL_S), no clear at 28 s
+        out += ["--duration", repr(_total(sc) - _seg_start(sc, sc.get("dist_segment", "dist")) + WIND_TAIL_S)]
+    return out

@@ -161,6 +161,15 @@ for _k, _plant in _V_PLANT.items():
 # Segment times are from the observed main mode. No --sched (runner streams MANUAL_CONTROL).
 SCENARIOS["stick_zsine_o6"] = dict(mode="stick", axis=None, traj=ZSINE_O6,
                                    segments=[("settle", 3.0, 0.0), ("stick", _traj_dur(ZSINE_O6), 0.0), ("hold", 3.0, 0.0)])
+# S214 (GATES "Owner amendment S214", Q30 B) dedicated G3 scenarios: the main segment of o1_lemniscate / stick_zsine_o6 (G5 keeps
+# those two unchanged), then one hold of G3_HOLD_S starting at the arrival from the main segment. Every G3 injected event
+# (fault steps, eRPM loss / frozen, gust) starts at the main segment and ends before the hold; the steady wind and the final sag
+# stay on to the end (g3_run sets wind hold_to_end and the sag ramp_s). Item 3 = last 10 s of the hold, item 6 = last 20 s.
+G3_HOLD_S = 25.0
+SCENARIOS["g3_lemniscate"] = dict(mode="trajectory", axis=None, traj=LEMNISCATE_O1,
+                                  segments=_traj_segments(LEMNISCATE_O1, G3_HOLD_S))
+SCENARIOS["g3_stick_zsine"] = dict(mode="stick", axis=None, traj=ZSINE_O6,
+                                   segments=[("settle", 3.0, 0.0), ("stick", _traj_dur(ZSINE_O6), 0.0), ("hold", G3_HOLD_S, 0.0)])
 # S153 --ground-arm: the runner's own phase sequence replaces the segments (placeholder for the mode='stick' check)
 SCENARIOS["stick_ground_arm"] = dict(mode="stick", axis=None, traj=None, segments=[("settle", 1.0, 0.0)])
 # S136 G5.1 flight-mode stick steps (GATES 5b): throttle at hover, roll / pitch / yaw doublets from stick_profile.step_sticks
