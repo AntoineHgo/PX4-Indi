@@ -1429,3 +1429,12 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
 - Alternatives: vector RMS (looser up to sqrt 3), relative re-excursion (looser), owner question (not needed: no
   reading loosens the text). Overturn: owner says otherwise, or the PID reference fails item 5 on tracking alone ->
   owner question per the reference-flight rule.
+
+## D-OWNER-Q33 (2026-11-25): G3 item 5 on a static pre-event reference
+- Owner answer B with amendments after an independent review (sonnet, medium); text in GATES "Owner amendment Q33".
+- Why: on the S227 pre-test both keys scored one event (main start, return ~0 s), so item 5 measured lemniscate
+  tracking (INDI 0.576 m, PID 1.210 m), and the gust at +12 s was scored by neither key nor skipped by item 2.
+- Overturns the D-G3-KEYS-S227 item 5 reference (commanded path at the same time); the rest of D-G3-KEYS-S227 stands.
+- Alternatives not chosen: A (subtract pre-event tracking error: its baseline is the settle hover, removes nothing),
+  C (keep: binds on tracking, both stacks fail, gust still unscored).
+- Overturn: owner only; PID failing item 5 on the new scenario -> owner question.

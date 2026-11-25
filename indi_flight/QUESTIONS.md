@@ -87,3 +87,25 @@ B item 5 events in a hover segment before the lemniscate (static pre-event refer
 C keep as is: item 5 then binds on lemniscate tracking and fails for both stacks.
 Meanwhile: no re-fly, re-score or note on item 5. Next session flies the (b) FREEZE-10 baselines 262/283 on the new
 scenarios scored on items 1-4 and 6 (no open question decides those). Not blocked overall.
+
+Answer:
+B with amendments (owner, 2026-11-25, with an independent review agent's second opinion). Gate text: GATES "Owner
+amendment Q33". Findings behind it (checked on results/g3_pretest_s227, both keys, both stacks): the only scored event
+is the main-segment start, return time ~0 s, so 0.576 m (INDI) / 1.210 m (PID) is lemniscate tracking error, not event
+response; the gust (fixed gust_x timing: 2 s ramp, 10 s steady, 1 s gust, peak at +12 s) is scored by neither key and
+not skipped by item 2; A as written fails (its pre-event 5 s is the settle hover).
+1. Scenario: settle -> event hover -> main segment (lemniscate / stick) -> 35 s hold. Events in the event hover on a
+   static reference: fault step and wind ramp at t0, gust at t0 + 12 s. Event hover length >= gust end + 10 s
+   (5 s return + 5 s quiet), derived in code from the disturbance.py profile constants (23 s today), not a literal.
+2. Both keys: item 5 events = fault start (t0) and gust (t0 + 12 s); item 2 skip windows (S225) get the gust time too.
+   Self-tests in both keys for the gust event and its skip, break-checked.
+3. Item 5 reference per mode: position = hover setpoint (trajectory_setpoint); attitude = q_d (level, zero sticks);
+   rate = not applicable (items 1, 2, 6 cover rate runs). Thresholds unchanged (0.3 m, 3 deg, 5 s, 5 s).
+4. The wind ramp is a disturbance, not a scored event (text names gust and fault start). The sag keeps its slow ramp
+   from the scenario start and is not an event; each run tables where its ramp ends relative to t0.
+5. Item 4 window = main segment only (fault and steady wind already on). Limits unchanged.
+6. Same pattern in g3_stick_zsine; check the q_d reference exists before t0.
+7. Order: build (1-2, 6) -> re-fly the S227 pre-test draw 0 for INDI and PID on the new scenario, both keys -> then the
+   FREEZE-10 baselines 262/283 on the new scenario. S227 pre-test results stay evidence for items 1-3, 6 only. If PID
+   fails item 5 again on the new scenario: new owner question, no silent change.
+Cost accepted: ~+23 s per run (~1.9 h per 300 runs at speed 1).

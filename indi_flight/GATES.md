@@ -867,3 +867,19 @@ box; SCORES.tsv, progress.txt, HALT_ON_FAIL.json) and `speed1_s213/README.md` (s
   loss/frozen starts are not skipped. Conditions: item 5 scored in both keys in the same campaign; self-test in both
   keys (straddling sine not flagged, post-fault sine flagged, break-checked); skipped windows tabled for both stacks.
   Rescore only valid 903eae63 runs used on this route (4 draws, PID references); pre-S214 multi-motor runs stay invalid.
+
+## Owner amendment Q33 (2026-11-25): G3 item 5 events on a static reference (owner answer B with amendments, D-OWNER-Q33)
+- **Supersedes** the S214 "Correction (GATES 3 Flight per run)": fault steps, wind ramp and gust now start in an
+  event hover between settle and the main segment, not at the main-segment start. S214 window and hold rules unchanged.
+- **Scenario.** settle -> event hover -> main segment (`traj` lemniscate / `stick`) -> hold (35 s). In the event hover:
+  fault step and wind ramp at t0, gust at t0 + 12 s (fixed gust_x timing). Event hover length >= gust end + 10 s,
+  derived in code from the `bench/disturbance.py` profile constants (23 s today). Steady wind and drawn faults stay on
+  to the end of the run. Sag: slow ramp from the scenario start as now, not an event; its ramp end is tabled per run.
+- **Item 5.** Events = fault start (t0) and gust (t0 + 12 s), in both keys. Reference per mode: position = hover
+  setpoint (trajectory_setpoint); attitude = q_d (level, zero sticks); rate mode = not applicable. Wind ramp not
+  scored. Thresholds unchanged. Replaces the D-G3-KEYS-S227 item 5 reference (commanded path at the same time).
+- **Item 2.** S225 skip windows also contain the gust time (t0 + 12 s) in both keys; self-tests break-checked.
+- **Item 4.** Window = main segment only; limits unchanged.
+- **Evidence.** S227 pre-test (INDI and PID) stays evidence for items 1-3, 6 only. Before any campaign: re-fly pre-test
+  draw 0 for INDI and PID on the new scenario, both keys; then the FREEZE-10 baselines 262/283 on the new scenario.
+  PID failing item 5 on the new scenario -> owner question.
