@@ -16,14 +16,18 @@
    f3170f4b91 (results/q30_tooling_s226/KEY1_README.md, KEY2_README.md; tests in /tmp/g3venv, host has no pytest).
    S227 done: (a1) wiring 6827fb2340, (a2) D-G3-KEYS-S227 (literal/stricter reading), keys aligned 2dd1139cce,
    (a3) hold 35 s. Pre-test 66a1f1299c (results/g3_pretest_s227, draw 0 g3_lemniscate): flies, keys agree, item 5
-   FAIL 0.576 m vs 0.3 m (others pass). PID ref 6c714845b1: item 5 FAIL 1.210 m, item 4 FAIL 0.764 m -> Q33 OPEN,
-   BLOCKING G3 item 5 (no re-fly/re-score/note on item 5). Next: (b) baselines, scored on items 1-4, 6 only. (b) FREEZE-10 baselines 262/283 (and 264/joint
-   on the new scenario) on 903eae63, scored both keys. (c) one solver run (opus, high) on (i)/(ii)/(iii), values
+   FAIL 0.576 m vs 0.3 m (others pass). PID ref 6c714845b1: item 5 FAIL 1.210 m, item 4 FAIL 0.764 m.
+   Q33 answered B (closed S228, GATES "Owner amendment Q33"): (a4) build event hover in g3_lemniscate and
+   g3_stick_zsine + gust/fault events and gust skip in both keys, self-tests break-checked (sonnet high, two keys);
+   (a5) re-fly pre-test draw 0 INDI+PID on it; PID fails item 5 again -> new owner question.
+   (b) FREEZE-10 baselines 262/283 (and 264/joint on the new scenario) on 903eae63, scored both keys. (c) one solver run (opus, high) on (i)/(ii)/(iii), values
    fixed before review; brief: no tb sweeps, no item2_split, no 2 Hz cause search. (d) one independent review
    (opus, high). (e) pass -> freeze-11 + re-fly list; none passes -> route B (fixed corner), G3 300 on 903eae63.
    Cause context: restore264 falsifier_s222/README.md, blend264_s223, ref264_s224.
-S227 route check: supervisor asked (GATE_STATUS unchanged 9 sessions); RC226 (one session old, same state) stands,
-  no new RC. Blocker of the next G3 verdict = action 0 (a)-(e), nothing else; cut list below unchanged.
+S228 route check: design/route_check_228.md (GATE_STATUS unchanged 10 sessions). Blocker of the next G3 verdict =
+  action 0 (a4)-(e), nothing else; cut list below. RC228 cuts: both scenarios in one commit; (a5) INDI+PID
+  and (b) 262/283 chained as one docker job; no re-score of S227 pre-test; 264/joint baselines only if the D-RATE-BLD-2
+  pass line lists them; no RC before the solver verdict.
 CUT (RC208/RC221/S223/RC226): G6 item 7 chain (results/g6_item7_s212/PREP.md), G7 (f) unit 9, (g), harness
   extraction, dead path, older G7 list (items 3 below), G8 drafting (item 5), saturation sweep: all wait until the
   Q32 route decides firmware. No route check before the solver verdict (RC226 item 6). Unit tests for the winner

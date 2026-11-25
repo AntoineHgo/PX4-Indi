@@ -2049,3 +2049,42 @@ on an in-range draw; A costs ~8-12 sessions under the weekly cap.
   Pre-test g3_lemniscate draw 0 on 903eae63 (66a1f1299c): flies, keys agree, item 5 FAIL 0.576 m; PID ref same draw
   item 5 FAIL 1.210 m, item 4 FAIL 0.764 m -> Q33 (blocking item 5). Gate progress: G3 test tooling runs end to end
   on the new scenario with both keys; item 5 definition to the owner (Q33).
+- S228 (2026-11-25): Q33 closed (owner answer B with amendments; GATES "Owner amendment Q33", DECISIONS D-OWNER-Q33). Full text:
+  ## Q33 (S227, 2026-11-25): G3 item 5 on the new g3_lemniscate scenario fails for PID too. BLOCKING for G3 item 5.
+  Context: GATES item 5: "after each injected event (gust, fault start) back within 0.3 m and 3 deg of the pre-event
+  reference in <= 5 s and no re-excursion > 0.3 m for 5 s". With the S214 events at the start of the main lemniscate
+  there is no static pre-event point, so both keys use the commanded path at the same time (D-G3-KEYS-S227, the
+  literal and stricter reading). Then ordinary tracking error counts against 0.3 m, which is tighter than item 4
+  (0.5 m horizontal RMS). Pre-test (results/g3_pretest_s227, seed-173 draw 0, binary 903eae63, both keys agree):
+  INDI items 1-4, 6 pass, item 5 FAIL 0.576 m; PID reference same draw: item 5 FAIL 1.210 m, item 4 FAIL 0.764 m.
+  Options:
+  A (recommended) item 5 measures what the event adds: deviation from the commanded path minus the pre-event
+    tracking error (e.g. 0.3 m above the 95th percentile of the 5 s before the event), threshold unchanged.
+  B item 5 events in a hover segment before the lemniscate (static pre-event reference), as the text reads; scenario
+    change, both keys follow.
+  C keep as is: item 5 then binds on lemniscate tracking and fails for both stacks.
+  Meanwhile: no re-fly, re-score or note on item 5. Next session flies the (b) FREEZE-10 baselines 262/283 on the new
+  scenarios scored on items 1-4 and 6 (no open question decides those). Not blocked overall.
+  
+  Answer:
+  B with amendments (owner, 2026-11-25, with an independent review agent's second opinion). Gate text: GATES "Owner
+  amendment Q33". Findings behind it (checked on results/g3_pretest_s227, both keys, both stacks): the only scored event
+  is the main-segment start, return time ~0 s, so 0.576 m (INDI) / 1.210 m (PID) is lemniscate tracking error, not event
+  response; the gust (fixed gust_x timing: 2 s ramp, 10 s steady, 1 s gust, peak at +12 s) is scored by neither key and
+  not skipped by item 2; A as written fails (its pre-event 5 s is the settle hover).
+  1. Scenario: settle -> event hover -> main segment (lemniscate / stick) -> 35 s hold. Events in the event hover on a
+     static reference: fault step and wind ramp at t0, gust at t0 + 12 s. Event hover length >= gust end + 10 s
+     (5 s return + 5 s quiet), derived in code from the disturbance.py profile constants (23 s today), not a literal.
+  2. Both keys: item 5 events = fault start (t0) and gust (t0 + 12 s); item 2 skip windows (S225) get the gust time too.
+     Self-tests in both keys for the gust event and its skip, break-checked.
+  3. Item 5 reference per mode: position = hover setpoint (trajectory_setpoint); attitude = q_d (level, zero sticks);
+     rate = not applicable (items 1, 2, 6 cover rate runs). Thresholds unchanged (0.3 m, 3 deg, 5 s, 5 s).
+  4. The wind ramp is a disturbance, not a scored event (text names gust and fault start). The sag keeps its slow ramp
+     from the scenario start and is not an event; each run tables where its ramp ends relative to t0.
+  5. Item 4 window = main segment only (fault and steady wind already on). Limits unchanged.
+  6. Same pattern in g3_stick_zsine; check the q_d reference exists before t0.
+  7. Order: build (1-2, 6) -> re-fly the S227 pre-test draw 0 for INDI and PID on the new scenario, both keys -> then the
+     FREEZE-10 baselines 262/283 on the new scenario. S227 pre-test results stay evidence for items 1-3, 6 only. If PID
+     fails item 5 again on the new scenario: new owner question, no silent change.
+  Cost accepted: ~+23 s per run (~1.9 h per 300 runs at speed 1).
+- S228 (2026-11-25): g3_campaign_f10 already committed and scored (verdict S199). Q33 closed. RC228 (design/route_check_228.md): only G3 can move a row; next = (a4) event-hover build. Gate progress: none (Q33 closed into the G3 action list; budget did not fit the two-key build).
