@@ -165,7 +165,7 @@ SCENARIOS["stick_zsine_o6"] = dict(mode="stick", axis=None, traj=ZSINE_O6,
 # those two unchanged), then one hold of G3_HOLD_S starting at the arrival from the main segment. Every G3 injected event
 # (fault steps, eRPM loss / frozen, gust) starts at the main segment and ends before the hold; the steady wind and the final sag
 # stay on to the end (g3_run sets wind hold_to_end and the sag ramp_s). Item 3 = last 10 s of the hold, item 6 = last 20 s.
-G3_HOLD_S = 25.0
+G3_HOLD_S = 35.0
 SCENARIOS["g3_lemniscate"] = dict(mode="trajectory", axis=None, traj=LEMNISCATE_O1,
                                   segments=_traj_segments(LEMNISCATE_O1, G3_HOLD_S))
 SCENARIOS["g3_stick_zsine"] = dict(mode="stick", axis=None, traj=ZSINE_O6,

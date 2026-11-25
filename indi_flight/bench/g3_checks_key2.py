@@ -409,7 +409,7 @@ def load_run(d, t0=None, t1=None, mode=None, wind=False, sag=False):
         ss_mode = ([e for e in rj["events"] if e["name"] == "hold"][0]).get("mode", "position")
     elif rw["mode"] is None: rw["mode"], rw["mode_src"] = "position", "default (no traj/stick event)"
     return dict(t=t, q=q, w=w, pos=pos, h=h, nav_t=nav_t, sp_t=sp_t, sp_xy=sp_xy, sp_z=sp_z, land_t=land_t,
-                position_mode=rj.get("scenario") == "o1_lemniscate" or rw["mode"] == "position", sag=sag,
+                position_mode=rj.get("scenario") in ("o1_lemniscate", "g3_lemniscate") or rw["mode"] == "position", sag=sag,
                 win_s=None if not legacy else (st + t0, st + t1), motors_t=mo["timestamp"] * 1e-6,
                 motors=np.stack([mo[f"control[{i}]"] for i in range(4)], 1), hold0=h0, hold1=h1, gc_t=gc,
                 wind=wind, mode=ss_mode or rw["mode"], runwin=rw, att_t=att_t, att_q=att_q, tel_events=tel, legacy=legacy), float(np.max(np.diff(t)))

@@ -521,7 +521,7 @@ score() {
 		echo "interrupted by stop --now" >"$d/SCORE_PENDING"
 		return
 	}
-	args=$(grep -E "^$r --t0 " "$d/chain_key1.txt" | head -1 | cut -d' ' -f2-)
+	args=$(grep -E "^$r (--t0|--run-json) " "$d/chain_key1.txt" | head -1 | cut -d' ' -f2-)
 	mkdir -p "$D/key2"
 	rm -f "$D/key2/$r.json"
 	if [ -n "$args" ]; then
