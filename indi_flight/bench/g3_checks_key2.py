@@ -268,7 +268,7 @@ def recovery(t, q, pos, h, rw, sp_t, sp_xy, sp_z, att_t, att_q, extra=()):
     """G3 item 5: after each injected event (gust / fault step = main-segment start; extra = reported-only (name, time) events)
     the vehicle is back within 0.3 m and 3 deg of the reference within 5 s and then has no re-excursion > 0.3 m for 5 s.
     Reference: position mode = the commanded reference (trajectory_setpoint position, vehicle_attitude_setpoint q_d), because the
-    lemniscate is not a static hold; attitude mode = the pre-event attitude (median body z over the 2 s before the event);
+    lemniscate is not a static hold; attitude mode = the commanded attitude q_d at the same time (S227; not the pre-event median);
     rate mode = not applicable (no position or attitude hold; item 6 covers it). Position error is 3-D (x, y, altitude), attitude
     error is the tilt angle between body z axes (yaw excluded, as item 3).  t_in = first sample with every applicable error within
     its limit; pass = t_in - t_event <= 5 s and no sample in (t_in, t_in+5 s] with the controlled error beyond its limit
@@ -290,15 +290,14 @@ def recovery(t, q, pos, h, rw, sp_t, sp_xy, sp_z, att_t, att_q, extra=()):
             sp, good = interp_sp(tw, sp_t, None if sp_xy is None or sp_z is None else np.column_stack([sp_xy, sp_z]))
             e_pos = np.where(good, np.sqrt((pos[m, 0] - np.where(good, sp[:, 0], 0)) ** 2 + (pos[m, 1] - np.where(good, sp[:, 1], 0)) ** 2
                                            + (h[m] + np.where(good, sp[:, 2], 0)) ** 2), np.nan) if sp is not None else np.full(len(tw), np.nan)
-            if att_t is not None and att_q is not None and len(att_t) > 1:
-                o = np.argsort(att_t); at = np.asarray(att_t, float)[o]; aq = np.asarray(att_q, float)[o]
-                k = np.clip(np.searchsorted(at, tw, side="right") - 1, 0, len(at) - 1)
-                ref = _zb(aq[k]); e_att = np.where((tw >= at[0]) & np.isfinite(aq[k]).all(1), _angle_deg(zb_t[m], ref), np.nan)
-            else: e_att = np.full(len(tw), np.nan)
         else:
-            pre = (t >= te - 2.0) & (t < te)
-            if not pre.any(): r.update(pass_=False, note="no pre-event data (fail closed)"); out.append(r); ok = ok and not gated; continue
-            ref = np.median(zb_t[pre], 0)[None, :]; e_att = _angle_deg(zb_t[m], np.repeat(ref, m.sum(), 0))
+            e_pos = None
+        # attitude reference (S227, both modes): the commanded attitude q_d at the same time (last q_d sample at or before each time)
+        if att_t is not None and att_q is not None and len(att_t) > 1:
+            o = np.argsort(att_t); at = np.asarray(att_t, float)[o]; aq = np.asarray(att_q, float)[o]
+            k = np.clip(np.searchsorted(at, tw, side="right") - 1, 0, len(at) - 1)
+            ref = _zb(aq[k]); e_att = np.where((tw >= at[0]) & np.isfinite(aq[k]).all(1), _angle_deg(zb_t[m], ref), np.nan)
+        else: e_att = np.full(len(tw), np.nan)   # no q_d: reference missing, fails closed below
         valid = np.isfinite(e_att) & (np.isfinite(e_pos) if e_pos is not None else True)
         if valid.mean() < 0.5:
             r.update(pass_=False, note=f"reference missing for {1 - valid.mean():.0%} of the 10 s window (fail closed)"); out.append(r)
@@ -320,16 +319,16 @@ def recovery(t, q, pos, h, rw, sp_t, sp_xy, sp_z, att_t, att_q, extra=()):
             "pass": bool(ok)}
 
 def rate_hold(t, w, rw):
-    """G3 item 6 (rate mode, zero sticks): body rate RMS <= 5 deg/s over the last 20 s of the hold. RMS = sqrt(mean(p^2+q^2+r^2))
-    (3-axis vector, not detrended, so a constant rate drift counts); per-axis RMS reported."""
+    """G3 item 6 (rate mode, zero sticks, S227): body rate RMS <= 5 deg/s over the last 20 s of the hold, gated on each of p, q, r
+    separately (not detrended, so a constant rate drift counts). The 3-axis vector RMS sqrt(mean(p^2+q^2+r^2)) is reported only."""
     if rw["mode"] != "rate": return {"applicable": False, "pass": True, "note": "item 6 is for rate (acro) mode only"}
     a, b = rw["item6"]; m = (t >= a) & (t <= b)
     if rw["hold_dur_s"] < ITEM6_S - 1e-9 or not m.any():
         return {"applicable": True, "window_s": [a, b], "pass": False, "note": "hold shorter than 20 s or no data (fail closed)"}
-    wd = np.degrees(w[m]); rms = float(np.sqrt(np.mean(np.sum(wd ** 2, 1)))); ax = np.sqrt(np.mean(wd ** 2, 0)).tolist()
+    wd = np.degrees(w[m]); rms = float(np.sqrt(np.mean(np.sum(wd ** 2, 1)))); ax = np.sqrt(np.mean(wd ** 2, 0))
     lim = RATE_RMS if not _brk("item6") else 1e9
-    return {"applicable": True, "window_s": [a, b], "n_used": int(m.sum()), "rate_rms_dps": rms, "axis_rms_dps": ax,
-            "axis_mean_dps": wd.mean(0).tolist(), "limit_dps": RATE_RMS, "pass": bool(rms <= lim)}
+    return {"applicable": True, "window_s": [a, b], "n_used": int(m.sum()), "rate_rms_dps": rms, "axis_rms_dps": ax.tolist(),
+            "axis_mean_dps": wd.mean(0).tolist(), "limit_dps": RATE_RMS, "pass": bool(np.all(ax <= lim))}
 
 def analyse(t, q, w, pos, h, motors_t, motors, hold0, hold1, gc_t, wind=False, mode="position", nav_t=(),
             sp_t=None, sp_xy=None, land_t=None, position_mode=False, sp_z=None, win_s=None, sag=False,

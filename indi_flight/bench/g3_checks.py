@@ -335,13 +335,14 @@ def item6_rate_hold(tt, w, win):
 
 
 def evaluate(tt, pos, q, w, tm, cmd, ref, t0, t1, wind=False, sag=False, mode="position", ref_source="given", t_land=None, nav_changes=None, sp=None,
-             step_starts=None, track_win=None, event_times=None, rate_mode=False, item6_win=None, sp_xyz=None, att_sp=None):
+             step_starts=None, track_win=None, event_times=None, rate_mode=False, item6_win=None, sp_xyz=None, att_sp=None, hold_win=None):
     """nav_changes: times [s] of vehicle_status.nav_state changes; if given (G4, Q15) the rate detector skips windows
     overlapping [t, t + NAV_SKIP_S]. tt (n,), pos (n,3) NED, q (n,4), w (n,3) rad/s truth; tm (m,), cmd (m,4); ref (3,) NED hold point or None.
     sp: (t_sp (k,), xy_sp (k,2)) trajectory_setpoint x,y on the same time base and frame as tt/pos, or None.
     S214 / S225 (all optional, from windows_from_run_json): step_starts [t]: item-2 rate windows containing one are skipped; track_win
     [ta, tb] and sp_xyz (t_sp, xyz_sp (k,3)): item 4; event_times [t], sp_xyz, att_sp (t_qd, q_d (k,4)): item 5; rate_mode + item6_win
-    [ta, tb]: item 6. Items 4-6 enter res["pass"] only when applicable."""
+    [ta, tb]: item 6. hold_win [h0, h1] (S227): item-2 position limit cycle = 3 x 10 s windows from the hold start h0 (to min(h1, end of
+    flight)); without it (old --t0/--t1 use) the windows start at max(airborne start, t0). Items 4-6 enter res["pass"] only when applicable."""
     h = -pos[:, 2]
     h = h - h[0] if np.isfinite(h[0]) else h
     up = np.flatnonzero(np.isfinite(h) & (h > AIRBORNE_M))
@@ -384,7 +385,8 @@ def evaluate(tt, pos, q, w, tm, cmd, ref, t0, t1, wind=False, sag=False, mode="p
             osc[name] = line_detector(wg[i], fs, RATE_BAND, RMS_DEG_S, float(tg[0]), skip, skip_points=list(step_starts or []))
         res["item2_skipped_windows"] = [{"start_s": a0, "end_s": a1, "reason": why} for a0, a1, why in osc["p"]["skipped"]]  # same windows for p, q, r
         res["item2_step_starts"] = list(step_starts or [])
-        osc["position"] = position_limit_cycle(tt[a][fin], pos[a][fin], max(ta, t0), te)
+        ps, pe = (max(ta, hold_win[0]), min(te, hold_win[1])) if hold_win else (max(ta, t0), te)   # S227: windows from the hold start
+        osc["position"] = position_limit_cycle(tt[a][fin], pos[a][fin], ps, pe)
         okm = np.isfinite(cmd[am][:, :4]).all(axis=1)
         _, cg, fsc = uniform(tm[am][okm], cmd[am][okm][:, :4], ta, te)
         chat = [line_detector(cg[i], fsc, CMD_BAND, CMD_LINE_RMS, rms_hz=CMD_RMS_HZ) for i in range(4)]
@@ -525,7 +527,8 @@ def main():
         a.t0, a.t1 = win["item3"]
         sp_xyz = load_setpoint_xyz(a.log)
         kw = dict(step_starts=win["step_starts"], track_win=win["track"], event_times=win["step_starts"], sp_xyz=sp_xyz,
-                  att_sp=load_att_setpoint(a.log), rate_mode=a.rate_mode, item6_win=win["item6"])
+                  att_sp=load_att_setpoint(a.log), rate_mode=a.rate_mode, item6_win=win["item6"],
+                  hold_win=[win["hold"]["t"], win["hold"]["t"] + win["hold"]["dur_s"]])
     elif a.t0 is None or a.t1 is None or a.rate_mode:
         ap.error("give --run-json, or --t0 and --t1 (and no --rate-mode)")
     tt, pos, q, w, tm, cmd, ref, src, t_land, navc = load(a.log, a.t0, a.t1)
