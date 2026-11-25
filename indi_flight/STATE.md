@@ -13,10 +13,11 @@
    g3_chain.sh pins it). Do NOT rebuild build/px4_sitl_default from HEAD. Pre-S214 C3 runs: GATES 2 invalid.
 0. G3 route per D-OWNER-Q32 (GATES "Owner amendment S225"; pass line fixed in DECISIONS D-RATE-BLD-2 S226).
    Tooling: results/q30_tooling_s226/KEY1_README.md, KEY2_README.md (tests in /tmp/g3venv, host has no pytest);
-   S227 pre-test results/g3_pretest_s227. Per GATES "Owner amendment Q33": (a4) build event hover in g3_lemniscate
-   and g3_stick_zsine + gust/fault events and gust skip in both keys, self-tests break-checked. RC229 split:
-   (a4.1) scenarios + key 1 (one sonnet high agent), (a4.2) key 2 written blind (one sonnet high agent), one
-   per session if the cap is small; (a5) re-fly pre-test draw 0 INDI+PID on it; PID fails item 5 again ->
+   S227 pre-test results/g3_pretest_s227. Per GATES "Owner amendment Q33": (a4) DONE S230 (9cd2a1cb1a key 1 +
+   scenarios, fda2630219 key 2 blind; results/q33_tooling_s230/; position item 5 keeps the 3 deg term, S230
+   correction). (a5)+(b) chain results/g3_pretest_s230/ (README, STATUS.txt): draw 0 INDI+PID, 262, 283 INDI.
+   Next: score all four with both keys (sonnet low), check key agreement and that the event hover flies as
+   specified (stick pilot in stabilized/acro over 23 s of neutral sticks = unverified); PID fails item 5 again ->
    new owner question.
    (b) FREEZE-10 baselines 262/283 (and 264/joint on the new scenario) on 903eae63, scored both keys. (c) one solver run (opus, high) on (i)/(ii)/(iii), values
    fixed before review; brief: no tb sweeps, no item2_split, no 2 Hz cause search. (d) one independent review
@@ -82,7 +83,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| a4.1 | G3 event hover scenarios + key 1 (sonnet high, S230) | - | results/q33_tooling_s230/ (KEY1_README.md, EVENT_HOVER_SPEC.md) | re-brief from STATE action 0 (a4.1) if no README |
+| a5+b | G3 pre-test chain draw 0 INDI/PID, 262, 283 (detached, S230, waiter pid 1547971) | - | results/g3_pretest_s230/ (STATUS.txt, README.md) | `tail -n 5 indi_flight/results/g3_pretest_s230/STATUS.txt`; re-run chain.sh for missing runs |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
