@@ -19,6 +19,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import g3_sample  # noqa: E402
 import run_validity  # noqa: E402
+import scenarios  # noqa: E402
 
 # D-NOISE-PROF typical profile (same values as bench/gate_g4.sh "typ")
 TYPICAL_VIB_ACC, TYPICAL_VIB_GYR, TYPICAL_IMU_NSC = 10.0, 0.0, 4.0
@@ -36,8 +37,10 @@ LEGACY_SCENARIOS = False  # set by --legacy-scenarios
 SCENARIO_POSITION = SCENARIO_POSITION_G3
 SCENARIO_STICK = SCENARIO_STICK_G3
 G3_SCENARIOS = (SCENARIO_POSITION_G3, SCENARIO_STICK_G3)
-# main flight segment (start of the fault / wind window) and the segment that ends an eRPM loss, per scenario
+# main flight segment per scenario, and the ANCHOR segment: the start of the single anchor of every timed G3 event (fault steps, wind
+# profile, eRPM loss / frozen). Legacy scenarios: the main segment. Q33 scenarios: the event hover ("event"), before the main segment.
 MAIN_SEGMENT = {SCENARIO_POSITION_LEGACY: "traj", SCENARIO_STICK_LEGACY: "stick", SCENARIO_POSITION_G3: "traj", SCENARIO_STICK_G3: "stick"}
+ANCHOR_SEGMENT = {**MAIN_SEGMENT, SCENARIO_POSITION_G3: scenarios.G3_EVENT_SEGMENT, SCENARIO_STICK_G3: scenarios.G3_EVENT_SEGMENT}
 POSITION_SCENARIOS = (SCENARIO_POSITION_LEGACY, SCENARIO_POSITION_G3)  # position mode: the horizontal gates apply (keys 1 and 2)
 END_SEGMENT = "hold"
 OVERRIDES_NAME = "g3_scenario_overrides.json"
@@ -171,24 +174,24 @@ def build_run(draw, base_params_path, out_dir):
     else:
         applied["tel_dropout"] = {"on": False}
     ov = {}   # --scenario-overrides content (bench/scenario_overrides.py)
-    main_seg = MAIN_SEGMENT[scenario]
+    anchor_seg = ANCHOR_SEGMENT[scenario]   # anchor of every timed event (Q33: the event hover; legacy: the main segment)
     tl = f["tel_loss"]
     if tl["on"]:
-        ov["erpm_loss"] = {"motor": int(tl["motor"]), "start": main_seg, "start_offset_s": tl["start_offset_s"],
+        ov["erpm_loss"] = {"motor": int(tl["motor"]), "start": anchor_seg, "start_offset_s": tl["start_offset_s"],
                            "duration_s": tl["duration_s"]}
-        applied["tel_loss"] = {"motor": tl["motor"], "start": main_seg, "start_offset_s": tl["start_offset_s"],
+        applied["tel_loss"] = {"motor": tl["motor"], "start": anchor_seg, "start_offset_s": tl["start_offset_s"],
                                "duration_s": tl["duration_s"], "via": "scenario-overrides erpm_loss (timed, sim time)"}
-        notes["tel_loss"] = (f"anchor = start of '{main_seg}' (the single anchor of all timed G3 events): loss from "
+        notes["tel_loss"] = (f"anchor = start of '{anchor_seg}' (the single anchor of all timed G3 events, t0): loss from "
                              f"+{tl['start_offset_s']} s for {tl['duration_s']} s (sim time)")
     else:
         applied["tel_loss"] = {"on": False}
     if f["tel_frozen"]["on"]:
         tf = f["tel_frozen"]
-        ov["erpm_frozen"] = {"motor": int(tf["motor"]), "start": main_seg, "start_offset_s": tf["start_offset_s"],
+        ov["erpm_frozen"] = {"motor": int(tf["motor"]), "start": anchor_seg, "start_offset_s": tf["start_offset_s"],
                              "duration_s": tf["duration_s"]}
-        applied["tel_frozen"] = {"motor": tf["motor"], "start": main_seg, "start_offset_s": tf["start_offset_s"],
+        applied["tel_frozen"] = {"motor": tf["motor"], "start": anchor_seg, "start_offset_s": tf["start_offset_s"],
                                  "duration_s": tf["duration_s"], "via": "scenario-overrides erpm_frozen (timed, sim time, SIM_GZ_ERPM_FRZ)"}
-        notes["tel_frozen"] = (f"anchor = start of '{main_seg}': rpm frozen from +{tf['start_offset_s']} s for "
+        notes["tel_frozen"] = (f"anchor = start of '{anchor_seg}': rpm frozen from +{tf['start_offset_s']} s for "
                                f"{tf['duration_s']} s (sim time), errorcount not incremented")
     else:
         applied["tel_frozen"] = {"on": False}
@@ -226,14 +229,14 @@ def build_run(draw, base_params_path, out_dir):
         applied["thrust_sag"] = {"on": False}
     faults = []
     if sat["on"]:
-        faults.append({"segment": main_seg, "motors": [0, 1, 2, 3], "thrust_scale": sat["scale"]})
-        applied["saturation"] = {"scale": sat["scale"], "via": f"scenario-overrides motor_fault, all motors, step at '{main_seg}'"}
+        faults.append({"segment": anchor_seg, "motors": [0, 1, 2, 3], "thrust_scale": sat["scale"]})
+        applied["saturation"] = {"scale": sat["scale"], "via": f"scenario-overrides motor_fault, all motors, step at '{anchor_seg}'"}
     else:
         applied["saturation"] = {"on": False}
     if wk["on"]:
-        faults.append({"segment": main_seg, "motor": int(wk["motor"]), "thrust_scale": wk["scale"]})
+        faults.append({"segment": anchor_seg, "motor": int(wk["motor"]), "thrust_scale": wk["scale"]})
         applied["weak_motor"] = {"motor": wk["motor"], "scale": wk["scale"],
-                                 "via": f"scenario-overrides motor_fault, step at '{main_seg}' (multiplies with saturation)"}
+                                 "via": f"scenario-overrides motor_fault, step at '{anchor_seg}' (multiplies with saturation)"}
     else:
         applied["weak_motor"] = {"on": False}
     if faults:
@@ -245,12 +248,12 @@ def build_run(draw, base_params_path, out_dir):
         applied["wind"] = {"steady_ms": 0.0, "gust_amp_ms": 0.0}
     else:
         ov["disturbance"] = "gust_x"
-        ov["dist_segment"] = main_seg
+        ov["dist_segment"] = anchor_seg
         ov["wind"] = {"steady": w["steady_ms"], "peak": w["gust_peak_total_ms"], "dir_deg": w["dir_deg"]}
-        if hold:  # S214: steady wind to the scenario end (gust at +12 s of the main segment, ends before the hold)
+        if hold:  # S214: steady wind to the scenario end (gust at +12 s of the event hover, which ends before the main segment)
             ov["wind"]["hold_to_end"] = True
         applied["wind"] = {"steady_ms": w["steady_ms"], "gust_peak_total_ms": w["gust_peak_total_ms"], "dir_deg": w["dir_deg"],
-                           "via": f"scenario-overrides wind, profile starts at '{main_seg}'"}
+                           "via": f"scenario-overrides wind, profile starts at '{anchor_seg}'"}
         notes["wind"] = ("gust_x timing is fixed (2 s ramp, 10 s hold, 1 s gust, then steady) from the segment start; the drawn "
                          f"gust_offset_s {w.get('gust_offset_s')} is not used"
                          + ("; steady wind held to the scenario end (S214)" if hold else "; profile cleared at 28 s"))
@@ -273,7 +276,51 @@ def build_run(draw, base_params_path, out_dir):
     merged = dict(base)
     merged.update(params)
     return {"argv": argv, "params": params, "overrides": ov, "merged_params": merged, "applied": applied, "not_applied": not_applied,
-            "notes": notes}
+            "notes": notes, "timeline_plan": plan_timeline(scenario, ov) if scenario in G3_SCENARIOS else None}
+
+
+TIMELINE_BASE = ("PX4 clock in us, the base of run.json events[].t_us (sim time); ulog time = us * 1e-6 - ulog start_timestamp [s]")
+
+
+def timeline(scenario, seg_us, fault, wind, sag_start_us=None, sag_ramp_s=None):
+    """Q33 event times of one G3 run in us on the base of seg_us (pure). seg_us: {segment name: start in us}; fault / wind: the run
+    has a motor fault step / a gust_x wind profile; sag_start_us, sag_ramp_s: the sag ramp (None without sag). t0 = start of the event
+    hover = fault step and wind-ramp start; gust = t0 + scenarios.G3_GUST_OFFSET_S (None without wind); the event hover ends at
+    t0 + its length; main segment = the traj / stick segment, main_end = main_start + its length; hold as in the scenario."""
+    dur = {n: d for n, d, _ in scenarios.SCENARIOS[scenario]["segments"]}
+    main, us = MAIN_SEGMENT[scenario], (lambda sec: int(round(sec * 1e6)))
+    t0 = int(seg_us[scenarios.G3_EVENT_SEGMENT])
+    return {"version": 1, "time_base": TIMELINE_BASE, "scenario": scenario, "main_segment": main,
+            "fault_on": bool(fault), "wind_on": bool(wind),
+            "event_t0_us": t0, "gust_us": t0 + us(scenarios.G3_GUST_OFFSET_S) if wind else None,
+            "event_end_us": t0 + us(dur[scenarios.G3_EVENT_SEGMENT]),
+            "main_start_us": int(seg_us[main]), "main_end_us": int(seg_us[main]) + us(dur[main]),
+            "hold_start_us": int(seg_us["hold"]), "hold_end_us": int(seg_us["hold"]) + us(dur["hold"]),
+            "sag_ramp_start_us": None if sag_start_us is None else int(sag_start_us),
+            "sag_ramp_end_us": None if sag_start_us is None else int(sag_start_us) + us(sag_ramp_s)}
+
+
+def plan_timeline(scenario, overrides):
+    """The timeline of a planned run (no flight): scenario start = 0 us, segments back to back, events from the overrides."""
+    t, seg_us = 0.0, {}
+    for n, d, _ in scenarios.SCENARIOS[scenario]["segments"]:
+        seg_us[n] = int(round(t * 1e6))
+        t += d
+    sag = overrides.get("thrust_sag")
+    return timeline(scenario, seg_us, "motor_fault" in overrides, "wind" in overrides, 0 if sag else None, sag["ramp_s"] if sag else None)
+
+
+def run_timeline(rj):
+    """timeline() from a finished run.json (actual segment start times, motor_fault, disturbance and thrust_sag blocks); None for a run
+    that is not a Q33 G3 scenario or has no event-hover event."""
+    if rj.get("scenario") not in G3_SCENARIOS:
+        return None
+    seg_us = {e["name"]: e["t_us"] for e in rj.get("events", [])}
+    if not {scenarios.G3_EVENT_SEGMENT, MAIN_SEGMENT[rj["scenario"]], "hold"} <= set(seg_us):
+        return None
+    sag = rj.get("thrust_sag")
+    return timeline(rj["scenario"], seg_us, rj.get("motor_fault"), rj.get("disturbance"),
+                    sag["t0_us"] if sag else None, sag["dur_s"] if sag else None)
 
 
 def unapplied(draws, base_params_path, out_root="/nonexistent"):
@@ -335,6 +382,9 @@ def finalize(out, status, extra=None):
         status["metrics_status"] = rj.get("metrics_status")
     if rj is not None:
         rj["g3_outcome"] = outcome
+        tl = run_timeline(rj)  # Q33: event times in run.json, so a scorer does not re-derive them
+        if tl is not None:
+            rj["g3_timeline"] = tl
         if extra:
             rj.update(extra)
         with open(os.path.join(out, "run.json"), "w") as fh:

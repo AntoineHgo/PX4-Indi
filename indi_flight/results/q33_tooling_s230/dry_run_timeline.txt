@@ -1,0 +1,40 @@
+event hover length (derived from disturbance.py constants): 23.0 s; gust offset 12.0 s
+
+mode position scenario g3_lemniscate
+ segments (name, dur_s): [('settle', 3.0), ('event', 23.0), ('traj', 17.81), ('hold', 35.0)]
+ overrides: dist_segment=event motor_fault=None erpm_loss=None erpm_frozen=None sag=None wind={'steady': 0.925292, 'peak': 6.907683, 'dir_deg': 24.737468, 'hold_to_end': True}
+ timeline_plan (s from scenario start, sim time):
+   main_segment         traj
+   fault_on             False
+   wind_on              True
+   event_t0_s           3.0
+   gust_s               15.0
+   event_end_s          26.0
+   main_start_s         26.0
+   main_end_s           43.80961
+   hold_start_s         43.80961
+   hold_end_s           78.80960999999999
+   sag_ramp_start_s     None
+   sag_ramp_end_s       None
+
+mode stabilized scenario g3_stick_zsine
+ segments (name, dur_s): [('settle', 3.0), ('event', 23.0), ('stick', 18.0), ('hold', 35.0)]
+ overrides: dist_segment=None motor_fault=None erpm_loss=None erpm_frozen=None sag=None wind=None
+ timeline_plan (s from scenario start, sim time):
+   main_segment         stick
+   fault_on             False
+   wind_on              False
+   event_t0_s           3.0
+   gust_s               None
+   event_end_s          26.0
+   main_start_s         26.0
+   main_end_s           44.0
+   hold_start_s         44.0
+   hold_end_s           79.0
+   sag_ramp_start_s     None
+   sag_ramp_end_s       None
+
+full example, draw 1, g3_lemniscate: fault+wind+sag; overrides anchored at: fault {'segment': 'event', 'motor': 0, 'thrust_scale': 0.920235}, wind event, erpm event
+  event_t0 3.0 s, gust 15.0 s, event_end/main_start 26.0 s, main_end 43.810 s, sag ramp end 10.0 s (sag ramp_s 10.0)
+
+300 draws of seed 1: every override merges and validates on the new scenarios (timed telemetry events and wind profile fit)

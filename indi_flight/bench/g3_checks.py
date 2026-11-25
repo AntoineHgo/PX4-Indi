@@ -28,13 +28,17 @@ Item 2 sustained oscillation: truth p,q,r on the uniform grid (g4_metrics.unifor
 Item 3 steady-state on [T0,T1]: horizontal RMS about the reference <= 0.15 m calm / 0.30 m with --wind; altitude |mean error|
   (truth height re-zeroed to its median over the first 1 s at rest, D-G3-ZREF) <= 0.10 m calm / 0.20 m with --sag; roll/pitch |mean| <= 1.0 deg in attitude mode.
 
-Item 2 fault windows (S225, Q32 A): every 4 s rate-line window [w0, w0 + 4) that contains a fault or gust step start is skipped (step_starts);
+Item 2 fault windows (S225, Q32 A; Q33): every 4 s rate-line window [w0, w0 + 4) that contains a fault or gust step start is skipped (step_starts =
+  t0 and the gust time t0 + 12 s on a Q33 run);
   a skipped window counts as unflagged, so no line chains across it. Telemetry loss/frozen starts are NOT step starts. The skipped
   windows are tabled in the JSON (item2_skipped_windows: start, end, reason; also the Q15 nav-change skips).
-Item 4 tracking (position scenario, run.json `traj` event): truth vs trajectory_setpoint (linear interpolation, NaN / outside-range
-  samples excluded), horizontal RMS <= 0.5 m and vertical RMS <= 0.3 m over [traj start, traj start + dur_s].
-Item 5 recovery (see item5_recovery): per event, back within 0.3 m (3-D, vs the time-matched trajectory_setpoint) and 3 deg (tilt vs
-  vehicle_attitude_setpoint q_d) in <= 5 s, then no position error > 0.3 m for 5 s.
+Item 4 tracking (position scenario; Q33: the main segment only = run.json g3_timeline [main_start, main_end], the event hover is not
+  in it): truth vs trajectory_setpoint (linear interpolation, NaN / outside-range samples excluded), horizontal RMS <= 0.5 m and
+  vertical RMS <= 0.3 m.
+Item 5 recovery (see item5_recovery; Q33): events = fault start t0 (event hover start) and gust t0 + 12 s (run.json g3_timeline); per
+  event, back within the static reference in <= 5 s, then no excursion > the limit for 5 s. Reference per mode: position = hover setpoint
+  (trajectory_setpoint, 3-D 0.3 m, plus tilt 3 deg vs q_d as in GATES 3 item 5); attitude / stabilized = q_d (level, zero sticks; tilt 3 deg); rate mode = n/a.
+  The wind ramp is not scored.
 Item 6 rate mode (--rate-mode, acro with zero sticks): per-axis truth body-rate RMS (p, q, r) <= 5 deg/s over the last 20 s of the hold.
 
 PROPOSED readings (undefined in the spec, minimal choice):
@@ -207,20 +211,38 @@ def windows_from_run_json(rj, start_s):
     """S214 / S225 windows from run.json (pure). rj: run.json dict; start_s: ulog start_timestamp in seconds. run.json event times
     (events[].t_us, motor_fault, disturbance) are on the PX4 clock = ulog timestamps, so t_ulog = t_us * 1e-6 - start_s.
     Returns {main: {name, t, dur_s} | None, hold: {t, dur_s} | None, item3: [t0, t1] | None, item6: [t0, t1] | None,
-    track: [t, t + dur] | None (position scenario only), step_starts: [t], fault, gust}. Main segment = the `traj` (position) or `stick`
-    event; hold = the `hold` event; item 3 = last ITEM3_LAST_S s of the hold, item 6 = last ITEM6_LAST_S s. step_starts: the main
-    segment start if run.json records a motor_fault (weak motor / saturation step) or a disturbance (gust_x wind); every G3
-    injector starts there (GATES S214 correction). Telemetry loss / frozen and the sag ramp are not step starts."""
+    track: [t, t + dur] | None (position scenario only), step_starts: [t], item5_events: [t], fault, gust, timeline}. Main segment = the
+    `traj` (position) or `stick` event; hold = the `hold` event; item 3 = last ITEM3_LAST_S s of the hold, item 6 = last ITEM6_LAST_S s.
+    Q33 runs (run.json g3_timeline, written by g3_run.finalize): item 4 window = main segment [main_start, main_end] only; step_starts
+    (item-2 skip points) = t0 when the run has a fault or a wind profile, plus the gust time t0 + 12 s when it has wind; item5_events =
+    the fault start t0 (when a motor fault is on) and the gust time (when wind is on); the wind ramp and the sag are not events; every
+    time comes from g3_timeline. Older runs (no g3_timeline, no `event` segment): the S225 reading, the main-segment start is the
+    one step start and the one item 5 event. Telemetry loss / frozen and the sag ramp are never step starts."""
     ev = {e["name"]: e for e in rj.get("events", [])}
     main_name = "traj" if "traj" in ev else ("stick" if "stick" in ev else None)
-    out = {"main": None, "hold": None, "item3": None, "item6": None, "track": None, "step_starts": [], "fault": False, "gust": False}
-    if main_name:
+    out = {"main": None, "hold": None, "item3": None, "item6": None, "track": None, "step_starts": [], "fault": False, "gust": False,
+           "item5_events": []}
+    tl = rj.get("g3_timeline")
+    if "event" in ev and tl is None:   # Q33 scenario without the event times: fail loud, never score it with the S225 anchor
+        raise ValueError("run.json has an 'event' segment but no g3_timeline (Q33 runs record it in finalize)")
+    if main_name and tl is not None:   # Q33: every time is read from g3_timeline (us, run.json event clock), none re-derived
+        c = lambda us: us * 1e-6 - start_s   # noqa: E731
+        out["main"] = {"name": main_name, "t": c(tl["main_start_us"]), "dur_s": (tl["main_end_us"] - tl["main_start_us"]) * 1e-6}
+        out["fault"], out["gust"] = bool(tl["fault_on"]), bool(tl["wind_on"])
+        if main_name == "traj":
+            out["track"] = [c(tl["main_start_us"]), c(tl["main_end_us"])]     # item 4: the main segment only, not the event hover
+        t0 = c(tl["event_t0_us"])
+        out["item5_events"] = ([t0] if out["fault"] else []) + ([c(tl["gust_us"])] if out["gust"] else [])   # fault start, gust
+        out["step_starts"] = ([t0] if out["fault"] or out["gust"] else []) + ([c(tl["gust_us"])] if out["gust"] else [])
+        out["timeline"] = {k[:-3] + "_s": (None if v is None else c(v)) for k, v in tl.items() if k.endswith("_us")}   # ulog base, s
+    elif main_name:
         e = ev[main_name]
         out["main"] = {"name": main_name, "t": e["t_us"] * 1e-6 - start_s, "dur_s": float(e["dur_s"])}
         out["fault"] = bool(rj.get("motor_fault"))
         out["gust"] = bool(rj.get("disturbance"))
         if out["fault"] or out["gust"]:
             out["step_starts"] = [out["main"]["t"]]
+        out["item5_events"] = list(out["step_starts"])
         if main_name == "traj":
             out["track"] = [out["main"]["t"], out["main"]["t"] + out["main"]["dur_s"]]
     if "hold" in ev:
@@ -272,9 +294,10 @@ def _tilt_error_deg(q, qd):
 
 def item5_recovery(tt, pos, q, sp_xyz, att_sp, events, z_rest=0.0):
     """Item 5 (GATES 3: "after each injected event (gust, fault start) back within 0.3 m and 3 deg of the pre-event reference in <= 5 s
-    and no re-excursion > 0.3 m for 5 s"). events: [t] injected-event times (fault / gust step starts).
-    Reference = the commanded reference at the same time (trajectory_setpoint position, vehicle_attitude_setpoint q_d): in a moving
-    scenario the pre-event reference IS the commanded path. In band at time t = 3-D position error <= REC_POS_M (when sp_xyz) and tilt
+    and no re-excursion > 0.3 m for 5 s"). events: [t] injected-event times (fault start t0, gust t0 + 12 s; Q33).
+    Reference = the time-matched setpoint (trajectory_setpoint position / vehicle_attitude_setpoint q_d): the events are in the event hover,
+    where it is the static hover point / level attitude. The caller passes sp_xyz only in position mode and att_sp only in attitude mode
+    (evaluate), so each mode has one reference. In band at time t = 3-D position error <= REC_POS_M (when sp_xyz) and tilt
     error <= REC_TILT_DEG (when att_sp). t_rec = first t >= event with the vehicle in band; pass when t_rec - event <= REC_TIME_S and the
     position error (tilt error when there is no position reference) stays <= its limit for REC_QUIET_S after t_rec. No reference at all
     or no event -> not applicable (pass)."""
@@ -419,7 +442,11 @@ def evaluate(tt, pos, q, w, tm, cmd, ref, t0, t1, wind=False, sag=False, mode="p
     if track_win is not None or event_times is not None or rate_mode:
         res["item4_tracking"] = item4_tracking(tt, pos, sp_xyz_ok, track_win, z_rest) if mode == "position" else \
             {"applicable": False, "pass": True, "note": "item 4 is for the position scenario only"}
-        res["item5_recovery"] = item5_recovery(tt, pos, q, sp_xyz_ok if mode == "position" else None, att_sp, event_times or [], z_rest)
+        # Q33 reference: position mode = the hover setpoint (trajectory_setpoint, position only); attitude / stabilized = q_d (level,
+        # zero sticks); rate mode (acro) = not applicable
+        res["item5_recovery"] = {"applicable": False, "pass": True, "note": "rate mode: item 5 not applicable (Q33)", "events": list(event_times or [])} \
+            if rate_mode else item5_recovery(tt, pos, q, sp_xyz_ok if mode == "position" else None, att_sp,
+                                             event_times or [], z_rest)
         res["item6_rate_hold"] = item6_rate_hold(tt, w, item6_win) if rate_mode else {"applicable": False, "pass": True, "note": "not a rate-mode run"}
     p456 = all(res[k]["pass"] for k in ("item4_tracking", "item5_recovery", "item6_rate_hold") if k in res)
     res["pass"] = bool(res["item1_loc"]["pass"] and res["item2_oscillation"]["pass"] and it3["pass"] and p456)
@@ -526,7 +553,7 @@ def main():
             ap.error("run.json has no hold event of >= 20 s: no S214 window (use --t0/--t1 for an old run)")
         a.t0, a.t1 = win["item3"]
         sp_xyz = load_setpoint_xyz(a.log)
-        kw = dict(step_starts=win["step_starts"], track_win=win["track"], event_times=win["step_starts"], sp_xyz=sp_xyz,
+        kw = dict(step_starts=win["step_starts"], track_win=win["track"], event_times=win["item5_events"], sp_xyz=sp_xyz,
                   att_sp=load_att_setpoint(a.log), rate_mode=a.rate_mode, item6_win=win["item6"],
                   hold_win=[win["hold"]["t"], win["hold"]["t"] + win["hold"]["dur_s"]])
     elif a.t0 is None or a.t1 is None or a.rate_mode:

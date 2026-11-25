@@ -134,7 +134,9 @@ def test_item5_recovery():
     r, _ = make(pos_err=bump)
     assert not r["item5_recovery"]["pass"]
     tilt6 = lambda t: np.where((t >= T_FAULT) & (t < T_FAULT + 6.0), 6.0, 0.0)                   # 6 deg tilt for 6 s: not within 3 deg in 5 s
-    r, _ = make(tilt=tilt6)
+    r, _ = make(tilt=tilt6, mode="attitude")                               # Q33: tilt vs q_d only in attitude mode
+    assert not r["item5_recovery"]["pass"] and r["item5_recovery"]["uses"]["attitude"]
+    r, _ = make(tilt=tilt6)                                                # position mode keeps the 3 deg tilt term
     assert not r["item5_recovery"]["pass"] and r["item5_recovery"]["uses"]["attitude"]
     r, _ = make(rj=run_json(fault=False))                                  # no fault or gust: no event, not applicable
     assert r["item5_recovery"]["applicable"] is False and r["item5_recovery"]["pass"]

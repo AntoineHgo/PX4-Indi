@@ -109,7 +109,7 @@ def test_erpm_frozen_drawn_motor_and_window():
             continue
         e = b["overrides"]["erpm_frozen"]
         assert e["motor"] == tf["motor"] and e["start_offset_s"] == tf["start_offset_s"] and e["duration_s"] == tf["duration_s"]
-        assert e["start"] == r.MAIN_SEGMENT[b["applied"]["mode"]["scenario"]]
+        assert e["start"] == r.ANCHOR_SEGMENT[b["applied"]["mode"]["scenario"]]
         n += 1
     assert n > 5
 
@@ -210,7 +210,7 @@ def test_erpm_loss_drawn_motor_and_window():
             continue
         e = b["overrides"]["erpm_loss"]
         assert e["motor"] == tl["motor"] and e["start_offset_s"] == tl["start_offset_s"] and e["duration_s"] == tl["duration_s"]
-        assert e["start"] == r.MAIN_SEGMENT[b["applied"]["mode"]["scenario"]] and "end" not in e
+        assert e["start"] == r.ANCHOR_SEGMENT[b["applied"]["mode"]["scenario"]] and "end" not in e
         n += 1
     assert n > 5
 
@@ -226,7 +226,7 @@ def test_weak_motor_segment_and_motor():
         mf = b["overrides"]["motor_fault"]
         mf = mf if isinstance(mf, list) else [mf]
         e = [x for x in mf if "motor" in x][0]
-        assert e["segment"] == r.MAIN_SEGMENT[b["applied"]["mode"]["scenario"]] and e["segment"] != r.END_SEGMENT
+        assert e["segment"] == r.ANCHOR_SEGMENT[b["applied"]["mode"]["scenario"]] and e["segment"] != r.END_SEGMENT
         n += 1
         both += f["saturation"]["on"]
     assert n > 5
@@ -312,7 +312,9 @@ def test_s214_scenarios_and_legacy_switch():
     assert G3_HOLD_S >= 20.0
     for nm, old in (("g3_lemniscate", "o1_lemniscate"), ("g3_stick_zsine", "stick_zsine_o6")):
         segs = SCENARIOS[nm]["segments"]
-        assert [x[0] for x in segs][-1] == "hold" and segs[-1][1] == G3_HOLD_S and segs[:-1] == SCENARIOS[old]["segments"][:-1]
+        # Q33: settle, event hover, main segment, hold (the old stand-in's main segment is unchanged)
+        assert [x[0] for x in segs][-1] == "hold" and segs[-1][1] == G3_HOLD_S
+        assert segs[:1] + segs[2:-1] == SCENARIOS[old]["segments"][:-1] and segs[1][0] == "event"
         assert SCENARIOS[old]["segments"][-1][1] == 3.0           # G5 scenarios untouched
     seen = set()
     try:
@@ -330,20 +332,20 @@ def test_s214_scenarios_and_legacy_switch():
                 elif "wind" in ov:
                     flags = so.wind_flags(so.merge(SCENARIOS[sc_name], ov))
                     dur = float(flags[flags.index("--duration") + 1])
-                    seg0 = so._seg_start(SCENARIOS[sc_name], r.MAIN_SEGMENT[sc_name])
+                    seg0 = so._seg_start(SCENARIOS[sc_name], r.ANCHOR_SEGMENT[sc_name])
                     assert abs(dur - (so._total(SCENARIOS[sc_name]) - seg0 + so.WIND_TAIL_S)) < 1e-9 and dur > 28.0
                     seen.add("wind")
                 if not legacy and "thrust_sag" in ov:
-                    assert ov["thrust_sag"]["ramp_s"] < SCENARIOS[sc_name]["segments"][0][1] + SCENARIOS[sc_name]["segments"][1][1]  # ends before the hold
+                    assert ov["thrust_sag"]["ramp_s"] < sum(x[1] for x in SCENARIOS[sc_name]["segments"][:-1])  # ends before the hold
                     seen.add("sag")
-                # every timed event ends before the hold (main segment start + offset + duration <= main segment end)
+                # every timed event ends before the hold (anchor start + offset + duration <= end of the event hover, Q33)
                 for k in ("erpm_loss", "erpm_frozen"):
                     if k in ov and not legacy:
-                        main = [x for x in SCENARIOS[sc_name]["segments"] if x[0] == r.MAIN_SEGMENT[sc_name]][0]
-                        assert ov[k]["start_offset_s"] + ov[k]["duration_s"] <= main[1]
+                        anc = [x for x in SCENARIOS[sc_name]["segments"] if x[0] == r.ANCHOR_SEGMENT[sc_name]][0]
+                        assert ov[k]["start_offset_s"] + ov[k]["duration_s"] <= anc[1]
                         seen.add(k)
                 if "wind" in ov and not legacy:
-                    assert 13.0 <= so.WIND_PROFILE_S + 0.0 <= SCENARIOS[sc_name]["segments"][1][1]   # gust over before the hold
+                    assert 13.0 <= so.WIND_PROFILE_S + 0.0 <= SCENARIOS[sc_name]["segments"][1][1]   # gust over inside the event hover
     finally:
         r.LEGACY_SCENARIOS = False
     assert seen == {"wind", "sag", "erpm_loss", "erpm_frozen"}, seen

@@ -10,6 +10,11 @@ segments: (name, duration_s, value). `settle` segments are not step events (valu
           every other segment starts a step from the previous value to `value`.
 """
 import math
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import disturbance as _dist  # noqa: E402  profile constants only (stdlib imports)
 
 STEP_DEG = 15.0
 DIAG_STEP_DEG = 20.0
@@ -162,14 +167,26 @@ for _k, _plant in _V_PLANT.items():
 SCENARIOS["stick_zsine_o6"] = dict(mode="stick", axis=None, traj=ZSINE_O6,
                                    segments=[("settle", 3.0, 0.0), ("stick", _traj_dur(ZSINE_O6), 0.0), ("hold", 3.0, 0.0)])
 # S214 (GATES "Owner amendment S214", Q30 B) dedicated G3 scenarios: the main segment of o1_lemniscate / stick_zsine_o6 (G5 keeps
-# those two unchanged), then one hold of G3_HOLD_S starting at the arrival from the main segment. Every G3 injected event
-# (fault steps, eRPM loss / frozen, gust) starts at the main segment and ends before the hold; the steady wind and the final sag
-# stay on to the end (g3_run sets wind hold_to_end and the sag ramp_s). Item 3 = last 10 s of the hold, item 6 = last 20 s.
+# those two unchanged), then one hold of G3_HOLD_S starting at the arrival from the main segment. Since Q33 the injected events
+# start in the event hover before the main segment (below); the steady wind and the final sag stay on to the end (g3_run sets wind
+# hold_to_end and the sag ramp_s). Item 3 = last 10 s of the hold, item 6 = last 20 s.
 G3_HOLD_S = 35.0
+# Q33 (GATES "Owner amendment Q33"): settle -> event hover -> main segment -> hold. The event hover is a hover at the settle
+# position (neutral sticks in stick mode) in which every G3 injected event starts: fault step and wind ramp at its start t0, gust
+# at t0 + G3_GUST_OFFSET_S (fixed gust_x timing). Its length is derived from the disturbance.py gust_x profile constants:
+# gust end + G3_EVENT_QUIET_S (item 5 allows 5 s to recover and 5 s without re-excursion). Steady wind, drawn faults and the final
+# sag stay on to the end of the run; the sag is a slow ramp from the scenario start, not an event.
+G3_GUST_OFFSET_S = _dist.WIND_RAMP_T + _dist.WIND_HOLD1_T       # 12 s after the event-hover start
+G3_GUST_END_S = G3_GUST_OFFSET_S + _dist.GUST_T                 # 13 s
+G3_EVENT_QUIET_S = 10.0
+G3_EVENT_HOVER_S = G3_GUST_END_S + G3_EVENT_QUIET_S             # 23 s
+G3_EVENT_SEGMENT = "event"
 SCENARIOS["g3_lemniscate"] = dict(mode="trajectory", axis=None, traj=LEMNISCATE_O1,
-                                  segments=_traj_segments(LEMNISCATE_O1, G3_HOLD_S))
+                                  segments=[("settle", 3.0, 0.0), (G3_EVENT_SEGMENT, G3_EVENT_HOVER_S, 0.0),
+                                            ("traj", _traj_dur(LEMNISCATE_O1), 0.0), ("hold", G3_HOLD_S, 0.0)])
 SCENARIOS["g3_stick_zsine"] = dict(mode="stick", axis=None, traj=ZSINE_O6,
-                                   segments=[("settle", 3.0, 0.0), ("stick", _traj_dur(ZSINE_O6), 0.0), ("hold", G3_HOLD_S, 0.0)])
+                                   segments=[("settle", 3.0, 0.0), (G3_EVENT_SEGMENT, G3_EVENT_HOVER_S, 0.0),
+                                             ("stick", _traj_dur(ZSINE_O6), 0.0), ("hold", G3_HOLD_S, 0.0)])
 # S153 --ground-arm: the runner's own phase sequence replaces the segments (placeholder for the mode='stick' check)
 SCENARIOS["stick_ground_arm"] = dict(mode="stick", axis=None, traj=None, segments=[("settle", 1.0, 0.0)])
 # S136 G5.1 flight-mode stick steps (GATES 5b): throttle at hover, roll / pitch / yaw doublets from stick_profile.step_sticks
