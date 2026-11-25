@@ -3,29 +3,26 @@
 ## Status
 - Stage: 6 (validation). FREEZE-10 (D-FREEZE-10): firmware 7fe6206fcc, config g5_freeze_s157 params (XY gains at
   firmware defaults 1.2/2.4). Later firmware commits behaviour-neutral (D-G7-NUTTX-BUILD, D-F10-NEUTRAL).
-- Gates: see GATE_STATUS.tsv. G3 NOT PASSED twice (S199, S213 C3 LOC draw 264). Q31 answered S218 (route B+).
-  Controller ACT_TC box r [0.88, 1.02] x tau_mean (D-OWNER-Q28). FREEZE-10 stays; firmware change only per Q31.
+- Gates: see GATE_STATUS.tsv. G3 NOT PASSED twice (S199, S213 C3 LOC draw 264). Q32 answered (A bounded, S225
+  amendment): FREEZE-10 decision 2 re-opened, rate loop only. Controller ACT_TC box r [0.88, 1.02] x tau_mean.
 - Owner rule F-10 (2026-11-22): brief every coder with F-10. Clean-up = separate behaviour-neutral commits,
   independent review.
 
 ## Next actions (each names its gate item)
 -1. Gate binary = 903eae63 (D-BINARY-GZFIX; FREEZE-10 + GZBridge fix f110361a33; old px4.freeze10_d220e193;
    g3_chain.sh pins it). Do NOT rebuild build/px4_sitl_default from HEAD. Pre-S214 C3 runs: GATES 2 invalid.
-0. G3 item 1 (D-OWNER-Q31 escalation), ONLY blocker of the next verdict change. Minimal case =
-   results/g3_refly_actc_s212/restore264 joint (sat 0.351 + weak 0.709): INDI LOC, PID survives. Cause
-   (falsifier_s222/README.md): no integral action against the weak-motor torque bias (ACT_BLD 1 s blend only) ->
-   decision 2 re-opened, D-RATE-BLD-2 PROPOSED option (i) lower ACT_BLD (param only). Probes on draw 264
-   (blend264_s223/README.md, 903eae63): tb 0.10 / 0.05 no LOC, item 2 FAIL post-fault 2 Hz p/q, item 3 FAIL 0.37 m.
-   S225: tb 1.0 on 903eae63 = watchdog abort (LOC on the gate binary); PID ref items 1/3 pass, item 2 fails on
-   fault-straddling windows only (ref264_s224/README.md). BLOCKED on Q32 (QUESTIONS.md; WAIT_OWNER): A re-freeze
-   with one solver session / B exclude corner / C stop, + item 2 straddle windows. On answer A: solver (opus, high)
-   + independent reviewer compare (i)/(ii)/(iii) on joint, 264, 262, 283 vs written pass line. No more tb probes, no
-   item2_split work, no cause search on the post-fault 2 Hz before Q32 is answered (RC224 item 6).
-   Deferred until a firmware candidate exists: Q30 tooling (GATES "Owner amendment S214").
-1. G6 item 7 chain (60 corners, results/g6_item7_s212/PREP.md): CUT until the Q31 route ends (firmware fix would
-   invalidate it). MAX_STRUCTURE 0.08 vs norm residual > 0.05 (actc_grid_s209 PRETEST.md) revisited then.
-CUT (RC208/RC221/S223): G7 (f) unit 9, (g), harness extraction, dead path, older G7 list, G8 drafting, saturation
-  sweep: all wait until the Q31 route decides firmware. Budget goes to action 0 only.
+0. G3 route per D-OWNER-Q32 (GATES "Owner amendment S225"; pass line fixed in DECISIONS D-RATE-BLD-2 S226).
+   Order (RC226 item 4): (a) Q30 tooling: key 1 + G3 scenarios with >= 20 s hold (agent, KEY1_README.md) and
+   independent key 2 (agent, KEY2_README.md), both in results/q30_tooling_s226/; then a cross-key self-test check
+   and a 1-flight pre-test of the new scenario on 903eae63 (haiku). (b) FREEZE-10 baselines 262/283 (and 264/joint
+   on the new scenario) on 903eae63, scored both keys. (c) one solver run (opus, high) on (i)/(ii)/(iii), values
+   fixed before review; brief: no tb sweeps, no item2_split, no 2 Hz cause search. (d) one independent review
+   (opus, high). (e) pass -> freeze-11 + re-fly list; none passes -> route B (fixed corner), G3 300 on 903eae63.
+   Cause context: restore264 falsifier_s222/README.md, blend264_s223, ref264_s224.
+CUT (RC208/RC221/S223/RC226): G6 item 7 chain (results/g6_item7_s212/PREP.md), G7 (f) unit 9, (g), harness
+  extraction, dead path, older G7 list (items 3 below), G8 drafting (item 5), saturation sweep: all wait until the
+  Q32 route decides firmware. No route check before the solver verdict (RC226 item 6). Unit tests for the winner
+  are written after it is chosen (still required by the pass line).
 2. G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
 3. G7 open items: (f) F-10 clean-up per results/g7_s198/F10_PLAN.md (build dir build/f10_sitl, unit tests in
    build/px4_sitl_test). Units 1-8 done; unit 8 review MINORs (wording, F10_UNIT8_REVIEW.md) go into the
@@ -77,7 +74,8 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none (blocked on Q32) | - | - | - |
+| Q30-K1 | G3 scenarios + key 1 items 3-6 + item 2 skip rule | sonnet high | results/q30_tooling_s226/KEY1_README.md | re-brief from STATE 0(a) if README incomplete |
+| Q30-K2 | key 2 same, independent (no key-1 reads) | sonnet high | results/q30_tooling_s226/KEY2_README.md | same |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.

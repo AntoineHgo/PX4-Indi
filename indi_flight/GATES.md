@@ -842,3 +842,28 @@ box; SCORES.tsv, progress.txt, HALT_ON_FAIL.json) and `speed1_s213/README.md` (s
   fix probe if a cause is shown on the log; class (b) goes to the owner. (2) If the LOC persists: two independent
   investigation agents in parallel (opus, effort high), separate reports; then one solving agent (opus, high) and an
   independent review agent (pre-approved). (3) If it still persists: owner question, continue or stop.
+
+## Owner amendment S225 (2026-11-25): Q32 bounded re-freeze route and G3 item 2 fault windows (owner answer A, D-OWNER-Q32)
+- **Route.** FREEZE-10 decision 2 (D-RATE-BLD-2) re-opened, rate loop only. Candidates (i) lower ACT_BLD, (ii) per-motor
+  command-to-omega^2 correction, (iii) bounded rate integrator with allocator-saturation anti-windup; one pass line,
+  simplest passing candidate wins. Bound: one solver run (opus, high), one independent review (opus, high); any missed
+  cell = fail; no candidate passes -> route B below, no new question.
+- **Order.** Q30 tooling first (S214 window, items 4-6 in both keys, item 2 rule below), then FREEZE-10 baselines of
+  draws 262 (C212 idx 22) and 283 (C5) on 903eae63.
+- **Pass line** (written in D-RATE-BLD-2 before the first candidate flight, unchanged after): draws joint, 264, 262, 283,
+  speed 1, committed seeds, one flight each; both keys: item 1 pass, item 2 pass (rule below), item 3 pass on the S214
+  window. A cell FREEZE-10 already fails on 262/283 is judged "not worse" and reported as a G3 risk. Items 4-5
+  reported. Winner re-flown once on 264 and joint: still passes. G2 rate roll/pitch/yaw at 800 and 400 Hz, measured
+  and model-only, 2 seeds, at G2 thresholds; G2-STEP 9/9. Unit tests break-checked: weak-motor loop, allocator-
+  saturation anti-windup, landed, telemetry loss and frozen, arming reset. New code meets F-10.
+- **A passes.** Freeze-11 = FREEZE-10 + the candidate only, built per D-BINARY-GZFIX, sha pinned. Re-fly G2 rate/att
+  cells + G2-STEP (outer cells only if the outer loop changed), G3 300 fail-fast, G4, G5 rows, G6 item 7. A failure
+  there goes to the owner.
+- **Route B.** Keep FREEZE-10. Excluded corner, fixed now: saturation-corner draws (2.0 x hover, outside owner ranges,
+  S94 decision 6) with a weak motor on; class (b), a measured INDI limit reported in G8 (not a PID fallback, F-1).
+  In-range draws (sag, weak motor >= 0.7) stay counted. G3 re-flies 300 fail-fast on 903eae63.
+- **G3 item 2 fault windows (applies from S225).** Item 2 skips every 4 s window that contains a fault or gust step
+  start (main-segment start, read by each key from `run.json`); no line chains across a skipped window. Telemetry
+  loss/frozen starts are not skipped. Conditions: item 5 scored in both keys in the same campaign; self-test in both
+  keys (straddling sine not flagged, post-fault sine flagged, break-checked); skipped windows tabled for both stacks.
+  Rescore only valid 903eae63 runs used on this route (4 draws, PID references); pre-S214 multi-motor runs stay invalid.

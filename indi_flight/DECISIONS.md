@@ -1398,3 +1398,21 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
 - Cost of (i): default change after FREEZE-10 invalidates G2 rate/att cells, G3, G4, G5, G6 rows (all re-flown).
 - Overturn: (i) fails draw 264 itself, or rate-loop margins at the new tb below G2 thresholds -> (ii).
 - S225: tb 1.0 LOC confirmed on 903eae63; PID ref on 264 passes items 1/3, item 2 only on fault-straddling windows -> (i) alone leaves INDI-only item 2 post-fault and item 3 failures. Re-freeze scope asked in Q32.
+- S226 ACTIVE (D-OWNER-Q32). PASS LINE, fixed before the first candidate flight, never edited after:
+  draws joint (restore264 joint plant), 264 (C212 run_024), 262 (C212 run_022), 283 (g3_campaign_f10 run_283, C5);
+  seeds = the gz seed in that run.json (joint and 264: 1528771325, 262: 662687257, 283: 1555206049); plant = that
+  run's drawn factors; new G3 position scenario with the S214 hold; speed 1; gate binary 903eae63 + candidate only;
+  one flight each. Both keys (Q30 tooling, keyed): item 1 pass; item 2 pass under the S225 fault-window rule; item 3
+  pass on the S214 window. A cell the FREEZE-10 baseline (same draw, same scenario, 903eae63) already fails on 262 or
+  283: "not worse" (same key, metric <= baseline), reported as a G3 risk. Items 4-5 reported. Winner re-flown once on
+  264 and joint: still passes. G2 rate roll/pitch/yaw at 800 and 400 Hz, measured and model-only, 2 seeds, at G2
+  thresholds; G2-STEP 9/9. Unit tests break-checked: weak-motor loop, allocator-saturation anti-windup, landed,
+  telemetry loss and frozen, arming reset. F-10 met. Any missed cell = candidate fails. Simplest passing of
+  (i) < (ii) < (iii) wins. None passes -> route B (GATES "Owner amendment S225").
+
+## D-OWNER-Q32 (S226, 2026-11-25): bounded re-freeze of the rate-loop gap remover
+- Owner answer A bounded + item 2 sub-question yes with conditions; text in GATES "Owner amendment S225".
+- Acted on: D-RATE-BLD-2 becomes ACTIVE with candidates (i)-(iii); order Q30 tooling -> 262/283 FREEZE-10 baselines on
+  903eae63 -> pass line committed in D-RATE-BLD-2 -> one solver run -> one independent review -> freeze-11 or route B.
+- Alternatives the owner did not choose: B now (ship the limit), C (stop G3).
+- Overturn: none by the orchestrator; a failure after freeze-11 goes to the owner.
