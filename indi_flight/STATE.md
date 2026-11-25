@@ -14,17 +14,16 @@
 0. G3 route per D-OWNER-Q32 (GATES "Owner amendment S225"; pass line fixed in DECISIONS D-RATE-BLD-2 S226).
    Order (RC226 item 4): (a) Q30 tooling: key 1 + g3_lemniscate/g3_stick_zsine (25 s hold) 1bf26c88f9, key 2
    f3170f4b91 (results/q30_tooling_s226/KEY1_README.md, KEY2_README.md; tests in /tmp/g3venv, host has no pytest).
-   Open before any flight (one sonnet medium task): (a1) wiring: g3_chain.sh ~l.524 greps key 2 args with
-   "^$r --t0 " (misses --run-json runs); g3_checks_key2.py:225 position mode only for o1_lemniscate (add
-   g3_lemniscate). (a2) reconcile key interpretations against GATES text, decide in one DECISIONS line: item 5
-   reference (key 1 commanded path at same time vs key 2 trajectory_setpoint/q_d; key 1 smoke run_001 item 5 0.67 m
-   from tracking, not the event), item 6 per-axis (key 1) vs 3-axis vector RMS (key 2), item 5 gating of telemetry
-   events. (a3) position limit cycle needs 3x10 s windows > 25 s hold: lengthen hold to 35 s (>= 20 s, S214) or
-   state it. Then a 1-flight pre-test of g3_lemniscate on 903eae63 (haiku), both keys run on it. (b) FREEZE-10 baselines 262/283 (and 264/joint
+   S227 done: (a1) wiring 6827fb2340, (a2) D-G3-KEYS-S227 (literal/stricter reading), keys aligned 2dd1139cce,
+   (a3) hold 35 s. Open: 1-flight pre-test g3_lemniscate (S227-c, results/g3_pretest_s227/README.md); if key 2 needs
+   vehicle_attitude_setpoint for stick runs, check it is logged. Watch: item 5 is absolute vs commanded path, so
+   tracking error counts; if PID fails item 5 on tracking alone -> owner question. (b) FREEZE-10 baselines 262/283 (and 264/joint
    on the new scenario) on 903eae63, scored both keys. (c) one solver run (opus, high) on (i)/(ii)/(iii), values
    fixed before review; brief: no tb sweeps, no item2_split, no 2 Hz cause search. (d) one independent review
    (opus, high). (e) pass -> freeze-11 + re-fly list; none passes -> route B (fixed corner), G3 300 on 903eae63.
    Cause context: restore264 falsifier_s222/README.md, blend264_s223, ref264_s224.
+S227 route check: supervisor asked (GATE_STATUS unchanged 9 sessions); RC226 (one session old, same state) stands,
+  no new RC. Blocker of the next G3 verdict = action 0 (a)-(e), nothing else; cut list below unchanged.
 CUT (RC208/RC221/S223/RC226): G6 item 7 chain (results/g6_item7_s212/PREP.md), G7 (f) unit 9, (g), harness
   extraction, dead path, older G7 list (items 3 below), G8 drafting (item 5), saturation sweep: all wait until the
   Q32 route decides firmware. No route check before the solver verdict (RC226 item 6). Unit tests for the winner
@@ -80,7 +79,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | - | - | - |
+| S227-c | 1-flight pre-test g3_lemniscate on 903eae63, both keys | haiku medium | results/g3_pretest_s227/README.md | g3_chain.sh status indi_flight/results/g3_pretest_s227 |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.

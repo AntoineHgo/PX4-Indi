@@ -1416,3 +1416,16 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   903eae63 -> pass line committed in D-RATE-BLD-2 -> one solver run -> one independent review -> freeze-11 or route B.
 - Alternatives the owner did not choose: B now (ship the limit), C (stop G3).
 - Overturn: none by the orchestrator; a failure after freeze-11 goes to the owner.
+
+## D-G3-KEYS-S227 (S227): one reading of G3 items 2, 5, 6 for both keys (results/q30_tooling_s226/RECONCILE_S227.md)
+- Rule: where GATES text is ambiguous, take the literal or stricter reading; both keys gate the same quantity.
+- Item 5 reference = commanded path at the same time (trajectory_setpoint in position mode, q_d tilt in stick mode),
+  0.3 m / 3 deg absolute (tracking error counts; no "relative to pre-event error"). Key 2 stick mode moves from the
+  pre-event median to q_d.
+- Item 6 = per-axis p, q, r RMS each <= 5 deg/s (key 2 gates per-axis; vector RMS reported only).
+- Item 2 position limit cycle: 3 x 10 s windows from the hold start in both keys (key 1 started at the last 10 s:
+  defect, could never flag). Hold 25 -> 35 s (G3_HOLD_S) so 3 windows fit.
+- Item 5 telemetry events stay ungated (text names gust and fault start only).
+- Alternatives: vector RMS (looser up to sqrt 3), relative re-excursion (looser), owner question (not needed: no
+  reading loosens the text). Overturn: owner says otherwise, or the PID reference fails item 5 on tracking alone ->
+  owner question per the reference-flight rule.
