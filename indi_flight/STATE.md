@@ -16,12 +16,12 @@
    (falsifier_s222/README.md): no integral action against the weak-motor torque bias (ACT_BLD 1 s blend only) ->
    decision 2 re-opened, D-RATE-BLD-2 PROPOSED option (i) lower ACT_BLD (param only). Probes on draw 264
    (blend264_s223/README.md, 903eae63): tb 0.10 / 0.05 no LOC, item 2 FAIL post-fault 2 Hz p/q, item 3 FAIL 0.37 m.
-   S213 LOC baseline flew d220e193, not 903eae63. NEXT (task S224-F in Tasks): draw 264 on 903eae63 tb 1.0 (LOC on
-   gate binary?) + PID draw 264 scored items 2/3 + item2_split (reference flight rule). If PID fails
-   items 2/3 too -> owner question (blocking G3 items 2/3). If INDI-only: one session of cause search on the
-   post-fault 2 Hz (candidate D-RATE-BLD-2 (iv), outer demand capped to available thrust), then G2 margin spot
-   cells at the chosen tb and accept (i) naming re-flown rows.
-   Before the next G3 campaign: Q30 tooling (GATES "Owner amendment S214").
+   S225: tb 1.0 on 903eae63 = watchdog abort (LOC on the gate binary); PID ref items 1/3 pass, item 2 fails on
+   fault-straddling windows only (ref264_s224/README.md). BLOCKED on Q32 (QUESTIONS.md; WAIT_OWNER): A re-freeze
+   with one solver session / B exclude corner / C stop, + item 2 straddle windows. On answer A: solver (opus, high)
+   + independent reviewer compare (i)/(ii)/(iii) on joint, 264, 262, 283 vs written pass line. No more tb probes, no
+   item2_split work, no cause search on the post-fault 2 Hz before Q32 is answered (RC224 item 6).
+   Deferred until a firmware candidate exists: Q30 tooling (GATES "Owner amendment S214").
 1. G6 item 7 chain (60 corners, results/g6_item7_s212/PREP.md): CUT until the Q31 route ends (firmware fix would
    invalidate it). MAX_STRUCTURE 0.08 vs norm residual > 0.05 (actc_grid_s209 PRETEST.md) revisited then.
 CUT (RC208/RC221/S223): G7 (f) unit 9, (g), harness extraction, dead path, older G7 list, G8 drafting, saturation
@@ -77,8 +77,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S224-F | draw 264 on 903eae63: INDI tb 1.0 + PID ref, scored | sonnet | restore264/ref264_s224/README.md | re-launch brief (STATE action 0) |
-| S224-RC | route check 224 | sonnet | design/route_check_224.md | re-launch |
+| - | none (blocked on Q32) | - | - | - |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.

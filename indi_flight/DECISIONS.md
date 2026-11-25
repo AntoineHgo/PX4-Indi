@@ -1397,3 +1397,4 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   (item2_split_s223). Lean (i) if a tb removes LOC with tilt margin and no INDI-only post-fault item 2 failure; else (ii).
 - Cost of (i): default change after FREEZE-10 invalidates G2 rate/att cells, G3, G4, G5, G6 rows (all re-flown).
 - Overturn: (i) fails draw 264 itself, or rate-loop margins at the new tb below G2 thresholds -> (ii).
+- S225: tb 1.0 LOC confirmed on 903eae63; PID ref on 264 passes items 1/3, item 2 only on fault-straddling windows -> (i) alone leaves INDI-only item 2 post-fault and item 3 failures. Re-freeze scope asked in Q32.

@@ -68,3 +68,42 @@ full text in JOURNAL.md S214).
 
 Q31 closed S218 (owner answer B + escalation route, binary 903eae63; GATES "Owner amendment S218", DECISIONS
 D-OWNER-Q31; full text in JOURNAL.md S218).
+
+## Q32 (S225, 2026-11-25): draw 264 needs a firmware change after FREEZE-10. Re-freeze, exclude the corner, or stop? BLOCKING G3
+
+Context (route check design/route_check_224.md; evidence results/g3_refly_actc_s212/restore264/):
+- Draw 264 = available thrust 0.351 on all motors (sag) + one motor at 0.709, lemniscate. Q31 route steps 1-2 done.
+- INDI on the gate binary 903eae63 at the frozen MC_INDI_ACT_BLD 1.0 loses control (ref264_s224/q0_bld100: watchdog,
+  > 3 m below hold altitude). Same on the joint minimal case (falsifier_s222).
+- Cause shown on logs (two investigators + falsifiers): the weak motor's torque bias grows with collective; the
+  rate loop's only remover of a command/output gap is the 1 s blend of modelled and measured torque, too slow.
+  ACT_BLD 0.15/0.10/0.05 or model-only (W_MAX 0) remove the loss of control (max tilt 45-54 deg).
+- With tb 0.10/0.05 on draw 264 (blend264_s223) G3 item 1 passes but item 2 fails (post-fault 2 Hz p/q limit
+  cycle, pre-fault clean) and item 3 fails (0.37/0.36 m vs 0.30 m).
+- PID reference, same draw and binary (ref264_s224/README.md): item 1 pass (max tilt 41 deg), item 3 pass (0.123 m),
+  item 2 FAIL both keys on the whole run (2 Hz q, windows straddling the fault; pre- and post-fault clean). So item 2
+  fails in both stacks as scored today (a test-window question), while the INDI post-fault 2 Hz line and item 3
+  are INDI-only. INDI tb 1.0 max tilt 66.8 deg before the abort.
+- Any fix (lower ACT_BLD default, per-motor command-to-omega^2 correction, or a bounded rate integrator) changes
+  frozen firmware/defaults: G2 rate/att cells, G3 (300), G4 (18), G5 rows, G6 item 7 are re-flown. Roughly 8-12
+  sessions of CPU-heavy re-fly plus 1-2 sessions of design and two-key review.
+
+Options:
+- A. Re-open FREEZE-10 for decision 2 (D-RATE-BLD-2): one solver session (opus, high) + independent review compare
+  (i) lower ACT_BLD, (ii) per-motor gain correction, (iii) bounded rate integrator on the four draws already flown
+  (joint, 264, 262, 283) against a written pass line (items 1-3); pick one, check G2 rate margins, freeze-11, re-fly
+  the listed rows.
+- B. Keep FREEZE-10 and state the limit: amend G3 so the joint corner "sag below X + one weak motor" is outside the
+  INDI claim (reported as a measured limit in the report, not a PID fallback, F-1), re-fly G3 on 903eae63 without it.
+- C. Stop the G3 route: G3 NOT PASSED with this limit written up; go to G6/G7/G8 on FREEZE-10.
+
+- Sub-question (any option): item 2 windows that straddle the fault instant also flag PID on this draw. Exclude
+  windows straddling a fault from item 2 (score pre-fault and post-fault separately), yes/no? Recommendation: yes.
+
+Recommendation: A, bounded: one solver session; if no option passes items 1-3 on the four draws, fall back to B.
+Reason: the cause is a structural gap (no integral action against a growing actuator bias, lesson 9), which a real
+weak or damaged motor also produces; B and C ship a known defect.
+Meanwhile: nothing. Every open item (G3 campaign, G6 item 7, G7 F-10 clean-up, G8 chapters) depends on which firmware
+is frozen. Blocked: yes (WAIT_OWNER).
+
+Answer:
