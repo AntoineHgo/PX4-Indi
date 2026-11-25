@@ -211,7 +211,9 @@ def windows_from_run(rj, legacy_win=None):
     """All G3 windows from run.json['events'] alone (S214; key 2 no longer takes key 1's t0/t1). Times are on the ulog clock
     (run.json t_us is the runner's sim.t, the same clock as the ulog / sim_ground_truth timestamp).
     main = first event named 'traj' (position scenarios) or 'stick' (stick scenarios); hold = LAST event named 'hold'.
-    step_t = fault / gust step starts = the main-segment start (S214 correction). legacy_win = (t0, t1) overrides item 3 only."""
+    step_t = fault / gust step starts = the main-segment start (S214 correction). legacy_win = (t0, t1) overrides item 3 only.
+    Q33: if run.json has g3_timeline, main window, step_t (t0 if fault_on or wind_on, gust if wind_on) and ev5 (item-5 events: fault t0,
+    gust) come from it; an 'event' segment without g3_timeline raises ValueError."""
     ev = rj.get("events", [])
     main = next((e for e in ev if e.get("name") in ("traj", "stick")), None)
     holds = [e for e in ev if e.get("name") == "hold"]
@@ -224,6 +226,16 @@ def windows_from_run(rj, legacy_win=None):
     if main is not None:
         m0 = main["t_us"] * 1e-6
         r.update(main_name=main["name"], main=[m0, m0 + float(main.get("dur_s") or 0.0)], step_t=[m0])
+    tl = rj.get("g3_timeline")
+    if tl is None and any(e.get("name") == "event" for e in ev):
+        raise ValueError("run.json has an 'event' segment but no g3_timeline (Q33 run, refused)")
+    if tl is not None:   # Q33 (EVENT_HOVER_SPEC): events in the event hover, main window and step starts from g3_timeline
+        t0 = tl["event_t0_us"] * 1e-6; gu = tl.get("gust_us"); fo, wo = bool(tl["fault_on"]), bool(tl["wind_on"])
+        ev5 = ([("fault@t0", t0)] if fo else []) + ([("gust", gu * 1e-6)] if wo and gu is not None else [])
+        r.update(main_name=tl["main_segment"], main=[tl["main_start_us"] * 1e-6, tl["main_end_us"] * 1e-6], timeline=True,
+                 event_t0=t0, event_win=[t0, tl["event_end_us"] * 1e-6], ev5=ev5,
+                 step_t=([t0] if fo or wo else []) + ([gu * 1e-6] if wo and gu is not None else []))
+        main = {"name": tl["main_segment"]}
     st = rj.get("stick") or {}
     if main is not None and main["name"] == "traj": r["mode"], r["mode_src"] = "position", "events: traj"
     elif main is not None and main["name"] == "stick":
@@ -264,6 +276,13 @@ def _zb(q):   # body z axis in the world frame, rows (n,3); q = w,x,y,z
 def _angle_deg(a, b):
     return np.degrees(np.arccos(np.clip((a * b).sum(1) / (np.linalg.norm(a, axis=1) * np.linalg.norm(b, axis=1)), -1, 1)))
 
+def hover_ref(sp_t, sp_xy, sp_z, a, b):
+    """Q33: static hover setpoint = median of the finite logged trajectory_setpoint (x, y, z) samples in the event hover [a, b]; None if none."""
+    if sp_t is None or sp_xy is None or sp_z is None: return None
+    c = np.column_stack([sp_xy, sp_z]).astype(float); st = np.asarray(sp_t, float)
+    m = (st >= a) & (st <= b) & np.isfinite(c).all(1)
+    return np.median(c[m], 0) if m.any() else None
+
 def recovery(t, q, pos, h, rw, sp_t, sp_xy, sp_z, att_t, att_q, extra=()):
     """G3 item 5: after each injected event (gust / fault step = main-segment start; extra = reported-only (name, time) events)
     the vehicle is back within 0.3 m and 3 deg of the reference within 5 s and then has no re-excursion > 0.3 m for 5 s.
@@ -272,11 +291,15 @@ def recovery(t, q, pos, h, rw, sp_t, sp_xy, sp_z, att_t, att_q, extra=()):
     rate mode = not applicable (no position or attitude hold; item 6 covers it). Position error is 3-D (x, y, altitude), attitude
     error is the tilt angle between body z axes (yaw excluded, as item 3).  t_in = first sample with every applicable error within
     its limit; pass = t_in - t_event <= 5 s and no sample in (t_in, t_in+5 s] with the controlled error beyond its limit
-    (position mode: 0.3 m; attitude mode: 3 deg, the only controlled quantity there)."""
+    (position mode: 0.3 m; attitude mode: 3 deg, the only controlled quantity there).
+    Q33 (rw['timeline']): events = fault t0 and gust from g3_timeline; position reference = static hover setpoint (median of the logged
+    trajectory_setpoint over the event hover) instead of the commanded path at the same time; q_d tilt term unchanged."""
     mode = rw["mode"]
     if mode not in ("position", "attitude"):
         return {"applicable": False, "pass": True, "events": [], "note": f"item 5 not applicable in mode {mode!r}"}
-    evs = [("step@main_start", te, True) for te in rw["step_t"]] + [(n, te, False) for n, te in extra]
+    tlm = bool(rw.get("timeline"))   # Q33: events = fault t0 and gust (g3_timeline), reference = static hover setpoint (position mode)
+    evs = ([(n, te, True) for n, te in rw["ev5"]] if tlm else [("step@main_start", te, True) for te in rw["step_t"]]) + [(n, te, False) for n, te in extra]
+    ref0 = hover_ref(sp_t, sp_xy, sp_z, *rw["event_win"]) if tlm and mode == "position" else None
     out = []; ok = True
     zb_t = _zb(q)
     for name, te, gated in evs:
@@ -286,7 +309,9 @@ def recovery(t, q, pos, h, rw, sp_t, sp_xy, sp_z, att_t, att_q, extra=()):
             if gated: ok = False
             continue
         tw = t[m]; e_att = e_pos = None
-        if mode == "position":
+        if mode == "position" and tlm:
+            e_pos = np.full(len(tw), np.nan) if ref0 is None else np.sqrt((pos[m, 0] - ref0[0]) ** 2 + (pos[m, 1] - ref0[1]) ** 2 + (h[m] + ref0[2]) ** 2)
+        elif mode == "position":
             sp, good = interp_sp(tw, sp_t, None if sp_xy is None or sp_z is None else np.column_stack([sp_xy, sp_z]))
             e_pos = np.where(good, np.sqrt((pos[m, 0] - np.where(good, sp[:, 0], 0)) ** 2 + (pos[m, 1] - np.where(good, sp[:, 1], 0)) ** 2
                                            + (h[m] + np.where(good, sp[:, 2], 0)) ** 2), np.nan) if sp is not None else np.full(len(tw), np.nan)
@@ -401,7 +426,7 @@ def load_run(d, t0=None, t1=None, mode=None, wind=False, sag=False):
         fl = draw_flags(d)
         if fl:
             wind, sag = wind or fl["wind"], sag or fl["sag"]
-            if rw["main"]: tel = [(n, rw["main"][0] + o) for n, o in fl["tel"]]
+            if rw["main"]: tel = [(n, rw.get("event_t0", rw["main"][0]) + o) for n, o in fl["tel"]]
     ss_mode = mode
     if mode: rw["mode"], rw["mode_src"] = mode, "--mode"
     elif legacy:   # old behaviour: item-3 mode = the hold event's own 'mode' field (default position)
