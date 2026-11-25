@@ -15,9 +15,10 @@
    Order (RC226 item 4): (a) Q30 tooling: key 1 + g3_lemniscate/g3_stick_zsine (25 s hold) 1bf26c88f9, key 2
    f3170f4b91 (results/q30_tooling_s226/KEY1_README.md, KEY2_README.md; tests in /tmp/g3venv, host has no pytest).
    S227 done: (a1) wiring 6827fb2340, (a2) D-G3-KEYS-S227 (literal/stricter reading), keys aligned 2dd1139cce,
-   (a3) hold 35 s. Open: 1-flight pre-test g3_lemniscate (S227-c, results/g3_pretest_s227/README.md); if key 2 needs
-   vehicle_attitude_setpoint for stick runs, check it is logged. Watch: item 5 is absolute vs commanded path, so
-   tracking error counts; if PID fails item 5 on tracking alone -> owner question. (b) FREEZE-10 baselines 262/283 (and 264/joint
+   (a3) hold 35 s. Pre-test 66a1f1299c (results/g3_pretest_s227, draw 0 g3_lemniscate): flies, keys agree, item 5
+   FAIL 0.576 m vs 0.3 m (others pass). PID ref of draw 0 in flight (S227-d). PID also fails item 5 -> owner
+   question on item 5 definition (absolute vs commanded path counts tracking error), BLOCKING G3 item 5; meanwhile
+   (b) baselines may fly (items 1-4, 6). INDI only -> one session cause search. (b) FREEZE-10 baselines 262/283 (and 264/joint
    on the new scenario) on 903eae63, scored both keys. (c) one solver run (opus, high) on (i)/(ii)/(iii), values
    fixed before review; brief: no tb sweeps, no item2_split, no 2 Hz cause search. (d) one independent review
    (opus, high). (e) pass -> freeze-11 + re-fly list; none passes -> route B (fixed corner), G3 300 on 903eae63.
@@ -79,7 +80,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S227-c | 1-flight pre-test g3_lemniscate on 903eae63, both keys | haiku medium | results/g3_pretest_s227/README.md | g3_chain.sh status indi_flight/results/g3_pretest_s227 |
+| S227-d | PID reference of pre-test draw 0 (g3_lemniscate), both keys | haiku medium | results/g3_pretest_s227/pid_ref/README.md | re-brief: same draw, pid_default |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
