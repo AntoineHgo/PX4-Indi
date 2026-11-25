@@ -2043,3 +2043,9 @@ the 2-40 Hz band (untested whether a real tone); the mechanism also applies insi
 on an in-range draw; A costs ~8-12 sessions under the weekly cap.
 
 - S226 (2026-11-25): Q32 closed and acted on (GATES "Owner amendment S225", D-OWNER-Q32, D-RATE-BLD-2 active with pass line fixed before any candidate flight). Route check 226 (on path; cuts: G6 item 7/G7/G8 wait, no RC before solver verdict). g3_campaign_f10 already committed and its verdict written (S199): skipped. Q30 tooling built: g3_lemniscate/g3_stick_zsine (25 s hold) + key 1 items 3-6 + S225 skip (1bf26c88f9), independent key 2 (f3170f4b91), break-checked; not flown; key interpretations of items 5/6 and chain wiring to reconcile. Gate progress: G3 route step (a) Q30 scorer tooling built in both keys (unflown); no GATE_STATUS row changed.
+
+- S227 (2026-11-25): RC226 stood as route check (one session old). Q30 tooling closed: key 2 wiring for --run-json
+  runs, hold 35 s (6827fb2340), D-G3-KEYS-S227 literal/stricter reading, keys aligned on items 2, 5, 6 (2dd1139cce).
+  Pre-test g3_lemniscate draw 0 on 903eae63 (66a1f1299c): flies, keys agree, item 5 FAIL 0.576 m; PID ref same draw
+  item 5 FAIL 1.210 m, item 4 FAIL 0.764 m -> Q33 (blocking item 5). Gate progress: G3 test tooling runs end to end
+  on the new scenario with both keys; item 5 definition to the owner (Q33).

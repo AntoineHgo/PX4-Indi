@@ -16,9 +16,8 @@
    f3170f4b91 (results/q30_tooling_s226/KEY1_README.md, KEY2_README.md; tests in /tmp/g3venv, host has no pytest).
    S227 done: (a1) wiring 6827fb2340, (a2) D-G3-KEYS-S227 (literal/stricter reading), keys aligned 2dd1139cce,
    (a3) hold 35 s. Pre-test 66a1f1299c (results/g3_pretest_s227, draw 0 g3_lemniscate): flies, keys agree, item 5
-   FAIL 0.576 m vs 0.3 m (others pass). PID ref of draw 0 in flight (S227-d). PID also fails item 5 -> owner
-   question on item 5 definition (absolute vs commanded path counts tracking error), BLOCKING G3 item 5; meanwhile
-   (b) baselines may fly (items 1-4, 6). INDI only -> one session cause search. (b) FREEZE-10 baselines 262/283 (and 264/joint
+   FAIL 0.576 m vs 0.3 m (others pass). PID ref 6c714845b1: item 5 FAIL 1.210 m, item 4 FAIL 0.764 m -> Q33 OPEN,
+   BLOCKING G3 item 5 (no re-fly/re-score/note on item 5). Next: (b) baselines, scored on items 1-4, 6 only. (b) FREEZE-10 baselines 262/283 (and 264/joint
    on the new scenario) on 903eae63, scored both keys. (c) one solver run (opus, high) on (i)/(ii)/(iii), values
    fixed before review; brief: no tb sweeps, no item2_split, no 2 Hz cause search. (d) one independent review
    (opus, high). (e) pass -> freeze-11 + re-fly list; none passes -> route B (fixed corner), G3 300 on 903eae63.
@@ -80,7 +79,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S227-d | PID reference of pre-test draw 0 (g3_lemniscate), both keys | haiku medium | results/g3_pretest_s227/pid_ref/README.md | re-brief: same draw, pid_default |
+| - | none | - | - | - |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.

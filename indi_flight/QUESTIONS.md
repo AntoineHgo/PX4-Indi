@@ -71,3 +71,19 @@ D-OWNER-Q31; full text in JOURNAL.md S218).
 
 Q32 closed S226 (owner answer A bounded + item 2 sub-question yes; GATES "Owner amendment S225", DECISIONS
 D-OWNER-Q32; full text in JOURNAL.md S226).
+
+## Q33 (S227, 2026-11-25): G3 item 5 on the new g3_lemniscate scenario fails for PID too. BLOCKING for G3 item 5.
+Context: GATES item 5: "after each injected event (gust, fault start) back within 0.3 m and 3 deg of the pre-event
+reference in <= 5 s and no re-excursion > 0.3 m for 5 s". With the S214 events at the start of the main lemniscate
+there is no static pre-event point, so both keys use the commanded path at the same time (D-G3-KEYS-S227, the
+literal and stricter reading). Then ordinary tracking error counts against 0.3 m, which is tighter than item 4
+(0.5 m horizontal RMS). Pre-test (results/g3_pretest_s227, seed-173 draw 0, binary 903eae63, both keys agree):
+INDI items 1-4, 6 pass, item 5 FAIL 0.576 m; PID reference same draw: item 5 FAIL 1.210 m, item 4 FAIL 0.764 m.
+Options:
+A (recommended) item 5 measures what the event adds: deviation from the commanded path minus the pre-event
+  tracking error (e.g. 0.3 m above the 95th percentile of the 5 s before the event), threshold unchanged.
+B item 5 events in a hover segment before the lemniscate (static pre-event reference), as the text reads; scenario
+  change, both keys follow.
+C keep as is: item 5 then binds on lemniscate tracking and fails for both stacks.
+Meanwhile: no re-fly, re-score or note on item 5. Next session flies the (b) FREEZE-10 baselines 262/283 on the new
+scenarios scored on items 1-4 and 6 (no open question decides those). Not blocked overall.
