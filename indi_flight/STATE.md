@@ -25,7 +25,8 @@
 S228 route check: design/route_check_228.md (GATE_STATUS unchanged 10 sessions). Blocker of the next G3 verdict =
   action 0 (a4)-(e), nothing else; cut list below. RC228 cuts: both scenarios in one commit; (a5) INDI+PID
   and (b) 262/283 chained as one docker job; no re-score of S227 pre-test; 264/joint baselines only if the D-RATE-BLD-2
-  pass line lists them; no RC before the solver verdict.
+  pass line lists them; no RC before the solver verdict. RC230 (design/route_check_230.md): confirms RC229; no new
+  RC until (a5) has flown or a gate row changes; a4.2 reads a4.1's EVENT_HOVER_SPEC.md, not key 1 code.
 CUT (RC208/RC221/S223/RC226): G6 item 7 chain (results/g6_item7_s212/PREP.md), G7 (f) unit 9, (g), harness
   extraction, dead path, older G7 list (items 3 below), G8 drafting (item 5), saturation sweep: all wait until the
   Q32 route decides firmware. No route check before the solver verdict (RC226 item 6). Unit tests for the winner
@@ -81,7 +82,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | - | - | - |
+| a4.1 | G3 event hover scenarios + key 1 (sonnet high, S230) | - | results/q33_tooling_s230/ (KEY1_README.md, EVENT_HOVER_SPEC.md) | re-brief from STATE action 0 (a4.1) if no README |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
