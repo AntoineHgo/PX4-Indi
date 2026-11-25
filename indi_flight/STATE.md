@@ -12,19 +12,12 @@
 -1. Gate binary = 903eae63 (D-BINARY-GZFIX; FREEZE-10 + GZBridge fix f110361a33; old px4.freeze10_d220e193;
    g3_chain.sh pins it). Do NOT rebuild build/px4_sitl_default from HEAD. Pre-S214 C3 runs: GATES 2 invalid.
 0. G3 item 1 (D-OWNER-Q31 escalation), ONLY blocker of the next verdict change. Minimal case =
-   results/g3_refly_actc_s212/restore264 joint (sat 0.351 + weak 0.709): INDI LOC, PID survives. Cause (investigators
-   A/B + falsifier_s222/README.md): no integral action against the weak-motor torque bias in the rate loop (1 s blend
-   MC_INDI_ACT_BLD only, indi_rate_control.cpp:336-357) -> re-opens decision 2. Probes ACT_BLD 0.15 / W_MAX 0 remove
-   LOC but fail item 2 (both keys); pid_joint fails item 2 key1 too (2 Hz from 21-29 s, before the ~58.8 s fault).
-   S223: D-RATE-BLD-2 PROPOSED (lean option (i): lower ACT_BLD default, param only). blend_s223/README.md: tb 0.10
-   / 0.05 no LOC on joint (tilt 52.4 / 45.4 deg), item 2 FAIL both keys. item2_split_s223/README.md: pre-fault clean
-   on all runs (sat/weak start at the fault, segment traj); "21 s" lines = 4 s windows straddling the fault
-   transient (lowest band bin 2 Hz, maybe band edge); PID key1 fail = straddle + post-fault position limit cycle;
-   p2 (model only) keeps 2 Hz post-fault. S223c blend264_s223/README.md (draw 264 full plant, binary 903eae63):
-   tb 0.10 / 0.05 no LOC (tilt 48.5 / 47.9 deg), item 1 PASS, item 2 FAIL post-fault (2 Hz p/q from fault+3-5 s,
-   rms 11-28 dps, both keys), item 3 FAIL (0.371 / 0.362 m vs 0.30). CAVEAT: S213 LOC baseline flew d220e193, not
-   903eae63. NEXT (one sonnet agent, 2 flights): draw 264 on 903eae63 with tb 1.0 (does LOC hold on the gate
-   binary?) and PID draw 264 on 903eae63 scored items 2/3 + item2_split (reference flight rule). If PID fails
+   results/g3_refly_actc_s212/restore264 joint (sat 0.351 + weak 0.709): INDI LOC, PID survives. Cause
+   (falsifier_s222/README.md): no integral action against the weak-motor torque bias (ACT_BLD 1 s blend only) ->
+   decision 2 re-opened, D-RATE-BLD-2 PROPOSED option (i) lower ACT_BLD (param only). Probes on draw 264
+   (blend264_s223/README.md, 903eae63): tb 0.10 / 0.05 no LOC, item 2 FAIL post-fault 2 Hz p/q, item 3 FAIL 0.37 m.
+   S213 LOC baseline flew d220e193, not 903eae63. NEXT (task S224-F in Tasks): draw 264 on 903eae63 tb 1.0 (LOC on
+   gate binary?) + PID draw 264 scored items 2/3 + item2_split (reference flight rule). If PID fails
    items 2/3 too -> owner question (blocking G3 items 2/3). If INDI-only: one session of cause search on the
    post-fault 2 Hz (candidate D-RATE-BLD-2 (iv), outer demand capped to available thrust), then G2 margin spot
    cells at the chosen tb and accept (i) naming re-flown rows.
@@ -51,9 +44,8 @@ CUT (RC208/RC221/S223): G7 (f) unit 9, (g), harness extraction, dead path, older
 4. G6: item 7 runs in the action-0 chain. ID_OK 0 waits for G6 (D-G7-DEFAULTS).
 5. G8: drafts report/02_outer_loop_design.md and docs/en/config_mc/indi_control.md; open items in
    report/DOCS_DRAFT_S201.md (S213: code items resolved; identification user steps = G6; prettier/link check open).
-   S213 finding: airframe requirement R1 (refuse to arm without eRPM) is not enforced by code (modelled fallback
-   only): G7/G8 decide enforce (firmware, after Q31) or reword R1. S215 drafts: report/01_inner_loop_design.md,
-   06_bringup_checklist.md, S216 A_history_errata.md (their "Unverified" sections are open G8 items). Missing: ch.3 G3/G6
+   R1 (refuse to arm without eRPM) not enforced by code: G7/G8 decide enforce (after Q31) or reword R1. Drafts
+   report/01_inner_loop_design.md, 06_bringup_checklist.md, A_history_errata.md ("Unverified" = open G8 items). Missing: ch.3 G3/G6
    sections and limits (after Q31); numbers in ch.3 follow any re-fly a Q31 fix causes. G7 parameter pass: MC_INDI_ACT_TC yaml still says "round up" (overturned, D-OWNER-Q27);
    pos module reads esc_status instance 0 only, no frozen/error-count check, 100 ms ESC age vs 20 ms in rate module.
 Rules: 1 session per inner-loop law change; parallel docker streams only for tolerance-insensitive probes, never gate
@@ -85,7 +77,8 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | - | - | - |
+| S224-F | draw 264 on 903eae63: INDI tb 1.0 + PID ref, scored | sonnet | restore264/ref264_s224/README.md | re-launch brief (STATE action 0) |
+| S224-RC | route check 224 | sonnet | design/route_check_224.md | re-launch |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
