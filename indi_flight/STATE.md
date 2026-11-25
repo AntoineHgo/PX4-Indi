@@ -12,9 +12,15 @@
 -1. Gate binary = 903eae63 (D-BINARY-GZFIX; FREEZE-10 + GZBridge fix f110361a33; old px4.freeze10_d220e193;
    g3_chain.sh pins it). Do NOT rebuild build/px4_sitl_default from HEAD. Pre-S214 C3 runs: GATES 2 invalid.
 0. G3 route per D-OWNER-Q32 (GATES "Owner amendment S225"; pass line fixed in DECISIONS D-RATE-BLD-2 S226).
-   Order (RC226 item 4): (a) Q30 tooling: key 1 + G3 scenarios with >= 20 s hold (agent, KEY1_README.md) and
-   independent key 2 (agent, KEY2_README.md), both in results/q30_tooling_s226/; then a cross-key self-test check
-   and a 1-flight pre-test of the new scenario on 903eae63 (haiku). (b) FREEZE-10 baselines 262/283 (and 264/joint
+   Order (RC226 item 4): (a) Q30 tooling: key 1 + g3_lemniscate/g3_stick_zsine (25 s hold) 1bf26c88f9, key 2
+   f3170f4b91 (results/q30_tooling_s226/KEY1_README.md, KEY2_README.md; tests in /tmp/g3venv, host has no pytest).
+   Open before any flight (one sonnet medium task): (a1) wiring: g3_chain.sh ~l.524 greps key 2 args with
+   "^$r --t0 " (misses --run-json runs); g3_checks_key2.py:225 position mode only for o1_lemniscate (add
+   g3_lemniscate). (a2) reconcile key interpretations against GATES text, decide in one DECISIONS line: item 5
+   reference (key 1 commanded path at same time vs key 2 trajectory_setpoint/q_d; key 1 smoke run_001 item 5 0.67 m
+   from tracking, not the event), item 6 per-axis (key 1) vs 3-axis vector RMS (key 2), item 5 gating of telemetry
+   events. (a3) position limit cycle needs 3x10 s windows > 25 s hold: lengthen hold to 35 s (>= 20 s, S214) or
+   state it. Then a 1-flight pre-test of g3_lemniscate on 903eae63 (haiku), both keys run on it. (b) FREEZE-10 baselines 262/283 (and 264/joint
    on the new scenario) on 903eae63, scored both keys. (c) one solver run (opus, high) on (i)/(ii)/(iii), values
    fixed before review; brief: no tb sweeps, no item2_split, no 2 Hz cause search. (d) one independent review
    (opus, high). (e) pass -> freeze-11 + re-fly list; none passes -> route B (fixed corner), G3 300 on 903eae63.
@@ -74,8 +80,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| Q30-K1 | G3 scenarios + key 1 items 3-6 + item 2 skip rule | sonnet high | results/q30_tooling_s226/KEY1_README.md | re-brief from STATE 0(a) if README incomplete |
-| Q30-K2 | key 2 same, independent (no key-1 reads) | sonnet high | results/q30_tooling_s226/KEY2_README.md | same |
+| - | none | - | - | - |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
