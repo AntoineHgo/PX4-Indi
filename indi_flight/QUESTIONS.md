@@ -107,3 +107,33 @@ Meanwhile: nothing. Every open item (G3 campaign, G6 item 7, G7 F-10 clean-up, G
 is frozen. Blocked: yes (WAIT_OWNER).
 
 Answer:
+A, bounded; sub-question yes with conditions (owner, 2026-11-25, with an independent review agent's second opinion).
+Gate text: GATES "Owner amendment S225".
+1. Re-open FREEZE-10 decision 2 (D-RATE-BLD-2), rate loop only (D-GAP unchanged; a candidate that needs it says so
+   before flying). Candidates (i) lower ACT_BLD, (ii) per-motor command-to-omega^2 correction, (iii) bounded rate
+   integrator with allocator-saturation anti-windup, all judged by one pass line; simplest passing one wins (F-9).
+2. First: Q30 tooling (S214 window, items 4-6 in both keys), then FREEZE-10 baselines of 262 (C212 idx 22) and 283
+   (C5, sample source named in the pass line) on 903eae63; old flights of 262/283 are d220e193 (262 invalid, S218).
+3. Pass line, committed in D-RATE-BLD-2 before the first candidate flight, unchanged after. Draws joint, 264, 262,
+   283, speed 1, committed seeds, one flight each; both keys: item 1 pass, item 2 pass as scored in point 7, item 3
+   on the S214 window. A cell FREEZE-10 already fails on 262/283 becomes "not worse", reported as a G3 risk. Items
+   4-5 reported. Winner re-flown once on 264 and joint: still passes. G2 rate roll/pitch/yaw, 800 and 400 Hz,
+   measured and model-only, 2 seeds, at G2 thresholds; G2-STEP 9/9. Unit tests, each break-checked: weak-motor loop,
+   allocator-saturation anti-windup, landed, telemetry loss and frozen, arming reset. New code meets F-10.
+4. Bound: one solver agent run (opus, high) builds, flies, tunes; values fixed before review. One independent review
+   (opus, high) of code and scoring; a BLOCKING finding = no pass. Any missed cell = fail, no partial pass, no second
+   solver, no more tb probes. No candidate passes -> B, no new question.
+5. B: keep FREEZE-10. Excluded corner fixed now, not fitted: saturation-corner draws (2.0 x hover, outside owner
+   ranges, S94 decision 6) with a weak motor on; class (b), a measured INDI limit in G8, not a PID fallback (F-1; as
+   Q27 item 4). In-range draws (sag, weak motor >= 0.7) stay counted. G3 re-flies 300 fail-fast on 903eae63.
+6. A passes: freeze-11 = FREEZE-10 + the candidate only, built per D-BINARY-GZFIX, sha pinned. Re-fly G2 rate/att
+   cells + G2-STEP (outer cells only if the outer loop changed), G3 300 fail-fast, G4, G5 rows, G6 item 7. A failure
+   there goes to the owner, not automatically to B.
+7. Sub-question yes: G3 item 2 skips 4 s windows containing a fault or gust step start (traj start, read by each key
+   from run.json); no line chains across the skip. Telemetry loss/frozen starts are not skipped. Conditions: item 5
+   scored in both keys in the same campaign; self-test in both keys (straddling sine not flagged, post-fault sine
+   flagged, break-checked); skipped windows tabled for both stacks (as Q15 class C). Applies from now on; rescore
+   only valid 903eae63 runs used here (4 draws, PID refs); pre-S214 multi-motor runs stay invalid.
+Owner warnings noted: (iii) may cost G2 rate PM (freeze-10 spot 46.9 vs 45 deg); the 2 Hz line is the lowest bin of
+the 2-40 Hz band (untested whether a real tone); the mechanism also applies inside owner ranges, so G3 may still fail
+on an in-range draw; A costs ~8-12 sessions under the weekly cap.
