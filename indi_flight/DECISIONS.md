@@ -1476,3 +1476,19 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
 - G6: cannot be PASSED in full (needs G3); its other items are still evidence for the report.
 - Alternatives: re-open a firmware route (owner chose A); drop item 5 work (owner asked for it for G8).
 - Overturned by: a new owner instruction only.
+
+## D-ID-OK-LIMIT (S246, 2026-11-26): un-identified start is a reported limit, not refuse-to-arm (closes STATE action 4)
+- Evidence: G6 item 7 flew `MC_INDI_ID_OK` 0 (gains x0.5, ACT_TC 0.05) on the 60 plant corners: 6 LOC in 58
+  counted runs (278, 295 both keys; watchdog 262/264/269/292), 2 invalid (results/g6_item7_s212/TALLY_S244.md).
+  D-G7-DEFAULTS overturn condition is met: the 0.5x state does not fly the whole G6 set.
+- Choice: keep `MC_INDI_ID_OK` 0 as default and allow arming; state the limit in docs/en and report ch.4: the
+  un-identified state is for the identification flight on a healthy vehicle (full battery, no weak motor, calm
+  air), not a flight configuration over the G3 plant box.
+- Alternatives: (a) refuse to arm while ID_OK 0 (rejected: D-IDENT owner Q6 B, INDI flies its own identification
+  manoeuvre, so it must arm un-identified; also a firmware behaviour change after FREEZE-10 without a gate failure
+  cause shown on a log); (b) ID_OK 1 in 4040 (rejected in D-G7-DEFAULTS, claims an identification not run).
+- G7(c): its scripted test (default params hash == validated files) is unaffected. The G7 verdict text states that
+  the default ID_OK 0 state is flown and scored with this limit, not validated over the plant corners.
+- R1 (refuse to arm without eRPM, design/airframe_requirements.md) is NOT decided here: enforcing it is firmware
+  after freeze, rewording it changes the F-3 requirements list (owner question). Left open for G7/G8.
+- Overturned by: an owner instruction, or a firmware route that makes the un-identified state pass G6 item 7.

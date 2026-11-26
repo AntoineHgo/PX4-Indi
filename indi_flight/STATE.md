@@ -33,8 +33,8 @@
    omega_ff step on offboard entry; g510 LOC on one sample (stricter than GATES 0.2 s,
    results/g7_checkers_s215/README.md: justify or align); ACT_TC/W_MAX firmware vs
    bench (lesson 12); guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
-4. G7 defaults: ID_OK 0 behaviour decided by G6 result (D-G7-DEFAULTS): G6 NOT PASSED, so G7/G8 state the
-   un-identified limit and decide refuse-to-arm vs reported limit (record in DECISIONS).
+4. G7 verdict text: ID_OK 0 = reported limit, no refuse-to-arm (D-ID-OK-LIMIT, docs warning added S246); state it
+   in the G7 verdict. R1 (eRPM refuse-to-arm) still open: enforce = firmware after freeze, reword = owner question.
 5. G8: drafts report/02_outer_loop_design.md and docs/en/config_mc/indi_control.md; open items in
    report/DOCS_DRAFT_S201.md (S213: code items resolved; identification user steps = G6; prettier/link check open).
    R1 (refuse to arm without eRPM) not enforced by code: G7/G8 decide enforce (after Q31) or reword R1. Drafts

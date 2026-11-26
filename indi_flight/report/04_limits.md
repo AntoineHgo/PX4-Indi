@@ -28,7 +28,7 @@ G6 is NOT PASSED (`GATES.md` "G6 item 7 verdict (S244...)"; `results/g6_item7_s2
 
 Item 7 flies the 60 corners C1-C6 un-identified (`MC_INDI_ID_OK` 0, gains x0.5, ACT_TC 0.05). Result: 6 LOC in 58 valid-or-counted runs. LOC in runs 278 and 295 (both keys); runs 262, 264, 269 and 292 were stopped by the flight watchdog and count as LOC. Runs 274 and 284 are invalid (harness) and were not re-flown. Over the whole run, item 2 fails in 21 / 22 of 54 scored runs (keys 1 / 2); overall pass is 12/54 on both keys.
 
-Consequence for defaults. With `MC_INDI_ID_OK` 0 the controller flies un-identified values, and that start is not safe on all plant corners. The decision between refusing to arm before identification and reporting this limit to the user is OPEN (STATE.md next action 4; it must be recorded in DECISIONS). Until then this chapter reports the limit.
+Consequence for defaults. With `MC_INDI_ID_OK` 0 the controller flies un-identified values, and that start is not safe on all plant corners. Decision (DECISIONS D-ID-OK-LIMIT): arming is allowed un-identified, because the controller flies its own identification manoeuvre, and the limit is reported to the user: the un-identified state is for the identification flight on a healthy vehicle (full battery, no weak motor, calm air), not a flight configuration over the robustness plant range.
 
 Identification quality, where measured: ACT_TC identification error 0 of 30 cells failed in the SITL grid (time constants within 3.7 %, delay offset about +1.75 ms); quad5in plant only, mostly one seed (`results/actc_grid_s209/README.md`).
 
@@ -51,7 +51,7 @@ G5 and G2 are PASSED at freeze-10 with the following rows not tested or only par
 ## 4.4 Implementation limits (G7 open items)
 
 G7 is open (`GS` row G7; STATE.md next actions 3 to 5).
-- `MC_INDI_ID_OK` 0 behaviour: decided by the G6 result (D-G7-DEFAULTS); G6 NOT PASSED, so refuse-to-arm versus reported limit is open (see 4.2).
+- `MC_INDI_ID_OK` 0 behaviour: reported limit, no refuse-to-arm (DECISIONS D-ID-OK-LIMIT, see 4.2).
 - R1 (refuse to arm without eRPM telemetry) is not enforced by code; a missing or stale measurement gives a modelled fallback and arming is allowed. Open: enforce or reword R1.
 - Flash: fmu-v6x overflows by 23.5 kB (fmu-v5x measured +64.9 kB). Open, goes to an upstream note.
 - The position module reads `esc_status` instance 0 only, has no frozen or error-count check, and uses a 100 ms ESC age against 20 ms in the rate module. Open.
@@ -79,4 +79,3 @@ No real flight log exists. Telemetry (0-3 frames of 1.25 ms), actuator latency a
 - The 4.3 anomaly list is one-line summaries from `ANOMALIES.md` headlines; the full OPEN status of each (closing tests) was not re-read, and the list may be incomplete. [open: not re-read]
 - Whether motor-time-constant and telemetry-latency measurements in chapter 6 map to the 4.1 failing region was inferred from the chapter headings only; the checklist body was not read. [open: headings only]
 - The fmu-v5x flash figure is from S195 (`results/g7_s195/FORMAT_SIZE`), before later firmware commits; not re-measured. [open: stale number]
-- Whether a decision on refuse-to-arm versus reported limit has been recorded in DECISIONS after STATE.md was written. [open: DECISIONS not read]
