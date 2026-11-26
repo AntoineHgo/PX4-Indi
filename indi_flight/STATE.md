@@ -71,9 +71,8 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| C1 | G6 item 7 chain RUNNING (60 corners 240-299, ID_OK 0, speed 4; started 19:54, ETA ~22:15; chain pid 1997213, wrapper 1997203; pins 903eae63 / image 85779446 ok) | detached | results/g6_item7_s212/ (LAUNCH_S243.md) | `bash indi_flight/bench/g3_chain.sh status indi_flight/results/g6_item7_s212`; when done: commit runs, score items 1-2, write verdict note |
-| A2 | Q34 item 5 "A and B", KEY 1 only (g3_checks.py) + re-score 4 pre-test runs | sonnet | results/g3_pretest_s230/Q34_KEY1.md | re-brief from GATES "Owner amendment S243" |
-| A3 | (next) same for KEY 2 (g3_checks_key2.py), independent agent that does not read A2's note | sonnet | results/g3_pretest_s230/Q34_KEY2.md | not started |
+| C1 | G6 item 7 chain HALTED after run 240 (CHAIN_HALTED: g3_checks.py hash changed by the Q34 key 1 commit 6605ba380d; run 240 ok, pass/pass). Restart after key 2 lands: replace the g3_checks.py and g3_checks_key2.py lines of results/g6_item7_s212/chain_freeze.sha256 with new sha256sum, rm CHAIN_HALTED, `bash indi_flight/bench/g3_chain.sh start indi_flight/results/g6_item7_s212`; at the end `g3_chain.sh rescore` so run 240 item 5 uses the new keys | detached | results/g6_item7_s212/ | see left |
+| A3 | Q34 KEY 2 (g3_checks_key2.py), independent of key 1 (done, Q34_KEY1.md, matches owner on all 6 events) | sonnet | results/g3_pretest_s230/Q34_KEY2.md | re-brief from GATES "Owner amendment S243" |
 CUT (RC241): g3_chain.sh failing-list display fix and exclusion self-test (defer to G7).
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
