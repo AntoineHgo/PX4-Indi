@@ -180,7 +180,7 @@ Search for `MC_INDI_` to find the groups _Multicopter INDI Rate Control_ and _Mu
 | [MC_INDI_ERPM_TO][MC_INDI_ERPM_TO]   | 0.02    | s     | Measured torque timeout                                  |
 | [MC_INDI_ERPM_FRZ][MC_INDI_ERPM_FRZ] | 0.5     | s     | Frozen rotor speed detection time                        |
 | [MC_INDI_ACT_BLD][MC_INDI_ACT_BLD]   | 1.0     | s     | Actuator state blend time constant                       |
-| [MC_INDI_DT_MAX][MC_INDI_DT_MAX]     | 1.0     |       | Maximum torque increment per cycle                       |
+| [MC_INDI_INC_MAX][MC_INDI_INC_MAX]   | 1.0     |       | Maximum torque increment per cycle                       |
 | [MC_INDI_LND_SLEW][MC_INDI_LND_SLEW] | 5.0     | 1/s   | Landed feedback torque slew (normalised torque per second) |
 | [MC_INDI_SP_TO][MC_INDI_SP_TO]       | 0.5     | s     | Rate setpoint timeout                                    |
 | [MC_INDI_YAW_CUT][MC_INDI_YAW_CUT]   | 0       | Hz    | Yaw feedback low-pass cut-off                            |
@@ -211,7 +211,7 @@ The `MC_INDI_INJ_*` and `MC_INDI_PINJ_*` parameters are for bench and identifica
 [MC_INDI_ERPM_TO]: ../advanced_config/parameter_reference.md#MC_INDI_ERPM_TO
 [MC_INDI_ERPM_FRZ]: ../advanced_config/parameter_reference.md#MC_INDI_ERPM_FRZ
 [MC_INDI_ACT_BLD]: ../advanced_config/parameter_reference.md#MC_INDI_ACT_BLD
-[MC_INDI_DT_MAX]: ../advanced_config/parameter_reference.md#MC_INDI_DT_MAX
+[MC_INDI_INC_MAX]: ../advanced_config/parameter_reference.md#MC_INDI_INC_MAX
 [MC_INDI_LND_SLEW]: ../advanced_config/parameter_reference.md#MC_INDI_LND_SLEW
 [MC_INDI_SP_TO]: ../advanced_config/parameter_reference.md#MC_INDI_SP_TO
 [MC_INDI_YAW_CUT]: ../advanced_config/parameter_reference.md#MC_INDI_YAW_CUT

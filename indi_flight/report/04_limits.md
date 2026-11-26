@@ -63,7 +63,7 @@ G7 is open (`GS` row G7; STATE.md next actions 3 to 5).
 - R1 (refuse to arm without eRPM telemetry) is not enforced by code; a missing or stale measurement gives a modelled fallback and arming is allowed. Open: enforce or reword R1.
 - Flash: fmu-v6x overflows by 23.5 kB (fmu-v5x measured +64.9 kB). Open, goes to an upstream note.
 - The position module reads `esc_status` instance 0 only, has no frozen or error-count check, and uses a 100 ms ESC age against 20 ms in the rate module. Open.
-- Guard parameters `MC_INDI_ERPM_TO`, `ERPM_FRZ`, `SP_TO`, `DT_MAX` have no flown test of their own (only the A-57 probe touched the frozen detector). Open, "justify in writing".
+- Guard parameters `MC_INDI_ERPM_TO`, `ERPM_FRZ`, `SP_TO`, `INC_MAX` have no flown test of their own (only the A-57 probe touched the frozen detector). Open, "justify in writing".
 - Dead path: the `K_pos`/`K_vel` cascade in the acceleration control is unused (module always accel-only, `McIndiPosControl.cpp:315`). Open: remove after review or justify.
 - The g510 LOC checker uses one sample, stricter than the 0.2 s in GATES (`results/g7_checkers_s215/README.md`). Open: justify or align.
 - `MC_INDI_ACT_TC` yaml still says "round up", which D-OWNER-Q27 overturned. Open (parameter pass).

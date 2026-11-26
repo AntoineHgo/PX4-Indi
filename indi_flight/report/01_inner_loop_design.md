@@ -46,7 +46,7 @@ flowchart LR
   GY -->|"alpha_f"| INV
   subgraph LAW["IndiRateControl::update"]
     direction LR
-    NU --> INV["dt_cmd = (nu - (1+c) alpha_f + c r_dot [+ G2/dt prev]) / (G1 [+ G2/dt])<br/>clamp |dt_cmd| <= MC_INDI_DT_MAX"]
+    NU --> INV["dt_cmd = (nu - (1+c) alpha_f + c r_dot [+ G2/dt prev]) / (G1 [+ G2/dt])<br/>clamp |dt_cmd| <= MC_INDI_INC_MAX"]
     TF["t_f = t_f_meas + b   (measurement in use)<br/>t_f = t_f_model       (fallback)"] --> SUM
     INV --> SUM["t_cmd = clamp(t_fb + dt_cmd, -1, 1)"]
   end
@@ -112,7 +112,7 @@ Roll and pitch (L:455-460):
 
 ```
 dt_cmd = (nu - (1 + c) alpha_f + c r_dot) / G1
-t_cmd  = clamp( t_fb + clamp(dt_cmd, +-MC_INDI_DT_MAX), -1, 1 )            L:468-473
+t_cmd  = clamp( t_fb + clamp(dt_cmd, +-MC_INDI_INC_MAX), -1, 1 )            L:468-473
 ```
 
 `t_fb` is `t_f` in flight and 0 on ground (section 5). Both `alpha_f` and `t_f` are filtered by the same chain, so on
@@ -146,7 +146,7 @@ margins (section 8). `b` is frozen while `maybe_landed` (D-S3-LANDED, L:337-341)
 
 The law has no integrator, so there is no windup state. Saturation enters in three places:
 
-- The increment is bounded to `MC_INDI_DT_MAX` per cycle and the output to [-1, 1] (L:468-473). The default 1.0 is
+- The increment is bounded to `MC_INDI_INC_MAX` per cycle and the output to [-1, 1] (L:468-473). The default 1.0 is
   the full range (the bound is inactive).
 - The actuator model is fed with the torque the allocator actually produced from the previous setpoint, not with the
   setpoint: `torque_allocated_prev = prev_setpoint - unallocated_torque`, when the allocator status is newer than the
@@ -261,7 +261,7 @@ flown identification or the model time constant; **bandwidth default** = design 
 | `MC_INDI_ERPM_DLY` | 1 (Q:27) | 1 (Y:164) | cycles | delay of the measured torque | identified by correlation lag (Q:26 comment) |
 | `MC_INDI_ERPM_TO` | 0.02 (Q:29) | 0.02 (Y:174) | s | age above which measured torque is invalid | default, flown unchanged |
 | `MC_INDI_ACT_BLD` | 1.0 (Q:30) | 1.0 (Y:189) | s | blend time constant `tb`; 0 off | bandwidth default (D-RATE-BLD) |
-| `MC_INDI_DT_MAX` | 1.0 (Q:31) | 1.0 (Y:200) | - | increment bound per cycle and axis | default, inactive at 1.0 |
+| `MC_INDI_INC_MAX` | 1.0 (Q:31) | 1.0 (Y:200) | - | increment bound per cycle and axis | default, inactive at 1.0 |
 | `MC_INDI_LND_SLEW` | 5.0 (Q:32) | 5.0 (Y:214) | 1/s | landed-edge feedback torque slew | default (D-S3-LANDED) |
 | `MC_INDI_ERPM_FRZ` | 0.5 (Q:33) | 0.5 (Y:227) | s | frozen rotor speed window | default (D-S3-FROZEN) |
 | `MC_INDI_SP_TO` | 0.5 (Q:34) | 0.5 (Y:240) | s | rate setpoint timeout | default (D-S3-SPTO) |

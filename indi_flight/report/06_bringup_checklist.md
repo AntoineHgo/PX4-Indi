@@ -20,7 +20,7 @@ Parameters are cited as `file:line` of their definition in the yaml (the `defaul
 | plausibility | rpm above 1.5 x omega_max is rejected (`MAX_OMEGA_RATIO`, IndiMeasuredTorque.hpp:76) | catches a wrong pole count or W_MAX |
 | error counter | a sample whose `esc_errorcount` changed is dropped (IndiMeasuredTorque.cpp:166-176) | dropped frame |
 | `MC_INDI_SP_TO` | 0.5 s, range 0.05-2 (yaml:232) | no rate setpoint: setpoint zeroed, thrust held; not in acro |
-| `MC_INDI_DT_MAX` | 1.0, range 0.01-1 (yaml:195) | limit of the torque increment per cycle and axis |
+| `MC_INDI_INC_MAX` | 1.0, range 0.01-1 (yaml:195) | limit of the torque increment per cycle and axis |
 | dt guard | dt clamped to 0.125 ms .. 20 ms (RC/McIndiRateControl.cpp:310-311) | not a parameter |
 | `MC_INDI_ID_OK` | 0 (yaml:79) | 0: K_R, K_P, K_Y applied at half their value |
 | `MC_INDI_ACT_BLD` | 1.0 s (yaml:180) | blend measured/modelled actuator torque |
@@ -76,8 +76,8 @@ Measure: `top` for the CPU load; `perf` for `mc_indi_rate_control: cycle` (RC/Mc
 Criterion: rate module runs once per gyro update at the configured rate (G2 tested 800 and 400 Hz, 267 Hz reported only, GATES.md G2), no missed cycle, no `dt` beyond the 20 ms clamp (McIndiRateControl.cpp:310-311). A minimum rate and load limit are not in the sources (U). Reason: the margins were computed for 400-800 Hz; the clamp hides a long gap.
 If it fails: lower the load, or leave the vehicle on the tested rates; do not fly at a rate that was not margin-tested.
 
-**B9. Setpoint timeout and DT_MAX.**
-Measure: stop the `vehicle_rates_setpoint` publisher in a mode other than acro, armed, props off; watch `indi_rate_status.rate_sp_stale` and the zeroed rate setpoint after `MC_INDI_SP_TO` (0.5 s). Criterion: stale flag set at about the timeout, thrust held. These two guards (SP_TO, DT_MAX) are not evidenced by a flown test (6.6), so a bench confirmation is the only evidence.
+**B9. Setpoint timeout and INC_MAX.**
+Measure: stop the `vehicle_rates_setpoint` publisher in a mode other than acro, armed, props off; watch `indi_rate_status.rate_sp_stale` and the zeroed rate setpoint after `MC_INDI_SP_TO` (0.5 s). Criterion: stale flag set at about the timeout, thrust held. These two guards (SP_TO, INC_MAX) are not evidenced by a flown test (6.6), so a bench confirmation is the only evidence.
 
 **B10. GNSS latency (R4 in AR).**
 Measure the receiver latency and set `SENS_GNSS0_DELAY` within 50 ms of it. Reason: G3 drew mismatches of +-50 ms and the outer loop was less tolerant than PID beyond about +60 ms (AR, R4).
@@ -110,7 +110,7 @@ SITL validated the estimators only (D-IDENT); identification on a real log is un
 - The simulator eRPM-loss hook is late by 36-122 ms (STATE.md Notes), so frozen and loss timings were not measured exactly (A-57).
 - The logger misses the first ~0.2 s of `indi_pos_status` (late subscription): a missing sample is not bypass (STATE.md Notes). Same care on the real logger.
 - Requirement R1 (refuse to arm without eRPM) is not enforced: no arming check exists (DOCS_DRAFT_S201.md item 1, RESOLVED S213); a missing or stale measurement gives the modelled fallback and arming is allowed. The check is yours (B3, B6).
-- `MC_INDI_ERPM_TO`/`ERPM_FRZ`, `MC_INDI_SP_TO` and `MC_INDI_DT_MAX` are not backed by a flown test of their own (no test found for them; only the A-57 trip probe touched the frozen detector).
+- `MC_INDI_ERPM_TO`/`ERPM_FRZ`, `MC_INDI_SP_TO` and `MC_INDI_INC_MAX` are not backed by a flown test of their own (no test found for them; only the A-57 trip probe touched the frozen detector).
 - The position module has no frozen-rpm detection and uses a 100 ms ESC age against 20 ms in the rate module (6.2): a frozen telemetry is flagged for the rate path only.
 - ESC telemetry instance 0 only (6.2).
 - G6 un-identified item flies ID_OK 0, ACT_TC 0.05 (D-G6-ITEM7-SET). Production boards do not build the modules (only the sitl board enables them, DOCS_DRAFT_S201.md item 4).
@@ -121,6 +121,6 @@ SITL validated the estimators only (D-IDENT); identification on a real log is un
 - Tolerance of `esc_rpm` against a tachometer (B5), and the real trip time of the frozen detector (A-57 open). [open: needs tachometer test]
 - Whether the real DShot driver repeats a stale `esc_rpm`, zeroes it or clears `esc_online_flags` on telemetry loss: read the driver only for pole count and publish path; the loss behaviour is the thing B6 measures. [open: needs hardware (B6)]
 - Behaviour of a second `esc_status` instance on a real board. [open: needs real board]
-- Whether the guard parameters `ERPM_TO`, `ERPM_FRZ`, `SP_TO`, `DT_MAX` are tuned for real hardware. [open: needs hardware flight]
+- Whether the guard parameters `ERPM_TO`, `ERPM_FRZ`, `SP_TO`, `INC_MAX` are tuned for real hardware. [open: needs hardware flight]
 - Whether `MC_INDI_ACT_TC` yaml text (yaml:126-128) is to be updated; `ident_actc.py` use on a hardware log (written for sim logs). [open: waits G7 parameter pass (yaml:126-128 unchanged at S217); `ident_actc.py` on hardware needs a flight]
 - Default values quoted here were read from the yaml; the `default:` line numbers were not individually cited. [open: line numbers] (Closed S217: `DSHOT_MOT_POL` default 14 is also the parameter default, `src/drivers/dshot/module.yaml:87`.)
