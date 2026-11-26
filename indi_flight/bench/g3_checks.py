@@ -36,7 +36,8 @@ Item 4 tracking (position scenario; Q33: the main segment only = run.json g3_tim
   in it): truth vs trajectory_setpoint (linear interpolation, NaN / outside-range samples excluded), horizontal RMS <= 0.5 m and
   vertical RMS <= 0.3 m.
 Item 5 recovery (see item5_recovery; Q33): events = fault start t0 (event hover start) and gust t0 + 12 s (run.json g3_timeline); per
-  event, back within the static reference in <= 5 s, then no excursion > the limit for 5 s. Reference per mode: position = hover setpoint
+  event (A and B, Q34 S243), A: back within the static reference in <= 5 s, then no excursion > the limit for 5 s; B: position error <= 0.3 m
+  and tilt error vs q_d <= 3 deg on every sample in [event + 5 s, event + 10 s]. Reference per mode: position = hover setpoint
   (trajectory_setpoint, 3-D 0.3 m, plus tilt 3 deg vs q_d as in GATES 3 item 5); attitude / stabilized = q_d (level, zero sticks; tilt 3 deg); rate mode = n/a.
   The wind ramp is not scored.
 Item 6 rate mode (--rate-mode, acro with zero sticks): per-axis truth body-rate RMS (p, q, r) <= 5 deg/s over the last 20 s of the hold.
@@ -84,6 +85,7 @@ LAND_NAV_STATES = (5, 18)  # RTL, AUTO_LAND (vehicle_status.nav_state)
 ITEM3_LAST_S, ITEM6_LAST_S = 10.0, 20.0      # S214: item 3 window = last 10 s of the hold, item 6 = last 20 s
 TRACK_H_RMS_M, TRACK_V_RMS_M = 0.5, 0.3      # item 4
 REC_POS_M, REC_TILT_DEG, REC_TIME_S, REC_QUIET_S = 0.3, 3.0, 5.0, 5.0   # item 5
+REC_B_FROM_S, REC_B_TO_S = 5.0, 10.0   # item 5 part B window after the event (Q34, S243)
 RATE_HOLD_RMS_DPS = 5.0                      # item 6
 STEP_TOL_S = 0.5                             # two step starts closer than this are one event
 
@@ -328,16 +330,24 @@ def item5_recovery(tt, pos, q, sp_xyz, att_sp, events, z_rest=0.0):
     for te in events:
         after = np.flatnonzero((tt >= te) & inband)
         if after.size == 0:
-            rows.append({"t_event": te, "t_recover_s": None, "pass": False, "reason": "never back in band"})
+            rows.append({"t_event": te, "t_recover_s": None, "pass_a": False, "pass": False, "reason": "never back in band"})
             allok = False
             continue
         tr = float(tt[after[0]])
         sel = (tt >= tr) & (tt <= tr + REC_QUIET_S)
         reex = float(np.nanmax(quiet_err[sel])) if np.isfinite(quiet_err[sel]).any() else None
         full = float(tt[-1]) >= tr + REC_QUIET_S - 1e-9
-        good = bool(tr - te <= REC_TIME_S and full and (reex is not None and reex <= quiet_lim))
+        good_a = bool(tr - te <= REC_TIME_S and full and (reex is not None and reex <= quiet_lim))
+        # part B (Q34, S243): every sample in [te + 5, te + 10] has position error <= REC_POS_M and tilt error <= REC_TILT_DEG
+        selb = (tt >= te + REC_B_FROM_S) & (tt <= te + REC_B_TO_S)
+        fullb = float(tt[-1]) >= te + REC_B_TO_S - 1e-9
+        b_pos = float(np.nanmax(err_pos[selb])) if have_pos and np.isfinite(err_pos[selb]).any() else None
+        b_att = float(np.nanmax(err_att[selb])) if have_att and np.isfinite(err_att[selb]).any() else None
+        good_b = bool(fullb and (not have_pos or (b_pos is not None and b_pos <= REC_POS_M)) and (not have_att or (b_att is not None and b_att <= REC_TILT_DEG)))
+        good = good_a and good_b
         rows.append({"t_event": te, "t_recover_s": tr - te, "max_quiet_err": reex, "quiet_quantity": "position_m" if have_pos else "tilt_deg",
-                     "log_covers_quiet_window": full, "pass": good})
+                     "log_covers_quiet_window": full, "pass_a": good_a, "b_max_pos_m": b_pos, "b_max_tilt_deg": b_att,
+                     "log_covers_b_window": fullb, "pass_b": good_b, "pass": good})
         allok &= good
     return {"applicable": True, "events": rows, "limits": {"pos_m": REC_POS_M, "tilt_deg": REC_TILT_DEG, "time_s": REC_TIME_S,
             "quiet_s": REC_QUIET_S}, "uses": {"position": have_pos, "attitude": have_att}, "pass": bool(allok)}
