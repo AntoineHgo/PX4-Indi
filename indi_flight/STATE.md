@@ -11,24 +11,13 @@
 ## Next actions (each names its gate item)
 -1. Gate binary = 903eae63 (D-BINARY-GZFIX; FREEZE-10 + GZBridge fix f110361a33; old px4.freeze10_d220e193;
    g3_chain.sh pins it). Do NOT rebuild build/px4_sitl_default from HEAD. Pre-S214 C3 runs: GATES 2 invalid.
-0. G3 route per D-OWNER-Q32 (GATES "Owner amendment S225"; pass line fixed in DECISIONS D-RATE-BLD-2 S226).
-   Tooling: results/q30_tooling_s226/KEY1_README.md, KEY2_README.md (tests in /tmp/g3venv, host has no pytest);
-   S227 pre-test results/g3_pretest_s227. Per GATES "Owner amendment Q33": (a4) DONE S230 (9cd2a1cb1a key 1 +
-   scenarios, fda2630219 key 2 blind; results/q33_tooling_s230/; position item 5 keeps the 3 deg term, S230
-   correction). (a5)+(b) DONE S230, results/g3_pretest_s230/SCORES.md (keys agree on all pass/fail; timeline
-   as specified): INDI d0 PASS all; PID d0 item 5 PASS, item 4 FAIL 0.768 m (PID ref only); 262 FAIL items 4, 5
-   (fault 1.305 m); 283 FAIL item 2. Q34 OPEN (item 5 tilt reading, blocks item 5 rows and the (e) verdict;
-   no item 5 re-score). Stick pilot neutral over the event hover = unverified (only stabilized run is none yet).
-   Next = (c) on the items Q34 does not decide.
-   (b) FREEZE-10 baselines 262/283 (and 264/joint on the new scenario) on 903eae63, scored both keys. (c) one solver run (opus, high) on (i)/(ii)/(iii), values
-   fixed before review; brief: no tb sweeps, no item2_split, no 2 Hz cause search. (d) one independent review
-   (opus, high). (e) pass -> freeze-11 + re-fly list; none passes -> route B (fixed corner), G3 300 on 903eae63.
-   Cause context: restore264 falsifier_s222/README.md, blend264_s223, ref264_s224.
-S228 route check: design/route_check_228.md (GATE_STATUS unchanged 10 sessions). Blocker of the next G3 verdict =
-  action 0 (a4)-(e), nothing else; cut list below. RC228 cuts: both scenarios in one commit; (a5) INDI+PID
-  and (b) 262/283 chained as one docker job; no re-score of S227 pre-test; 264/joint baselines only if the D-RATE-BLD-2
-  pass line lists them; no RC before the solver verdict. RC230 (design/route_check_230.md): confirms RC229; no new
-  RC until (a5) has flown or a gate row changes; a4.2 reads a4.1's EVENT_HOVER_SPEC.md, not key 1 code.
+0. G3 route per D-OWNER-Q32 (GATES "Owner amendment S225", "Owner amendment Q33"; pass line DECISIONS
+   D-RATE-BLD-2). (a4), (a5), (b) DONE (JOURNAL S230/S231; baselines results/g3_pretest_s230/SCORES.md).
+   Q34 OPEN: blocks item 5 rows and the (e) verdict; no item 5 re-score. Stick pilot neutral over the event
+   hover unverified. Next = (c) one solver run (opus, high) on (i)/(ii)/(iii), items Q34 does not decide,
+   values fixed before review; brief: no tb sweeps, no item2_split, no 2 Hz cause search. (d) one independent
+   review (opus, high). (e) pass -> freeze-11 + re-fly list; none passes -> route B (fixed corner), G3 300 on
+   903eae63. Cause context: restore264 falsifier_s222/README.md, blend264_s223, ref264_s224.
 CUT (RC208/RC221/S223/RC226): G6 item 7 chain (results/g6_item7_s212/PREP.md), G7 (f) unit 9, (g), harness
   extraction, dead path, older G7 list (items 3 below), G8 drafting (item 5), saturation sweep: all wait until the
   Q32 route decides firmware. No route check before the solver verdict (RC226 item 6). Unit tests for the winner
