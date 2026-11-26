@@ -23,7 +23,10 @@
    S234 supervisor RC request: inputs unchanged since RC231 except (ii) part 1 progress; blocker of the next G3
    verdict = (ii) part 2 scores, then (iii), (d), (e). No new RC agent (budget to the blocker); cut unchanged.
    results/g3_campaign_f10 is CLOSED (S199 verdict; 3 SCORE_PENDING = unscorable aborts 039/245/264, FAILS_S199
-   s4): a supervisor "chain finished" item for it needs no rescore and no verdict (S237).
+   s4): a supervisor "chain finished" item for it needs no rescore and no verdict (S237). The line is hardcoded
+   (run_orchestrator.sh:71 CHAIN_DIR) and repeats every launch: ignore it, do not re-check, go to route B.
+   CUT (S238, S237+S238 Gate progress none from this line): scope = route B launch only (pre-test 1-3 flights,
+   then the 300), nothing else until it runs.
 CUT (RC208/RC221/S223/RC226): G6 item 7 chain (results/g6_item7_s212/PREP.md), G7 (f) unit 9, (g), harness
   extraction, dead path, older G7 list (items 3 below), G8 drafting (item 5), saturation sweep: all wait until the
   Q32 route decides firmware. No route check before the solver verdict (RC226 item 6). Unit tests for the winner
