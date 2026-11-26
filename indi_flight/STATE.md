@@ -72,7 +72,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | C1 | G6 item 7 chain HALTED after run 240 (CHAIN_HALTED: g3_checks.py hash changed by the Q34 key 1 commit 6605ba380d; run 240 ok, pass/pass). Restart after key 2 lands: replace the g3_checks.py and g3_checks_key2.py lines of results/g6_item7_s212/chain_freeze.sha256 with new sha256sum, rm CHAIN_HALTED, `bash indi_flight/bench/g3_chain.sh start indi_flight/results/g6_item7_s212`; at the end `g3_chain.sh rescore` so run 240 item 5 uses the new keys | detached | results/g6_item7_s212/ | see left |
-| C1b | Resume of C1 (hashes re-pinned after both keys committed) by a haiku agent in S243; result in LAUNCH_S243.md "Resume". If CHAIN_HALTED is still there next launch, apply the recipe above | detached | results/g6_item7_s212/ | status command above |
+| C1b | C1 RESUMED 20:02 (pid 2025254, hashes re-pinned, run 241 on, ETA ~21:20). When done: commit runs (metrics, run.json, SCORES.tsv), `g3_chain.sh rescore` (run 240 item 5 on new keys), item 7 verdict note (items 1-2 pass line, 3-6 reported) | detached | results/g6_item7_s212/ (LAUNCH_S243.md "Resume") | status command above |
 CUT (RC241): g3_chain.sh failing-list display fix and exclusion self-test (defer to G7).
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

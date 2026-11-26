@@ -29,3 +29,14 @@ Check status:
     bash indi_flight/bench/g3_chain.sh status indi_flight/results/g6_item7_s212 | tail -n 20
 Log: indi_flight/results/g6_item7_s212/chain.log
 Stop (only if needed, not done): bash indi_flight/bench/g3_chain.sh stop indi_flight/results/g6_item7_s212
+
+## Resume
+
+- Reason: chain stopped after run 240 because bench/g3_checks.py and g3_checks_key2.py changed (Q34 item 5 "A and B" rule, committed). Hashes re-pinned, CHAIN_HALTED removed.
+- New hashes (chain_freeze.sha256 lines 21-22 only):
+  - g3_checks.py 20487ca205b422cd5760a2baf02c9413e06a163c6863a0c1de97fdd05df299b4
+  - g3_checks_key2.py 3a757a2dfcb3422fed53df525e8c6c5242a9632055dbde2f693d6a841f304999
+- Verify: sha256sum -c chain_freeze.sha256 passes (rc 0). Run 240 not re-flown (scored, done 1).
+- Resumed: 2026-11-26 ~20:02 (binary 903eae63ceb1..., speed 4.0 pinned).
+- Chain pid: 2025254 (lock held).
+- Status: running; campaign 240-299, current idx 241 flying, remaining 59; scored 1 (key 1 pass, key 2 pass). ETA 2026-11-26 21:18.
