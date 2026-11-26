@@ -13,7 +13,7 @@ RC247 (design/route_check_247.md) CUT, overrides items 3-5 below: no code work o
 whole-branch F-10 reviewer flags), K_pos/K_vel dead path, harness extraction, K128 ID_OK call site, D-JFF-SOURCE,
 D-OFFB-POSVEL, omega_ff, g510 one-sample, ACT_TC/W_MAX vs bench, guard params, pos esc_status inst 0/100 ms, G6 item 2
 rescore: each becomes one justification line in the G7/G8 verdict. Q36 not a blocker. Plan (order):
- P1 G8: DONE S247 (results/g8_s247/README.md): only gap = report must state the G3 excluded saturation corner
+ P1 G8: DONE S247 (results/g8_s247/README.md); G3 excluded-corner gap closed (04_limits 4.1.1), check 2 PASS;
     (GATES Route B, class (b) beyond-range) in 03_validation/04_limits; re-run bench/gate_g8.sh at the G8 verdict.
  P2 G7 (a)(d)(g): make_fw_branch.sh --force-recreate, zero diff + format + branch build re-run on final branch.
  P3 G7 (f): one whole-branch F-10 + nav-terminology review (opus), unit 8 MINORs as one neutral commit (sonnet).

@@ -22,6 +22,14 @@ Hypothesis, UNVERIFIED: the draw 3 mode comes from actuator-model mismatch (moto
 
 What a user should take from this. The operating envelope of the INDI controllers is not demonstrated for plants with motors much slower than the ACT_TC setting, nor for deep thrust saturation with one weak motor. On such plants INDI can fail where PID does not. No firmware after freeze-10 has a full 300-run result: the S213 re-fly stopped after 25 runs and route B after 3.
 
+### 4.1.1 Excluded saturation corner (class (b) beyond-range physics)
+
+G3 excludes one plant corner, the saturation-corner draws: thrust demand 2.0 x hover, outside the owner ranges, with a weak motor on. They are class (b) "beyond-range physics": a measured INDI limit stated in this report, not a PID fallback (`GATES.md` "Owner amendment S225", Route B). The class applies only to draws outside the owner ranges (inverted asymmetry, saturation corner, gust peak above the owner text); inside the owner ranges a failure counts (`GATES.md` "Orchestrator decisions S94", decision 6).
+
+In-range draws (sag, weak motor at 0.7 or above) stay counted, and a class (b) run stays counted in the campaign. No claim is made for the INDI controllers beyond this corner.
+
+G3 is NOT PASSED, final (owner decision), irrespective of this exclusion.
+
 ## 4.2 Un-identified start and identification (G6)
 
 G6 is NOT PASSED (`GATES.md` "G6 item 7 verdict (S244...)"; `results/g6_item7_s212/TALLY_S244.md`). It requires G3, which is final NOT PASSED.
