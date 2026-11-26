@@ -9,6 +9,14 @@
   independent review.
 
 ## Next actions (each names its gate item)
+RC247 (design/route_check_247.md) CUT, overrides items 3-5 below: no code work on unit 9 renames (only names the
+whole-branch F-10 reviewer flags), K_pos/K_vel dead path, harness extraction, K128 ID_OK call site, D-JFF-SOURCE,
+D-OFFB-POSVEL, omega_ff, g510 one-sample, ACT_TC/W_MAX vs bench, guard params, pos esc_status inst 0/100 ms, G6 item 2
+rescore: each becomes one justification line in the G7/G8 verdict. Q36 not a blocker. Plan (order):
+ P1 G8: write+run bench/gate_g8.sh (named by GATES G8, missing) -> results/g8_s247/ (sonnet).
+ P2 G7 (a)(d)(g): make_fw_branch.sh --force-recreate, zero diff + format + branch build re-run on final branch.
+ P3 G7 (f): one whole-branch F-10 + nav-terminology review (opus), unit 8 MINORs as one neutral commit (sonnet).
+ P4 G7 verdict: justification table (cut list + S58-S63 review items, ID_OK 0 limit). P5 G8 gaps + verdict.
 -1. Gate binary = 903eae63 (D-BINARY-GZFIX; FREEZE-10 + GZBridge fix f110361a33; old px4.freeze10_d220e193;
    g3_chain.sh pins it). Do NOT rebuild build/px4_sitl_default from HEAD. Pre-S214 C3 runs: GATES 2 invalid.
 0. G3 chain STOPPED for good (Q35 A): no G3 re-fly or firmware route. Cuts lifted (D-OWNER-Q34-Q35). Order:
