@@ -2,7 +2,7 @@
 # Detached, resumable, serial flight chain for the G3 campaign (seed 173, n 300, FREEZE-10).
 #
 #   bash indi_flight/bench/g3_chain.sh start   [DIR] [IDX_FIRST IDX_LAST] [--allow-binary SHA256] [--speed F]
-#                                              [--samples SAMPLE_DIR] [--halt-on-fail]
+#                                              [--samples SAMPLE_DIR] [--halt-on-fail] [--exclude-sat-weak]
 #   bash indi_flight/bench/g3_chain.sh status  [DIR]
 #   bash indi_flight/bench/g3_chain.sh stop    [DIR] [--now]
 #   bash indi_flight/bench/g3_chain.sh rescore [DIR]
@@ -19,6 +19,9 @@
 # campaign; g3_run.py is called with --samples and --require-actc. Without it the campaign is unchanged.
 # --halt-on-fail (pinned in DIR/chain_halt_on_fail): after both keys score a run, the chain halts (CHAIN_HALTED, state
 # halted, HALT_ON_FAIL.json) when item 1 or item 2 is FAIL on BOTH keys. Resume: rm CHAIN_HALTED HALT_ON_FAIL.json, start.
+# --exclude-sat-weak (route B, GATES Owner amendment S225; first start only, pinned in DIR/chain_exclude.txt): the seed's
+# draws with the saturation corner (2.0 x hover thrust) AND a weak motor on are class (b), never flown, listed in
+# DIR/chain_exclude.txt (one index per line) and DIR/EXCLUDED_CLASS_B.json; status counts them as "excluded", not done.
 # No git, no Claude. See results/g3_campaign_f10/README.md.
 #
 # TEST HOOK (smoke tests only): G3_CHAIN_TEST_FLIGHT_CMD="false" replaces the flight command by that shell command;
@@ -136,11 +139,17 @@ except (OSError, ValueError):  # directory from before chain_range existed
     a, b = st.get("idx_first", 0), st.get("idx_last", 299)
 fa = int(fa) if fa else st.get("fly_first", a)
 fb = int(fb) if fb else st.get("fly_last", b)
-done = failed = pending_score = k1 = k2 = scored = left_fly = 0
+done = failed = pending_score = k1 = k2 = scored = left_fly = excluded = 0
 outcomes = {}
+try:
+    excl = {int(x) for x in open(os.path.join(d, "chain_exclude.txt")).read().split()}
+except (OSError, ValueError):
+    excl = set()
 for i in range(a, b + 1):
     r = os.path.join(d, f"run_{i:03d}")
-    if os.path.exists(os.path.join(r, "g3_done.json")):
+    if i in excl and not os.path.exists(os.path.join(r, "g3_done.json")):
+        excluded += 1
+    elif os.path.exists(os.path.join(r, "g3_done.json")):
         done += 1
         try:  # chain class (ok, flight, other, void) when the chain has classified the run, else the runner outcome
             o = open(os.path.join(r, "chain_class.txt")).read().split()[0]
@@ -163,7 +172,7 @@ for i in range(a, b + 1):
         failed += 1
     elif fa <= i <= fb:
         left_fly += 1
-remaining = (b - a + 1) - done - failed
+remaining = (b - a + 1) - done - failed - excluded
 cycles = []
 try:
     for line in open(os.path.join(d, "progress.txt")):
@@ -179,7 +188,7 @@ st.update({
     "state": state, "pid": int(pid) if pid else st.get("pid"), "current_idx": int(cur) if cur else None,
     "phase": phase or None, "idx_first": a, "idx_last": b,
     "fly_first": fa, "fly_last": fb, "remaining_in_fly_range": left_fly,
-    "done": done, "failed": failed, "remaining": remaining,
+    "done": done, "failed": failed, "excluded_class_b": excluded, "remaining": remaining,
     "outcomes": outcomes, "scored": scored, "score_pending": pending_score, "key1_pass": k1, "key2_pass": k2,
     "binary_sha256": open(freeze).read().split()[0] if os.path.exists(freeze) else None,
     "params": open(os.path.join(d, "chain_params")).read().strip() if os.path.exists(os.path.join(d, "chain_params")) else None,
@@ -698,6 +707,10 @@ run_chain() {
 		fi
 		[ "$STOP_NOW" = 1 ] && break
 		[ -f "$d/CHAIN_FAILED" ] && continue
+		if [ -f "$D/chain_exclude.txt" ] && grep -qx "$idx" "$D/chain_exclude.txt"; then
+			progress "idx=$idx EXCLUDED class (b): saturation corner with a weak motor (not flown)"
+			continue
+		fi
 		# before each flight: freeze and host
 		reason=$(freeze_ok) || halt "$reason"
 		avail=$(df -BG --output=avail "$D" | tail -1 | tr -dc 0-9)
@@ -782,7 +795,7 @@ run_chain() {
 # commands
 # ---------------------------------------------------------------------------------------------------------------
 cmd_start() {
-	local allow="" pos=() a speed="" samples="" haltfail=0
+	local allow="" pos=() a speed="" samples="" haltfail=0 exclsw=0
 	while [ $# -gt 0 ]; do
 		case "$1" in
 		--allow-binary)
@@ -804,6 +817,10 @@ cmd_start() {
 			;;
 		--halt-on-fail)
 			haltfail=1
+			shift
+			;;
+		--exclude-sat-weak)
+			exclsw=1
 			shift
 			;;
 		-*) die "unknown option $1" ;;
@@ -896,6 +913,21 @@ cmd_start() {
 	fi
 	[ -s "$D/chain_range" ] || echo "$CAMP_A $CAMP_B" >"$D/chain_range"
 	[ -f "$D/.gitignore" ] || printf '# chain scratch: scoring link directory, temporary files (partial/ is evidence: big files are ignored by the repo patterns)\n.score_tmp/\n*.tmp\n' >"$D/.gitignore"
+	if [ "$exclsw" = 1 ] && [ ! -s "$D/chain_exclude.txt" ]; then
+		[ -z "$SAMPLES" ] || die "--exclude-sat-weak is for the seed's campaign, not --samples"
+		python3 -I - "$REPO/indi_flight/bench" "$SEED" "$N" "$D" <<'PY' || die "cannot compute the excluded draws"
+import json, sys
+sys.path.insert(0, sys.argv[1])
+import g3_sample
+seed, n, d = int(sys.argv[2]), int(sys.argv[3]), sys.argv[4]
+ex = [{"idx": r["run_index"], "kind": r["kind"], "weak_scale": r["factors"]["weak_motor"]["scale"],
+       "saturation_scale": r["factors"]["saturation"]["scale"]}
+      for r in g3_sample.campaign(seed, n) if r["factors"]["saturation"]["on"] and r["factors"]["weak_motor"]["on"]]
+json.dump({"class": "b", "rule": "saturation corner and weak motor on", "seed": seed, "n": n, "excluded": ex},
+          open(d + "/EXCLUDED_CLASS_B.json", "w"), indent=1)
+open(d + "/chain_exclude.txt", "w").write("".join(f"{e['idx']}\n" for e in ex))
+PY
+	fi
 	[ "$haltfail" = 0 ] || echo "item 1 or item 2 FAIL on both keys halts the chain" >"$D/chain_halt_on_fail"
 	rm -f "$D/STOP_CHAIN"
 
