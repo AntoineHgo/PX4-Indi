@@ -15,7 +15,7 @@
    D-RATE-BLD-2). (a4), (a5), (b) DONE (JOURNAL S230/S231; baselines results/g3_pretest_s230/SCORES.md).
    Q34 OPEN: blocks item 5 rows and the (e) verdict; no item 5 re-score. Stick pilot neutral over the event
    hover unverified. (c): candidate (i) MISSED (S232, D-RATE-BLD-2-C2, results/g3_cand_i_s231/SCORES.md).
-   (ii) MISSED S234 (LOC joint+264). NEXT at session start: the solver for (iii) with design/solver_brief_c.md as the
+   (ii) MISSED S234 (LOC joint+264). (iii) part 2 flights in flight (Tasks); NEXT: score them, per design/solver_brief_c.md as the
    brief (fixed S232; parts 1-3, part 2 flights may go to sonnet/medium). (d) one independent
    review (opus, high). (e) pass -> freeze-11 + re-fly list; none passes -> route B (fixed corner), G3 300 on
    903eae63. Cause context: restore264 falsifier_s222/README.md, blend264_s223, ref264_s224.
@@ -79,7 +79,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S235 | (iii) part 1: design note + code + unit tests + binary | sonnet/high | design/cand_iii_design.md, results/g3_cand_iii_s235/README.md (checklist), worktree /tmp/px4_cand_iii | if README checklist incomplete: re-brief from it; then part 2 flights (sonnet/medium, cand_ii chain pattern) |
+| S236 | (iii) part 2: 4 pass-line flights (part 1 closed: 79/79 tests, sha 60d6a954) | detached chain pid 1768338, launched 05:37 | results/g3_cand_iii_s235/ (dirty while running), STATUS.txt | if STATUS.txt has CHAIN_FINISHED: score.sh both keys -> SCORES.md with pass-line verdict (sonnet/medium, cand_ii SCORES.md pattern); if pid dead without it: re-run missing flights from chain.sh |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
