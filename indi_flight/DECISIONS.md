@@ -1438,3 +1438,13 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
 - Alternatives not chosen: A (subtract pre-event tracking error: its baseline is the settle hover, removes nothing),
   C (keep: binds on tracking, both stacks fail, gust still unscored).
 - Overturn: owner only; PID failing item 5 on the new scenario -> owner question.
+
+## D-RATE-BLD-2-C1 (S231): candidate (i) value and how step (c) is split
+- Candidate (i) = MC_INDI_ACT_BLD 0.10 s, one value (no sweep), fixed before its flights. Why 0.10: S223
+  blend264_s223 removed the draw-264 LOC at 0.10 and 0.05 with equal tilt (48.5 / 47.9 deg); 0.10 is the smaller
+  change from 1.0. Those flights failed items 2/3 on the OLD scenario and old item 2 rule, so (i) is unscored on the
+  pass line (event hover, S225 fault windows) and is the simplest candidate: it is flown first.
+- Step (c) split: (i) is parameter-only, so its 4 pass-line flights (joint, 264, 262, 283) are run and scored by a
+  sonnet agent with the keyed Q30/Q33 tooling; no opus solver for (i). The opus/high solver run is for (ii)/(iii)
+  only, and only if (i) misses a flight cell. RC231 (design/route_check_231.md): Q34 does not change the ranking.
+- Overturn: (i) passes all flight cells -> G2 rate cells, G2-STEP, unit tests per the pass line before any verdict.

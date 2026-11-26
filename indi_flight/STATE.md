@@ -73,7 +73,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | - | - | - |
+| c1 | G3 (c) candidate (i) ACT_BLD 0.10: fly + score joint/264/262/283 (D-RATE-BLD-2-C1) | sonnet | results/g3_cand_i_s231/ (README.md, STATUS.txt, SCORES.md) | `tail -n 5 results/g3_cand_i_s231/STATUS.txt`; score if CHAIN_FINISHED |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
