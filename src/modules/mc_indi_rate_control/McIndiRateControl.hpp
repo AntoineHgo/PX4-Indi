@@ -217,7 +217,7 @@ private:
 		(ParamInt<px4::params::MC_INDI_DELAY>) _param_mc_indi_delay,
 		(ParamInt<px4::params::MC_INDI_ERPM_DLY>) _param_mc_indi_erpm_dly,
 		(ParamFloat<px4::params::MC_INDI_ERPM_TO>) _param_mc_indi_erpm_to,
-		(ParamFloat<px4::params::MC_INDI_DT_MAX>) _param_mc_indi_dt_max,
+		(ParamFloat<px4::params::MC_INDI_INC_MAX>) _param_mc_indi_inc_max,
 		(ParamFloat<px4::params::MC_INDI_LND_SLEW>) _param_mc_indi_lnd_slew,
 		(ParamFloat<px4::params::MC_INDI_ERPM_FRZ>) _param_mc_indi_erpm_frz,
 		(ParamFloat<px4::params::MC_INDI_SP_TO>) _param_mc_indi_sp_to,
@@ -230,6 +230,6 @@ private:
 		(ParamInt<px4::params::MC_INDI_INJ_NP>) _param_mc_indi_inj_np,
 		(ParamFloat<px4::params::MC_INDI_INJ_DLY>) _param_mc_indi_inj_dly,
 		(ParamInt<px4::params::MC_INDI_INJ_PT>) _param_mc_indi_inj_pt,
-		(ParamFloat<px4::params::MC_INDI_INJ_RAMP>) _param_mc_indi_inj_ramp
+		(ParamFloat<px4::params::MC_INDI_INJ_AMPR>) _param_mc_indi_inj_ampr
 	)
 };

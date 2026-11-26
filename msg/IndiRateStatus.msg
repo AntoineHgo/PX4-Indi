@@ -5,7 +5,7 @@
 uint64 timestamp # [us] Time since system start
 uint64 timestamp_sample # [us] Gyro sample time of the cycle
 
-float32[3] nu # [rad/s^2] [@frame FRD] Desired angular acceleration
+float32[3] nu # [rad/s^2] [@frame FRD] Desired angular acceleration (nu), pseudo-control of the INDI law
 float32[3] angular_accel_filtered # [rad/s^2] [@frame FRD] Measured filtered angular acceleration used by the controller
 float32[3] torque_filtered # [-] [@frame FRD] Modelled actuator torque after the synchronisation filter (normalised)
 float32[3] torque_increment # [-] [@frame FRD] Commanded torque increment (normalised)
@@ -19,7 +19,7 @@ bool measured_torque_in_use # The measured actuator torque (ESC rpm) replaced th
 # System identification excitation on the torque (MC_INDI_INJ_*):
 # torque_sp = torque_sp_pre_inject + inject is published and fed back, equal to torque_sp_pre_inject while MC_INDI_INJ_AX is 0
 float32[3] torque_sp_pre_inject # [-] [@frame FRD] INDI controller output (normalised torque)
-float32[3] inject # [-] [@frame FRD] Injected excitation (normalised torque)
+float32[3] inject # [-] [@frame FRD] Injected torque excitation (normalised torque), 0 when off
 float32[3] torque_sp # [-] [@frame FRD] Sum of both, before the non-finite guard of the published vehicle_torque_setpoint
 
 # System identification excitation on the rate setpoint (MC_INDI_INJ_PT 1), all zero otherwise

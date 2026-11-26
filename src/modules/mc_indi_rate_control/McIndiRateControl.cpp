@@ -104,14 +104,14 @@ McIndiRateControl::parameters_updated()
 	_indi.setLeadScale(_param_mc_indi_lead.get());
 	_indi.setDelaySamples(_param_mc_indi_delay.get());
 	_indi.setMeasurementDelaySamples(_param_mc_indi_erpm_dly.get());
-	_indi.setMaxIncrement(_param_mc_indi_dt_max.get());
+	_indi.setMaxIncrement(_param_mc_indi_inc_max.get());
 	_indi.setLandedSlew(_param_mc_indi_lnd_slew.get());
 	_indi.setYawCutoff(_param_mc_indi_yaw_cut.get());
 	_rate_sp_watchdog.setTimeout(_param_mc_indi_sp_to.get());
 
 	// system identification excitation, rebuilt only when one of its values changed
-	// PT 1 (rate setpoint, rad/s) takes its amplitude from MC_INDI_INJ_RAMP, MC_INDI_INJ_AMP (torque) is ignored then
-	const float inject_amp = (_param_mc_indi_inj_pt.get() == 1) ? _param_mc_indi_inj_ramp.get() : _param_mc_indi_inj_amp.get();
+	// PT 1 (rate setpoint, rad/s) takes its amplitude from MC_INDI_INJ_AMPR, MC_INDI_INJ_AMP (torque) is ignored then
+	const float inject_amp = (_param_mc_indi_inj_pt.get() == 1) ? _param_mc_indi_inj_ampr.get() : _param_mc_indi_inj_amp.get();
 	_injection.setParameters(_param_mc_indi_inj_ax.get(), inject_amp, _param_mc_indi_inj_tp.get(),
 				 _param_mc_indi_inj_fmin.get(), _param_mc_indi_inj_fmax.get(), _param_mc_indi_inj_np.get(), _param_mc_indi_inj_dly.get());
 

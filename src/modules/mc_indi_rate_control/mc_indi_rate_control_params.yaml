@@ -187,10 +187,12 @@ parameters:
       unit: s
       decimal: 2
       increment: 0.05
-    MC_INDI_DT_MAX:
+    MC_INDI_INC_MAX:
       description:
         short: INDI maximum torque increment
-        long: Limit of the torque increment per cycle and axis, in normalised torque.
+        long: >-
+          Limit of the torque increment per cycle and axis, in normalised torque.
+          The output stays limited to [-1, 1].
       type: float
       default: 1.0
       min: 0.01
@@ -337,7 +339,7 @@ parameters:
         short: INDI sysid excitation break point
         long: >-
           Where the MC_INDI_INJ_AX excitation enters. The torque setpoint break
-          uses MC_INDI_INJ_AMP. The rate setpoint break (attitude loop) uses MC_INDI_INJ_RAMP and is zero unless an
+          uses MC_INDI_INJ_AMP. The rate setpoint break (attitude loop) uses MC_INDI_INJ_AMPR and is zero unless an
           attitude controlled mode is active, the rate setpoint is fresh and the INDI controller reports no fault. The
           sequence restarts when those conditions are met again or this parameter changes. Only used when MC_INDI_INJ_AX is not 0.
       type: enum
@@ -347,10 +349,12 @@ parameters:
       min: 0
       max: 1
       default: 0
-    MC_INDI_INJ_RAMP:
+    MC_INDI_INJ_AMPR:
       description:
         short: INDI sysid excitation amplitude on the rate setpoint
-        long: Amplitude of each sine component when MC_INDI_INJ_PT is 1. Only used when MC_INDI_INJ_AX is not 0.
+        long: >-
+          Amplitude of each sine component added to the rate setpoint when MC_INDI_INJ_PT is 1.
+          Only used when MC_INDI_INJ_AX is not 0.
       type: float
       default: 0.05
       min: 0

@@ -4,17 +4,17 @@
 
 uint64 timestamp # [us] Time since system start
 
-float32[3] a_c # [m/s^2] [@frame NED] Commanded acceleration, input of the INDI stage, including the system identification excitation
-float32[3] a_c_pre_inject # [m/s^2] [@frame NED] Commanded acceleration before the system identification excitation
-float32[3] inject # [m/s^2] [@frame NED] System identification excitation (MC_INDI_PINJ_*), 0 when off
-float32[3] a_f # [m/s^2] [@frame NED] Measured filtered acceleration
-float32[3] t_f # [m/s^2] [@frame NED] Measured filtered specific thrust vector
-float32[3] t_c # [m/s^2] [@frame NED] Commanded specific thrust vector after saturation
-float32[3] t_c_applied # [m/s^2] [@frame NED] Specific thrust vector sent to the attitude setpoint, includes the excitation when MC_INDI_PINJ_PT is 1
+float32[3] a_c # [m/s^2] [@frame NED] Commanded acceleration (a_c), input of the INDI stage, including the system identification excitation
+float32[3] a_c_pre_inject # [m/s^2] [@frame NED] Commanded acceleration (a_c) before the system identification excitation
+float32[3] inject # [m/s^2] [@frame NED] Injected system identification excitation added to the commanded acceleration (MC_INDI_PINJ_*), 0 when off
+float32[3] a_f # [m/s^2] [@frame NED] Filtered measured acceleration (a_f), low-pass filtered
+float32[3] t_f # [m/s^2] [@frame NED] Filtered measured specific thrust vector (t_f), thrust force per unit mass
+float32[3] t_c # [m/s^2] [@frame NED] Commanded specific thrust vector (t_c) after saturation, thrust force per unit mass
+float32[3] t_c_applied # [m/s^2] [@frame NED] Commanded specific thrust vector (t_c) sent to the attitude setpoint, includes the excitation when MC_INDI_PINJ_PT is 1
 float32[3] omega_ff # [rad/s] [@frame FRD] Body rate feedforward from the jerk reference
 float32[4] q_d # [-] Attitude setpoint quaternion from the commanded thrust vector and yaw, NaN while holding, logging only
 
-float32 mean_u # [-] [@invalid NaN] Mean normalised rotor thrust from the ESC rpm
+float32 mean_u # [-] [@invalid NaN] Mean normalised rotor thrust (mean of u_i = (omega_i / MC_INDI_W_MAX)^2) from the ESC rpm
 bool mean_u_valid # The measured mean thrust was used in this cycle (else the model fallback)
 float32 thrust # [-] Normalised thrust command, thrust_body = (0, 0, -thrust)
 
