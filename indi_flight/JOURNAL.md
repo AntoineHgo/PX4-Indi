@@ -2171,3 +2171,4 @@ A, and C = yes with a guard (owner, 2026-11-26).
   1e4-1e7), so the 5 deg/s RMS floor is what decides item 2 in practice.
 
 </details>
+- S243 (2026-11-26, cont.): G6 item 7 corner chain launched (240-299, ID_OK 0); it stopped itself after run 240 (pass/pass) when the Q34 key 1 commit changed a pinned scorer: orchestrator sequencing error, hashes re-pinned after key 2, chain resumed. Q34 "A and B" in both keys, independently, self-tests + break-checks; S230 pre-test re-score matches the owner on 6/6 events (results/g3_pretest_s230/Q34_KEY1.md, Q34_KEY2.md). Gate progress: G3 item 5 keys changed and scored (G8 evidence); G6 item 7 run 240 flown.
