@@ -32,7 +32,7 @@
  ****************************************************************************/
 
 /**
- * Multicopter position controller.
+ * Multicopter position controller with an acceleration INDI loop.
  */
 
 #pragma once
@@ -119,7 +119,7 @@ private:
 	static constexpr hrt_abstime kStageMaxAge{20_ms};
 
 	/** INDI loop after PositionControl::update. Modifies att_sp / local_pos_sp when active. */
-	void runIndiStage(float dt, hrt_abstime now, bool want_active, bool model_force, bool flying, float tilt_limit_rad, float ht,
+	void runIndiStage(float dt, hrt_abstime now, bool want_active, bool model_force, bool flying, float tilt_limit_rad, float hover_thrust,
 			  vehicle_local_position_setpoint_s &local_pos_sp, vehicle_attitude_setpoint_s &att_sp);
 
 	/** Arm/disarm edge: clear blend, held setpoint, stale latch and request a filter/differencing reset. */
@@ -132,7 +132,7 @@ private:
 	void trackDegraded(StageMode mode, hrt_abstime now);
 
 	IndiAccelControl _accel_control;
-	IndiPosInjection _injection; ///< bench loop-break excitation of the commanded acceleration (MC_INDI_PINJ_*), off by default
+	IndiPosInjection _injection; ///< system identification excitation of the commanded acceleration (MC_INDI_PINJ_*), off by default
 	uORB::Subscription _attitude_sub{ORB_ID(vehicle_attitude)};
 	uORB::SubscriptionCallbackWorkItem _acceleration_sub{this, ORB_ID(vehicle_acceleration)}; ///< also schedules the module: every sample feeds the native-rate force filter
 	uORB::Subscription _esc_status_sub{ORB_ID(esc_status)};
@@ -143,14 +143,14 @@ private:
 	float _mean_rotor_thrust{NAN};
 	bool _mean_rotor_thrust_valid{false};
 	hrt_abstime _acc_sample_time{0};
-	hrt_abstime _q_time{0}, _acc_time{0}, _esc_time{0}, _thr_time{0};
-	float _coll_meas{NAN};		///< latest vehicle_thrust_setpoint collective
+	hrt_abstime _attitude_time{0}, _accel_time{0}, _esc_status_time{0}, _thrust_sp_time{0};
+	float _collective_command{NAN};	///< latest vehicle_thrust_setpoint collective (commanded)
 	hrt_abstime _acc_fresh_since{0};	///< start of the current continuous fresh-acceleration run
 	bool _acc_stale_latched{false};	///< hysteresis: modelled acceleration until fresh for kAccRecoverTime
 	static constexpr hrt_abstime kAccRecoverTime{20_ms};
 	float _last_thrust{0.f};	///< last published collective
-	float _hte{NAN};
-	bool _hte_valid{false};
+	float _hover_thrust_estimate{NAN};
+	bool _hover_thrust_estimate_valid{false};
 	bool _indi_active{false};
 	float _held_q_d[4] {};		///< hold mode: last published attitude setpoint
 	float _held_thrust_body[3] {};
@@ -162,11 +162,11 @@ private:
 	bool _degraded_warned{false};
 	int _stage_reason{-1};		///< last reported degraded-condition bitmask
 	int _stage_reports{0};		///< number of condition reports printed (capped)
-	float _filter_hz{0.f};
+	float _filter_rate_hz{0.f};
 	int _rate_dev_count{0};	///< consecutive cycles with a rate deviation > 20 % (filter re-config hysteresis)
 	bool _alloc_saturated{false};	///< latest control_allocator_status reports saturation
 	hrt_abstime _alloc_time{0};
-	float _filter_cut{-1.f};
+	float _filter_cutoff_hz{-1.f};
 	param_t _w_max_handle{PARAM_INVALID};
 	float _rotor_w_max{0.f};
 
@@ -220,9 +220,9 @@ private:
 
 	DEFINE_PARAMETERS(
 		// Position Control
-		(ParamFloat<px4::params::MC_INDI_XY_P>)     _param_indi_xy_p,
+		(ParamFloat<px4::params::MC_INDI_XY_P>)     _param_mc_indi_xy_p,
 		(ParamFloat<px4::params::MPC_Z_P>)          _param_mpc_z_p,
-		(ParamFloat<px4::params::MC_INDI_XY_VP>)    _param_indi_xy_vp,
+		(ParamFloat<px4::params::MC_INDI_XY_VP>)    _param_mc_indi_xy_vp,
 		(ParamFloat<px4::params::MPC_XY_VEL_I_ACC>) _param_mpc_xy_vel_i_acc,
 		(ParamFloat<px4::params::MPC_XY_VEL_D_ACC>) _param_mpc_xy_vel_d_acc,
 		(ParamFloat<px4::params::MPC_Z_VEL_P_ACC>)  _param_mpc_z_vel_p_acc,
@@ -277,17 +277,17 @@ private:
 		(ParamFloat<px4::params::MPC_YAWRAUTO_MAX>) _param_mpc_yawrauto_max,
 		(ParamFloat<px4::params::MPC_YAWRAUTO_ACC>) _param_mpc_yawrauto_acc,
 
-		(ParamFloat<px4::params::MC_INDI_POS_LPF>)  _param_indi_lpf,
-		(ParamInt<px4::params::MC_INDI_POS_DLY>)    _param_indi_dly,
-		(ParamFloat<px4::params::MC_INDI_POS_TB>)   _param_indi_tb,
-		(ParamInt<px4::params::MC_INDI_PINJ_AX>)    _param_indi_pinj_ax,
-		(ParamFloat<px4::params::MC_INDI_PINJ_AMP>) _param_indi_pinj_amp,
-		(ParamFloat<px4::params::MC_INDI_PINJ_TP>)  _param_indi_pinj_tp,
-		(ParamFloat<px4::params::MC_INDI_PINJ_FLO>) _param_indi_pinj_flo,
-		(ParamFloat<px4::params::MC_INDI_PINJ_FHI>) _param_indi_pinj_fhi,
-		(ParamInt<px4::params::MC_INDI_PINJ_NP>)    _param_indi_pinj_np,
-		(ParamInt<px4::params::MC_INDI_PINJ_PT>)    _param_indi_pinj_pt,
-		(ParamFloat<px4::params::MC_INDI_PINJ_DLY>) _param_indi_pinj_dly
+		(ParamFloat<px4::params::MC_INDI_POS_LPF>)  _param_mc_indi_lpf,
+		(ParamInt<px4::params::MC_INDI_POS_DLY>)    _param_mc_indi_dly,
+		(ParamFloat<px4::params::MC_INDI_POS_TB>)   _param_mc_indi_tb,
+		(ParamInt<px4::params::MC_INDI_PINJ_AX>)    _param_mc_indi_pinj_ax,
+		(ParamFloat<px4::params::MC_INDI_PINJ_AMP>) _param_mc_indi_pinj_amp,
+		(ParamFloat<px4::params::MC_INDI_PINJ_TP>)  _param_mc_indi_pinj_tp,
+		(ParamFloat<px4::params::MC_INDI_PINJ_FLO>) _param_mc_indi_pinj_flo,
+		(ParamFloat<px4::params::MC_INDI_PINJ_FHI>) _param_mc_indi_pinj_fhi,
+		(ParamInt<px4::params::MC_INDI_PINJ_NP>)    _param_mc_indi_pinj_np,
+		(ParamInt<px4::params::MC_INDI_PINJ_PT>)    _param_mc_indi_pinj_pt,
+		(ParamFloat<px4::params::MC_INDI_PINJ_DLY>) _param_mc_indi_pinj_dly
 	);
 
 	math::WelfordMean<float> _sample_interval_s{};
@@ -328,7 +328,7 @@ private:
 	bool _indi_jerk_reset_pending{false}; ///< estimator reset: clear the jerk history only
 
 	// Feed-forward acceleration of the trajectory setpoint of this cycle (source of the jerk feed-forward), and the
-	// rotor-speed feed-forward the INDI loop produced (valid only on an active INDI cycle), published every cycle
+	// body rate feed-forward the INDI loop produced (valid only on an active INDI cycle), published every cycle
 	matrix::Vector3f _accel_feedforward_mps2{NAN, NAN, NAN};
 	matrix::Vector3f _omega_ff_out{};
 	bool _omega_ff_valid{false};

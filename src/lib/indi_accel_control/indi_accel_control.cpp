@@ -77,7 +77,7 @@ void IndiAccelControl::setFilter(float sample_freq_hz, float cutoff_hz)
 {
 	_force_lowpass.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
 	_lpf_u.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
-	_lpf_um.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
+	_lpf_model_u.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
 	_lpf_j.set_cutoff_frequency(sample_freq_hz, cutoff_hz);
 
 	// set_cutoff_frequency() zeroes the delay elements (output would fall to 0 and take the filter time to
@@ -85,21 +85,21 @@ void IndiAccelControl::setFilter(float sample_freq_hz, float cutoff_hz)
 	_force_lowpass.reset(_last_f_b);
 
 	// native-rate force filter: new cut-off, keeps its own sample rate (configured on the first sample)
-	_native_cut = cutoff_hz;
+	_force_native_cutoff_hz = cutoff_hz;
 
-	if (_native_hz > 0.f) {
-		_force_lowpass_native.set_cutoff_frequency(_native_hz, _native_cut);
-		_force_lowpass_native.reset(_native_f);
+	if (_force_native_rate_hz > 0.f) {
+		_force_lowpass_native.set_cutoff_frequency(_force_native_rate_hz, _force_native_cutoff_hz);
+		_force_lowpass_native.reset(_force_native_last);
 	}
 
 	_lpf_u.reset(_last_u);
-	_lpf_um.reset(_last_um);
+	_lpf_model_u.reset(_last_um);
 	_lpf_j.reset(_jerk_difference_filtered);
 }
 
 void IndiAccelControl::sampleSpecificForce(const Vector3f &f_b, float dt_s)
 {
-	// a_f is built from _native_f only: reject anything that would poison the filter state
+	// a_f is built from _force_native_last only: reject anything that would poison the filter state
 	if (!allFinite(f_b) || !PX4_ISFINITE(dt_s) || dt_s <= 0.f) {
 		return;
 	}
@@ -107,22 +107,23 @@ void IndiAccelControl::sampleSpecificForce(const Vector3f &f_b, float dt_s)
 	// same hysteresis as the control-rate check: a rate deviation of more than 20 % must persist for kNativeRateDevSamples samples
 	constexpr int kNativeRateDevSamples = 16;
 	const float rate = roundf(1.f / dt_s);
-	const bool rate_dev = (_native_hz > 0.f) && (fabsf(rate - _native_hz) > 0.2f * _native_hz);
-	_native_dev_count = rate_dev ? math::min(_native_dev_count + 1, kNativeRateDevSamples) : 0;
+	const bool rate_dev = (_force_native_rate_hz > 0.f) && (fabsf(rate - _force_native_rate_hz) > 0.2f * _force_native_rate_hz);
+	_force_native_rate_dev_count = rate_dev ? math::min(_force_native_rate_dev_count + 1, kNativeRateDevSamples) : 0;
 
-	if (rate >= 5.f && (_native_hz <= 0.f || _native_dev_count >= kNativeRateDevSamples)) {
+	if (rate >= 5.f && (_force_native_rate_hz <= 0.f || _force_native_rate_dev_count >= kNativeRateDevSamples)) {
 		const bool first = !_native_fed;
-		_native_hz = rate;
-		_native_dev_count = 0;
-		_force_lowpass_native.set_cutoff_frequency(_native_hz, _native_cut); // zeroes the delay elements: re-seed, never from zero
-		_force_lowpass_native.reset(first ? f_b : _native_f);
+		_force_native_rate_hz = rate;
+		_force_native_rate_dev_count = 0;
+		// zeroes the delay elements: re-seed, never from zero
+		_force_lowpass_native.set_cutoff_frequency(_force_native_rate_hz, _force_native_cutoff_hz);
+		_force_lowpass_native.reset(first ? f_b : _force_native_last);
 	}
 
 	if (!_native_fed) {
 		_force_lowpass_native.reset(f_b); // start without a step
 	}
 
-	_native_f = _force_lowpass_native.apply(f_b);
+	_force_native_last = _force_lowpass_native.apply(f_b);
 	_native_fed = true;
 }
 
@@ -137,10 +138,10 @@ void IndiAccelControl::setThrustModel(float g_t, float k_cmd)
 	}
 }
 
-void IndiAccelControl::setBlendTimeConstant(float tb_s)
+void IndiAccelControl::setBlendTimeConstant(float blend_tc_s)
 {
-	if (PX4_ISFINITE(tb_s) && (tb_s > FLT_EPSILON)) {
-		_blend_time_constant_s = tb_s;
+	if (PX4_ISFINITE(blend_tc_s) && (blend_tc_s > FLT_EPSILON)) {
+		_blend_time_constant_s = blend_tc_s;
 
 	} else {
 		_blend_time_constant_s = 0.f;
@@ -162,17 +163,17 @@ void IndiAccelControl::reset(const Vector3f &f_b, float coll_cmd, float mean_u)
 
 	_force_lowpass.reset(f);
 	_force_lowpass_native.reset(f);
-	_native_f = f;
+	_force_native_last = f;
 	_prev_f_b_valid = true;
 	_lpf_u.reset(u);
-	_lpf_um.reset(u_model);
+	_lpf_model_u.reset(u_model);
 	_last_f_b = f;
 	_last_u = u;
 	_last_um = u_model;
 
 	for (int i = 0; i <= kMaxDelaySamples; i++) {
-		_u_buf[i] = u;
-		_um_buf[i] = u_model;
+		_mean_u_delay_buf[i] = u;
+		_model_u_delay_buf[i] = u_model;
 	}
 
 	_delay_buffer_index = 0;
@@ -189,7 +190,7 @@ void IndiAccelControl::resetJerkHistory()
 	_lpf_j.reset(_jerk_difference);
 
 	for (int i = 0; i < 3; i++) {
-		_t_a_ff_prev[i] = 0.f;
+		_a_ff_prev_time[i] = 0.f;
 		_a_ff_prev_valid[i] = false;
 	}
 }
@@ -208,19 +209,19 @@ void IndiAccelControl::updateJerkDifference(const Vector3f &a_ff, const bool a_v
 
 		if (!_a_ff_prev_valid[i]) {
 			_a_ff_prev(i) = a_ff(i);
-			_t_a_ff_prev[i] = _time;
+			_a_ff_prev_time[i] = _time;
 			_a_ff_prev_valid[i] = true;
 			_jerk_difference(i) = 0.f;
 			continue;
 		}
 
 		if (fabsf(a_ff(i) - _a_ff_prev(i)) > 0.f) {
-			const float dt_change = math::max(_time - _t_a_ff_prev[i], kMinDt);
+			const float dt_change = math::max(_time - _a_ff_prev_time[i], kMinDt);
 			_jerk_difference(i) = math::constrain((a_ff(i) - _a_ff_prev(i)) / dt_change, -kMaxJerk, kMaxJerk);
 			_a_ff_prev(i) = a_ff(i);
-			_t_a_ff_prev[i] = _time;
+			_a_ff_prev_time[i] = _time;
 
-		} else if ((_time - _t_a_ff_prev[i]) > kJerkHold) {
+		} else if ((_time - _a_ff_prev_time[i]) > kJerkHold) {
 			// unchanged for longer than the hold: the stream is constant (or has no jerk), not a step in progress
 			_jerk_difference(i) = 0.f;
 		}
@@ -369,18 +370,18 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 	// invalid telemetry: feed u_model - b so that u_meas_f + b stays continuous (no step at loss or recovery)
 	const float u_in = u_valid ? in.mean_u : (u_model - _blend_offset);
 	_delay_buffer_index = (_delay_buffer_index + 1) % (kMaxDelaySamples + 1);
-	_u_buf[_delay_buffer_index] = u_in;
-	_um_buf[_delay_buffer_index] = u_model;
-	const int i_d = (_delay_buffer_index + kMaxDelaySamples + 1 - _delay) % (kMaxDelaySamples + 1);
-	const float u_meas_f = _lpf_u.apply(_u_buf[i_d]);
-	const float u_model_f = _lpf_um.apply(_um_buf[i_d]);
+	_mean_u_delay_buf[_delay_buffer_index] = u_in;
+	_model_u_delay_buf[_delay_buffer_index] = u_model;
+	const int i_d = (_delay_buffer_index + kMaxDelaySamples + 1 - _delay_samples) % (kMaxDelaySamples + 1);
+	const float u_meas_f = _lpf_u.apply(_mean_u_delay_buf[i_d]);
+	const float u_model_f = _lpf_model_u.apply(_model_u_delay_buf[i_d]);
 	_last_u = u_meas_f;
 	_last_um = u_model_f;
 
-	// Measured acceleration. Invalid f_b: the body specific force of the SAME delayed actuator signal that
-	// feeds t_f below (_u_buf[i_d] plus the held blend, scale _thrust_gain_mps2, body (0,0,-_thrust_gain_mps2*u)), through the same f_b filter.
+	// Measured acceleration. Invalid f_b: the body specific force of the same delayed actuator signal that
+	// feeds t_f below (_mean_u_delay_buf[i_d] plus the held blend, scale _thrust_gain_mps2, body (0,0,-_thrust_gain_mps2*u)), through the same f_b filter.
 	// Measured and modelled paths are then identical signals through identical filters and cancel: t_c = a_c - g.
-	const float u_sub = _u_buf[i_d] + ((_blend_time_constant_s > 0.f) ? _blend_offset : 0.f);
+	const float u_sub = _mean_u_delay_buf[i_d] + ((_blend_time_constant_s > 0.f) ? _blend_offset : 0.f);
 	const Vector3f f_in = in.f_b_valid ? in.f_b : Vector3f(0.f, 0.f, -_thrust_gain_mps2 * u_sub);
 	Vector3f f_bf;
 
@@ -388,7 +389,7 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 	// continue from the force used last cycle, then converge to the measured value at the filter bandwidth
 	if (in.f_b_valid && !_prev_f_b_valid && _native_fed) {
 		_force_lowpass_native.reset(_last_f_b);
-		_native_f = _last_f_b;
+		_force_native_last = _last_f_b;
 	}
 
 	_prev_f_b_valid = in.f_b_valid;
@@ -396,7 +397,7 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 	if (in.f_b_valid && _native_fed) {
 		// filtered at the force sample rate by sampleSpecificForce(); keep the control-rate filter on the same
 		// value so a switch to the modelled path (invalid f_b) starts without a step
-		f_bf = _native_f;
+		f_bf = _force_native_last;
 		_force_lowpass.reset(f_bf);
 
 	} else {

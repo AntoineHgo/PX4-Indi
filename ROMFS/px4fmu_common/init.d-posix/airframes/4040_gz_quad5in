@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# @name Gazebo quad5in (5-inch reference airframe)
+# @name Gazebo quad5in (5-inch quadcopter)
 #
 # @type Quadrotor
 #
-# Model: quad5in, served through PX4_GZ_MODELS
+# Model: quad5in (not in PX4-gazebo-models, set PX4_GZ_MODELS)
 
 . ${R}etc/init.d/rc.mc_defaults
 
@@ -70,7 +70,7 @@ param set-default EKF2_BCOEF_X 0.0
 param set-default EKF2_BCOEF_Y 0.0
 param set-default EKF2_MCOEF 0.49
 
-# stock PID, scaled for the small fast quad (rationale in ref_airframe_model.md)
+# stock PID rate and attitude gains scaled for the small, fast quadcopter
 param set-default MC_ROLLRATE_P 0.03
 param set-default MC_ROLLRATE_I 0.06
 param set-default MC_ROLLRATE_D 0.0006

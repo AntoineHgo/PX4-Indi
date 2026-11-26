@@ -34,9 +34,9 @@
 /**
  * @file IndiInjectionStep.hpp
  *
- * The part of one INDI rate cycle that carries the bench loop-break excitation: where d enters (torque setpoint or
+ * The part of one INDI rate cycle that carries the system identification excitation: where d enters (torque setpoint or
  * rate setpoint) and which setpoint the INDI law receives. Kept out of McIndiRateControl so that a unit test runs
- * the same code path as the module (the call-site tests of design note attitude_break_s86.md, section 8).
+ * the same code path as the module.
  */
 
 #pragma once
@@ -49,7 +49,7 @@
 #include "IndiInjection.hpp"
 
 struct IndiInjectionStepIn {
-	int point{0};			///< MC_INDI_INJ_PT: 0 torque setpoint (u = c + d), 1 rate setpoint (x = y + d)
+	int point{0};			///< MC_INDI_INJ_PT: 0 torque setpoint, 1 rate setpoint (excitation added to the controller output, resp. to the rate setpoint)
 	bool armed{false};
 	bool landed{false};
 	bool maybe_landed{false};
@@ -68,8 +68,8 @@ struct IndiInjectionStepOut {
 };
 
 /**
- * Run the INDI law with the bench excitation. With MC_INDI_INJ_AX off (injection.axis() < 0) the law receives
- * rates_sp itself and nothing else is computed. With PT 1 the law receives x = y + d (d never touches rates_sp, the
+ * Run the INDI law with the excitation. With MC_INDI_INJ_AX off (injection.axis() < 0) the law receives
+ * rates_sp itself and nothing else is computed. With PT 1 the law receives the rate setpoint plus the excitation (rates_sp itself is not changed, the
  * torque is not injected). d is 0 while !rate_sp_break_allowed or while the law reports a fault from the last cycle.
  */
 void runIndiInjectionStep(IndiRateControl &indi, IndiInjection &injection, const IndiInjectionStepIn &in,

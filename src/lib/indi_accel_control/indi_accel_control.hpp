@@ -148,7 +148,7 @@ public:
 	void setFilter(float sample_freq_hz, float cutoff_hz);
 
 	/**
-	 * Feed EVERY specific-force sample (native rate, e.g. vehicle_acceleration ~267 Hz) through a low-pass of the same
+	 * Feed every specific-force sample (native rate, above the control rate) through a low-pass of the same
 	 * cut-off as setFilter() but configured at the sample rate of the force itself (a vibration line above the
 	 * control rate must be removed before decimation, else it folds into the control band).
 	 * update() then uses this output instead of filtering the decimated in.f_b. Non finite samples and dt <= 0 are ignored.
@@ -163,15 +163,15 @@ public:
 	void setThrustModel(float g_t, float k_cmd);
 
 	/// Delay of the mean u sample in cycles, clamped to [0, kMaxDelaySamples]. Applied at once.
-	void setMeasurementDelay(int samples) { _delay = math::constrain(samples, 0, kMaxDelaySamples); }
-	int measurementDelay() const { return _delay; }
+	void setMeasurementDelay(int samples) { _delay_samples = math::constrain(samples, 0, kMaxDelaySamples); }
+	int measurementDelay() const { return _delay_samples; }
 
 	/**
 	 * Collective blend: u_f = u_meas + b, b = LP_tb(u_model - u_meas), so the collective is measured at
 	 * high frequency and modelled (previous clamped command) at DC. tb <= 0 or non finite disables it and sets
 	 * b = 0. b is also zero at construction; reset() leaves it alone.
 	 */
-	void setBlendTimeConstant(float tb_s);
+	void setBlendTimeConstant(float blend_tc_s);
 	float blendTimeConstant() const { return _blend_time_constant_s; }
 	float blend() const { return _blend_offset; }
 
@@ -182,7 +182,7 @@ public:
 	void resetBlend() { _blend_offset = 0.f; }
 
 	/**
-	 * Bench loop break at the controller output: the vehicle receives a thrust-acceleration magnitude c_applied (m/s^2)
+	 * System identification loop break at the controller output: the vehicle receives a thrust-acceleration magnitude c_applied (m/s^2)
 	 * other than the one update() returned. Sets the previous thrust command to the clamped normalised value of it
 	 * (same conversion and limits as update()), so the blend model path follows what the actuator was given.
 	 * Non finite values are ignored.
@@ -195,7 +195,7 @@ public:
 	 * Initialise the filters and the delay buffers (no increment step) and forget the jerk difference history.
 	 * @param coll_cmd commanded collective (thrust command units): model path u_model = coll_cmd * k_cmd and the
 	 *        previous thrust command are set from it.
-	 * @param mean_u MEASURED mean rotor thrust, or NaN if not available: measured path starts at it, else at the
+	 * @param mean_u measured mean rotor thrust, or NaN if not available: measured path starts at it, else at the
 	 *        steady relation u_model - b (then u_meas + b = u_model, no collective step; with mean_u given the first
 	 *        update has a step equal to mean_u + b - u_model).
 	 * Non finite coll_cmd or f_b are replaced by hover values.
@@ -242,25 +242,25 @@ private:
 	float _thr_max{1.f};
 	float _thrust_gain_mps2{19.6f};
 	float _mean_thrust_per_command{1.f};
-	int _delay{0};
+	int _delay_samples{0};
 	bool _jerk_ff{true};
 
 	// state
 	math::LowPassFilter2p<matrix::Vector3f> _force_lowpass{};
 	// native-rate specific-force filter (sampleSpecificForce): same cut-off, own sample rate
 	math::LowPassFilter2p<matrix::Vector3f> _force_lowpass_native{};
-	matrix::Vector3f _native_f{0.f, 0.f, -kGravity};
-	float _native_cut{0.f};
-	float _native_hz{0.f};
-	int _native_dev_count{0};
+	matrix::Vector3f _force_native_last{0.f, 0.f, -kGravity};
+	float _force_native_cutoff_hz{0.f};
+	float _force_native_rate_hz{0.f};
+	int _force_native_rate_dev_count{0};
 	bool _native_fed{false};
 	bool _prev_f_b_valid{true}; ///< f_b_valid of the previous update(): edge detection for the native filter re-seed
 	math::LowPassFilter2p<float> _lpf_u{};
-	float _u_buf[kMaxDelaySamples + 1] {};
+	float _mean_u_delay_buf[kMaxDelaySamples + 1] {};
 	int _delay_buffer_index{0};
 	// model path of the collective blend: previous clamped command through the same delay and filter
-	math::LowPassFilter2p<float> _lpf_um{};
-	float _um_buf[kMaxDelaySamples + 1] {};
+	math::LowPassFilter2p<float> _lpf_model_u{};
+	float _model_u_delay_buf[kMaxDelaySamples + 1] {};
 	float _blend_time_constant_s{0.f};
 	float _blend_offset{0.f};
 	bool _blend_hold{false};
@@ -274,7 +274,7 @@ private:
 	// jerk backward difference state
 	float _time{0.f};
 	matrix::Vector3f _a_ff_prev{};
-	float _t_a_ff_prev[3] {};
+	float _a_ff_prev_time[3] {};
 	bool _a_ff_prev_valid[3] {};
 	matrix::Vector3f _jerk_difference{};
 	math::LowPassFilter2p<matrix::Vector3f> _lpf_j{};

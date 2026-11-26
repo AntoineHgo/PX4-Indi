@@ -81,7 +81,7 @@ void McIndiPosControl::pollStageInputs()
 
 	if (_attitude_sub.update(&att)) {
 		_q = matrix::Quatf(att.q);
-		_q_time = att.timestamp;
+		_attitude_time = att.timestamp;
 	}
 
 	pollAcceleration();
@@ -91,7 +91,7 @@ void McIndiPosControl::pollAcceleration()
 {
 	vehicle_acceleration_s acc;
 
-	// vehicle_acceleration has queue length 1 and is published at ~267 Hz: every sample is drained here, on every
+	// vehicle_acceleration has queue length 1 and is published at a rate above the control rate: every sample is drained here, on every
 	// wakeup (the module is also scheduled on vehicle_acceleration), so each sample reaches the native-rate force filter
 	// before the INDI loop decimates
 	if (_acceleration_sub.update(&acc)) {
@@ -105,12 +105,12 @@ void McIndiPosControl::pollAcceleration()
 
 		_acc_sample_time = sample_time;
 		_specific_force_body_mps2 = specific_force;
-		_acc_time = acc.timestamp;
+		_accel_time = acc.timestamp;
 	}
 }
 
 void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_active, bool model_force, bool flying, float tilt_limit_rad,
-				    float ht,
+				    float hover_thrust,
 				    vehicle_local_position_setpoint_s &local_pos_sp, vehicle_attitude_setpoint_s &att_sp)
 {
 	constexpr hrt_abstime kMaxAge = kStageMaxAge;
@@ -126,8 +126,8 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 	vehicle_thrust_setpoint_s thr;
 
 	if (_thrust_setpoint_sub.update(&thr)) {
-		_coll_meas = -thr.xyz[2];
-		_thr_time = thr.timestamp;
+		_collective_command = -thr.xyz[2];
+		_thrust_sp_time = thr.timestamp;
 	}
 
 	esc_status_s esc_status;
@@ -162,7 +162,7 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 
 		_mean_rotor_thrust_valid = ok && (seen == 0xFu);
 		_mean_rotor_thrust = _mean_rotor_thrust_valid ? (rotor_thrust_sum / 4.f) : NAN;
-		_esc_time = (esc_status.timestamp != 0) ? esc_status.timestamp : now;
+		_esc_status_time = (esc_status.timestamp != 0) ? esc_status.timestamp : now;
 	}
 
 	// the library sees the true interval (lower-clamped, up to kStageDtMax); a longer interval holds (rate < 5 Hz).
@@ -170,20 +170,20 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 	const bool interval_ok = stageIntervalOk(raw_dt);
 	const float dt = stageDt(raw_dt);
 	const float rate = interval_ok ? roundf(1.f / dt) : 0.f;
-	const float cutoff_hz = _param_indi_lpf.get();
+	const float cutoff_hz = _param_mc_indi_lpf.get();
 
 	// hysteresis: a rate deviation of more than 20 % must persist for kRateDevCycles cycles (a single late
 	// sample must not re-configure the filters, and the return from it must not either); after a Hold a deviated rate re-configures at once
 	constexpr int kRateDevCycles = 5;
-	const bool rate_dev = (rate >= 5.f) && (fabsf(rate - _filter_hz) > 0.2f * _filter_hz);
+	const bool rate_dev = (rate >= 5.f) && (fabsf(rate - _filter_rate_hz) > 0.2f * _filter_rate_hz);
 	_rate_dev_count = rate_dev ? math::min(_rate_dev_count + 1, kRateDevCycles) : 0;
 
-	if (rate >= 5.f && (_filter_hz <= 0.f || _rate_dev_count >= kRateDevCycles || (_stage_was_hold && rate_dev)
-			    || !isEqualF(cutoff_hz, _filter_cut))) {
-		_filter_hz = rate;
-		_filter_cut = cutoff_hz;
+	if (rate >= 5.f && (_filter_rate_hz <= 0.f || _rate_dev_count >= kRateDevCycles || (_stage_was_hold && rate_dev)
+			    || !isEqualF(cutoff_hz, _filter_cutoff_hz))) {
+		_filter_rate_hz = rate;
+		_filter_cutoff_hz = cutoff_hz;
 		_rate_dev_count = 0;
-		_accel_control.setFilter(_filter_hz, cutoff_hz); // re-seeds the filters from their last output (no zero state)
+		_accel_control.setFilter(_filter_rate_hz, cutoff_hz); // re-seeds the filters from their last output (no zero state)
 	}
 
 	// control allocator saturation (holds the collective blend), fresh reports only
@@ -200,17 +200,17 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 		_alloc_time = (alloc.timestamp != 0) ? alloc.timestamp : now;
 	}
 
-	const float accel_per_thrust_mps2 = IndiAccelControl::kGravity / math::max(ht, 0.05f);
+	const float accel_per_thrust_mps2 = IndiAccelControl::kGravity / math::max(hover_thrust, 0.05f);
 	_accel_control.setThrustModel(accel_per_thrust_mps2, 1.f);
 	_accel_control.setLimits(_param_mpc_xy_vel_max.get(), _param_mpc_z_vel_max_up.get(), _param_mpc_z_vel_max_dn.get(),
 				 tilt_limit_rad, flying ? _param_mpc_thr_min.get() : 0.f, _param_mpc_thr_max.get()); // as stock: ramp from zero
 
 	// a sample newer than this cycle's 'now' (published after it was taken) has age 0, not stale
 	auto age = [now](hrt_abstime t) { return (now > t) ? (now - t) : hrt_abstime{0}; };
-	const bool fresh_att = _q_time != 0 && age(_q_time) <= kMaxAge;
-	const bool fresh_acc = _acc_time != 0 && age(_acc_time) <= kMaxAge;
-	const bool fresh_thr = _thr_time != 0 && age(_thr_time) <= kMaxAge;
-	const bool fresh_esc = _mean_rotor_thrust_valid && age(_esc_time) <= kEscMaxAge;
+	const bool fresh_att = _attitude_time != 0 && age(_attitude_time) <= kMaxAge;
+	const bool fresh_acc = _accel_time != 0 && age(_accel_time) <= kMaxAge;
+	const bool fresh_thr = _thrust_sp_time != 0 && age(_thrust_sp_time) <= kMaxAge;
+	const bool fresh_esc = _mean_rotor_thrust_valid && age(_esc_status_time) <= kEscMaxAge;
 	// commanded acceleration of the stock position loop, the input of the INDI loop
 	const Vector3f accel_command_pre_inject(local_pos_sp.acceleration[0], local_pos_sp.acceleration[1], local_pos_sp.acceleration[2]);
 
@@ -241,7 +241,7 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 	if (_pos_entry_pending) {
 		_pos_entry_pending = false;
 		_indi_reset_pending = true;
-		const float hold_collective_raw = fresh_thr ? _coll_meas : _last_thrust;
+		const float hold_collective_raw = fresh_thr ? _collective_command : _last_thrust;
 
 		if (att_ok && PX4_ISFINITE(hold_collective_raw)) {
 			const float hold_collective = math::max(hold_collective_raw, 0.f);
@@ -279,7 +279,7 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 	_stage_reason = reason;
 
 	if (can_run) {
-		// bench loop-break excitation d on one NED axis, not computed (u == c) when MC_INDI_PINJ_AX is 0
+		// system identification excitation d on one NED axis, not computed (u == c) when MC_INDI_PINJ_AX is 0
 		Vector3f inject{};
 		const int inject_axis = _injection.axis();
 
@@ -287,16 +287,16 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 			inject(inject_axis) = _injection.update(now, _vehicle_control_mode.flag_armed, _vehicle_land_detected.landed);
 		}
 
-		// u = c + d replaces c in the whole loop: thrust vector, previous thrust command, blend model path and jerk
-		// difference are all computed from u, so every feedback path closes through u
-		// MC_INDI_PINJ_PT = 1 moves d to the loop output instead (acceleration-loop break): reference = c
-		const bool inject_output = (_param_indi_pinj_pt.get() == 1) && (inject_axis >= 0);
+		// the commanded acceleration plus the excitation is used in the whole loop: thrust vector, previous thrust
+		// command, blend model path and jerk difference, so every feedback path sees what was applied
+		// MC_INDI_PINJ_PT = 1 moves the excitation to the loop output instead: reference = commanded acceleration
+		const bool inject_output = (_param_mc_indi_pinj_pt.get() == 1) && (inject_axis >= 0);
 		const Vector3f accel_reference = inject_output ? accel_command_pre_inject : (accel_command_pre_inject + inject);
 
 		if (_indi_reset_pending) {
 			// restart (position-control entry, Hold -> run, state reset): differencing restarts from the current state
 			// (reset() keeps the blend, so no collective step)
-			const float collective_raw = fresh_thr ? _coll_meas : _last_thrust;
+			const float collective_raw = fresh_thr ? _collective_command : _last_thrust;
 			const float collective = PX4_ISFINITE(collective_raw) ? math::max(collective_raw, 0.f) : 0.f;
 			_accel_control.reset((fresh_acc && !model_force) ? _specific_force_body_mps2 : Vector3f(0.f, 0.f, -collective * accel_per_thrust_mps2),
 					     collective, fresh_esc ? _mean_rotor_thrust : NAN);
@@ -305,8 +305,7 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 
 		} else if (_indi_jerk_reset_pending) {
 			// estimator reset while the loop runs: forget the jerk difference history so that a setpoint step from the reset
-			// is not differentiated. The measured force/collective filters are frame independent and kept (re-seeding them with
-			// one raw sample gave a 1.9 deg tilt spike at a yaw reset)
+			// is not differentiated. The measured force and collective filters are frame independent and kept.
 			_accel_control.resetJerkHistory();
 			_indi_jerk_reset_pending = false;
 		}
@@ -407,7 +406,7 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 			_last_thrust = -_held_thrust_body[2];
 
 		} else {
-			const Vector3f thr_vec(0.f, 0.f, -holdFallbackThrust(flying, ht));
+			const Vector3f thr_vec(0.f, 0.f, -holdFallbackThrust(flying, hover_thrust));
 			const float yaw_hold = PX4_ISFINITE(yaw_sp) ? yaw_sp : (att_ok ? matrix::Eulerf(_q).psi() : 0.f);
 			ControlMath::thrustToAttitude(thr_vec, yaw_hold, att_sp);
 			thr_vec.copyTo(local_pos_sp.thrust);
@@ -436,9 +435,9 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 	// reset() below keeps the blend; model path from the commanded collective, measured path from the ESC mean u
 	_accel_control.setBlendHold(true);
 	const float stock_collective = -att_sp.thrust_body[2];
-	const float collective_raw = fresh_thr ? _coll_meas : (PX4_ISFINITE(stock_collective) ? stock_collective : _last_thrust);
+	const float collective_raw = fresh_thr ? _collective_command : (PX4_ISFINITE(stock_collective) ? stock_collective : _last_thrust);
 	const float collective = PX4_ISFINITE(collective_raw) ? math::max(collective_raw, 0.f) : 0.f;
-	// c is the COMMANDED collective (not measured): the measured mean u is passed separately (NaN: use the model path)
+	// c is the commanded collective (not measured): the measured mean u is passed separately (NaN: use the model path)
 	_accel_control.reset(fresh_acc ? _specific_force_body_mps2 : Vector3f(0.f, 0.f, -collective * accel_per_thrust_mps2), collective,
 			     fresh_esc ? _mean_rotor_thrust : NAN);
 	_last_thrust = PX4_ISFINITE(stock_collective) ? stock_collective : collective;
@@ -614,17 +613,17 @@ void McIndiPosControl::parameters_update(bool force)
 					    "Land tilt limit has been constrained by maximum tilt", _param_mpc_tiltmax_air.get());
 		}
 
-		_control.setPositionGains(Vector3f(_param_indi_xy_p.get(), _param_indi_xy_p.get(), _param_mpc_z_p.get()));
+		_control.setPositionGains(Vector3f(_param_mc_indi_xy_p.get(), _param_mc_indi_xy_p.get(), _param_mpc_z_p.get()));
 		_control.setVelocityGains(
-			Vector3f(_param_indi_xy_vp.get(), _param_indi_xy_vp.get(), _param_mpc_z_vel_p_acc.get()),
+			Vector3f(_param_mc_indi_xy_vp.get(), _param_mc_indi_xy_vp.get(), _param_mpc_z_vel_p_acc.get()),
 			Vector3f(_param_mpc_xy_vel_i_acc.get(), _param_mpc_xy_vel_i_acc.get(), _param_mpc_z_vel_i_acc.get()),
 			Vector3f(_param_mpc_xy_vel_d_acc.get(), _param_mpc_xy_vel_d_acc.get(), _param_mpc_z_vel_d_acc.get()));
 		_control.setHorizontalThrustMargin(_param_mpc_thr_xy_marg.get());
-		_accel_control.setMeasurementDelay(_param_indi_dly.get());
-		_accel_control.setBlendTimeConstant(_param_indi_tb.get());
-		// bench-only loop-break excitation, rebuilt only when one of its values changed
-		_injection.setParameters(_param_indi_pinj_ax.get(), _param_indi_pinj_amp.get(), _param_indi_pinj_tp.get(),
-					 _param_indi_pinj_flo.get(), _param_indi_pinj_fhi.get(), _param_indi_pinj_np.get(), _param_indi_pinj_dly.get());
+		_accel_control.setMeasurementDelay(_param_mc_indi_dly.get());
+		_accel_control.setBlendTimeConstant(_param_mc_indi_tb.get());
+		// system identification excitation, rebuilt only when one of its values changed
+		_injection.setParameters(_param_mc_indi_pinj_ax.get(), _param_mc_indi_pinj_amp.get(), _param_mc_indi_pinj_tp.get(),
+					 _param_mc_indi_pinj_flo.get(), _param_mc_indi_pinj_fhi.get(), _param_mc_indi_pinj_np.get(), _param_mc_indi_pinj_dly.get());
 
 		float w_max = 0.f;
 		_rotor_w_max = (_w_max_handle != PARAM_INVALID && param_get(_w_max_handle, &w_max) == PX4_OK
@@ -839,7 +838,7 @@ void McIndiPosControl::Run()
 				}
 
 				if (previous.flag_armed && !_vehicle_control_mode.flag_armed) {
-					_injection.reset(); // the INDI loop does not run disarmed: the disarm edge restarts the bench window for the next arm
+					_injection.reset(); // the INDI loop does not run disarmed: the disarm edge restarts the excitation window for the next arm
 				}
 
 				if (!previous.flag_multicopter_position_control_enabled && _vehicle_control_mode.flag_multicopter_position_control_enabled) {
@@ -871,8 +870,8 @@ void McIndiPosControl::Run()
 
 			if (_hover_thrust_estimate_sub.copy(&hte)) {
 				// the hover thrust never enters the PositionControl integrator
-				_hte_valid = hte.valid && PX4_ISFINITE(hte.hover_thrust);
-				_hte = hte.hover_thrust;
+				_hover_thrust_estimate_valid = hte.valid && PX4_ISFINITE(hte.hover_thrust);
+				_hover_thrust_estimate = hte.hover_thrust;
 			}
 		}
 
@@ -968,9 +967,9 @@ void McIndiPosControl::Run()
 			// and limitTilt commands full tilt
 			_control.decoupleHorizontalAndVecticalAcceleration(_param_mpc_acc_decouple.get() || not_taken_off || flying_but_ground_contact);
 
-			const float ht = (flying && _hte_valid) ? _hte : _param_mpc_thr_hover.get();
+			const float hover_thrust = (flying && _hover_thrust_estimate_valid) ? _hover_thrust_estimate : _param_mpc_thr_hover.get();
 			// the stock integrator never integrates while armed here, so no integrator shift
-			_control.setHoverThrust(ht);
+			_control.setHoverThrust(hover_thrust);
 
 			// make sure takeoff ramp is not amended by acceleration feed-forward
 			if (_takeoff.getTakeoffState() == TakeoffState::rampup && PX4_ISFINITE(_setpoint.velocity[2])) {
@@ -1111,7 +1110,7 @@ void McIndiPosControl::Run()
 			// failsafe edits above). The jerk is differenced from it inside runIndiStage.
 			_accel_feedforward_mps2 = matrix::Vector3f(_setpoint.acceleration);
 
-			runIndiStage(raw_dt, now, want_indi, model_force, flying, _tilt_limit_slew_rate.getState(), ht, local_pos_sp, attitude_setpoint);
+			runIndiStage(raw_dt, now, want_indi, model_force, flying, _tilt_limit_slew_rate.getState(), hover_thrust, local_pos_sp, attitude_setpoint);
 
 			// zero the stock integrator only on cycles where the INDI loop actually ran (this cycle)
 			if (_indi_active) {
@@ -1297,12 +1296,11 @@ int McIndiPosControl::print_usage(const char *reason)
 	PRINT_MODULE_DESCRIPTION(
 		R"DESCR_STR(
 ### Description
-The controller has two loops: a P loop for position error and a PID loop for velocity error.
-Output of the velocity controller is thrust vector that is split to thrust direction
-(i.e. rotation matrix for multicopter orientation) and thrust scalar (i.e. multicopter thrust itself).
+This implements the multicopter position controller with an acceleration INDI loop.
+The stock position and velocity loops compute the commanded acceleration (no integrator). An incremental nonlinear
+dynamic inversion on the measured specific force turns it into the thrust vector and the attitude setpoint.
 
-The controller doesn't use Euler angles for its work, they are generated only for more human-friendly control and
-logging.
+It replaces mc_pos_control when MC_INDI_POS_EN is set (see rc.mc_apps).
 )DESCR_STR");
 
 	PRINT_MODULE_USAGE_NAME("mc_indi_pos_control", "controller");

@@ -72,7 +72,7 @@ void IndiPosInjection::setParameters(int axis, float amplitude, float period, fl
 		const double f = (double)f_min * pow(10.0, (double)i / per_decade);
 		const int k = (int)round(f / df);
 
-		// np.unique keeps each bin once (k is non-decreasing), then k >= 1 and k * df <= fmax * (1 + 0.5 * df / fmax)
+		// each bin is kept once (k is non-decreasing), then k >= 1 and k * df <= fmax * (1 + 0.5 * df / fmax)
 		if (k < 1 || k == last_k || k * df > (double)f_max + 0.5 * df) {
 			continue;
 		}
@@ -104,7 +104,7 @@ double IndiPosInjection::waveform(double t) const
 	return d;
 }
 
-float IndiPosInjection::update(uint64_t timestamp_sample_us, bool armed, bool landed)
+float IndiPosInjection::update(uint64_t timestamp_us, bool armed, bool landed)
 {
 	if (_axis == 0 || _num == 0) {
 		return 0.f;
@@ -121,14 +121,14 @@ float IndiPosInjection::update(uint64_t timestamp_sample_us, bool armed, bool la
 
 	if (!_started) {
 		_started = true;
-		_t0_us = timestamp_sample_us + (uint64_t)(_delay * 1e6f);
+		_t0_us = timestamp_us + (uint64_t)(_delay * 1e6f);
 	}
 
-	if (timestamp_sample_us < _t0_us) {
+	if (timestamp_us < _t0_us) {
 		return 0.f;
 	}
 
-	const double t = (double)(timestamp_sample_us - _t0_us) * 1e-6;
+	const double t = (double)(timestamp_us - _t0_us) * 1e-6;
 
 	if (t >= (double)_n_periods * (double)_period) {
 		return 0.f;

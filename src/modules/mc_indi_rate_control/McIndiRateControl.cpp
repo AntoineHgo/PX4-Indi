@@ -109,7 +109,7 @@ McIndiRateControl::parameters_updated()
 	_indi.setYawCutoff(_param_mc_indi_yaw_cut.get());
 	_rate_sp_watchdog.setTimeout(_param_mc_indi_sp_to.get());
 
-	// bench-only loop-break excitation, rebuilt only when one of its values changed
+	// system identification excitation, rebuilt only when one of its values changed
 	// PT 1 (rate setpoint, rad/s) takes its amplitude from MC_INDI_INJ_RAMP, MC_INDI_INJ_AMP (torque) is ignored then
 	const float inject_amp = (_param_mc_indi_inj_pt.get() == 1) ? _param_mc_indi_inj_ramp.get() : _param_mc_indi_inj_amp.get();
 	_injection.setParameters(_param_mc_indi_inj_ax.get(), inject_amp, _param_mc_indi_inj_tp.get(),
@@ -136,7 +136,7 @@ McIndiRateControl::parameters_updated()
 	_indi.setFilterCutoffs(gyro_cutoff, dgyro_cutoff);
 
 	// measured torque from the ESC rpm
-	_measured_torque_model.setRotorSpeedMax(_param_mc_indi_w_max.get());
+	_measured_torque.setRotorSpeedMax(_param_mc_indi_w_max.get());
 	updateMeasuredTorqueEffectiveness();
 }
 
@@ -149,26 +149,26 @@ McIndiRateControl::updateMeasuredTorqueEffectiveness()
 		bool normalize_rpy[ActuatorEffectiveness::MAX_NUM_MATRICES] {};
 		_effectiveness.getNormalizeRPY(normalize_rpy);
 
-		_measured_torque_model.setEffectiveness(config.effectiveness_matrices[0], config.trim[0],
-							config.linearization_point[0], config.num_actuators_matrix[0], normalize_rpy[0]);
+		_measured_torque.setEffectiveness(config.effectiveness_matrices[0], config.trim[0],
+						  config.linearization_point[0], config.num_actuators_matrix[0], normalize_rpy[0]);
 
 	} else {
 		// no valid rotor geometry: no measured torque, INDI uses its actuator model
-		_measured_torque_model.setEffectiveness(ActuatorEffectiveness::EffectivenessMatrix{}, ActuatorEffectiveness::ActuatorVector{},
-							ActuatorEffectiveness::ActuatorVector{}, 0, true);
+		_measured_torque.setEffectiveness(ActuatorEffectiveness::EffectivenessMatrix{}, ActuatorEffectiveness::ActuatorVector{},
+						  ActuatorEffectiveness::ActuatorVector{}, 0, true);
 	}
 }
 
 void
 McIndiRateControl::updateMeasuredTorque()
 {
-	if (!_measured_torque_model.enabled()) {
+	if (!_measured_torque.enabled()) {
 		_torque_measured = actuator_torque_measured_s{};
 		return;
 	}
 
-	_measured_torque_model.setArmed(_vehicle_control_mode.flag_armed);
-	_measured_torque_model.setFrozenWindow(_param_mc_indi_erpm_frz.get());
+	_measured_torque.setArmed(_vehicle_control_mode.flag_armed);
+	_measured_torque.setFrozenWindow(_param_mc_indi_erpm_frz.get());
 
 	// per motor command for the frozen rpm detection
 	actuator_motors_s motors;
@@ -177,7 +177,7 @@ McIndiRateControl::updateMeasuredTorque()
 		const hrt_abstime t_motors = hrt_absolute_time();
 
 		for (int motor = 0; motor < IndiMeasuredTorque::MAX_MOTORS; motor++) {
-			_measured_torque_model.setMotorCommand(motor, motors.control[motor], t_motors);
+			_measured_torque.setMotorCommand(motor, motors.control[motor], t_motors);
 		}
 	}
 
@@ -195,15 +195,15 @@ McIndiRateControl::updateMeasuredTorque()
 			}
 
 			if (!(esc_status.esc_online_flags & (1u << j))) {
-				_measured_torque_model.setMotorOffline(motor);
+				_measured_torque.setMotorOffline(motor);
 
 			} else {
-				_measured_torque_model.setMotorSample(motor, (float)esc.esc_rpm, esc.esc_errorcount, esc.timestamp);
+				_measured_torque.setMotorSample(motor, (float)esc.esc_rpm, esc.esc_errorcount, esc.timestamp);
 			}
 		}
 	}
 
-	const IndiMeasuredTorque::Result result = _measured_torque_model.compute(hrt_absolute_time());
+	const IndiMeasuredTorque::Result result = _measured_torque.compute(hrt_absolute_time());
 
 	actuator_torque_measured_s msg{};
 	msg.timestamp = hrt_absolute_time();
@@ -237,7 +237,7 @@ McIndiRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f &ang
 				       && torque_measured.isAllFinite();
 	_indi.setMeasuredTorque(torque_measured, measurement_valid);
 
-	// c: controller output and bench loop-break excitation d (torque setpoint or rate setpoint, MC_INDI_INJ_PT)
+	// controller output and system identification excitation (torque setpoint or rate setpoint, MC_INDI_INJ_PT)
 	IndiInjectionStepIn step_in{};
 	step_in.point = _param_mc_indi_inj_pt.get();
 	step_in.armed = armed;
@@ -250,7 +250,7 @@ McIndiRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f &ang
 	runIndiInjectionStep(_indi, _injection, step_in, rates, _rates_setpoint + _omega_ff_applied, angular_accel, torque_allocated_prev,
 			     step);
 
-	// u = c + d: the published setpoint and the stored previous setpoint, so every feedback path closes through u
+	// published and stored previous setpoint = controller output + excitation, so every feedback path sees what was applied
 	const Vector3f torque_setpoint_pre_inject = step.torque_pre_inject;
 	const Vector3f inject = step.torque_inject;
 	const Vector3f torque_setpoint = step.torque_sp;

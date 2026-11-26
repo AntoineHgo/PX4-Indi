@@ -1,28 +1,32 @@
-uint64 timestamp		# time since system start (microseconds)
-uint64 timestamp_sample	# gyro sample time of the cycle (microseconds)
+# INDI angular rate controller internals
+#
+# Published by mc_indi_rate_control.
 
-# INDI angular rate controller internals (published by mc_indi_rate_control)
-float32[3] nu				# desired angular acceleration (rad/s^2)
-float32[3] angular_accel_filtered	# measured filtered angular acceleration used by the controller (rad/s^2)
-float32[3] torque_filtered		# modelled actuator torque after the synchronisation filter (normalised)
-float32[3] torque_increment		# commanded torque increment (normalised)
-float32[3] lead_gain			# rate lead gain applied this cycle (0 when landed)
-float32[3] rate_sp_dot			# filtered, clamped rate setpoint derivative used by the setpoint lead (rad/s^2, 0 when landed)
+uint64 timestamp # [us] Time since system start
+uint64 timestamp_sample # [us] Gyro sample time of the cycle
 
-bool fault				# inputs or parameters were rejected in this cycle, the torque output is zero
+float32[3] nu # [rad/s^2] [@frame FRD] Desired angular acceleration
+float32[3] angular_accel_filtered # [rad/s^2] [@frame FRD] Measured filtered angular acceleration used by the controller
+float32[3] torque_filtered # [-] [@frame FRD] Modelled actuator torque after the synchronisation filter (normalised)
+float32[3] torque_increment # [-] [@frame FRD] Commanded torque increment (normalised)
+float32[3] lead_gain # [-] [@frame FRD] Rate lead gain applied this cycle, 0 when landed
+float32[3] rate_sp_dot # [rad/s^2] [@frame FRD] Filtered, clamped rate setpoint derivative used by the setpoint lead, 0 when landed
 
-bool measured_torque_in_use		# the measured actuator torque (ESC rpm) replaced the actuator model in this cycle
+bool fault # Inputs or parameters were rejected in this cycle, the torque output is zero
 
-# bench excitation (MC_INDI_INJ_*): torque_sp = torque_sp_pre_inject + inject is published and fed back, equal to torque_sp_pre_inject while MC_INDI_INJ_AX is 0
-float32[3] torque_sp_pre_inject		# INDI controller output (normalised torque)
-float32[3] inject			# injected excitation (normalised torque)
-float32[3] torque_sp			# sum of both, before the non-finite guard of the published vehicle_torque_setpoint
+bool measured_torque_in_use # The measured actuator torque (ESC rpm) replaced the actuator model in this cycle
 
-# bench excitation on the rate setpoint (MC_INDI_INJ_PT 1), all zero otherwise
-float32[3] rates_sp_pre_inject		# rate setpoint held in the module (rad/s)
-float32[3] rates_sp_inject		# injected excitation (rad/s)
-float32[3] rates_sp_applied		# rate setpoint the INDI controller received, sum of both (rad/s)
+# System identification excitation on the torque (MC_INDI_INJ_*):
+# torque_sp = torque_sp_pre_inject + inject is published and fed back, equal to torque_sp_pre_inject while MC_INDI_INJ_AX is 0
+float32[3] torque_sp_pre_inject # [-] [@frame FRD] INDI controller output (normalised torque)
+float32[3] inject # [-] [@frame FRD] Injected excitation (normalised torque)
+float32[3] torque_sp # [-] [@frame FRD] Sum of both, before the non-finite guard of the published vehicle_torque_setpoint
 
-bool rate_sp_stale			# no vehicle_rates_setpoint within MC_INDI_SP_TO while armed: rate setpoint zeroed, thrust held
+# System identification excitation on the rate setpoint (MC_INDI_INJ_PT 1), all zero otherwise
+float32[3] rates_sp_pre_inject # [rad/s] [@frame FRD] Rate setpoint held in the module
+float32[3] rates_sp_inject # [rad/s] [@frame FRD] Injected excitation
+float32[3] rates_sp_applied # [rad/s] [@frame FRD] Rate setpoint the INDI controller received, sum of both
 
-bool foreign_torque_pub			# a vehicle_torque_setpoint not published by this module was received (second rate controller)
+bool rate_sp_stale # No vehicle_rates_setpoint within MC_INDI_SP_TO while armed: rate setpoint zeroed, thrust held
+
+bool foreign_torque_pub # A vehicle_torque_setpoint not published by this module was received (second rate controller)

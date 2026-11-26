@@ -34,7 +34,7 @@
 /**
  * @file IndiInjection.hpp
  *
- * Bench-only loop-break excitation of mc_indi_rate_control (system identification, off by default).
+ * System identification excitation of mc_indi_rate_control (system identification, off by default).
  * A Schroeder-phase multisine d on one torque axis, added to the controller output c (u = c + d).
  * Frequencies are log-spaced (10 per decade) integer multiples of 1/Tp, phases are Schroeder phases for equal power.
  */

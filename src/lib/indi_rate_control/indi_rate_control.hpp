@@ -44,11 +44,10 @@
  *   c      = lead_scale K tau_c                    rate prediction lead, tau_c = actuator time constant,
  *                                                  c <= 2, 0 on ground
  *   r_dot  = low passed, clamped derivative of rate_sp (kSetpointLeadTc, kMaxRateSpDot), 0 on ground
- *   dt_cmd = G1^-1 (nu - (1 + c) angular_accel + c r_dot)   roll, pitch
- *   t_cmd  = t_f + dt_cmd                          bounded to [-1, 1]
+ *   Delta  = G1^-1 (nu - (1 + c) angular_accel + c r_dot)   roll, pitch, torque increment
+ *   t_cmd  = t_f + Delta                                    bounded to [-1, 1]
  *
- * The same prediction on the setpoint path gives nu_eff = K (1 + tau_c s)(rate_sp - rate), so a
- * rate setpoint that moves (attitude loop output) is not followed with the actuator lag; no extra parameter,
+ * The same prediction on the setpoint path gives nu_eff = K (1 + tau_c s)(rate_sp - rate).
  * MC_INDI_LEAD = 0 turns both terms off. r_dot is 0 at the first cycle, after reset() and resetSetpointLead(), on
  * ground and on rejected cycles, so that no derivative impulse enters the law.
  *
@@ -59,9 +58,8 @@
  *
  * Yaw adds the rotor spin-up term G2, as a first order low pass on the increment (backward Euler of
  * (G1 + G2 s) Delta = nu - (1 + c) angular_accel), Delta_prev = increment applied in the previous cycle:
- *   (G1 + G2/dt) dt_cmd = nu - (1 + c) angular_accel + (G2/dt) Delta_prev
- * DC gain 1/G1, time constant G2/G1, independent of dt. G2 is the rotor inertia reaction per unit torque rate,
- * so G2/G1 is not the motor time constant.
+ *   (G1 + G2/dt) Delta = nu - (1 + c) angular_accel + (G2/dt) Delta_prev
+ * DC gain 1/G1, time constant G2/G1, independent of dt.
  *
  * Measured torque path (optional): setMeasuredTorque() supplies tau_meas = B u from the ESC
  * rotor speeds. It runs through its own delay and its own copy of H in parallel to the model, and replaces
@@ -126,7 +124,7 @@ public:
 	 * (low frequency) torque, clamped to <= kMaxBlendTimeConstant s. A value <= 0 or non finite disables the
 	 * blend: the measured torque alone is used when it is in use.
 	 */
-	void setActuatorBlendTimeConstant(float tb_s);
+	void setActuatorBlendTimeConstant(float blend_tc_s);
 
 	/**
 	 * Set the scale of the rate prediction lead c = scale K tau_c on the angular acceleration feedback.
@@ -260,7 +258,7 @@ public:
 	const matrix::Vector3f &getNu() const { return _nu; }
 	const matrix::Vector3f &getFilteredAngularAccel() const { return _a_f; }
 	const matrix::Vector3f &getFilteredTorque() const { return _t_f; }
-	const matrix::Vector3f &getTorqueIncrement() const { return _dt_cmd; }
+	const matrix::Vector3f &getTorqueIncrement() const { return _torque_increment; }
 
 	/// True if the last update() call rejected its inputs or parameters
 	bool getFault() const { return _fault; }
@@ -380,7 +378,7 @@ private:
 	matrix::Vector3f _t_f;
 	matrix::Vector3f _t_f_model;
 	matrix::Vector3f _t_f_meas;
-	matrix::Vector3f _dt_cmd;
+	matrix::Vector3f _torque_increment;
 	matrix::Vector3f _rate_sp_dot;
 	bool _fault{false};
 };

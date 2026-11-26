@@ -72,7 +72,7 @@ void IndiInjection::setParameters(int axis, float amplitude, float period, float
 		const double f = (double)f_min * pow(10.0, (double)i / per_decade);
 		const int k = (int)round(f / df);
 
-		// np.unique keeps each bin once (k is non-decreasing), then k >= 1 and k * df <= fmax * (1 + 0.5 * df / fmax)
+		// each bin is kept once (k is non-decreasing), then k >= 1 and k * df <= fmax * (1 + 0.5 * df / fmax)
 		if (k < 1 || k == last_k || k * df > (double)f_max + 0.5 * df) {
 			continue;
 		}

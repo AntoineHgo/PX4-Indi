@@ -72,9 +72,9 @@ parameters:
       default: 2.4
     MC_INDI_PINJ_AX:
       description:
-        short: INDI outer-loop bench excitation axis
+        short: INDI outer-loop sysid excitation axis
         long: >-
-          Bench and system identification only. Adds a multisine to the commanded acceleration of the selected axis and
+          System identification only. Adds a multisine to the commanded acceleration of the selected axis and
           also feeds it back to the INDI stage. It runs while armed and not landed, for MC_INDI_PINJ_NP periods after
           MC_INDI_PINJ_DLY, and starts again at each arm.
       type: enum
@@ -88,7 +88,7 @@ parameters:
       description:
         short: Excitation amplitude per sine component
         long: >-
-          Bench and system identification only. Amplitude of each sine component of the commanded acceleration. Only
+          System identification only. Amplitude of each sine component of the commanded acceleration. Only
           used when MC_INDI_PINJ_AX is not 0.
       type: float
       unit: m/s^2
@@ -101,7 +101,7 @@ parameters:
       description:
         short: Excitation multisine period
         long: >-
-          Bench and system identification only. Period of the multisine, the frequencies are integer multiples of
+          Period of the multisine, the frequencies are integer multiples of
           1/period. Only used when MC_INDI_PINJ_AX is not 0.
       type: float
       unit: s
@@ -114,7 +114,7 @@ parameters:
       description:
         short: Excitation lowest frequency
         long: >-
-          Bench and system identification only. Lowest frequency of the multisine, about 10 components per decade up to
+          Lowest frequency of the multisine, about 10 components per decade up to
           MC_INDI_PINJ_FHI. Only used when MC_INDI_PINJ_AX is not 0.
       type: float
       unit: Hz
@@ -127,7 +127,7 @@ parameters:
       description:
         short: Excitation highest frequency
         long: >-
-          Bench and system identification only. Highest frequency of the multisine. Only used when MC_INDI_PINJ_AX is
+          Highest frequency of the multisine. Only used when MC_INDI_PINJ_AX is
           not 0.
       type: float
       unit: Hz
@@ -140,7 +140,7 @@ parameters:
       description:
         short: Excitation number of periods
         long: >-
-          Bench and system identification only. Number of periods of the multisine after it starts, then it stops. Only
+          System identification only. Number of periods of the multisine after it starts, then it stops. Only
           used when MC_INDI_PINJ_AX is not 0.
       type: int32
       min: 1
@@ -150,7 +150,7 @@ parameters:
       description:
         short: Excitation injection point
         long: >-
-          Bench and system identification only. Stage input measures the velocity and position loop with the INDI
+          Stage input measures the velocity and position loop with the INDI
           acceleration loop closed. Stage output adds the excitation to the thrust vector sent to the attitude setpoint,
           which breaks the loop at the plant input. Only used when MC_INDI_PINJ_AX is not 0.
       type: enum

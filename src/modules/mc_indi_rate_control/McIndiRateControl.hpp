@@ -116,19 +116,19 @@ private:
 
 	/**
 	 * Run the INDI rate law, publishes indi_rate_status
-	 * @param timestamp_sample gyro sample time of this cycle, the clock of the bench injection
-	 * @return normalised torque setpoint u = c + d (d is zero unless the bench injection MC_INDI_INJ_AX is set)
+	 * @param timestamp_sample gyro sample time of this cycle, the clock of the excitation
+	 * @return normalised torque setpoint, controller output plus excitation (no excitation unless MC_INDI_INJ_AX is set)
 	 */
 	matrix::Vector3f runIndiRateControl(const matrix::Vector3f &rates, const matrix::Vector3f &angular_accel, float dt,
 					    bool landed, bool maybe_landed, hrt_abstime timestamp_sample,
 					    bool armed);
 
 	IndiRateControl _indi; ///< INDI rate law
-	IndiInjection _injection; ///< bench loop-break excitation (MC_INDI_INJ_*), off by default
+	IndiInjection _injection; ///< system identification excitation (MC_INDI_INJ_*), off by default
 	int32_t _inject_point_prev{0}; ///< MC_INDI_INJ_PT at the last parameter update
 
 	ActuatorEffectivenessMultirotor _effectiveness{this}; ///< rotor geometry, same parameters as the control allocator
-	IndiMeasuredTorque _measured_torque_model;
+	IndiMeasuredTorque _measured_torque;
 
 	uORB::Subscription _control_allocator_status_sub{ORB_ID(control_allocator_status)};
 	uORB::Subscription _esc_status_sub{ORB_ID(esc_status)};

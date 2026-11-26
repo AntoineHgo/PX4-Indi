@@ -34,9 +34,8 @@
 /**
  * @file IndiPosInjection.hpp
  *
- * Bench-only loop-break excitation of mc_indi_pos_control (system identification, off by default).
- * A Schroeder-phase multisine d on one NED acceleration axis, added to the commanded acceleration c (u = c + d).
- * Copy of mc_indi_rate_control/IndiInjection (that class is module-local), renamed to avoid a duplicate symbol.
+ * System identification excitation of mc_indi_pos_control (system identification, off by default).
+ * A Schroeder-phase multisine d on one NED acceleration axis, added to the commanded acceleration.
  * Frequencies are log-spaced (10 per decade) integer multiples of 1/Tp, phases are Schroeder phases for equal power.
  */
 
@@ -70,9 +69,9 @@ public:
 	/**
 	 * Excitation of the current cycle. Not evaluated (returns exactly 0) when off, disarmed, landed or outside
 	 * [0, n_periods * period) after the origin, which is delay after the first cycle that is on, armed and not landed.
-	 * @param timestamp_sample_us cycle time (gyro sample time), microseconds
+	 * @param timestamp_us cycle time, microseconds
 	 */
-	float update(uint64_t timestamp_sample_us, bool armed, bool landed);
+	float update(uint64_t timestamp_us, bool armed, bool landed);
 
 	/** Restart the time origin: the next armed, airborne cycle starts a new window. Called on the disarm edge. */
 	void reset() { _started = false; }
