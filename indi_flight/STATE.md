@@ -79,7 +79,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | - | - | (ii) done S234: MISSED (LOC joint + 264), results/g3_cand_ii_s233/SCORES.md. NEXT: (iii) per design/solver_brief_c.md; one cause line for the (ii) LOC only if (iii) needs it |
+| S235 | (iii) part 1: design note + code + unit tests + binary | sonnet/high | design/cand_iii_design.md, results/g3_cand_iii_s235/README.md (checklist), worktree /tmp/px4_cand_iii | if README checklist incomplete: re-brief from it; then part 2 flights (sonnet/medium, cand_ii chain pattern) |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
