@@ -1458,3 +1458,11 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
 - Why not in S232: one opus/high solver run (code + candidate binary + flights) does not fit twice in the
   remaining session budget (lesson 21); it starts at the next launch.
 - Overturn: none; the pass line is fixed. (ii) and (iii) both missing -> route B.
+
+## D-RATE-BLD-2-C3 (S236): candidate (iii) bounded rate integrator misses the pass line; route B
+- Result: results/g3_cand_iii_s235/SCORES.md, both keys agree. Draw 264 LOC (tilt 66.9 deg > 60 deg, item 1) and
+  item 2 on p/q/r; draw 262 item 2 new failure vs baseline; 283 item 2 not worse than baseline; item 3 passes all.
+- With (i) S232 and (ii) S234, no candidate of D-OWNER-Q32 step (c) passes. Per solver_brief_c.md and GATES "Owner
+  amendment S225": route B (fixed corner), G3 300 on binary 903eae63, no new owner question. Step (d) review and
+  freeze-11 lapse. Candidate worktrees /tmp/px4_cand_{i,ii,iii} are not firmware of record.
+- Overturned by: a scoring defect found in score.sh for these four flights.
