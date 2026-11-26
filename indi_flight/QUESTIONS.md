@@ -77,3 +77,19 @@ D-OWNER-Q33; full text in JOURNAL.md S228).
 
 Q34 and Q35 closed S243 (owner answers: Q34 "A and B" for item 5; Q35 A, G3 final NOT PASSED, C yes with guard;
 GATES "Owner amendment S243", DECISIONS D-OWNER-Q34-Q35; full text in JOURNAL.md S243).
+
+## Q36 (S246, 2026-11-26): R1 "without eRPM telemetry INDI refuses to arm" is not what the code does
+Context: design/airframe_requirements.md R1 (accepted with Q25) says INDI refuses to arm without rotor-speed
+telemetry. The firmware does not enforce it: with missing or stale eRPM the rate module switches to the modelled
+actuator state (O-5 fallback) and arming is allowed. All gate evidence (G2-G6) was flown with telemetry present;
+G3 covered telemetry loss and frozen values in flight only. The F-3 requirements list is an owner topic, so I do not
+change it myself. Enforcing it needs a pre-arm check: in PX4 arming checks live in commander (zero diff, O-11), and
+any firmware change after FREEZE-10 needs a gate failure cause shown on a log, which this is not.
+Options:
+- A (recommended) reword R1: "eRPM telemetry on every motor is required for the validated configuration; without
+  it the controller runs on the modelled actuator state, which is not validated as a flight configuration". The docs
+  and report state it as a limit and the bring-up checklist checks telemetry before the first flight.
+- B enforce R1 in firmware after the verdicts (a new INDI-side check; needs a way to block arming without commander
+  changes, re-fly of the G5 arming rows, two keys).
+Meanwhile: G7 (f) unit 9 / F-10 review and G8 drafts continue; R1 wording is left as is. Blocking: G8 text on R1
+only (no gate verdict depends on it); not blocking other work.

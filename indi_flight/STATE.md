@@ -34,7 +34,7 @@
    results/g7_checkers_s215/README.md: justify or align); ACT_TC/W_MAX firmware vs
    bench (lesson 12); guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
 4. G7 verdict text: ID_OK 0 = reported limit, no refuse-to-arm (D-ID-OK-LIMIT, docs warning added S246); state it
-   in the G7 verdict. R1 (eRPM refuse-to-arm) still open: enforce = firmware after freeze, reword = owner question.
+   in the G7 verdict. R1 (eRPM refuse-to-arm): owner Q36 open (A reword recommended); G8 R1 text waits for it.
 5. G8: drafts report/02_outer_loop_design.md and docs/en/config_mc/indi_control.md; open items in
    report/DOCS_DRAFT_S201.md (S213: code items resolved; identification user steps = G6; prettier/link check open).
    R1 (refuse to arm without eRPM) not enforced by code: G7/G8 decide enforce (after Q31) or reword R1. Drafts
@@ -70,7 +70,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none (S245 ch.3 G3/G6 sections and report/04_limits.md drafted, committed) | - | - | - |
+| f10id | remove 7 project ids (results/g7_s246/ID_GREP.md) from comments, token compare | sonnet | results/g7_s246/F10_IDFIX.md | check file; re-brief if missing |
 CUT (RC241): g3_chain.sh failing-list display fix and exclusion self-test (defer to G7).
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
