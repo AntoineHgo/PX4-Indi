@@ -1508,3 +1508,16 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
 - Alternatives: rename everything (rejected: (4) breaks keyed evidence scripts); justify everything (rejected:
   (1) names mislead a reader, which F-10 forbids).
 - Overturned by: a source check showing a name in (1) is accurate, or an owner instruction.
+
+## D-F10-NEUTRAL-S249 (S249): public-name and comment fixes invalidate no gate row
+- Commits 8423db867b (MC_INDI_DT_MAX -> MC_INDI_INC_MAX, MC_INDI_INJ_RAMP -> MC_INDI_INJ_AMPR, .msg comments),
+  7eaf225535 (docs/en, report), 5987dde746 (comments). Source check (results/g7_s249/P3C_PUBLIC_NAMES.md): DT_MAX
+  bounds the torque increment per cycle, INJ_RAMP is a rate-setpoint excitation amplitude; both old names misled.
+- Neutral: same type, default, range and logic; C++ diff is the 6 renamed lines (read by orchestrator); 13/13 unit
+  tests, SITL build; 5987dde746 changes comments and help text only (second key P3B_KEY2.md finding closed: the stock
+  velocity integrator is reset before every update, McIndiPosControl.cpp:1071-1074).
+- Gate evidence stays valid: it was flown on pinned binary 903eae63 with the old names; bench
+  quad5in_indi_defaults.params keeps MC_INDI_DT_MAX for that binary (mapping in P3C_PUBLIC_NAMES.md). Report and
+  docs give the new names with the mapping.
+- Kept per D-F10-PUBLIC-NAMES: MC_INDI_XY_P/XY_VP, uORB field names; multisine duplicate justified in G7 verdict.
+- Overturned by: a test or object diff showing a behaviour change in these commits.
