@@ -74,7 +74,11 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| B1 | route B: corner exclusion check, pre-test 1-3, launch 300 detached | sonnet/medium | results/g3_routeB_s239/README.md | read README; chain cmd there |
+| B1 | G3 route B 297 runs (262/264/269 excluded class b, --exclude-sat-weak), --halt-on-fail, started 08:00:56, ETA ~11 h, pids 1816878/1816871 | detached chain | results/g3_routeB_s239/campaign | `bash indi_flight/bench/g3_chain.sh status <dir>`; resume in README |
+NEXT S240: (1) pre-test draw 37 (weak 0.743) scored FAIL in both keys with EMPTY failing-item list: one sonnet/low task
+reads its SCORES lines and scorer code to name the failing criterion (set-up fault vs real fail) before the chain
+reaches 37; if scorer defect, stop chain, fix, restart. (2) g3_chain.sh exclusion has no self-test (tooling, add one).
+(3) On chain end: score items 1-3, G3 verdict; item 5 waits Q34.
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
