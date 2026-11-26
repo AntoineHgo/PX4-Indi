@@ -93,3 +93,21 @@ C. Both terms, current t_rec rule: any transient over 3 deg fails, so this is st
 Meanwhile: no item 5 re-score or notes. STATE (c) (solver run on joint/264/262/283) may start on the items Q34 does
 not decide. The (e) candidate verdict waits for this answer. PID item 4 fails on draw 0 (0.768 m, same as S227):
 reported as PID reference only, since INDI passes item 4 on draw 0.
+
+## Q35 (2026-11-26, S242): G3 after route B, and item 4 failing in both stacks. BLOCKING for G3 (verdict and item 4 rows)
+Context. Route B (keep FREEZE-10, 300 fail-fast on 903eae63) halted at run 003 (results/g3_routeB_s239/HALT_S240.md).
+Speed-1 re-fly and PID references on the same draws and seed (REF_S241.md, both keys agree):
+- Draw 3 (motor tau x2.4-2.8): INDI item 2 FAIL, pitch-rate line at 2.0 Hz sustained, reproduced; PID item 2 PASS.
+  INDI-specific -> G3 NOT PASSED on route B (GATES "G3 verdict, route B (S242)").
+- Item 4 (horizontal RMS <= 0.5 m): draw 2 INDI 0.834 / PID 0.862 m; draw 3 INDI 0.553 / PID 0.917 m. Fails in both.
+- Route B was the last route of D-OWNER-Q32. Candidates (i)-(iii) missed (S232-S236). Item 5 still waits Q34.
+Options.
+A. (Recommended) G3 is final NOT PASSED for this project: the slow-motor 2 Hz pitch mode (and draw 264 LOC) are
+   written up as measured INDI limits in G8 with the data; the G3 chain stops; the cuts lift and work moves to G6
+   item 7, G7 (f)(g) and G8. DONE is then possible with G3 shown unreachable with data (MISSION "Create DONE").
+B. One more bounded firmware route on the slow-motor pitch mode (one investigation session on draw 3, a fix only
+   if a probe removes it on the log, then G2 cells + G3 300 re-fly). Cost about 4-6 sessions; may miss again.
+C. Item 4 sub-question (any option): a row where PID fails item 4 on the same draw is a test defect and is
+   reported for both stacks, not counted for INDI (yes / no). Recommended: yes.
+Meanwhile: no G3 re-fly, re-score or notes; G6/G7/G8 remain cut until this answer (they depend on whether firmware
+changes). Blocked: WAIT_OWNER created.

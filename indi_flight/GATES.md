@@ -883,3 +883,14 @@ box; SCORES.tsv, progress.txt, HALT_ON_FAIL.json) and `speed1_s213/README.md` (s
 - **Evidence.** S227 pre-test (INDI and PID) stays evidence for items 1-3, 6 only. Before any campaign: re-fly pre-test
   draw 0 for INDI and PID on the new scenario, both keys; then the FREEZE-10 baselines 262/283 on the new scenario.
   PID failing item 5 on the new scenario -> owner question.
+
+## G3 verdict, route B (S242, 2026-11-26): NOT PASSED (campaign halted at run 003)
+- Route B (Owner amendment S225), 300 fail-fast on 903eae63, results/g3_routeB_s239/campaign: halted at run 003
+  (HALT_S240.md). Speed-1 re-fly and PID references: results/g3_routeB_s239/REF_S241.md (keys 1 and 2 agree on
+  every item).
+- Item 2, draw 3 (slow motors tau x2.4-2.8): INDI q line at 2.00 Hz, sustained, both keys, reproduced at speed 1.
+  PID on the same draw and seed: item 2 PASS. INDI-specific failure -> G3 NOT PASSED.
+- Item 4, draws 2 and 3: INDI 0.834 / 0.553 m (re-fly 0.546 m), PID 0.862 / 0.917 m, limit 0.5 m. Fails in both
+  stacks: whether this is a test defect is owner question Q35 (blocking for item 4 rows). It does not change the
+  verdict, which item 2 decides.
+- Route B was the last route of D-OWNER-Q32: next step is owner question Q35.
