@@ -74,3 +74,22 @@ D-OWNER-Q32; full text in JOURNAL.md S226).
 
 Q33 closed S228 (owner answer B with amendments, event hover; GATES "Owner amendment Q33", DECISIONS
 D-OWNER-Q33; full text in JOURNAL.md S228).
+
+## Q34 (2026-11-26, S230): G3 item 5, how is "back within 0.3 m and 3 deg in <= 5 s" read? BLOCKING for G3 item 5 rows
+Context. The event-hover pre-test flew (results/g3_pretest_s230/SCORES.md, both keys agree on every pass/fail).
+Both keys use the D-G3-KEYS-S227 reading: t_rec = first sample at or after the event inside the band; then the
+POSITION error must stay <= 0.3 m for 5 s (tilt only when there is no position reference). A gust or fault starts
+with the vehicle in the band, so t_rec = event time and the 3 deg term is never checked after it in position mode.
+Values (key 2 "att" = max tilt error vs q_d per event, window as in SCORES.md, not re-checked; position max in brackets):
+- INDI draw 0: fault 5.6 deg (0.159 m), gust 2.0 deg -> PASS now, FAIL if tilt is enforced in that window.
+- PID draw 0: fault 1.7 deg, gust 1.1 deg -> PASS under every reading.
+- INDI 262: fault 12.0 deg (1.305 m, FAIL on position anyway), gust 8.8 deg (0.279 m) -> gust PASS now.
+Options.
+A. Keep the current reading (tilt checked only at t_rec). This is what the keys do today, and it is weak.
+B. (Recommended) "Back in <= 5 s" = in the band on BOTH terms over [event + 5 s, event + 10 s]. Transients inside
+   the first 5 s are allowed, as the GATES text allows. This needs a change to both keys plus a re-score of the 4
+   pre-test runs (no flight).
+C. Both terms, current t_rec rule: any transient over 3 deg fails, so this is stricter than the GATES text.
+Meanwhile: no item 5 re-score or notes. STATE (c) (solver run on joint/264/262/283) may start on the items Q34 does
+not decide. The (e) candidate verdict waits for this answer. PID item 4 fails on draw 0 (0.768 m, same as S227):
+reported as PID reference only, since INDI passes item 4 on draw 0.

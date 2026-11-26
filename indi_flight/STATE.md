@@ -15,10 +15,11 @@
    Tooling: results/q30_tooling_s226/KEY1_README.md, KEY2_README.md (tests in /tmp/g3venv, host has no pytest);
    S227 pre-test results/g3_pretest_s227. Per GATES "Owner amendment Q33": (a4) DONE S230 (9cd2a1cb1a key 1 +
    scenarios, fda2630219 key 2 blind; results/q33_tooling_s230/; position item 5 keeps the 3 deg term, S230
-   correction). (a5)+(b) chain results/g3_pretest_s230/ (README, STATUS.txt): draw 0 INDI+PID, 262, 283 INDI.
-   Next: score all four with both keys (sonnet low), check key agreement and that the event hover flies as
-   specified (stick pilot in stabilized/acro over 23 s of neutral sticks = unverified); PID fails item 5 again ->
-   new owner question.
+   correction). (a5)+(b) DONE S230, results/g3_pretest_s230/SCORES.md (keys agree on all pass/fail; timeline
+   as specified): INDI d0 PASS all; PID d0 item 5 PASS, item 4 FAIL 0.768 m (PID ref only); 262 FAIL items 4, 5
+   (fault 1.305 m); 283 FAIL item 2. Q34 OPEN (item 5 tilt reading, blocks item 5 rows and the (e) verdict;
+   no item 5 re-score). Stick pilot neutral over the event hover = unverified (only stabilized run is none yet).
+   Next = (c) on the items Q34 does not decide.
    (b) FREEZE-10 baselines 262/283 (and 264/joint on the new scenario) on 903eae63, scored both keys. (c) one solver run (opus, high) on (i)/(ii)/(iii), values
    fixed before review; brief: no tb sweeps, no item2_split, no 2 Hz cause search. (d) one independent review
    (opus, high). (e) pass -> freeze-11 + re-fly list; none passes -> route B (fixed corner), G3 300 on 903eae63.
@@ -83,7 +84,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| a5+b | G3 pre-test chain draw 0 INDI/PID, 262, 283 (detached, S230, waiter pid 1547971) | - | results/g3_pretest_s230/ (STATUS.txt, README.md) | `tail -n 5 indi_flight/results/g3_pretest_s230/STATUS.txt`; re-run chain.sh for missing runs |
+| - | none | - | - | - |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
