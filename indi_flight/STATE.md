@@ -14,10 +14,14 @@
 0. G3 route per D-OWNER-Q32 (GATES "Owner amendment S225", "Owner amendment Q33"; pass line DECISIONS
    D-RATE-BLD-2). (a4), (a5), (b) DONE (JOURNAL S230/S231; baselines results/g3_pretest_s230/SCORES.md).
    Q34 OPEN: blocks item 5 rows and the (e) verdict; no item 5 re-score. Stick pilot neutral over the event
-   hover unverified. Next = (c) one solver run (opus, high) on (i)/(ii)/(iii), items Q34 does not decide,
-   values fixed before review; brief: no tb sweeps, no item2_split, no 2 Hz cause search. (d) one independent
+   hover unverified. (c): candidate (i) MISSED (S232, D-RATE-BLD-2-C2, results/g3_cand_i_s231/SCORES.md).
+   NEXT at session start: launch the opus/high solver for (ii) then (iii) with design/solver_brief_c.md as the
+   brief (fixed S232; parts 1-3, part 2 flights may go to sonnet/medium). (d) one independent
    review (opus, high). (e) pass -> freeze-11 + re-fly list; none passes -> route B (fixed corner), G3 300 on
    903eae63. Cause context: restore264 falsifier_s222/README.md, blend264_s223, ref264_s224.
+   S232 supervisor RC request (GATE_STATUS unchanged 14 sessions): answered by RC231 (one session old, same
+   inputs): blocker of the next G3 verdict = (c) candidate scores, then (d), (e); Q34 only for item 5 reporting.
+   No new RC until (c) returns. Cut stands: nothing outside G3 (c)-(e) is worked on.
 CUT (RC208/RC221/S223/RC226): G6 item 7 chain (results/g6_item7_s212/PREP.md), G7 (f) unit 9, (g), harness
   extraction, dead path, older G7 list (items 3 below), G8 drafting (item 5), saturation sweep: all wait until the
   Q32 route decides firmware. No route check before the solver verdict (RC226 item 6). Unit tests for the winner
@@ -73,7 +77,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| c1 | G3 (c) candidate (i) ACT_BLD 0.10: fly + score joint/264/262/283 (D-RATE-BLD-2-C1) | sonnet | results/g3_cand_i_s231/ (README.md, STATUS.txt, SCORES.md) | `tail -n 5 results/g3_cand_i_s231/STATUS.txt`; score if CHAIN_FINISHED |
+| - | none (S232) | - | - | - |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.

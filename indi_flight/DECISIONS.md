@@ -1448,3 +1448,13 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   sonnet agent with the keyed Q30/Q33 tooling; no opus solver for (i). The opus/high solver run is for (ii)/(iii)
   only, and only if (i) misses a flight cell. RC231 (design/route_check_231.md): Q34 does not change the ranking.
 - Overturn: (i) passes all flight cells -> G2 rate cells, G2-STEP, unit tests per the pass line before any verdict.
+
+## D-RATE-BLD-2-C2 (S232): candidate (i) misses the pass line; (ii)/(iii) solver brief fixed
+- Result: results/g3_cand_i_s231/SCORES.md (both keys). joint PASS items 1-3; 264 MISS (item 1 exc 5.347 m > 5.0,
+  item 2 p/q/r sustained; no LOC, tilt 54.3 deg); 262 MISS (item 2 q sustained, baseline passes); 283 item 2 q worse
+  than baseline on key 1 (6.54 vs 5.95 dps), not worse on key 2: the keys disagree on "not worse" there (per-key
+  reading of the failing axis, not defined further by the pass line); moot since (i) already misses 264 and 262.
+- Consequence: (i) fails. Next: (ii), then (iii), per design/solver_brief_c.md (written before any (ii) code).
+- Why not in S232: one opus/high solver run (code + candidate binary + flights) does not fit twice in the
+  remaining session budget (lesson 21); it starts at the next launch.
+- Overturn: none; the pass line is fixed. (ii) and (iii) both missing -> route B.
