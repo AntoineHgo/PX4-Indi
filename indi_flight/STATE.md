@@ -74,11 +74,18 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| B1 | G3 route B 297 runs (262/264/269 excluded class b, --exclude-sat-weak), --halt-on-fail, started 08:00:56, ETA ~11 h, pids 1816878/1816871 | detached chain | results/g3_routeB_s239/campaign | `bash indi_flight/bench/g3_chain.sh status <dir>`; resume in README |
-NEXT S240: (1) pre-test draw 37 (weak 0.743) scored FAIL in both keys with EMPTY failing-item list: one sonnet/low task
-reads its SCORES lines and scorer code to name the failing criterion (set-up fault vs real fail) before the chain
-reaches 37; if scorer defect, stop chain, fix, restart. (2) g3_chain.sh exclusion has no self-test (tooling, add one).
-(3) On chain end: score items 1-3, G3 verdict; item 5 waits Q34.
+| B1 | G3 route B chain HALTED 08:12 at run 003 (item 2 FAIL both keys); runs 0-3 committed (2d5d8eb754). Nothing running. | - | results/g3_routeB_s239/campaign | after diagnosis: `rm CHAIN_HALTED HALT_ON_FAIL.json` in campaign/, then g3_chain.sh resume per README |
+| D1 | S240 halt diagnosis: failing criterion of run 002 + pretest37 (FAIL, empty item list) and run 003 item 2 | sonnet/medium | results/g3_routeB_s239/HALT_S240.md | re-launch brief if file missing |
+ROUTE CHECK S240 (supervisor, GATE_STATUS unchanged 3 sessions; short form, budget cap $1.13, no RC agent):
+blocker of the G3 verdict = route B chain halted after 4 runs. Cut: everything except (1)-(3) below.
+D1 DONE (HALT_S240.md): 002 = item 4 real FAIL (0.834 m vs 0.5, both keys, heavy plant + 8.4 m/s gust); 37 = item 5
+only (waits Q34); 003 = item 2 pitch ~2 Hz, 10-13.6 dps vs 5, slow motors (tau x2.4-2.8), no weak/sat, + item 4.
+g3_chain.sh:572-576 lists items 1-3 only (verdict covers 1-6): display defect, verdicts right.
+NEXT S241: (1) g3_chain.sh failing list: include items 4-6 (tooling, self-test). Item 4 on 002: PID ref same draw.
+(2) run 003 item 2 (same signature as S199 draw 245 2 Hz pitch): PID reference of draw 3 at speed 1 (rule: reference before cause search), plus INDI speed-1
+re-fly; reproduces INDI-only -> route B fails on item 2 = G3 NOT PASSED on route B: write the verdict and an owner
+question (route B was the last route of Q32); not reproduced -> rm halt files, resume. (3) g3_chain.sh exclusion
+self-test (tooling). Item 5 waits Q34.
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
