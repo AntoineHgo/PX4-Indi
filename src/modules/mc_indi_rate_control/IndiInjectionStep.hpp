@@ -49,7 +49,7 @@
 #include "IndiInjection.hpp"
 
 struct IndiInjectionStepIn {
-	int point{0};			///< MC_INDI_INJ_PT: 0 torque setpoint, 1 rate setpoint (excitation added to the controller output, resp. to the rate setpoint)
+	int point{0};			///< MC_INDI_INJ_PT: 0 adds the excitation to the torque output, 1 to the rate setpoint
 	bool armed{false};
 	bool landed{false};
 	bool maybe_landed{false};
@@ -69,8 +69,8 @@ struct IndiInjectionStepOut {
 
 /**
  * Run the INDI law with the excitation. With MC_INDI_INJ_AX off (injection.axis() < 0) the law receives
- * rates_sp itself and nothing else is computed. With PT 1 the law receives the rate setpoint plus the excitation (rates_sp itself is not changed, the
- * torque is not injected). d is 0 while !rate_sp_break_allowed or while the law reports a fault from the last cycle.
+ * rates_sp itself and nothing else is computed. With PT 1 the law receives the rate setpoint plus the excitation
+ * (rates_sp itself is not changed, the torque is not injected). d is 0 while !rate_sp_break_allowed or while the law reports a fault from the last cycle.
  */
 void runIndiInjectionStep(IndiRateControl &indi, IndiInjection &injection, const IndiInjectionStepIn &in,
 			  const matrix::Vector3f &rates, const matrix::Vector3f &rates_sp, const matrix::Vector3f &angular_accel,

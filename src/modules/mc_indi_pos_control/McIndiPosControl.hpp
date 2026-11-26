@@ -132,7 +132,7 @@ private:
 	void trackDegraded(StageMode mode, hrt_abstime now);
 
 	IndiAccelControl _accel_control;
-	IndiPosInjection _injection; ///< system identification excitation of the commanded acceleration (MC_INDI_PINJ_*), off by default
+	IndiPosInjection _injection; ///< excitation of the commanded acceleration (MC_INDI_PINJ_*), off by default
 	uORB::Subscription _attitude_sub{ORB_ID(vehicle_attitude)};
 	uORB::SubscriptionCallbackWorkItem _acceleration_sub{this, ORB_ID(vehicle_acceleration)}; ///< also schedules the module: every sample feeds the native-rate force filter
 	uORB::Subscription _esc_status_sub{ORB_ID(esc_status)};

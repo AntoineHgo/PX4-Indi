@@ -379,7 +379,8 @@ bool IndiAccelControl::update(const Input &in, Output &out)
 	_last_um = u_model_f;
 
 	// Measured acceleration. Invalid f_b: the body specific force of the same delayed actuator signal that
-	// feeds t_f below (_mean_u_delay_buf[i_d] plus the held blend, scale _thrust_gain_mps2, body (0,0,-_thrust_gain_mps2*u)), through the same f_b filter.
+	// feeds t_f below (_mean_u_delay_buf[i_d] plus the held blend, scale _thrust_gain_mps2,
+	// body (0,0,-_thrust_gain_mps2*u)), through the same f_b filter.
 	// Measured and modelled paths are then identical signals through identical filters and cancel: t_c = a_c - g.
 	const float u_sub = _mean_u_delay_buf[i_d] + ((_blend_time_constant_s > 0.f) ? _blend_offset : 0.f);
 	const Vector3f f_in = in.f_b_valid ? in.f_b : Vector3f(0.f, 0.f, -_thrust_gain_mps2 * u_sub);

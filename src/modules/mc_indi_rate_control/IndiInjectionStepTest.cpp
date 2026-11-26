@@ -33,7 +33,7 @@
 
 
 /**
- * Call-site tests of the bench injection: they run runIndiInjectionStep(), the code runIndiRateControl() executes
+ * Call-site tests of the injection: they run runIndiInjectionStep(), the code runIndiRateControl() executes
  * each cycle, with the real INDI law. Reference = a second law of identical state fed the setpoint by hand.
  */
 

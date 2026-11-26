@@ -34,7 +34,7 @@
 /**
  * @file IndiPosInjection.hpp
  *
- * System identification excitation of mc_indi_pos_control (system identification, off by default).
+ * System identification excitation of mc_indi_pos_control, off by default.
  * A Schroeder-phase multisine d on one NED acceleration axis, added to the commanded acceleration.
  * Frequencies are log-spaced (10 per decade) integer multiples of 1/Tp, phases are Schroeder phases for equal power.
  */

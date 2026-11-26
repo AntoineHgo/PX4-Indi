@@ -91,9 +91,9 @@ void McIndiPosControl::pollAcceleration()
 {
 	vehicle_acceleration_s acc;
 
-	// vehicle_acceleration has queue length 1 and is published at a rate above the control rate: every sample is drained here, on every
-	// wakeup (the module is also scheduled on vehicle_acceleration), so each sample reaches the native-rate force filter
-	// before the INDI loop decimates
+	// vehicle_acceleration has queue length 1 and is published above the control rate: every sample is drained here,
+	// on every wakeup (the module is also scheduled on vehicle_acceleration), so each sample reaches the
+	// native-rate force filter before the INDI loop decimates
 	if (_acceleration_sub.update(&acc)) {
 		const matrix::Vector3f specific_force(acc.xyz);
 		const hrt_abstime sample_time = (acc.timestamp_sample != 0) ? acc.timestamp_sample : acc.timestamp;
@@ -183,7 +183,8 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 		_filter_rate_hz = rate;
 		_filter_cutoff_hz = cutoff_hz;
 		_rate_dev_count = 0;
-		_accel_control.setFilter(_filter_rate_hz, cutoff_hz); // re-seeds the filters from their last output (no zero state)
+		// re-seeds the filters from their last output (no zero state)
+		_accel_control.setFilter(_filter_rate_hz, cutoff_hz);
 	}
 
 	// control allocator saturation (holds the collective blend), fresh reports only
@@ -838,7 +839,8 @@ void McIndiPosControl::Run()
 				}
 
 				if (previous.flag_armed && !_vehicle_control_mode.flag_armed) {
-					_injection.reset(); // the INDI loop does not run disarmed: the disarm edge restarts the excitation window for the next arm
+					// the loop does not run disarmed: the disarm edge restarts the excitation window
+					_injection.reset();
 				}
 
 				if (!previous.flag_multicopter_position_control_enabled && _vehicle_control_mode.flag_multicopter_position_control_enabled) {
@@ -968,7 +970,7 @@ void McIndiPosControl::Run()
 			_control.decoupleHorizontalAndVecticalAcceleration(_param_mpc_acc_decouple.get() || not_taken_off || flying_but_ground_contact);
 
 			const float hover_thrust = (flying && _hover_thrust_estimate_valid) ? _hover_thrust_estimate : _param_mpc_thr_hover.get();
-			// the stock integrator never integrates while armed here, so no integrator shift
+			// no integrator shift: the stock velocity integrator is zeroed before each update, it never reaches the output
 			_control.setHoverThrust(hover_thrust);
 
 			// make sure takeoff ramp is not amended by acceleration feed-forward
@@ -1068,7 +1070,8 @@ void McIndiPosControl::Run()
 			pollStageInputs();
 
 			// reference acceleration = feed-forward + P/D whenever armed in these modes, whatever the
-			// freshness of its inputs and the takeoff state: the stock integrator never integrates
+			// freshness of its inputs and the takeoff state. The stock velocity integrator is zeroed before each update,
+			// so it never contributes to the commanded acceleration.
 			if (want_indi) {
 				_control.resetIntegral();
 			}
@@ -1297,8 +1300,9 @@ int McIndiPosControl::print_usage(const char *reason)
 		R"DESCR_STR(
 ### Description
 This implements the multicopter position controller with an acceleration INDI loop.
-The stock position and velocity loops compute the commanded acceleration (no integrator). An incremental nonlinear
-dynamic inversion on the measured specific force turns it into the thrust vector and the attitude setpoint.
+The stock position and velocity loops compute the commanded acceleration (their integrator is zeroed before each update).
+An incremental nonlinear dynamic inversion on the measured specific force turns it into the thrust vector and the
+attitude setpoint.
 
 It replaces mc_pos_control when MC_INDI_POS_EN is set (see rc.mc_apps).
 )DESCR_STR");
