@@ -153,8 +153,10 @@ def test_key2_item5_recovery_position_mode():
     assert not late["pass"] and late["events"][0]["t_back_s"] > 5.0
     re_ = run(te + 3, te + 4, 0.5)["item5_recovery"]                   # within at te, excursion 0.5 m at te + 3 (< 5 s after return)
     assert not re_["pass"] and re_["events"][0]["re_excursion"]
-    far = run(te + 7, te + 8, 0.5)["item5_recovery"]                   # excursion later than te + 5 s after the return: outside the 5 + 5 s scope
-    assert far["pass"]
+    far = run(te + 7, te + 8, 0.5)["item5_recovery"]                   # excursion later than te + 5 s after the return: outside the A scope ...
+    assert far["events"][0]["pass_a"] and not far["pass"]              # ... but inside the Q34 B window [te + 5, te + 10]: B fails (was: pass before Q34)
+    far2 = run(te + 11, te + 12, 0.5)["item5_recovery"]                # after te + 10 s: outside A and B
+    assert far2["pass"]
     clean = build(rj_pos(), "position")
     assert clean["item5_recovery"]["pass"] and clean["item5_recovery"]["events"][0]["t_back_s"] == 0.0
 

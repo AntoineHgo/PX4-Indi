@@ -292,6 +292,8 @@ def recovery(t, q, pos, h, rw, sp_t, sp_xy, sp_z, att_t, att_q, extra=()):
     error is the tilt angle between body z axes (yaw excluded, as item 3).  t_in = first sample with every applicable error within
     its limit; pass = t_in - t_event <= 5 s and no sample in (t_in, t_in+5 s] with the controlled error beyond its limit
     (position mode: 0.3 m; attitude mode: 3 deg, the only controlled quantity there).
+    Q34 (S243): an event passes only if A (the rule above) AND B hold; B = every sample in [te + 5 s, te + 10 s] has position error <= 0.3 m
+    (position mode) and tilt error vs q_d <= 3 deg.
     Q33 (rw['timeline']): events = fault t0 and gust from g3_timeline; position reference = static hover setpoint (median of the logged
     trajectory_setpoint over the event hover) instead of the commanded path at the same time; q_d tilt term unchanged."""
     mode = rw["mode"]
@@ -334,8 +336,15 @@ def recovery(t, q, pos, h, rw, sp_t, sp_xy, sp_z, att_t, att_q, extra=()):
         q5 = (tw > tw[i0]) & (tw <= tw[i0] + REC_QUIET) & valid
         exc = (e_pos > REC_POS) if e_pos is not None else (e_att > REC_ATT)
         re_exc = bool((exc & q5).any()); peak = float(np.nanmax(np.where(q5, e_pos if e_pos is not None else e_att, np.nan))) if q5.any() else 0.0
-        good_ev = (tb <= REC_T and not re_exc) or _brk("item5")
-        r.update(pass_=bool(good_ev), t_back_s=tb, re_excursion=re_exc, max_err_after_return=peak,
+        good_a = (tb <= REC_T and not re_exc) or _brk("item5")
+        # Q34 (S243) B: every sample in [te + REC_T, te + REC_T + REC_QUIET] within 0.3 m (position mode) and 3 deg of q_d; a missing sample fails closed
+        wb = tw >= te + REC_T - 1e-9
+        b_pos = None if e_pos is None else float(np.nanmax(np.where(wb, e_pos, np.nan)))
+        b_att = float(np.nanmax(np.where(wb, e_att, np.nan)))
+        good_b = (bool((e_att[wb] <= REC_ATT).all()) and (e_pos is None or bool((e_pos[wb] <= REC_POS).all()))) or _brk("item5b")
+        good_ev = good_a and good_b
+        r.update(pass_=bool(good_ev), pass_a=bool(good_a), pass_b=bool(good_b), b_max_pos_err_m=b_pos, b_max_att_err_deg=b_att,
+                 t_back_s=tb, re_excursion=re_exc, max_err_after_return=peak,
                  max_pos_err_m=None if e_pos is None else float(np.nanmax(e_pos)), max_att_err_deg=float(np.nanmax(e_att)))
         out.append(r)
         if gated and not good_ev: ok = False
