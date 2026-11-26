@@ -14,8 +14,8 @@
 0. G3 chain STOPPED for good (Q35 A): no G3 re-fly or firmware route. Cuts lifted (D-OWNER-Q34-Q35). Order:
    a. G6 NOT PASSED (S244, GATES "G6 item 7 verdict"): item 7 LOC 6/58 (278, 295 + watchdog 262/264/269/292).
       G8 limits chapter carries it. Unchecked: item 2 limited to the ID-manoeuvre window was not scored separately.
-   c. G7 (f) unit 9 + whole-branch F-10 review + id grep; (g) branch build. d. G8 drafts: ch.3 sections 3.3 G3 and 3.6 G6 written S245 (open items in its Unverified list). Missing: limits
-      chapter (draw 3 2 Hz pitch, draw 264 LOC, ACT_TC-mismatch hypothesis UNVERIFIED, item 4 PID guard, G6 item 7).
+   c. G7 (f) unit 9 + whole-branch F-10 review + id grep; (g) branch build. d. G8 drafts: ch.3 sections 3.3 G3 and 3.6 G6 written S245 (open items in its Unverified list). Limits chapter
+      report/04_limits.md drafted S245 (Unverified list open; refuse-to-arm decision still open, action 4).
    Supervisor "g3_campaign_f10 chain finished" line is hardcoded and stale (S199 closed it, S237): ignore it.
    Route check: RC241 (S241) current; next RC S256.
 2. G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
@@ -70,7 +70,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none (S245a ch.3 G3/G6 sections done, committed) | - | - | - |
+| - | none (S245 ch.3 G3/G6 sections and report/04_limits.md drafted, committed) | - | - | - |
 CUT (RC241): g3_chain.sh failing-list display fix and exclusion self-test (defer to G7).
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
