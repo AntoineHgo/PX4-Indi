@@ -17,16 +17,8 @@
    hover unverified. (c): candidate (i) MISSED (S232, D-RATE-BLD-2-C2, results/g3_cand_i_s231/SCORES.md).
    (ii) MISSED S234 (LOC joint+264). (iii) MISSED S236 (LOC 264, item 2 262; results/g3_cand_iii_s235/SCORES.md). NEXT: route B (GATES "Owner amendment S225", fixed
    corner; solver_brief_c.md last line): G3 300 on 903eae63, no new question; (d)/(e) lapse (no winner). Cause context: restore264 falsifier_s222/README.md, blend264_s223, ref264_s224.
-   S232 supervisor RC request (GATE_STATUS unchanged 14 sessions): answered by RC231 (one session old, same
-   inputs): blocker of the next G3 verdict = (c) candidate scores, then (d), (e); Q34 only for item 5 reporting.
-   No new RC until (c) returns. Cut stands: nothing outside G3 (c)-(e) is worked on.
-   S234 supervisor RC request: inputs unchanged since RC231 except (ii) part 1 progress; blocker of the next G3
-   verdict = (ii) part 2 scores, then (iii), (d), (e). No new RC agent (budget to the blocker); cut unchanged.
-   results/g3_campaign_f10 is CLOSED (S199 verdict; 3 SCORE_PENDING = unscorable aborts 039/245/264, FAILS_S199
-   s4): a supervisor "chain finished" item for it needs no rescore and no verdict (S237). The line is hardcoded
-   (run_orchestrator.sh:71 CHAIN_DIR) and repeats every launch: ignore it, do not re-check, go to route B.
-   CUT (S238, S237+S238 Gate progress none from this line): scope = route B launch only (pre-test 1-3 flights,
-   then the 300), nothing else until it runs.
+   Supervisor "g3_campaign_f10 chain finished" line is hardcoded and stale (S199 closed it, S237): ignore it.
+   CUT (S238, RC239): scope = route B launch only (pre-test 1-3 flights, then the 300), nothing else until it runs.
 CUT (RC208/RC221/S223/RC226): G6 item 7 chain (results/g6_item7_s212/PREP.md), G7 (f) unit 9, (g), harness
   extraction, dead path, older G7 list (items 3 below), G8 drafting (item 5), saturation sweep: all wait until the
   Q32 route decides firmware. No route check before the solver verdict (RC226 item 6). Unit tests for the winner
@@ -82,7 +74,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | - | - | - |
+| B1 | route B: corner exclusion check, pre-test 1-3, launch 300 detached | sonnet/medium | results/g3_routeB_s239/README.md | read README; chain cmd there |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
