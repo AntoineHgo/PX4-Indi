@@ -894,3 +894,23 @@ box; SCORES.tsv, progress.txt, HALT_ON_FAIL.json) and `speed1_s213/README.md` (s
   stacks: whether this is a test defect is owner question Q35 (blocking for item 4 rows). It does not change the
   verdict, which item 2 decides.
 - Route B was the last route of D-OWNER-Q32: next step is owner question Q35.
+
+## Owner amendment S243 (2026-11-26): Q34 item 5 reading and Q35 final G3 verdict (D-OWNER-Q34-Q35)
+- **G3 final: NOT PASSED for this project** (Q35 A). The G3 chain stops: no re-fly, no new firmware route. The
+  slow-motor 2 Hz pitch mode (draw 3, S241 re-fly, local q PSD peak 2.0-2.25 Hz about 30 dB above PID on the same
+  draw) and the draw 264 LOC are written up in G8 as measured INDI limits, with the data. Hypothesis to state as
+  UNVERIFIED unless checked: actuator-model mismatch (motor tau x2.4-2.8 nominal, MC_INDI_ACT_TC 0.033).
+- **Item 4, PID guard** (Q35 C yes): a row where PID fails item 4 on the same draw and seed is a test defect,
+  reported for both stacks and not counted against INDI, ONLY IF INDI's value is not worse than PID's; otherwise it
+  counts against INDI. Today: draws 0 (0.418 vs 0.768 m), 2 (0.834 vs 0.862 m), 3 (0.553 vs 0.917 m): not counted.
+  Limit: one flight per stack and draw, no spread estimate.
+- **Item 2 note:** the 20x band-median ratio passes in every window for both stacks (ratios 1e4-1e7); the 5 deg/s
+  RMS floor decides item 2 in practice.
+- **Item 5 = "A and B"** (Q34): an event passes only if (A) t_rec <= 5 s and no position re-excursion > 0.3 m in
+  (t_rec, t_rec + 5 s], and (B) position error <= 0.3 m and tilt error vs q_d <= 3 deg on every sample in
+  [event + 5 s, event + 10 s]. Both keys change; re-score of the 4 S230 pre-test runs must reproduce the owner's
+  values (INDI d0 fault/gust PASS, PID d0 fault/gust PASS, INDI d262 fault FAIL on A, d262 gust PASS). Serves the
+  G3 rows and the G8 write-up only, not a new campaign.
+- **G6 consequence (orchestrator reading):** G6 requires G3 passed from wrong initial parameters; with G3 final NOT
+  PASSED, G6 cannot be PASSED in full. G6 items that do not depend on G3 (identification procedure, item 7, G2/G5
+  rows) are still flown and scored; the G6 verdict will state the G3 dependency.

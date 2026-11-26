@@ -1466,3 +1466,13 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   amendment S225": route B (fixed corner), G3 300 on binary 903eae63, no new owner question. Step (d) review and
   freeze-11 lapse. Candidate worktrees /tmp/px4_cand_{i,ii,iii} are not firmware of record.
 - Overturned by: a scoring defect found in score.sh for these four flights.
+
+## D-OWNER-Q34-Q35 (S243, 2026-11-26): G3 final NOT PASSED; item 5 "A and B"; item 4 PID guard
+- Owner answers: Q35 A (G3 final NOT PASSED, chain stops, limits into G8), Q35 C yes with guard (item 4 not counted
+  against INDI where PID fails the same draw and INDI is not worse), Q34 "A and B" for item 5. Text: GATES "Owner
+  amendment S243"; full answers in JOURNAL.md S243.
+- Acted on: cuts of RC208/RC221/S223/RC226 lifted. Order: G6 item 7 corners (CPU, chain per
+  results/g6_item7_s212/PREP.md), Q34 key change + 4-run re-score, then G7 (f) unit 9 + F-10 review, (g), then G8.
+- G6: cannot be PASSED in full (needs G3); its other items are still evidence for the report.
+- Alternatives: re-open a firmware route (owner chose A); drop item 5 work (owner asked for it for G8).
+- Overturned by: a new owner instruction only.

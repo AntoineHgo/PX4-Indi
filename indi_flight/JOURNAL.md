@@ -2101,3 +2101,73 @@ on an in-range draw; A costs ~8-12 sessions under the weekly cap.
 - S240 2026-11-26: route B chain stopped at run 003 (item 2 pitch ~2 Hz, slow motors); 002 item 4 FAIL, draw 37 item 5 only; g3_chain lists items 1-3 only (results/g3_routeB_s239/HALT_S240.md). Short route check in STATE (budget cap). Gate progress: G3 route B runs 0-3 scored, stop diagnosed.
 - S241 2026-11-26: STATE trimmed; route check RC241 (design/route_check_241.md, short form): cut g3_chain display fix and exclusion self-test; PID reference of route B draws 2 and 3 plus INDI re-fly of 3 launched (D2, results/g3_routeB_s239/REF_S241.md). Supervisor g3_campaign_f10 line stale, nothing to commit. Gate progress: G3 route B stop -> reference flights in progress (no row change yet).
 - S242 (2026-11-26): committed REF_S241 (PID refs draws 2-3, INDI re-fly draw 3). Applied RC241 rule: draw 3 item 2 INDI-only and reproduced -> G3 NOT PASSED on route B (GATES, GATE_STATUS); item 4 fails PID too; Q35 asked, WAIT_OWNER. Route check: RC241 (S241) is current, its item 6 acted on. Gate progress: G3 route B verdict NOT PASSED written.
+- S243 (2026-11-26): Q34 and Q35 closed (full text below); GATES "Owner amendment S243", D-OWNER-Q34-Q35; G3 final NOT PASSED; cuts lifted. Gate progress: G3 verdict final (owner Q35 A).
+
+<details><summary>S243 Q34/Q35 full text</summary>
+
+## Q34 (2026-11-26, S230): G3 item 5, how is "back within 0.3 m and 3 deg in <= 5 s" read? BLOCKING for G3 item 5 rows
+Context. The event-hover pre-test flew (results/g3_pretest_s230/SCORES.md, both keys agree on every pass/fail).
+Both keys use the D-G3-KEYS-S227 reading: t_rec = first sample at or after the event inside the band; then the
+POSITION error must stay <= 0.3 m for 5 s (tilt only when there is no position reference). A gust or fault starts
+with the vehicle in the band, so t_rec = event time and the 3 deg term is never checked after it in position mode.
+Values (key 2 "att" = max tilt error vs q_d per event, window as in SCORES.md, not re-checked; position max in brackets):
+- INDI draw 0: fault 5.6 deg (0.159 m), gust 2.0 deg -> PASS now, FAIL if tilt is enforced in that window.
+- PID draw 0: fault 1.7 deg, gust 1.1 deg -> PASS under every reading.
+- INDI 262: fault 12.0 deg (1.305 m, FAIL on position anyway), gust 8.8 deg (0.279 m) -> gust PASS now.
+Options.
+A. Keep the current reading (tilt checked only at t_rec). This is what the keys do today, and it is weak.
+B. (Recommended) "Back in <= 5 s" = in the band on BOTH terms over [event + 5 s, event + 10 s]. Transients inside
+   the first 5 s are allowed, as the GATES text allows. This needs a change to both keys plus a re-score of the 4
+   pre-test runs (no flight).
+C. Both terms, current t_rec rule: any transient over 3 deg fails, so this is stricter than the GATES text.
+Meanwhile: no item 5 re-score or notes. STATE (c) (solver run on joint/264/262/283) may start on the items Q34 does
+not decide. The (e) candidate verdict waits for this answer. PID item 4 fails on draw 0 (0.768 m, same as S227):
+reported as PID reference only, since INDI passes item 4 on draw 0.
+
+Answer:
+B, scored as "A and B" (owner, 2026-11-26). An event passes item 5 only if BOTH hold:
+1. today's rule (A): t_rec <= 5 s and no position re-excursion > 0.3 m in (t_rec, t_rec + 5 s];
+2. B: position error <= 0.3 m AND tilt error vs q_d <= 3 deg on every sample in [event + 5 s, event + 10 s].
+Reason: B alone only looks at [5, 10] s and would turn draw 262's fault (1.305 m, 12.0 deg inside the first 5 s, A FAIL)
+into a PASS (0.073 m, 0.51 deg in [5, 10] s); item 1 does not catch that excursion. "A and B" keeps the early position
+check and adds the tilt term after the transient, with no new threshold.
+Expected on the S230 pre-test (computed by the owner's analysis from the logs, both keys must reproduce it): INDI d0
+fault PASS (A pass; [5,10] 0.058 m, 0.73 deg), INDI d0 gust PASS, PID d0 fault and gust PASS, INDI d262 fault FAIL
+(fails A), INDI d262 gust PASS ([5,10] 0.063 m, 0.57 deg).
+Work: change both keys, self-tests with break-checks, re-score the 4 pre-test runs (no flight). Since Q35 is answered A,
+this serves the G3 rows and the G8 write-up, not a new G3 campaign.
+
+## Q35 (2026-11-26, S242): G3 after route B, and item 4 failing in both stacks. BLOCKING for G3 (verdict and item 4 rows)
+Context. Route B (keep FREEZE-10, 300 fail-fast on 903eae63) halted at run 003 (results/g3_routeB_s239/HALT_S240.md).
+Speed-1 re-fly and PID references on the same draws and seed (REF_S241.md, both keys agree):
+- Draw 3 (motor tau x2.4-2.8): INDI item 2 FAIL, pitch-rate line at 2.0 Hz sustained, reproduced; PID item 2 PASS.
+  INDI-specific -> G3 NOT PASSED on route B (GATES "G3 verdict, route B (S242)").
+- Item 4 (horizontal RMS <= 0.5 m): draw 2 INDI 0.834 / PID 0.862 m; draw 3 INDI 0.553 / PID 0.917 m. Fails in both.
+- Route B was the last route of D-OWNER-Q32. Candidates (i)-(iii) missed (S232-S236). Item 5 still waits Q34.
+Options.
+A. (Recommended) G3 is final NOT PASSED for this project: the slow-motor 2 Hz pitch mode (and draw 264 LOC) are
+   written up as measured INDI limits in G8 with the data; the G3 chain stops; the cuts lift and work moves to G6
+   item 7, G7 (f)(g) and G8. DONE is then possible with G3 shown unreachable with data (MISSION "Create DONE").
+B. One more bounded firmware route on the slow-motor pitch mode (one investigation session on draw 3, a fix only
+   if a probe removes it on the log, then G2 cells + G3 300 re-fly). Cost about 4-6 sessions; may miss again.
+C. Item 4 sub-question (any option): a row where PID fails item 4 on the same draw is a test defect and is
+   reported for both stacks, not counted for INDI (yes / no). Recommended: yes.
+Meanwhile: no G3 re-fly, re-score or notes; G6/G7/G8 remain cut until this answer (they depend on whether firmware
+changes). Blocked: WAIT_OWNER created.
+
+Answer:
+A, and C = yes with a guard (owner, 2026-11-26).
+- A: G3 is final NOT PASSED for this project. The G3 chain stops (no re-fly, no new firmware route). The slow-motor
+  2 Hz pitch mode (draw 3, reproduced in the S241 re-fly, local q PSD peak at 2.0-2.25 Hz about 30 dB above PID on the
+  same draw) and the draw 264 LOC are written up in G8 as measured INDI limits, with the data. The cuts lift; work moves
+  to G6 item 7, G7 (f)(g) and G8. DONE may then be declared with G3 shown unreachable with data (MISSION "Create DONE").
+  For the G8 write-up, a hypothesis to state as UNVERIFIED unless checked: actuator-model mismatch (motor tau drawn at
+  x2.4-2.8 nominal while MC_INDI_ACT_TC stays 0.033).
+- C = yes, with a guard: a row where PID fails item 4 on the same draw and seed is a test defect, reported for both
+  stacks and not counted against INDI, ONLY IF INDI's value is not worse than PID's. If INDI is worse, it counts
+  against INDI. Today: draw 0 (0.418 vs 0.768 m), draw 2 (0.834 vs 0.862 m), draw 3 (0.553 vs 0.917 m), so INDI is
+  not counted on any of them. Note the limit: one flight per stack and draw, no spread estimate.
+- Also note for the item 2 write-up: the 20x band-median ratio test passes in every window for both stacks (ratios
+  1e4-1e7), so the 5 deg/s RMS floor is what decides item 2 in practice.
+
+</details>

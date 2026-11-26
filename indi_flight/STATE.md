@@ -1,7 +1,7 @@
 # STATE (budget 8000 bytes: read at every launch, resume essentials only)
 
 ## Status
-- Stage: 6 (validation). BLOCKED on Q35 (WAIT_OWNER). FREEZE-10 (D-FREEZE-10): firmware 7fe6206fcc, config g5_freeze_s157 params (XY gains at
+- Stage: 6-7 (G6 item 7, G7, G8). G3 FINAL NOT PASSED (owner Q35 A, GATES "Owner amendment S243"). FREEZE-10 (D-FREEZE-10): firmware 7fe6206fcc, config g5_freeze_s157 params (XY gains at
   firmware defaults 1.2/2.4). Later firmware commits behaviour-neutral (D-G7-NUTTX-BUILD, D-F10-NEUTRAL).
 - Gates: see GATE_STATUS.tsv. G3 NOT PASSED twice (S199, S213 C3 LOC draw 264). Q32 answered (A bounded, S225
   amendment): FREEZE-10 decision 2 re-opened, rate loop only. Controller ACT_TC box r [0.88, 1.02] x tau_mean.
@@ -11,16 +11,15 @@
 ## Next actions (each names its gate item)
 -1. Gate binary = 903eae63 (D-BINARY-GZFIX; FREEZE-10 + GZBridge fix f110361a33; old px4.freeze10_d220e193;
    g3_chain.sh pins it). Do NOT rebuild build/px4_sitl_default from HEAD. Pre-S214 C3 runs: GATES 2 invalid.
-0. BLOCKED on Q35 (WAIT_OWNER, S242): G3 route B NOT PASSED (GATES "G3 verdict, route B (S242)"; draw 3 item 2
-   INDI-only). Q35 = final NOT PASSED (A) vs one more firmware route (B) + item 4 PID-also-fails sub-question.
-   On answer A: lift the CUT list below (G6 item 7, G7, G8 with G3 limits written up). On B: one investigation
-   session on draw 3 (results/g3_routeB_s239/ref_s241/indi_d3). Q34 OPEN: item 5 rows only.
+0. G3 chain STOPPED for good (Q35 A): no G3 re-fly or firmware route. Cuts lifted (D-OWNER-Q34-Q35). Order:
+   a. G6 item 7: 60 corner runs at ID_OK 0 (results/g6_item7_s212, PREP.md launch line; S243 launch, see Tasks).
+      Score items 1-2 (pass), 3-6 reported. Item 5 in these runs is re-scored after the Q34 key change.
+   b. G3 item 5 "A and B" (Q34): both keys + self-tests with break-checks, re-score 4 S230 pre-test runs
+      (results/g3_pretest_s230/Q34_RESCORE.md). Report/G8 evidence, no campaign.
+   c. G7 (f) unit 9 + whole-branch F-10 review + id grep; (g) branch build. d. G8 drafts incl. G3 limits chapter
+      (draw 3 2 Hz pitch, draw 264 LOC, ACT_TC-mismatch hypothesis UNVERIFIED unless checked, item 4 PID guard).
    Supervisor "g3_campaign_f10 chain finished" line is hardcoded and stale (S199 closed it, S237): ignore it.
-   Route check: RC241 (S241) is current; supervisor "GATE_STATUS unchanged" trigger answered by the S242 verdict.
-CUT (RC208/RC221/S223/RC226): G6 item 7 chain (results/g6_item7_s212/PREP.md), G7 (f) unit 9, (g), harness
-  extraction, dead path, older G7 list (items 3 below), G8 drafting (item 5), saturation sweep: all wait until the
-  Q32 route decides firmware. No route check before the solver verdict (RC226 item 6). Unit tests for the winner
-  are written after it is chosen (still required by the pass line).
+   Route check: RC241 (S241) current; next RC S256.
 2. G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
 3. G7 open items: (f) F-10 clean-up per results/g7_s198/F10_PLAN.md (build dir build/f10_sitl, unit tests in
    build/px4_sitl_test). Units 1-8 done; unit 8 review MINORs (wording, F10_UNIT8_REVIEW.md) go into the
@@ -72,7 +71,8 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | Nothing running. G3 route B chain halted at run 003 (results/g3_routeB_s239/campaign, all committed). | - | - | only if Q35 answer resumes it |
+| A1 | G6 item 7 chain launch (60 corners, detached) | haiku | results/g6_item7_s212/LAUNCH_S243.md (pids) | `g3_chain.sh status results/g6_item7_s212` per PREP.md |
+| A2 | Q34 item 5 "A and B" in both keys + re-score 4 pre-test runs | sonnet | results/g3_pretest_s230/Q34_RESCORE.md | re-brief from GATES "Owner amendment S243" |
 CUT (RC241): g3_chain.sh failing-list display fix and exclusion self-test (defer to G7).
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
