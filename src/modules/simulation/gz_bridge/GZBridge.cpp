@@ -641,7 +641,7 @@ void GZBridge::airspeedCallback(const gz::msgs::AirSpeed &msg)
 
 void GZBridge::addExtraImuNoise(gz::math::Vector3d &accel_b, gz::math::Vector3d &gyro_b)
 {
-	// Base stddev = SDF values in indi_flight/sim/staged/quad5in_base_model_a14.sdf (gyro lines ~186-198, accel ~208-221).
+	// Base stddev = IMU noise values of the vehicle model SDF.
 	// Axes are FLU in the SDF, the accel z sigma is 0.00686. FLU->FRD only flips signs, so x/y/z sigmas stay per axis.
 	static constexpr double GYRO_SIGMA = 0.0008726646; // rad/s per axis
 	static constexpr double ACCEL_SIGMA_X = 0.00637;   // m/s^2
@@ -683,7 +683,7 @@ void GZBridge::addRotorVibration(uint64_t timestamp_sample, gz::math::Vector3d &
 	memcpy(rotor_rpm, _mixing_interface_esc._rotor_rpm, sizeof(rotor_rpm));
 	pthread_mutex_unlock(&_mixing_interface_esc._node_mutex);
 
-	// One tone pair referred to the IMU (D-VIB-HOOK): the net imbalance line at the mean rotor speed (1P, rotating in
+	// One tone pair referred to the IMU: the net imbalance line at the mean rotor speed (1P, rotating in
 	// the rotor plane) and the blade-pass line at SIM_GZ_VIB_NB x 1P along the thrust axis at half amplitude. The
 	// amplitudes are those seen at the IMU at SIM_GZ_VIB_RPM and scale with rotor speed squared. Per-rotor tones with
 	// fixed phase offsets cancel at equal rotor speeds, so the net line is modelled directly.

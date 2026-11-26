@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * Failsafe trajectory setpoint of the INDI position module (T5). Pure function, no module state, so it is unit tested
+ * Failsafe trajectory setpoint of the INDI position module. Pure function, no module state, so it is unit tested
  * against the rule table of the stock mc_pos_control generateFailsafeSetpoint().
  */
 

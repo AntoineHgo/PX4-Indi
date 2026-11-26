@@ -152,7 +152,7 @@ private:
 	uint32_t _erpm_errors[esc_status_s::CONNECTED_ESC_MAX] {};
 	uint32_t _random_state{0x12345678u}; // SIM_GZ_SEED 0: fixed, dropouts repeatable run to run
 
-	// SIM_GZ_DLY_ACT delay line (hook A1). Only touched from updateOutputs(), which runs inside Run() under
+	// SIM_GZ_DLY_ACT delay line. Only touched from updateOutputs(), which runs inside Run() under
 	// _node_mutex. 0 = bypassed. Size: 10 ms at up to 3.2 kHz output calls (PX4 rate loop at most 800 Hz).
 	static constexpr int ACT_DELAY_LEN = 32;
 	struct ActDelayEntry {

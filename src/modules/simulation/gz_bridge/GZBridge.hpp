@@ -172,7 +172,7 @@ private:
 	float _vib_phase{0.f}; // angle of the 1P line at the mean rotor speed [rad]
 	uint64_t _vib_timestamp_last{0};
 
-	// SIM_GZ_DLY_IMU delay line (hook A2), one ring per IMU instance, shared mutex (gz transport callbacks of
+	// SIM_GZ_DLY_IMU delay line, one ring per IMU instance, shared mutex (gz transport callbacks of
 	// different instances may run on different threads). 0 = bypassed. Size: 10 ms at up to 3.2 kHz IMU rate
 	// (flown world: 800 Hz, 1.25 ms step => 8 samples + margin).
 	static constexpr int IMU_DELAY_LEN = 32;

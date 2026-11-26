@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * Detection of a change of the vehicle_local_position estimator reset counters (T10). Pure, header only.
+ * Detection of a change of the vehicle_local_position estimator reset counters. Pure, header only.
  * The first sample only latches the counters (a counter that is already non zero at start is not a reset).
  */
 

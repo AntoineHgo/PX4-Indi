@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * Extrapolation of a held trajectory setpoint of the INDI position module (probe F2). The sender publishes at a lower
+ * Extrapolation of a held trajectory setpoint of the INDI position module. The sender publishes at a lower
  * rate than the controller runs, so a zero-order hold is a staircase in position and velocity that enters the P and D
  * terms. Pure function, no module state: the caller extrapolates a copy of the latest received sample each cycle.
  *
