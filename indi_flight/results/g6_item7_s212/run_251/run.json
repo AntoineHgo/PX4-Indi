@@ -1,0 +1,985 @@
+{
+ "scenario": "g3_lemniscate",
+ "controller": "indi",
+ "seed": 1604226518,
+ "speed": 4.0,
+ "sim": "v2",
+ "instance": 0,
+ "params_file": "indi_flight/results/g6_item7_s212/run_251/g3_params.txt",
+ "params_applied": {
+  "NAV_DLL_ACT": 0,
+  "COM_RC_IN_MODE": 4,
+  "COM_RCL_EXCEPT": 4,
+  "SDLOG_PROFILE": 17,
+  "MIS_TAKEOFF_ALT": 5.0,
+  "MC_INDI_G1_R": "1081.231445",
+  "MC_INDI_G1_P": "1009.2314",
+  "MC_INDI_G1_Y": "126.153925",
+  "MC_INDI_G2_Y": "27",
+  "MC_INDI_W_MAX": "2700",
+  "MC_INDI_ACT_BLD": "1.0",
+  "MC_INDI_ACT_TC": "0.05",
+  "MC_INDI_DELAY": "0",
+  "MC_INDI_DT_MAX": "1.0",
+  "MC_INDI_EN": "1",
+  "MC_INDI_ERPM_DLY": "1",
+  "MC_INDI_ERPM_FRZ": "0.5",
+  "MC_INDI_ERPM_TO": "0.02",
+  "MC_INDI_ID_OK": "0",
+  "MC_INDI_INJ_AX": "0",
+  "MC_INDI_K_P": "20",
+  "MC_INDI_K_R": "20",
+  "MC_INDI_K_Y": "20",
+  "MC_INDI_LEAD": "1",
+  "MC_INDI_LND_SLEW": "5.0",
+  "MC_INDI_PINJ_AX": "0",
+  "MC_INDI_POS_DLY": "1",
+  "MC_INDI_POS_LPF": "10.0",
+  "MC_INDI_POS_TB": "0.3",
+  "MC_INDI_SP_TO": "0.5",
+  "MC_INDI_YAW_CUT": "0",
+  "SIM_GZ_ERPM_LAT": "0"
+ },
+ "git": {
+  "commit": "19aaaab282cabb77b43ef22d89be492c1ddf12a6",
+  "dirty": false
+ },
+ "noise_seed": {
+  "gz_sim_seed": 1604226518,
+  "px4_baro_srand": 1234
+ },
+ "events": [
+  {
+   "name": "settle",
+   "t_us": 55766000,
+   "dur_s": 3.0,
+   "mode": "trajectory",
+   "axis": null,
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  },
+  {
+   "name": "event",
+   "t_us": 58766000,
+   "dur_s": 23.0,
+   "mode": "trajectory",
+   "axis": null,
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  },
+  {
+   "name": "traj",
+   "t_us": 81777000,
+   "dur_s": 17.80960979386122,
+   "mode": "trajectory",
+   "axis": null,
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  },
+  {
+   "name": "hold",
+   "t_us": 99597000,
+   "dur_s": 35.0,
+   "mode": "trajectory",
+   "axis": null,
+   "value": 0.0,
+   "prev": 0.0,
+   "step": false
+  }
+ ],
+ "phase_log": [],
+ "exit_status": "ok",
+ "error": null,
+ "physics_step_s": 0.00125,
+ "world": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/sim/worlds/default.sdf",
+ "imu_rate": 800,
+ "rate_hz": 800,
+ "imu_filter_hz": {
+  "IMU_GYRO_CUTOFF": 40,
+  "IMU_DGYRO_CUTOFF": 20
+ },
+ "probe_ff_drag": 0.0,
+ "scenario_overrides": {
+  "file": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/results/g6_item7_s212/run_251/g3_scenario_overrides.json",
+  "overrides": {
+   "dist_segment": "event",
+   "disturbance": "gust_x",
+   "motor_fault": {
+    "motor": 1,
+    "segment": "event",
+    "thrust_scale": 0.80223
+   },
+   "thrust_sag": {
+    "ramp_s": 10.0,
+    "scale": 0.7
+   },
+   "wind": {
+    "dir_deg": 332.246178,
+    "hold_to_end": true,
+    "peak": 6.156803,
+    "steady": 0.873475
+   }
+  },
+  "merged_keys": [
+   "dist_segment",
+   "disturbance",
+   "motor_fault",
+   "thrust_sag",
+   "wind"
+  ],
+  "merged_hooks": {
+   "disturbance": "gust_x",
+   "dist_segment": "event",
+   "wind": {
+    "dir_deg": 332.246178,
+    "hold_to_end": true,
+    "peak": 6.156803,
+    "steady": 0.873475
+   },
+   "thrust_sag": {
+    "ramp_s": 10.0,
+    "scale": 0.7
+   },
+   "motor_fault": {
+    "motor": 1,
+    "segment": "event",
+    "thrust_scale": 0.80223
+   }
+  }
+ },
+ "provenance": {
+  "commit": "19aaaab282cabb77b43ef22d89be492c1ddf12a6",
+  "dirty": false,
+  "binary": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/build/px4_sitl_default/bin/px4",
+  "binary_sha256": "903eae63ceb1bf019215076650cf02fb38cac8534618530410506f6a505f6d62",
+  "binary_commit": "9b16e713925229d93c7db17d8496d713a40b110e",
+  "header_newer_than_binary": false,
+  "files_sha256": {
+   "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/sim/worlds/default.sdf": "851a0e6ca8249cd74427cd1d9215affe0edbce1fde355ffa74fa5622a8cf1bb9",
+   "indi_flight/results/g6_item7_s212/run_251/g3_params.txt": "3df104fa34f59ff03abad8e52bf25577bf6dd13d1da98e4f230398aae3c5d63e",
+   "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/params/quad5in_indi_g1.params": "9001a362844586861d6ff4d5306ea00e2ac79ba85de07252a43c4b2202bd7a2b",
+   "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/sim/models/quad5in/model.config": "7ea654fc18d2f1bcc35920c3deb6ca7c0917d0c768ceaefbd4948b86488bff8f",
+   "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/sim/models/quad5in/model.sdf": "4968f2cde140c6e2ae9c821d5bd5bde636887109840046bc34529d8b98c6ae8a"
+  }
+ },
+ "gate_bearing": false,
+ "airframe_params_file": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/bench/params/quad5in_indi_g1.params",
+ "airframe_params_used": {},
+ "boot_params": {
+  "MC_INDI_EN": 1,
+  "MC_INDI_POS_EN": 1
+ },
+ "dly_act_ms": 1,
+ "dly_imu_ms": 1,
+ "gps_dly_ms": 158,
+ "erpm_drop": 0.139179,
+ "sim_seed": 247217450,
+ "imu_noise_scale": 4.0,
+ "vib": {
+  "acc": 13.343786,
+  "gyr": 0.167189,
+  "rpm": 9540.0,
+  "nb": 3
+ },
+ "gnss_delay": 158,
+ "model_variant": {
+  "model": "quad5in",
+  "scale": {
+   "tau": 0.509697,
+   "tau_up": 0.980975,
+   "mass": 1.3,
+   "ixx": 1.3,
+   "iyy": 1.3,
+   "izz": 1.3
+  },
+  "dir": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/results/g6_item7_s212/run_251/model_variant",
+  "stock_models": "/home/ahugo/Documents/Drotek/Codes/PX4-Indi/indi_flight/sim/models",
+  "original": {
+   "ixx": 0.001022,
+   "iyy": 0.001122,
+   "izz": 0.001944,
+   "mass": 0.566,
+   "rotor_mass": [
+    0.011,
+    0.011,
+    0.011,
+    0.011
+   ],
+   "timeConstantUp": [
+    0.033,
+    0.033,
+    0.033,
+    0.033
+   ],
+   "timeConstantDown": [
+    0.033,
+    0.033,
+    0.033,
+    0.033
+   ]
+  },
+  "new": {
+   "ixx": 0.0013285999999999999,
+   "iyy": 0.0014586,
+   "izz": 0.0025272,
+   "mass": 0.7358,
+   "rotor_mass": [
+    0.0143,
+    0.0143,
+    0.0143,
+    0.0143
+   ],
+   "timeConstantUp": [
+    0.016500000480975,
+    0.016500000480975,
+    0.016500000480975,
+    0.016500000480975
+   ],
+   "timeConstantDown": [
+    0.016820000999999998,
+    0.016820000999999998,
+    0.016820000999999998,
+    0.016820000999999998
+   ]
+  }
+ },
+ "log_poll": "actuator_motors",
+ "log_from_start": true,
+ "t_arm_target_s": 30.0,
+ "t_offboard_target_s": 52.0,
+ "t_before_arm_wait_s": 20.776,
+ "sched": true,
+ "arm_attempts": 1,
+ "t_arm_sent_s": 30.005,
+ "t_arm_us": 30766000,
+ "t_climb_done_s": 38.895,
+ "t_hold_s": 51.007,
+ "hold_pos_ned": [
+  -0.010987725108861923,
+  -0.009875306859612465,
+  -5.03582763671875
+ ],
+ "hold_yaw_rad": 1.596949577331543,
+ "hover_thrust_estimate": 0.17766,
+ "hover_thrust_valid": true,
+ "mpc_thr_hover": 0.137,
+ "hover_thr_used": 0.17766,
+ "hover_thr_source": "hte",
+ "t_offboard_sent_s": 52.005,
+ "t_offboard_us": 52766000,
+ "offboard_custom_mode": [
+  6,
+  0
+ ],
+ "t_window_start_us": 55766000,
+ "disturbance": {
+  "profile": "gust_x",
+  "onset_px4_s": 58.766,
+  "onset_us": 58766000,
+  "csv": "disturbance.csv",
+  "wind": {
+   "dir_deg": 332.246178,
+   "hold_to_end": true,
+   "peak": 6.156803,
+   "steady": 0.873475
+  },
+  "injector": {
+   "profile": "gust_x",
+   "vel_none_ticks": 0,
+   "updates": 62249,
+   "first_valid_vel_sim_s": 58.76625
+  }
+ },
+ "motor_fault": {
+  "motor": 1,
+  "thrust_scale": 0.80223,
+  "nominal": {
+   "MIN": 0,
+   "MAX": 2700
+  },
+  "segment": "event",
+  "event_us": 58766000,
+  "event_done_us": 58766000,
+  "applied": {
+   "MIN": 0,
+   "MAX": 2418
+  },
+  "omega_ratio": 0.8956729313761804
+ },
+ "thrust_sag": {
+  "ramp_s": 10.0,
+  "scale": 0.7,
+  "t0_us": 55766000,
+  "dur_s": 10.0,
+  "steps": [
+   [
+    55777000,
+    0.9997
+   ],
+   [
+    56276000,
+    0.9847
+   ],
+   [
+    56787000,
+    0.9694
+   ],
+   [
+    57266000,
+    0.955
+   ],
+   [
+    57776000,
+    0.9397
+   ],
+   [
+    58286000,
+    0.9244
+   ],
+   [
+    58777000,
+    0.9097
+   ],
+   [
+    59277000,
+    0.8947
+   ],
+   [
+    59786000,
+    0.8794
+   ],
+   [
+    60266000,
+    0.865
+   ],
+   [
+    60776000,
+    0.8497
+   ],
+   [
+    61276000,
+    0.8347
+   ],
+   [
+    61766000,
+    0.82
+   ],
+   [
+    62276000,
+    0.8047
+   ],
+   [
+    62776000,
+    0.7897
+   ],
+   [
+    63273000,
+    0.7748
+   ],
+   [
+    63776000,
+    0.7597
+   ],
+   [
+    64287000,
+    0.7444
+   ],
+   [
+    64766999,
+    0.73
+   ],
+   [
+    65287000,
+    0.7144
+   ],
+   [
+    65766999,
+    0.7
+   ],
+   [
+    66277000,
+    0.7
+   ],
+   [
+    66787000,
+    0.7
+   ],
+   [
+    67286000,
+    0.7
+   ],
+   [
+    67777000,
+    0.7
+   ],
+   [
+    68266000,
+    0.7
+   ],
+   [
+    68786000,
+    0.7
+   ],
+   [
+    69277000,
+    0.7
+   ],
+   [
+    69776000,
+    0.7
+   ],
+   [
+    70287000,
+    0.7
+   ],
+   [
+    70778000,
+    0.7
+   ],
+   [
+    71277000,
+    0.7
+   ],
+   [
+    71787000,
+    0.7
+   ],
+   [
+    72285000,
+    0.7
+   ],
+   [
+    72776000,
+    0.7
+   ],
+   [
+    73268000,
+    0.7
+   ],
+   [
+    73767000,
+    0.7
+   ],
+   [
+    74287000,
+    0.7
+   ],
+   [
+    74787000,
+    0.7
+   ],
+   [
+    75278000,
+    0.7
+   ],
+   [
+    75777000,
+    0.7
+   ],
+   [
+    76286000,
+    0.7
+   ],
+   [
+    76767000,
+    0.7
+   ],
+   [
+    77288000,
+    0.7
+   ],
+   [
+    77787000,
+    0.7
+   ],
+   [
+    78267000,
+    0.7
+   ],
+   [
+    78776000,
+    0.7
+   ],
+   [
+    79267000,
+    0.7
+   ],
+   [
+    79767000,
+    0.7
+   ],
+   [
+    80276000,
+    0.7
+   ],
+   [
+    80786000,
+    0.7
+   ],
+   [
+    81267000,
+    0.7
+   ],
+   [
+    81777000,
+    0.7
+   ],
+   [
+    82267000,
+    0.7
+   ],
+   [
+    82766000,
+    0.7
+   ],
+   [
+    83276000,
+    0.7
+   ],
+   [
+    83776000,
+    0.7
+   ],
+   [
+    84277000,
+    0.7
+   ],
+   [
+    84777000,
+    0.7
+   ],
+   [
+    85287000,
+    0.7
+   ],
+   [
+    85767000,
+    0.7
+   ],
+   [
+    86287000,
+    0.7
+   ],
+   [
+    86786000,
+    0.7
+   ],
+   [
+    87267000,
+    0.7
+   ],
+   [
+    87776000,
+    0.7
+   ],
+   [
+    88267000,
+    0.7
+   ],
+   [
+    88773000,
+    0.7
+   ],
+   [
+    89277000,
+    0.7
+   ],
+   [
+    89786000,
+    0.7
+   ],
+   [
+    90285000,
+    0.7
+   ],
+   [
+    90776000,
+    0.7
+   ],
+   [
+    91267000,
+    0.7
+   ],
+   [
+    91777000,
+    0.7
+   ],
+   [
+    92287000,
+    0.7
+   ],
+   [
+    92787000,
+    0.7
+   ],
+   [
+    93267000,
+    0.7
+   ],
+   [
+    93777000,
+    0.7
+   ],
+   [
+    94276000,
+    0.7
+   ],
+   [
+    94766000,
+    0.7
+   ],
+   [
+    95287000,
+    0.7
+   ],
+   [
+    95787000,
+    0.7
+   ],
+   [
+    96266000,
+    0.7
+   ],
+   [
+    96777000,
+    0.7
+   ],
+   [
+    97268000,
+    0.7
+   ],
+   [
+    97766000,
+    0.7
+   ],
+   [
+    98266000,
+    0.7
+   ],
+   [
+    98768000,
+    0.7
+   ],
+   [
+    99267000,
+    0.7
+   ],
+   [
+    99766000,
+    0.7
+   ],
+   [
+    100276000,
+    0.7
+   ],
+   [
+    100777000,
+    0.7
+   ],
+   [
+    101266000,
+    0.7
+   ],
+   [
+    101776000,
+    0.7
+   ],
+   [
+    102285000,
+    0.7
+   ],
+   [
+    102766000,
+    0.7
+   ],
+   [
+    103286000,
+    0.7
+   ],
+   [
+    103767000,
+    0.7
+   ],
+   [
+    104288000,
+    0.7
+   ],
+   [
+    104767000,
+    0.7
+   ],
+   [
+    105277000,
+    0.7
+   ],
+   [
+    105777000,
+    0.7
+   ],
+   [
+    106276000,
+    0.7
+   ],
+   [
+    106767000,
+    0.7
+   ],
+   [
+    107266000,
+    0.7
+   ],
+   [
+    107786000,
+    0.7
+   ],
+   [
+    108277000,
+    0.7
+   ],
+   [
+    108777000,
+    0.7
+   ],
+   [
+    109268000,
+    0.7
+   ],
+   [
+    109767000,
+    0.7
+   ],
+   [
+    110288000,
+    0.7
+   ],
+   [
+    110767000,
+    0.7
+   ],
+   [
+    111266000,
+    0.7
+   ],
+   [
+    111766000,
+    0.7
+   ],
+   [
+    112286000,
+    0.7
+   ],
+   [
+    112767000,
+    0.7
+   ],
+   [
+    113276000,
+    0.7
+   ],
+   [
+    113767000,
+    0.7
+   ],
+   [
+    114266000,
+    0.7
+   ],
+   [
+    114766000,
+    0.7
+   ],
+   [
+    115276000,
+    0.7
+   ],
+   [
+    115767000,
+    0.7
+   ],
+   [
+    116266000,
+    0.7
+   ],
+   [
+    116786000,
+    0.7
+   ],
+   [
+    117286000,
+    0.7
+   ],
+   [
+    117766000,
+    0.7
+   ],
+   [
+    118287000,
+    0.7
+   ],
+   [
+    118767000,
+    0.7
+   ],
+   [
+    119277000,
+    0.7
+   ],
+   [
+    119787000,
+    0.7
+   ],
+   [
+    120266000,
+    0.7
+   ],
+   [
+    120777000,
+    0.7
+   ],
+   [
+    121286000,
+    0.7
+   ],
+   [
+    121766000,
+    0.7
+   ],
+   [
+    122276000,
+    0.7
+   ],
+   [
+    122767000,
+    0.7
+   ],
+   [
+    123267000,
+    0.7
+   ],
+   [
+    123776000,
+    0.7
+   ],
+   [
+    124267000,
+    0.7
+   ],
+   [
+    124767000,
+    0.7
+   ],
+   [
+    125287000,
+    0.7
+   ],
+   [
+    125776000,
+    0.7
+   ],
+   [
+    126277000,
+    0.7
+   ],
+   [
+    126776000,
+    0.7
+   ],
+   [
+    127287000,
+    0.7
+   ],
+   [
+    127766000,
+    0.7
+   ],
+   [
+    128276000,
+    0.7
+   ],
+   [
+    128767000,
+    0.7
+   ],
+   [
+    129267000,
+    0.7
+   ],
+   [
+    129777000,
+    0.7
+   ],
+   [
+    130287000,
+    0.7
+   ],
+   [
+    130786000,
+    0.7
+   ],
+   [
+    131276000,
+    0.7
+   ],
+   [
+    131786000,
+    0.7
+   ],
+   [
+    132277000,
+    0.7
+   ],
+   [
+    132776000,
+    0.7
+   ],
+   [
+    133267000,
+    0.7
+   ],
+   [
+    133765999,
+    0.7
+   ],
+   [
+    134276000,
+    0.7
+   ]
+  ]
+ },
+ "trajectory": {
+  "shape": "lemniscate",
+  "ax": 5.0,
+  "ay": 2.5,
+  "w": 0.848528137423857,
+  "laps": 2,
+  "ramp_s": 3.0,
+  "t0_us": 81777000,
+  "dur_s": 17.80960979386122
+ },
+ "t_window_end_us": 134607000,
+ "t_land_cmd_us": 138608000,
+ "ulog": "flight.ulg",
+ "wall_time_s": 77.0,
+ "metrics_status": "ok",
+ "g3_outcome": "ok",
+ "g3_timeline": {
+  "version": 1,
+  "time_base": "PX4 clock in us, the base of run.json events[].t_us (sim time); ulog time = us * 1e-6 - ulog start_timestamp [s]",
+  "scenario": "g3_lemniscate",
+  "main_segment": "traj",
+  "fault_on": true,
+  "wind_on": true,
+  "event_t0_us": 58766000,
+  "gust_us": 70766000,
+  "event_end_us": 81766000,
+  "main_start_us": 81777000,
+  "main_end_us": 99586610,
+  "hold_start_us": 99597000,
+  "hold_end_us": 134597000,
+  "sag_ramp_start_us": 55766000,
+  "sag_ramp_end_us": 65766000
+ }
+}
