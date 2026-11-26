@@ -3,9 +3,12 @@ Status: draft complete
 # Chapter 3. Validation against the gates
 
 Gate G8 requires design first, then validation against the gates. Chapters 1 and 2 give the design (inner and outer
-loop); this chapter reports the gates that are PASSED: G1, G2, G4, G5. G3, G6 and G7 are not reported here (section
-headings only). Every number below comes from a gate evidence file at FREEZE-10 (D-FREEZE-10, firmware 7fe6206fcc) and is
-copied from it, not recomputed. Freeze discipline: a later firmware change re-flies the rows it invalidates, so a
+loop); this chapter reports the gates that are PASSED (G1, G2, G4, G5) and the two that are NOT PASSED (G3, G6),
+stated with their data. G7 is not reported here (section heading only). Every number below comes from a gate evidence file and is copied from
+it, not recomputed. G1, G2, G4, G5 and the S199 G3 campaign were flown on FREEZE-10 (D-FREEZE-10, firmware
+7fe6206fcc); the S213 G3 re-fly, G3 route B and G6 item 7 were flown on gate binary 903eae63 (FREEZE-10 plus the simulator
+bridge fix f110361a33, D-BINARY-GZFIX). The G3 candidate fixes (i)-(iii) were rate-loop variants flown on their own
+builds and are not part of any shipped firmware. Freeze discipline: a later firmware change re-flies the rows it invalidates, so a
 verdict here holds for that firmware only. PID values are a reference and never a pass condition (F-5).
 
 Citations: `GATES.md` = `indi_flight/GATES.md` (section title in quotes), `GS` = `indi_flight/GATE_STATUS.tsv`, `F10` =
@@ -118,7 +121,56 @@ Reproduce (all from the repo root, host python3; `F10/G2_SCORES.md` section "Com
 
 ## 3.3 G3 Robustness
 
-pending: see GATE_STATUS.tsv
+State: NOT PASSED, final (owner answer Q35 A, S243). The G3 chain stops: no re-fly and no new firmware route
+(`GATES.md` "Owner amendment S243", `GS` row G3).
+
+What it tests. A robustness campaign of 300 valid simulated flights of 100 s, 240 Latin-hypercube draws plus 60 corner
+runs (corners C1-C6, 10 runs each), each flown as arm, take-off, hover, roll steps, lemniscate trajectory, hold with a
+gust or fault. Factors: controller-versus-plant gain error x0.5-2 per axis, motor time constant x0.5-3 and up/down
+asymmetry, added delay 0-10 ms, mass and inertia +-30 %, thrust sag, weak motor, telemetry faults, vibration, GNSS latency,
+wind (`GATES.md` "3. G3 Robustness campaign", factor table). Pass items per run: 1 no LOC (loss of control), 2 no sustained
+oscillation, 3 steady state, 4 tracking (lemniscate horizontal RMS <= 0.5 m), 5 recovery after the event, 6 rate-mode hold.
+Campaign pass: 0 LOC, 0 oscillation, items 3-6 in every valid run, no quota (S208 Q27). PID is flown on the same draws as
+a reference only.
+
+History of attempts (all NOT PASSED):
+
+| attempt | result | evidence |
+|---|---|---|
+| S199, freeze-10, 300/300 flown | item 1 FAIL: run 245 (C1) 2 Hz pitch divergence, run 264 (C3) tilt > 60 deg at the fault; item 2 FAIL on 79 of 297 scored runs; item 3 94.95 % | `GATES.md` "G3 verdict at freeze-10 (S199...)"; `results/g3_campaign_f10/` |
+| S213, re-fly with drawn controller ACT_TC (actuator time-constant parameter), halted | run 022 (draw 262) item 2 not reproduced at speed 1, not counted; run 024 (draw 264, C3) LOC at 60.78 s (speed 4) and 61.03 s (speed 1), ACT_TC 0.0177 | `GATES.md` "G3 verdict, re-fly with drawn controller ACT_TC (S213...)"; `results/g3_refly_actc_s212/` |
+| S231-S236, candidate fixes (i) ACT_BLD 0.10, (ii) MAP_TC 0.2, (iii) rate integrator | all MISSED the pass line on both keys. (i) 264 items 1+2, 262 item 2; (ii) LOC on the joint draw and 264; (iii) LOC 264, item 2 on 262 | `GS` row G3; `results/g3_cand_i_s231/`, `g3_cand_ii_s233/`, `g3_cand_iii_s235/SCORES.md` |
+| S242, route B (300 fail-fast, binary 903eae63), halted at run 003 | draw 3 item 2 FAIL; item 4 fails on draws 2 and 3 | `GATES.md` "G3 verdict, route B (S242...)"; `results/g3_routeB_s239/HALT_S240.md`, `REF_S241.md` |
+
+Key failing draws.
+- Draw 3 (route B, slow motors, tau x2.4-2.8): INDI q (pitch rate) line at 2.00 Hz, sustained, both scoring keys,
+  reproduced at speed 1. PID on the same draw and seed passes item 2 (`REF_S241.md`). Local q PSD peak 2.0-2.25 Hz,
+  about 30 dB above PID (`GATES.md` "Owner amendment S243"). INDI-specific.
+- Draw 264 (corner C3: thrust scale 0.351, motor 3 at 0.709, mass 1.3): INDI tilts past 60 deg at the fault, in
+  freeze-10 (60.67 s speed 4, 60.91 s speed 1, ACT_TC 0.033) and in the re-fly (ACT_TC 0.0177). PID flies the draw
+  without LOC (tilt max 40 deg). INDI-specific (`GATES.md` S213 verdict). Not changed by ACT_TC.
+- Item 4, draws 0, 2, 3 (INDI / PID, limit 0.5 m): 0.418 / 0.768, 0.834 / 0.862, 0.553 / 0.917 m. PID fails too, and INDI is
+  not worse, so under the PID guard (Q35 C) these rows are a test defect, not counted against INDI. One flight per stack
+  and draw, no spread estimate (`GATES.md` "Owner amendment S243").
+- Item 5 reading A and B (Q34): re-score of the S230 pre-test matches the owner's 6/6 events
+  (`results/g3_pretest_s230/Q34_KEY1.md`, `Q34_KEY2.md`). Serves this write-up only, not a new campaign.
+
+Verdict. G3 is NOT PASSED for this project. Only 25 runs (S213) and 3 runs (route B) of the re-flies were flown before
+the halts, so the 300-run result is not available for any firmware after freeze-10.
+
+Limits carried to the report (measured, with the data above):
+1. Slow-motor 2 Hz pitch mode (draw 3): INDI-only, PID passes.
+2. Draw 264 LOC (saturation plus weak motor): INDI-only. The cause was not traced to its origin (`GATES.md` "Owner
+   amendments S208", item 4).
+3. Item 4 tracking above 0.5 m on draws 0, 2, 3 in both stacks (PID guard, not counted).
+Hypothesis, UNVERIFIED: actuator-model mismatch (motor tau x2.4-2.8 of nominal against MC_INDI_ACT_TC 0.033)
+(`GATES.md` "Owner amendment S243"). No evidence file shows it. The draw 264 failure does not depend on ACT_TC.
+
+Reproduce: route B draw 3 re-fly, `indi_project/docker/run.sh -n g3c_s241_003 -t 1500 -- python3 indi_flight/bench/g3_run.py
+--seed 173 --n 300 --start 3 --stop 3 --base-params indi_flight/results/g5_freeze_s157/params.params --out-root <dir>
+--timeout-s 1200 --speed 1`; PID reference `python3 indi_flight/results/g3_routeB_s239/ref_s241/fly_pid_ref.py 3`
+(`results/g3_routeB_s239/REF_S241.md`). Campaign form: `bench/gate_g3.sh pretest | campaign N SEEDFILE` (`GATES.md`
+definition, not run for this write-up).
 
 ## 3.4 G4 Noise and effort
 
@@ -250,7 +302,39 @@ for the gap flights). Per-row key-1 and key-2 outputs are listed in `F10/G5_VERD
 
 ## 3.6 G6 Defaults and identification
 
-pending: see GATE_STATUS.tsv
+State: NOT PASSED (S244, `GS` row G6; `GATES.md` "G6 item 7 verdict (S244...)").
+
+What it tests. G6 starts from wrong physical parameters (x2 and x0.5 on mass, inertia, motor tau, thrust constant: 8
+single-parameter starts plus the all-high and all-low corners), runs the shipped identification chain once, loads the
+identified values with no other edit, and then must pass G2 (stability margins), G3 (robustness) and G5 (modes and
+transitions) (`GATES.md` "6. G6 Defaults and identification from a wrong start"). Item 7 (S208 Q27, reduced by S211b
+Q29): the 60 corners C1-C6 flown un-identified (`MC_INDI_ID_OK` 0, gains x0.5, ACT_TC 0.05). Pass: item 1 (no LOC) in every
+valid run; item 2 only inside the identification-manoeuvre window; the rest reported. The ~100 Latin-hypercube runs were
+dropped, so that coverage is a stated limit.
+
+Result.
+- G3 is final NOT PASSED (S243), so G6 cannot pass: it requires G3 (`GATES.md` "Owner amendment S243", G6 consequence).
+- Item 7, runs 240-299 (gate binary 903eae63), both keys: item 1 FAILS. LOC in runs 278 and 295 (both keys). Runs 262
+  (altitude loss), 264 (height < 0.3 m), 269 and 292 (tilt > 60 deg) were stopped by the flight watchdog. The chain marked
+  them invalid, but a watchdog stop is not in the list of harness aborts, so they count as LOC: 6 LOC in 58 runs.
+- Invalid (harness): 274 (wall timeout), 284 (no INDI status in the log), not re-flown (cannot change the verdict).
+- Reported, 54 runs scored in the tally (key 1 / key 2 fails): item 2 over the whole run 21 / 22, item 3 2 / 2, item 4
+  18 / 18, item 5 30 / 30, item 6 0 / 0. Overall pass 12/54 on both keys (`results/g6_item7_s212/TALLY_S244.md`).
+  Run 240 item 5 was scored before the Q34 key change; per-corner failures are not reported (no run-to-corner map).
+- Identification quality: ACT_TC identification error 0 of 30 cells failed in the SITL grid (r_mean 0.899-1.002); time
+  constants within 3.7 %, delay offset about +1.75 ms; inert frames factor, quad5in plant only, one seed mostly
+  (`results/actc_grid_s209/README.md`; the telemetry-instance bound is `REFIT_INST0.md`, not read here).
+- Outlook flights (stock x500, a vehicle of about 1 kg, one above 5 kg) are reported only and not a pass condition. They
+  have not been flown yet (last project step), so nothing is reported here.
+- Item 2 over the whole run is reported only; it is not the item 2 pass window and the window-limited score does not exist.
+
+Verdict. G6 is NOT PASSED: G3 final NOT PASSED, and item 7 fails item 1 (6 LOC in 58 runs). The identification
+procedure and the defaults evidence stay in the report as the method and its limits.
+
+Reproduce: tally `bash indi_flight/bench/g3_chain.sh rescore indi_flight/results/g6_item7_s212` (it rescored 0 runs, the
+tally uses the stored scores; `results/g6_item7_s212/TALLY_S244.md`). ACT_TC grid `python3 indi_flight/bench/actc_grid.py
+--out indi_flight/results/actc_grid_s209`, table `python3 indi_flight/bench/actc_grid_table.py`
+(`results/actc_grid_s209/README.md`). The definition's `bench/gate_g6.sh start_id` does not exist in `bench/`.
 
 ## 3.7 G7 Code
 
@@ -262,3 +346,9 @@ pending: see GATE_STATUS.tsv
 - G5 rows G5.1-G5.7 results come from the audit table written S197 before the S198 gap flights; the S198 verdict says they are unchanged. [open: needs re-read of the S197 audit versus S198 verdict]
 - Reproduce commands for G1.1 (`bench/gate_g1.sh`) and G4 (`bench/gate_g4.sh`) come from `GATES.md` definitions, not from the FREEZE-10 evidence; the S193 G4 scoring command was not found in `F10/G4_SCORES.md`. [open: `results/freeze10_s193/g4_score.sh` exists (S217 ls) but was not read to confirm it is the S193 scoring command]
 - Hole-rate numbers for the G2 and G4 flights are not tabulated here beyond the re-fly cell. [open: not tabulated]
+- G3 and G6 numbers are copied from `GATES.md` verdict sections and `GS`; the per-run files for the S199 campaign (`results/g3_campaign_f10/SCORES.tsv`) and the candidate (i) and (ii) SCORES files were not opened. [open: not compared]
+- The G3 cause (actuator-model mismatch) is a hypothesis; no evidence file shows it. [open: unverified hypothesis]
+- G3 PID values for draws 0 and 2 (0.768, 0.862 m) come from `GATES.md` and `REF_S241.md`; draw 0 was not re-read. [open]
+- No `bench/gate_g6.sh` exists; the G6 start-error identification runs (10 starts, G2/G3/G5 per start) were not flown, so G6 items other than item 7 and the ACT_TC grid have no result here. [open: not flown]
+- G6 item 2 limited to the identification-manoeuvre window was not scored separately. [open]
+- G6 outlook flights on other airframes (x500, > 5 kg): no evidence found, not reported. [open]
