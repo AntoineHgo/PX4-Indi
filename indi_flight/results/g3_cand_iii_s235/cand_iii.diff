@@ -1,0 +1,464 @@
+diff --git a/msg/IndiRateStatus.msg b/msg/IndiRateStatus.msg
+index c9b50c3de99..43270bd5292 100644
+--- a/msg/IndiRateStatus.msg
++++ b/msg/IndiRateStatus.msg
+@@ -6,6 +6,7 @@ float32[3] nu				# desired angular acceleration (rad/s^2)
+ float32[3] angular_accel_filtered	# measured filtered angular acceleration used by the controller (rad/s^2)
+ float32[3] torque_filtered		# modelled actuator torque after the synchronisation filter (normalised)
+ float32[3] torque_increment		# commanded torque increment (normalised)
++float32[3] rate_integral		# rate integrator torque (normalised, 0 when disabled)
+ float32[3] lead_gain			# c_i applied this cycle (0 when landed)
+ float32[3] rate_sp_dot			# filtered, clamped rate setpoint derivative used by the setpoint lead (rad/s^2, 0 when landed)
+ 
+diff --git a/src/lib/indi_rate_control/indi_rate_control.cpp b/src/lib/indi_rate_control/indi_rate_control.cpp
+index 85c6a1c7e14..eb8a01ca4d6 100644
+--- a/src/lib/indi_rate_control/indi_rate_control.cpp
++++ b/src/lib/indi_rate_control/indi_rate_control.cpp
+@@ -178,6 +178,7 @@ void IndiRateControl::resetStates()
+ 	// filter's feed-through gain on every cycle that resets the states (landed, fault recovery)
+ 	_yaw_filter_reset_pending = true;
+ 	_yaw_inc_prev = 0.f;
++	_rate_integral.zero();
+ 	_blend.zero();
+ 	_t_fb_prev.zero();
+ 	_landed_ramp = false;
+@@ -199,6 +200,35 @@ void IndiRateControl::reset()
+ 	_sp_lead_reset = true;
+ }
+ 
++void IndiRateControl::updateRateIntegral(const Vector3f &rate_error, const float dt, const bool frozen)
++{
++	if ((_integral_corner_hz <= 0.f) || (_integral_limit <= 0.f)) {
++		_rate_integral.zero();
++		return;
++	}
++
++	if (frozen) {
++		return;
++	}
++
++	for (int i = 0; i < 3; i++) {
++		float error = rate_error(i);
++
++		// no further growth in the direction the allocator cannot deliver
++		if (_saturation_positive(i)) {
++			error = math::min(error, 0.f);
++		}
++
++		if (_saturation_negative(i)) {
++			error = math::max(error, 0.f);
++		}
++
++		const float corner = math::min(2.f * M_PI_F * _integral_corner_hz, kMaxIntegralCornerRatio * _gain_k(i));
++		_rate_integral(i) = math::constrain(_rate_integral(i) + corner * _gain_k(i) * error / _g1(i) * dt,
++						    -_integral_limit, _integral_limit);
++	}
++}
++
+ Vector3f IndiRateControl::faultOutput(const bool states_corrupted)
+ {
+ 	_fault = true;
+@@ -407,8 +437,14 @@ Vector3f IndiRateControl::update(const Vector3f &rate, const Vector3f &rate_sp,
+ 
+ 	_rate_sp_prev = rate_sp_eff;
+ 
+-	// 7. desired angular acceleration
+-	const Vector3f nu = _gain_k.emult(rate_error);
++	// 7. desired angular acceleration. The rate integral is frozen on ground, so that no ground contact error
++	// accumulates, stops growing toward an allocator limit, and is not applied while landed
++	updateRateIntegral(rate_error, dt, landed || maybe_landed);
++	Vector3f nu = _gain_k.emult(rate_error);
++
++	if (!landed) {
++		nu += _g1.emult(_rate_integral);
++	}
+ 
+ 	// 7b. on ground the measured acceleration carries no information about the torque: hold the feedback torque
+ 	// out of the law so that no increment can accumulate. At takeoff the law steps by the modelled torque, the
+diff --git a/src/lib/indi_rate_control/indi_rate_control.hpp b/src/lib/indi_rate_control/indi_rate_control.hpp
+index 7175fbef036..93fd0bed038 100644
+--- a/src/lib/indi_rate_control/indi_rate_control.hpp
++++ b/src/lib/indi_rate_control/indi_rate_control.hpp
+@@ -72,7 +72,14 @@
+  * the integral action of the model state against a steady command/output gap. b tracks the difference while the
+  * measurement is not in use, the blend is disabled or on ground, so every switch is bumpless.
+  *
+- * There is no integrator. All memory is statically allocated.
++ * Optional rate integrator (setRateIntegral()): the rate error integrated at corner frequency w_i adds
++ *   nu += G1 i,   di/dt = w_i K (rate_sp - rate) / G1,   |i| <= limit
++ * to the desired angular acceleration, i in normalised torque. It supplies the steady torque that the measured
++ * torque feedback cannot hold against a constant actuator effectiveness loss. The integration stops while the
++ * allocator saturates in the direction of the error, on ground (landed or maybe landed), and in a rejected cycle;
++ * the state is held on ground and not applied while landed. reset() clears it.
++ *
++ * All memory is statically allocated.
+  */
+ 
+ #pragma once
+@@ -208,6 +215,30 @@ public:
+ 		return true;
+ 	}
+ 
++	/**
++	 * Set the rate integrator, off while either value is 0.
++	 * @param corner_hz corner frequency of the integral action in Hz, relative to the proportional gain: the law is
++	 *        K (1 + w_i / s) error with w_i = 2 pi corner_hz. Limited to kMaxIntegralCornerRatio x K per axis so
++	 *        that the integral action stays well below the rate loop bandwidth. Non finite or negative gives 0
++	 * @param limit bound of the integral torque per axis in normalised torque units. Non finite or negative gives 0
++	 */
++	void setRateIntegral(float corner_hz, float limit)
++	{
++		_integral_corner_hz = (math::isFinite(corner_hz) && (corner_hz > 0.f)) ? corner_hz : 0.f;
++		_integral_limit = (math::isFinite(limit) && (limit > 0.f)) ? limit : 0.f;
++	}
++
++	/**
++	 * Set the allocator saturation seen by the last torque setpoint, per axis: true if the allocator could not
++	 * deliver more torque in that direction. The rate integrator does not grow further in that direction.
++	 */
++	void setSaturationStatus(const matrix::Vector3<bool> &saturation_positive,
++				 const matrix::Vector3<bool> &saturation_negative)
++	{
++		_saturation_positive = saturation_positive;
++		_saturation_negative = saturation_negative;
++	}
++
+ 	/**
+ 	 * Set the per axis limit of the torque increment. Non finite or <= 0 values are ignored and the last valid
+ 	 * limit is kept (1, the full torque range, until a valid value is set), so an invalid value never widens it.
+@@ -268,6 +299,9 @@ public:
+ 	/// True if the last update() call used the measured torque as t_f instead of the actuator model
+ 	bool measurementInUse() const { return _meas_in_use; }
+ 
++	/// Rate integral torque (normalised) held by the controller, for logging
++	const matrix::Vector3f &getRateIntegral() const { return _rate_integral; }
++
+ 	/// Blend state t_f_model - t_f_meas, low passed, of the last update() call
+ 	const matrix::Vector3f &getActuatorBlend() const { return _blend; }
+ 
+@@ -294,6 +328,10 @@ public:
+ 	 */
+ 	static constexpr int kMeasValidCycles = 20;
+ 
++	/// Upper bound of the integral corner frequency as a fraction of the rate bandwidth gain K, so that the
++	/// integral action costs at most about 11 degrees of phase at the rate loop crossover
++	static constexpr float kMaxIntegralCornerRatio = 0.2f;
++
+ 	/// Measured rpm above this multiple of rpm_max is rejected as implausible by normalisedThrustFromRpm()
+ 	static constexpr float kMaxRpmRatio = 1.5f;
+ 
+@@ -310,6 +348,7 @@ private:
+ 	void designSyncFilters(float sample_freq, bool reset_states);
+ 	void designYawFilters(float sample_freq);
+ 	void resetStates();
++	void updateRateIntegral(const matrix::Vector3f &rate_error, float dt, bool frozen);
+ 
+ 	/// Output of a rejected cycle: the held last valid output, or zero with reset states once the hold expires
+ 	matrix::Vector3f faultOutput(bool states_corrupted);
+@@ -331,6 +370,10 @@ private:
+ 	int _meas_delay_samples_target{0};
+ 	float _blend_tc{0.f}; ///< 0 = blend disabled
+ 	float _lead_scale{1.f}; ///< scale of the rate prediction lead, 0 = off
++	float _integral_corner_hz{0.f}; ///< rate integrator corner, 0 = off
++	float _integral_limit{0.f}; ///< rate integrator bound in normalised torque, 0 = off
++	matrix::Vector3<bool> _saturation_positive{}; ///< allocator cannot add torque in the positive direction
++	matrix::Vector3<bool> _saturation_negative{}; ///< allocator cannot add torque in the negative direction
+ 	matrix::Vector3f _lead_gain{}; ///< c applied in the last cycle, logging
+ 
+ 	// Filter design bookkeeping
+@@ -362,6 +405,7 @@ private:
+ 	AlphaFilter<float> _meas_alpha[3];
+ 	int _meas_valid_cycles{0};           ///< consecutive valid cycles, saturates at kMeasValidCycles
+ 	bool _meas_in_use{false};
++	matrix::Vector3f _rate_integral; ///< integral of the rate error as normalised torque
+ 	matrix::Vector3f _blend; ///< low passed t_f_model - t_f_meas, tracks it when the blend is not active
+ 
+ 	math::LowPassFilter2p<float> _yaw_lpf_accel; ///< yaw low pass on the angular acceleration
+diff --git a/src/lib/indi_rate_control/indi_rate_control_test.cpp b/src/lib/indi_rate_control/indi_rate_control_test.cpp
+index 8dc19c585bc..b06a5804ead 100644
+--- a/src/lib/indi_rate_control/indi_rate_control_test.cpp
++++ b/src/lib/indi_rate_control/indi_rate_control_test.cpp
+@@ -72,6 +72,7 @@ public:
+ 
+ 	float rate() const { return _rate; }
+ 	float accelFiltered() const { return _accel_f; }
++	float torque() const { return _torque; }
+ 
+ private:
+ 	math::LowPassFilter2p<float> _lpf;
+@@ -2303,3 +2304,173 @@ TEST(IndiRateControlTest, EffectiveGainKIdentStatus)
+ 		EXPECT_FLOAT_EQ(full(i), k(i));
+ 	}
+ }
++
++namespace
++{
++
++constexpr float kIntegralCornerHz = 0.5f;
++constexpr float kIntegralLimit = 0.2f;
++
++IndiRateControl makeIntegralController(float corner_hz = kIntegralCornerHz, float limit = kIntegralLimit)
++{
++	IndiRateControl ctrl = makeController();
++	ctrl.setActuatorBlendTimeConstant(0.f); // the measured torque alone, no integral action from the blend
++	ctrl.setRateIntegral(corner_hz, limit);
++	return ctrl;
++}
++
++/// Roll loop on the measured torque with a constant torque loss (weak motor): the plant produces gap less torque than
++/// commanded and the measurement sees that too. Returns the rate after the run, the mean of the last second.
++float runWeakMotorLoop(IndiRateControl &ctrl, float gap, float duration_s)
++{
++	RollPlant plant;
++	float command = 0.f;
++	float rate_sum = 0.f;
++	int rate_count = 0;
++	const int steps = static_cast<int>(duration_s / kDt);
++
++	for (int i = 0; i < steps; i++) {
++		const Vector3f measured(plant.torque() - gap, 0.f, 0.f);
++		ctrl.setMeasuredTorque(measured, true);
++		const Vector3f torque = ctrl.update(Vector3f(plant.rate(), 0.f, 0.f), Vector3f(),
++						    Vector3f(plant.accelFiltered(), 0.f, 0.f), Vector3f(command, 0.f, 0.f), kDt, false);
++		command = torque(0);
++		plant.step(command, -kG1True * gap);
++
++		if (i >= steps - static_cast<int>(1.f / kDt)) {
++			rate_sum += plant.rate();
++			rate_count++;
++		}
++	}
++
++	return rate_sum / static_cast<float>(rate_count);
++}
++
++/// constant roll rate error (default 0.1 rad/s) for n cycles, no measured acceleration, returns the last output
++Vector3f runRateError(IndiRateControl &ctrl, int n, bool landed, bool maybe_landed, float error = 0.1f)
++{
++	Vector3f torque;
++
++	for (int i = 0; i < n; i++) {
++		torque = ctrl.update(Vector3f(), Vector3f(error, 0.f, 0.f), Vector3f(), Vector3f(), kDt, landed, maybe_landed);
++	}
++
++	return torque;
++}
++
++} // namespace
++
++TEST(IndiRateIntegralTest, WeakMotorLoopRemovesSteadyError)
++{
++	const float gap = 0.08f;
++
++	// without the integrator the measured torque feedback leaves a steady rate error: 0.08 * 100 / 20 = 0.4 rad/s
++	IndiRateControl without = makeIntegralController(0.f, 0.f);
++	EXPECT_GT(fabsf(runWeakMotorLoop(without, gap, 12.f)), 0.3f);
++
++	IndiRateControl with = makeIntegralController();
++	EXPECT_LT(fabsf(runWeakMotorLoop(with, gap, 12.f)), 0.02f);
++	EXPECT_NEAR(with.getRateIntegral()(0), gap, 0.005f);
++}
++
++TEST(IndiRateIntegralTest, HeldWhileAllocatorSaturatesInTheErrorDirection)
++{
++	IndiRateControl ctrl = makeIntegralController();
++	ctrl.setSaturationStatus(Vector3<bool>(true, false, false), Vector3<bool>());
++	runRateError(ctrl, 400, false, false, 0.1f); // positive error, positive saturation
++	EXPECT_EQ(ctrl.getRateIntegral()(0), 0.f);
++
++	runRateError(ctrl, 400, false, false, -0.1f); // opposite direction is free
++	EXPECT_LT(ctrl.getRateIntegral()(0), -0.01f);
++
++	ctrl.reset();
++	ctrl.setSaturationStatus(Vector3<bool>(), Vector3<bool>(true, false, false));
++	runRateError(ctrl, 400, false, false, -0.1f);
++	EXPECT_EQ(ctrl.getRateIntegral()(0), 0.f);
++
++	runRateError(ctrl, 400, false, false, 0.1f);
++	EXPECT_GT(ctrl.getRateIntegral()(0), 0.01f);
++
++	ctrl.setSaturationStatus(Vector3<bool>(), Vector3<bool>()); // released
++	const float held = ctrl.getRateIntegral()(0);
++	runRateError(ctrl, 100, false, false, 0.1f);
++	EXPECT_GT(ctrl.getRateIntegral()(0), held);
++}
++
++TEST(IndiRateIntegralTest, FrozenOnGroundAndNotAppliedWhileLanded)
++{
++	IndiRateControl ctrl = makeIntegralController();
++	runRateError(ctrl, 400, false, false);
++	const float held = ctrl.getRateIntegral()(0);
++	ASSERT_GT(held, 0.01f);
++
++	// maybe landed: held, still applied (nu = K e + G1 i)
++	Vector3f torque = runRateError(ctrl, 400, false, true);
++	EXPECT_EQ(ctrl.getRateIntegral()(0), held);
++	EXPECT_NEAR(ctrl.getNu()(0), 2.f + kG1True * held, 1e-3f);
++	(void)torque;
++
++	// landed: held, not applied, nu is the proportional term only
++	runRateError(ctrl, 400, true, true);
++	EXPECT_EQ(ctrl.getRateIntegral()(0), held);
++	EXPECT_NEAR(ctrl.getNu()(0), 2.f, 1e-3f);
++
++	// back in flight it is applied again and grows
++	runRateError(ctrl, 100, false, false);
++	EXPECT_GT(ctrl.getRateIntegral()(0), held);
++}
++
++TEST(IndiRateIntegralTest, ResetAtArmingClearsIntegral)
++{
++	IndiRateControl ctrl = makeIntegralController();
++	runRateError(ctrl, 400, false, false);
++	ASSERT_GT(ctrl.getRateIntegral()(0), 0.01f);
++
++	ctrl.reset();
++	EXPECT_EQ(ctrl.getRateIntegral(), Vector3f());
++	const Vector3f torque = runRateError(ctrl, 1, false, false);
++	EXPECT_NEAR(torque(0), 2.f / kG1True, 1e-3f); // proportional term only, no leftover integral
++}
++
++TEST(IndiRateIntegralTest, BoundedByLimitOnEveryAxis)
++{
++	IndiRateControl ctrl = makeIntegralController();
++	Vector3f torque;
++
++	for (int i = 0; i < 4000; i++) { // 10 s of a constant error on all axes, opposite signs
++		torque = ctrl.update(Vector3f(), Vector3f(1.5f, -1.5f, 1.5f), Vector3f(), Vector3f(), kDt, false);
++	}
++
++	EXPECT_FLOAT_EQ(ctrl.getRateIntegral()(0), kIntegralLimit);
++	EXPECT_FLOAT_EQ(ctrl.getRateIntegral()(1), -kIntegralLimit);
++	EXPECT_FLOAT_EQ(ctrl.getRateIntegral()(2), kIntegralLimit);
++	EXPECT_NEAR(torque(0), 1.5f * 20.f / kG1True + kIntegralLimit, 1e-4f);
++}
++
++TEST(IndiRateIntegralTest, CornerIsLimitedToAFifthOfTheRateGain)
++{
++	// a corner of 100 Hz is cut to 0.2 K = 4 rad/s: di/dt = 4 * 20 * 1 / 100 = 0.8 per s
++	IndiRateControl ctrl = makeIntegralController(100.f, 1.f);
++	runRateError(ctrl, 40, false, false, 1.f); // 0.1 s
++	EXPECT_NEAR(ctrl.getRateIntegral()(0), 0.08f, 1e-3f);
++}
++
++TEST(IndiRateIntegralTest, DisabledByZeroCornerOrLimit)
++{
++	for (int variant = 0; variant < 2; variant++) {
++		IndiRateControl ctrl = variant ? makeIntegralController(kIntegralCornerHz, 0.f) : makeIntegralController(0.f, kIntegralLimit);
++		const Vector3f torque = runRateError(ctrl, 400, false, false);
++		EXPECT_EQ(ctrl.getRateIntegral(), Vector3f());
++		EXPECT_NEAR(torque(0), 2.f / kG1True, 1e-6f);
++	}
++}
++
++TEST(IndiRateIntegralTest, RejectedCycleKeepsTheIntegral)
++{
++	IndiRateControl ctrl = makeIntegralController();
++	runRateError(ctrl, 400, false, false);
++	const float held = ctrl.getRateIntegral()(0);
++	ctrl.update(Vector3f(), Vector3f(std::numeric_limits<float>::quiet_NaN(), 0.f, 0.f), Vector3f(), Vector3f(), kDt, false);
++	EXPECT_TRUE(ctrl.getFault());
++	EXPECT_EQ(ctrl.getRateIntegral()(0), held);
++}
+diff --git a/src/modules/mc_indi_rate_control/McIndiRateControl.cpp b/src/modules/mc_indi_rate_control/McIndiRateControl.cpp
+index 1c2f257ca6c..0418f68b7fb 100644
+--- a/src/modules/mc_indi_rate_control/McIndiRateControl.cpp
++++ b/src/modules/mc_indi_rate_control/McIndiRateControl.cpp
+@@ -35,6 +35,7 @@
+ #include "IndiInjectionStep.hpp"
+ 
+ #include <drivers/drv_hrt.h>
++#include <float.h>
+ #include <mathlib/math/Limits.hpp>
+ #include <mathlib/math/Functions.hpp>
+ 
+@@ -106,6 +107,7 @@ McIndiRateControl::parameters_updated()
+ 	_indi.setMeasurementDelaySamples(_param_mc_indi_erpm_dly.get());
+ 	_indi.setMaxIncrement(_param_mc_indi_dt_max.get());
+ 	_indi.setLandedSlew(_param_mc_indi_lnd_slew.get());
++	_indi.setRateIntegral(_param_mc_indi_ri_freq.get(), _param_mc_indi_ri_lim.get());
+ 	_indi.setYawCutoff(_param_mc_indi_yaw_cut.get());
+ 	_rate_sp_watchdog.setTimeout(_param_mc_indi_sp_to.get());
+ 
+@@ -269,6 +271,7 @@ McIndiRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f &ang
+ 	_indi.getFilteredAngularAccel().copyTo(indi_rate_status.angular_accel_filtered);
+ 	_indi.getFilteredTorque().copyTo(indi_rate_status.torque_filtered);
+ 	_indi.getTorqueIncrement().copyTo(indi_rate_status.torque_increment);
++	_indi.getRateIntegral().copyTo(indi_rate_status.rate_integral);
+ 	indi_rate_status.fault = _indi.getFault();
+ 	indi_rate_status.measured_torque_in_use = _indi.measurementInUse();
+ 	indi_rate_status.rate_sp_stale = _rate_sp_stale;
+@@ -432,6 +435,23 @@ McIndiRateControl::Run()
+ 			if (_control_allocator_status_sub.update(&control_allocator_status)) {
+ 				_unallocated_torque = Vector3f(control_allocator_status.unallocated_torque);
+ 				_unallocated_torque_time = control_allocator_status.timestamp;
++
++				// same saturation rule as the stock rate controller
++				Vector<bool, 3> saturation_positive;
++				Vector<bool, 3> saturation_negative;
++
++				if (!control_allocator_status.torque_setpoint_achieved) {
++					for (size_t i = 0; i < 3; i++) {
++						if (control_allocator_status.unallocated_torque[i] > FLT_EPSILON) {
++							saturation_positive(i) = true;
++
++						} else if (control_allocator_status.unallocated_torque[i] < -FLT_EPSILON) {
++							saturation_negative(i) = true;
++						}
++					}
++				}
++
++				_indi.setSaturationStatus(saturation_positive, saturation_negative);
+ 			}
+ 
+ 			// INDI has its own actuator model: no yaw low-pass filter and no battery scaling
+diff --git a/src/modules/mc_indi_rate_control/McIndiRateControl.hpp b/src/modules/mc_indi_rate_control/McIndiRateControl.hpp
+index 8eeba3e0411..fc655349e67 100644
+--- a/src/modules/mc_indi_rate_control/McIndiRateControl.hpp
++++ b/src/modules/mc_indi_rate_control/McIndiRateControl.hpp
+@@ -219,6 +219,8 @@ private:
+ 		(ParamFloat<px4::params::MC_INDI_ERPM_TO>) _param_mc_indi_erpm_to,
+ 		(ParamFloat<px4::params::MC_INDI_DT_MAX>) _param_mc_indi_dt_max,
+ 		(ParamFloat<px4::params::MC_INDI_LND_SLEW>) _param_mc_indi_lnd_slew,
++		(ParamFloat<px4::params::MC_INDI_RI_FREQ>) _param_mc_indi_ri_freq,
++		(ParamFloat<px4::params::MC_INDI_RI_LIM>) _param_mc_indi_ri_lim,
+ 		(ParamFloat<px4::params::MC_INDI_ERPM_FRZ>) _param_mc_indi_erpm_frz,
+ 		(ParamFloat<px4::params::MC_INDI_SP_TO>) _param_mc_indi_sp_to,
+ 		(ParamFloat<px4::params::MC_INDI_YAW_CUT>) _param_mc_indi_yaw_cut,
+diff --git a/src/modules/mc_indi_rate_control/mc_indi_rate_control_params.yaml b/src/modules/mc_indi_rate_control/mc_indi_rate_control_params.yaml
+index b5725293906..9f549459543 100644
+--- a/src/modules/mc_indi_rate_control/mc_indi_rate_control_params.yaml
++++ b/src/modules/mc_indi_rate_control/mc_indi_rate_control_params.yaml
+@@ -192,6 +192,32 @@ parameters:
+       max: 100
+       decimal: 1
+       increment: 0.5
++    MC_INDI_RI_FREQ:
++      description:
++        short: INDI rate integrator corner frequency
++        long: Corner frequency of the integral action on the body rate error, which adds a bounded
++          angular acceleration term to the INDI rate law. It holds the steady torque that the measured torque
++          feedback cannot hold against a constant actuator effectiveness loss, such as a weak motor. It is
++          limited to 0.2 times the rate bandwidth gain of each axis. Set to 0 to disable.
++      type: float
++      default: 0.5
++      min: 0.0
++      max: 2.0
++      unit: Hz
++      decimal: 2
++      increment: 0.05
++    MC_INDI_RI_LIM:
++      description:
++        short: INDI rate integrator limit
++        long: Bound of the rate integrator in normalised torque per axis. The integrator stops growing in the
++          direction the control allocator saturates, is frozen on the ground and cleared at arming.
++          Set to 0 to disable.
++      type: float
++      default: 0.2
++      min: 0.0
++      max: 0.5
++      decimal: 2
++      increment: 0.01
+     MC_INDI_ERPM_FRZ:
+       description:
+         short: INDI frozen rotor speed detection time
