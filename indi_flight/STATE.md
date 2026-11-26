@@ -12,13 +12,9 @@
 -1. Gate binary = 903eae63 (D-BINARY-GZFIX; FREEZE-10 + GZBridge fix f110361a33; old px4.freeze10_d220e193;
    g3_chain.sh pins it). Do NOT rebuild build/px4_sitl_default from HEAD. Pre-S214 C3 runs: GATES 2 invalid.
 0. G3 route per D-OWNER-Q32 (GATES "Owner amendment S225", "Owner amendment Q33"; pass line DECISIONS
-   D-RATE-BLD-2). (a4), (a5), (b) DONE (JOURNAL S230/S231; baselines results/g3_pretest_s230/SCORES.md).
-   Q34 OPEN: blocks item 5 rows and the (e) verdict; no item 5 re-score. Stick pilot neutral over the event
-   hover unverified. (c): candidate (i) MISSED (S232, D-RATE-BLD-2-C2, results/g3_cand_i_s231/SCORES.md).
-   (ii) MISSED S234 (LOC joint+264). (iii) MISSED S236 (LOC 264, item 2 262; results/g3_cand_iii_s235/SCORES.md). NEXT: route B (GATES "Owner amendment S225", fixed
-   corner; solver_brief_c.md last line): G3 300 on 903eae63, no new question; (d)/(e) lapse (no winner). Cause context: restore264 falsifier_s222/README.md, blend264_s223, ref264_s224.
+   D-RATE-BLD-2). Candidates (i)-(iii) MISSED (JOURNAL S232-S236) -> route B (GATES "Owner amendment S225"):
+   G3 300 on 903eae63, results/g3_routeB_s239 (HALTED at run 003, see Tasks). Q34 OPEN: blocks item 5 rows only.
    Supervisor "g3_campaign_f10 chain finished" line is hardcoded and stale (S199 closed it, S237): ignore it.
-   CUT (S238, RC239): scope = route B launch only (pre-test 1-3 flights, then the 300), nothing else until it runs.
 CUT (RC208/RC221/S223/RC226): G6 item 7 chain (results/g6_item7_s212/PREP.md), G7 (f) unit 9, (g), harness
   extraction, dead path, older G7 list (items 3 below), G8 drafting (item 5), saturation sweep: all wait until the
   Q32 route decides firmware. No route check before the solver verdict (RC226 item 6). Unit tests for the winner
@@ -47,7 +43,7 @@ CUT (RC208/RC221/S223/RC226): G6 item 7 chain (results/g6_item7_s212/PREP.md), G
    pos module reads esc_status instance 0 only, no frozen/error-count check, 100 ms ESC age vs 20 ms in rate module.
 Rules: 1 session per inner-loop law change; parallel docker streams only for tolerance-insensitive probes, never gate
   evidence, never a docker build during gate flights; G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1. Next RC:
-  S244 (last RC229).
+  S256 (last RC241).
 STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 margin): A-39 / yaw measured-path chase,
   PID M1 hook, hooks without a consumer, stand-alone anomaly chases, --sched-anchor and set_param fixes, EdgeState
   design, more PID G5.10 runs.
@@ -75,17 +71,14 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | B1 | G3 route B chain HALTED 08:12 at run 003 (item 2 FAIL both keys); runs 0-3 committed (2d5d8eb754). Nothing running. | - | results/g3_routeB_s239/campaign | after diagnosis: `rm CHAIN_HALTED HALT_ON_FAIL.json` in campaign/, then g3_chain.sh resume per README |
-| D1 | S240 halt diagnosis: failing criterion of run 002 + pretest37 (FAIL, empty item list) and run 003 item 2 | sonnet/medium | results/g3_routeB_s239/HALT_S240.md | re-launch brief if file missing |
-ROUTE CHECK S240 (supervisor, GATE_STATUS unchanged 3 sessions; short form, budget cap $1.13, no RC agent):
-blocker of the G3 verdict = route B chain halted after 4 runs. Cut: everything except (1)-(3) below.
-D1 DONE (HALT_S240.md): 002 = item 4 real FAIL (0.834 m vs 0.5, both keys, heavy plant + 8.4 m/s gust); 37 = item 5
-only (waits Q34); 003 = item 2 pitch ~2 Hz, 10-13.6 dps vs 5, slow motors (tau x2.4-2.8), no weak/sat, + item 4.
-g3_chain.sh:572-576 lists items 1-3 only (verdict covers 1-6): display defect, verdicts right.
-NEXT S241: (1) g3_chain.sh failing list: include items 4-6 (tooling, self-test). Item 4 on 002: PID ref same draw.
-(2) run 003 item 2 (same signature as S199 draw 245 2 Hz pitch): PID reference of draw 3 at speed 1 (rule: reference before cause search), plus INDI speed-1
-re-fly; reproduces INDI-only -> route B fails on item 2 = G3 NOT PASSED on route B: write the verdict and an owner
-question (route B was the last route of Q32); not reproduced -> rm halt files, resume. (3) g3_chain.sh exclusion
-self-test (tooling). Item 5 waits Q34.
+| D2 | PID reference of route B draws 2 and 3 + INDI re-fly of draw 3, speed 1, same plant/seed | haiku/medium | results/g3_routeB_s239/REF_S241.md | re-launch brief if file missing |
+Halt facts (HALT_S240.md): 002 = item 4 FAIL (0.834 m vs 0.5, both keys); 003 = item 2 pitch ~2 Hz 10-13.6 dps vs 5,
+slow motors (tau x2.4-2.8) + item 4; pretest 37 = item 5 only (waits Q34).
+NEXT (design/route_check_241.md): read REF_S241.md. INDI-only failure that reproduces -> write G3 verdict
+NOT PASSED on route B (GATES + GATE_STATUS) and owner question (route B was the last Q32 route). PID fails the
+same item on the same draw -> owner question (test defect?), blocking those rows. Neither reproduces -> rm halt
+files, resume chain. CUT (RC241): g3_chain.sh failing-list display fix and exclusion self-test (tooling, not on
+the verdict path; defer to G7).
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
