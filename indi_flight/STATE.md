@@ -12,10 +12,8 @@
 -1. Gate binary = 903eae63 (D-BINARY-GZFIX; FREEZE-10 + GZBridge fix f110361a33; old px4.freeze10_d220e193;
    g3_chain.sh pins it). Do NOT rebuild build/px4_sitl_default from HEAD. Pre-S214 C3 runs: GATES 2 invalid.
 0. G3 chain STOPPED for good (Q35 A): no G3 re-fly or firmware route. Cuts lifted (D-OWNER-Q34-Q35). Order:
-   a. G6 item 7: 60 corner runs at ID_OK 0 (results/g6_item7_s212, PREP.md launch line; S243 launch, see Tasks).
-      Score items 1-2 (pass), 3-6 reported. Item 5 in these runs is re-scored after the Q34 key change.
-   b. (done S243) G3 item 5 "A and B" both keys, 6/6 owner values (results/g3_pretest_s230/Q34_KEY{1,2}.md).
-      Lesson: never change a file pinned in a running chain's chain_freeze.sha256.
+   a. G6 NOT PASSED (S244, GATES "G6 item 7 verdict"): item 7 LOC 6/58 (278, 295 + watchdog 262/264/269/292).
+      G8 limits chapter carries it. Unchecked: item 2 limited to the ID-manoeuvre window was not scored separately.
    c. G7 (f) unit 9 + whole-branch F-10 review + id grep; (g) branch build. d. G8 drafts incl. G3 limits chapter
       (draw 3 2 Hz pitch, draw 264 LOC, ACT_TC-mismatch hypothesis UNVERIFIED unless checked, item 4 PID guard).
    Supervisor "g3_campaign_f10 chain finished" line is hardcoded and stale (S199 closed it, S237): ignore it.
@@ -35,7 +33,8 @@
    omega_ff step on offboard entry; g510 LOC on one sample (stricter than GATES 0.2 s,
    results/g7_checkers_s215/README.md: justify or align); ACT_TC/W_MAX firmware vs
    bench (lesson 12); guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
-4. G6: item 7 runs in the action-0 chain. ID_OK 0 waits for G6 (D-G7-DEFAULTS).
+4. G7 defaults: ID_OK 0 behaviour decided by G6 result (D-G7-DEFAULTS): G6 NOT PASSED, so G7/G8 state the
+   un-identified limit and decide refuse-to-arm vs reported limit (record in DECISIONS).
 5. G8: drafts report/02_outer_loop_design.md and docs/en/config_mc/indi_control.md; open items in
    report/DOCS_DRAFT_S201.md (S213: code items resolved; identification user steps = G6; prettier/link check open).
    R1 (refuse to arm without eRPM) not enforced by code: G7/G8 decide enforce (after Q31) or reword R1. Drafts
@@ -71,8 +70,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| C1 | G6 item 7 chain HALTED after run 240 (CHAIN_HALTED: g3_checks.py hash changed by the Q34 key 1 commit 6605ba380d; run 240 ok, pass/pass). Restart after key 2 lands: replace the g3_checks.py and g3_checks_key2.py lines of results/g6_item7_s212/chain_freeze.sha256 with new sha256sum, rm CHAIN_HALTED, `bash indi_flight/bench/g3_chain.sh start indi_flight/results/g6_item7_s212`; at the end `g3_chain.sh rescore` so run 240 item 5 uses the new keys | detached | results/g6_item7_s212/ | see left |
-| C1b | C1 RESUMED 20:02 (pid 2025254, hashes re-pinned, run 241 on, ETA ~21:20). When done: commit runs (metrics, run.json, SCORES.tsv), `g3_chain.sh rescore` (run 240 item 5 on new keys), item 7 verdict note (items 1-2 pass line, 3-6 reported) | detached | results/g6_item7_s212/ (LAUNCH_S243.md "Resume") | status command above |
+| - | none (G6 item 7 chain finished and committed S244) | - | - | - |
 CUT (RC241): g3_chain.sh failing-list display fix and exclusion self-test (defer to G7).
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

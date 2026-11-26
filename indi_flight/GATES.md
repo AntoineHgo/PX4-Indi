@@ -914,3 +914,18 @@ box; SCORES.tsv, progress.txt, HALT_ON_FAIL.json) and `speed1_s213/README.md` (s
 - **G6 consequence (orchestrator reading):** G6 requires G3 passed from wrong initial parameters; with G3 final NOT
   PASSED, G6 cannot be PASSED in full. G6 items that do not depend on G3 (identification procedure, item 7, G2/G5
   rows) are still flown and scored; the G6 verdict will state the G3 dependency.
+
+## G6 item 7 verdict (S244, 2026-11-26): NOT PASSED; G6 NOT PASSED
+
+Runs 240-299 (60 corners, `MC_INDI_ID_OK` 0, gate binary 903eae63), scored by both keys
+(`results/g6_item7_s212/SCORES.tsv`, `TALLY_S244.md`). Pass rule (S208 item 7): item 1 (no LOC) in every valid run.
+- Item 1 FAILS: LOC in 278 and 295, both keys. Runs 262 (altitude loss), 264 (height < 0.3 m), 269 and 292
+  (tilt > 60 deg) were stopped by the flight watchdog. The chain marked them INVALID, but the Q27 item 8 list of harness
+  aborts does not include a watchdog stop, so they count as LOC here too: 6 LOC in 58 runs.
+- Invalid (harness): 274 (wall timeout), 284 (no INDI status in log). They are not re-flown because they cannot
+  change the verdict.
+- Reported: item 2 over the whole run 21 (key 1) / 22 (key 2) runs (key disagreement on 276 only; the window-limited
+  item 2 was not scored separately); item 3: 2, item 4: 18, item 5: 30, item 6: 0 runs fail. Run 240 item 5 was
+  scored before the Q34 key change (rescore found nothing to redo, so it is not re-checked).
+- G6 needs G2, G3 and G5 to pass. G3 is final NOT PASSED (S243), so G6 is NOT PASSED. The identification procedure
+  and the defaults evidence stay in G8 as the method and its limits.
