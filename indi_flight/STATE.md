@@ -71,8 +71,9 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| A1 | G6 item 7 chain launch (60 corners, detached) | haiku | results/g6_item7_s212/LAUNCH_S243.md (pids) | `g3_chain.sh status results/g6_item7_s212` per PREP.md |
-| A2 | Q34 item 5 "A and B" in both keys + re-score 4 pre-test runs | sonnet | results/g3_pretest_s230/Q34_RESCORE.md | re-brief from GATES "Owner amendment S243" |
+| C1 | G6 item 7 chain RUNNING (60 corners 240-299, ID_OK 0, speed 4; started 19:54, ETA ~22:15; chain pid 1997213, wrapper 1997203; pins 903eae63 / image 85779446 ok) | detached | results/g6_item7_s212/ (LAUNCH_S243.md) | `bash indi_flight/bench/g3_chain.sh status indi_flight/results/g6_item7_s212`; when done: commit runs, score items 1-2, write verdict note |
+| A2 | Q34 item 5 "A and B", KEY 1 only (g3_checks.py) + re-score 4 pre-test runs | sonnet | results/g3_pretest_s230/Q34_KEY1.md | re-brief from GATES "Owner amendment S243" |
+| A3 | (next) same for KEY 2 (g3_checks_key2.py), independent agent that does not read A2's note | sonnet | results/g3_pretest_s230/Q34_KEY2.md | not started |
 CUT (RC241): g3_chain.sh failing-list display fix and exclusion self-test (defer to G7).
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
