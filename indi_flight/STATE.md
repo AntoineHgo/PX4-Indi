@@ -47,11 +47,12 @@ Route check: RC247 current; next RC S262.
 |---|---|---|---|---|
 | P2 | fw branch recreate + (a)(d)(g) | sonnet | results/g7_s248/README.md | re-launch P2 brief (worktree /tmp/indi_fwbranch_s248) |
 | P3 | whole-branch F-10 review DONE S248: not met yet, 3 BLOCKER + 8 neutral MAJOR + 32 MINOR, 0 ids in class A, 8 in class B | opus | results/g7_s248/F10_WHOLE_BRANCH_REVIEW.md | - |
-| P3b | DONE S248: 2292882735 (class A) + 104508687b (class B); 13/13 tests, objcmp identical .text/disasm on 20 objects; ~8 MINOR skipped | sonnet | results/g7_s248/F10_FIX_S248.md | NEXT: second key (sonnet, medium) of `git diff 1033890bb5 104508687b` vs the review file, then P3c, then re-run P2 |
+| P3b | DONE S248: 2292882735 (class A) + 104508687b (class B); 13/13 tests, objcmp identical .text/disasm on 20 objects; ~8 MINOR skipped | sonnet | results/g7_s248/F10_FIX_S248.md | - |
+| P3b-K2 | DONE S249: PASS with findings, 0 BLOCKER, 1 MAJOR ("no integrator" in McIndiPosControl.cpp help :1300 and comment :971 vs MPC_*_VEL_I_ACC passed + _control.update(dt) runs), 3 MINOR | sonnet | results/g7_s249/P3B_KEY2.md | P3d: verify integrator wording, fix comments + MINORs, one neutral commit (after P3c) |
+| P3c | DONE S249: 8423db867b (DT_MAX->INC_MAX, INJ_RAMP->INJ_AMPR, .msg symbol comments; no timestamp_sample existed) + 7eaf225535 (docs/en, report); 13/13 tests, SITL builds; diff read by orchestrator (6 C++ lines, rename only). bench quad5in_indi_defaults.params:31 keeps old DT_MAX name (pinned gate binary): mapping in record; report yaml:NNN refs off by 1-2 lines (G8) | sonnet | results/g7_s249/P3C_PUBLIC_NAMES.md | - |
+| P3d | S249 integrator wording + K2 MINORs, comment-only commit | sonnet | results/g7_s249/P3D_COMMENTS.md | re-launch brief; then re-run P2 |
 Commit trailer: AGENTS.md wins: use `Assisted-by:` only, no Co-Authored-By naming an AI (S248 commits carry both; not rewritten).
-P3c public names: apply D-F10-PUBLIC-NAMES (rename DT_MAX/INJ_RAMP after source check, drop unwritten
-timestamp_sample, .msg symbol definitions; one neutral commit + bench params/docs), second key, then re-run P2.
-P2 S248 on pre-fix head 4ebf90ad2f: (a)(d)(g) + 9 gtest PASS (results/g7_s248/README.md); re-run after P3b/P3c.
+P2 S248 on pre-fix head 4ebf90ad2f: (a)(d)(g) + 9 gtest PASS (results/g7_s248/README.md); re-run after P3d.
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
