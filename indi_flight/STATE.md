@@ -70,7 +70,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| f10id | remove 7 project ids (results/g7_s246/ID_GREP.md) from comments, token compare | sonnet | results/g7_s246/F10_IDFIX.md | check file; re-brief if missing |
+| - | none (S246 f10id done: 7 comment ids removed, token-identical; fw branch needs make_fw_branch.sh --force-recreate) | - | - | - |
 CUT (RC241): g3_chain.sh failing-list display fix and exclusion self-test (defer to G7).
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
