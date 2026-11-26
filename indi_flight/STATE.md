@@ -77,7 +77,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none (S232) | - | - | - |
+| S233-ii-1 | G3 (c) solver part 1 for (ii): design note, code in ~/px4_cand_ii, unit tests, candidate binary | opus/high | design/cand_ii_design.md, results/g3_cand_ii_s233/README.md (PART1_PROGRESS) | read README progress; resume part 1 where it stopped, then part 2 (flights, sonnet/medium) |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
