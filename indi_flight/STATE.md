@@ -16,12 +16,18 @@ D-OFFB-POSVEL wiring test, omega_ff step on offboard entry, g510 one-sample LOC 
 ACT_TC/W_MAX vs bench (lesson 12), guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced, pos module esc_status
 instance 0 / 100 ms age, G6 item 2 ID-window rescore, MC_INDI_ACT_TC yaml "round up" wording (D-OWNER-Q27).
 Plan (order):
- P2 G7 (a)(d)(g): make_fw_branch.sh --force-recreate (worktree OUTSIDE the repo), zero diff + format + branch build
-    on the final branch; v6x flash overflow 23.5 kB -> report note. Tests build in px4-indi-sim (px4-dev fails protobuf).
- P3 G7 (f): one whole-branch F-10 + nav-terminology review (opus) + id grep; unit 8 MINORs
-    (results/g7_s198/F10_UNIT8_REVIEW.md) and reviewer findings as one neutral commit (sonnet), then re-run P2.
- P4 G7 verdict in GATES.md: justification table (cut list + S58-S63 review items; ID_OK 0 = reported limit,
-    D-ID-OK-LIMIT, no refuse-to-arm).
+ P2 G7 (a)(d)(g) re-run on F-10 head: in flight S249 (results/g7_s249/README_P2.md); if not there, re-launch.
+ P6 G7 (b) gaps (results/g7_s249/G7B_TEST_INVENTORY.md, its 7-item ordered list): write the 5 small + 2 medium
+    tests, break-check each, sonnet high, one test commit (+ separate neutral helper-extraction commit with objcmp
+    where a test needs a helper out of Run(): ERPM_TO freshness, pos esc_status). "Lower mean_u limit" = item 4
+    (rpm<0 rejection + lower clamp), orchestrator call. Saturated-motor frozen eRPM: test pins the by-design limit,
+    report it in 04_limits. GLUE rows (XY_P/XY_VP wiring, K_pos/K_vel dead path, JFF source): justify via SITL
+    rows (g55_gain_probe_s176, G2 outer cells).
+ P7 G7 review items: write the S58-S63 external-review closed-or-justified table (none exists; sonnet medium,
+    sources: external_review_s59.md sections, design/stage3_items_note.md, DECISIONS) -> results/g7_s249/REVIEW_ITEMS.md.
+    Also fix MC_INDI_ACT_TC yaml "round up" wording (yaml:123, neutral text).
+ P4 G7 verdict in GATES.md from results/g7_s249/G7_VERDICT_DRAFT.md (draft said NOT PASSED on P6/P7 gaps; its
+    "injection helpers not mutation-checked" is wrong: S196 67/0). Re-run make check_format after P6.
  P5 G8 gaps + verdict: re-run bench/gate_g8.sh (results/g8_s247); report drafts 01-06 + A_history_errata
     ("Unverified" lists), docs/en/config_mc/indi_control.md (prettier/link check open, report/DOCS_DRAFT_S201.md).
     R1 text waits Q36.
@@ -45,12 +51,11 @@ Route check: RC247 current; next RC S262.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| P2 | fw branch recreate + (a)(d)(g) | sonnet | results/g7_s248/README.md | re-launch P2 brief (worktree /tmp/indi_fwbranch_s248) |
-| P3 | whole-branch F-10 review DONE S248: not met yet, 3 BLOCKER + 8 neutral MAJOR + 32 MINOR, 0 ids in class A, 8 in class B | opus | results/g7_s248/F10_WHOLE_BRANCH_REVIEW.md | - |
-| P3b | DONE S248: 2292882735 (class A) + 104508687b (class B); 13/13 tests, objcmp identical .text/disasm on 20 objects; ~8 MINOR skipped | sonnet | results/g7_s248/F10_FIX_S248.md | - |
+| P3/P3b | DONE S248: review results/g7_s248/F10_WHOLE_BRANCH_REVIEW.md, fixes 2292882735 + 104508687b (F10_FIX_S248.md; ~8 MINOR skipped -> G7 verdict) | - | - | - |
 | P3b-K2 | DONE S249: PASS with findings, 0 BLOCKER, 1 MAJOR ("no integrator" in McIndiPosControl.cpp help :1300 and comment :971 vs MPC_*_VEL_I_ACC passed + _control.update(dt) runs), 3 MINOR | sonnet | results/g7_s249/P3B_KEY2.md | P3d: verify integrator wording, fix comments + MINORs, one neutral commit (after P3c) |
 | P3c | DONE S249: 8423db867b (DT_MAX->INC_MAX, INJ_RAMP->INJ_AMPR, .msg symbol comments; no timestamp_sample existed) + 7eaf225535 (docs/en, report); 13/13 tests, SITL builds; diff read by orchestrator (6 C++ lines, rename only). bench quad5in_indi_defaults.params:31 keeps old DT_MAX name (pinned gate binary): mapping in record; report yaml:NNN refs off by 1-2 lines (G8) | sonnet | results/g7_s249/P3C_PUBLIC_NAMES.md | - |
-| P3d | S249 integrator wording + K2 MINORs, comment-only commit | sonnet | results/g7_s249/P3D_COMMENTS.md | re-launch brief; then re-run P2 |
+| P3d | DONE S249: 5987dde746 comments only (integrator reset before every update, :1071-1074) | sonnet | results/g7_s249/P3D_COMMENTS.md | - |
+| P2 | S249 fw branch re-check on F-10 head (worktree /tmp/indi_fwbranch_s249) | sonnet | results/g7_s249/README_P2.md | re-launch P2 brief if missing |
 Commit trailer: AGENTS.md wins: use `Assisted-by:` only, no Co-Authored-By naming an AI (S248 commits carry both; not rewritten).
 P2 S248 on pre-fix head 4ebf90ad2f: (a)(d)(g) + 9 gtest PASS (results/g7_s248/README.md); re-run after P3d.
 
