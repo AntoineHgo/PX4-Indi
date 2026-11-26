@@ -15,13 +15,15 @@
    D-RATE-BLD-2). (a4), (a5), (b) DONE (JOURNAL S230/S231; baselines results/g3_pretest_s230/SCORES.md).
    Q34 OPEN: blocks item 5 rows and the (e) verdict; no item 5 re-score. Stick pilot neutral over the event
    hover unverified. (c): candidate (i) MISSED (S232, D-RATE-BLD-2-C2, results/g3_cand_i_s231/SCORES.md).
-   NEXT at session start: launch the opus/high solver for (ii) then (iii) with design/solver_brief_c.md as the
+   (ii) MISSED S234 (LOC joint+264). NEXT at session start: the solver for (iii) with design/solver_brief_c.md as the
    brief (fixed S232; parts 1-3, part 2 flights may go to sonnet/medium). (d) one independent
    review (opus, high). (e) pass -> freeze-11 + re-fly list; none passes -> route B (fixed corner), G3 300 on
    903eae63. Cause context: restore264 falsifier_s222/README.md, blend264_s223, ref264_s224.
    S232 supervisor RC request (GATE_STATUS unchanged 14 sessions): answered by RC231 (one session old, same
    inputs): blocker of the next G3 verdict = (c) candidate scores, then (d), (e); Q34 only for item 5 reporting.
    No new RC until (c) returns. Cut stands: nothing outside G3 (c)-(e) is worked on.
+   S234 supervisor RC request: inputs unchanged since RC231 except (ii) part 1 progress; blocker of the next G3
+   verdict = (ii) part 2 scores, then (iii), (d), (e). No new RC agent (budget to the blocker); cut unchanged.
 CUT (RC208/RC221/S223/RC226): G6 item 7 chain (results/g6_item7_s212/PREP.md), G7 (f) unit 9, (g), harness
   extraction, dead path, older G7 list (items 3 below), G8 drafting (item 5), saturation sweep: all wait until the
   Q32 route decides firmware. No route check before the solver verdict (RC226 item 6). Unit tests for the winner
@@ -77,7 +79,7 @@ STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 marg
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| S233-ii-1 | G3 (c) solver part 1 for (ii): design note, code in ~/px4_cand_ii, unit tests, candidate binary | opus/high | design/cand_ii_design.md, results/g3_cand_ii_s233/README.md (PART1_PROGRESS) | read README progress; resume part 1 where it stopped, then part 2 (flights, sonnet/medium) |
+| - | none | - | - | (ii) done S234: MISSED (LOC joint + 264), results/g3_cand_ii_s233/SCORES.md. NEXT: (iii) per design/solver_brief_c.md; one cause line for the (ii) LOC only if (iii) needs it |
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
   untested, DESCEND failsafe tests.
