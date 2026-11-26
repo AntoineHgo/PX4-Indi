@@ -1,90 +1,55 @@
 # STATE (budget 8000 bytes: read at every launch, resume essentials only)
 
 ## Status
-- Stage: 6-7 (G6 item 7, G7, G8). G3 FINAL NOT PASSED (owner Q35 A, GATES "Owner amendment S243"). FREEZE-10 (D-FREEZE-10): firmware 7fe6206fcc, config g5_freeze_s157 params (XY gains at
-  firmware defaults 1.2/2.4). Later firmware commits behaviour-neutral (D-G7-NUTTX-BUILD, D-F10-NEUTRAL).
-- Gates: see GATE_STATUS.tsv. G3 NOT PASSED twice (S199, S213 C3 LOC draw 264). Q32 answered (A bounded, S225
-  amendment): FREEZE-10 decision 2 re-opened, rate loop only. Controller ACT_TC box r [0.88, 1.02] x tau_mean.
+- Stage: 7 (G7, G8). G3 FINAL NOT PASSED (owner Q35 A, GATES "Owner amendment S243"); G6 NOT PASSED (S244).
+  FREEZE-10 (D-FREEZE-10): firmware 7fe6206fcc, config g5_freeze_s157 params. Later firmware commits
+  behaviour-neutral (D-G7-NUTTX-BUILD, D-F10-NEUTRAL). No gate flights remain.
+- Gates: see GATE_STATUS.tsv. Open: G7, G8. Q36 open (R1 wording), blocks only the G8 R1 text.
 - Owner rule F-10 (2026-11-22): brief every coder with F-10. Clean-up = separate behaviour-neutral commits,
   independent review.
 
 ## Next actions (each names its gate item)
-RC247 (design/route_check_247.md) CUT, overrides items 3-5 below: no code work on unit 9 renames (only names the
-whole-branch F-10 reviewer flags), K_pos/K_vel dead path, harness extraction, K128 ID_OK call site, D-JFF-SOURCE,
-D-OFFB-POSVEL, omega_ff, g510 one-sample, ACT_TC/W_MAX vs bench, guard params, pos esc_status inst 0/100 ms, G6 item 2
-rescore: each becomes one justification line in the G7/G8 verdict. Q36 not a blocker. Plan (order):
- P1 G8: DONE S247 (results/g8_s247/README.md); G3 excluded-corner gap closed (04_limits 4.1.1), check 2 PASS;
-    (GATES Route B, class (b) beyond-range) in 03_validation/04_limits; re-run bench/gate_g8.sh at the G8 verdict.
- P2 G7 (a)(d)(g): make_fw_branch.sh --force-recreate, zero diff + format + branch build re-run on final branch.
- P3 G7 (f): one whole-branch F-10 + nav-terminology review (opus), unit 8 MINORs as one neutral commit (sonnet).
- P4 G7 verdict: justification table (cut list + S58-S63 review items, ID_OK 0 limit). P5 G8 gaps + verdict.
--1. Gate binary = 903eae63 (D-BINARY-GZFIX; FREEZE-10 + GZBridge fix f110361a33; old px4.freeze10_d220e193;
-   g3_chain.sh pins it). Do NOT rebuild build/px4_sitl_default from HEAD. Pre-S214 C3 runs: GATES 2 invalid.
-0. G3 chain STOPPED for good (Q35 A): no G3 re-fly or firmware route. Cuts lifted (D-OWNER-Q34-Q35). Order:
-   a. G6 NOT PASSED (S244, GATES "G6 item 7 verdict"): item 7 LOC 6/58 (278, 295 + watchdog 262/264/269/292).
-      G8 limits chapter carries it. Unchecked: item 2 limited to the ID-manoeuvre window was not scored separately.
-   c. G7 (f) unit 9 + whole-branch F-10 review + id grep; (g) branch build. d. G8 drafts: ch.3 sections 3.3 G3 and 3.6 G6 written S245 (open items in its Unverified list). Limits chapter
-      report/04_limits.md drafted S245 (Unverified list open; refuse-to-arm decision still open, action 4).
-   Supervisor "g3_campaign_f10 chain finished" line is hardcoded and stale (S199 closed it, S237): ignore it.
-   Route check: RC241 (S241) current; next RC S256.
-2. G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
-3. G7 open items: (f) F-10 clean-up per results/g7_s198/F10_PLAN.md (build dir build/f10_sitl, unit tests in
-   build/px4_sitl_test). Units 1-8 done; unit 8 review MINORs (wording, F10_UNIT8_REVIEW.md) go into the
-   whole-branch pass. Then unit 9 (public renames listed in F10_UNIT2..7 "not renamed"), then the
-   independent F-10 review over the whole branch + id grep. Never during gate flights.
-   (g) build check of indi-fw-pr with the worktree OUTSIDE the repo (re-run make_fw_branch.sh --force-recreate after
-   any firmware commit; quad5in model lives in indi_flight/sim, not in the branch). v6x flash overflow 23.5 kB ->
-   report/upstream note. Tests build in px4-indi-sim (px4-dev fails protobuf).
-   Dead path: IndiAccelControl K_pos/K_vel cascade unused (module always accel_only, McIndiPosControl.cpp:315):
-   remove after Q26 (behaviour change review) or justify.
-   Harness extraction (D-G7-HARNESS, firmware refactor) after Q26, with its re-fly named. Older list (justify in
-   writing): MC_INDI_ID_OK call site (K128 MAJOR, fix after Q26), D-JFF-SOURCE case, D-OFFB-POSVEL wiring test,
-   omega_ff step on offboard entry; g510 LOC on one sample (stricter than GATES 0.2 s,
-   results/g7_checkers_s215/README.md: justify or align); ACT_TC/W_MAX firmware vs
-   bench (lesson 12); guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced.
-4. G7 verdict text: ID_OK 0 = reported limit, no refuse-to-arm (D-ID-OK-LIMIT, docs warning added S246); state it
-   in the G7 verdict. R1 (eRPM refuse-to-arm): owner Q36 open (A reword recommended); G8 R1 text waits for it.
-5. G8: drafts report/02_outer_loop_design.md and docs/en/config_mc/indi_control.md; open items in
-   report/DOCS_DRAFT_S201.md (S213: code items resolved; identification user steps = G6; prettier/link check open).
-   R1 (refuse to arm without eRPM) not enforced by code: G7/G8 decide enforce (after Q31) or reword R1. Drafts
-   report/01_inner_loop_design.md, 06_bringup_checklist.md, A_history_errata.md ("Unverified" = open G8 items). Missing: ch.3 G3/G6
-   sections and limits (after Q31); numbers in ch.3 follow any re-fly a Q31 fix causes. G7 parameter pass: MC_INDI_ACT_TC yaml still says "round up" (overturned, D-OWNER-Q27);
-   pos module reads esc_status instance 0 only, no frozen/error-count check, 100 ms ESC age vs 20 ms in rate module.
-Rules: 1 session per inner-loop law change; parallel docker streams only for tolerance-insensitive probes, never gate
-  evidence, never a docker build during gate flights; G3 evidence for INDI outer loop needs MC_INDI_POS_EN=1. Next RC:
-  S256 (last RC241).
-STOP list (+RC194: A-53/A-54/A-58 bound-only, A-50/A-51 model x-check, G5.5 margin): A-39 / yaw measured-path chase,
-  PID M1 hook, hooks without a consumer, stand-alone anomaly chases, --sched-anchor and set_param fixes, EdgeState
-  design, more PID G5.10 runs.
+RC247 (design/route_check_247.md) cut list, no code work, each becomes one justification line in the G7/G8 verdict:
+unit 9 renames (except those the whole-branch F-10 reviewer flags), K_pos/K_vel dead path (module always accel_only,
+McIndiPosControl.cpp:315), harness extraction (D-G7-HARNESS), MC_INDI_ID_OK call site (K128), D-JFF-SOURCE,
+D-OFFB-POSVEL wiring test, omega_ff step on offboard entry, g510 one-sample LOC (results/g7_checkers_s215),
+ACT_TC/W_MAX vs bench (lesson 12), guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced, pos module esc_status
+instance 0 / 100 ms age, G6 item 2 ID-window rescore, MC_INDI_ACT_TC yaml "round up" wording (D-OWNER-Q27).
+Plan (order):
+ P2 G7 (a)(d)(g): make_fw_branch.sh --force-recreate (worktree OUTSIDE the repo), zero diff + format + branch build
+    on the final branch; v6x flash overflow 23.5 kB -> report note. Tests build in px4-indi-sim (px4-dev fails protobuf).
+ P3 G7 (f): one whole-branch F-10 + nav-terminology review (opus) + id grep; unit 8 MINORs
+    (results/g7_s198/F10_UNIT8_REVIEW.md) and reviewer findings as one neutral commit (sonnet), then re-run P2.
+ P4 G7 verdict in GATES.md: justification table (cut list + S58-S63 review items; ID_OK 0 = reported limit,
+    D-ID-OK-LIMIT, no refuse-to-arm).
+ P5 G8 gaps + verdict: re-run bench/gate_g8.sh (results/g8_s247); report drafts 01-06 + A_history_errata
+    ("Unverified" lists), docs/en/config_mc/indi_control.md (prettier/link check open, report/DOCS_DRAFT_S201.md).
+    R1 text waits Q36.
+Gate binary = 903eae63 (D-BINARY-GZFIX): do NOT rebuild build/px4_sitl_default from HEAD. G3 chain stopped for good
+(Q35 A): the supervisor "g3_campaign_f10 chain finished" line is hardcoded and stale (S199 closed it): ignore it.
+Route check: RC247 current; next RC S262.
 
 ## Notes
+- G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
+- chatter_cruise_s176.py without RAW= overwrites tracked results/g4_gate_s169/chatter_cruise_s176_raw.txt.
 - Nominal plant: matched GNSS --gps-dly 110 --gnss-delay 110. G4 typical noise: --vib-acc 10 --vib-gyr 0
   --imu-noise-scale 4.0 (D-NOISE-PROF).
-- G3 tooling: g3_run.py, quad5in variants, overrides/wind/motor_fault/timed eRPM loss. eRPM-loss lateness 36-122 ms:
-  take effective time from the log. Weak+sat unflown. Acro G3-unprobed (G5 carries it). altctl/posctl not in MODE_MIX.
-- pretest_gate only on stationary scenarios, or end its window at the fault (S98). SIM_GZ_SEED + SIM_GZ_IMU_NSC hooks.
-- Stabilized stick centre = HTE; runner thr0 honours HTE valid flag, fallback MPC_THR_HOVER.
-- Runner traps: pid_default + params with MC_INDI_EN 1 flies INDI (s148). MC_INDI_EN 1 in a params file does not start
-  the module, only MC_RATE_CTL_TYPE 1 does. Pilot sticks kept after LAND -> RC override to POSCTL. margins_of hangs
-  if ts_true=0.
+- Runner traps: MC_INDI_EN 1 in a params file does not start the module, only MC_RATE_CTL_TYPE 1 does.
+  margins_of hangs if ts_true=0. Logger misses the first ~0.2 s of indi_pos_status (late subscription).
 - quad5in defaults: bench/params/quad5in_indi_defaults.params (ACT_TC 0.033); MC_INDI_ID_OK 0 halves K.
 - Guard blocks long `git commit -m`: use `-F <file>`. Guard denies a segment naming indi_project with rm/tee/git
   apply; run each run.sh call alone, redirect only into indi_flight/.
-- chatter_cruise_s176.py without RAW= overwrites tracked results/g4_gate_s169/chatter_cruise_s176_raw.txt: brief
-  agents to set RAW to their own folder; `git checkout` it if dirty.
-- Detached chains: list every waiter pid in Tasks in flight.
-- Logger misses the first ~0.2 s of indi_pos_status (late subscription): never read a missing sample as bypass.
 - Worktrees and big builds go OUTSIDE the repo (S196 OOM: VS Code indexed an in-repo worktree to 23 GB).
+- Before editing any file under bench/, check no chain pins it (chain_freeze.sha256).
 
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none (S246 f10id done: 7 comment ids removed, token-identical; fw branch needs make_fw_branch.sh --force-recreate) | - | - | - |
-CUT (RC241): g3_chain.sh failing-list display fix and exclusion self-test (defer to G7).
+| - | none | - | - | - |
+
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
-  untested, DESCEND failsafe tests.
-- Review notes (`indi_project/review/external_review_s59_notes/`): `module_parity.md` for stage 5.
+  untested, DESCEND failsafe tests: justify in the G7 verdict.
 - Unmodelled in margins_models.py: measured path = eta x motor state, yaw structure (A-51), attitude loop; 267 Hz
   analytic only. Motor latency optional (lat_s, S175).
 - Deferred anomalies: A-4, A-6, A-30, A-32, A-34-A-36, A-39.
