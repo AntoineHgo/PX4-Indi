@@ -45,7 +45,11 @@ Route check: RC247 current; next RC S262.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| - | none | - | - | - |
+| P2 | fw branch recreate + (a)(d)(g) | sonnet | results/g7_s248/README.md | re-launch P2 brief (worktree /tmp/indi_fwbranch_s248) |
+| P3 | whole-branch F-10 review DONE S248: not met yet, 3 BLOCKER + 8 neutral MAJOR + 32 MINOR, 0 ids in class A, 8 in class B | opus | results/g7_s248/F10_WHOLE_BRANCH_REVIEW.md | - |
+| P3b | neutral fixes of the review (no public names) | sonnet | results/g7_s248/F10_FIX_S248.md | check file + git log; then second key (sonnet) of the diff, then re-run P2 |
+P3 public-name MAJORs (MC_INDI_DT_MAX, MC_INDI_INJ_RAMP, MC_INDI_XY_P/XY_VP, uORB math-symbol fields,
+unwritten IndiRateFeedforward.timestamp_sample, duplicate multisine): decide rename-or-justify in DECISIONS before P4.
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

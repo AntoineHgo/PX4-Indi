@@ -1492,3 +1492,19 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
 - R1 (refuse to arm without eRPM, design/airframe_requirements.md) is NOT decided here: enforcing it is firmware
   after freeze, rewording it changes the F-3 requirements list (owner question). Left open for G7/G8.
 - Overturned by: an owner instruction, or a firmware route that makes the un-identified state pass G6 item 7.
+
+## D-F10-PUBLIC-NAMES (S248): public names flagged by the whole-branch F-10 review
+- Context: results/g7_s248/F10_WHOLE_BRANCH_REVIEW.md lists MAJOR public names: MC_INDI_DT_MAX, MC_INDI_INJ_RAMP,
+  MC_INDI_XY_P/XY_VP (duplicate MPC_XY_P/MPC_XY_VEL_P_ACC), uORB math-symbol fields (a_c, a_f, t_f, t_c, nu,
+  inject), unwritten IndiRateFeedforward.timestamp_sample, duplicate multisine generator.
+- Choice: (1) rename the two misleading parameters after checking in the source what each one limits (the review
+  reads DT_MAX as a torque-increment limit; STATE listed it as a guard param: verify first), with bench params
+  files, docs/en and report updated in the same session; neutral (same values). (2) Remove the unwritten
+  timestamp_sample field (nothing reads it: grep first); if a consumer exists, justify instead. (3) Keep
+  MC_INDI_XY_P/XY_VP (INDI module gains with their own validated defaults; yaml text names the MPC_ analogue).
+  (4) Keep uORB field names, define each symbol and unit in the .msg comment: bench scorers that are gate
+  evidence read them by name, and a rename would invalidate keyed scripts. (5) Multisine duplicate: justify
+  (two separate modules, no shared lib for test excitation) in the G7 verdict.
+- Alternatives: rename everything (rejected: (4) breaks keyed evidence scripts); justify everything (rejected:
+  (1) names mislead a reader, which F-10 forbids).
+- Overturned by: a source check showing a name in (1) is accurate, or an owner instruction.
