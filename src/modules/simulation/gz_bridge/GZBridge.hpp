@@ -253,7 +253,7 @@ private:
 
 	MapProjection _pos_ref{};
 	double _alt_ref{};
-	px4::atomic_bool _alt_ref_set{false}; // A-20: publishes _alt_ref to the baro callback (other gz thread)
+	px4::atomic_bool _alt_ref_set{false}; // publishes _alt_ref to the baro callback (other gz thread)
 
 	matrix::Vector3d _position_prev{};
 	matrix::Vector3d _velocity_prev{};

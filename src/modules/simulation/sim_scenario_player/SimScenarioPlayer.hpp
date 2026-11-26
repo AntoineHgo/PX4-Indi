@@ -68,7 +68,7 @@ using namespace time_literals;
  *   t_sim_us att roll pitch yaw thrust   attitude setpoint stream (offboard_control_mode attitude, vehicle_attitude_setpoint
  *                                  as MavlinkReceiver::handle_message_set_attitude_target with type_mask 0b111); roll, pitch
  *                                  [rad], yaw [rad] is an OFFSET to the heading of the last sp_hold, thrust 0..1 or `auto`
- *                                  = hover thrust at that sp_hold / tilt + altitude PD (as run_scenario.py thr_cmd)
+ *                                  = hover thrust at that sp_hold / tilt + altitude PD
  *   t_sim_us pva dx dy dz vx vy vz ax ay az   position (offset [m] from the last sp_hold position), velocity, acceleration
  *                                  setpoint with the heading of the last sp_hold; at every publish the player propagates
  *                                  p + v dt + a dt^2 / 2 and v + a dt from the row time (dt capped at 0.2 s)
@@ -106,7 +106,7 @@ private:
 
 	static constexpr uint64_t SETPOINT_PERIOD_US = 20_ms; // 50 Hz offboard stream in simulation time
 	static constexpr float PVA_DT_MAX_S = 0.2f; // propagation of a pva row stops here (a stale row is held, not extrapolated)
-	// altitude PD of the `auto` thrust, same numbers as ALT_KP / ALT_KD in indi_flight/bench/run_scenario.py
+	// altitude PD gains of the `auto` thrust
 	static constexpr float ALT_KP = 0.04f;
 	static constexpr float ALT_KD = 0.10f;
 

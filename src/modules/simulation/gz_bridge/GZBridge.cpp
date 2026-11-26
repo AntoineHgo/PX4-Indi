@@ -603,7 +603,7 @@ void GZBridge::airPressureCallback(const gz::msgs::FluidPressure &msg, uint8_t i
 
 	double pressure = msg.pressure();
 
-	// A-14: gz-sensors never applies <reference_altitude>, so the sensor reports sea-level pressure at the local
+	// gz-sensors never applies <reference_altitude>, so the sensor reports sea-level pressure at the local
 	// z although the world sits at _alt_ref (MSL). Re-express the pressure at that elevation, otherwise
 	// SENS_BARO_AUTOCAL steps the baro by ~488 m after EKF2 started. Noise is carried through the mapping.
 	if (_alt_ref_set.load()) {
@@ -1021,7 +1021,7 @@ void GZBridge::navSatCallback(const gz::msgs::NavSat &msg, uint8_t instance_inde
 	// initialize gnss position
 	if (!_pos_ref.isInitialized()) {
 		if (!_alt_ref_set.load()) {
-			_alt_ref = msg.altitude(); // written once, before the flag that airPressureCallback (A-14) reads
+			_alt_ref = msg.altitude(); // written once, before the flag that airPressureCallback reads
 			_alt_ref_set.store(true);
 		}
 

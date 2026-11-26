@@ -314,7 +314,7 @@ void SimScenarioPlayer::publish_attitude(hrt_abstime now)
 
 	float thrust = _att[3];
 
-	if (!PX4_ISFINITE(thrust)) { // auto: hover thrust / tilt + altitude PD, as run_scenario.py thr_cmd
+	if (!PX4_ISFINITE(thrust)) { // auto: hover thrust / tilt + altitude PD
 		const float tilt = fmaxf(0.3f, cosf(_att[0]) * cosf(_att[1]));
 		thrust = _hold_thrust / tilt;
 		vehicle_local_position_s lpos{};

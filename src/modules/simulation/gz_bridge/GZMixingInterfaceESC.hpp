@@ -168,7 +168,7 @@ private:
 	uint32_t _act_overflow{0};
 	bool _act_first_logged{false};
 
-	// Release-age statistics over a window of releases, printed at the end of each window (A-37 closing test)
+	// Release-age statistics over a window of releases, printed at the end of each window
 	static constexpr uint32_t ACT_STAT_WINDOW = 4000;
 	uint32_t _act_stat_n{0};
 	uint32_t _act_stat_drops{0};
