@@ -16,18 +16,17 @@ D-OFFB-POSVEL wiring test, omega_ff step on offboard entry, g510 one-sample LOC 
 ACT_TC/W_MAX vs bench (lesson 12), guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced, pos module esc_status
 instance 0 / 100 ms age, G6 item 2 ID-window rescore, MC_INDI_ACT_TC yaml "round up" wording (D-OWNER-Q27).
 Plan (order):
- P5 NEXT: G8 gaps + verdict: bench/gate_g8.sh all 7 PASS S253 (results/g8_s253); report drafts 01-06 + A_history_errata
-    ("Unverified" lists), docs/en/config_mc/indi_control.md (prettier/link check open, report/DOCS_DRAFT_S201.md).
-    R1 text waits Q36. S254 check of report "Unverified" items: results/g8_s254/UNVERIFIED_CHECK.md (49 items:
-    17 VERIFIED, 2 WRONG fixed (stale Q31 tags), 30 UNCHECKED). S255 (haiku) first 10 UNCHECKED: 4 VERIFIED
-    (02:347,348,350,351), 6 still unchecked; items 11-20: 2 VERIFIED (15 scoped, 16), 8 still unchecked
-    (results/g8_s254/UNVERIFIED_CHECK_S255.md, flags on 12/15/19/20). Next: a sonnet agent clears
-    the remaining 24 (and report/UNVERIFIED_S217.md lists), removes verified items from the chapters, fixes report
-    02:349 "not confirmed" (yaml answers it) and GATES.md:321 bench/gate_g3.sh (absent; G3 scorers are
-    bench/g3_score.sh, g3_checks.py, g3_checks_key2.py).
+ P5 NEXT (G8 verdict; cut by RC256, design/route_check_256.md): GATES G8 criterion does not need the report
+    "Unverified" items cleared one by one: STOP item-by-item checks, drop report/UNVERIFIED_S217.md clearing.
+    One sonnet agent (medium): (1) in one pass mark every still-unchecked item of results/g8_s254/UNVERIFIED_CHECK.md
+    and UNVERIFIED_CHECK_S255.md as "unverified" in the chapter (or delete the claim), (2) fix report 02:349
+    "not confirmed" (yaml answers it) and GATES.md:321 bench/gate_g3.sh -> bench/g3_score.sh, g3_checks.py,
+    g3_checks_key2.py, (3) docs/en/config_mc/indi_control.md prettier/link check, (4) re-run bench/gate_g8.sh.
+    Then write the G8 verdict: R1 worded as Q36 option A and marked "pending Q36"; no WAIT_OWNER (Q36 decides
+    R1 text only). Then DONE file per MISSION (G3/G6 NOT PASSED written up with data).
 Gate binary = 903eae63 (D-BINARY-GZFIX): do NOT rebuild build/px4_sitl_default from HEAD. G3 chain stopped for good
 (Q35 A): the supervisor "g3_campaign_f10 chain finished" line is hardcoded and stale (S199 closed it): ignore it.
-Route check: RC247 current; next RC S262.
+Route check: RC256 current; next RC S271.
 
 ## Notes
 - G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
