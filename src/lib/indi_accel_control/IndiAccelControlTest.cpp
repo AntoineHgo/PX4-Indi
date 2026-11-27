@@ -870,6 +870,43 @@ TEST_F(IndiAccelBlendTest, ConvergesToThrustGap)
 	EXPECT_LE(fabsf(_ctrl.blend()), IndiAccelControl::kMaxBlend);
 }
 
+// reset with a measured mean u that lags the commanded collective: the first cycles run on the measured value
+TEST_F(IndiAccelBlendTest, ResetWithLaggingMeanUStepsByTheGap)
+{
+	const float u_hover = kG / kGt;
+	const float mean_u = 0.8f * u_hover;
+	_ctrl.setBlendTimeConstant(1.f);
+	_ctrl.setMeasurementDelay(2); // the delayed samples are the ones seeded by reset()
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), u_hover, mean_u);
+
+	IndiAccelControl::Input in = hoverInput(); // the specific force stays at hover
+	in.mean_u = mean_u;
+	IndiAccelControl::Output out;
+	ASSERT_TRUE(_ctrl.update(in, out));
+
+	// u_f = u_meas + b with b one blend cycle into the gap: the collective is the measured one, not the commanded one
+	EXPECT_NEAR(out.thrust, mean_u + out.blend, 1e-5f);
+	EXPECT_NEAR(out.blend, kDt / (1.f + kDt) * (u_hover - mean_u), 1e-5f);
+	EXPECT_LT(out.thrust - u_hover, -0.9f * (u_hover - mean_u));
+}
+
+TEST_F(IndiAccelBlendTest, ResetWithoutMeanUHasNoCollectiveStep)
+{
+	const float u_hover = kG / kGt;
+	_ctrl.setBlendTimeConstant(1.f);
+	_ctrl.setMeasurementDelay(2);
+	_ctrl.reset(Vector3f(0.f, 0.f, -kG), u_hover, kNaN);
+
+	IndiAccelControl::Input in = hoverInput();
+	IndiAccelControl::Output out;
+
+	for (int i = 0; i < 5; i++) {
+		ASSERT_TRUE(_ctrl.update(in, out));
+		EXPECT_NEAR(out.thrust, u_hover, 1e-5f) << i;
+		EXPECT_NEAR(out.blend, 0.f, 1e-6f) << i;
+	}
+}
+
 TEST_F(IndiAccelBlendTest, ConvergesToLargeThrustGap04)
 {
 	// steady gap u_model - u_meas = 0.4 (above the old 0.3 bound): measured mean u = previous collective - 0.4

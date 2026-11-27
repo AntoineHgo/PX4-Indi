@@ -371,3 +371,111 @@ TEST_F(IndiFrozenRpmTest, ArmingEdgeStartsANewWindow)
 		ASSERT_EQ(cycle(true, 5000.f, 0.f).motor_frozen_mask, 0) << i;
 	}
 }
+
+// age of the ESC sample against the telemetry timeout
+TEST(IndiSampleFreshnessTest, BoundaryAtTimeout)
+{
+	constexpr uint64_t kStamp = 5000000;
+	constexpr float kTimeout_s = 0.5f;
+	constexpr uint64_t kTimeout_us = 500000;
+
+	EXPECT_TRUE(IndiMeasuredTorque::isSampleFresh(kStamp, kStamp, kTimeout_s));
+	EXPECT_TRUE(IndiMeasuredTorque::isSampleFresh(kStamp + kTimeout_us - 1, kStamp, kTimeout_s));
+	EXPECT_FALSE(IndiMeasuredTorque::isSampleFresh(kStamp + kTimeout_us, kStamp, kTimeout_s));
+	EXPECT_FALSE(IndiMeasuredTorque::isSampleFresh(kStamp + kTimeout_us + 1, kStamp, kTimeout_s));
+}
+
+TEST(IndiSampleFreshnessTest, SampleFromTheFutureIsNotFresh)
+{
+	// with a huge timeout only the ordering check can reject it (the unsigned difference would wrap)
+	EXPECT_FALSE(IndiMeasuredTorque::isSampleFresh(1000, 2000, 1e20f));
+	EXPECT_FALSE(IndiMeasuredTorque::isSampleFresh(1999, 2000, 1e20f));
+	EXPECT_TRUE(IndiMeasuredTorque::isSampleFresh(2000, 2000, 1e20f));
+}
+
+TEST(IndiSampleFreshnessTest, NoTimeoutMeansNeverFresh)
+{
+	// a zero, negative or NaN timeout is not a free pass, not even for a sample of the current cycle
+	for (const float timeout_s : {0.f, -0.f, -1.f, -INFINITY, (float)NAN}) {
+		EXPECT_FALSE(IndiMeasuredTorque::isSampleFresh(2000, 2000, timeout_s)) << timeout_s;
+		EXPECT_FALSE(IndiMeasuredTorque::isSampleFresh(2100, 2000, timeout_s)) << timeout_s;
+	}
+}
+
+TEST_F(IndiFrozenRpmTest, WindowFollowsSetFrozenWindowSeconds)
+{
+	_model.setFrozenWindow(1.0f);
+	IndiMeasuredTorque::Result result{};
+
+	for (int i = 0; i < 360; i++) { // 0.9 s: the 0.5 s window of the fixture would have tripped
+		result = cycle(true, 5000.f, 0.f);
+	}
+
+	EXPECT_TRUE(result.valid);
+	EXPECT_EQ(result.motor_frozen_mask, 0);
+
+	for (int i = 0; i < 100; i++) { // 1.15 s
+		result = cycle(true, 5000.f, 0.f);
+	}
+
+	EXPECT_FALSE(result.valid);
+	EXPECT_EQ(result.motor_frozen_mask, 0x02);
+}
+
+TEST_F(IndiFrozenRpmTest, NegativeWindowDoesNotShortenTheDetection)
+{
+	// a negative window is clamped to zero and must not fall back to a working window: a frozen rpm is not flagged
+	_model.setFrozenWindow(-1.0f);
+	IndiMeasuredTorque::Result result{};
+
+	for (int i = 0; i < 800; i++) { // 2 s
+		result = cycle(true, 5000.f, 0.f);
+		ASSERT_EQ(result.motor_frozen_mask, 0) << i;
+	}
+
+	EXPECT_TRUE(result.valid);
+}
+
+// command pinned at full thrust
+TEST_F(IndiFrozenRpmTest, SaturatedConstantCommandWithConstantRpmStaysValid)
+{
+	// limit by design: with no command variation a constant rpm is not distinguishable from a legitimate one
+	for (int i = 0; i < 4000; i++) { // 10 s
+		_t += kStep;
+
+		for (int motor = 0; motor < kNumRotors; motor++) {
+			_model.setMotorCommand(motor, 1.f, _t);
+			_model.setMotorSample(motor, rpmFromThrust(1.f), 0, _t);
+		}
+
+		const IndiMeasuredTorque::Result result = _model.compute(_t);
+		ASSERT_TRUE(result.valid) << i;
+		ASSERT_EQ(result.motor_frozen_mask, 0) << i;
+		ASSERT_EQ(result.motor_valid_mask, 0x0F) << i;
+	}
+}
+
+TEST_F(IndiFrozenRpmTest, CommandDipFromSaturationWithConstantRpmIsFrozen)
+{
+	IndiMeasuredTorque::Result result{};
+
+	for (int i = 0; i < 400; i++) { // 1 s pinned at 1.0, then a dip to 0.97 (0.03 > 0.02) at a constant rpm
+		_t += kStep;
+		const float command = (i < 100) ? 1.f : 0.97f;
+
+		for (int motor = 0; motor < kNumRotors; motor++) {
+			_model.setMotorCommand(motor, command, _t);
+			_model.setMotorSample(motor, rpmFromThrust(1.f), 0, _t);
+		}
+
+		result = _model.compute(_t);
+
+		if (i < 100) {
+			ASSERT_TRUE(result.valid) << i;
+		}
+	}
+
+	EXPECT_FALSE(result.valid);
+	EXPECT_EQ(result.motor_frozen_mask, 0x0F);
+	EXPECT_EQ(result.motor_valid_mask, 0);
+}

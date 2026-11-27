@@ -1137,6 +1137,25 @@ TEST(IndiRateControlMeasurementTest, NormalisedThrustFromRpm)
 	EXPECT_FLOAT_EQ(u, 0.123f);
 }
 
+TEST(IndiRateControlMeasurementTest, NormalisedThrustFromRpmZeroBoundary)
+{
+	float u = 0.123f;
+
+	// a tiny negative rpm is rejected, squared it would be a valid thrust
+	EXPECT_FALSE(IndiRateControl::normalisedThrustFromRpm(-1e-3f, 10000.f, u));
+	EXPECT_FALSE(IndiRateControl::normalisedThrustFromRpm(-1e-6f, 10000.f, u));
+	EXPECT_FLOAT_EQ(u, 0.123f);
+
+	// a tiny positive rpm gives the exact square, not a raised floor
+	EXPECT_TRUE(IndiRateControl::normalisedThrustFromRpm(1.f, 10000.f, u));
+	EXPECT_FLOAT_EQ(u, 1e-8f);
+	EXPECT_GT(u, 0.f);
+
+	// zero and negative zero are valid and give no thrust
+	EXPECT_TRUE(IndiRateControl::normalisedThrustFromRpm(-0.f, 10000.f, u));
+	EXPECT_EQ(u, 0.f);
+}
+
 TEST(IndiRateControlBlendTest, DisabledIsBitIdenticalToNoSetterCall)
 {
 	const float disabled[] = {0.f, NAN, -0.5f, -INFINITY};
