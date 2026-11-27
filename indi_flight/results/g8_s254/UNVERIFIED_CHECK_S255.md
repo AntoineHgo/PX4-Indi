@@ -19,3 +19,23 @@ Extra check, GATES.md:321 cites bench/gate_g3.sh: DOES NOT EXIST (ls bench/gate_
 
 Counts (first 10): VERIFIED 4 (02:347, 02:348, 02:350, 02:351), WRONG 0, STILL UNCHECKED 6 (01:317, 01:329, 01:330, 02:353, 02:354, 03:166/343-350).
 Flags: (a) S254 table line refs for 02:347-354 are off by one versus the report text; (b) report 02:349 "not confirmed" for MPC values is stale; (c) "freeze file" identity is inferred, not stated in the report; (d) gate_g3.sh scoring-script identities are from names only.
+
+## Items 11-20
+
+Method: read-only grep/sed on the named report lines and source files. Items 11-20 are the next 10 UNCHECKED rows in file order after the first 10 above.
+
+| item id / claim (short) | verdict | source path:line | note |
+|---|---|---|---|
+| 11 03:343 g2_margins cited for method only, tables not compared | STILL UNCHECKED | report/03_validation.md:343-345 (text) | meta statement about what was read; not checkable from result files |
+| 12 03:343 G5 rows from S197 audit; S198 verdict says unchanged | STILL UNCHECKED | GATES.md:705-711 (S198 verdict cites G5_VERDICT_AUDIT.md); GATE_STATUS.tsv:6 | the word "unchanged" is not in the S198 verdict (GATES.md:703 is a G5.5 Q25 note, different topic); row-by-row S197 vs S198 comparison not done |
+| 13 03:343 hole-rate numbers not tabulated | STILL UNCHECKED | report/03_validation.md (text) | meta statement |
+| 14 03:343 per-run SCORES of S199 campaign not opened | STILL UNCHECKED | results/g3_campaign_f10/SCORES.tsv (exists) | meta statement about what was opened; file exists, contents not compared |
+| 15 03:343 "G6 runs not flown" | VERIFIED (scoped) | report/03_validation.md:355 ("10 starts ... not flown"); results/g6_item7_s212/SCORES.tsv, TALLY_S244.md; GATES.md:918-921 | the 10-start identification runs have no G6 result folder (only g6_item7_s212 matches "g6"). Item 7 WAS flown (runs 240-299, 60 corners). Short claim is only true if read as scoped to the 10 starts; flagged |
+| 16 04:94 actuator-model mismatch hypothesis | VERIFIED | GATES.md:902 "UNVERIFIED unless checked: actuator-model mismatch" | tag matches. The "no evidence file" part is not separately checked (same as item 10) |
+| 17 04:94 4.3 anomaly list = one-line ANOMALIES.md headlines | STILL UNCHECKED | report/04_limits.md:49-58; ANOMALIES.md:13,14,29,30,31,32,34 (A-4, A-6, A-50, A-51, A-53, A-54, A-57 all present) | IDs exist and headlines broadly match; OPEN status of each and list completeness not checked (partial) |
+| 18 04:94 motor tau and telemetry latency in ch.6 map to 4.1 | STILL UNCHECKED | report/06_bringup_checklist.md:116-135 (6.7 read only); report/04_limits.md:7 (4.1) | judgement; mapping not provable from result files |
+| 19 06:118 B3 telemetry rate, B4 latency, B8 loop rate/CPU | STILL UNCHECKED | report/g2_margins.md:9-10 (B4 "not found": VERIFIED); B3, B8 need flight | B4 part verified; B3 and B8 need flight/hardware data (none in results/) |
+| 20 06:118 B5 esc_rpm tolerance vs tachometer; A-57 open | STILL UNCHECKED | ANOMALIES.md:34 (A-57 open, absent from ANOMALIES_CLOSED.md) | A-57 open: VERIFIED. Tachometer tolerance needs hardware. Flag: the report's "real trip time" is the SIM probe value (+0.075 s, results/g3_telfrz_s185), not a real-board measurement |
+
+Counts (items 11-20): VERIFIED 2 (15 scoped, 16), WRONG 0, STILL UNCHECKED 8 (11, 12, 13, 14, 17, 18, 19, 20).
+Flags: (a) item 15 is WRONG if read unscoped (item 7 runs exist); (b) item 12 needs a row-by-row read of G5_VERDICT_AUDIT.md; (c) item 20 "real trip time" wording should say sim.
