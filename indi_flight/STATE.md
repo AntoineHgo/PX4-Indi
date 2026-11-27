@@ -1,7 +1,14 @@
 # STATE (budget 8000 bytes: read at every launch, resume essentials only)
 
+## Final summary (S257, 2026-11-27; DONE created)
+- G1, G2, G4, G5, G7, G8 PASSED (G7, G8 with justified limits). G3 NOT PASSED (final, owner Q35 A: draw 3 INDI-only
+  2 Hz pitch, draw 264 LOC on saturation + weak motor). G6 NOT PASSED (needs G3; item 7 6/58 failures). All written
+  up with data: GATES.md verdict sections, report 03_validation 3.3/3.6, 04_limits 4.1/4.2. Simulation only.
+- Open: Q36 (R1 eRPM-required wording; option A recommended, G8 text written as "pending Q36"). Option B would be a
+  post-verdict firmware change request. Clean firmware-only branch exists (G7); no PR opened.
+
 ## Status
-- Stage: 7 (G7, G8). G3 FINAL NOT PASSED (owner Q35 A, GATES "Owner amendment S243"); G6 NOT PASSED (S244).
+- Stage: 7 done. G3 FINAL NOT PASSED (owner Q35 A, GATES "Owner amendment S243"); G6 NOT PASSED (S244).
   FREEZE-10 (D-FREEZE-10): firmware 7fe6206fcc, config g5_freeze_s157 params. Later firmware commits
   behaviour-neutral (D-G7-NUTTX-BUILD, D-F10-NEUTRAL). No gate flights remain.
 - Gates: see GATE_STATUS.tsv. G7 PASSED S252. Open: G8. Q36 open (R1 wording), blocks only the G8 R1 text.
@@ -15,18 +22,11 @@ McIndiPosControl.cpp:315), harness extraction (D-G7-HARNESS), MC_INDI_ID_OK call
 D-OFFB-POSVEL wiring test, omega_ff step on offboard entry, g510 one-sample LOC (results/g7_checkers_s215),
 ACT_TC/W_MAX vs bench (lesson 12), guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced, pos module esc_status
 instance 0 / 100 ms age, G6 item 2 ID-window rescore, MC_INDI_ACT_TC yaml "round up" wording (D-OWNER-Q27).
-Plan (order):
- P5 NEXT (G8 verdict; cut by RC256, design/route_check_256.md): GATES G8 criterion does not need the report
-    "Unverified" items cleared one by one: STOP item-by-item checks, drop report/UNVERIFIED_S217.md clearing.
-    One sonnet agent (medium): (1) in one pass mark every still-unchecked item of results/g8_s254/UNVERIFIED_CHECK.md
-    and UNVERIFIED_CHECK_S255.md as "unverified" in the chapter (or delete the claim), (2) fix report 02:349
-    "not confirmed" (yaml answers it) and GATES.md:321 bench/gate_g3.sh -> bench/g3_score.sh, g3_checks.py,
-    g3_checks_key2.py, (3) docs/en/config_mc/indi_control.md prettier/link check, (4) re-run bench/gate_g8.sh.
-    Then write the G8 verdict: R1 worded as Q36 option A and marked "pending Q36"; no WAIT_OWNER (Q36 decides
-    R1 text only). Then DONE file per MISSION (G3/G6 NOT PASSED written up with data).
+Plan: none left. Only on an owner Q36 answer: A -> drop "pending Q36" from GATES G8 verdict and report R1 text;
+ B -> owner change request (INDI-side arming block, G5 arming rows re-fly, two keys).
 Gate binary = 903eae63 (D-BINARY-GZFIX): do NOT rebuild build/px4_sitl_default from HEAD. G3 chain stopped for good
 (Q35 A): the supervisor "g3_campaign_f10 chain finished" line is hardcoded and stale (S199 closed it): ignore it.
-Route check: RC256 current; next RC S271.
+Route check: RC256 current (S257 supervisor request answered by RC256, one session old; its cut was acted on).
 
 ## Notes
 - G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.

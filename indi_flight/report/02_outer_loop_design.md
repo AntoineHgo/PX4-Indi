@@ -294,7 +294,7 @@ Library constants (not parameters, `.hpp`): `kMaxBlend 0.5`, `kMeanUSatLimit 0.9
 
 Flagged, not confirmed: stock values for the `MPC_*` rows come from the stock yaml and the airframe file, not from a
 parameter dump of a freeze flight (the freeze params file lists no `MPC_*` outside what the airframe sets).
-`MPC_Z_VEL_MAX_UP/DN` and `MPC_THR_MAX` have no confirmed value here.
+Stock yaml defaults (`src/modules/mc_pos_control/multicopter_position_control_limits_params.yaml`): `MPC_Z_VEL_MAX_UP` 3.0 m/s (line 27), `MPC_Z_VEL_MAX_DN` 1.5 m/s (line 42), `MPC_THR_MAX` 1.0 (line 91); no flight dump confirms they were unchanged in the flown runs (unverified).
 
 ## 8. Margins (G2 outer loop at FREEZE-10)
 
@@ -346,7 +346,7 @@ recoveries.
 ## Unverified
 
 - Meaning of the cell suffix `r400`/`r800` (script argument `--rate-hz`, `g2o_fly.sh:14`): not traced; stated as "bench rate".
-- Stock `MPC_*` values (section 7) are stock yaml defaults, not a flight dump. `MPC_Z_VEL_MAX_UP/DN`, `MPC_THR_MAX` not confirmed.
+- Stock `MPC_*` values (section 7) are stock yaml defaults, not a flight dump. Yaml defaults of `MPC_Z_VEL_MAX_UP/DN` (3.0/1.5) and `MPC_THR_MAX` (1.0) are in section 7.
 - Mode table in `design/outer_loop_requirements.md` section 5 flags several items UNVERIFIED (PositionTriplet flag set,
   Descend xy, external modes); this chapter's mode-coverage table follows the code flags, not that table.
 - `MC_INDI_W_MAX` in the freeze file is the file's line 6; the airframe `4040_gz_quad5in` also sets it to 2700.
