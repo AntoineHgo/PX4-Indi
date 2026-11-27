@@ -29,9 +29,11 @@ Plan (order):
  P5 NEXT: G8 gaps + verdict: bench/gate_g8.sh all 7 PASS S253 (results/g8_s253); report drafts 01-06 + A_history_errata
     ("Unverified" lists), docs/en/config_mc/indi_control.md (prettier/link check open, report/DOCS_DRAFT_S201.md).
     R1 text waits Q36. S254 check of report "Unverified" items: results/g8_s254/UNVERIFIED_CHECK.md (49 items:
-    17 VERIFIED, 2 WRONG fixed (stale Q31 tags), 30 UNCHECKED). Next: a sonnet agent clears the 30 UNCHECKED items
-    (and the itemised lists in report/UNVERIFIED_S217.md) and removes verified items from the chapters; note that
-    GATES.md:321 cites bench/gate_g3.sh, which does not exist.
+    17 VERIFIED, 2 WRONG fixed (stale Q31 tags), 30 UNCHECKED). S255 (haiku) first 10 UNCHECKED: 4 VERIFIED
+    (02:347,348,350,351), 6 still unchecked (results/g8_s254/UNVERIFIED_CHECK_S255.md). Next: a sonnet agent clears
+    the remaining 26 (and report/UNVERIFIED_S217.md lists), removes verified items from the chapters, fixes report
+    02:349 "not confirmed" (yaml answers it) and GATES.md:321 bench/gate_g3.sh (absent; G3 scorers are
+    bench/g3_score.sh, g3_checks.py, g3_checks_key2.py).
 Gate binary = 903eae63 (D-BINARY-GZFIX): do NOT rebuild build/px4_sitl_default from HEAD. G3 chain stopped for good
 (Q35 A): the supervisor "g3_campaign_f10 chain finished" line is hardcoded and stale (S199 closed it): ignore it.
 Route check: RC247 current; next RC S262.
