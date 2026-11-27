@@ -47,12 +47,17 @@
 #include <uORB/topics/actuator_controls_status.h>
 #include <uORB/topics/actuator_motors.h>
 #include <uORB/topics/actuator_torque_measured.h>
+#include <uORB/topics/arming_check_reply.h>
+#include <uORB/topics/arming_check_request.h>
 #include <uORB/topics/control_allocator_status.h>
 #include <uORB/topics/indi_rate_feedforward.h>
 #include <uORB/topics/esc_status.h>
 #include <uORB/topics/indi_rate_status.h>
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/parameter_update.h>
+#include <uORB/topics/register_ext_component_reply.h>
+#include <uORB/topics/register_ext_component_request.h>
+#include <uORB/topics/unregister_ext_component.h>
 #include <uORB/topics/vehicle_angular_velocity.h>
 #include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/vehicle_land_detected.h>
@@ -113,6 +118,13 @@ private:
 	 */
 	void updateMeasuredTorque();
 
+	/**
+	 * Register with the commander as an external arming check and answer its requests: arming is refused
+	 * while a motor has no fresh rpm telemetry. While armed the answer is always positive.
+	 */
+	void updateArmingCheck();
+	void unregisterArmingCheck();
+
 	void updateActuatorControlsStatus(const vehicle_torque_setpoint_s &vehicle_torque_setpoint, float dt);
 
 	/**
@@ -141,6 +153,8 @@ private:
 	uORB::Subscription _vehicle_rates_setpoint_sub{ORB_ID(vehicle_rates_setpoint)};
 	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
 	uORB::Subscription _vehicle_torque_setpoint_sub{ORB_ID(vehicle_torque_setpoint)};
+	uORB::Subscription _arming_check_request_sub{ORB_ID(arming_check_request)};
+	uORB::Subscription _register_ext_component_reply_sub{ORB_ID(register_ext_component_reply)};
 
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
@@ -148,6 +162,9 @@ private:
 
 	uORB::Publication<actuator_controls_status_s>	_actuator_controls_status_pub{ORB_ID(actuator_controls_status_0)};
 	uORB::Publication<actuator_torque_measured_s>	_actuator_torque_measured_pub{ORB_ID(actuator_torque_measured)};
+	uORB::Publication<arming_check_reply_s>		_arming_check_reply_pub{ORB_ID(arming_check_reply)};
+	uORB::Publication<register_ext_component_request_s> _register_ext_component_request_pub{ORB_ID(register_ext_component_request)};
+	uORB::Publication<unregister_ext_component_s>	_unregister_ext_component_pub{ORB_ID(unregister_ext_component)};
 	uORB::Publication<indi_rate_status_s>		_indi_rate_status_pub{ORB_ID(indi_rate_status)};
 	uORB::Publication<vehicle_rates_setpoint_s>	_vehicle_rates_setpoint_pub{ORB_ID(vehicle_rates_setpoint)};
 	uORB::Publication<vehicle_thrust_setpoint_s>	_vehicle_thrust_setpoint_pub{ORB_ID(vehicle_thrust_setpoint)};
@@ -169,6 +186,14 @@ private:
 
 	bool _landed{true};
 	bool _maybe_landed{true};
+
+	static constexpr char ARMING_CHECK_NAME[] = "INDI rpm telemetry"; ///< at most 24 characters
+	static constexpr uint64_t ARMING_CHECK_REQUEST_ID = 0x494E444945525043; ///< identifies the registration request
+	int8_t _arming_check_id{-1}; ///< registration id given by the commander, -1 if not registered
+	hrt_abstime _last_registration_request{0};
+	hrt_abstime _last_arming_check_request{0};
+	hrt_abstime _erpm_refused_since{0};
+	hrt_abstime _last_erpm_event{0};
 
 	// last measured actuator torque (ESC rpm), all zero and invalid until one is computed
 	actuator_torque_measured_s _torque_measured{};

@@ -34,9 +34,12 @@
 #include "McIndiRateControl.hpp"
 #include "IndiInjectionStep.hpp"
 
+#include "IndiErpmArmingCheck.hpp"
+
 #include <drivers/drv_hrt.h>
 #include <mathlib/math/Limits.hpp>
 #include <mathlib/math/Functions.hpp>
+#include <px4_platform_common/events.h>
 
 using namespace matrix;
 using namespace time_literals;
@@ -218,6 +221,106 @@ McIndiRateControl::updateMeasuredTorque()
 	_torque_measured = msg;
 }
 
+void
+McIndiRateControl::updateArmingCheck()
+{
+	static constexpr hrt_abstime REGISTRATION_RETRY_INTERVAL = 1_s;
+	static constexpr hrt_abstime REQUEST_TIMEOUT = 1_s; // requests every ~300 ms, commander drops after ~1.2 s
+	static constexpr hrt_abstime EVENT_DELAY = 2_s;     // telemetry takes a moment to start after boot
+	static constexpr hrt_abstime EVENT_INTERVAL = 10_s;
+
+	const hrt_abstime now = hrt_absolute_time();
+	const bool armed = _vehicle_control_mode.flag_armed;
+
+	register_ext_component_reply_s registration_reply;
+	int tries = register_ext_component_reply_s::ORB_QUEUE_LENGTH;
+
+	while (_register_ext_component_reply_sub.update(&registration_reply) && --tries >= 0) {
+		if (registration_reply.request_id == ARMING_CHECK_REQUEST_ID && registration_reply.success) {
+			if (_arming_check_id != registration_reply.arming_check_id) {
+				PX4_INFO("arming check registered, id %d", (int)registration_reply.arming_check_id);
+			}
+
+			_arming_check_id = registration_reply.arming_check_id;
+			_last_arming_check_request = now;
+		}
+	}
+
+	// the commander only takes registrations while disarmed and drops a component that stops answering
+	if (!armed) {
+		if ((_arming_check_id >= 0) && (now > _last_arming_check_request + REQUEST_TIMEOUT)) {
+			_arming_check_id = -1;
+		}
+
+		if ((_arming_check_id < 0) && (now > _last_registration_request + REGISTRATION_RETRY_INTERVAL)) {
+			register_ext_component_request_s request{};
+			request.timestamp = now;
+			request.request_id = ARMING_CHECK_REQUEST_ID;
+			strncpy(request.name, ARMING_CHECK_NAME, sizeof(request.name) - 1);
+			request.px4_ros2_api_version = register_ext_component_request_s::LATEST_PX4_ROS2_API_VERSION;
+			request.register_arming_check = true;
+			_register_ext_component_request_pub.publish(request);
+			_last_registration_request = now;
+		}
+	}
+
+	arming_check_request_s request;
+
+	if (!_arming_check_request_sub.update(&request) || (_arming_check_id < 0)) {
+		return;
+	}
+
+	_last_arming_check_request = now;
+
+	const IndiErpmArmingCheck::Verdict verdict =
+		IndiErpmArmingCheck::evaluate(_measured_torque, now, _param_mc_indi_erpm_to.get(), armed);
+
+	if (verdict.can_arm) {
+		_erpm_refused_since = 0;
+
+	} else {
+		if (_erpm_refused_since == 0) {
+			_erpm_refused_since = now;
+		}
+
+		if ((now > _erpm_refused_since + EVENT_DELAY) && (now > _last_erpm_event + EVENT_INTERVAL)) {
+			/* EVENT
+			 * @description
+			 * Every motor must report its rpm: the ESC telemetry is not connected or not enabled, or a motor is not
+			 * responding.
+			 */
+			events::send<uint16_t>(events::ID("mc_indi_rate_control_erpm_missing"), events::Log::Error,
+					       "Arming denied: no rpm telemetry from motors (bit mask {1})", verdict.motor_mask);
+			_last_erpm_event = now;
+		}
+	}
+
+	arming_check_reply_s reply{};
+	reply.timestamp = now;
+	reply.request_id = request.request_id;
+	reply.registration_id = _arming_check_id;
+	reply.health_component_index = arming_check_reply_s::HEALTH_COMPONENT_INDEX_NONE;
+	reply.can_arm_and_run = verdict.can_arm;
+	_arming_check_reply_pub.publish(reply);
+}
+
+void
+McIndiRateControl::unregisterArmingCheck()
+{
+	if (_arming_check_id < 0) {
+		return;
+	}
+
+	unregister_ext_component_s unregister{};
+	unregister.timestamp = hrt_absolute_time();
+	strncpy(unregister.name, ARMING_CHECK_NAME, sizeof(unregister.name) - 1);
+	unregister.arming_check_id = _arming_check_id;
+	unregister.mode_id = -1;
+	unregister.mode_executor_id = -1;
+	_unregister_ext_component_pub.publish(unregister);
+	_arming_check_id = -1;
+}
+
 Vector3f
 McIndiRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f &angular_accel, float dt, bool landed, bool maybe_landed,
 				      hrt_abstime timestamp_sample, bool armed)
@@ -284,6 +387,7 @@ McIndiRateControl::Run()
 {
 	if (should_exit()) {
 		_vehicle_angular_velocity_sub.unregisterCallback();
+		unregisterArmingCheck();
 		exit_and_cleanup(desc);
 		return;
 	}
@@ -316,6 +420,8 @@ McIndiRateControl::Run()
 
 		/* check for updates in other topics */
 		_vehicle_control_mode_sub.update(&_vehicle_control_mode);
+
+		updateArmingCheck();
 
 		if (_vehicle_land_detected_sub.updated()) {
 			vehicle_land_detected_s vehicle_land_detected;

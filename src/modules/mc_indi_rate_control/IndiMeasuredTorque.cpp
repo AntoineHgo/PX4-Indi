@@ -234,6 +234,7 @@ IndiMeasuredTorque::compute(uint64_t now) const
 
 		} else {
 			valid = false;
+			result.motor_unusable_mask |= (uint16_t)(1u << motor);
 		}
 	}
 

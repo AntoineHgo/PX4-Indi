@@ -58,6 +58,8 @@ target_compile_options(IndiSafety PRIVATE ${MAX_CUSTOM_OPT_LEVEL})
 target_include_directories(IndiSafety PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 px4_add_library(IndiMeasuredTorque
+	IndiErpmArmingCheck.cpp
+	IndiErpmArmingCheck.hpp
 	IndiMeasuredTorque.cpp
 	IndiMeasuredTorque.hpp
 )
@@ -87,6 +89,7 @@ px4_add_module(
 	)
 
 px4_add_unit_gtest(SRC IndiInjectionTest.cpp LINKLIBS IndiInjection)
+px4_add_functional_gtest(SRC IndiErpmArmingCheckTest.cpp LINKLIBS IndiMeasuredTorque VehicleActuatorEffectiveness)
 px4_add_functional_gtest(SRC IndiMeasuredTorqueTest.cpp LINKLIBS IndiMeasuredTorque VehicleActuatorEffectiveness)
 px4_add_unit_gtest(SRC IndiRateSetpointWatchdogTest.cpp LINKLIBS IndiSafety)
 px4_add_unit_gtest(SRC IndiRateFeedforwardGateTest.cpp LINKLIBS IndiSafety)

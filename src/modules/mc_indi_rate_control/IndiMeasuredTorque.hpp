@@ -89,6 +89,7 @@ public:
 		uint64_t timestamp_sample{0}; ///< time of the oldest ESC sample used
 		uint8_t motor_valid_mask{0}; ///< motors (0..7) whose sample was used
 		uint8_t motor_frozen_mask{0}; ///< motors (0..7) whose rpm is frozen (treated as offline)
+		uint16_t motor_unusable_mask{0}; ///< motors (0..MAX_MOTORS-1) without a usable sample
 		bool valid{false};           ///< all rotors fresh and the torque finite
 	};
 
@@ -106,6 +107,8 @@ public:
 	void setRotorSpeedMax(float omega_max) { _omega_max = omega_max; }
 
 	bool enabled() const { return (_omega_max > 0.f) && (_num_rotors > 0); }
+
+	int numRotors() const { return _num_rotors; }
 
 	/** Forget the sample of a motor that is offline */
 	void setMotorOffline(int motor);

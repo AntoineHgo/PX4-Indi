@@ -17,7 +17,7 @@ parameters:
         long: >-
           Rotor speed at which a motor produces its full normalised thrust, assuming thrust grows with the square of
           the rotor speed. Used with ESC rpm telemetry to compute the measured torque (topic actuator_torque_measured).
-          Set to 0 to disable, INDI then uses its actuator model.
+          Set to 0 to disable, INDI then uses its actuator model and the rpm arming check is off.
       type: float
       unit: rad/s
       min: 0
@@ -164,7 +164,8 @@ parameters:
         short: INDI measured torque timeout
         long: >-
           Age of the oldest ESC sample behind the measured torque above which it is not used and INDI falls back to its
-          actuator model. Only used when MC_INDI_W_MAX is set.
+          actuator model. Arming is refused while the oldest sample is older than this, or while any motor has no rpm
+          telemetry newer than 20 ms. Only used when MC_INDI_W_MAX is set.
       type: float
       default: 0.02
       min: 0.001
