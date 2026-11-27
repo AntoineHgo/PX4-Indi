@@ -93,3 +93,15 @@ Options:
   changes, re-fly of the G5 arming rows, two keys).
 Meanwhile: G7 (f) unit 9 / F-10 review and G8 drafts continue; R1 wording is left as is. Blocking: G8 text on R1
 only (no gate verdict depends on it); not blocking other work.
+
+### Owner answer Q36 (2026-11-27): B, enforce R1 in firmware
+- Implement R1 in the INDI firmware: INDI must refuse to arm when eRPM telemetry is missing or stale on any motor.
+  No commander change (zero diff O-11 stays). Hint, to check yourself: commander already offers a generic external
+  arming check (register_ext_component_request with register_arming_check only, then arming_check_reply with
+  can_arm_and_run=false, see commander/HealthAndArmingChecks/checks/externalChecks.cpp, nav_mode_id -1 = all modes).
+  Only block arming; in-flight telemetry loss keeps the validated O-5 fallback (do not change in-flight behaviour).
+- Verify with small tests, 5 tests maximum in total (unit and/or SITL), each break-checked. No campaign, no gate
+  re-fly beyond those 5.
+- This answer lifts FREEZE-10 for this change only; F-10 rules apply (brief the coder, independent review).
+- When the implementation and the tests are done, do NOT update the report yet: ask me first in QUESTIONS.md
+  (create WAIT_OWNER) whether and how to update the report, GATES and docs.

@@ -1,6 +1,6 @@
 # STATE (budget 8000 bytes: read at every launch, resume essentials only)
 
-## Final summary (S257, 2026-11-27; DONE created)
+## Final summary (S257, 2026-11-27; DONE created, removed by owner with Q36 answer B: R1 firmware work open)
 - G1, G2, G4, G5, G7, G8 PASSED (G7, G8 with justified limits). G3 NOT PASSED (final, owner Q35 A: draw 3 INDI-only
   2 Hz pitch, draw 264 LOC on saturation + weak motor). G6 NOT PASSED (needs G3; item 7 6/58 failures). All written
   up with data: GATES.md verdict sections, report 03_validation 3.3/3.6, 04_limits 4.1/4.2. Simulation only.
@@ -22,8 +22,10 @@ McIndiPosControl.cpp:315), harness extraction (D-G7-HARNESS), MC_INDI_ID_OK call
 D-OFFB-POSVEL wiring test, omega_ff step on offboard entry, g510 one-sample LOC (results/g7_checkers_s215),
 ACT_TC/W_MAX vs bench (lesson 12), guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced, pos module esc_status
 instance 0 / 100 ms age, G6 item 2 ID-window rescore, MC_INDI_ACT_TC yaml "round up" wording (D-OWNER-Q27).
-Plan: none left. Only on an owner Q36 answer: A -> drop "pending Q36" from GATES G8 verdict and report R1 text;
- B -> owner change request (INDI-side arming block, G5 arming rows re-fly, two keys).
+Plan (owner Q36 answer B, D-OWNER-Q36; DONE removed by owner): (1) G8 R1 / F-3: implement INDI arming block on
+ missing/stale eRPM in mc_indi_rate_control via external arming check, <= 5 break-checked tests, F-10 brief
+ (agent writes results/q36_s258/IMPL.md); (2) independent review (results/q36_s258/REVIEW.md); (3) then Q37 to owner
+ "whether and how to update report, GATES, docs, firmware-only branch" + WAIT_OWNER. Do not touch report/GATES/docs before.
 Gate binary = 903eae63 (D-BINARY-GZFIX): do NOT rebuild build/px4_sitl_default from HEAD. G3 chain stopped for good
 (Q35 A): the supervisor "g3_campaign_f10 chain finished" line is hardcoded and stale (S199 closed it): ignore it.
 Route check: RC256 current (S257 supervisor request answered by RC256, one session old; its cut was acted on).
@@ -42,7 +44,7 @@ Route check: RC256 current (S257 supervisor request answered by RC256, one sessi
 - Before editing any file under bench/, check no chain pins it (chain_freeze.sha256).
 
 ## Tasks in flight
-None. (S248-S252 G7 task rows moved to JOURNAL.md S256.)
+S258 Q36 implementation agent: output results/q36_s258/IMPL.md (resume: read it, check diff, run review).
 Commit trailer: AGENTS.md wins: `Assisted-by:` only.
 
 ## Open problems

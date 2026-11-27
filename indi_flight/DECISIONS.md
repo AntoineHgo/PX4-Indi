@@ -1531,3 +1531,18 @@ inputs against a verbatim copy of the old code gave equal valid flags, bit-ident
 (results/g7_s251/P6B_TESTS.md). Gate rows were flown on binary 903eae63, which is not rebuilt.
 Alternatives: revert the pos extraction and leave row 7 MISSING (G7 (b) gap); test via a module harness (no harness
 in O-11 scope). Overturn if: a SITL flight of HEAD differs from 903eae63 on a G5 events row beyond seed tolerance.
+
+## D-OWNER-Q36 (S258, 2026-11-27): R1 enforced, INDI blocks arming without fresh eRPM on every motor
+Owner answer Q36 B (lifts FREEZE-10 for this change only). Mechanism: `mc_indi_rate_control` registers once as an
+external arming-check component (`register_ext_component_request`, `register_arming_check` only, no mode) and answers
+each `arming_check_request` with `arming_check_reply` `can_arm_and_run = false` plus a health/arming event while any
+motor in `CA_*` geometry has missing or stale eRPM (same age/frozen criteria as the in-flight O-5 detector,
+MC_INDI_ERPM_TO/FRZ). Commander zero diff (O-11) holds: the generic external-check path already exists.
+Alternatives: (a) commander pre-arm check: rejected, O-11; (b) refuse to output in INDI while disarmed with no
+telemetry: does not block arming, motors would still spin up on arm; (c) check in the position module: not started
+in every mode (acro/stabilized have only the rate module). In flight nothing changes: the reply is only consumed for
+arming, and the O-5 modelled fallback keeps running on in-flight loss.
+Tests: at most 5 in total (owner), unit and/or SITL, each break-checked. Gate rows invalidated: none expected
+(telemetry present in every gate flight, so the check always passes); the SITL arming test shows arming still works
+with telemetry. Overturn if: a gate-config SITL flight fails to arm, or a reply ever reaches commander in flight with
+can_arm_and_run false and changes the mode.
