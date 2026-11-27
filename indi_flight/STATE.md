@@ -4,7 +4,7 @@
 - Stage: 7 (G7, G8). G3 FINAL NOT PASSED (owner Q35 A, GATES "Owner amendment S243"); G6 NOT PASSED (S244).
   FREEZE-10 (D-FREEZE-10): firmware 7fe6206fcc, config g5_freeze_s157 params. Later firmware commits
   behaviour-neutral (D-G7-NUTTX-BUILD, D-F10-NEUTRAL). No gate flights remain.
-- Gates: see GATE_STATUS.tsv. Open: G7, G8. Q36 open (R1 wording), blocks only the G8 R1 text.
+- Gates: see GATE_STATUS.tsv. G7 PASSED S252. Open: G8. Q36 open (R1 wording), blocks only the G8 R1 text.
 - Owner rule F-10 (2026-11-22): brief every coder with F-10. Clean-up = separate behaviour-neutral commits,
   independent review.
 
@@ -25,10 +25,8 @@ Plan (order):
     4.6b notch not mirrored on torque path -> justify + 04_limits; 11.2c gust drag not air-relative -> limit;
     11.3d measured-torque test with hand-computed values -> add to P6; 11.3e = P6; 7.g8 accepted at verdict.
     Re-check the 4 "(weak)" rows (3.5d, 6.3/10, 11.3b, 11.3c). Also MC_INDI_ACT_TC yaml "round up" wording (yaml:123).
- P4 NEXT (S252, all G7 inputs now in): G7 verdict in GATES.md from results/g7_s249/G7_VERDICT_DRAFT.md + g7_s251/
-    (P6B_TESTS, P7A_REVIEW_ROWS, P7B_TORQUE_TEST, README_P2), with the RC247 cut list as justification lines (draft said NOT PASSED on P6/P7 gaps; its
-    "injection helpers not mutation-checked" is wrong: S196 67/0). Re-run make check_format after P6.
- P5 G8 gaps + verdict: re-run bench/gate_g8.sh (results/g8_s247); report drafts 01-06 + A_history_errata
+ P4 DONE S252: G7 PASSED (GATES "G7 verdict (S252)"). Any later firmware commit re-opens (a)(d)(e)(f) for its delta.
+ P5 NEXT: G8 gaps + verdict: re-run bench/gate_g8.sh (results/g8_s247); report drafts 01-06 + A_history_errata
     ("Unverified" lists), docs/en/config_mc/indi_control.md (prettier/link check open, report/DOCS_DRAFT_S201.md).
     R1 text waits Q36.
 Gate binary = 903eae63 (D-BINARY-GZFIX): do NOT rebuild build/px4_sitl_default from HEAD. G3 chain stopped for good
@@ -51,8 +49,7 @@ Route check: RC247 current; next RC S262.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
-| P8 | S252: F-10 delta review 0b1c6a26d1..HEAD (class A paths; S248 review covered 0b1c6a26d1 only), before G7 verdict | sonnet high | results/g7_s252/F10_DELTA_REVIEW.md | re-launch same brief if file missing |
-| P9 | S252: NuttX px4_fmu-v5x INDI build at HEAD (compile + size vs S195); G7 (e) | sonnet medium | results/g7_s252/NUTTX_BUILD.md | re-launch if file missing; remove temp boards/px4/fmu-v5x/indi.px4board |
+| P8/P9 | DONE S252: F-10 delta review 0/0/11 MINOR; NuttX v5x at HEAD rc 0 +64 792 B (11 S252 MINORs accepted in G7 verdict) | sonnet | results/g7_s252/ | - |
 | P6a | DONE S250: items 1-5, b89a18b4aa (neutral extraction, objdump identical; diff read) + 3ab7c72046 tests; 10/10 gtest targets; each break-checked. Lower constrain in normalisedThrustFromRpm is dead code (justify); item 5 limit -> 04_limits | sonnet | results/g7_s250/P6A_TESTS.md | - |
 | P6b | DONE S251: 042e38a1dd (neutral, D-F10-NEUTRAL-S251) + 1ac5d58c89 tests, 10 breaks killed, 12/12 gtest. P2 (indi-fw-pr) must be re-run to include them | sonnet | results/g7_s251/P6B_TESTS.md | - |
 | P2b | DONE S251: indi-fw-pr ee7d4542d7 (local, worktree /tmp/indi_fwbranch_s251), 75 files; (a) 0 stock diff, (d) 50/0, (g) SITL rc=0, 12/12 gtest (239 tests), F-10 grep 0. NuttX not rebuilt (S195 size; new code header-only helpers + tests) | sonnet | results/g7_s251/README_P2.md | - |

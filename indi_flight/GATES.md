@@ -929,3 +929,35 @@ Runs 240-299 (60 corners, `MC_INDI_ID_OK` 0, gate binary 903eae63), scored by bo
   scored before the Q34 key change (rescore found nothing to redo, so it is not re-checked).
 - G6 needs G2, G3 and G5 to pass. G3 is final NOT PASSED (S243), so G6 is NOT PASSED. The identification procedure
   and the defaults evidence stay in G8 as the method and its limits.
+
+## G7 verdict (S252, 2026-11-27): PASSED, with the justified limits below
+Head feat/indi-flight 689348de10 (firmware dirs identical to local branch indi-fw-pr ee7d4542d7, not pushed, no PR).
+- (a) Stock modules zero diff: PASS, 0 lines over the 6 stock paths, 0 indi_flight/indi_project paths, 75 files
+  (results/g7_s251/README_P2.md).
+- (b) Tests: PASS. 12/12 gtest targets, 239 tests, on the branch. The S195 audit (66 mutations, all 9 survivors
+  killed, results/g7_s195/BREAK_AUDIT.md) covers the helpers incl. injection (S196). The 4 MISSING and 3 WEAK rows of
+  results/g7_s249/G7B_TEST_INVENTORY.md are closed by tests that fail when broken (results/g7_s250/P6A_TESTS.md,
+  g7_s251/P6B_TESTS.md); the 11.3d hand-computed torque test is in g7_s251/P7B_TORQUE_TEST.md. Justified, not
+  unit-tested: module glue (parameter -> setter wiring for XY_P/XY_VP, ERPM_TO, SP_TO, INC_MAX; sp_source call site;
+  pos omega_ff valid flag; esc_status instance 0) is covered by SITL gate rows (G2 outer cells, g55_gain_probe_s176,
+  G5) per D-G7-HARNESS; the K_pos/K_vel path is unreachable (module always accel_only); the jerk source (D-JFF-SOURCE)
+  is flown in g4_jff_s172; the lower clamp in normalisedThrustFromRpm is dead code (rpm^2 >= 0); a permanently
+  saturated motor with frozen eRPM is not detected by design, pinned by a test, written in report 04_limits.
+- (c) Defaults: met as defined in D-G7-DEFAULTS. Gains: 0 mismatches between firmware defaults and the validated
+  files (results/g7_s195/DEFAULTS_DIFF.md, a full diff in place of the hash). Physical parameters (W_MAX, ACT_TC) are
+  per airframe; MC_INDI_ID_OK 0 (un-identified start) is a reported limit (D-ID-OK-LIMIT, G6 item 7 6/58 failures).
+  Not a robustness claim: G3 is NOT PASSED for every configuration.
+- (d) Format: PASS, astyle 50/0 on the branch (g7_s251/README_P2.md); later commits are docs only.
+- (e) Size: PASS, measured at this head (results/g7_s252/NUTTX_BUILD.md): px4_fmu-v5x with both modules, rc 0,
+  0 warnings, +64 792 B flash (8 964 B left), +40 B data, matching S195 within 120 B. Limit: fmu-v6x overflows by
+  23.5 kB with both modules (S195, results/g7_s195/FORMAT_SIZE.md).
+- (f) Instructions and F-10: PASS. Whole-branch review results/g7_s248/F10_WHOLE_BRANCH_REVIEW.md, fixes second-keyed
+  (g7_s249/P3B_KEY2.md), delta review of 0b1c6a26d1..HEAD results/g7_s252/F10_DELTA_REVIEW.md (0 BLOCKER, 0 MAJOR);
+  project-id/path grep 0 hits (g7_s251/README_P2.md). Accepted: public names kept by D-F10-PUBLIC-NAMES (uORB fields
+  the scorers key on, XY_P/XY_VP, duplicate multisine), 8 MINORs skipped in S248 (F10_FIX_S248.md) and 11 MINORs of
+  S252, all naming or comment only.
+- (g) Firmware-only branch from main: PASS, builds px4_sitl_default rc 0 (g7_s251/README_P2.md).
+- Review open items: 92 rows closed, justified or superseded (results/g7_s249/REVIEW_ITEMS.md,
+  g7_s251/P7A_REVIEW_ROWS.md, report 04_limits 4.6).
+Cut items (route_check_247) without code work: listed above or in report 04_limits; G6 item 2 ID-window rescore
+dropped (G6 stays NOT PASSED as scored).
