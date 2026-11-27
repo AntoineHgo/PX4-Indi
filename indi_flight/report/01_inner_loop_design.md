@@ -318,7 +318,7 @@ flown on the frozen pair (g2_margins.md 2.2, section 4). The model-only fallback
 - Margin numbers come from `g2_margins.md` and `GATES.md`, not from the result folders; the pre-freeze rows used
   binaries other than FREEZE-10 and are listed as trend only. [open: needs re-scoring of result folders]
 - The G3 C3 corner description is taken from the S213 verdict text; the "mass 1.3" figure has no unit in the source and
-  is not interpreted. [open: waits Q31 (G3 verdict); unit of mass 1.3 not stated in source]
+  is not interpreted. [G3 verdict final NOT PASSED (S243); open: unit of mass 1.3 not stated in source]
 - `J_r = 5e-6` (rotor inertia) behind `G2_Y = 27` is assumed in D-G2Y-DERIVE; the IV fit of `G1_Y` (163 to 166) disagrees with
   the derived 205 (Q:10 comment, A-43/A-44 unresolved). [open: needs identification; A-43/A-44 unresolved]
 - `MC_INDI_ACT_TC = 0.033` equals the quad5in model time constant. The identification grid

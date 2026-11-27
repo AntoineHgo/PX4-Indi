@@ -107,7 +107,12 @@ not controller code (A.6).
 | Q28 | S211 | rule A; G3 controller ACT_TC box r in [0.88, 1.02] x tau_mean |
 | Q29 | S211 | G3 re-fly of 300 runs fail-fast, critical block first; G6 item 7 = 60 corners only |
 | Q30 | S214 | G3 item 3 scored on a written window: hold of at least 20 s, last 10 s, replacing the 3 s stand-in |
-| Q31 | S213 | open: route after the second G3 NOT PASSED (A.4) |
+| Q31 | S213, answered S218 | route B with an escalation route; gate binary 903eae63 (GATES "Owner amendment S218") |
+| Q32 | S225, answered S226 | A, bounded: candidate fixes (i)-(iii) tried in turn, none passed (GATES "Owner amendment S225") |
+| Q33 | answered S228 | B with amendments: event hover test (GATES "Owner amendment Q33") |
+| Q34 | S230, answered S243 | "A and B" for G3 item 5 (GATES "Owner amendment S243") |
+| Q35 | S242, answered S243 | A: G3 final NOT PASSED, chain stops; C yes with a guard (GATES "Owner amendment S243") |
+| Q36 | S246 | open: wording of requirement R1 (eRPM telemetry at arming); decides the G8 text on R1 only |
 
 ## A.4 Gate history
 
@@ -129,8 +134,8 @@ and fell, run 264 (corner C3) tilted past 60 deg, and 79 of 297 scored runs fail
 both draws without loss of control (`indi_flight/GATES.md` "G3 verdict at freeze-10", line 725). Second in the ACT_TC
 re-fly (S213): chain C212 halted at run 024 (draw 264, corner C3), INDI loss of control at 60.78 s at speed 4 and
 61.03 s at speed 1 with controller ACT_TC 0.0177; the freeze-10 flights of the same plant (ACT_TC 0.033) failed at the
-same time, so the failure did not depend on ACT_TC; PID did not lose control (`indi_flight/GATES.md` line 808). Q31 is
-open and blocks G3 and G6 (`indi_flight/QUESTIONS.md` line 69). No outcome is stated here.
+same time, so the failure did not depend on ACT_TC; PID did not lose control (`indi_flight/GATES.md` line 808). Q31 was
+answered B at S218 (route B); route B was NOT PASSED at S242 and G3 is final NOT PASSED (owner Q35 A, S243).
 
 ## A.5 Errata
 
@@ -173,4 +178,4 @@ open and blocks G3 and G6 (`indi_flight/QUESTIONS.md` line 69). No outcome is st
   `bench/metrics.py` (stage 8 trajectory metric). The archive-1 row follows the review. [open: S217 `LESSONS.md:10` indeed labels it "Stage 1"; conflict with the review stays, owner/archive check needed]
 - Whether this project re-scored any archive result with the corrected metric was not checked. [open: not checked]
 - G1 first-test session (S19-S24) is inferred from JOURNAL lines 73-75 and Q2 (S24). [open: needs journal read]
-- Q31 outcome is not known and not stated. [open: waits Q31]
+- Q31 outcome: answered B at S218; G3 final NOT PASSED (S243). [closed S254]
