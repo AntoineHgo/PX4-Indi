@@ -53,6 +53,11 @@ Measure: from the log, the interval of new `esc_status.esc[i].timestamp` per mot
 Criterion (U): the sources give no required rate. The controller needs a sample younger than `MC_INDI_ERPM_TO` (0.02 s) and than 20 ms, so a motor updating slower than about 50 Hz cannot satisfy the rate module's freshness rule continuously. The simulation telemetry frame is 1.25 ms, 0-3 frames latency was the G3 envelope (GATES.md, G3 factor table).
 If it fails: the rate path will sit on the actuator model; set `MC_INDI_W_MAX` 0 and treat the vehicle as running the modelled path, or raise the telemetry rate.
 
+**B3a. rpm published while disarmed.**
+Measure: with the vehicle disarmed and props off, log `esc_status` and read the update rate of every motor.
+Criterion: every motor at about 50 Hz or more while disarmed (the arming check needs a sample younger than 20 ms). Unverified on hardware.
+If it fails: arming is refused with the INDI rpm telemetry event; fix the ESC driver or telemetry configuration. Also check that arming is refused with one motor's telemetry unplugged.
+
 **B4. Telemetry latency and spread.**
 Measure: step the command of one motor (props off, small step above idle) and read the delay between the `actuator_motors` change and the first `esc_status.esc_rpm` change, per motor; repeat 10 times. Use `ident_actc.py` (below) on a hover log for the combined delay it reports.
 Criterion: latency small and the same on all motors, and covered by `MC_INDI_ERPM_DLY` (1 cycle by default, yaml:157) plus the G3 envelope of 0-3 frames. The G2 delay margin was set as at least 2 control periods plus the telemetry latency (GATES.md G2 pass rule), but the latency value itself is not recorded (report/g2_margins.md:9-10): the numeric limit is (U).
@@ -109,7 +114,7 @@ SITL validated the estimators only (D-IDENT); identification on a real log is un
 - G3 robustness is NOT PASSED (GATES.md:808-823). Corner C3 (thrust scale 0.351, motor 3 at 0.709, mass 1.3): the INDI rate controller lost control (tilt above 60 deg) while PID recovered (tilt max 40 deg); it does not depend on ACT_TC (0.033 or 0.0177 both fail). Expect no recovery on a saturated vehicle with a weak motor. Q31 is open.
 - The simulator eRPM-loss hook is late by 36-122 ms (STATE.md Notes), so frozen and loss timings were not measured exactly (A-57).
 - The logger misses the first ~0.2 s of `indi_pos_status` (late subscription): a missing sample is not bypass (STATE.md Notes). Same care on the real logger.
-- Requirement R1 (refuse to arm without eRPM) is not enforced: no arming check exists (DOCS_DRAFT_S201.md item 1, RESOLVED S213); a missing or stale measurement gives the modelled fallback and arming is allowed. The check is yours (B3, B6).
+- Requirement R1 (refuse to arm without rpm telemetry on every motor) is enforced by an arming check in the rate module (04_limits.md 4.4). It is flown in SITL only; on hardware it depends on the ESC driver publishing rpm while disarmed (B3a). In flight the check always allows.
 - `MC_INDI_ERPM_TO`/`ERPM_FRZ`, `MC_INDI_SP_TO` and `MC_INDI_INC_MAX` are not backed by a flown test of their own (no test found for them; only the A-57 trip probe touched the frozen detector).
 - The position module has no frozen-rpm detection and uses a 100 ms ESC age against 20 ms in the rate module (6.2): a frozen telemetry is flagged for the rate path only.
 - ESC telemetry instance 0 only (6.2).

@@ -35,8 +35,8 @@ The vehicle must be a multicopter with a configured [control allocator](../conce
 
 - **Rotor-speed telemetry on every motor.**
   Use an ESC protocol that reports rotor speed to the flight controller, for example bidirectional DShot.
-  The INDI controllers do not block arming if it is missing.
-  If the rotor speed of a motor is missing or stale, the controllers use the actuator model instead (see [Overview](#overview)), which is less accurate.
+  The INDI rate controller refuses to arm while the rotor speed of any motor is missing or stale (see [Arming Requirements](#arming-requirements)).
+  If the rotor speed of a motor is lost in flight, the controllers use the actuator model instead (see [Overview](#overview)), which is less accurate.
 - **Rotor geometry in the `CA_*` parameters.**
   The rotor positions, spin directions, and thrust and moment coefficients must be configured, because the measured torque is computed with the control allocation library.
   See [Actuator Configuration](../config/actuators.md).
@@ -46,6 +46,17 @@ The vehicle must be a multicopter with a configured [control allocator](../conce
 - **A correct GNSS delay.**
   Set [SENS_GNSS0_DELAY](../advanced_config/parameter_reference.md#SENS_GNSS0_DELAY) within 50 ms of the measured latency of the GNSS receiver.
   The outer loop is less tolerant of a stale position measurement than the PID controller.
+
+### Arming Requirements
+
+The INDI rate controller refuses to arm until all of the following are met:
+
+- Every motor reports rotor speed, and the newest sample of each is not older than 20 ms ([MC_INDI_ERPM_TO](../advanced_config/parameter_reference.md#MC_INDI_ERPM_TO) applies to the oldest sample).
+- [MC_INDI_W_MAX](../advanced_config/parameter_reference.md#MC_INDI_W_MAX) is set (not `0`).
+- The `CA_*` rotor geometry is configured.
+
+The ESC driver must publish rotor speed while the vehicle is disarmed, at about 50 Hz or more per motor, otherwise arming is refused.
+Once armed, the check never blocks, and a rotor-speed loss in flight is handled by the actuator model.
 
 ## Enabling the Controllers
 
@@ -105,7 +116,7 @@ The tooling that runs the identification and fits the parameters is not yet desc
 
 If you are unsure of a value, round the actuator time constant up: an over-estimate of up to twice the true motor time constant keeps the stability margins, an under-estimate does not.
 Under-estimating the yaw spin-up term `MC_INDI_G2_Y` is benign, over-estimating it is the weak side of the margin.
-`MC_INDI_W_MAX` defaults to `0`, which disables the measured torque: the controller then uses its actuator model.
+`MC_INDI_W_MAX` defaults to `0`, and with `0` the INDI rate controller refuses to arm: set it to the rotor speed at full thrust.
 
 ## Gains and Tuning
 
@@ -134,6 +145,8 @@ Before the first flight with the INDI controllers, check the following on the be
 1. **Rotor-speed telemetry rate and latency.**
    Check that every motor reports rotor speed at a rate consistent with the controller rate, and with a latency that is small and similar across motors.
    The controller compensates a fixed latency with [MC_INDI_ERPM_DLY](../advanced_config/parameter_reference.md#MC_INDI_ERPM_DLY) and [MC_INDI_POS_DLY](../advanced_config/parameter_reference.md#MC_INDI_POS_DLY), in controller cycles.
+1. **Rotor speed while disarmed.**
+   With the vehicle disarmed, check that every motor reports rotor speed at about 50 Hz or more, and that arming is refused when one motor's telemetry is missing.
 1. **Frozen-value behaviour.**
    A motor whose reported rotor speed stays bit-identical while its command varies is treated as offline after [MC_INDI_ERPM_FRZ](../advanced_config/parameter_reference.md#MC_INDI_ERPM_FRZ) seconds, and the measured torque falls back to the actuator model.
    Check that the ESC driver does not repeat stale values in a way that hides a missing measurement.
@@ -146,7 +159,7 @@ Before the first flight with the INDI controllers, check the following on the be
 
 - The INDI controllers replace the stock controllers in every flight mode, and there is no PID fallback in flight.
 - Autotune is not available with the INDI rate controller.
-- Every motor should provide rotor-speed telemetry: arming is not blocked without it, and the controllers then use the less accurate actuator model.
+- Every motor must provide rotor-speed telemetry to arm. Frozen values are not detected while disarmed. After a loss in flight, the controllers use the less accurate actuator model.
 - The INDI rate controller does not start if another controller already publishes `vehicle_torque_setpoint`.
   If another publisher appears while it is running, it logs an error but keeps running.
 - Only multicopters are supported; VTOL vehicles are not.
@@ -169,7 +182,7 @@ Search for `MC_INDI_` to find the groups _Multicopter INDI Rate Control_ and _Mu
 | [MC_INDI_G1_P][MC_INDI_G1_P]         | 1640.0  |       | Pitch control effectiveness                                |
 | [MC_INDI_G1_Y][MC_INDI_G1_Y]         | 205.0   |       | Yaw control effectiveness                                  |
 | [MC_INDI_G2_Y][MC_INDI_G2_Y]         | 27.0    |       | Yaw rotor spin-up term                                     |
-| [MC_INDI_W_MAX][MC_INDI_W_MAX]       | 0       | rad/s | Rotor speed at full thrust (0: measured torque disabled)   |
+| [MC_INDI_W_MAX][MC_INDI_W_MAX]       | 0       | rad/s | Rotor speed at full thrust (0: arming is refused)          |
 | [MC_INDI_K_R][MC_INDI_K_R]           | 20.0    | rad/s | Roll rate bandwidth                                        |
 | [MC_INDI_K_P][MC_INDI_K_P]           | 20.0    | rad/s | Pitch rate bandwidth                                       |
 | [MC_INDI_K_Y][MC_INDI_K_Y]           | 20.0    | rad/s | Yaw rate bandwidth                                         |

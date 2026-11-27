@@ -212,11 +212,14 @@ frozen and treated as invalid until the rpm changes (MT:127-141; a constant comm
 a constant rpm is then legitimate). The detection restarts at arming and disarming (MT:114-124). The masks are
 published in `actuator_torque_measured` (`motor_valid_mask`, `motor_frozen_mask`, M:208-217).
 
-**Airframe requirement R1 is not enforced by code.** `design/airframe_requirements.md` R1 says INDI refuses to arm
-without eRPM telemetry on every motor. No such check exists in the module (the only refusal is the second-controller
-check at M:70-78). Without telemetry, `MC_INDI_W_MAX = 0`, or a missing `CA_*` geometry, the modelled path runs
-instead, and the law still flies with the actuator model and no blend. The only protection is the lower gain level of
-section 6 before identification.
+**Airframe requirement R1 is enforced in firmware.** `design/airframe_requirements.md` R1 says INDI refuses to arm
+without rpm telemetry on every motor. The rate module registers as a commander external arming check
+(`IndiErpmArmingCheck`) and refuses arming while any motor's rpm telemetry is missing or stale (sample age above 20 ms,
+`MC_INDI_ERPM_TO` applied to the oldest sample), or while the measured path is not configured (`MC_INDI_W_MAX` = 0 or
+no `CA_*` rotor geometry). While armed the check always allows: it has no in-flight effect, and telemetry lost in
+flight is handled by the modelled fallback (no blend), which is not validated for the whole envelope. The commander is
+unchanged. Limits of the check: see 04_limits.md 4.4 (ungated windows at boot and after a dropped registration, rpm
+must be published while disarmed, frozen values are not detected while disarmed).
 
 ## 5. Ground, landed handling and faults
 

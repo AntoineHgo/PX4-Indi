@@ -60,7 +60,11 @@ G5 and G2 are PASSED at freeze-10 with the following rows not tested or only par
 
 G7 is open (`GS` row G7; STATE.md next actions 3 to 5).
 - `MC_INDI_ID_OK` 0 behaviour: reported limit, no refuse-to-arm (DECISIONS D-ID-OK-LIMIT, see 4.2).
-- R1 (refuse to arm without eRPM telemetry) is not enforced by code; a missing or stale measurement gives a modelled fallback and arming is allowed. Open: enforce or reword R1.
+- R1 (refuse to arm without rpm telemetry on every motor, and without `MC_INDI_W_MAX` and `CA_*` geometry) is enforced by a commander external arming check in the rate module (results/q36_s258, results/q37_s259: 5 unit tests, hover and refusal SITL flights, one seed). In flight the check always allows; a telemetry loss in flight gives the modelled fallback. Limits of the check:
+  - Ungated windows: about 1-1.5 s at boot before the first reply, about 1-2 s after the commander drops a silent registration, and none at all if the commander has no free external-check slot (8 slots). An unconfigured airframe could arm in such a window. Untested.
+  - The ESC driver must publish rpm while disarmed at about 50 Hz or more per motor, otherwise arming is refused. Unverified on hardware (bring-up B3a).
+  - Frozen rpm values are not detected while disarmed (motors at rest); the frozen detector is armed-only.
+  - Not covered: real hardware, GCS display of the refusal events, an arm command racing the 300 ms reply cache, motors failing one at a time.
 - Flash: fmu-v6x overflows by 23.5 kB (fmu-v5x measured +64.9 kB). Open, goes to an upstream note.
 - The position module reads `esc_status` instance 0 only, has no frozen or error-count check, and uses a 100 ms ESC age against 20 ms in the rate module. Open.
 - Guard parameters `MC_INDI_ERPM_TO`, `ERPM_FRZ`, `SP_TO`, `INC_MAX` have no flown test of their own (only the A-57 probe touched the frozen detector). Open, "justify in writing".
