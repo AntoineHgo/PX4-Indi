@@ -479,3 +479,158 @@ TEST_F(IndiFrozenRpmTest, CommandDipFromSaturationWithConstantRpmIsFrozen)
 	EXPECT_EQ(result.motor_frozen_mask, 0x0F);
 	EXPECT_EQ(result.motor_valid_mask, 0);
 }
+
+// Torque against values worked out by hand for a symmetric quad X.
+//
+// PX4 motor order and spin: 1 front right CCW, 2 rear left CCW, 3 front left CW, 4 rear right CW (FRD frame).
+// Per unit of normalised thrust u, rotor i produces roll = -ct * py, pitch = ct * px, yaw = ct * km, so with
+// ct = 5, px = py = +-0.2 and km = +-0.1 the torque of u = (u1, u2, u3, u4) is
+//   roll  = -u1 + u2 + u3 - u4
+//   pitch =  u1 - u2 + u3 - u4
+//   yaw   = 0.5 * (u1 + u2 - u3 - u4)
+// The pseudo-inverse columns are the rows divided by their squared norm (the rows are orthogonal), so the
+// roll/pitch scale is sqrt((4 / 16) / (4 / 2)) = 1 / (2 sqrt(2)) and the yaw scale is the largest entry, 0.5.
+// The normalised torque is the torque times these scales.
+namespace
+{
+
+float rpmFromSpeedRatio(float omega_over_omega_max)
+{
+	return omega_over_omega_max * kOmegaMax * 60.f / (2.f * M_PI_F);
+}
+
+} // namespace
+
+class IndiMeasuredTorqueQuadXTest : public ::testing::Test
+{
+public:
+	void SetUp() override
+	{
+		const float px[kNumRotors] = {0.2f, -0.2f, 0.2f, -0.2f};
+		const float py[kNumRotors] = {0.2f, -0.2f, -0.2f, 0.2f};
+		const float km[kNumRotors] = {0.1f, 0.1f, -0.1f, -0.1f};
+
+		ActuatorEffectivenessRotors::Geometry geometry{};
+		geometry.num_rotors = kNumRotors;
+
+		for (int i = 0; i < kNumRotors; i++) {
+			geometry.rotors[i].position = Vector3f(px[i], py[i], 0.f);
+			geometry.rotors[i].axis = Vector3f(0.f, 0.f, -1.f);
+			geometry.rotors[i].thrust_coef = 5.f;
+			geometry.rotors[i].moment_ratio = km[i];
+		}
+
+		ActuatorEffectivenessRotors::computeEffectivenessMatrix(geometry, _effectiveness);
+	}
+
+	// @param speed_ratio omega / omega_max of each motor
+	IndiMeasuredTorque::Result torqueAt(const float speed_ratio[kNumRotors], bool normalize)
+	{
+		IndiMeasuredTorque model;
+		model.setEffectiveness(_effectiveness, _trim, _linearization_point, kNumRotors, normalize);
+		model.setRotorSpeedMax(kOmegaMax);
+
+		for (int motor = 0; motor < kNumRotors; motor++) {
+			model.setMotorSample(motor, rpmFromSpeedRatio(speed_ratio[motor]), 0, kNow - 1000);
+		}
+
+		return model.compute(kNow);
+	}
+
+	static constexpr uint64_t kNow = 1000000;
+
+	ActuatorEffectiveness::EffectivenessMatrix _effectiveness;
+	ControlAllocation::ActuatorVector _trim;
+	ControlAllocation::ActuatorVector _linearization_point;
+};
+
+TEST_F(IndiMeasuredTorqueQuadXTest, HoverGivesNoTorque)
+{
+	const float speed_ratio[kNumRotors] = {0.5f, 0.5f, 0.5f, 0.5f};
+
+	const IndiMeasuredTorque::Result result = torqueAt(speed_ratio, true);
+
+	ASSERT_TRUE(result.valid);
+	EXPECT_NEAR(result.torque[0], 0.f, 1e-6f);
+	EXPECT_NEAR(result.torque[1], 0.f, 1e-6f);
+	EXPECT_NEAR(result.torque[2], 0.f, 1e-6f);
+}
+
+TEST_F(IndiMeasuredTorqueQuadXTest, OneMotorFasterGivesItsRollPitchYawSigns)
+{
+	// motor at 0.7 (u = 0.49) while the others are at 0.5 (u = 0.25): du = 0.24 on that motor
+	// roll/pitch = +-0.24 / (2 sqrt(2)) = +-0.0848528, yaw = +-0.5 * 0.24 * 0.5 = +-0.06
+	const float roll_pitch = 0.0848528f;
+	const float yaw = 0.06f;
+	const struct {
+		int motor;
+		float roll;
+		float pitch;
+		float yaw;
+	} cases[] = {
+		{0, -roll_pitch, +roll_pitch, +yaw},
+		{1, +roll_pitch, -roll_pitch, +yaw},
+		{2, +roll_pitch, +roll_pitch, -yaw},
+		{3, -roll_pitch, -roll_pitch, -yaw},
+	};
+
+	for (const auto &c : cases) {
+		float speed_ratio[kNumRotors] = {0.5f, 0.5f, 0.5f, 0.5f};
+		speed_ratio[c.motor] = 0.7f;
+
+		const IndiMeasuredTorque::Result result = torqueAt(speed_ratio, true);
+
+		ASSERT_TRUE(result.valid) << "motor " << c.motor;
+		EXPECT_NEAR(result.torque[0], c.roll, 1e-5f) << "motor " << c.motor;
+		EXPECT_NEAR(result.torque[1], c.pitch, 1e-5f) << "motor " << c.motor;
+		EXPECT_NEAR(result.torque[2], c.yaw, 1e-5f) << "motor " << c.motor;
+	}
+}
+
+TEST_F(IndiMeasuredTorqueQuadXTest, DiagonalPairFasterIsPureYawWithTheSignOfItsSpin)
+{
+	// pair at 0.7 (u = 0.49), the other pair at 0.5 (u = 0.25): yaw = +-0.5 * 0.5 * (2 * 0.24) = +-0.12
+	const float counter_clockwise_pair[kNumRotors] = {0.7f, 0.7f, 0.5f, 0.5f}; // rear left and front right
+	const float clockwise_pair[kNumRotors] = {0.5f, 0.5f, 0.7f, 0.7f};         // front left and rear right
+
+	IndiMeasuredTorque::Result result = torqueAt(counter_clockwise_pair, true);
+	ASSERT_TRUE(result.valid);
+	EXPECT_NEAR(result.torque[0], 0.f, 1e-6f);
+	EXPECT_NEAR(result.torque[1], 0.f, 1e-6f);
+	EXPECT_NEAR(result.torque[2], 0.12f, 1e-5f);
+
+	result = torqueAt(clockwise_pair, true);
+	ASSERT_TRUE(result.valid);
+	EXPECT_NEAR(result.torque[0], 0.f, 1e-6f);
+	EXPECT_NEAR(result.torque[1], 0.f, 1e-6f);
+	EXPECT_NEAR(result.torque[2], -0.12f, 1e-5f);
+}
+
+TEST_F(IndiMeasuredTorqueQuadXTest, DifferentSpeedsOnAllMotors)
+{
+	// speed ratios 0.7, 0.5, 0.4, 0.6 give u = 0.49, 0.25, 0.16, 0.36
+	// roll  = -0.49 + 0.25 + 0.16 - 0.36 = -0.44,  scaled -0.44 / (2 sqrt(2)) = -0.155563
+	// pitch =  0.49 - 0.25 + 0.16 - 0.36 =  0.04,  scaled  0.04 / (2 sqrt(2)) =  0.0141421
+	// yaw   = 0.5 * (0.49 + 0.25 - 0.16 - 0.36) = 0.11, scaled 0.11 * 0.5 = 0.055
+	const float speed_ratio[kNumRotors] = {0.7f, 0.5f, 0.4f, 0.6f};
+
+	const IndiMeasuredTorque::Result result = torqueAt(speed_ratio, true);
+
+	ASSERT_TRUE(result.valid);
+	EXPECT_NEAR(result.torque[0], -0.155563f, 1e-5f);
+	EXPECT_NEAR(result.torque[1], 0.0141421f, 1e-5f);
+	EXPECT_NEAR(result.torque[2], 0.055f, 1e-5f);
+}
+
+TEST_F(IndiMeasuredTorqueQuadXTest, WithoutNormalisationTheTorqueIsThePhysicalOne)
+{
+	// same speeds as above, scales are 1: roll -0.44, pitch 0.04, yaw 0.11
+	const float speed_ratio[kNumRotors] = {0.7f, 0.5f, 0.4f, 0.6f};
+
+	const IndiMeasuredTorque::Result result = torqueAt(speed_ratio, false);
+
+	ASSERT_TRUE(result.valid);
+	EXPECT_NEAR(result.torque[0], -0.44f, 1e-5f);
+	EXPECT_NEAR(result.torque[1], 0.04f, 1e-5f);
+	EXPECT_NEAR(result.torque[2], 0.11f, 1e-5f);
+}
