@@ -25,7 +25,8 @@ Plan (order):
     4.6b notch not mirrored on torque path -> justify + 04_limits; 11.2c gust drag not air-relative -> limit;
     11.3d measured-torque test with hand-computed values -> add to P6; 11.3e = P6; 7.g8 accepted at verdict.
     Re-check the 4 "(weak)" rows (3.5d, 6.3/10, 11.3b, 11.3c). Also MC_INDI_ACT_TC yaml "round up" wording (yaml:123).
- P4 G7 verdict in GATES.md from results/g7_s249/G7_VERDICT_DRAFT.md (draft said NOT PASSED on P6/P7 gaps; its
+ P4 NEXT (S252, all G7 inputs now in): G7 verdict in GATES.md from results/g7_s249/G7_VERDICT_DRAFT.md + g7_s251/
+    (P6B_TESTS, P7A_REVIEW_ROWS, P7B_TORQUE_TEST, README_P2), with the RC247 cut list as justification lines (draft said NOT PASSED on P6/P7 gaps; its
     "injection helpers not mutation-checked" is wrong: S196 67/0). Re-run make check_format after P6.
  P5 G8 gaps + verdict: re-run bench/gate_g8.sh (results/g8_s247); report drafts 01-06 + A_history_errata
     ("Unverified" lists), docs/en/config_mc/indi_control.md (prettier/link check open, report/DOCS_DRAFT_S201.md).
@@ -52,6 +53,7 @@ Route check: RC247 current; next RC S262.
 |---|---|---|---|---|
 | P6a | DONE S250: items 1-5, b89a18b4aa (neutral extraction, objdump identical; diff read) + 3ab7c72046 tests; 10/10 gtest targets; each break-checked. Lower constrain in normalisedThrustFromRpm is dead code (justify); item 5 limit -> 04_limits | sonnet | results/g7_s250/P6A_TESTS.md | - |
 | P6b | DONE S251: 042e38a1dd (neutral, D-F10-NEUTRAL-S251) + 1ac5d58c89 tests, 10 breaks killed, 12/12 gtest. P2 (indi-fw-pr) must be re-run to include them | sonnet | results/g7_s251/P6B_TESTS.md | - |
+| P2b | DONE S251: indi-fw-pr ee7d4542d7 (local, worktree /tmp/indi_fwbranch_s251), 75 files; (a) 0 stock diff, (d) 50/0, (g) SITL rc=0, 12/12 gtest (239 tests), F-10 grep 0. NuttX not rebuilt (S195 size; new code header-only helpers + tests) | sonnet | results/g7_s251/README_P2.md | - |
 | P7a | DONE S251: report 04_limits 4.6.1-4.6.7 (A-6, A-4, 4.6b, 11.2c, 3.5d, 11.3b/c, 7.g8); 6.3/10 SUPERSEDED confirmed | sonnet | results/g7_s251/P7A_REVIEW_ROWS.md | - |
 | P7b | DONE S251: 731fc34528 5 hand-computed quad-X torque tests, 6 breaks killed, 23/23 | sonnet | results/g7_s251/P7B_TORQUE_TEST.md | - |
 | P3/P3b | DONE S248: review results/g7_s248/F10_WHOLE_BRANCH_REVIEW.md, fixes 2292882735 + 104508687b (F10_FIX_S248.md; ~8 MINOR skipped -> G7 verdict) | - | - | - |
