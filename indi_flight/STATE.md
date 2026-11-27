@@ -16,11 +16,9 @@ D-OFFB-POSVEL wiring test, omega_ff step on offboard entry, g510 one-sample LOC 
 ACT_TC/W_MAX vs bench (lesson 12), guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced, pos module esc_status
 instance 0 / 100 ms age, G6 item 2 ID-window rescore, MC_INDI_ACT_TC yaml "round up" wording (D-OWNER-Q27).
 Plan (order):
- P6 G7 (b) gaps: items 1-5 DONE S250; items 6-7 (medium) left (results/g7_s249/G7B_TEST_INVENTORY.md): write the 2 medium
-    tests, break-check each, sonnet high, one test commit (+ separate neutral helper-extraction commit with objcmp
-    where a test needs a helper out of Run(): ERPM_TO freshness, pos esc_status). "Lower mean_u limit" = item 4
-    (rpm<0 rejection + lower clamp), orchestrator call. Saturated-motor frozen eRPM: test pins the by-design limit,
-    report it in 04_limits. GLUE rows (XY_P/XY_VP wiring, K_pos/K_vel dead path, JFF source): justify via SITL
+ P6 G7 (b) gaps: items 1-7 DONE (S250, S251). Left for the verdict text only: "lower mean_u limit" = item 4
+    (dead lower clamp), saturated-motor frozen eRPM limit -> 04_limits, GLUE rows (esc_status instance 0,
+    sp_source call site, pos omega_ff valid flag) and (XY_P/XY_VP wiring, K_pos/K_vel dead path, JFF source): justify via SITL
     rows (g55_gain_probe_s176, G2 outer cells).
  P7 G7 review items: table DONE S249 (results/g7_s249/REVIEW_ITEMS.md: 92 rows, 49 CLOSED, 12 JUSTIFIED,
     23 SUPERSEDED, 8 OPEN). Close the OPEN rows: A-6 hover excess <30 Hz and A-4 speed-factor -> 04_limits lines;
@@ -53,6 +51,7 @@ Route check: RC247 current; next RC S262.
 | id | task | agent | output | resume |
 |---|---|---|---|---|
 | P6a | DONE S250: items 1-5, b89a18b4aa (neutral extraction, objdump identical; diff read) + 3ab7c72046 tests; 10/10 gtest targets; each break-checked. Lower constrain in normalisedThrustFromRpm is dead code (justify); item 5 limit -> 04_limits | sonnet | results/g7_s250/P6A_TESTS.md | - |
+| P6b | DONE S251: 042e38a1dd (neutral, D-F10-NEUTRAL-S251) + 1ac5d58c89 tests, 10 breaks killed, 12/12 gtest. P2 (indi-fw-pr) must be re-run to include them | sonnet | results/g7_s251/P6B_TESTS.md | - |
 | P3/P3b | DONE S248: review results/g7_s248/F10_WHOLE_BRANCH_REVIEW.md, fixes 2292882735 + 104508687b (F10_FIX_S248.md; ~8 MINOR skipped -> G7 verdict) | - | - | - |
 | P3b-K2 | DONE S249: PASS with findings, 0 BLOCKER, 1 MAJOR ("no integrator" in McIndiPosControl.cpp help :1300 and comment :971 vs MPC_*_VEL_I_ACC passed + _control.update(dt) runs), 3 MINOR | sonnet | results/g7_s249/P3B_KEY2.md | P3d: verify integrator wording, fix comments + MINORs, one neutral commit (after P3c) |
 | P3c | DONE S249: 8423db867b (DT_MAX->INC_MAX, INJ_RAMP->INJ_AMPR, .msg symbol comments; no timestamp_sample existed) + 7eaf225535 (docs/en, report); 13/13 tests, SITL builds; diff read by orchestrator (6 C++ lines, rename only). bench quad5in_indi_defaults.params:31 keeps old DT_MAX name (pinned gate binary): mapping in record; report yaml:NNN refs off by 1-2 lines (G8) | sonnet | results/g7_s249/P3C_PUBLIC_NAMES.md | - |

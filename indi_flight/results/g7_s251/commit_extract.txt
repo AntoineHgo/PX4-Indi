@@ -1,0 +1,8 @@
+refactor(mc_indi_pos_control): extract the ESC mean thrust and freshness check
+
+Move the mean rotor thrust from esc_status and the sample age check of the
+position module into a header-only helper, and the rate setpoint source mask
+of the rate module into a helper, so that both can be unit tested. No
+behaviour change.
+
+Assisted-by: Claude Sonnet

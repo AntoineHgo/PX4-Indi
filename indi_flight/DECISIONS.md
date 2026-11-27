@@ -1521,3 +1521,13 @@ Overturn: a log showing the estimator origin is not the rest position (e.g. armi
   docs give the new names with the mapping.
 - Kept per D-F10-PUBLIC-NAMES: MC_INDI_XY_P/XY_VP, uORB field names; multisine duplicate justified in G7 verdict.
 - Overturned by: a test or object diff showing a behaviour change in these commits.
+
+## D-F10-NEUTRAL-S251 (S251, 2026-11-27): esc_status and sp_source helper extraction invalidates no gate row
+Decision: accept 042e38a1dd (IndiEscThrust.hpp, IndiRateSetpointSource.hpp) as behaviour-neutral. Rate module .o
+objdump identical (file-name line only). Pos module .o differs in register allocation/branch layout (6920 vs 6923
+instructions, relocations equal): the loop is moved verbatim (diff read by the orchestrator) and isFresh evaluates
+the old `valid && age(t) <= kEscMaxAge` expression; a temporary differential test over 2,000,000 random esc_status
+inputs against a verbatim copy of the old code gave equal valid flags, bit-identical means and equal age results
+(results/g7_s251/P6B_TESTS.md). Gate rows were flown on binary 903eae63, which is not rebuilt.
+Alternatives: revert the pos extraction and leave row 7 MISSING (G7 (b) gap); test via a module harness (no harness
+in O-11 scope). Overturn if: a SITL flight of HEAD differs from 903eae63 on a G5 events row beyond seed tolerance.

@@ -1,0 +1,16 @@
+== e3: src/modules/mc_indi_pos_control/IndiEscThrust.hpp : 'if (!(esc_status.esc_online_flags & (1u << j))' -> 'if (!(esc_status.esc_online_flags | (1u << j))' (unit-IndiEscThrust)
+-- broken
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_pos_control/IndiEscThrustTest.cpp:101: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_pos_control/IndiEscThrustTest.cpp:102: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_pos_control/IndiEscThrustTest.cpp:101: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_pos_control/IndiEscThrustTest.cpp:102: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_pos_control/IndiEscThrustTest.cpp:101: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_pos_control/IndiEscThrustTest.cpp:102: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_pos_control/IndiEscThrustTest.cpp:101: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_pos_control/IndiEscThrustTest.cpp:102: Failure
+[  FAILED  ] IndiEscThrustTest.OfflineMotorIsInvalid (0 ms)
+[  PASSED  ] 9 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] IndiEscThrustTest.OfflineMotorIsInvalid
+-- reverted
+[  PASSED  ] 10 tests.

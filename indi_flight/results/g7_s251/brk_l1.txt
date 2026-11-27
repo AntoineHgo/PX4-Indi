@@ -1,0 +1,15 @@
+== l1: src/lib/indi_rate_control/indi_rate_control.hpp : 'void resetSetpointLead() { _sp_lead_reset = true; }' -> 'void resetSetpointLead() { }' (unit-indi_rate_control_test)
+-- broken
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_rate_control/indi_rate_control_test.cpp:2277: Failure
+[  FAILED  ] IndiRateControlSetpointLeadTest.NoImpulseFromSetpointStepOrReset (0 ms)
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_rate_control/indi_rate_control_test.cpp:2316: Failure
+[  FAILED  ] IndiRateControlSetpointLeadTest.FeedForwardEnableStepNeedsTheLeadRestart (0 ms)
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_rate_control/indi_rate_control_test.cpp:2370: Failure
+[  FAILED  ] IndiRateControlSetpointLeadTest.LeadZeroIsPreviousLawOnRandomInput (0 ms)
+[  PASSED  ] 74 tests.
+[  FAILED  ] 3 tests, listed below:
+[  FAILED  ] IndiRateControlSetpointLeadTest.NoImpulseFromSetpointStepOrReset
+[  FAILED  ] IndiRateControlSetpointLeadTest.FeedForwardEnableStepNeedsTheLeadRestart
+[  FAILED  ] IndiRateControlSetpointLeadTest.LeadZeroIsPreviousLawOnRandomInput
+-- reverted
+[  PASSED  ] 77 tests.

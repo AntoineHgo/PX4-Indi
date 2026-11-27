@@ -1,0 +1,10 @@
+== e6: src/modules/mc_indi_pos_control/IndiEscThrust.hpp : '(now_us > sample_us) ? (now_us - sample_us) : uint64_t{0}' -> 'now_us - sample_us' (unit-IndiEscThrust)
+-- broken
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_pos_control/IndiEscThrustTest.cpp:154: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_pos_control/IndiEscThrustTest.cpp:155: Failure
+[  FAILED  ] IndiEscThrustTest.SampleFromTheFutureHasAgeZero (0 ms)
+[  PASSED  ] 9 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] IndiEscThrustTest.SampleFromTheFutureHasAgeZero
+-- reverted
+[  PASSED  ] 10 tests.
