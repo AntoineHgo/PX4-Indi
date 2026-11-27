@@ -20,7 +20,7 @@ Plan (order):
     (dead lower clamp), saturated-motor frozen eRPM limit -> 04_limits, GLUE rows (esc_status instance 0,
     sp_source call site, pos omega_ff valid flag) and (XY_P/XY_VP wiring, K_pos/K_vel dead path, JFF source): justify via SITL
     rows (g55_gain_probe_s176, G2 outer cells).
- P7 G7 review items: table DONE S249 (results/g7_s249/REVIEW_ITEMS.md: 92 rows, 49 CLOSED, 12 JUSTIFIED,
+ P7 DONE S251 (all 8 OPEN rows closed: g7_s251/P7A_REVIEW_ROWS.md, P7B_TORQUE_TEST.md). Was: table DONE S249 (results/g7_s249/REVIEW_ITEMS.md: 92 rows, 49 CLOSED, 12 JUSTIFIED,
     23 SUPERSEDED, 8 OPEN). Close the OPEN rows: A-6 hover excess <30 Hz and A-4 speed-factor -> 04_limits lines;
     4.6b notch not mirrored on torque path -> justify + 04_limits; 11.2c gust drag not air-relative -> limit;
     11.3d measured-torque test with hand-computed values -> add to P6; 11.3e = P6; 7.g8 accepted at verdict.
@@ -52,6 +52,8 @@ Route check: RC247 current; next RC S262.
 |---|---|---|---|---|
 | P6a | DONE S250: items 1-5, b89a18b4aa (neutral extraction, objdump identical; diff read) + 3ab7c72046 tests; 10/10 gtest targets; each break-checked. Lower constrain in normalisedThrustFromRpm is dead code (justify); item 5 limit -> 04_limits | sonnet | results/g7_s250/P6A_TESTS.md | - |
 | P6b | DONE S251: 042e38a1dd (neutral, D-F10-NEUTRAL-S251) + 1ac5d58c89 tests, 10 breaks killed, 12/12 gtest. P2 (indi-fw-pr) must be re-run to include them | sonnet | results/g7_s251/P6B_TESTS.md | - |
+| P7a | DONE S251: report 04_limits 4.6.1-4.6.7 (A-6, A-4, 4.6b, 11.2c, 3.5d, 11.3b/c, 7.g8); 6.3/10 SUPERSEDED confirmed | sonnet | results/g7_s251/P7A_REVIEW_ROWS.md | - |
+| P7b | DONE S251: 731fc34528 5 hand-computed quad-X torque tests, 6 breaks killed, 23/23 | sonnet | results/g7_s251/P7B_TORQUE_TEST.md | - |
 | P3/P3b | DONE S248: review results/g7_s248/F10_WHOLE_BRANCH_REVIEW.md, fixes 2292882735 + 104508687b (F10_FIX_S248.md; ~8 MINOR skipped -> G7 verdict) | - | - | - |
 | P3b-K2 | DONE S249: PASS with findings, 0 BLOCKER, 1 MAJOR ("no integrator" in McIndiPosControl.cpp help :1300 and comment :971 vs MPC_*_VEL_I_ACC passed + _control.update(dt) runs), 3 MINOR | sonnet | results/g7_s249/P3B_KEY2.md | P3d: verify integrator wording, fix comments + MINORs, one neutral commit (after P3c) |
 | P3c | DONE S249: 8423db867b (DT_MAX->INC_MAX, INJ_RAMP->INJ_AMPR, .msg symbol comments; no timestamp_sample existed) + 7eaf225535 (docs/en, report); 13/13 tests, SITL builds; diff read by orchestrator (6 C++ lines, rename only). bench quad5in_indi_defaults.params:31 keeps old DT_MAX name (pinned gate binary): mapping in record; report yaml:NNN refs off by 1-2 lines (G8) | sonnet | results/g7_s249/P3C_PUBLIC_NAMES.md | - |

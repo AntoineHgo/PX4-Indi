@@ -1,0 +1,22 @@
+== t1: src/modules/control_allocator/VehicleActuatorEffectiveness/ActuatorEffectivenessRotors.cpp : 'ct * position.cross(axis) - ct * km * axis' -> 'ct * position.cross(axis) + ct * km * axis' (functional-IndiMeasuredTorque)
+-- broken
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:586: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:586: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:586: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:586: Failure
+[  FAILED  ] IndiMeasuredTorqueQuadXTest.OneMotorFasterGivesItsRollPitchYawSigns (0 ms)
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:600: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:606: Failure
+[  FAILED  ] IndiMeasuredTorqueQuadXTest.DiagonalPairFasterIsPureYawWithTheSignOfItsSpin (0 ms)
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:622: Failure
+[  FAILED  ] IndiMeasuredTorqueQuadXTest.DifferentSpeedsOnAllMotors (0 ms)
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:635: Failure
+[  FAILED  ] IndiMeasuredTorqueQuadXTest.WithoutNormalisationTheTorqueIsThePhysicalOne (0 ms)
+[  PASSED  ] 19 tests.
+[  FAILED  ] 4 tests, listed below:
+[  FAILED  ] IndiMeasuredTorqueQuadXTest.OneMotorFasterGivesItsRollPitchYawSigns
+[  FAILED  ] IndiMeasuredTorqueQuadXTest.DiagonalPairFasterIsPureYawWithTheSignOfItsSpin
+[  FAILED  ] IndiMeasuredTorqueQuadXTest.DifferentSpeedsOnAllMotors
+[  FAILED  ] IndiMeasuredTorqueQuadXTest.WithoutNormalisationTheTorqueIsThePhysicalOne
+-- reverted
+[  PASSED  ] 23 tests.

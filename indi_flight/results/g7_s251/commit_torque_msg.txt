@@ -1,0 +1,10 @@
+test(mc_indi_rate_control): check measured torque against hand-computed values
+
+The existing tests compare the measured torque with the control
+allocator output, so a formula shared by both goes unnoticed. Add
+tests for a symmetric quad X whose roll, pitch and yaw torque is
+worked out by hand from the rotor geometry and the stated
+normalisation: hover, each single motor faster, each diagonal pair
+faster, unequal speeds, and the unnormalised torque.
+
+Assisted-by: Claude:claude-sonnet-5-5
