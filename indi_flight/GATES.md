@@ -959,6 +959,10 @@ Head feat/indi-flight 689348de10 (firmware dirs identical to local branch indi-f
 - (g) Firmware-only branch from main: PASS, builds px4_sitl_default rc 0 (g7_s251/README_P2.md).
 - Review open items: 92 rows closed, justified or superseded (results/g7_s249/REVIEW_ITEMS.md,
   g7_s251/P7A_REVIEW_ROWS.md, report 04_limits 4.6).
+Note (S259): the arming-check commits (e6af4b6b0d, ac744d360e) are cherry-picked to the firmware-only branch
+indi-fw-pr (head fcd212f228) and the G7 checks re-run there: (a) stock zero diff 0 lines, (d) format 53 files clean,
+(g) SITL build rc 0 and Indi gtests 244/0, F-10 grep 0 hits, (e) fmu-v5x +66.1 kB flash (S252 +64.8 kB), 7.7 kB
+free. Verdict unchanged (results/q37_s259/G7_RECHECK.md).
 Cut items (route_check_247) without code work: listed above or in report 04_limits; G6 item 2 ID-window rescore
 dropped (G6 stays NOT PASSED as scored).
 
@@ -974,10 +978,13 @@ Evidence: `bench/gate_g8.sh`, output `results/g8_s257/gate_g8_out.txt`, 7/7 chec
 Limits:
 - Unverified claims: 47 listed (01: 11, 02: 7, 03: 10, 04: 6, 06: 7, A: 5, g2_margins: 1), each marked "Unverified" or
   `[open: ...]` in the chapter text; checked one by one only for 20 (S254, S255), the rest marked in one pass per RC256.
-- R1 "refuse to arm without eRPM" is not enforced in firmware (QUESTIONS.md Q36): pending owner Q36, option A
-  recommended (reword R1 to "eRPM telemetry required for the validated configuration; without it the modelled actuator
-  state runs, not validated"); the bring-up checklist checks telemetry before first flight.
+- R1 "refuse to arm without rpm telemetry" is enforced in firmware (S259 note below); its limits are in report
+  04_limits.md 4.4, and the bring-up checklist item B3a checks rpm while disarmed.
 - G3 is NOT PASSED (report 03_validation.md 3.3 with data, 04_limits.md 4.1 limits and corners) and G6 is NOT PASSED
   (03_validation.md 3.6, 04_limits.md 4.2; item 7 un-identified start 6/58 failures, 10 start runs not flown).
 - All evidence is simulation only (04_limits.md 4.5); no hardware flight.
 Verdict: G8 PASSED with the limits above (unverified-claim count is a tally, results/g8_s257/README.md).
+Note (S259, 2026-11-27): R1 is enforced (Q36 B, Q37 B): `mc_indi_rate_control` registers a commander external arming
+check that refuses arming without fresh rpm on every motor and without `MC_INDI_W_MAX` and `CA_*` geometry. Tests:
+results/q36_s258 (hover arms with telemetry) and results/q37_s259 (refusal flight, unit tests). No gate row is
+invalidated and no gate flight was re-flown.
