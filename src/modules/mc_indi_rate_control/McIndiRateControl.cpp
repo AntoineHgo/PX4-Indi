@@ -396,12 +396,9 @@ McIndiRateControl::Run()
 		}
 
 		// the rate setpoint source changed (control mode flags, setpoint timeout or recovery): restart its derivative
-		const uint8_t sp_source = (uint8_t)(_vehicle_control_mode.flag_control_attitude_enabled << 0)
-					  | (_vehicle_control_mode.flag_control_rates_enabled << 1)
-					  | (_vehicle_control_mode.flag_control_manual_enabled << 2)
-					  | (_vehicle_control_mode.flag_control_offboard_enabled << 3)
-					  | (wd.stale << 4)
-					  | (omega_ff_on << 5);
+		const uint8_t sp_source = IndiRateSetpointSource::mask(_vehicle_control_mode.flag_control_attitude_enabled,
+					  _vehicle_control_mode.flag_control_rates_enabled, _vehicle_control_mode.flag_control_manual_enabled,
+					  _vehicle_control_mode.flag_control_offboard_enabled, wd.stale, omega_ff_on);
 
 		if (sp_source != _sp_source_prev) {
 			_indi.resetSetpointLead();

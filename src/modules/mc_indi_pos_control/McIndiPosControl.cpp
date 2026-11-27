@@ -133,35 +133,9 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 	esc_status_s esc_status;
 
 	if (_esc_status_sub.update(&esc_status)) {
-		// mean normalised rotor thrust u = (omega / omega_max)^2, valid only if all motors report
-		const float rpm_max = _rotor_w_max * (60.f / (2.f * M_PI_F));
-		const int n = math::min((int)esc_status.esc_count, (int)esc_status_s::CONNECTED_ESC_MAX);
-		float rotor_thrust_sum = 0.f;
-		uint32_t seen = 0;
-		bool ok = (_rotor_w_max > 0.f);
-
-		for (int j = 0; j < n && ok; j++) {
-			const esc_report_s &esc = esc_status.esc[j];
-			const int motor = (int)esc.actuator_function - (int)esc_report_s::ACTUATOR_FUNCTION_MOTOR1;
-
-			if (motor < 0 || motor >= 4) {
-				continue;
-			}
-
-			float rotor_thrust = 0.f;
-
-			if (!(esc_status.esc_online_flags & (1u << j))
-			    || !IndiRateControl::normalisedThrustFromRpm((float)esc.esc_rpm, rpm_max, rotor_thrust)) {
-				ok = false;
-				break;
-			}
-
-			rotor_thrust_sum += rotor_thrust;
-			seen |= (1u << motor);
-		}
-
-		_mean_rotor_thrust_valid = ok && (seen == 0xFu);
-		_mean_rotor_thrust = _mean_rotor_thrust_valid ? (rotor_thrust_sum / 4.f) : NAN;
+		const IndiEscThrust::MeanRotorThrust mean = IndiEscThrust::meanRotorThrust(esc_status, _rotor_w_max);
+		_mean_rotor_thrust_valid = mean.valid;
+		_mean_rotor_thrust = mean.thrust;
 		_esc_status_time = (esc_status.timestamp != 0) ? esc_status.timestamp : now;
 	}
 
@@ -211,7 +185,7 @@ void McIndiPosControl::runIndiStage(float raw_dt, hrt_abstime now, bool want_act
 	const bool fresh_att = _attitude_time != 0 && age(_attitude_time) <= kMaxAge;
 	const bool fresh_acc = _accel_time != 0 && age(_accel_time) <= kMaxAge;
 	const bool fresh_thr = _thrust_sp_time != 0 && age(_thrust_sp_time) <= kMaxAge;
-	const bool fresh_esc = _mean_rotor_thrust_valid && age(_esc_status_time) <= kEscMaxAge;
+	const bool fresh_esc = IndiEscThrust::isFresh(_mean_rotor_thrust_valid, now, _esc_status_time, kEscMaxAge);
 	// commanded acceleration of the stock position loop, the input of the INDI loop
 	const Vector3f accel_command_pre_inject(local_pos_sp.acceleration[0], local_pos_sp.acceleration[1], local_pos_sp.acceleration[2]);
 

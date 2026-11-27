@@ -66,6 +66,7 @@
 #include "IndiInjection.hpp"
 #include "IndiMeasuredTorque.hpp"
 #include "IndiRateFeedforwardGate.hpp"
+#include "IndiRateSetpointSource.hpp"
 #include "RateSetpointWatchdog.hpp"
 #include "TorqueStampTracker.hpp"
 
