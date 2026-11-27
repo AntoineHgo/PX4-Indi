@@ -2293,6 +2293,37 @@ TEST(IndiRateControlSetpointLeadTest, NoImpulseFromSetpointStepOrReset)
 	EXPECT_EQ(ctrl.getRateSpDot(), zero);
 }
 
+TEST(IndiRateControlSetpointLeadTest, FeedForwardEnableStepNeedsTheLeadRestart)
+{
+	const Vector3f zero;
+	constexpr float kFeedForward_radps = 3.f;
+
+	for (const bool restart : {false, true}) {
+		IndiRateControl ctrl = makeSpController();
+
+		for (int i = 0; i < 40; i++) {
+			ctrl.update(zero, zero, zero, zero, kDt, false);
+		}
+
+		// the feed-forward is added to the setpoint from this cycle on: the effective setpoint steps
+		if (restart) {
+			ctrl.resetSetpointLead();
+		}
+
+		ctrl.update(zero, Vector3f(kFeedForward_radps, 0.f, 0.f), zero, zero, kDt, false);
+
+		if (restart) {
+			EXPECT_EQ(ctrl.getRateSpDot(), zero);
+
+		} else {
+			EXPECT_GT(ctrl.getRateSpDot()(0), 0.f);
+		}
+
+		ctrl.update(zero, Vector3f(kFeedForward_radps + 1.f, 0.f, 0.f), zero, zero, kDt, false); // the lead runs again
+		EXPECT_GT(ctrl.getRateSpDot()(0), 0.f);
+	}
+}
+
 TEST(IndiRateControlSetpointLeadTest, LandedHoldsZeroAndTakeoffStartsAtZero)
 {
 	const Vector3f zero;
