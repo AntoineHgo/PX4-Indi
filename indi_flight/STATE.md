@@ -26,7 +26,7 @@ Plan (order):
     11.3d measured-torque test with hand-computed values -> add to P6; 11.3e = P6; 7.g8 accepted at verdict.
     Re-check the 4 "(weak)" rows (3.5d, 6.3/10, 11.3b, 11.3c). Also MC_INDI_ACT_TC yaml "round up" wording (yaml:123).
  P4 DONE S252: G7 PASSED (GATES "G7 verdict (S252)"). Any later firmware commit re-opens (a)(d)(e)(f) for its delta.
- P5 NEXT: G8 gaps + verdict: re-run bench/gate_g8.sh (results/g8_s247); report drafts 01-06 + A_history_errata
+ P5 NEXT: G8 gaps + verdict: bench/gate_g8.sh all 7 PASS S253 (results/g8_s253); report drafts 01-06 + A_history_errata
     ("Unverified" lists), docs/en/config_mc/indi_control.md (prettier/link check open, report/DOCS_DRAFT_S201.md).
     R1 text waits Q36.
 Gate binary = 903eae63 (D-BINARY-GZFIX): do NOT rebuild build/px4_sitl_default from HEAD. G3 chain stopped for good
