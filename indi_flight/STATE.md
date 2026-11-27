@@ -51,6 +51,8 @@ Route check: RC247 current; next RC S262.
 ## Tasks in flight
 | id | task | agent | output | resume |
 |---|---|---|---|---|
+| P8 | S252: F-10 delta review 0b1c6a26d1..HEAD (class A paths; S248 review covered 0b1c6a26d1 only), before G7 verdict | sonnet high | results/g7_s252/F10_DELTA_REVIEW.md | re-launch same brief if file missing |
+| P9 | S252: NuttX px4_fmu-v5x INDI build at HEAD (compile + size vs S195); G7 (e) | sonnet medium | results/g7_s252/NUTTX_BUILD.md | re-launch if file missing; remove temp boards/px4/fmu-v5x/indi.px4board |
 | P6a | DONE S250: items 1-5, b89a18b4aa (neutral extraction, objdump identical; diff read) + 3ab7c72046 tests; 10/10 gtest targets; each break-checked. Lower constrain in normalisedThrustFromRpm is dead code (justify); item 5 limit -> 04_limits | sonnet | results/g7_s250/P6A_TESTS.md | - |
 | P6b | DONE S251: 042e38a1dd (neutral, D-F10-NEUTRAL-S251) + 1ac5d58c89 tests, 10 breaks killed, 12/12 gtest. P2 (indi-fw-pr) must be re-run to include them | sonnet | results/g7_s251/P6B_TESTS.md | - |
 | P2b | DONE S251: indi-fw-pr ee7d4542d7 (local, worktree /tmp/indi_fwbranch_s251), 75 files; (a) 0 stock diff, (d) 50/0, (g) SITL rc=0, 12/12 gtest (239 tests), F-10 grep 0. NuttX not rebuilt (S195 size; new code header-only helpers + tests) | sonnet | results/g7_s251/README_P2.md | - |
