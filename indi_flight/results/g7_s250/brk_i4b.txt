@@ -1,0 +1,13 @@
+== i4b: src/lib/indi_rate_control/indi_rate_control.hpp : 'math::constrain(ratio * ratio, 0.f, 1.f)' -> 'math::constrain(ratio * ratio, 1e-6f, 1.f)' (unit-indi_rate_control_test)
+-- broken
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_rate_control/indi_rate_control_test.cpp:1115: Failure
+[  FAILED  ] IndiRateControlMeasurementTest.NormalisedThrustFromRpm (0 ms)
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_rate_control/indi_rate_control_test.cpp:1151: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_rate_control/indi_rate_control_test.cpp:1156: Failure
+[  FAILED  ] IndiRateControlMeasurementTest.NormalisedThrustFromRpmZeroBoundary (0 ms)
+[  PASSED  ] 74 tests.
+[  FAILED  ] 2 tests, listed below:
+[  FAILED  ] IndiRateControlMeasurementTest.NormalisedThrustFromRpm
+[  FAILED  ] IndiRateControlMeasurementTest.NormalisedThrustFromRpmZeroBoundary
+-- reverted
+[  PASSED  ] 76 tests.

@@ -1,0 +1,102 @@
+== i1b: src/modules/mc_indi_rate_control/IndiMeasuredTorque.hpp : '(now_us >= timestamp_sample_us) && (((now_us' -> '(((now_us' (functional-IndiMeasuredTorque)
+-- broken
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:391: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:392: Failure
+[  FAILED  ] IndiSampleFreshnessTest.SampleFromTheFutureIsNotFresh (0 ms)
+[  PASSED  ] 17 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] IndiSampleFreshnessTest.SampleFromTheFutureIsNotFresh
+-- reverted
+[  PASSED  ] 18 tests.
+== i2a: src/lib/indi_accel_control/indi_accel_control.cpp : 'const float u = PX4_ISFINITE(mean_u) ? mean_u : (u_model - _blend_offset);' -> 'const float u = u_model - _blend_offset;' (unit-IndiAccelControl)
+-- broken
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_accel_control/IndiAccelControlTest.cpp:888: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_accel_control/IndiAccelControlTest.cpp:889: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_accel_control/IndiAccelControlTest.cpp:890: Failure
+[  FAILED  ] IndiAccelBlendTest.ResetWithLaggingMeanUStepsByTheGap (0 ms)
+[  PASSED  ] 62 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] IndiAccelBlendTest.ResetWithLaggingMeanUStepsByTheGap
+-- reverted
+[  PASSED  ] 63 tests.
+== i2b: src/lib/indi_accel_control/indi_accel_control.cpp : 'const float u = PX4_ISFINITE(mean_u) ? mean_u :' -> 'const float u = true ? mean_u :' (unit-IndiAccelControl)
+-- broken
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_accel_control/IndiAccelControlTest.cpp:904: Failure
+[  FAILED  ] IndiAccelBlendTest.ResetWithoutMeanUHasNoCollectiveStep (0 ms)
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_accel_control/IndiAccelControlTest.cpp:1059: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_accel_control/IndiAccelControlTest.cpp:1060: Failure
+[  FAILED  ] IndiAccelBlendTest.NoCollectiveStepAtBypassEdgeModuleConvention (0 ms)
+[  PASSED  ] 61 tests.
+[  FAILED  ] 2 tests, listed below:
+[  FAILED  ] IndiAccelBlendTest.ResetWithoutMeanUHasNoCollectiveStep
+[  FAILED  ] IndiAccelBlendTest.NoCollectiveStepAtBypassEdgeModuleConvention
+-- reverted
+[  PASSED  ] 63 tests.
+== i3a: src/modules/mc_indi_rate_control/IndiMeasuredTorque.hpp : '? seconds : 0.f) * 1e6f)' -> '? seconds : 0.f) * 5e5f)' (functional-IndiMeasuredTorque)
+-- broken
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:414: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:415: Failure
+[  FAILED  ] IndiFrozenRpmTest.WindowFollowsSetFrozenWindowSeconds (0 ms)
+[  PASSED  ] 17 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] IndiFrozenRpmTest.WindowFollowsSetFrozenWindowSeconds
+-- reverted
+[  PASSED  ] 18 tests.
+== i3b: src/modules/mc_indi_rate_control/IndiMeasuredTorque.hpp : '? seconds : 0.f) * 1e6f)' -> '? seconds : 0.5f) * 1e6f)' (functional-IndiMeasuredTorque)
+-- broken
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:433: Failure
+[  FAILED  ] IndiFrozenRpmTest.NegativeWindowDoesNotShortenTheDetection (0 ms)
+[  PASSED  ] 17 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] IndiFrozenRpmTest.NegativeWindowDoesNotShortenTheDetection
+-- reverted
+[  PASSED  ] 18 tests.
+== i4a: src/lib/indi_rate_control/indi_rate_control.hpp : '|| (rpm < 0.f)' -> '|| (rpm < -0.5f)' (unit-indi_rate_control_test)
+-- broken
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_rate_control/indi_rate_control_test.cpp:1145: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_rate_control/indi_rate_control_test.cpp:1146: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_rate_control/indi_rate_control_test.cpp:1147: Failure
+[  FAILED  ] IndiRateControlMeasurementTest.NormalisedThrustFromRpmZeroBoundary (0 ms)
+[  PASSED  ] 75 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] IndiRateControlMeasurementTest.NormalisedThrustFromRpmZeroBoundary
+-- reverted
+[  PASSED  ] 76 tests.
+== i4b: src/lib/indi_rate_control/indi_rate_control.hpp : 'math::constrain(ratio * ratio, 0.f, 1.f)' -> 'math::constrain(ratio * ratio, 1e-6f, 1.f)' (unit-indi_rate_control_test)
+-- broken
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_rate_control/indi_rate_control_test.cpp:1115: Failure
+[  FAILED  ] IndiRateControlMeasurementTest.NormalisedThrustFromRpm (0 ms)
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_rate_control/indi_rate_control_test.cpp:1151: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_rate_control/indi_rate_control_test.cpp:1156: Failure
+[  FAILED  ] IndiRateControlMeasurementTest.NormalisedThrustFromRpmZeroBoundary (0 ms)
+[  PASSED  ] 74 tests.
+[  FAILED  ] 2 tests, listed below:
+[  FAILED  ] IndiRateControlMeasurementTest.NormalisedThrustFromRpm
+[  FAILED  ] IndiRateControlMeasurementTest.NormalisedThrustFromRpmZeroBoundary
+-- reverted
+[  PASSED  ] 76 tests.
+== i4c: src/lib/indi_rate_control/indi_rate_control.hpp : 'math::constrain(ratio * ratio, 0.f, 1.f)' -> 'math::min(ratio * ratio, 1.f)' (unit-indi_rate_control_test)
+-- broken
+[  PASSED  ] 76 tests.
+-- reverted
+[  PASSED  ] 76 tests.
+== i5a: src/modules/mc_indi_rate_control/IndiMeasuredTorque.hpp : 'FROZEN_CMD_VARIATION = 0.02f' -> 'FROZEN_CMD_VARIATION = 0.05f' (functional-IndiMeasuredTorque)
+-- broken
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:478: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:479: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:480: Failure
+[  FAILED  ] IndiFrozenRpmTest.CommandDipFromSaturationWithConstantRpmIsFrozen (0 ms)
+[  PASSED  ] 17 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] IndiFrozenRpmTest.CommandDipFromSaturationWithConstantRpmIsFrozen
+-- reverted
+[  PASSED  ] 18 tests.
+== i5b: src/modules/mc_indi_rate_control/IndiMeasuredTorque.cpp : '((sample.cmd_max - sample.cmd_min) > FROZEN_CMD_VARIATION))' -> '(((sample.cmd_max - sample.cmd_min) > FROZEN_CMD_VARIATION) || (sample.cmd_max >= 0.99f)))' (functional-IndiMeasuredTorque)
+-- broken
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:452: Failure
+[  FAILED  ] IndiFrozenRpmTest.SaturatedConstantCommandWithConstantRpmStaysValid (0 ms)
+[  PASSED  ] 17 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] IndiFrozenRpmTest.SaturatedConstantCommandWithConstantRpmStaysValid
+-- reverted
+[  PASSED  ] 18 tests.

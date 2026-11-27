@@ -1,0 +1,17 @@
+test(indi_rate_control): add tests for the ESC freshness, frozen window, reset and rpm bounds
+
+- ESC sample freshness: boundary at the timeout, sample from the future,
+  zero/negative/NaN timeout.
+- Frozen rpm window: setFrozenWindow(1.0) trips at 1 s and not at 0.9 s,
+  a negative window does not fall back to a working window.
+- Saturated motor: a command pinned at 1.0 with a constant rpm stays valid
+  (limit by design), a dip to 0.97 with a constant rpm is flagged.
+- AccelControl reset: a lagging mean_u gives a first-cycle collective step
+  equal to the gap, a NaN mean_u gives none.
+- normalisedThrustFromRpm: tiny negative rpm rejected, tiny positive rpm
+  gives the exact square.
+
+Each test was seen failing with the behaviour broken once in the source and
+passing after the revert.
+
+Assisted-by: Claude Sonnet

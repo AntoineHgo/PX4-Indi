@@ -1,0 +1,13 @@
+== i2b: src/lib/indi_accel_control/indi_accel_control.cpp : 'const float u = PX4_ISFINITE(mean_u) ? mean_u :' -> 'const float u = true ? mean_u :' (unit-IndiAccelControl)
+-- broken
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_accel_control/IndiAccelControlTest.cpp:904: Failure
+[  FAILED  ] IndiAccelBlendTest.ResetWithoutMeanUHasNoCollectiveStep (0 ms)
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_accel_control/IndiAccelControlTest.cpp:1059: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_accel_control/IndiAccelControlTest.cpp:1060: Failure
+[  FAILED  ] IndiAccelBlendTest.NoCollectiveStepAtBypassEdgeModuleConvention (0 ms)
+[  PASSED  ] 61 tests.
+[  FAILED  ] 2 tests, listed below:
+[  FAILED  ] IndiAccelBlendTest.ResetWithoutMeanUHasNoCollectiveStep
+[  FAILED  ] IndiAccelBlendTest.NoCollectiveStepAtBypassEdgeModuleConvention
+-- reverted
+[  PASSED  ] 63 tests.

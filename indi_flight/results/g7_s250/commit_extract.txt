@@ -1,0 +1,8 @@
+refactor(mc_indi_rate_control): extract the ESC sample freshness check
+
+Move the inline age comparison of the measured torque sample into
+IndiMeasuredTorque::isSampleFresh so it can be unit tested. Same
+expression, no behaviour change: the disassembly of McIndiRateControl.cpp.o
+is identical before and after.
+
+Assisted-by: Claude Sonnet

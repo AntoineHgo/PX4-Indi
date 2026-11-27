@@ -1,0 +1,9 @@
+== i5b: src/modules/mc_indi_rate_control/IndiMeasuredTorque.cpp : '((sample.cmd_max - sample.cmd_min) > FROZEN_CMD_VARIATION))' -> '(((sample.cmd_max - sample.cmd_min) > FROZEN_CMD_VARIATION) || (sample.cmd_max >= 0.99f)))' (functional-IndiMeasuredTorque)
+-- broken
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/modules/mc_indi_rate_control/IndiMeasuredTorqueTest.cpp:452: Failure
+[  FAILED  ] IndiFrozenRpmTest.SaturatedConstantCommandWithConstantRpmStaysValid (0 ms)
+[  PASSED  ] 17 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] IndiFrozenRpmTest.SaturatedConstantCommandWithConstantRpmStaysValid
+-- reverted
+[  PASSED  ] 18 tests.

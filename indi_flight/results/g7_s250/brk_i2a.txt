@@ -1,0 +1,11 @@
+== i2a: src/lib/indi_accel_control/indi_accel_control.cpp : 'const float u = PX4_ISFINITE(mean_u) ? mean_u : (u_model - _blend_offset);' -> 'const float u = u_model - _blend_offset;' (unit-IndiAccelControl)
+-- broken
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_accel_control/IndiAccelControlTest.cpp:888: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_accel_control/IndiAccelControlTest.cpp:889: Failure
+/home/ahugo/Documents/Drotek/Codes/PX4-Indi/src/lib/indi_accel_control/IndiAccelControlTest.cpp:890: Failure
+[  FAILED  ] IndiAccelBlendTest.ResetWithLaggingMeanUStepsByTheGap (0 ms)
+[  PASSED  ] 62 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] IndiAccelBlendTest.ResetWithLaggingMeanUStepsByTheGap
+-- reverted
+[  PASSED  ] 63 tests.
