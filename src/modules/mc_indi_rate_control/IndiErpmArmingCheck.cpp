@@ -42,7 +42,13 @@ IndiErpmArmingCheck::evaluate(const IndiMeasuredTorque &measured, uint64_t now_u
 {
 	Verdict verdict{};
 
-	if (armed || !measured.enabled()) {
+	if (armed) {
+		return verdict;
+	}
+
+	if (!measured.enabled()) {
+		verdict.can_arm = false;
+		verdict.not_configured = true;
 		return verdict;
 	}
 

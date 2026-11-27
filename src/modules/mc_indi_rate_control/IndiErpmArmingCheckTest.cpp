@@ -152,3 +152,31 @@ TEST_F(IndiErpmArmingCheckTest, NeverRefusesWhileArmed)
 	reportAll(kNow - 50000);
 	EXPECT_TRUE(IndiErpmArmingCheck::evaluate(_measured, kNow, kTimeout, true).can_arm);
 }
+
+TEST_F(IndiErpmArmingCheckTest, NotConfiguredRefusesWhileDisarmed)
+{
+	reportAll(kNow - 5000);
+
+	// no rotor speed scaling: the telemetry is present but not used
+	_measured.setRotorSpeedMax(0.f);
+	IndiErpmArmingCheck::Verdict verdict = IndiErpmArmingCheck::evaluate(_measured, kNow, kTimeout, false);
+	EXPECT_FALSE(verdict.can_arm);
+	EXPECT_TRUE(verdict.not_configured);
+	EXPECT_EQ(verdict.motor_mask, 0);
+	EXPECT_TRUE(IndiErpmArmingCheck::evaluate(_measured, kNow, kTimeout, true).can_arm);
+
+	// no rotor geometry
+	IndiMeasuredTorque without_geometry;
+	without_geometry.setRotorSpeedMax(kOmegaMax);
+	verdict = IndiErpmArmingCheck::evaluate(without_geometry, kNow, kTimeout, false);
+	EXPECT_FALSE(verdict.can_arm);
+	EXPECT_TRUE(verdict.not_configured);
+	EXPECT_EQ(verdict.motor_mask, 0);
+	EXPECT_TRUE(IndiErpmArmingCheck::evaluate(without_geometry, kNow, kTimeout, true).can_arm);
+
+	// configured again: arming is allowed and the flag is cleared
+	_measured.setRotorSpeedMax(kOmegaMax);
+	verdict = IndiErpmArmingCheck::evaluate(_measured, kNow, kTimeout, false);
+	EXPECT_TRUE(verdict.can_arm);
+	EXPECT_FALSE(verdict.not_configured);
+}

@@ -156,7 +156,7 @@ McIndiRateControl::updateMeasuredTorqueEffectiveness()
 						  config.linearization_point[0], config.num_actuators_matrix[0], normalize_rpy[0]);
 
 	} else {
-		// no valid rotor geometry: no measured torque, INDI uses its actuator model
+		// no valid rotor geometry: no measured torque, arming is refused
 		_measured_torque.setEffectiveness(ActuatorEffectiveness::EffectivenessMatrix{}, ActuatorEffectiveness::ActuatorVector{},
 						  ActuatorEffectiveness::ActuatorVector{}, 0, true);
 	}
@@ -284,13 +284,25 @@ McIndiRateControl::updateArmingCheck()
 		}
 
 		if ((now > _erpm_refused_since + EVENT_DELAY) && (now > _last_erpm_event + EVENT_INTERVAL)) {
-			/* EVENT
-			 * @description
-			 * Every motor must report its rpm: the ESC telemetry is not connected or not enabled, or a motor is not
-			 * responding.
-			 */
-			events::send<uint16_t>(events::ID("mc_indi_rate_control_erpm_missing"), events::Log::Error,
-					       "Arming denied: no rpm telemetry from motors (bit mask {1})", verdict.motor_mask);
+			if (verdict.not_configured) {
+				/* EVENT
+				 * @description
+				 * INDI needs the ESC rpm telemetry of every motor. Set <param>MC_INDI_W_MAX</param> and the rotor geometry
+				 * (<param>CA_ROTOR0_PX</param> and the other CA_ROTORn parameters) of the airframe.
+				 */
+				events::send(events::ID("mc_indi_rate_control_rpm_not_configured"), events::Log::Error,
+					     "Arming denied: set MC_INDI_W_MAX and the rotor geometry");
+
+			} else {
+				/* EVENT
+				 * @description
+				 * Every motor must report its rpm: the ESC telemetry is not connected or not enabled, or a motor is not
+				 * responding.
+				 */
+				events::send<uint16_t>(events::ID("mc_indi_rate_control_erpm_missing"), events::Log::Error,
+						       "Arming denied: no rpm telemetry from motors (bit mask {1})", verdict.motor_mask);
+			}
+
 			_last_erpm_event = now;
 		}
 	}
@@ -639,8 +651,9 @@ It takes rate setpoints (in acro mode via `manual_control_setpoint` topic) as in
 torque and thrust setpoints.
 
 It replaces `mc_rate_control` (PID): only one of the two is started, selected by the parameter `MC_INDI_EN`
-(see rc.mc_apps). With `MC_INDI_W_MAX` set it also computes the torque produced by the measured rotor speeds
-(ESC rpm telemetry) and publishes it as `actuator_torque_measured`.
+(see rc.mc_apps). With `MC_INDI_W_MAX` set it computes the torque produced by the measured rotor speeds
+(ESC rpm telemetry) and publishes it as `actuator_torque_measured`. Arming is refused while `MC_INDI_W_MAX`
+or the rotor geometry is not set, or while a motor has no rpm telemetry.
 
 )DESCR_STR");
 

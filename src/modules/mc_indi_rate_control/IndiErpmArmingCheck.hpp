@@ -50,6 +50,7 @@ public:
 	struct Verdict {
 		bool can_arm{true};
 		uint16_t motor_mask{0}; ///< motors without usable telemetry (bit per motor), all motors if none is singled out
+		bool not_configured{false}; ///< refused: no rotor speed scaling or geometry
 	};
 
 	/**
@@ -57,7 +58,7 @@ public:
 	 * @param now_us current time
 	 * @param timeout_s maximum age of the oldest sample (MC_INDI_ERPM_TO)
 	 * @param armed never blocks while armed
-	 * @return can_arm is false if any motor has no fresh rpm sample; true if the measured torque is not in use
+	 * @return can_arm is false if any motor has no fresh rpm sample, or if the measured torque is not in use
 	 *         (no rotor speed scaling configured or no rotor geometry)
 	 */
 	static Verdict evaluate(const IndiMeasuredTorque &measured, uint64_t now_us, float timeout_s, bool armed);

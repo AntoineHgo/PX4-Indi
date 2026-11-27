@@ -120,7 +120,8 @@ private:
 
 	/**
 	 * Register with the commander as an external arming check and answer its requests: arming is refused
-	 * while a motor has no fresh rpm telemetry. While armed the answer is always positive.
+	 * while a motor has no fresh rpm telemetry, or the rotor speed scaling or geometry is missing.
+	 * While armed the answer is always positive.
 	 */
 	void updateArmingCheck();
 	void unregisterArmingCheck();
