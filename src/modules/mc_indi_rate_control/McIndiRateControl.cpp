@@ -232,8 +232,8 @@ McIndiRateControl::runIndiRateControl(const Vector3f &rates, const Vector3f &ang
 	// measured actuator torque from the ESC rpm, used only while complete, fresh and finite
 	const Vector3f torque_measured(_torque_measured.torque);
 	const hrt_abstime now = hrt_absolute_time();
-	const bool measurement_valid = _torque_measured.valid && (now >= _torque_measured.timestamp_sample)
-				       && (((now - _torque_measured.timestamp_sample) * 1e-6f) < _param_mc_indi_erpm_to.get())
+	const bool measurement_valid = _torque_measured.valid
+				       && IndiMeasuredTorque::isSampleFresh(now, _torque_measured.timestamp_sample, _param_mc_indi_erpm_to.get())
 				       && torque_measured.isAllFinite();
 	_indi.setMeasuredTorque(torque_measured, measurement_valid);
 

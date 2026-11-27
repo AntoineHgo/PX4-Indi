@@ -75,6 +75,15 @@ public:
 	static constexpr float FROZEN_CMD_VARIATION = 0.02f; ///< (max - min) of the command that proves a motor must change speed
 	static constexpr float MAX_OMEGA_RATIO = 1.5f; ///< above this multiple of omega_max a rotor speed is implausible
 
+	/**
+	 * @return true if the sample is not from the future and younger than the timeout
+	 *         (false for a timeout of zero, negative or NaN)
+	 */
+	static bool isSampleFresh(uint64_t now_us, uint64_t timestamp_sample_us, float timeout_s)
+	{
+		return (now_us >= timestamp_sample_us) && (((now_us - timestamp_sample_us) * 1e-6f) < timeout_s);
+	}
+
 	struct Result {
 		float torque[3] {};          ///< roll, pitch, yaw, normalised like the torque setpoint
 		uint64_t timestamp_sample{0}; ///< time of the oldest ESC sample used
