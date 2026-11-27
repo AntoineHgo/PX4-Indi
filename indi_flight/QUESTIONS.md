@@ -78,30 +78,29 @@ D-OWNER-Q33; full text in JOURNAL.md S228).
 Q34 and Q35 closed S243 (owner answers: Q34 "A and B" for item 5; Q35 A, G3 final NOT PASSED, C yes with guard;
 GATES "Owner amendment S243", DECISIONS D-OWNER-Q34-Q35; full text in JOURNAL.md S243).
 
-## Q36 (S246, 2026-11-26): R1 "without eRPM telemetry INDI refuses to arm" is not what the code does
-Context: design/airframe_requirements.md R1 (accepted with Q25) says INDI refuses to arm without rotor-speed
-telemetry. The firmware does not enforce it: with missing or stale eRPM the rate module switches to the modelled
-actuator state (O-5 fallback) and arming is allowed. All gate evidence (G2-G6) was flown with telemetry present;
-G3 covered telemetry loss and frozen values in flight only. The F-3 requirements list is an owner topic, so I do not
-change it myself. Enforcing it needs a pre-arm check: in PX4 arming checks live in commander (zero diff, O-11), and
-any firmware change after FREEZE-10 needs a gate failure cause shown on a log, which this is not.
-Options:
-- A (recommended) reword R1: "eRPM telemetry on every motor is required for the validated configuration; without
-  it the controller runs on the modelled actuator state, which is not validated as a flight configuration". The docs
-  and report state it as a limit and the bring-up checklist checks telemetry before the first flight.
-- B enforce R1 in firmware after the verdicts (a new INDI-side check; needs a way to block arming without commander
-  changes, re-fly of the G5 arming rows, two keys).
-Meanwhile: G7 (f) unit 9 / F-10 review and G8 drafts continue; R1 wording is left as is. Blocking: G8 text on R1
-only (no gate verdict depends on it); not blocking other work.
 
-### Owner answer Q36 (2026-11-27): B, enforce R1 in firmware
-- Implement R1 in the INDI firmware: INDI must refuse to arm when eRPM telemetry is missing or stale on any motor.
-  No commander change (zero diff O-11 stays). Hint, to check yourself: commander already offers a generic external
-  arming check (register_ext_component_request with register_arming_check only, then arming_check_reply with
-  can_arm_and_run=false, see commander/HealthAndArmingChecks/checks/externalChecks.cpp, nav_mode_id -1 = all modes).
-  Only block arming; in-flight telemetry loss keeps the validated O-5 fallback (do not change in-flight behaviour).
-- Verify with small tests, 5 tests maximum in total (unit and/or SITL), each break-checked. No campaign, no gate
-  re-fly beyond those 5.
-- This answer lifts FREEZE-10 for this change only; F-10 rules apply (brief the coder, independent review).
-- When the implementation and the tests are done, do NOT update the report yet: ask me first in QUESTIONS.md
-  (create WAIT_OWNER) whether and how to update the report, GATES and docs.
+Q36 closed S258 (owner answer B: R1 enforced in INDI firmware, D-OWNER-Q36, commit e6af4b6b0d; full text in
+JOURNAL.md S258).
+
+## Q37 (S258, 2026-11-27): report, GATES, docs and firmware-only branch after the R1 arming check
+Context: as Q36 B asked, `mc_indi_rate_control` now registers as a commander external arming check and refuses
+arming while any motor's rpm telemetry is missing or stale (fixed 20 ms sample age, MC_INDI_ERPM_TO on the oldest
+sample). While armed it always replies "can arm", so flight behaviour is unchanged (O-5 fallback). Commander zero diff.
+Tests: 4 unit (fresh / missing motor / stale / armed) + 1 SITL hover that arms with telemetry, each break-checked
+(results/q36_s258/IMPL.md). Independent review: 0 BLOCKER, 1 MAJOR (param text, fixed), 8 MINOR (REVIEW.md).
+No gate row invalidated: every gate flight had telemetry. Limits found:
+ (1) the check is off when MC_INDI_W_MAX = 0 (firmware default; the measured path is then off too);
+ (2) ungated windows: ~1-1.5 s at boot before the first reply, ~1-2 s after commander drops a silent registration,
+     and silently none if commander has no free external-check slot;
+ (3) the ESC driver must publish rpm while disarmed at >= ~50 Hz per motor, else arming is refused (unverified on
+     hardware: bring-up checklist item); (4) frozen values are not detected while disarmed (motors at rest).
+ (5) refusal in running SITL was not flown (it would have been a 6th test).
+Options:
+- A (recommended): one sonnet task cherry-picks e6af4b6b0d onto the firmware-only branch and re-runs the G7 checks
+  on it (stock zero diff, format, gtest, F-10 grep, NuttX flash); I then update the report R1 text and 04_limits with
+  limits (1)-(5), the docs page (arming requirement + checklist line for (3)), GATES G8 (drop "pending Q36", add one
+  G7 note), then recreate DONE. No re-fly.
+- B: A, plus close limit (1): INDI also refuses arming while the measured path is disabled (W_MAX 0 or no rotor
+  geometry), so an unconfigured airframe cannot arm. One more break-checked test (6th, needs your OK).
+- C: keep the change on feat/indi-flight only; the report states R1 is enforced there but not on the PR branch.
+Meanwhile: nothing (no gate work left). Blocked: yes, WAIT_OWNER created.

@@ -2187,3 +2187,34 @@ A, and C = yes with a guard (owner, 2026-11-26).
 - S256 (2026-11-27): STATE trim: G7 task rows P2/P2b/P3/P3b/P3b-K2/P3c/P3d/P6a/P6b/P7a/P7b/P8/P9 (all DONE S248-S252, outputs results/g7_s248..g7_s252) and plan items P4/P6/P7 (DONE, G7 PASSED S252) moved out of STATE.md.
 - S256 (2026-11-27): G3 chain line stale (G3 FINAL NOT PASSED stands). Route check RC256 (design/route_check_256.md, sonnet): item-by-item "Unverified" clearing is not required by the G8 criterion; cut it, mark the rest in one pass, fix 02:349 and GATES.md:321, write G8 verdict with R1 "pending Q36". Cut written in STATE. Gate progress: none (route check and cut only; G8 path shortened to one agent + verdict).
 - S257 (2026-11-27): G3 chain line stale (G3 FINAL NOT PASSED stands); route check request answered by RC256 (one session old). P5 one-pass (sonnet): report Unverified items already marked in text (0 new), 02 MPC_Z_VEL/THR_MAX from yaml, GATES.md:321 g3 scripts, docs page tables re-padded, links ok; bench/gate_g8.sh 7/7 PASS (results/g8_s257/). G8 verdict PASSED with limits (R1 pending Q36). All gates have verdicts: DONE created. Gate progress: G8 open -> PASSED.
+
+### Q36 full text (closed S258)
+## Q36 (S246, 2026-11-26): R1 "without eRPM telemetry INDI refuses to arm" is not what the code does
+Context: design/airframe_requirements.md R1 (accepted with Q25) says INDI refuses to arm without rotor-speed
+telemetry. The firmware does not enforce it: with missing or stale eRPM the rate module switches to the modelled
+actuator state (O-5 fallback) and arming is allowed. All gate evidence (G2-G6) was flown with telemetry present;
+G3 covered telemetry loss and frozen values in flight only. The F-3 requirements list is an owner topic, so I do not
+change it myself. Enforcing it needs a pre-arm check: in PX4 arming checks live in commander (zero diff, O-11), and
+any firmware change after FREEZE-10 needs a gate failure cause shown on a log, which this is not.
+Options:
+- A (recommended) reword R1: "eRPM telemetry on every motor is required for the validated configuration; without
+  it the controller runs on the modelled actuator state, which is not validated as a flight configuration". The docs
+  and report state it as a limit and the bring-up checklist checks telemetry before the first flight.
+- B enforce R1 in firmware after the verdicts (a new INDI-side check; needs a way to block arming without commander
+  changes, re-fly of the G5 arming rows, two keys).
+Meanwhile: G7 (f) unit 9 / F-10 review and G8 drafts continue; R1 wording is left as is. Blocking: G8 text on R1
+only (no gate verdict depends on it); not blocking other work.
+
+### Owner answer Q36 (2026-11-27): B, enforce R1 in firmware
+- Implement R1 in the INDI firmware: INDI must refuse to arm when eRPM telemetry is missing or stale on any motor.
+  No commander change (zero diff O-11 stays). Hint, to check yourself: commander already offers a generic external
+  arming check (register_ext_component_request with register_arming_check only, then arming_check_reply with
+  can_arm_and_run=false, see commander/HealthAndArmingChecks/checks/externalChecks.cpp, nav_mode_id -1 = all modes).
+  Only block arming; in-flight telemetry loss keeps the validated O-5 fallback (do not change in-flight behaviour).
+- Verify with small tests, 5 tests maximum in total (unit and/or SITL), each break-checked. No campaign, no gate
+  re-fly beyond those 5.
+- This answer lifts FREEZE-10 for this change only; F-10 rules apply (brief the coder, independent review).
+- When the implementation and the tests are done, do NOT update the report yet: ask me first in QUESTIONS.md
+  (create WAIT_OWNER) whether and how to update the report, GATES and docs.
+
+- S258 (2026-11-27): owner removed DONE, Q36 answered B. D-OWNER-Q36 written; INDI rpm arming check implemented in mc_indi_rate_control (e6af4b6b0d, sonnet high), 4 unit tests + 1 SITL hover, each break-checked; independent review 0 BLOCKER / 1 MAJOR (param text, fixed) / 8 MINOR (results/q36_s258/). Q37 asked (report/GATES/docs/branch update, W_MAX 0 hole), WAIT_OWNER. Gate progress: G8 R1 firmware requirement implemented and tested; no gate verdict changed, no gate row invalidated (telemetry present in every gate flight).
