@@ -1546,3 +1546,16 @@ Tests: at most 5 in total (owner), unit and/or SITL, each break-checked. Gate ro
 (telemetry present in every gate flight, so the check always passes); the SITL arming test shows arming still works
 with telemetry. Overturn if: a gate-config SITL flight fails to arm, or a reply ever reaches commander in flight with
 can_arm_and_run false and changes the mode.
+
+## D-OWNER-Q37 (S259, 2026-11-27): INDI also refuses arming while its measured path is disabled
+Owner answer Q37 B (lifts FREEZE-10 for this change only, like Q36). Change: `IndiErpmArmingCheck` refuses arming
+while the measured torque is not in use (`MC_INDI_W_MAX` = 0 or no rotor geometry in `CA_*`), with its own event, so an
+INDI airframe that was never configured for rpm telemetry cannot arm. Effect on defaults: `MC_INDI_EN` = 1 with the
+firmware default `MC_INDI_W_MAX` = 0 no longer arms; the stock default (`MC_INDI_EN` = 0, PID) is unchanged.
+Alternatives: (a) keep the check off at W_MAX 0 (Q37 option A): leaves limit (1), rejected by the owner; (b) give
+W_MAX a non-zero default: no value transfers across airframes (D-AF defaults), rejected.
+Tests (owner: at most 3 more, each break-checked): 6th = unit test, disabled measured path refuses; 7th = SITL flight,
+arming refused with rpm telemetry missing, accepted once it is back (closes limit (5)). Then cherry-pick e6af4b6b0d and
+this change onto the firmware-only branch and re-run the G7 checks there. Gate rows invalidated: none (every gate
+flight had W_MAX set and telemetry); the agent lists any gate params file with W_MAX 0. Overturn if: a gate-config
+SITL flight fails to arm.

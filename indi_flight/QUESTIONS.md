@@ -104,3 +104,14 @@ Options:
   geometry), so an unconfigured airframe cannot arm. One more break-checked test (6th, needs your OK).
 - C: keep the change on feat/indi-flight only; the report states R1 is enforced there but not on the PR branch.
 Meanwhile: nothing (no gate work left). Blocked: yes, WAIT_OWNER created.
+
+### Owner answer Q37 (2026-11-27): B
+- B: do A (cherry-pick onto the firmware-only branch, G7 checks re-run there) plus close limit (1): INDI also
+  refuses arming while the measured path is disabled (W_MAX 0 or no rotor geometry).
+- Document limit (3) explicitly: docs page arming requirement + bring-up checklist line (ESC must publish rpm while
+  disarmed at >= ~50 Hz per motor, else arming is refused; unverified on hardware), and in report 04_limits.
+- Run a few more tests to verify, up to 3 more in total (6th test for limit (1) included), each break-checked.
+  Include the SITL refusal flight of limit (5) (arming refused with telemetry missing/stale, then accepted once
+  telemetry is back). Keep it small: no campaign, no gate re-fly.
+- Then update report (R1 text, 04_limits with limits (1)-(5) as they stand after B), docs, GATES G8 (drop
+  "pending Q36", add the G7 note) and recreate DONE.
