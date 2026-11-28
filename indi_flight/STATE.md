@@ -30,7 +30,9 @@ agent (no project context) + fixes; (5) orchestrator renders every page (pdftopp
 Untracked `report/indi_report.pdf` (09:22, origin unknown): left untouched, not committed.
 Gate binary = 903eae63 (D-BINARY-GZFIX): do NOT rebuild build/px4_sitl_default from HEAD. G3 chain stopped for good
 (Q35 A): the supervisor "g3_campaign_f10 chain finished" line is hardcoded and stale (S199 closed it): ignore it.
-Route check: RC256 current (S257 supervisor request answered by RC256, one session old; its cut was acted on).
+Route check: RC262 current (design/route_check_262.md). Cut acted on: writers batched 04 (done) +05, then 06+07,
+then 08+09+A+B; section and chapter review merged in one agent for 08, 09, A, B; one build/render per batch.
+Rejected: merging the fresh-eyes reader with the whole-PDF technical reviewer (directive 7c names two reviewers).
 
 ## Notes
 - G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
@@ -54,11 +56,13 @@ lists not-possible figs). B flagged source discrepancies to settle before the ch
 "4 of 8" no -180 crossing vs 7/8 in scores; ch03 "item 2 fails 79 of 297" vs 79 failing runs, item 2 on 73; figure
 font DejaVu (Libertinus OTF is in texmf, point matplotlib at it); PID step trace from older indi_vs_pid flights. Next: chapters 03-05 agent (inner, outer, analysis) from report/*.md, using
 CAPTIONS.md/FIGURES.md. Cost: S260 three sonnet-high agents ~ $1+ each: run at most 2 per session.
-S261: ch03 written 26a5a6a340 (NOTES_D.md 11 items); 7a review reviews/ch03_section_review.md: 0 BLOCKER, 2 MAJOR
-(R1 crossover 4 Hz vs 1.72 Hz -> blend corner 0.16 Hz vs 1.7 Hz; R2 ch07 stub must cover sat+weak motor,
-telemetry-loss fallback, yaw G1 disagreement, assumed rotor inertia behind G2_Y), 14 MINOR. Next: (1) sonnet-medium
-fix agent for R1 + MINORs (R2 carried to ch07 brief), re-review fixed parts; (2) 7a reviews of ch01/02 (addendum 7
-applies retroactively); (3) ch04, ch05, one chapter + its review per session (~$0.45 write, ~$0.5 review). Firmware after FREEZE-10: e6af4b6b0d, ac744d360e (R1 arming check, owner-lifted freeze, no gate row
+S262: ch03 fixed 320bd3f9f8 + re-review 181684d503 (14 closed; R8 notation symbols B, b, t_b, l, c, Delta_max,
+bold/plain nu -> ch02 table, do in the ch01/02 fix). ch03 R2 (sat+weak motor, telemetry-loss fallback, yaw G1
+disagreement, assumed rotor inertia behind G2_Y) goes into the ch07 brief. ch04 written bc6d958dd5 (NOTES_E.md:
+7 unverified values, 2 disagreements); 7a review running -> reviews/ch04_section_review.md (if absent at relaunch,
+re-run it: sonnet-medium, same interface). Next: (1) ch04 fixes + re-review; (2) ch05 write+review; (3) 7a reviews
+of ch01/02 + R8; (4) ch06+07, then 08+09+A+B. Costs seen S262: write ~$0.35, review ~$0.3, fix ~$0.25 (sonnet-medium).
+Owner also asked 7b chapter reviews once each chapter is complete (03 is complete now). Firmware after FREEZE-10: e6af4b6b0d, ac744d360e (R1 arming check, owner-lifted freeze, no gate row
 invalidated). Commit trailer: AGENTS.md wins: `Assisted-by:` only.
 
 ## Open problems
