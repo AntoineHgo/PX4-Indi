@@ -47,8 +47,9 @@ Route check: RC256 current (S257 supervisor request answered by RC256, one sessi
 
 ## Tasks in flight
 S260: A skeleton DONE, committed 1258f61ac1 (23 pages, `report/pdf/build.sh [--no-figs]`; chapters 03-09, A, B
-stubs; NOTES_A.md lists unverified airframe-table units). Still running at S260 end (if cut, check files, finish or
-relaunch): C diagrams (report/pdf/diagrams/, CAPTIONS.md). B figures DONE b8f50cae60 (7 figs, 12 tests; FIGURES.md
+stubs; NOTES_A.md lists unverified airframe-table units). C diagrams DONE d9277c0ec2 (architecture, inner, outer,
+ground_logic; CAPTIONS.md: notation u = per-axis normalised torque, bold T specific thrust; one 4.8 pt overfull;
+stock-mode routing unverified). Full build with figs+diagrams not yet run. B figures DONE b8f50cae60 (7 figs, 12 tests; FIGURES.md
 lists not-possible figs). B flagged source discrepancies to settle before the chapters copy them: ch02 z outer cells
 "4 of 8" no -180 crossing vs 7/8 in scores; ch03 "item 2 fails 79 of 297" vs 79 failing runs, item 2 on 73; figure
 font DejaVu (Libertinus OTF is in texmf, point matplotlib at it); PID step trace from older indi_vs_pid flights. Next: chapters 03-05 agent (inner, outer, analysis) from report/*.md, using
