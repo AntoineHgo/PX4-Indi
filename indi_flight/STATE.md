@@ -23,7 +23,11 @@ McIndiPosControl.cpp:315), harness extraction (D-G7-HARNESS), MC_INDI_ID_OK call
 D-OFFB-POSVEL wiring test, omega_ff step on offboard entry, g510 one-sample LOC (results/g7_checkers_s215),
 ACT_TC/W_MAX vs bench (lesson 12), guard params (ERPM_TO/FRZ, SP_TO, DT_MAX) unevidenced, pos module esc_status
 instance 0 / 100 ms age, G6 item 2 ID-window rescore, MC_INDI_ACT_TC yaml "round up" wording (D-OWNER-Q27).
-Plan: none open. Q37 B done S259 (D-OWNER-Q37). Project DONE; next work only on a new owner instruction.
+Plan: owner directive 2026-11-28 (QUESTIONS.md, D-OWNER-PDF): G8 professional PDF `report/pdf/indi_report.pdf`.
+DONE removed until it is met. Steps: (1) S260 skeleton+front chapters, TikZ diagrams, figure scripts; (2) chapters
+inner, outer, analysis; (3) validation, limits, bring-up, conclusion, traceability appendix; (4) fresh-eyes review
+agent (no project context) + fixes; (5) orchestrator renders every page (pdftoppm) and checks it; (6) DONE.
+Untracked `report/indi_report.pdf` (09:22, origin unknown): left untouched, not committed.
 Gate binary = 903eae63 (D-BINARY-GZFIX): do NOT rebuild build/px4_sitl_default from HEAD. G3 chain stopped for good
 (Q35 A): the supervisor "g3_campaign_f10 chain finished" line is hardcoded and stale (S199 closed it): ignore it.
 Route check: RC256 current (S257 supervisor request answered by RC256, one session old; its cut was acted on).
@@ -42,7 +46,8 @@ Route check: RC256 current (S257 supervisor request answered by RC256, one sessi
 - Before editing any file under bench/, check no chain pins it (chain_freeze.sha256).
 
 ## Tasks in flight
-None. Firmware after FREEZE-10: e6af4b6b0d, ac744d360e (R1 arming check, owner-lifted freeze, no gate row
+S260 PDF agents: A skeleton (report/pdf/{main,preamble}.tex, build.sh, README, chapters 00-02), B figures
+(bench/report_figs/, report/pdf/figures/, FIGURES.md), C diagrams (report/pdf/diagrams/). Notes in report/pdf/NOTES_*.md. Firmware after FREEZE-10: e6af4b6b0d, ac744d360e (R1 arming check, owner-lifted freeze, no gate row
 invalidated). Commit trailer: AGENTS.md wins: `Assisted-by:` only.
 
 ## Open problems

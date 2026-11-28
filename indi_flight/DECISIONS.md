@@ -1559,3 +1559,19 @@ arming refused with rpm telemetry missing, accepted once it is back (closes limi
 this change onto the firmware-only branch and re-run the G7 checks there. Gate rows invalidated: none (every gate
 flight had W_MAX set and telemetry); the agent lists any gate params file with W_MAX 0. Overturn if: a gate-config
 SITL flight fails to arm.
+
+## D-OWNER-PDF (S260, 2026-11-28): professional PDF report, LaTeX on the host
+Owner directive 2026-11-28 (QUESTIONS.md): presentation work on G8 only, no flight, firmware or result change.
+Choice: lualatex + latexmk on the host (installed: tikz, pgfplots, booktabs, fontspec, cleveref, tcolorbox; no siunitx,
+no biblatex, no pandoc), TikZ block diagrams (no draw.io: not installed, TikZ allowed by the owner), matplotlib figure
+scripts in `bench/report_figs/` reading committed results only, one build script `report/pdf/build.sh`.
+Layout: `report/pdf/main.tex`, `preamble.tex`, `chapters/NN_*.tex`, `diagrams/*.tex`, `figures/*.pdf` (generated).
+Shared palette (diagrams, plots, headings): indiblue #1F4E79, indiorange #C55A11, indigrey #595959, indilight #DCE6F2,
+indigreen #548235, indired #A50021.
+Work split: S260 skeleton + front chapters, diagrams, figure scripts (parallel, disjoint files); later sessions the
+design/analysis/validation/limits/bring-up chapters from the markdown sources, then the traceability appendix, then
+a fresh-eyes review (no project context) and a page-by-page visual check by the orchestrator, then DONE.
+Alternatives: pandoc from the markdown chapters (not installed, keeps the development trail); draw.io (not installed).
+Naming: the PDF calls gates G1-G8 "acceptance criteria C1-C8" (G1/G2 clash with the INDI effectiveness symbols);
+the traceability appendix maps Cn = Gn.
+Overturn if: the host LaTeX cannot build a package the layout needs (then build in a container image).

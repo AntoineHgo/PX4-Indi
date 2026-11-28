@@ -84,3 +84,40 @@ JOURNAL.md S258).
 
 Q37 closed S259 (owner answer B: W_MAX 0 refusal, tests 6-7, firmware-only branch re-checked, report/docs/GATES
 updated; DECISIONS D-OWNER-Q37; full text in JOURNAL.md S259).
+
+## Owner directive (2026-11-28): rewrite the report as a professional PDF (open, acted on at next launch)
+G1-G8 verdicts stand; this is presentation work on G8 only. No new flights, no firmware change, no new results.
+1. Deliverable: one PDF, `indi_flight/report/pdf/indi_report.pdf`, built from sources committed next to it
+   (one build command, written in its README). Modern, professional layout (e.g. LaTeX/lualatex with a clean
+   template, title page, table of contents, numbered sections/figures/tables/equations, consistent colours, headers).
+   Any tool may be used (LaTeX, TikZ/pgfplots, matplotlib, Python venvs inside the repo; draw.io desktop AppImage
+   in `indi_flight/tools/` if it runs headless, otherwise TikZ with the same quality). Diagram sources are committed.
+2. Content: block diagrams (draw.io or TikZ) for both loops and the overall architecture; equations typeset in
+   LaTeX (the INDI laws, filters, measured torque, outer-loop law, margins); proper tables (booktabs style); graphs
+   produced by scripts in `bench/` from committed results (step responses, margins/Bode, validation campaigns, limits).
+3. Readability first: a reader who knows control but not this project must follow it. Simple wording, short sentences,
+   a clear reasoning line (problem -> idea -> design -> analysis -> validation -> limits -> bring-up). Restructure
+   freely, along a PhD-thesis-like outline: abstract, introduction and goals, background (INDI principle, PX4 control
+   chain), inner-loop design, outer-loop design, analysis, validation method and results, limits, hardware bring-up,
+   conclusion and future work, appendices.
+4. No development trail in the main text: no code line citations (`M:1118`, `M:380-384`), no file names
+   (`SetpointExtrapolation.hpp`), no decision ids (`D-F7-GROUND`), no session numbers or Q-numbers. Name things by
+   what they do; use PX4 parameter and uORB names only where a user needs them. Traceability (code map, decision ids,
+   history and errata) goes to one appendix at the end. Keep every figure and number traceable to the existing
+   chapters and results; do not change a verdict or a value.
+5. The existing markdown chapters stay as the technical source; do not delete them.
+6. Done when the PDF builds from a clean checkout, a fresh-eyes review agent (no project context) reports it
+   readable and finds no development-trail references in the main text, and you have checked every page visually
+   (rendered images). Then recreate `DONE`.
+7. Addendum (owner, 2026-11-28 09:45; applies to work already done under this directive too). Review agents verify
+   at three levels, each by an agent that did not write the part it reviews:
+   a. Every section, as it is written: technical correctness against the markdown chapters, committed results and
+      firmware (each number, equation, sign convention, unit, parameter value and verdict checked at its source),
+      plus clarity and the no-development-trail rule.
+   b. Every chapter, once complete: reasoning flows, no gaps or contradictions with other chapters, figures/tables/
+      equations correct, referenced and explained in the text.
+   c. The final PDF: one fresh-eyes reader with no project context (readability, logic), and one technical reviewer
+      for the whole document (consistency of numbers, notation and cross-references across chapters, layout on
+      every rendered page).
+   Fix every finding, or record why it is rejected, then re-review the fixed parts. Commit the review reports under
+   `report/pdf/reviews/`. `DONE` only once all three levels report no open finding.
