@@ -35,6 +35,8 @@ then 08+09+A+B; section and chapter review merged in one agent for 08, 09, A, B;
 Rejected: merging the fresh-eyes reader with the whole-PDF technical reviewer (directive 7c names two reviewers).
 S263: supervisor route-check request (GATE_STATUS unchanged 3 sessions) answered by RC262 (one session old): the
 file cannot change under the presentation-only directive (G8 stays PASSED, verdicts frozen); no new check bought.
+S264 (supervisor again, 4 sessions): same answer. Blocker of DONE = directive 7a/7b/7c reviews + page check only.
+New cut: ch06+07 also get one merged 7a+7b review agent; 7b of 01/02/03/05 merged with the ch01/02+05 re-review.
 
 ## Notes
 - G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
@@ -75,6 +77,12 @@ follow-ups: ch05 notation (ubar, plain nu/omega/u per axis), W_MAX 0 blocks armi
 take-off; main.tex abstract ("no vehicle-specific assumption", "measured in flight") and uncited px4guide; ch02
 airframe table ~6 pt overfull; ch06 must list owner test amendments; (3) ch06+07 write, then
 08+09+A+B. Agents build into /tmp/indi_pdf_*, never build/ (parallel builds clash).
+S264 in flight: (a) re-review ch01/02/05 fixes + 7b of 01/02/03/05 -> reviews/ch01_02_05_rereview_ch_review.md;
+(b) ch06+07 written -> chapters/06_validation.tex, 07_limits.tex, NOTES_G.md. If cut: re-launch the missing one.
+(a) DONE: 40/41 fixes closed, 0 BLOCKER, 3 MAJOR (M1 ch03 "no integrator" vs blend state; M2 "final configuration"
+undefined, ch01:105/108 clash; M3 abstract "measured in flight"/all modes), 13 actionable MINOR (f_c, c, omega
+clashes; ACT_TC ch02:143; C2 latency; G2 vs C2 naming; L_rate undefined; px4guide uncited; FIGURES.md 250 Hz). Next:
+one fix agent (sonnet-medium) for these. (b) was still running at session cut: check its files are complete.
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
