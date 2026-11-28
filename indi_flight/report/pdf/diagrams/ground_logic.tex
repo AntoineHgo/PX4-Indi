@@ -1,0 +1,19 @@
+% Ground, take-off ramp, flight and landing logic of the outer loop. Bare tikzpicture.
+\begin{tikzpicture}[x=1cm,y=1cm, node distance=0.9cm]
+  \node[state, minimum width=2.6cm, minimum height=1.9cm] (g) at (1.3,0)
+    {\textbf{Ground}\\[-1pt]\scriptsize modelled force\\[-2pt]\scriptsize minimum thrust\\[-2pt]\scriptsize blend frozen};
+  \node[state, minimum width=2.6cm, minimum height=1.9cm] (r) at (5.2,0)
+    {\textbf{Take-off ramp}\\[-1pt]\scriptsize modelled force\\[-2pt]\scriptsize thrust rises by\\[-2pt]\scriptsize model inversion};
+  \node[stateflight, minimum width=2.6cm, minimum height=1.9cm] (f) at (9.1,0)
+    {\textbf{Flight}\\[-1pt]\scriptsize measured force and\\[-2pt]\scriptsize rotor speed\\[-2pt]\scriptsize blend active};
+  \node[state, minimum width=2.6cm, minimum height=1.9cm] (l) at (13.0,0)
+    {\textbf{Touch-down}\\[-1pt]\scriptsize modelled force\\[-2pt]\scriptsize blend held\\[-2pt]\scriptsize landed flags};
+  \draw[signal] (g) -- node[lab, above] {take-off} (r);
+  \draw[signal] (r) -- node[lab, above] {ramp done} (f);
+  \draw[signal] (f) -- node[lab, above] {landing} (l);
+  \draw[signal] (l.south) -- ++(0,-0.9) -| node[lab, below, pos=0.25] {landed, disarmed} (g.south);
+  \node[lab, anchor=north west, text width=6cm, align=left] at (-0.2,-3.2)
+     {Edge ramp to flight: force source switches from modelled to measured; measured step at most 10\,\% of hover thrust.};
+  \node[lab, anchor=north east, text width=6cm, align=left] at (14.3,-3.2)
+     {Rate feed-forward $\boldsymbol\omega_{\mathrm{ff}}$ valid in flight only. Arm and disarm restart the filter and blend states.};
+\end{tikzpicture}

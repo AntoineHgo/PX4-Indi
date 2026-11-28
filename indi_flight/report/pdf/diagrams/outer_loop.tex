@@ -1,0 +1,64 @@
+% Acceleration-loop INDI block diagram. Bare tikzpicture.
+\begin{tikzpicture}[x=1cm,y=1cm]
+  % ---------- forward path (y = 0) ----------
+  \node[block, minimum width=3.2cm, minimum height=1.7cm] (casc) at (1.7,0)
+     {Position and velocity\\cascade (no integrator)\\[-1pt]\scriptsize $\mathbf{p}_{\mathrm{ref}},\mathbf{v}_{\mathrm{ref}},\mathbf{a}_{\mathrm{ff}}\mapsto\mathbf{a}_{\mathrm{ref}}$};
+  \node[sum] (sT) at (4.0,0) {};
+  \node[sum] (sa) at (5.8,0) {};
+  \node[block, minimum width=2.6cm, minimum height=1.3cm] (sat) at (8.3,0)
+     {Saturation\\[-1pt]\scriptsize vertical priority,\\[-2pt]\scriptsize tilt limit};
+  \node[block, minimum width=3.0cm, minimum height=1.3cm] (split) at (11.9,0)
+     {Thrust vector to\\attitude and thrust\\[-1pt]\scriptsize $\mathbf{q}_d$,\; $T_c=\lVert\mathbf{T}_c\rVert/g_t$};
+
+  \draw[signal] (-0.9,0.5) -- node[lab, above, pos=0.15] {$\mathbf{a}_{\mathrm{ff}}$} ($(casc.west)+(0,0.5)$);
+  \draw[signal] (-0.9,0)   -- node[lab, above, pos=0.15] {$\mathbf{v}_{\mathrm{ref}}$} (casc.west);
+  \draw[signal] (-0.9,-0.5) -- node[lab, above, pos=0.15] {$\mathbf{p}_{\mathrm{ref}}$} ($(casc.west)+(0,-0.5)$);
+  \draw[measured] ($(casc.south)+(0,-0.9)$) -- node[lab, right, text=indiorange] {$\mathbf{p},\mathbf{v}$ (estimator)} (casc.south);
+  \draw[signal] (casc.east) -- node[lab, above, pos=0.3] {$\mathbf{a}_{\mathrm{ref}}$} (sT.west);
+  \draw[signal] (sT) -- (sa);
+  \draw[signal] (sa) -- (sat.west);
+  \draw[signal] (sat) -- node[lab, above] {$\mathbf{T}_c$} (split);
+  \node[sgn] at ($(sT.west)+(-0.12,-0.17)$) {$+$};
+  \node[sgn] at ($(sT.south)+(0.17,-0.12)$) {$+$};
+  \node[sgn] at ($(sa.west)+(-0.12,-0.17)$) {$+$};
+  \node[sgn] at ($(sa.south)+(0.17,-0.12)$) {$-$};
+
+  % ---------- jerk feed-forward (y = 2.2) ----------
+  \node[block, minimum width=4.4cm] (jerk) at (6.6,2.2)
+     {Jerk feed-forward\\[-1pt]\scriptsize $\boldsymbol\omega_{\mathrm{ff}}=(\mathbf{j}\!\cdot\!\mathbf{y}_b,\,-\mathbf{j}\!\cdot\!\mathbf{x}_b)/c$,\; $\mathbf{j}=\dot{\mathbf{a}}_{\mathrm{ff}}$ filtered};
+  \node[junction] (ja) at (-0.5,0.5) {};
+  \draw[signal] (ja) |- (jerk.west);
+  \draw[signal] (jerk.east) -- ++(0.8,0) node[lab, anchor=west, text width=2.6cm, align=left] {$\boldsymbol\omega_{\mathrm{ff}}$ to rate loop};
+
+  % ---------- inner loop plant (y = -2.8) ----------
+  \node[plant, minimum width=2.4cm, minimum height=1.3cm] (plant) at (11.9,-2.8)
+     {Attitude loop,\\rate loop,\\airframe};
+  \draw[signal] (split.south -| plant.north) -- node[lab, right, pos=0.5] {$\mathbf{q}_d$, $T_c$} (plant.north);
+
+  % ---------- measured specific force path ----------
+  \node[switch, minimum width=1.6cm, minimum height=1.1cm] (sw) at (5.8,-2.8) {Force\\source};
+  \node[measblock, minimum width=2.8cm] (fil) at (8.6,-2.8)
+     {Specific force\\[-1pt]\scriptsize $\mathbf{a}_f=R\,\mathbf{f}_{b,f}+\mathbf{g}$};
+  \draw[measured] (plant.west) -- node[lab, above, text=indiorange] {$\mathbf{f}_b$} (fil.east);
+  \draw[measured] (fil.west) -- (sw.east);
+  \draw[signal] (sw.north) -- node[lab, right, pos=0.5] {$\mathbf{a}_f$} (sa.south);
+  \node[badge] at (fil.north west) {H};
+
+  % ---------- thrust state ----------
+  \node[measblock, minimum width=3.0cm] (um) at (9.6,-5.0)
+     {Measured thrust\\[-1pt]\scriptsize mean $u_i=(\Omega_i/\Omega_{\max})^2$};
+  \node[modblock, minimum width=2.5cm] (uo) at (12.9,-5.0)
+     {Modelled thrust\\[-1pt]\scriptsize from $T_c$};
+  \draw[measured] (10.9,-3.45) -- node[lab, right, text=indiorange, pos=0.5] {$\Omega_i$} (10.9,-4.52);
+  \draw[signal] (13.2,-0.65) -- node[lab, right, pos=0.5] {$T_c$} (13.2,-4.52);
+  \node[badge] at (um.north west) {H};
+  \node[badge] at (uo.north west) {H};
+  \node[block, minimum width=5.8cm] (bl) at (6.4,-7.2)
+     {Thrust state: measured/modelled blend\\[-1pt]\scriptsize $\mathbf{T}_f=-g_t\,(u_{\mathrm{meas},f}+b)\,\mathbf{z}_b$,\; $b=\mathrm{LP}(u_{\mathrm{mod},f}-u_{\mathrm{meas},f})$};
+  \draw[measured] (8.8,-5.48) -- (8.8,-6.7);
+  \draw[modelled] (uo.south) -- (12.9,-7.2) -- (bl.east);
+  \draw[signal] (4.0,-6.7) -- node[lab, left, pos=0.5] {$\mathbf{T}_f$} (sT.south);
+  \draw[modelled] (5.8,-6.7) -- node[lab, left, pos=0.5] {modelled force} (sw.south);
+  \node[lab, align=left, text width=3.3cm, anchor=north west] at (-0.8,-4.0)
+     {Force source: measured in flight; modelled on the ground, in the take-off ramp and when sensor data is stale. Blend frozen on the ground, in the ramp and at saturation.};
+\end{tikzpicture}

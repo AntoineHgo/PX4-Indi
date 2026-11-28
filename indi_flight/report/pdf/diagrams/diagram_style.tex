@@ -1,0 +1,59 @@
+% Shared TikZ styles for the INDI report diagrams.
+% Needs tikz with libraries: positioning, arrows.meta, calc, fit, backgrounds, shapes.geometric
+\providecolor{indiblue}{HTML}{1F4E79}
+\providecolor{indiorange}{HTML}{C55A11}
+\providecolor{indigrey}{HTML}{595959}
+\providecolor{indilight}{HTML}{DCE6F2}
+\providecolor{indigreen}{HTML}{548235}
+\providecolor{indired}{HTML}{A50021}
+
+\providecommand{\indimono}[1]{{\ttfamily\scriptsize #1}}
+
+\tikzset{
+  % ---- text helpers ----
+  dtext/.style   = {font=\sffamily\footnotesize, align=center},
+  mono/.style    = {font=\ttfamily\scriptsize},
+  lab/.style     = {font=\sffamily\scriptsize, text=indigrey, inner sep=1.2pt},
+  labm/.style    = {font=\ttfamily\fontsize{6.5}{7.5}\selectfont, text=indigrey, inner sep=1.2pt},
+  sgn/.style     = {font=\sffamily\scriptsize\bfseries, inner sep=0.8pt, text=indiblue},
+  % ---- arrows ----
+  >=Stealth,
+  signal/.style  = {-{Stealth[length=1.9mm,width=1.5mm]}, line width=0.5pt, draw=indiblue},
+  measured/.style= {-{Stealth[length=1.9mm,width=1.5mm]}, line width=0.5pt, draw=indiorange},
+  modelled/.style= {-{Stealth[length=1.9mm,width=1.5mm]}, line width=0.5pt, draw=indigrey, dash pattern=on 3pt off 2pt},
+  plain/.style   = {line width=0.5pt, draw=indiblue},
+  % ---- blocks ----
+  block/.style   = {draw=indiblue, fill=indilight, line width=0.5pt, rounded corners=2.5pt,
+                    minimum height=0.95cm, inner sep=3pt, dtext},
+  plant/.style   = {draw=indigrey, fill=indigrey!14, line width=0.5pt, rounded corners=2.5pt,
+                    minimum height=0.95cm, inner sep=3pt, dtext},
+  measblock/.style = {draw=indiorange, fill=indiorange!10, line width=0.5pt, rounded corners=2.5pt,
+                    minimum height=0.95cm, inner sep=3pt, dtext},
+  modblock/.style  = {draw=indigrey, fill=white, line width=0.5pt, rounded corners=2.5pt, dash pattern=on 3pt off 2pt,
+                    minimum height=0.95cm, inner sep=3pt, dtext},
+  sum/.style     = {circle, draw=indiblue, fill=white, line width=0.5pt, inner sep=0pt,
+                    minimum size=0.55cm, font=\sffamily\scriptsize},
+  switch/.style  = {draw=indiblue, fill=white, line width=0.5pt, rounded corners=2.5pt,
+                    minimum height=0.8cm, inner sep=3pt, dtext},
+  junction/.style= {circle, fill=indiblue, inner sep=0pt, minimum size=1.5mm},
+  junctionm/.style={circle, fill=indiorange, inner sep=0pt, minimum size=1.5mm},
+  badge/.style   = {circle, draw=indigreen, fill=white, text=indigreen, line width=0.5pt, inner sep=0.5pt,
+                    minimum size=0.42cm, font=\sffamily\scriptsize\bfseries},
+  % ---- architecture ----
+  module-stock/.style = {draw=indigrey, fill=indigrey!10, line width=0.5pt, rounded corners=2.5pt,
+                    inner sep=3pt, align=center, font=\sffamily\footnotesize, minimum height=1.35cm},
+  module-indi/.style  = {draw=indiblue, fill=indilight, line width=1.1pt, rounded corners=2.5pt,
+                    inner sep=3pt, align=center, font=\sffamily\footnotesize, minimum height=1.35cm},
+  module-kept/.style  = {draw=indigrey, fill=indigrey!10, line width=0.5pt, rounded corners=2.5pt,
+                    inner sep=3pt, align=center, font=\sffamily\footnotesize, minimum height=1.0cm},
+  source/.style  = {draw=indigrey, fill=white, line width=0.5pt, rounded corners=6pt,
+                    inner sep=3pt, align=center, font=\sffamily\footnotesize, minimum height=0.85cm},
+  group/.style   = {draw=indigrey, line width=0.4pt, dash pattern=on 2pt off 2pt, rounded corners=4pt,
+                    inner sep=0pt},
+  grouplabel/.style = {font=\sffamily\scriptsize\itshape, text=indigrey, inner sep=2pt},
+  % ---- state diagrams ----
+  state/.style   = {draw=indiblue, fill=indilight, line width=0.5pt, rounded corners=6pt,
+                    minimum height=1.0cm, inner sep=3pt, dtext},
+  stateflight/.style = {draw=indigreen, fill=indigreen!12, line width=0.5pt, rounded corners=6pt,
+                    minimum height=1.0cm, inner sep=3pt, dtext},
+}

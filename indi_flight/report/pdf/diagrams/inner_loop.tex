@@ -1,0 +1,67 @@
+% Rate-loop INDI block diagram (per axis). Bare tikzpicture.
+\begin{tikzpicture}[x=1cm,y=1cm]
+  % ---------- forward path (row y = 0) ----------
+  \node[sum] (s1) at (1.3,0) {};
+  \node[block, minimum width=1.2cm] (K) at (3.0,0) {Gain\\$K$};
+  \node[sum] (s2) at (4.9,0) {};
+  \node[block, minimum width=3.0cm, minimum height=1.1cm] (inv) at (7.35,0)
+     {Inversion $G_1^{-1}$\\[-1pt]\scriptsize(yaw: $(G_1{+}G_2/T_s)^{-1}$)};
+  \node[sum] (s3) at (9.75,0) {};
+  \node[block, minimum width=1.5cm] (sat) at (11.45,0) {Saturation\\[-1pt]\scriptsize $[-1,1]$};
+
+  \draw[signal] (-0.5,0) -- node[lab, above, pos=0.2] {$\boldsymbol\omega_{\mathrm{ref}}$} (s1.west);
+  \node[junction] (jr) at (0.3,0) {};
+  \draw[signal] (s1) -- (K.west);
+  \draw[signal] (K) -- node[lab, below] {$\boldsymbol\nu$} (s2);
+  \draw[signal] (s2) -- (inv.west);
+  \draw[signal] (inv) -- node[lab, below] {$\Delta u$} (s3);
+  \draw[signal] (s3) -- (sat);
+  \node[sgn] at ($(s1.west)+(-0.12,0.16)$) {$+$};
+  \node[sgn] at ($(s1.south)+(0.17,-0.12)$) {$-$};
+  \node[sgn] at ($(s2.west)+(-0.12,0.16)$) {$+$};
+  \node[sgn] at ($(s2.north)+(0.17,0.12)$) {$+$};
+  \node[sgn] at ($(s2.south)+(0.17,-0.12)$) {$-$};
+  \node[sgn] at ($(s3.west)+(-0.12,0.16)$) {$+$};
+  \node[sgn] at ($(s3.south)+(0.17,-0.12)$) {$+$};
+
+  % ---------- lead row (y = 2.2) ----------
+  \node[block, minimum width=2.8cm] (lead) at (4.9,2.2)
+     {Rate prediction lead\\[-1pt]\scriptsize $c\,\dot{\boldsymbol\omega}_{\mathrm{ref},f}$, $c=K\tau_a$};
+  \draw[signal] (jr) |- (lead.west);
+  \draw[signal] (lead) -- (s2);
+  \node[block, minimum width=2.6cm] (g2) at (8.3,2.2)
+     {Yaw spin-up term\\[-1pt]\scriptsize $G_2/T_s\cdot\Delta u_{\mathrm{prev}}$};
+  \draw[signal] (g2.south) -- (g2.south |- inv.north);
+
+  % ---------- plant row (y = -2.7), flows right to left ----------
+  \node[block, minimum width=2.4cm] (alloc) at (12.9,-2.7) {Control\\allocation};
+  \node[plant, minimum width=2.2cm] (plant) at (9.5,-2.7) {Rotors,\\airframe};
+  \node[block, minimum width=2.9cm] (chain) at (4.9,-2.7)
+     {Rate filter chain\\[-1pt]\scriptsize $\dot{\boldsymbol\omega}_f$ from gyro};
+  \draw[signal] (sat.east) -| node[lab, above, pos=0.3] {$u_c$} (alloc.north);
+  \draw[signal] (alloc.west) -- node[lab, above] {motors} (plant.east);
+  \draw[signal] (plant.west) -- node[lab, above] {$\boldsymbol\omega$} (chain.east);
+  \draw[signal] (chain.north) -- node[lab, right, pos=0.55] {$(1{+}c)\,\dot{\boldsymbol\omega}_f$} (s2.south);
+  \draw[signal] (chain.west) -| node[lab, above, pos=0.15] {$\boldsymbol\omega$} (s1.south);
+  \node[badge] at (chain.north west) {H};
+
+  % ---------- actuator state row (y = -5.0) ----------
+  \node[measblock, minimum width=3.0cm] (meas) at (9.5,-5.0)
+     {Measured rotor state\\[-1pt]\scriptsize $u_i=(\Omega_i/\Omega_{\max})^2$ $\rightarrow u_{\mathrm{meas}}$\\[-1pt]\scriptsize delay, filter $H$};
+  \node[modblock, minimum width=2.6cm] (model) at (12.9,-5.0)
+     {Modelled actuator\\[-1pt]\scriptsize 1st order, $\tau_a$\\[-1pt]\scriptsize delay, filter $H$};
+  \draw[measured] (plant.south) -- node[lab, left, text=indiorange] {$\Omega_i$} (plant.south |- meas.north);
+  \draw[signal] (alloc.south) -- node[lab, right] {allocated} (alloc.south |- model.north);
+  \node[badge] at (meas.north west) {H};
+  \node[badge] at (model.north west) {H};
+
+  % ---------- blend (y = -7.2) ----------
+  \node[block, minimum width=4.6cm] (blend) at (10.7,-7.2)
+     {Actuator state: measured/modelled blend\\[-1pt]\scriptsize $u_f=u_{\mathrm{meas}}+b,\; b=\mathrm{LP}(u_{\mathrm{mod}}-u_{\mathrm{meas}})$};
+  \draw[measured] (meas.south) -- (meas.south |- blend.north);
+  \draw[modelled] (model.south) -- (model.south |- blend.north);
+  \draw[signal] (11.3,-6.67) -- (11.3,-1.15) -| (s3.south);
+  \node[lab, anchor=west] at (11.3,-1.55) {$u_f$};
+  \node[block, draw=none, fill=none, text width=5cm, align=left, font=\sffamily\scriptsize, text=indigrey, anchor=north west] at (0,-6.4)
+     {Per axis, normalised $u\in[-1,1]$.\\ Landed: $u_f$ held at 0.};
+\end{tikzpicture}

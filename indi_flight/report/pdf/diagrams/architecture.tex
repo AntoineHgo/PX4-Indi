@@ -1,0 +1,82 @@
+% Architecture: PX4 multicopter chain with stock and INDI stacks. Bare tikzpicture.
+\begin{tikzpicture}[x=1cm,y=1cm]
+  % --- setpoint sources ---
+  \node[source, minimum width=3.1cm] (s1) at (-5.1,0)  {Manual,\\ stabilised, acro};
+  \node[source, minimum width=3.1cm] (s2) at (-1.7,0)  {Altitude,\\ position hold};
+  \node[source, minimum width=3.1cm] (s3) at ( 1.7,0)  {Mission, RTL,\\ land, takeoff};
+  \node[source, minimum width=3.1cm] (s4) at ( 5.1,0)  {Offboard};
+  \node[module-kept, minimum width=6.5cm] (fmm) at (0,-1.7)
+    {Setpoint generation\\[-1pt]\indimono{flight\_mode\_manager}};
+  \draw[signal] (s2.south) -- (s2.south |- fmm.north);
+  \draw[signal] (s3.south) -- (s3.south |- fmm.north);
+
+  % --- position / acceleration layer ---
+  \node[module-stock, minimum width=5.9cm] (pos) at (-3.4,-4.5)
+    {Position and velocity PID,\\ thrust from hover model\\[-1pt]\indimono{mc\_pos\_control}};
+  \node[module-indi, minimum width=5.9cm] (ipos) at (3.4,-4.5)
+    {\textbf{Acceleration INDI} (outer loop)\\ thrust from measured acceleration\\[-1pt]\indimono{mc\_indi\_pos\_control}};
+  \node[fit=(pos)(ipos), group, inner xsep=0.25cm, inner ysep=0.42cm] (posg) {};
+  \node[grouplabel, anchor=north west] at (posg.north west) {Position and acceleration layer};
+  \node[labm, anchor=south east] at (pos.south east) {MC\_INDI\_POS\_EN = 0};
+  \node[labm, anchor=south east] at (ipos.south east) {MC\_INDI\_POS\_EN = 1};
+
+  \draw[signal] (fmm.south) -- node[lab, right, pos=0.45] {\indimono{trajectory\_setpoint}} (fmm.south |- posg.north);
+  \draw[signal] (s4.south) -- node[lab, right, pos=0.5, align=left] {\indimono{trajectory\_}\\[-2pt]\indimono{setpoint}} (s4.south |- posg.north);
+
+  % --- attitude ---
+  \node[module-kept, minimum width=5.8cm] (att) at (0,-7.55)
+    {Attitude P loop (kept)\\[-1pt]\indimono{mc\_att\_control}};
+  \draw[signal] (pos.south) -- node[lab, left, pos=0.5] {\indimono{vehicle\_attitude\_setpoint}} ($(pos.south |- att.north)$);
+  \draw[signal] (ipos.south) -- ($(ipos.south |- att.north)$);
+  % manual to attitude (left edge route)
+  \draw[signal] (s1.west) -- ++(-0.3,0) coordinate (m1) |- (att.west);
+
+  % --- rate layer ---
+  \node[module-stock, minimum width=5.9cm] (rate) at (-3.4,-10.1)
+    {Rate PID\\[-1pt]\indimono{mc\_rate\_control}};
+  \node[module-indi, minimum width=5.9cm] (irate) at (3.4,-10.1)
+    {\textbf{Rate INDI} (inner loop)\\ torque from measured $\dot{\boldsymbol\omega}$\\[-1pt]\indimono{mc\_indi\_rate\_control}};
+  \node[fit=(rate)(irate), group, inner xsep=0.25cm, inner ysep=0.42cm] (rateg) {};
+  \node[grouplabel, anchor=north west] at (rateg.north west) {Rate layer};
+  \node[labm, anchor=south east] at (rate.south east) {MC\_INDI\_EN = 0};
+  \node[labm, anchor=south east] at (irate.south east) {MC\_INDI\_EN = 1};
+  \draw[signal] ($(att.south)+(-2.2,0)$) -- ($(att.south |- rateg.north)+(-2.2,0)$);
+  \node[lab, align=center] at ($(att.south)+(0,-0.45)$) {\indimono{vehicle\_rates\_}\\[-2pt]\indimono{setpoint}};
+  \node[lab, rotate=90, anchor=south] at ($(m1)+(-0.12,-5.5)$) {\indimono{manual\_control\_setpoint}: stabilised to attitude, acro to rate};
+  \draw[signal] ($(att.south)+(2.2,0)$) -- ($(att.south |- rateg.north)+(2.2,0)$);
+  % acro route
+  \draw[signal] (m1) -- (m1 |- rateg.west) -- (rateg.west);
+  % jerk feed-forward from INDI pos to INDI rate
+  \draw[signal] ($(ipos.south)+(1.9,0)$) -- node[lab, right, align=left, pos=0.5] {\indimono{indi\_rate\_}\\[-2pt]\indimono{feedforward}} ($(ipos.south |- rateg.north)+(1.9,0)$);
+
+  % --- allocator, motors ---
+  \node[module-kept, minimum width=7.0cm, minimum height=0.9cm] (alloc) at (0,-12.9)
+    {Control allocation (kept)\\[-1pt]\indimono{control\_allocator}};
+  \draw[signal] (rate.south) -- node[lab, left] {\indimono{vehicle\_torque\_setpoint}} (rate.south |- alloc.north);
+  \draw[signal] (irate.south) -- node[lab, right] {\indimono{vehicle\_torque\_setpoint}} ($(irate.south |- alloc.north)$);
+  \draw[signal] ($(irate.south |- alloc.north)+(-2.4,0)$) -- node[lab, left, pos=0.5] {\indimono{unallocated\_torque}} ($(irate.south)+(-2.4,0)$);
+  \node[plant, minimum width=5.9cm] (air) at (-3.4,-15.0)
+    {ESCs, motors, airframe};
+  \node[measblock, minimum width=5.9cm] (meas) at (3.4,-15.0)
+    {Measurements: IMU, EKF2,\\ rotor speed telemetry};
+  \draw[signal] (air.north |- alloc.south) -- node[lab, left] {\indimono{actuator\_motors}} (air.north);
+  \draw[measured] (air.east) -- (meas.west);
+  % measurement bus
+  \coordinate (bus0) at (7.0,-15.0);
+  \draw[measured] (meas.east) -- (bus0) -- (7.0,-10.1) coordinate (b2);
+  \draw[measured] (b2) -- (7.0,-4.5) coordinate (b3);
+  \draw[measured] (b2) -- (irate.east);
+  \draw[measured] (b3) -- (ipos.east);
+  \node[junctionm] at (b2) {};
+  \node[lab, rotate=90, anchor=north, text=indiorange] at (7.08,-12.2) {\indimono{esc\_status, vehicle\_acceleration, vehicle\_angular\_velocity}};
+
+  % --- legend ---
+  \node[module-kept, minimum height=0.5cm, minimum width=0.9cm, inner sep=1pt] (l1) at (-6.4,-16.9) {};
+  \node[lab, anchor=west] at (l1.east) {stock PX4 module};
+  \node[module-indi, minimum height=0.5cm, minimum width=0.9cm, inner sep=1pt] (l2) at (-3.3,-16.9) {};
+  \node[lab, anchor=west] at (l2.east) {INDI module (new)};
+  \draw[measured] (-0.1,-16.9) -- ++(0.9,0) node[lab, anchor=west, right] {measured signal};
+  \draw[signal] (2.9,-16.9) -- ++(0.9,0) node[lab, anchor=west, right] {setpoint, command};
+  \node[lab, anchor=west, text width=14cm, align=left] at (-7.0,-17.6)
+    {Also kept and read by the INDI modules: \texttt{mc\_hover\_thrust\_estimator}, \texttt{land\_detector}, \texttt{commander}.};
+\end{tikzpicture}

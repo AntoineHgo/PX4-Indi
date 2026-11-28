@@ -1,0 +1,24 @@
+\documentclass[10pt]{article}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{fontspec}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,calc,fit,backgrounds,shapes.geometric}
+\definecolor{indiblue}{HTML}{1F4E79}
+\definecolor{indiorange}{HTML}{C55A11}
+\definecolor{indigrey}{HTML}{595959}
+\definecolor{indilight}{HTML}{DCE6F2}
+\definecolor{indigreen}{HTML}{548235}
+\definecolor{indired}{HTML}{A50021}
+\input{diagram_style.tex}
+\pagestyle{empty}
+\newcommand{\showdiagram}[2]{%
+  \clearpage\noindent{\sffamily #2}\par\medskip
+  \noindent\fbox{\parbox{15cm}{\centering\vspace{2mm}\input{#1}\vspace{2mm}}}\par}
+\begin{document}
+\showdiagram{architecture.tex}{architecture}
+\IfFileExists{inner_loop.tex}{\showdiagram{inner_loop.tex}{inner loop}}{}
+\IfFileExists{outer_loop.tex}{\showdiagram{outer_loop.tex}{outer loop}}{}
+\IfFileExists{actuator_state.tex}{\showdiagram{actuator_state.tex}{actuator state}}{}
+\IfFileExists{ground_logic.tex}{\showdiagram{ground_logic.tex}{ground logic}}{}
+\end{document}
