@@ -46,8 +46,11 @@ Route check: RC256 current (S257 supervisor request answered by RC256, one sessi
 - Before editing any file under bench/, check no chain pins it (chain_freeze.sha256).
 
 ## Tasks in flight
-S260 PDF agents: A skeleton (report/pdf/{main,preamble}.tex, build.sh, README, chapters 00-02), B figures
-(bench/report_figs/, report/pdf/figures/, FIGURES.md), C diagrams (report/pdf/diagrams/). Notes in report/pdf/NOTES_*.md. Firmware after FREEZE-10: e6af4b6b0d, ac744d360e (R1 arming check, owner-lifted freeze, no gate row
+S260: A skeleton DONE, committed 1258f61ac1 (23 pages, `report/pdf/build.sh [--no-figs]`; chapters 03-09, A, B
+stubs; NOTES_A.md lists unverified airframe-table units). Still running at S260 end (if cut, check files, finish or
+relaunch): B figures (bench/report_figs/, report/pdf/figures/, FIGURES.md, maybe results/report_traces/), C diagrams
+(report/pdf/diagrams/, CAPTIONS.md). Next: chapters 03-05 agent (inner, outer, analysis) from report/*.md, using
+CAPTIONS.md/FIGURES.md. Cost: S260 three sonnet-high agents ~ $1+ each: run at most 2 per session. Firmware after FREEZE-10: e6af4b6b0d, ac744d360e (R1 arming check, owner-lifted freeze, no gate row
 invalidated). Commit trailer: AGENTS.md wins: `Assisted-by:` only.
 
 ## Open problems

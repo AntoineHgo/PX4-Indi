@@ -97,3 +97,4 @@ Moved out of STATE.md on 2026-11-17 (token economy, owner).
 - S165: a G2 cell (rate or outer, --speed 4, serial) flies and scores in ~1 min wall for ~$0.03 of context; a sonnet model x-check over existing cell tables cost ~$0.35 in 11 calls. Prefer flying a missing cell to arguing about it.
 
 - S243: a committed scorer change stopped a running chain (its chain_freeze.sha256 pins bench scripts). Rule: before editing any file under bench/, check no chain is running whose freeze file lists it; otherwise wait, or re-pin and resume deliberately. Cost: one stop and a resume agent.
+- S260 cost: sonnet-high report-writing agents (LaTeX template + 2 chapters, 48 calls, 7 min) ~$1 each; three in parallel spent ~$3 of a $6 cap. Size PDF chapter agents at 2 per session.
