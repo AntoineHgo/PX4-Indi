@@ -54,8 +54,11 @@ lists not-possible figs). B flagged source discrepancies to settle before the ch
 "4 of 8" no -180 crossing vs 7/8 in scores; ch03 "item 2 fails 79 of 297" vs 79 failing runs, item 2 on 73; figure
 font DejaVu (Libertinus OTF is in texmf, point matplotlib at it); PID step trace from older indi_vs_pid flights. Next: chapters 03-05 agent (inner, outer, analysis) from report/*.md, using
 CAPTIONS.md/FIGURES.md. Cost: S260 three sonnet-high agents ~ $1+ each: run at most 2 per session.
-S261: agent D (sonnet medium) writes chapters/03_inner_loop.tex only, notes in pdf/NOTES_D.md. Then 7a section
-review of ch03 (and of S260 ch01/02 work, addendum 7 applies retroactively), then ch04, ch05 one per session. Firmware after FREEZE-10: e6af4b6b0d, ac744d360e (R1 arming check, owner-lifted freeze, no gate row
+S261: ch03 written 26a5a6a340 (NOTES_D.md 11 items); 7a review reviews/ch03_section_review.md: 0 BLOCKER, 2 MAJOR
+(R1 crossover 4 Hz vs 1.72 Hz -> blend corner 0.16 Hz vs 1.7 Hz; R2 ch07 stub must cover sat+weak motor,
+telemetry-loss fallback, yaw G1 disagreement, assumed rotor inertia behind G2_Y), 14 MINOR. Next: (1) sonnet-medium
+fix agent for R1 + MINORs (R2 carried to ch07 brief), re-review fixed parts; (2) 7a reviews of ch01/02 (addendum 7
+applies retroactively); (3) ch04, ch05, one chapter + its review per session (~$0.45 write, ~$0.5 review). Firmware after FREEZE-10: e6af4b6b0d, ac744d360e (R1 arming check, owner-lifted freeze, no gate row
 invalidated). Commit trailer: AGENTS.md wins: `Assisted-by:` only.
 
 ## Open problems

@@ -2254,3 +2254,4 @@ only (no gate verdict depends on it); not blocking other work.
   - Then update report (R1 text, 04_limits with limits (1)-(5) as they stand after B), docs, GATES G8 (drop
     "pending Q36", add the G7 note) and recreate DONE.
 - S260 2026-11-28: owner PDF directive acted on (D-OWNER-PDF, DONE removed); LaTeX template + ch 1-2 (1258f61ac1), 7 figure scripts + traces (b8f50cae60), 4 TikZ diagrams (d9277c0ec2). Gate progress: G8 PDF deliverable, steps 1 of 6 done (skeleton, figures, diagrams).
+- S261 2026-11-28: PDF ch03 inner loop written (26a5a6a340), section review 0 BLOCKER/2 MAJOR/14 MINOR, fixes next. Gate progress: G8 PDF directive step 2 (ch03 drafted and reviewed).
