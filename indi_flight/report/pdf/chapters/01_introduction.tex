@@ -1,0 +1,114 @@
+\chapter{Introduction}\label{ch:introduction}
+
+\section{The problem}\label{sec:problem}
+
+A multicopter is unstable without feedback control.
+The flight controller must hold the attitude, follow position commands and reject wind, all at once and on different airframes.
+PX4 does this with a cascade of proportional and PID controllers.
+Their gains must be tuned for each airframe.
+The tuning is valid for one mass, one motor and propeller set and one battery state.
+When the vehicle changes, for example a heavier payload or a weaker battery, the tuned gains no longer match.
+
+Incremental nonlinear dynamic inversion (INDI) offers another route.
+It does not model the whole vehicle.
+It measures how the vehicle actually accelerates and asks the actuators for the change that closes the remaining gap.
+The method has been flown on aircraft, micro air vehicles and quadrotors in aggressive flight~\cite{sieberling2010,smeur2016,smeur2018,tal2021}.
+This report describes an implementation inside PX4 that works in every multicopter flight mode and tests how far it can be trusted.
+
+\section{Why INDI}\label{sec:why}
+
+The idea is explained in \cref{ch:background}.
+Here we list what the designer gains.
+\begin{itemize}
+  \item \textbf{Few model parameters.}
+    The inner loop needs the control effectiveness of each axis and the time constant of the motors.
+    It needs no drag model and no model of the other forces and torques on the vehicle.
+  \item \textbf{Disturbance rejection without an observer.}
+    A disturbance shows up in the measured acceleration.
+    The next command corrects it, so no integrator and no disturbance estimator are required.
+  \item \textbf{One gain per axis.}
+    The loop bandwidth of each rate axis is set by one gain.
+  \item \textbf{Use of the rotor speed.}
+    Bidirectional DShot telemetry reports the speed of each rotor.
+    The controller knows what the motors really do, not only what was commanded.
+\end{itemize}
+There is a price.
+The law needs a clean, fast measurement of angular and linear acceleration, and it relies on the actuator model being close.
+Later chapters show where this price appears.
+
+\section{Goals}\label{sec:goals}
+
+The project has four goals.
+\begin{enumerate}
+  \item Build an INDI angular-rate controller and an INDI linear-acceleration controller for PX4.
+  \item Derive them from first principles and analyse their stability margins.
+  \item Test them against acceptance criteria that were written before the tests.
+  \item State clearly what does not work yet and what must be checked on real hardware.
+\end{enumerate}
+
+\section{Scope and constraints}\label{sec:scope}
+
+The following rules shaped the design.
+\begin{description}
+  \item[PID stays untouched and default.] The stock controllers are not modified.
+    The INDI modules are selected by two parameters, \param{MC_INDI_EN} for the rate loop and \param{MC_INDI_POS_EN} for the acceleration loop.
+    With both at zero the vehicle flies exactly as before.
+  \item[Every flight mode.] Manual, assisted, automatic and offboard modes all go through the same two modules.
+    There is no fall-back to the PID controller inside them.
+  \item[Generic design, one reference airframe.] The design makes no assumption specific to one vehicle.
+    The tests use one simulated 5-inch quadcopter of about 600~g (\cref{sec:airframe}).
+    Defaults for other vehicles are a stated limit.
+  \item[Simulation only.] All evidence comes from Gazebo software-in-the-loop (SITL) runs.
+    No real flight was made.
+    \Cref{ch:limits} and \cref{ch:bringup} say what this means.
+\end{description}
+
+\section{Acceptance criteria and results}\label{sec:criteria}
+
+Eight acceptance criteria were fixed before the tests.
+\Cref{tab:criteria} lists them with their verdicts.
+\Cref{ch:validation} gives the data, and \cref{ch:traceability} maps each criterion to its evidence.
+
+\begin{table}[tbp]
+\caption{The eight acceptance criteria and their verdicts.}\label{tab:criteria}
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}l l Y l@{}}
+\toprule
+ & Criterion & Meaning & Verdict \\
+\midrule
+C1 & Evidence integrity & The logs and scoring scripts can be trusted: complete logs, two independent scorers, recorded provenance of every run. & \passed \\
+C2 & Stability margins & Phase margin of at least 45 deg and gain margin of at least 6 dB, measured in flight by multisine injection, and clean attitude steps. & \passed \\
+C3 & Robustness & A campaign of 300 randomised simulated flights: no loss of control and no sustained oscillation. & \notpassed \\
+C4 & Noise and effort & Under three noise profiles, motor effort and command chatter stay within limits. & \passed \\
+C5 & Modes and transitions & All flight modes, mode switches, failsafes, kill and re-arm behave as specified. & \passed \\
+C6 & Defaults and tuning method & Starting from wrong physical parameters, the identification chain must lead to a controller that passes C2, C3 and C5. It requires C3. & \notpassed \\
+C7 & Code and upstream readiness & Stock modules untouched, unit tests, code format, flash size and review. & \passed \\
+C8 & Report & Design, analysis, evidence, limits and bring-up are written down. & \passed \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{keyresult}[Result in one paragraph]
+Six of eight criteria are met.
+C3 and C6 are not.
+The controllers are stable with good margins and handle noise, modes and transitions in simulation.
+They are not robust enough over the full randomised campaign.
+Two failures belong to INDI alone: PID flown on the same draws does not fail them.
+\end{keyresult}
+
+\section{Reading guide}\label{sec:guide}
+
+The chapters follow one line: problem, idea, design, analysis, validation, limits, bring-up.
+\begin{itemize}
+  \item \Cref{ch:background} explains the INDI principle, the PX4 control chain, the reference airframe and the notation.
+  \item \Cref{ch:inner_loop} and \cref{ch:outer_loop} give the design of the two controllers.
+  \item \Cref{ch:analysis} analyses stability and robustness.
+  \item \Cref{ch:validation} reports the simulation evidence against the criteria.
+  \item \Cref{ch:limits} states what does not work yet.
+  \item \Cref{ch:bringup} lists the checks needed before a first real flight.
+  \item \Cref{ch:conclusion} concludes.
+  \item The appendices list the parameters and map each criterion to its evidence.
+\end{itemize}
+A reader who knows control theory but not this project should read \cref{ch:background} first, then the chapters in order.
+A reader who only wants the verdicts can read \cref{sec:criteria} and \cref{ch:limits}.

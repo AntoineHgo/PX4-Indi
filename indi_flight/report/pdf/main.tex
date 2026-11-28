@@ -1,0 +1,100 @@
+\input{preamble}
+
+\begin{document}
+\pagenumbering{roman}
+
+% ---------------------------------------------------------------- title page
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[indiblue] (current page.north west) rectangle ([yshift=-2.2cm]current page.north east);
+  \fill[indiorange] ([yshift=-2.2cm]current page.north west) rectangle ([yshift=-2.35cm]current page.north east);
+\end{tikzpicture}\par
+\vspace*{3.2cm}
+\noindent{\raggedright
+{\sffamily\bfseries\fontsize{30}{36}\selectfont\color{indiblue} Incremental Nonlinear\\ Dynamic Inversion\\ for PX4 Multicopters\par}
+\vspace{1.2cm}
+{\sffamily\Large\color{indigrey} Inner rate loop and outer acceleration loop:\\ design, analysis and simulation validation\par}
+\vspace{2cm}
+\noindent{\color{indiorange}\rule{6cm}{1.2pt}}\par
+\vspace{0.6cm}
+{\sffamily\large\color{indigrey} Technical report\par}
+\vspace{0.2cm}
+{\sffamily\large\color{indigrey} November 2026\par}
+}
+\vfill
+{\small\color{indigrey}\raggedright
+Simulation study on a 5-inch reference quadcopter (Gazebo SITL). No real flight was performed.\par}
+\end{titlepage}
+
+% ---------------------------------------------------------------- abstract
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+Incremental nonlinear dynamic inversion (INDI) computes a small change of the actuator command from the measured angular or linear acceleration.
+It needs few model parameters and rejects disturbances without an estimator or an integrator.
+This report presents two INDI controllers for PX4 multicopters.
+The inner controller replaces the angular-rate controller, and the outer controller replaces the position controller's thrust step with a linear-acceleration loop.
+Both use the rotor speed that bidirectional DShot telemetry reports.
+They are selected by parameter, work in every flight mode, and leave the stock PID controllers untouched and as the default.
+
+The report states the problem, derives the controllers, gives the stability analysis and lists the evidence.
+All tests run in Gazebo software-in-the-loop simulation on one 5-inch quadcopter of about 600~g.
+Eight acceptance criteria were fixed before the tests.
+Six are met: evidence integrity, stability margins, noise and effort, modes and transitions, code and upstream readiness, and this report.
+Measured in flight, the outer loops keep a phase margin of at least 49.1 deg and the rate loop was checked at 46.9 deg, against a limit of 45 deg.
+
+Two criteria are not met.
+The 300-run randomised robustness campaign shows INDI-specific failures: a sustained 2~Hz pitch oscillation with slow motors, and a loss of control at a saturated, weak-motor corner where PID flies on.
+The tuning method, which depends on that campaign, therefore also fails.
+The report ends with a bring-up checklist for real hardware.
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\clearpage
+\pagenumbering{arabic}
+
+\include{chapters/01_introduction}
+\include{chapters/02_background}
+\include{chapters/03_inner_loop}
+\include{chapters/04_outer_loop}
+\include{chapters/05_analysis}
+\include{chapters/06_validation}
+\include{chapters/07_limits}
+\include{chapters/08_bringup}
+\include{chapters/09_conclusion}
+
+\appendix
+\include{chapters/A_parameters}
+\include{chapters/B_traceability}
+
+% ---------------------------------------------------------------- bibliography
+\begin{thebibliography}{9}
+\addcontentsline{toc}{chapter}{Bibliography}
+\bibitem{sieberling2010}
+S.~Sieberling, Q.~P.~Chu and J.~A.~Mulder.
+Robust flight control using incremental nonlinear dynamic inversion and angular acceleration prediction.
+\emph{Journal of Guidance, Control, and Dynamics}, 33(6), 2010.
+
+\bibitem{smeur2016}
+E.~J.~J.~Smeur, Q.~Chu and G.~C.~H.~E.~de~Croon.
+Adaptive incremental nonlinear dynamic inversion for attitude control of micro air vehicles.
+\emph{Journal of Guidance, Control, and Dynamics}, 39(3), 2016.
+
+\bibitem{smeur2018}
+E.~J.~J.~Smeur, G.~C.~H.~E.~de~Croon and Q.~Chu.
+Cascaded incremental nonlinear dynamic inversion for MAV disturbance rejection.
+\emph{Control Engineering Practice}, 73, 2018.
+
+\bibitem{tal2021}
+E.~Tal and S.~Karaman.
+Accurate tracking of aggressive quadrotor trajectories using incremental nonlinear dynamic inversion and differential flatness.
+\emph{IEEE Transactions on Control Systems Technology}, 29(3), 2021.
+
+\bibitem{px4guide}
+PX4 Autopilot Project.
+\emph{PX4 User Guide}, \url{https://docs.px4.io}.
+\end{thebibliography}
+
+\end{document}

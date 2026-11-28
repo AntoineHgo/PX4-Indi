@@ -1,0 +1,169 @@
+\chapter{Background}\label{ch:background}
+
+This chapter gives what the later chapters assume: the INDI principle, the reason to measure rotor speed, the PX4 control chain, the reference airframe and the notation.
+
+\section{The INDI principle}\label{sec:indi_principle}
+
+Consider the rotational dynamics of a multicopter.
+The angular acceleration $\dot{\vect\omega}$ depends on the actuator states $\mathbf{u}$ and on everything else, such as gyroscopic terms, drag and disturbances.
+Write this as
+\begin{equation}\label{eq:plant}
+  \dot{\vect\omega} = \mathbf{f}(\vect\omega,\,\text{disturbances}) + G_1\,\mathbf{u} + G_2\,\dot{\mathbf{u}} .
+\end{equation}
+The matrix $G_1$ is the control effectiveness: it says how much angular acceleration a change of the actuator states produces.
+The matrix $G_2$ describes the reaction torque of a rotor that spins up or down.
+It matters for the yaw axis only.
+The term $\mathbf{f}$ is unknown and changes with time.
+
+Instead of modelling $\mathbf{f}$, INDI measures it.
+Take the angular acceleration at the present time, filtered and written $\dot{\vect\omega}_f$, together with the actuator state $\mathbf{u}_f$ that produced it, filtered in the same way.
+\Cref{eq:plant} holds at the present time and again one sample later.
+When the sample period $\ts$ is short, $\mathbf{f}$ has changed little between the two.
+Subtract the two equations, and $\mathbf{f}$ drops out:
+\begin{equation}\label{eq:increment}
+  \dot{\vect\omega} = \dot{\vect\omega}_f + G_1\,\Delta\mathbf{u} + G_2\,\Delta\dot{\mathbf{u}} ,
+  \qquad \Delta\mathbf{u} = \mathbf{u}_c - \mathbf{u}_f .
+\end{equation}
+Here $\mathbf{u}_c$ is the new command.
+Ask for a desired angular acceleration $\vect\nu$, the virtual control, and set $\dot{\vect\omega}=\vect\nu$.
+Ignoring $G_2$ for roll and pitch, the incremental law follows:
+\begin{equation}\label{eq:indi_law}
+  \mathbf{u}_c = \mathbf{u}_f + G_1^{-1}\bigl(\vect\nu - \dot{\vect\omega}_f\bigr) .
+\end{equation}
+The virtual control comes from a simple proportional law on the rate error,
+\begin{equation}\label{eq:nu}
+  \vect\nu = K\,(\vect\omega_{\mathrm{ref}} - \vect\omega) ,
+\end{equation}
+where $K$ is a bandwidth gain in 1/s.
+If the actuators were instant and the measurement perfect, $\dot{\vect\omega}=\vect\nu$ would hold and the rate error would decay with the time constant $1/K$.
+
+\begin{keyresult}[What INDI buys]
+The law \cref{eq:indi_law} contains $G_1$ but no model of $\mathbf{f}$.
+Whatever $\mathbf{f}$ does, the measured $\dot{\vect\omega}_f$ already contains it.
+Disturbances are rejected through the measurement, with no observer and no integrator.
+\end{keyresult}
+
+Two practical facts follow.
+First, $\dot{\vect\omega}_f$ and $\mathbf{u}_f$ must pass through the same filters and delays.
+Otherwise their difference in \cref{eq:indi_law} carries a filter artefact instead of the true gap.
+Second, the real actuator is not instant.
+A motor follows its command with a lag, which we model as a first-order system with time constant $\tau_a$:
+\begin{equation}\label{eq:actuator}
+  \dot{u}_i = \frac{u_{c,i} - u_i}{\tau_a} .
+\end{equation}
+The inner-loop design (\cref{ch:inner_loop}) compensates this lag.
+The analysis (\cref{ch:analysis}) shows what remains.
+
+\section{Why the rotor speed matters}\label{sec:rotor_speed}
+
+The law \cref{eq:indi_law} needs the actuator state $\mathbf{u}_f$, that is, what the motors really produce.
+A command is not that.
+A weak motor, a sagging battery or a lag delivers less than commanded.
+If the controller uses the command in place of the state, it cannot see this gap.
+
+Bidirectional DShot lets each speed controller report the rotor speed $\Omega_i$.
+The controller then forms the normalised actuator state
+\begin{equation}\label{eq:u_state}
+  u_i = \left(\frac{\Omega_i}{\Omega_{\max}}\right)^{2} ,
+\end{equation}
+which is proportional to the thrust of rotor $i$, because thrust grows with the square of the rotor speed.
+With the control allocation geometry, the measured $u_i$ give the torque and the collective thrust $T$ that the rotors really delivered.
+The same measurement serves both loops.
+The INDI stack refuses to arm when rotor-speed telemetry or the rotor geometry is missing (\cref{ch:bringup}).
+
+\section{The PX4 control chain}\label{sec:px4_chain}
+
+PX4 controls a multicopter with a cascade, from the slow outer loop to the fast inner loop.
+\begin{enumerate}
+  \item The position and velocity controller turns a position target into a commanded linear acceleration.
+    It then converts this acceleration into a thrust vector, which fixes the collective thrust and the target attitude.
+  \item The attitude controller turns the target attitude into a body-rate setpoint.
+  \item The rate controller turns the rate setpoint into a normalised torque setpoint.
+  \item The control allocator maps torque and thrust to the motor commands.
+\end{enumerate}
+The estimator supplies position, velocity and attitude to the cascade.
+The gyroscope and the accelerometer feed the rate loop and, in the INDI case, the acceleration loop.
+
+\indidiagram{architecture}{The PX4 control chain with the two INDI modules. The rate module replaces the stock rate controller. The acceleration module replaces the stock thrust step of the position controller.}{fig:architecture}
+
+\Cref{fig:architecture} shows where the two INDI modules sit.
+\begin{itemize}
+  \item \module{mc_indi_rate_control} runs in place of \module{mc_rate_control}.
+    It applies \cref{eq:indi_law} per axis, at the rate of the gyroscope chain.
+    It is selected with \param{MC_INDI_EN}.
+  \item \module{mc_indi_pos_control} runs in place of \module{mc_pos_control}.
+    The stock position and velocity steps still produce an acceleration reference $\aref$.
+    The INDI step turns $\aref$ into a thrust vector with the same incremental idea: it compares $\aref$ with the measured acceleration $\mathbf{a}_f$ and adds the difference to the present thrust vector.
+    It is selected with \param{MC_INDI_POS_EN}.
+\end{itemize}
+Only one module of each pair runs.
+The attitude loop, the control allocator and the estimator are the stock ones.
+The acceleration module also sends the rate module a body-rate feed-forward, so the rate loop does not lag behind a moving trajectory.
+
+\section{The reference airframe}\label{sec:airframe}
+
+All evidence in this report comes from one simulated quadcopter, a 5-inch vehicle of about 600~g.
+\Cref{tab:airframe} lists its main values.
+
+\begin{table}[tbp]
+\caption{Main values of the simulated reference quadcopter.}\label{tab:airframe}
+\centering
+\small
+\begin{tabular}{@{}l l l@{}}
+\toprule
+Quantity & Symbol & Value \\
+\midrule
+Mass & $m$ & 0.610 kg \\
+Moments of inertia ($I_{xx}$, $I_{yy}$, $I_{zz}$) & & $1.40$, $1.50$, $2.70\times10^{-3}$ kg\,m$^2$ \\
+Rotor position (each axis, $\pm$) & & $0.0795$ m \\
+Thrust coefficient & $k_T$ & $1.5\times10^{-6}$ \\
+Moment-to-thrust ratio & $k_Q/k_T$ & $0.01267$ m \\
+Maximum rotor speed & $\Omax$ & $2700$ rad/s \\
+Hover rotor speed & & about $999$ rad/s \\
+Hover normalised thrust & $u_h$ & $0.137$ \\
+Motor time constant (up and down) & $\tau_a$ & $33$ ms \\
+Rotor inertia & $J_r$ & $5\times10^{-6}$ kg\,m$^2$ (assumed) \\
+Motor poles (telemetry) & & $14$ \\
+Rate-loop sample rates used in tests & $\fc$ & $800$, $400$, $266.7$ Hz \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The control effectiveness is the derived value $G_1$ of 1757 (roll) and 1640 (pitch) rad/s$^2$ per unit of normalised torque, and 205 for yaw.
+The rotor inertia is an assumption, not a measurement.
+The hover normalised thrust is the value stored in \param{MPC_THR_HOVER}.
+
+\section{Notation}\label{sec:notation}
+
+\Cref{tab:notation} lists the symbols.
+Bold symbols are vectors or matrices.
+A subscript $f$ marks a filtered signal.
+
+\begin{table}[tbp]
+\caption{Notation.}\label{tab:notation}
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+Symbol & Meaning \\
+\midrule
+$\vect\omega$ & body angular rate (rad/s) \\
+$\dot{\vect\omega}$ & angular acceleration (rad/s$^2$) \\
+$\Omega_i$ & rotor speed of rotor $i$ (rad/s) \\
+$u_i = (\Omega_i/\Omega_{\max})^2$ & normalised actuator state of rotor $i$ \\
+$\mathbf{u}$, $\mathbf{u}_c$ & actuator state vector, actuator command \\
+$\vect\nu$ & virtual control: desired angular acceleration \\
+$G_1$ & control-effectiveness matrix \\
+$G_2$ & rotor spin-up (yaw) matrix \\
+$\tau_a$ & actuator time constant \\
+$(\,\cdot\,)_f$ & filtered signal, for example $\dot{\vect\omega}_f$, $\mathbf{u}_f$ \\
+$\Delta\mathbf{u}$ & increment of the actuator command, $\mathbf{u}_c-\mathbf{u}_f$ \\
+$K$ & bandwidth gain of the rate loop (1/s) \\
+$\mathbf{a}$ & specific force or linear acceleration measured on board \\
+$\aref$ & acceleration reference of the outer loop \\
+$T$ & collective thrust \\
+$\ts$ & sample period \\
+$\fc$ & control rate, $\fc = 1/\ts$ \\
+\bottomrule
+\end{tabularx}
+\end{table}

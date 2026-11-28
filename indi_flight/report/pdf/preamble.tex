@@ -1,0 +1,165 @@
+% Preamble of the INDI report. Build with lualatex (see build.sh).
+\documentclass[11pt,a4paper,twoside=false,parskip=false,headings=normal,numbers=noenddot]{scrreprt}
+
+% ---------------------------------------------------------------- fonts
+\usepackage{fontspec}
+\IfFontExistsTF{Libertinus Serif}{%
+  \setmainfont{Libertinus Serif}%
+  \setsansfont{Libertinus Sans}%
+  \IfFontExistsTF{Libertinus Mono}{\setmonofont[Scale=MatchLowercase]{Libertinus Mono}}%
+    {\setmonofont[Scale=MatchLowercase]{Latin Modern Mono}}%
+  \usepackage{unicode-math}%
+  \setmathfont{Libertinus Math}%
+  \setmathfont[version=bold]{Libertinus Math}%
+}{%
+  \setmainfont{Latin Modern Roman}%
+  \setsansfont{Latin Modern Sans}%
+  \setmonofont{Latin Modern Mono}%
+  \usepackage{unicode-math}%
+  \setmathfont{Latin Modern Math}%
+}
+\usepackage{microtype}
+\usepackage[english]{babel}
+
+% ---------------------------------------------------------------- maths, tables, graphics
+\usepackage{amsmath}  % unicode-math supplies the symbols of amssymb
+\usepackage{booktabs,tabularx,array}
+\usepackage{graphicx}
+\usepackage[export]{adjustbox}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\setlist{nosep,leftmargin=1.4em}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,calc,fit,backgrounds,shapes.geometric}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\usepackage[labelfont={bf,color=indiblue},font=small,format=hang,labelsep=colon]{caption}
+\usepackage{subcaption}
+
+% ---------------------------------------------------------------- palette
+\definecolor{indiblue}{HTML}{1F4E79}
+\definecolor{indiorange}{HTML}{C55A11}
+\definecolor{indigrey}{HTML}{595959}
+\definecolor{indilight}{HTML}{DCE6F2}
+\definecolor{indigreen}{HTML}{548235}
+\definecolor{indired}{HTML}{A50021}
+
+% ---------------------------------------------------------------- headings
+\addtokomafont{disposition}{\sffamily\color{indiblue}}
+\setkomafont{chapter}{\sffamily\bfseries\color{indiblue}\LARGE}
+\setkomafont{section}{\sffamily\bfseries\color{indiblue}\Large}
+\setkomafont{subsection}{\sffamily\bfseries\color{indiblue}\large}
+\setkomafont{subsubsection}{\sffamily\bfseries\color{indiblue}}
+\setkomafont{paragraph}{\sffamily\bfseries\color{indigrey}}
+\setkomafont{descriptionlabel}{\sffamily\bfseries\color{indiblue}}
+\setkomafont{pageheadfoot}{\sffamily\small\color{indigrey}}
+\setkomafont{pagenumber}{\sffamily\small\color{indigrey}}
+
+% ---------------------------------------------------------------- headers
+\usepackage[headwidth=\textwidth,footwidth=\textwidth]{scrlayer-scrpage}
+\automark[section]{chapter}
+\pagestyle{scrheadings}
+\clearpairofpagestyles
+\ihead{\headmark}
+\ohead{\pagemark}
+\setkomafont{headsepline}{\color{indiblue}}
+\KOMAoption{headsepline}{true}
+\renewcommand*{\chaptermarkformat}{\chapapp~\thechapter\autodot\enskip}
+\renewcommand*{\sectionmarkformat}{\thesection\autodot\enskip}
+\renewcommand*{\chapterpagestyle}{scrplain}
+\pagestyle{scrheadings}
+\ofoot[\pagemark]{}
+\cfoot[]{}
+
+% ---------------------------------------------------------------- links and references
+\usepackage[colorlinks=true,linkcolor=indiblue,citecolor=indiblue,urlcolor=indiblue,
+  pdftitle={Incremental Nonlinear Dynamic Inversion for PX4 Multicopters},
+  pdfsubject={Inner rate loop and outer acceleration loop: design, analysis and simulation validation},
+  pdfkeywords={INDI, PX4, multicopter, rate control, acceleration control, simulation},
+  pdfauthor={},
+  bookmarksnumbered=true,pdfusetitle=false]{hyperref}
+\usepackage[capitalise,nameinlink]{cleveref}
+\crefname{chapter}{Chapter}{Chapters}
+\crefname{appendix}{Appendix}{Appendices}
+\crefname{section}{Section}{Sections}
+\crefname{figure}{Figure}{Figures}
+\crefname{table}{Table}{Tables}
+\crefname{equation}{Equation}{Equations}
+\creflabelformat{equation}{#2\textup{(#1)}#3}
+
+% ---------------------------------------------------------------- numbering
+\numberwithin{equation}{chapter}
+\counterwithin{figure}{chapter}
+\counterwithin{table}{chapter}
+
+% ---------------------------------------------------------------- boxes
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable,skins}
+\newtcolorbox{keyresult}[1][Key result]{%
+  enhanced,breakable,colback=indilight!60,colframe=indiblue,
+  coltitle=white,fonttitle=\sffamily\bfseries\small,title={#1},
+  boxrule=0.6pt,arc=1.5pt,left=6pt,right=6pt,top=4pt,bottom=4pt,
+  before skip=10pt,after skip=10pt}
+\newtcolorbox{indinote}[1][Note]{%
+  enhanced,breakable,colback=white,colframe=indiorange,
+  coltitle=white,fonttitle=\sffamily\bfseries\small,title={#1},
+  boxrule=0.6pt,arc=1.5pt,left=6pt,right=6pt,top=4pt,bottom=4pt,
+  before skip=10pt,after skip=10pt}
+
+% ---------------------------------------------------------------- macros: parameters and topics
+% \param{MC_INDI_EN}: monospace, a line break may follow every underscore.
+\ExplSyntaxOn
+\tl_new:N \l__indi_tmp_tl
+\tl_new:N \l__indi_us_tl
+\tl_set:Nx \l__indi_us_tl { \char_generate:nn { 95 } { 8 } }
+\NewDocumentCommand{\indiBreakUs}{m}
+  {
+    \tl_set:Nn \l__indi_tmp_tl {#1}
+    \tl_replace_all:NVn \l__indi_tmp_tl \l__indi_us_tl { \textunderscore \hspace{0pt} }
+    \l__indi_tmp_tl
+  }
+\ExplSyntaxOff
+\newcommand{\param}[1]{\texttt{\indiBreakUs{#1}}}
+\newcommand{\topic}[1]{\texttt{\indiBreakUs{#1}}}
+\newcommand{\module}[1]{\texttt{\indiBreakUs{#1}}}
+
+% ---------------------------------------------------------------- macros: diagrams and figures
+\IfFileExists{diagrams/diagram_style.tex}{\input{diagrams/diagram_style.tex}}{}
+
+\newcommand{\indiplaceholder}[2]{%
+  \fbox{\parbox[c][3.2cm][c]{0.9\linewidth}{\centering\sffamily\color{indigrey}
+  Placeholder: #1\\ (#2 not yet generated)}}}
+
+% \indidiagram{name}{caption}{label}: input diagrams/name.tex (a bare tikzpicture) in a figure
+\newcommand{\indidiagram}[3]{%
+  \begin{figure}[tbp]
+    \centering
+    \IfFileExists{diagrams/#1.tex}{\adjustbox{max width=\linewidth}{\input{diagrams/#1.tex}}}{\indiplaceholder{#1}{diagrams/#1.tex}}
+    \caption{#2}\label{#3}
+  \end{figure}}
+
+% \indifigure{name}{caption}{label}: include figures/name.pdf in a figure
+\newcommand{\indifigure}[3]{%
+  \begin{figure}[tbp]
+    \centering
+    \IfFileExists{figures/#1.pdf}{\includegraphics[width=\linewidth]{figures/#1.pdf}}{\indiplaceholder{#1}{figures/#1.pdf}}
+    \caption{#2}\label{#3}
+  \end{figure}}
+
+% ---------------------------------------------------------------- notation macros
+\newcommand{\vect}[1]{\symbf{#1}}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\ts}{T_{\mathrm{s}}}
+\newcommand{\fc}{f_{\mathrm{c}}}
+\newcommand{\aref}{\mathbf{a}_{\mathrm{ref}}}
+\newcommand{\Omax}{\Omega_{\max}}
+
+% ---------------------------------------------------------------- table helpers
+\renewcommand{\arraystretch}{1.15}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\passed}{\textcolor{indigreen}{\textbf{PASSED}}}
+\newcommand{\notpassed}{\textcolor{indired}{\textbf{NOT PASSED}}}
+
+\setlength{\emergencystretch}{2em}
+\raggedbottom
