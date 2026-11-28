@@ -12,7 +12,7 @@ When the vehicle changes, for example a heavier payload or a weaker battery, the
 Incremental nonlinear dynamic inversion (INDI) offers another route.
 It does not model the whole vehicle.
 It measures how the vehicle actually accelerates and asks the actuators for the change that closes the remaining gap.
-The method has been flown on aircraft, micro air vehicles and quadrotors in aggressive flight~\cite{sieberling2010,smeur2016,smeur2018,tal2021}.
+The method has been applied to aircraft, micro air vehicles and aggressive quadrotor flight~\cite{sieberling2010,smeur2016,smeur2018,tal2021}.
 This report describes an implementation inside PX4 that works in every multicopter flight mode and tests how far it can be trusted.
 
 \section{Why INDI}\label{sec:why}
@@ -21,11 +21,12 @@ The idea is explained in \cref{ch:background}.
 Here we list what the designer gains.
 \begin{itemize}
   \item \textbf{Few model parameters.}
-    The inner loop needs the control effectiveness of each axis and the time constant of the motors.
+    The inner loop needs the control effectiveness of each axis, the time constant of the motors and the maximum rotor speed.
     It needs no drag model and no model of the other forces and torques on the vehicle.
   \item \textbf{Disturbance rejection without an observer.}
     A disturbance shows up in the measured acceleration.
-    The next command corrects it, so no integrator and no disturbance estimator are required.
+    The next command corrects it, so no integrator on the error and no disturbance estimator are required.
+    A slow blend state, introduced in \cref{ch:inner_loop}, only corrects a steady gap between commanded and delivered torque or thrust.
   \item \textbf{One gain per axis.}
     The loop bandwidth of each rate axis is set by one gain.
   \item \textbf{Use of the rotor speed.}
@@ -42,7 +43,7 @@ The project has four goals.
 \begin{enumerate}
   \item Build an INDI angular-rate controller and an INDI linear-acceleration controller for PX4.
   \item Derive them from first principles and analyse their stability margins.
-  \item Test them against acceptance criteria that were written before the tests.
+  \item Test them against acceptance criteria that were fixed before the tests (later test-definition fixes are listed in \cref{ch:validation}).
   \item State clearly what does not work yet and what must be checked on real hardware.
 \end{enumerate}
 
@@ -52,10 +53,12 @@ The following rules shaped the design.
 \begin{description}
   \item[PID stays untouched and default.] The stock controllers are not modified.
     The INDI modules are selected by two parameters, \param{MC_INDI_EN} for the rate loop and \param{MC_INDI_POS_EN} for the acceleration loop.
-    With both at zero the vehicle flies exactly as before.
-  \item[Every flight mode.] Manual, assisted, automatic and offboard modes all go through the same two modules.
+    With both at zero the INDI modules are not started and the stock modules run unchanged (checked by a code diff).
+  \item[Every flight mode.] By design, manual, assisted, automatic and offboard modes all go through the same two modules.
+    The modes that were flown in the tests are listed in \cref{ch:validation}.
     There is no fall-back to the PID controller inside them.
-  \item[Generic design, one reference airframe.] The design makes no assumption specific to one vehicle.
+  \item[Generic design, one reference airframe.] The design is not tied to one vehicle, with one exception: the measured collective thrust assumes four rotors.
+    Other layouts are untested.
     The tests use one simulated 5-inch quadcopter of about 600~g (\cref{sec:airframe}).
     Defaults for other vehicles are a stated limit.
   \item[Simulation only.] All evidence comes from Gazebo software-in-the-loop (SITL) runs.
@@ -65,7 +68,8 @@ The following rules shaped the design.
 
 \section{Acceptance criteria and results}\label{sec:criteria}
 
-Eight acceptance criteria were fixed before the tests.
+Eight acceptance criteria were fixed before the tests, with thresholds.
+Where a test turned out to be defective, its definition was amended afterwards by the project owner and the change was logged; \cref{ch:validation} lists each such change next to the result it affects.
 \Cref{tab:criteria} lists them with their verdicts.
 \Cref{ch:validation} gives the data, and \cref{ch:traceability} maps each criterion to its evidence.
 
@@ -78,23 +82,30 @@ Eight acceptance criteria were fixed before the tests.
  & Criterion & Meaning & Verdict \\
 \midrule
 C1 & Evidence integrity & The logs and scoring scripts can be trusted: complete logs, two independent scorers, recorded provenance of every run. & \passed \\
-C2 & Stability margins & Phase margin of at least 45 deg and gain margin of at least 6 dB, measured in flight by multisine injection, and clean attitude steps. & \passed \\
-C3 & Robustness & A campaign of 300 randomised simulated flights: no loss of control and no sustained oscillation. & \notpassed \\
+C2 & Stability margins & Phase margin of at least 45 deg and gain margin of at least 6 dB, measured in simulated flight by multisine injection, delay margin of at least two control periods plus telemetry latency, and clean attitude steps. & \passed \\
+C3 & Robustness & A campaign of 300 randomised simulated flights: no loss of control, no sustained oscillation, and steady-state accuracy, tracking, recovery and hold within limits in every run. & \notpassed \\
 C4 & Noise and effort & Under three noise profiles, motor effort and command chatter stay within limits. & \passed \\
-C5 & Modes and transitions & All flight modes, mode switches, failsafes, kill and re-arm behave as specified. & \passed \\
+C5 & Modes and transitions & Position, altitude, stabilised, acro, hold, mission, take-off, land, return and offboard modes; mode switches; failsafes; kill and re-arm; estimator resets. Not tested: a false maybe-landed flag, a vertical estimator reset, sustained thrust saturation, and offboard acceleration-only setpoints. Mission and return are scored by one method only. & \passed \\
 C6 & Defaults and tuning method & Starting from wrong physical parameters, the identification chain must lead to a controller that passes C2, C3 and C5. It requires C3. & \notpassed \\
-C7 & Code and upstream readiness & Stock modules untouched, unit tests, code format, flash size and review. & \passed \\
-C8 & Report & Design, analysis, evidence, limits and bring-up are written down. & \passed \\
+C7 & Code and upstream readiness & Stock modules untouched, unit tests, code format, flash size and review. The firmware fits a v5x flight controller; it does not fit a v6x with both modules. & \passed \\
+C8 & Report & Design, analysis, evidence, limits and bring-up are written down; some claims are marked unverified (\cref{ch:limits}). & \passed \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \begin{keyresult}[Result in one paragraph]
-Six of eight criteria are met.
-C3 and C6 are not.
-The controllers are stable with good margins and handle noise, modes and transitions in simulation.
-They are not robust enough over the full randomised campaign.
-Two failures belong to INDI alone: PID flown on the same draws does not fail them.
+Six of eight criteria are met: C1, C2, C4, C5, C7 and C8.
+C3 (robustness) and C6 (defaults and tuning method, which requires C3) are not.
+PASSED means passed with the limits listed in \cref{ch:limits}.
+In simulation the controllers meet the stability limits.
+The outer loops have a phase margin of at least 49.1 degrees in 24 cells.
+The rate loop was measured in one configuration (roll axis) at 46.9 degrees against a limit of 45 degrees, so this margin is thin; pitch and yaw rate margins were not measured.
+Noise and effort stay within limits, and the tested modes and transitions behave as specified.
+Robustness is not shown.
+In the 300-flight campaign on the final frozen firmware, two flights lost control (one in a growing 2 Hz pitch oscillation, one by tilting past 60 degrees when a fault hit a saturated vehicle with a weak motor), and 79 of 297 scored flights showed a sustained oscillation on at least one of the two scoring methods.
+PID flown on the same draws did not lose control.
+Repair attempts and a re-fly did not remove two INDI-specific limits: a 2 Hz pitch oscillation with slow motors, and the loss of control at the saturated weak-motor corner.
+The campaign was not repeated on a later firmware, and the project owner closed C3 as not passed.
 \end{keyresult}
 
 \section{Reading guide}\label{sec:guide}

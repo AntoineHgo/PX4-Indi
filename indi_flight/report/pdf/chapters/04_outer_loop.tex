@@ -21,14 +21,15 @@ The INDI law of \cref{sec:indi_principle} works in a different way.
 It does not need the thrust to match a model.
 It measures the acceleration that the vehicle has now.
 It adds to the present thrust the thrust that would remove the acceleration error.
-Three questions follow.
+Four questions follow.
 \begin{enumerate}
   \item Where does the commanded acceleration $\aref$ come from?
   \item What is the thrust that is acting now, and how is it measured?
   \item How do the measured acceleration and the thrust stay in step?
+  \item How is a standing thrust gap removed without an integrator?
 \end{enumerate}
 The sections below answer them in this order.
-Later sections cover the flight modes, the ground and take-off ramp, the estimator resets and the guards.
+Later sections cover the measured and modelled state, the flight modes, the ground and take-off ramp, the estimator resets and the guards.
 
 \paragraph{Placement.}
 The outer-loop module runs instead of the stock position controller when \param{MC_INDI_POS_EN} is 1 (reboot required).
@@ -80,7 +81,7 @@ The accelerometer measures the specific force
 \begin{equation}\label{eq:outer_fb}
   \vect f_b = R^{\mathsf T}\,(\vect a - \vect g) .
 \end{equation}
-The measured acceleration is therefore $\vect a_f = R\,\vect f_{b,f} + \vect g$, where $\vect f_{b,f}$ is the filtered specific force.
+The measured acceleration is therefore $\vect a_f = R\,\vect f_{b,f} + \vect g$, where $\vect f_{b,f}$ is the filtered specific force of \cref{eq:outer_fb}.
 
 The control variable is the specific thrust vector $\vect T$, in m/s$^2$.
 It is the thrust per unit of mass.
@@ -92,6 +93,9 @@ At hover, $\tau = g$.
 \Cref{fig:outer_loop} shows the loop.
 The measured specific force closes the acceleration loop.
 The position and velocity cascade closes the outer loop around it.
+The blocks marked $H$ are the matched low-pass filters of \cref{sec:outer_filters}.
+The force-source switch selects the measured force (flight) or the modelled force (ground, take-off ramp, stale data), as described in \cref{sec:outer_state}.
+The thrust-state block forms $\vect T_f$ from the measured and the modelled rotor state with the blend of \cref{sec:outer_gap}.
 
 \subsection{Reference acceleration}\label{sec:outer_cascade}
 
@@ -128,12 +132,12 @@ The control effectiveness is one, because $\vect T$ is already a specific thrust
 No model of the airframe appears in \cref{eq:outer_inc}.
 
 The actuator signal is a normalised rotor speed squared, $u_i = (\Omega_i/\Omega_{\max})^2$ as in \cref{eq:u_state}.
-The thrust model needs a scale.
+The thrust model needs a scale, $g_t$ of \cref{eq:outer_gt}.
 It is
 \begin{equation}\label{eq:outer_gt}
   g_t = g / h_t , \qquad \vect T_f = -g_t\,u_f\,\vect z_b ,
 \end{equation}
-where $u_f$ is the filtered mean actuator state of all rotors.
+where $u_f$ is the filtered mean actuator state of all rotors (a scalar; in \cref{ch:inner_loop} $u_f$ is the torque).
 $h_t$ is the hover thrust.
 In flight, while the hover-thrust estimate is valid, $h_t$ is that estimate.
 Otherwise it is \param{MPC_THR_HOVER}.
@@ -141,7 +145,7 @@ It is never below 0.05.
 An error of $g_t$ changes the loop gain.
 It does not leave an offset (\cref{sec:outer_gap}).
 
-The normalised collective $T_{\mathrm{col}}$ that goes to the attitude setpoint is
+The normalised collective $T_{\mathrm{col}}$ of \cref{eq:outer_cmd} that goes to the attitude setpoint is
 \begin{equation}\label{eq:outer_cmd}
   T_{\mathrm{col}} = \frac{\tau}{g_t}, \qquad \tau = \lVert\vect T_c\rVert ,
 \end{equation}
@@ -159,7 +163,8 @@ It does not leave a standing acceleration error.
 The accelerometer and the measured thrust pass through the same second-order low-pass filter.
 Its cut-off is \param{MC_INDI_POS_LPF}.
 The filter on the force runs at the accelerometer sample rate.
-The module is scheduled on the acceleration topic and handles every sample.
+The module is scheduled on the acceleration topic.
+The force filter runs on every acceleration sample; the stage itself, the INDI law, runs once per update of the position estimate.
 This is on purpose.
 Filtering after a decimation to the lower stage rate would fold a vibration line into the signal band.
 The stage runs at about 89~Hz in the reference simulation, so a simulated vibration line at 95.7~Hz would appear at 6.8~Hz in $\vect a_f$.
@@ -191,7 +196,7 @@ The vertical axis keeps priority over the horizontal one: a saturated vehicle ho
 
 The attitude loop follows $\vect q_d$ with a lag.
 A change of the acceleration setpoint would reach the rate loop late.
-The module therefore sends a body-rate feed-forward
+The module therefore sends the body-rate feed-forward of \cref{eq:outer_ff}
 \begin{equation}\label{eq:outer_ff}
   \vect\omega_{\mathrm{ff}} = \frac{1}{\tau}\,\bigl(\vect j\cdot\vect y_b,\; -\vect j\cdot\vect x_b,\; 0\bigr) ,
 \end{equation}
@@ -230,9 +235,9 @@ Measured & Attitude and acceleration fresh, in flight, no ground contact. & Meas
 \end{table}
 
 \paragraph{Measured thrust.}
-The mean actuator state is $u = \frac14\sum_i (\Omega_i/\Omega_{\max})^2$ over the four rotors.
+The mean actuator state is $\bar u = \frac14\sum_i (\Omega_i/\Omega_{\max})^2$ over the four rotors.
 $\Omega_i$ comes from the ESC rotor-speed telemetry, and $\Omega_{\max}$ is \param{MC_INDI_W_MAX}.
-\param{MC_INDI_W_MAX} must be set: with its default of 0 the INDI stack refuses to arm.
+\param{MC_INDI_W_MAX} must be set: with its default of 0 the INDI rate module refuses to arm, and the outer loop has no measured thrust.
 The mean is for four rotors (a quadrotor).
 If a motor goes offline in flight, or the ESC data is stale, the value is invalid.
 The law then uses the commanded collective instead.
@@ -265,13 +270,13 @@ A reset of the stage re-seeds the delay line and the thrust filter from the meas
 If a motor weakens or the battery sags, the rotor speed no longer gives the thrust that the model expects.
 The outer loop has no integrator, so a standing acceleration error would remain.
 The module restores integral action with a complementary blend of measured and modelled collective.
-It adds a slow correction $b$ to the measured actuator state:
+It adds a slow correction $b$ to the measured actuator state (\cref{eq:outer_blend}):
 \begin{equation}\label{eq:outer_blend}
   b \leftarrow b + \frac{\ts}{t_b + \ts}\,\bigl(u_{\mathrm{mod},f} - u_{\mathrm{meas},f} - b\bigr),
   \qquad u_f = u_{\mathrm{meas},f} + b .
 \end{equation}
 Here $\ts$ is the stage period and $u_{\mathrm{meas},f}$ is the filtered mean of the four rotor states (a scalar, unlike the torque vector of \cref{ch:inner_loop}).
-$u_{\mathrm{mod},f}$ is the filtered commanded collective, which the thrust model predicts.
+$u_{\mathrm{mod},f}$ is the filtered commanded collective, which the thrust model predicts (the model path of the thrust).
 The blend is bounded to $\lvert b\rvert \le 0.5$.
 The time constant is $t_b = $ \param{MC_INDI_POS_TB}.
 
@@ -339,7 +344,7 @@ The stock thrust is never published.
 The stage is requested when the vehicle is armed and a position, velocity or climb-rate mode is active.
 \Cref{fig:outer_ground} shows the states.
 
-\indidiagram{ground_logic}{Operating states of the outer loop. The same INDI law runs from arming to disarming; only the source of the force and thrust state changes. Ground and ramp use the modelled force, flight uses the measured force and rotor speed, and touch-down returns to the modelled force and holds the blend.}{fig:outer_ground}
+\indidiagram{ground_logic}{Operating states of the outer loop. The same INDI law runs from arming to disarming; only the source of the force and thrust state changes. The note at the edge applies to the step discussed under ``Edge to flight''. Ground and ramp use the modelled force, flight uses the measured force and rotor speed, and touch-down returns to the modelled force and holds the blend.}{fig:outer_ground}
 
 \paragraph{On the ground.}
 The accelerometer holds the ground reaction, so the measured force would be wrong.
@@ -357,7 +362,7 @@ On the ground and in the ramp these parts are frozen: the blend, the rate feed-f
 \paragraph{Edge to flight.}
 At the end of the ramp the force source switches from modelled to measured.
 The step of the thrust at this edge is the error of the thrust model, a few percent of the hover thrust.
-On the measured take-offs it was 4 to 5~\% of the hover thrust, always below a limit of 10~\%.
+In the take-off after a re-arm the step was 4 to 5~\% of the hover thrust; every take-off stayed below a limit of 10~\%.
 
 \paragraph{Landing.}
 The stock land task and \param{MPC_LAND_SPEED} shape the setpoint.
@@ -375,7 +380,7 @@ When the estimator resets its position, velocity or heading, the stock logic cor
 The module clears only the jerk history.
 It keeps the measured force, the mean actuator state, the delay lines and the previous thrust.
 These signals do not depend on the world frame.
-A single raw accelerometer sample carries vibration of about 0.25~m/s$^2$, against 0.04~m/s$^2$ after the filter.
+In the reference simulation a single raw accelerometer sample carries vibration of about 0.25~m/s$^2$, against 0.04~m/s$^2$ after the filter.
 Re-seeding from it would step the acceleration estimate and tilt the thrust command (about 2~deg in simulation).
 A full reset of the stage happens only at entry to position control, at the return from hold and when the stage restarts.
 It keeps the blend and re-seeds the thrust path as described in \cref{sec:outer_state}.
@@ -426,7 +431,7 @@ Parameter & Reference & Default & Unit & Meaning \\
 \param{MC_INDI_POS_TB} & 0.3 & 0.3 & s & Blend time constant $t_b$. 0 turns the blend off. \\
 \param{MC_INDI_XY_P} & 1.2 & 1.2 & 1/s & Horizontal position gain $K_p$, instead of \param{MPC_XY_P}. \\
 \param{MC_INDI_XY_VP} & 2.4 & 2.4 & 1/s & Horizontal velocity gain $K_v$, instead of \param{MPC_XY_VEL_P_ACC}. \\
-\param{MC_INDI_W_MAX} & 2700 & 0 & rad/s & Rotor speed at full thrust $\Omax$ (shared with the rate module). Must be set; the default 0 blocks arming. \\
+\param{MC_INDI_W_MAX} & 2700 & 0 & rad/s & Rotor speed at full thrust $\Omax$ (shared with the rate module). Must be set; the default 0 blocks arming of the INDI rate loop. \\
 \bottomrule
 \end{tabularx}
 \end{table}

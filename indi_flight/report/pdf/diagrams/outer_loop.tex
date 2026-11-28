@@ -25,7 +25,7 @@
 
   % ---------- jerk feed-forward (y = 2.2) ----------
   \node[block, minimum width=4.4cm] (jerk) at (6.6,2.2)
-     {Jerk feed-forward\\[-1pt]\scriptsize $\boldsymbol\omega_{\mathrm{ff}}=(\mathbf{j}\!\cdot\!\mathbf{y}_b,\,-\mathbf{j}\!\cdot\!\mathbf{x}_b)/c$,\; $\mathbf{j}=\dot{\mathbf{a}}_{\mathrm{ff}}$ filtered};
+     {Jerk feed-forward\\[-1pt]\scriptsize $\boldsymbol\omega_{\mathrm{ff}}=(\mathbf{j}\!\cdot\!\mathbf{y}_b,\,-\mathbf{j}\!\cdot\!\mathbf{x}_b)/\tau$,\; $\mathbf{j}=\dot{\mathbf{a}}_{\mathrm{ff}}$ filtered};
   \node[junction] (ja) at (-0.5,0.5) {};
   \draw[signal] (ja) |- (jerk.west);
   \draw[signal] (jerk.east) -- ++(0.8,0) node[lab, anchor=west, text width=2.6cm, align=left] {$\boldsymbol\omega_{\mathrm{ff}}$ to rate loop};

@@ -15,13 +15,13 @@ A weak motor or a sagging battery changes the plant, and the gains no longer fit
 
 The INDI law of \cref{sec:indi_principle} avoids this.
 It adds an increment to the torque that is already acting.
-The increment is the torque needed to turn the measured angular acceleration $\dot{\vect\omega}_f$ into the desired one.
+The increment is the torque needed to turn the measured angular acceleration $\dot\omega_f$ into the desired one.
 The law needs the control effectiveness $G_1$, and it needs the torque that is acting now.
 Three questions follow.
 \begin{enumerate}
-  \item How is the desired angular acceleration $\vect\nu$ formed from the rate setpoint?
+  \item How is the desired angular acceleration $\nu$ formed from the rate setpoint?
   \item What is the torque that is acting now, and how is it measured?
-  \item How do the two signals, $\dot{\vect\omega}_f$ and that torque, stay in step?
+  \item How do the two signals, $\dot\omega_f$ and that torque, stay in step?
 \end{enumerate}
 The sections below answer them in this order.
 
@@ -46,7 +46,7 @@ Torque lies in $[-1,\,1]$, and $G_1$ is in rad/s$^2$ per unit of normalised torq
 \toprule
 Signal (uORB topic) & Use \\
 \midrule
-\topic{vehicle_angular_velocity} & Body rate and its derivative: the filtered angular acceleration $\dot{\vect\omega}_f$. \\
+\topic{vehicle_angular_velocity} & Body rate and its derivative: the filtered angular acceleration $\dot\omega_f$. \\
 \topic{vehicle_rates_setpoint} & Rate setpoint from the attitude loop. \\
 \topic{indi_rate_feedforward} & Rate feed-forward of the outer loop (roll and pitch), added to the setpoint. \\
 \topic{esc_status}, \topic{actuator_motors} & Rotor speed, for the measured torque. \\
@@ -61,7 +61,7 @@ Signal (uORB topic) & Use \\
 \Cref{fig:inner_loop} shows the loop for one axis.
 The next sections follow it from left to right.
 
-\indidiagram{inner_loop}{Rate-loop INDI law for one axis. The rate error gives a desired angular acceleration $\vect\nu$. The measured, filtered angular acceleration $\dot{\vect\omega}_f$ is subtracted. The remainder is inverted through $G_1$ to an increment $\Delta u$ and added to the filtered actuator state $u_f$. The actuator state blends the measured rotor speed (high frequencies) with a modelled first-order actuator (low frequencies). All three paths pass through the same filter chain $H$. The delays are set so that they match.}{fig:inner_loop}
+\indidiagram{inner_loop}{Rate-loop INDI law for one axis. The rate error gives a desired angular acceleration $\nu$. The measured, filtered angular acceleration $\dot\omega_f$ is subtracted. The remainder is inverted through $G_1$ to an increment $\Delta u$ and added to the filtered actuator state $u_f$. The actuator state blends the measured rotor speed (high frequencies) with a modelled first-order actuator (low frequencies). All three paths pass through the same filter chain $H$. The delays are set so that they match.}{fig:inner_loop}
 
 \section{The rate law}\label{sec:inner_law}
 
@@ -163,16 +163,17 @@ The normalised rotor state is $u_i=(\Omega_i/\Omax)^2$, as in \cref{eq:u_state},
 The speed $\Omax$ is \param{MC_INDI_W_MAX}.
 The measured torque follows from the effectiveness matrix $B$ of the control allocation library:
 \begin{equation}\label{eq:inner_meas}
-  u_{\mathrm{meas}} = B\,(\mathbf{u}_{\mathrm{rot}} - \mathbf{u}_{\mathrm{trim}}) .
+  u_{\mathrm{meas}} = B\,(\vect{u}_{\mathrm{rot}} - \vect{u}_{\mathrm{trim}}) .
 \end{equation}
-Here $\mathbf{u}_{\mathrm{rot}}$ collects the rotor states $u_i$, and $\mathbf{u}_{\mathrm{trim}}$ is the trim state.
+Here $\vect{u}_{\mathrm{rot}}$ collects the rotor states $u_i$, and $\vect{u}_{\mathrm{trim}}$ is the trim state.
 $B$ is built from the \param{CA_*} rotor geometry and scaled in the same way as the allocator scales it.
 So the measured torque uses the same geometry as the allocator, with no extra parameter per axis.
 Rows of $B$ with all entries below 0.05 are set to zero, as in the allocator.
 The measured path has its own delay (\param{MC_INDI_ERPM_DLY}) and its own copy of the filter chain $H$.
 The result is $u_{\mathrm{meas},f}$.
 
-Setting \param{MC_INDI_W_MAX} to 0 turns the measured path off.
+\param{MC_INDI_W_MAX} must be set.
+With its default of 0 the rate module refuses to arm, because no measured torque can be built.
 An invalid rotor geometry also gives no measured torque.
 
 \paragraph{Switching.}
@@ -347,7 +348,7 @@ A lower default, for example 320 and 210~rad/s$^2$ for roll and pitch, would rai
 Parameter & Reference & Default & Unit & Meaning \\
 \midrule
 \param{MC_INDI_EN} & 1 & 0 & -- & Start the INDI rate module instead of the stock one (reboot). \\
-\param{MC_INDI_W_MAX} & 2700 & 0 & rad/s & Rotor speed at full thrust, $\Omax$. 0 turns the measured path off. \\
+\param{MC_INDI_W_MAX} & 2700 & 0 & rad/s & Rotor speed at full thrust, $\Omax$. Must be set; the default 0 blocks arming of the INDI rate loop. \\
 \param{MC_INDI_G1_R} & 1757 & 1757 & rad/s$^2$ & Roll control effectiveness $G_1$. \\
 \param{MC_INDI_G1_P} & 1640 & 1640 & rad/s$^2$ & Pitch control effectiveness $G_1$. \\
 \param{MC_INDI_G1_Y} & 205 & 205 & rad/s$^2$ & Yaw control effectiveness $G_1$. \\
