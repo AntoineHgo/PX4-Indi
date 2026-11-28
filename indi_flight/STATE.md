@@ -59,9 +59,10 @@ CAPTIONS.md/FIGURES.md. Cost: S260 three sonnet-high agents ~ $1+ each: run at m
 S262: ch03 fixed 320bd3f9f8 + re-review 181684d503 (14 closed; R8 notation symbols B, b, t_b, l, c, Delta_max,
 bold/plain nu -> ch02 table, do in the ch01/02 fix). ch03 R2 (sat+weak motor, telemetry-loss fallback, yaw G1
 disagreement, assumed rotor inertia behind G2_Y) goes into the ch07 brief. ch04 written bc6d958dd5 (NOTES_E.md:
-7 unverified values, 2 disagreements); 7a review running -> reviews/ch04_section_review.md (if absent at relaunch,
-re-run it: sonnet-medium, same interface). Next: (1) ch04 fixes + re-review; (2) ch05 write+review; (3) 7a reviews
-of ch01/02 + R8; (4) ch06+07, then 08+09+A+B. Costs seen S262: write ~$0.35, review ~$0.3, fix ~$0.25 (sonnet-medium).
+7 unverified values, 2 disagreements); 7a review done reviews/ch04_section_review.md: 0 BLOCKER, 4 MAJOR (R1 stage reset keeps blend,
+R2 W_MAX 0 refuses arming, R3 20 ms thrust-data row wrong, R4 T_c vector/scalar clash), 13 MINOR; all 7 NOTES_E
+values found. Next: (1) ch04 fixes (sonnet-medium) + re-review; (2) ch05 write+review; (3) 7a reviews
+of ch01/02 + R8; (4) ch06+07, then 08+09+A+B. Costs seen S262: write ~$0.35, review $0.3-0.6, fix ~$0.25 (sonnet-medium).
 Owner also asked 7b chapter reviews once each chapter is complete (03 is complete now). Firmware after FREEZE-10: e6af4b6b0d, ac744d360e (R1 arming check, owner-lifted freeze, no gate row
 invalidated). Commit trailer: AGENTS.md wins: `Assisted-by:` only.
 
