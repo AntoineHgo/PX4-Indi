@@ -1,3 +1,311 @@
 \chapter{Stability and Robustness Analysis}\label{ch:analysis}
 
-This chapter is written from the technical source chapters.
+The INDI loops cancel the plant, so their stability does not follow from the usual rate-loop tuning rules.
+It rests on delays, filters and the actuator model.
+A wrong model or a slow rotor can push a loop towards instability.
+This chapter asks how far each loop is from that edge.
+It measures the margins in flight simulation on the final configuration.
+It then compares the measurements with linear models.
+\Cref{ch:inner_loop,ch:outer_loop} describe the loops.
+
+\section{How the loop gains are measured}\label{sec:an_method}
+
+\subsection{Loop-break points}\label{sec:an_break}
+
+A loop gain $L(s)$ is measured by opening the loop at one point and injecting a known signal.
+The controller output $c$ and the excitation $d$ are added:
+\begin{equation}\label{eq:an_inj}
+  u = c + d .
+\end{equation}
+The sum $u$ goes to the plant and to the stored previous setpoint of the incremental law.
+Every feedback path therefore closes through $u$: the gyro, the measured rotor speed and the modelled actuator.
+The loop gain is the ratio of the signal that returns to the signal that was injected,
+\begin{equation}\label{eq:an_L}
+  L(j\omega) = -\frac{Y(j\omega)}{X(j\omega)} ,
+\end{equation}
+estimated from the logged signals.
+Each loop has its own break point (\cref{tab:an_break}).
+
+\begin{table}[tbp]
+\caption{Loops, break points and injected signals.}\label{tab:an_break}
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}L{3.6cm} L{4.6cm} Y@{}}
+\toprule
+Loop & Break point & Band of the multisine \\
+\midrule
+Rate (roll, pitch, yaw) & Torque setpoint, $u=c+d$ & 1 to 60~Hz \\
+Attitude & Rate setpoint, output of the attitude loop & 0.2 to 20~Hz \\
+Acceleration (INDI stage) & Output of the INDI stage (\texttt{pt1}) & 0.2 to 8~Hz \\
+Velocity and position & Input of the INDI stage (\texttt{pt0}) & 0.2 to 8~Hz \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The acceleration break closes every path through the plant input.
+With a matched actuator model, the incremental terms cancel there.
+The measured $L$ is then dominated by the outer loops.
+The part that is specific to INDI shows above about 3~Hz.
+The rate loop is broken at the torque, so its measurement contains the whole INDI law.
+
+\subsection{Excitation and estimation}\label{sec:an_excite}
+
+The excitation is a Schroeder multisine in hover.
+Its frequency grid is the multiple of $1/T_p$, with 10 bins per decade.
+It uses at least three periods, and the first one is discarded.
+The amplitude is chosen in a pre-test: two amplitudes must agree within 1~dB and 5~deg.
+
+The frequency response is estimated by a period-exact Fourier transform.
+When the time base is not uniform, a least-squares fit on the true sample times is used instead.
+Bins are kept where the coherence is at least 0.8, and at least 0.9 within a decade of the crossover.
+Each run must also pass checks:
+\begin{itemize}
+  \item no fault and no landing during the run;
+  \item the logged $u$ equals $c+d$;
+  \item the logged rate equals the controller rate;
+  \item the log has no holes beyond the allowed gap length.
+\end{itemize}
+Outer-loop cells were flown one at a time, because parallel flights made holes in the simulation log.
+
+Every outer-loop cell is scored by two independent estimators, called key~1 and key~2.
+They agree if the phase margins differ by at most 3~deg and the gain margins by at most 1~dB.
+They must also agree on whether a gain margin exists.
+A cell that fails this test is marked \emph{blocked}.
+
+\section{Margin criteria}\label{sec:an_criteria}
+
+The phase margin is $\mathrm{PM}=180^\circ+\angle L(j2\pi\fc)$ at the gain crossover $\fc$.
+The gain margin is $\mathrm{GM}=-20\log_{10}|L|$ at the frequency where $\angle L=-180^\circ$.
+The delay margin is the extra delay that brings the loop to the edge:
+\begin{equation}\label{eq:an_dm}
+  \mathrm{DM} = \frac{\mathrm{PM}}{360\,\fc} .
+\end{equation}
+The loops are accepted if all of the following hold.
+\begin{itemize}
+  \item $\mathrm{GM}\ge 6$~dB.
+  \item $\mathrm{PM}\ge 45^\circ$.
+  \item $\mathrm{DM}\ge 2$ control periods plus the telemetry latency.
+\end{itemize}
+The limits are applied to the worst of two runs, at controller rates of 800 and 400~Hz.
+The lowest rate (about 267~Hz) is only reported.
+
+The values are common margins for a loop that must stay stable when the model is wrong.
+A gain margin of 6~dB tolerates a doubling of the effectiveness.
+A phase margin of 45~deg leaves room for unmodelled lag.
+The delay margin covers the case that the estimated delay is too short.
+The telemetry latency adds to the delay of the rotor-speed path.
+Its value is not part of the evidence, so the delay margin is compared with the control periods only.
+It is large in every cell, so this does not change the verdict.
+
+Two reading rules apply.
+\begin{enumerate}
+  \item If the phase never reaches $-180^\circ$ in the measured band, there is no gain margin, and no gain limit applies.
+  \item A crossing of $-180^\circ$ with $|L|>1$ is a gain-reduction margin $20\log_{10}|L|$.
+    It must also be at least 6~dB.
+\end{enumerate}
+
+\section{Linear models for the cross-check}\label{sec:an_models}
+
+Linear models of the loops predict the margins.
+The prediction is compared with the measurement.
+The acceptance rule is that $\Delta\mathrm{PM}$ is within 10~deg and $\Delta\mathrm{GM}$ within 3~dB, or that the difference is explained.
+
+The rate model is a discrete-time loop built from the law of \cref{ch:inner_loop}.
+It contains the setpoint lead, the actuator time constant $\tau_a$, the delay and the filters.
+The attitude loop sits outside the rate loop.
+The attitude loop gain is
+\begin{equation}\label{eq:an_att}
+  L_{\mathrm{att}} = A_{\mathrm{att}}\,T_{\mathrm{cl}} ,\qquad
+  A_{\mathrm{att}} = p\,z^{-1}\,\frac{\ts\,z}{z-1} ,\qquad
+  T_{\mathrm{cl}} = \frac{N(s)}{1+L_{\mathrm{rate}}} ,
+\end{equation}
+with the attitude gain $p$ (8 in the reference airframe) and a delay of one sample.
+$T_{\mathrm{cl}}$ is the closed rate loop from rate setpoint to rate.
+The numerator $N$ is scaled so that $T_{\mathrm{cl}}$ has unit gain at low frequency.
+The rate and attitude loops are related by
+\begin{equation}\label{eq:an_ident}
+  1 + L_{\mathrm{M3a}} = \bigl(1+L_{\mathrm{rate}}\bigr)\bigl(1+L_{\mathrm{att}}\bigr) ,
+\end{equation}
+where $L_{\mathrm{M3a}}$ is the loop broken at the torque setpoint.
+This identity holds to $10^{-9}$ in the model test.
+
+The attitude loop was flown with the velocity and position loops closed.
+The model must include them.
+The outer-loop factor is
+\begin{equation}\label{eq:an_outer}
+  O(s) = 1 + \Bigl(K_v + \frac{K_i}{s}\Bigr)\frac{K_p + s}{s^{2}} + K_d\,F(s) ,
+\end{equation}
+where $F$ is a first-order low-pass at 5~Hz, and $K_p$, $K_v$, $K_i$, $K_d$ are the position and velocity gains.
+The attitude model with the outer loops is $L_{\mathrm{att}}\,O$.
+The acceleration increment of the INDI stage adds no small-signal path.
+No linear model of the break at the input or output of the INDI stage was built.
+
+\section{Results}\label{sec:an_results}
+
+\subsection{Outer loops}\label{sec:an_outer}
+
+The outer-loop cells cover three axes (N, E, D), both break points, two controller rates (400 and 800~Hz) and two seeds.
+This gives 24 cells.
+\Cref{tab:an_outer} gives the range over the four cells of each group.
+
+\begin{table}[tbp]
+\caption{Outer-loop margins of the final configuration, range over four cells (two rates, two seeds) per row. Break point \texttt{pt0} is the input and \texttt{pt1} the output of the INDI stage. ``none'' means no $-180^\circ$ crossing in 0.2 to 8~Hz.}\label{tab:an_outer}
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}L{2.2cm} L{1.9cm} L{2.8cm} L{2.8cm} Y@{}}
+\toprule
+Break, axis & GM (dB) & PM (deg) & DM (ms) & Note \\
+\midrule
+\texttt{pt0}, N & 13.5 to 14.0 & 49.7 to 55.3 & 367 to 399 & \\
+\texttt{pt0}, E & 13.5 to 14.0 & 49.1 to 53.0 & 367 to 405 & lowest PM \\
+\texttt{pt0}, D & none & 65.4 to 68.2 & 246 to 283 & \\
+\texttt{pt1}, N & 13.8 to 14.4 & 52.5 to 71.3 & 464 to 591 & one cell blocked \\
+\texttt{pt1}, E & 13.9 to 14.6 & 52.9 to 56.9 & 461 to 485 & one cell re-flown \\
+\texttt{pt1}, D & none; 22.4 in one cell & 58.7 to 66.2 & 229 to 288 & two cells blocked \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+All 24 cells meet the limits.
+The smallest phase margin is 49.1~deg, 4.1~deg above the limit.
+The smallest gain margin in the horizontal axes is 13.5~dB.
+The smallest plateau gain margin is 12.9~dB; it is the second key's reading of the flat gain region.
+The smallest delay margin is 229~ms.
+At 800~Hz one control period is 1.25~ms, so the delay margin is far above the limit.
+The vertical axis has no gain margin in 7 of 8 cells, because the phase stays above $-180^\circ$.
+One cell shows 22.4~dB (17.8~dB in key~2).
+
+One cell had a hole in the log.
+The controller topic had a single gap of 22.5~ms against a limit of 10~ms excess.
+The cell was flown again.
+The new run gave PM 56.9~deg, GM 13.9~dB and a clean log.
+The table uses the new run.
+
+Three cells are blocked on key agreement.
+Both keys are above the limits in each of them.
+\begin{itemize}
+  \item North, \texttt{pt1}, 800~Hz, seed 1: PM 71.3 and 67.8~deg. The difference exceeds 3~deg.
+  \item Down, \texttt{pt1}, 400~Hz, seed 2: PM 58.7 and 58.2~deg. Key~1 has no gain margin, key~2 finds 16.3~dB.
+  \item Down, \texttt{pt1}, 800~Hz, seed 2: GM 22.4 and 17.8~dB. The difference exceeds 1~dB.
+\end{itemize}
+They were not flown again.
+
+\subsection{Rate and attitude loops}\label{sec:an_rate_att}
+
+On the final configuration, one cell was scored for each of two loops.
+\begin{itemize}
+  \item Rate loop, roll, 800~Hz: PM 46.9~deg, GM 15.7~dB, DM 75.5~ms.
+  \item Attitude loop, pitch, 400~Hz: PM 48.0~deg, GM 13.7~dB at 4.29~Hz, DM 93.5~ms.
+\end{itemize}
+\Cref{tab:an_spot} lists them.
+The phase margins are 1.9 and 3.0~deg above the limit.
+This is a thin reserve and the evidence is one run each.
+Pitch and yaw of the rate loop, and yaw of the attitude loop, were not measured on the final configuration.
+
+\begin{table}[tbp]
+\caption{Spot cells of the final configuration. Both have a clean log. The limits are GM 6~dB, PM 45~deg.}\label{tab:an_spot}
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}L{4.2cm} L{1.7cm} L{1.7cm} L{1.7cm} Y@{}}
+\toprule
+Cell & GM (dB) & PM (deg) & DM (ms) & Verdict \\
+\midrule
+Rate, roll, 800~Hz & 15.7 & 46.9 & 75.5 & pass \\
+Attitude, pitch, 400~Hz & 13.7 & 48.0 & 93.5 & pass \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The attitude cell has two $-180^\circ$ crossings.
+One is at 4.29~Hz with $|L|<1$ and a margin of 13.7~dB.
+The other is at 0.237~Hz with $|L|=7.3$.
+The scorer reports the signed minimum, $-17.3$~dB, for the second one.
+Under the reading rule of \cref{sec:an_criteria}, it is a gain-reduction margin of $+17.3$~dB.
+The cell passes with GM 13.7~dB.
+Read literally as a signed minimum, the cell would fail.
+This reading is the one recorded in the verdict.
+
+\subsection{Margin figure}\label{sec:an_fig}
+
+\Cref{fig:g2_margins} shows every flown cell.
+Filled markers are 400~Hz and open markers 800~Hz.
+Dashed lines are the limits.
+Cells without a gain margin are left out of the gain panel.
+The delay margin is far above two control periods everywhere.
+\indifigure{g2_margins}{Stability margins measured in flight at the final configuration. Each marker is one flown cell; dashed lines are the acceptance thresholds. Loops without a $-180^\circ$ crossing in the measured band have no gain margin. The delay margin is far above two control periods in every cell. The 250~Hz controller rate was not measured.}{fig:g2_margins}
+
+\Cref{fig:bode_rate} (\cref{ch:inner_loop}) shows the measured response of the roll rate cell.
+In the Bode plot the gain falls through 0~dB at 1.72~Hz.
+The phase there is $-133^\circ$, so the phase margin is 46.9~deg.
+The phase reaches $-180^\circ$ at 18.3~Hz, where the gain is $-15.7$~dB.
+The Nichols chart shows the same two points on one curve.
+The curve passes the critical point $(-180^\circ,\,0~\mathrm{dB})$ with a clear gap.
+The plot has 18 measured bins and no model overlay.
+
+\section{Agreement of model and measurement}\label{sec:an_agree}
+
+The cross-checks below use pre-final binaries.
+They test the models, not the final margins.
+
+\paragraph{Rate loop.}
+The model reproduces an earlier measurement (phase margin 23.6 against 22.3~deg, gain margin 4.7 against 4.1~dB).
+It also reproduces the shift in phase margin when the setpoint lead was added (a drop of 9.7~deg in the model, 8.4~deg measured).
+Two differences remain.
+The model gain is 0.2 to 1.7~dB too high.
+The model phase leads the measurement by 17~deg at 1~Hz, and the lead falls to $-5^\circ$ at 8~Hz.
+At the crossover the phase margins agree within 1.1~deg.
+No gain-margin comparison on the measured path exists.
+
+\paragraph{Attitude loop.}
+\Cref{tab:an_att} compares model and flight for the roll cells.
+Without the outer loops, the model phase margin was about 15~deg too high.
+With the outer-loop factor of \cref{eq:an_outer}, the phase margins agree within 0.3~deg at all three rates.
+The gain margin of the model is 1.6 to 4.6~dB lower than measured.
+The model is therefore conservative.
+The cells at 400 and 267~Hz are outside the 3~dB rule.
+The likely cause is the phase error of the rate model near $-180^\circ$, but this was not shown.
+Both gain margins are far above 6~dB.
+
+\begin{table}[tbp]
+\caption{Attitude loop, roll: model with outer loops against flight. Pre-final binaries.}\label{tab:an_att}
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}L{2.6cm} L{2.6cm} L{2.6cm} L{2.2cm} Y@{}}
+\toprule
+Controller rate & Model PM / GM & Measured PM / GM & $\Delta$PM / $\Delta$GM & 10~deg / 3~dB rule \\
+\midrule
+800~Hz & 57.6 / 20.3 & 57.3 / 21.9 & $-0.3$ / $+1.6$ & pass \\
+400~Hz & 56.4 / 18.6 & 56.6 / 22.0 & $+0.2$ / $+3.4$ & GM outside \\
+267~Hz & 55.3 / 17.2 & 55.5 / 21.8 & $+0.2$ / $+4.6$ & GM outside \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Limits of the cross-check.}
+The yaw loops are not modelled.
+Pitch is identical to roll in the model, so the model cannot explain a difference between them.
+The model runs the attitude controller at the rate-loop rate with a delay of one sample.
+The module runs at the attitude callback rate.
+The effective velocity and position gains of the flown runs were not read back.
+For the outer loops, no model of the break at the stage input or output exists.
+A check at three frequencies with the stock horizontal gains gave $|L|$ of 0.60, 0.29 and 0.14 at 0.5, 1 and 2~Hz.
+The measurement gave 0.69, 0.27 and 0.16.
+This check was not scored by a second key.
+
+\section{Verdict}\label{sec:an_verdict}
+
+The stability gate (G2) is \passed{} on the final configuration.
+The recorded result is as follows.
+\begin{itemize}
+  \item All 24 outer-loop cells meet the limits: PM at least 49.1~deg, horizontal GM at least 13.5~dB, plateau GM at least 12.9~dB, DM at least 229~ms. All logs are clean after one re-flight.
+  \item The two spot cells meet the limits (rate PM 46.9~deg, attitude PM 48.0~deg).
+  \item The attitude step test passes in 9 of 9 flights with both keys.
+\end{itemize}
+Four limits of the evidence are recorded.
+\begin{enumerate}
+  \item Three cells are blocked on key agreement, with both keys above the limits.
+  \item The phase margins of the two spot cells are thin, 1.9 and 3.0~deg above the limit, from one run each.
+  \item The pitch-attitude cell has a signed gain minimum of $-17.3$~dB at 0.237~Hz. It passes as a gain-reduction margin.
+  \item The 250~Hz rate was not measured.
+\end{enumerate}
+\Cref{ch:validation} reports the flight tests of the other gates.
