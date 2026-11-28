@@ -53,7 +53,9 @@ stock-mode routing unverified). Full build with figs+diagrams not yet run. B fig
 lists not-possible figs). B flagged source discrepancies to settle before the chapters copy them: ch02 z outer cells
 "4 of 8" no -180 crossing vs 7/8 in scores; ch03 "item 2 fails 79 of 297" vs 79 failing runs, item 2 on 73; figure
 font DejaVu (Libertinus OTF is in texmf, point matplotlib at it); PID step trace from older indi_vs_pid flights. Next: chapters 03-05 agent (inner, outer, analysis) from report/*.md, using
-CAPTIONS.md/FIGURES.md. Cost: S260 three sonnet-high agents ~ $1+ each: run at most 2 per session. Firmware after FREEZE-10: e6af4b6b0d, ac744d360e (R1 arming check, owner-lifted freeze, no gate row
+CAPTIONS.md/FIGURES.md. Cost: S260 three sonnet-high agents ~ $1+ each: run at most 2 per session.
+S261: agent D (sonnet medium) writes chapters/03_inner_loop.tex only, notes in pdf/NOTES_D.md. Then 7a section
+review of ch03 (and of S260 ch01/02 work, addendum 7 applies retroactively), then ch04, ch05 one per session. Firmware after FREEZE-10: e6af4b6b0d, ac744d360e (R1 arming check, owner-lifted freeze, no gate row
 invalidated). Commit trailer: AGENTS.md wins: `Assisted-by:` only.
 
 ## Open problems
