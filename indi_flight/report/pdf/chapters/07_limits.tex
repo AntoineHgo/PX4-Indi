@@ -1,3 +1,182 @@
 \chapter{Limits}\label{ch:limits}
 
-This chapter is written from the technical source chapters.
+This chapter states what the INDI rate and acceleration controllers do not yet achieve, and what the evidence does not show.
+It rests on \cref{ch:validation} and uses its numbers.
+PASSED in that chapter means passed with the limits listed here.
+All results are for one simulated airframe, a 5-inch quadcopter of about 600~g.
+LOC means loss of control.
+
+\section{Robustness (G3)}\label{sec:lim_g3}
+
+The robustness gate is NOT PASSED, and the owner closed it as final.
+Two failures are specific to INDI: PID, flown on the same draw and seed, does not fail them.
+
+\subsection{Slow motors: a 2~Hz pitch oscillation}
+
+On one draw the motors are 2.4 to 2.8 times slower than nominal.
+The INDI pitch rate then oscillates at 2.00~Hz, sustained, on both scoring keys, also at real time.
+Its power peak is about 30~dB above PID.
+The campaign shows the same family of failures more widely: the 2.0 to 2.5~Hz line appears in 37 runs with high added delay and slow motors.
+The statement that this mode is INDI-specific rests on one PID flight per draw and seed, so it has no spread estimate.
+
+One hypothesis exists: the actuator model of the controller (time constant 0.033~s) no longer matches motors that slow.
+\emph{This is unverified.}
+No evidence file shows it, and it does not explain the saturation failure below.
+
+\subsection{Saturation with a weak motor: loss of control}
+
+In corner C3 the available thrust is 0.351 of nominal, one motor is at 0.709, and the mass is 30~\% above nominal.
+INDI tilts past 60~deg at the fault.
+PID flies the same draw with a tilt below 40~deg.
+The outcome does not depend on the actuator time constant in the range that was tried.
+Two measurements are available.
+In this event a rotor speed collapse hits both stacks; INDI applies 55 to 80~\% of the counter-torque that PID applies for 0.2~s, and tilts over.
+Why the rotor speed collapses was not traced.
+Three repairs in the rate loop were tried on their own builds, and none removed the failure (\cref{sec:val_g3}).
+The cause is not established.
+
+\indifigure{limits_failures}{The two robustness failures specific to INDI. (a) With motors 2.4 to 2.8 times slower than nominal, the INDI pitch rate oscillates at about 2~Hz; the PID reference on the same draw does not. (b), (c) After a thrust-saturating fault with one weak motor, INDI tilts past 60~deg and control is lost; PID, flown on the same draw, stays well below 60~deg.}{fig:lim_failures}
+
+\subsection{The excluded corner}
+
+The saturation corner (thrust of twice the hover thrust, with a weak motor on) lies outside the ranges the owner set for the robustness test.
+It is reported here as a measured INDI limit.
+It is not a promise that a PID fallback exists: the controller has none.
+Inside the owner ranges, a failure counts.
+Draws with sag, or a weak motor at 0.7 or above, stay counted.
+No claim is made for the controllers beyond this corner.
+
+\subsection{What a user should take from this}
+
+The operating envelope of the INDI controllers is not demonstrated for plants whose motors are much slower than the actuator time constant parameter, nor for deep thrust saturation with one weak motor.
+On such plants INDI can fail where PID does not.
+No firmware after the final configuration has a 300-flight result: the second attempt stopped after 25 flights and the last after three.
+Tracking above 0.5~m on three draws appears in both stacks and is not counted against INDI, but it is a fact for a user: the lemniscate was not tracked within 0.5~m on those plants.
+
+\section{Un-identified start and identification (G6)}\label{sec:lim_g6}
+
+G6 is NOT PASSED.
+It requires G3.
+
+When the identification flag \param{MC_INDI_ID_OK} is 0, the controller flies cautious defaults, with half gains and an actuator time constant of 0.05~s.
+This start lost control in 6 of 58 corner flights (\cref{sec:val_g6}).
+Arming in this state is allowed, because the controller flies its own identification manoeuvre.
+The un-identified state is therefore meant for the identification flight on a healthy vehicle: full battery, no weak motor, calm air.
+It is not a flight configuration over the whole plant range.
+
+Where identification was measured, it was accurate in simulation: the time constant was found within 3.7~\%, and no cell of a 30-cell grid failed.
+This is on one airframe and mostly one seed.
+
+Not covered:
+\begin{itemize}
+  \item the roughly 100 un-identified random draws between the corners were dropped, so the range between the corners is not tested;
+  \item the ten wrong-start identification runs (twice and half the true parameters) were not flown;
+  \item identification on other airframes (about 1~kg, above 5~kg) was not flown, and nothing is reported for them;
+  \item the oscillation score limited to the identification manoeuvre was not made.
+\end{itemize}
+
+\subsection{Yaw control effectiveness: two estimates disagree}
+
+The default yaw control effectiveness (\param{MC_INDI_G1_Y}, 205~rad/s$^2$) is derived from the airframe.
+An instrumental-variable fit on flight data gave 163 to 166~rad/s$^2$.
+The two disagree, and the difference is not resolved.
+The reason is not known: it may lie in the derivation or in the fit.
+Only a new identification on flight data can settle it.
+
+\subsection{Assumed rotor inertia in the yaw spin-up term}
+
+Yaw torque comes from a change of rotor speed, and the rotor inertia reacts on the body.
+The yaw spin-up term (\param{MC_INDI_G2_Y}, 27~rad/s) is derived from a rotor inertia of $5\times 10^{-6}$ (SI units).
+That inertia is an assumption, not a measurement.
+Its correctness for another rotor is not shown.
+
+\section{Untested modes and rows (G2, G5)}\label{sec:lim_untested}
+
+G2 and G5 are PASSED, with these rows not tested or only partly evidenced:
+\begin{itemize}
+  \item a false maybe-landed flag and a vertical estimator reset: not tested (owner decision);
+  \item acceleration-only offboard setpoints, and take-off on an offboard setpoint alone: not tested (owner decision);
+  \item the saturation part of the stabilised full-scale test: dropped, because no stack reaches four motors above 0.99 for 1~s. Saturated behaviour is therefore not covered by G5;
+  \item mission and return to launch have one scoring script only, and the mission waypoint margin is 0.03~m (worst 0.970~m against 1.0~m);
+  \item G2: three outer cells are blocked on key agreement only; the rate and attitude spot margins exceed the limit by 1.9 and 3.0~deg; the model cross-check disagrees with the measurement in three rate groups, bounded and with all measured cells passing; the 250~Hz controller rate was not measured;
+  \item pitch and yaw rate margins were not flown at the final configuration (only the roll rate loop).
+\end{itemize}
+
+Open observations that touch flight behaviour:
+\begin{itemize}
+  \item In hover, the outer-loop command has more power below 30~Hz than the identified noise sources explain, and the cause is unknown. The G4 limits are met with it: the narrow-band command RMS is at most $3.46\times 10^{-4}$ against a flag at $5\times 10^{-4}$, and the nearest chatter line is at $4.12\times 10^{-4}$. Whether it grows on a real vehicle is not known.
+  \item Most INDI flights ran at four times real time, and INDI behaviour depends on the simulation speed to some degree. The robustness failures and the steady-state misses were repeated at real time and reproduced, or stayed within the real-time spread. The other 77 oscillation findings of the campaign were not repeated, and a speed-dependent behaviour that these checks missed is not excluded. A planned comparison of steps at both speeds was not flown.
+  \item Several motor-command lines at 70 to 78~Hz appear in some INDI position runs. They are a noise-gate matter, not a robustness failure.
+\end{itemize}
+
+\section{Behaviour without telemetry: the modelled fallback}\label{sec:lim_fallback}
+
+The controller measures the actuator state from rotor-speed telemetry.
+When telemetry is lost, missing or frozen, it falls back to a modelled actuator state, with no blend.
+Arming is refused without fresh telemetry on every motor, but the check always allows once the vehicle is armed.
+A loss in flight is handled only by the fallback.
+
+The fallback is not validated for the whole envelope:
+\begin{itemize}
+  \item no stability margin was flown for the model-only path;
+  \item a permanently saturated motor with frozen telemetry is not detected, by design;
+  \item the simulator hook that cuts telemetry acts 36 to 122~ms late, so timings of loss and frozen detection were not measured exactly.
+\end{itemize}
+
+\section{Implementation limits (G7)}\label{sec:lim_impl}
+
+\paragraph{The arming check.}
+It was tested with five unit tests and two simulation flights (a hover that arms, and a refused arming), one seed.
+Its limits are:
+\begin{itemize}
+  \item about 1 to 1.5~s at boot before the first reply, and about 1 to 2~s after the commander drops a silent registration, are ungated, and there is none at all if the commander has no free slot (eight exist). An unconfigured airframe could arm in such a window. This is untested;
+  \item the speed controller driver must publish rotor speed while disarmed, at about 50~Hz or more per motor, or arming is refused. This is unverified on hardware;
+  \item frozen values are not detected while disarmed;
+  \item not covered: real hardware, display of the refusal in a ground station, an arm command that races the reply cache, and motors failing one at a time.
+\end{itemize}
+
+\paragraph{Other items.}
+\begin{itemize}
+  \item Flash: the v6x board overflows by 23.5~kB with both modules. The v5x board fits, with 7.7~kB free. The v5x figure was measured twice and the figures agree within 2~kB.
+  \item The position module reads the speed-controller data of motor instance 0 only, has no frozen-value or error-count check, and uses a 100~ms age limit where the rate module uses 20~ms.
+  \item Four guard parameters (telemetry timeout, frozen-value window, setpoint timeout and increment limit) have no flown test of their own.
+  \item A position-and-velocity gain cascade in the acceleration controller is not reachable. It stays until it is reviewed or removed.
+  \item The loss-of-control checker of the stabilised full-scale test uses one sample, which is stricter than the 0.2~s of the test definition.
+  \item The text of the actuator time constant parameter still advises rounding up, which the owner overturned. The parameter text must be fixed.
+  \item Production boards do not build the modules; only the simulation board enables them.
+  \item The unit tests of the outer module use a level attitude only, and the only closed-loop test plant is roll-only. A wrong-way rotation or a tilt-dependent error would not be caught by a unit test; it is covered by simulation flights on the full plant.
+\end{itemize}
+
+\paragraph{Gyro notch filters.}
+The rate controller takes the gyro and its derivative from the stock estimator, which carry any gyro notch that is configured.
+The measured-torque path passes the same low-pass chain, but no notch.
+With a notch configured, the two paths are no longer phase-matched near the notch frequency.
+The reference airframe sets no notch, and the simulator has no dynamic notch, so the effect was neither flown nor measured.
+First flights should have the gyro notches off.
+
+\section{Simulation-only evidence}\label{sec:lim_sim}
+
+No real flight log exists.
+Telemetry (0 to 3 frames of 1.25~ms), actuator latency and DShot behaviour come from the simulator model.
+The real speed-controller firmware, the telemetry driver and the real rates are not covered.
+The simulated motor time constants are those of the model, so the failures of \cref{sec:lim_g3} may differ on real motors, in either direction.
+Further simplifications:
+\begin{itemize}
+  \item \emph{Gust.} The simulator applies drag from the wind speed alone, with no vehicle velocity. A drifting vehicle sees more force than in air-relative drag, so the gust is overstated for a moving vehicle (conservative) and equal in hover. The aerodynamic damping of real wind is not covered.
+  \item \emph{Battery.} The simulator has no battery voltage model. Thrust sag is a uniform thrust scale from 1.0 to 0.7. The effect of voltage on the thrust map, on the rotor-speed range and on the high-frequency gain is not tested. Hover and one step should be repeated at full and at low battery.
+  \item \emph{Airframe.} One 5-inch airframe of about 600~g. Other sizes and loads are not tested; a payload that is added after identification, about 1.3 times the mass, is a limit and not a test row.
+\end{itemize}
+
+Before a first real flight, the bring-up checklist of \cref{ch:bringup} measures the motor time constant and the telemetry latency, to decide whether the real plant lies inside the failing region of \cref{sec:lim_g3}, and starts with a tethered or low-risk hover.
+The identification must complete before the identification flag is set.
+
+\section{Unverified claims in the report}\label{sec:lim_unverified}
+
+The report marks 47 claims as unverified in its source chapters; 20 of them were checked one by one and the others were marked without a check.
+The main ones are repeated here.
+\begin{itemize}
+  \item The actuator-model mismatch as the cause of the slow-motor oscillation.
+  \item That the oscillation is INDI-specific, from one PID flight per draw.
+  \item The yaw inertia and the yaw effectiveness of \cref{sec:lim_g6}.
+  \item The cause of the lower roll rate phase margin of the final configuration (46.9~deg) compared with earlier configurations (about 69~deg).
+\end{itemize}

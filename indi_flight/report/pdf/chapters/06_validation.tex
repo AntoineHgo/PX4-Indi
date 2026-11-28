@@ -1,3 +1,520 @@
 \chapter{Simulation Validation}\label{ch:validation}
 
-This chapter is written from the technical source chapters.
+This chapter reports the tests that decide whether the INDI controllers are accepted.
+Each criterion of \cref{tab:criteria} is a \emph{gate}: a test with fixed thresholds.
+Gate G$n$ is criterion C$n$.
+Six gates are \passed{}: G1, G2, G4, G5, G7 and G8.
+Two are \notpassed{}: G3 (robustness) and G6 (defaults and identification, which needs G3).
+All evidence comes from simulation, on one reference airframe: a 5-inch quadcopter of about 600~g.
+No real flight was made.
+\Cref{ch:limits} states what this means.
+
+\section{Method}\label{sec:val_method}
+
+\subsection{Gates as test definitions}\label{sec:val_gates}
+
+Each gate was written as a test definition before its first run: what is flown, what is measured and which threshold applies.
+The thresholds do not depend on the controller that is being judged.
+In particular, a PID controller was flown on the same scenarios as a reference.
+Its results are shown beside the INDI results where they exist.
+They are never a pass condition.
+A gate passes only when its own thresholds are met.
+
+A verdict holds for one firmware.
+The gates G2, G4 and G5 were flown on the final configuration.
+If the firmware changes later, the rows that the change affects must be flown again.
+The robustness re-flights used a simulator build in which the motor-fault injector was repaired.
+Earlier robustness runs with several simultaneous motor limits were declared invalid, because the injector had applied the limits about one second apart.
+
+\subsection{Two scoring scripts per metric}\label{sec:val_keys}
+
+Every important metric is computed twice, by two scoring scripts written independently.
+The report calls them key~1 and key~2.
+A result counts when both keys agree.
+When they disagree, the case is reported and the gate definition decides, not the script that happens to be more favourable.
+The scoring scripts themselves are tested.
+Each one has a self-test that must fail when the check is deliberately broken.
+
+\subsection{Ground truth, seeds and run provenance}\label{sec:val_truth}
+
+The simulator publishes the true state of the vehicle, stamped in simulation time.
+All pass conditions are judged on this truth, not on the estimator output.
+Each test is flown with several random seeds, three for most gates.
+Every run records the code commit, whether the source tree was clean, the hash of the simulator binary, and the hashes of the simulation models and of the parameters.
+The run script refuses to start with a modified source tree or an out-of-date binary.
+Most INDI flights ran at four times real time.
+The flights that decide the robustness gate were repeated at real time (\cref{sec:val_g3}), and the limits chapter discusses the remaining risk.
+
+\subsection{Owner amendments}\label{sec:val_amend}
+
+After the first run of a test, the project owner amended the test where it had a defect.
+Each change was logged before the results were re-scored.
+Where a gate result below depends on an amendment, the table says so.
+\Cref{sec:val_amendments} lists the amendments in one place.
+
+\section{G1: evidence integrity}\label{sec:val_g1}
+
+G1 does not test the controller.
+It tests whether the evidence can be trusted.
+\Cref{tab:val_g1} lists its seven items.
+
+\begin{table}[tbp]
+\caption{G1 items and results.}\label{tab:val_g1}
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}l L{4.9cm} Y@{}}
+\toprule
+Item & Test & Result \\
+\midrule
+G1.1 & Logger completeness: every published sample is logged, at most 0.1~\% missing & Met. Logger shortfall within the limit. Simulator holes: 0.012~\% of steps, single holes at most 6.3~ms. These fail the original gap rule, which the owner replaced by this one \\
+G1.2 & True state is stamped in simulation time & Met \\
+G1.3 & Two scoring keys, with the attitude angle computed the same way in both & Met \\
+G1.4 & Scoring self-tests fail when the check is broken & Met \\
+G1.5 & Each fault injector and plant variant is checked before its first campaign & Deferred to each injector by design; not a failed item \\
+G1.6 & Mode-change timing: spread at most 10~ms, latency at most 20~ms & Met: spread within one commander period (10~ms), latency within two \\
+G1.7 & Run provenance recorded, dirty tree or stale binary refused & Met. The refusal was tested by breaking each condition: dirty tree, stale binary, newer header, missing input, missing binary \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{keyresult}[G1 verdict: \passed]
+The logs are complete enough and the scoring is checked.
+G1 carries five evidence limits into every later verdict.
+\begin{itemize}
+  \item Logs have two kinds of holes (simulator and controller). A run with more than 0.1~\% holes is flown again; it is not a failure.
+  \item Analysis windows anchor on the logged mode change, which is timed to within 10~ms.
+  \item The estimated height differs from the true height by up to 0.15~m in hover, and the position-hold spread is $\pm 0.15$~m.
+  \item The estimated heading is off by up to 1.6~deg, constant in a hover. No yaw threshold below 1.6~deg is judged on truth.
+  \item The bench parameter sets switch off the barometer auto-calibration.
+\end{itemize}
+\end{keyresult}
+
+\section{G2: stability margins}\label{sec:val_g2}
+
+G2 measures the stability margins of every loop in flight, with a multisine injected at a loop-break point (\cref{ch:analysis}).
+It then checks attitude steps.
+\Cref{tab:val_g2_tests} gives the thresholds.
+
+\begin{table}[tbp]
+\caption{G2 thresholds.}\label{tab:val_g2_tests}
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}L{4.2cm} Y@{}}
+\toprule
+Quantity & Threshold \\
+\midrule
+Phase margin & At least 45~deg \\
+Gain margin & At least 6~dB; no limit where the phase never reaches $-180^\circ$ in 0.2 to 8~Hz \\
+Gain reduction near $-180^\circ$ & Where $|L|>1$ within 10~deg of $-180^\circ$, the value $20\log_{10}|L|$ must also be at least 6~dB \\
+Delay margin & At least two control periods plus telemetry latency (never the binding limit) \\
+Key agreement & Phase margins within 3~deg, gain margins within 1~dB, and both keys find a gain margin or neither does \\
+Holes & The hole check of G1 passes in every run \\
+Step response, every seed & Roll and pitch: overshoot at most 5~\%, 2~\% settling at most 450~ms. Yaw: overshoot at most 5~\%, settling at most 1350~ms \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The step thresholds are absolute.
+They were derived from a PID reference flown beforehand on three seeds: roll and pitch overshoot 0~\% and settling at most 412~ms, yaw overshoot at most 0.3~\% and settling at most 1240~ms.
+
+\paragraph{Flights.}
+The outer loops were flown in 24 cells: three axes, two break points, two controller rates (400 and 800~Hz) and two seeds.
+Two spot cells cover the inner loops: the roll rate loop at 800~Hz and the pitch attitude loop at 400~Hz.
+The step test used three seeds on roll, pitch and yaw.
+The 250~Hz controller rate was not measured.
+
+\begin{table}[tbp]
+\caption{G2 results at the final configuration. Worst case over all flown cells.}\label{tab:val_g2}
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}L{4.6cm} L{3.2cm} L{2.2cm} Y@{}}
+\toprule
+Quantity & Worst case & Threshold & Result \\
+\midrule
+Outer-loop phase margin & 49.1~deg & 45~deg & 24 of 24 meet it \\
+Outer-loop gain margin, horizontal axes & 13.5~dB & 6~dB & 24 of 24 meet it \\
+Plateau gain margin (second key) & 12.88~dB & 6~dB & Met \\
+Outer-loop delay margin & 229~ms & not binding & Met \\
+Hole check & 24 of 24 & pass & One cell failed and was flown again \\
+Agreement of the two keys & 21 of 24 cells & agree & Three cells blocked (see text) \\
+Rate loop, roll spot & PM 46.9~deg, GM 15.7~dB, DM 75.5~ms & PM 45~deg & Met, thin \\
+Attitude loop, pitch spot & PM 48.0~deg, GM 13.7~dB at 4.29~Hz, DM 93.5~ms & PM 45~deg & Met, thin \\
+Steps, roll and pitch & overshoot 0.65~\%, settling 347.5~ms & 5~\%, 450~ms & 9 of 9 pass, both keys \\
+Steps, yaw & overshoot at most 0.17~\%, settling 1196.25~ms & 5~\%, 1350~ms & 89~\% of the limit \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Reading the result.}
+The worst hole-check cell had one setpoint gap of 22.5~ms against a 10~ms limit.
+It was flown again and passed with a phase margin of 56.9~deg, a gain margin of 13.9~dB and a delay margin of 0.485~s.
+The earlier run of this cell had a phase margin of 59.59~deg and a gain margin of 13.83~dB.
+Three outer cells are blocked on key agreement only; both keys are above the limits in each of them:
+\begin{itemize}
+  \item one velocity cell: phase margin 71.3~deg on key~1 and 67.8~deg on key~2 (difference $-3.48$~deg, limit 3~deg);
+  \item one acceleration cell on the vertical axis: key~2 finds a gain margin of 16.3~dB, key~1 finds none;
+  \item one acceleration cell on the vertical axis: gain margin 22.4~dB on key~1 and 17.8~dB on key~2 (difference $-4.6$~dB).
+\end{itemize}
+These cells were not flown again.
+In the primary scorer, the vertical outer loop has no $-180^\circ$ crossing, hence no gain margin, in 7 of its 8 cells.
+
+The attitude spot cell has a second $-180^\circ$ crossing at 0.237~Hz with $|L|=7.3$.
+It is read as a gain-reduction margin of 17.3~dB.
+A literal signed reading would print $-17.31$~dB and fail.
+The gate verdict uses the first reading, which the owner's amendment prescribes.
+The rate and attitude spot margins exceed the limit by only 1.9 and 3.0~deg.
+Pitch and yaw rate margins were not flown at the final configuration.
+
+\indifigure{step_attitude}{Attitude step responses of the INDI controller and of the PID reference in simulated hover (15~deg roll and pitch, 45~deg yaw). Both settle inside the 2~\% band within the acceptance limits (450~ms, yaw 1350~ms). INDI overshoots by less than 1~\%; the PID reference barely overshoots.}{fig:val_steps}
+
+\begin{keyresult}[G2 verdict: \passed]
+All 24 outer-loop cells and both spot cells meet the margins, and all 9 steps pass on both keys.
+Evidence limits: three cells are blocked on key agreement only; the spot margins are thin; there is no second key on the spot cells; 250~Hz was not measured.
+\end{keyresult}
+
+\section{G3: robustness}\label{sec:val_g3}
+
+\subsection{The test}
+
+G3 is a campaign of 300 valid simulated flights of 100~s.
+240 flights are Latin-hypercube draws over the factors of \cref{tab:val_g3_factors}, and 60 are corner cases (six named corners C1 to C6, ten flights each) that combine three or four extreme factors.
+Each flight is: arm, take-off, hover, roll steps, a lemniscate trajectory, then an event hover with a fault or a gust, and a hold.
+Seventy percent of the flights use position mode, 20~\% attitude mode and 10~\% rate mode with zero sticks.
+The noise of G4 (typical profile) is always on.
+
+\begin{table}[tbp]
+\caption{Factors drawn in the robustness campaign.}\label{tab:val_g3_factors}
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}L{5.2cm} Y@{}}
+\toprule
+Factor & Range \\
+\midrule
+Controller gain versus plant gain, per axis & Owner box 0.8 to 1.2 times (see text) \\
+Motor time constant & 0.5 to 3 times nominal, with different rise and fall values \\
+Added loop delay & 0 to 10~ms \\
+Mass; inertia & $\pm 30$~\%; $\pm 30$~\% per axis \\
+Available thrust (battery sag) & 1.0 down to 0.7, in 40~\% of flights \\
+Weak motor & one motor at 1.0 to 0.7, in 30~\% of flights \\
+Saturation corner & thrust down to twice the hover thrust, 10~\% of flights \\
+Telemetry & 0 to 3 frames latency; dropouts, loss and frozen values \\
+Vibration & 1 to 5 times a base level \\
+GNSS latency & 80 to 250~ms, with a mismatch of up to $\pm 50$~ms in the estimator setting \\
+Wind & steady 0 to 5~m/s plus a gust with peak 3 to 9~m/s \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Six items are checked on every flight, on the true state:
+\begin{enumerate}
+  \item no loss of control;
+  \item no sustained oscillation of the rates or the position;
+  \item steady state in the last 10~s of a hold of at least 20~s: horizontal RMS error at most 0.15~m in calm air and 0.30~m with wind or gust, height offset at most 0.10~m (0.20~m with sag or a weak motor);
+  \item tracking: lemniscate horizontal RMS at most 0.5~m, vertical RMS at most 0.3~m;
+  \item recovery: after each event the vehicle is back within 0.3~m and 3~deg in at most 5~s and does not leave the 0.3~m band for the next 5~s;
+  \item rate mode: body-rate RMS at most 5~deg/s over the last 20~s with zero sticks.
+\end{enumerate}
+The campaign passes only if there is no loss of control, no sustained oscillation, and items 3 to 6 are met in every valid run.
+There is no quota of allowed failures.
+PID was flown on the same draws as a reference.
+
+\subsection{Results}
+
+No attempt passed.
+\Cref{tab:val_g3} lists the four attempts.
+The first is the full campaign, flown on the final firmware.
+The others tried to repair the failures and stopped at the first confirmed failure.
+
+\begin{table}[tbp]
+\caption{Attempts at the robustness gate. All are NOT PASSED.}\label{tab:val_g3}
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}L{3.2cm} Y@{}}
+\toprule
+Attempt & Result \\
+\midrule
+Full campaign, 300 of 300 flown, final firmware &
+  Item 1 fails: one 2~Hz growing pitch oscillation ends in a fall (corner C1), and one flight tilts past 60~deg at the fault (corner C3, saturation plus a weak motor). Item 2 fails on 79 of 297 scored runs. Item 3 passes in 94.95~\% (15 misses). \\
+Re-fly with the controller time constant drawn like an identification error, halted after 25 runs &
+  One oscillation failure was not reproduced at real time and was not counted. The saturation draw lost control again, at 60.78~s at four times real time and 61.03~s at real time. \\
+Three repair candidates in the rate loop, each on its own build &
+  All missed the pass line on both keys (details below). \\
+Last route, 300 flights planned, halted at the third &
+  Slow-motor draw: item 2 fails on both keys, and tracking (item 4) fails on draws 2 and 3. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Item 2, 79 of 297.}
+The 79 runs are the runs in which at least one key found a sustained oscillation: key~1 found it in 73 runs, key~2 in 45, and 39 runs were found by both.
+They are four different things.
+Eight runs show a 10.75 to 11.5~Hz pitch line (high delay, fast motor, controller gain below the plant gain).
+Thirty-seven runs show a 2.0 to 2.5~Hz line (high delay and slow motor); the corners C1 and C6 fail in all 19 scored runs.
+Twenty-five runs are landing windows that only key~1 flags; key~2 skips landings by design.
+Nine runs are borderline 2~Hz lines flagged by key~1 only.
+Two of the 2~Hz and 11~Hz cases were repeated at real time and reproduced, and PID passes them.
+One of the 11~Hz draws also fails with PID, on another axis.
+The other 77 flagged runs were not repeated at real time; the verdict does not depend on them.
+
+\paragraph{Two failures that are specific to INDI.}
+\begin{itemize}
+  \item \emph{Slow motors.} On one draw the motors are 2.4 to 2.8 times slower than nominal. The INDI pitch rate oscillates at 2.00~Hz, sustained, on both keys, and again at real time. The local power peak (2.0 to 2.25~Hz) is about 30~dB above PID. PID on the same draw and seed passes.
+  \item \emph{Saturation with a weak motor.} In corner C3 the thrust scale is 0.351, motor 3 is at 0.709 and the mass is 30~\% above nominal. INDI tilts past 60~deg at the fault: at 60.67~s (four times real time) and 60.91~s (real time) with the actuator time constant at 0.033~s, and again at 61.03~s with a drawn value of 0.0177~s. PID flies the same draw without loss of control; its tilt stays below 40~deg. A different time constant does not change the outcome.
+\end{itemize}
+
+\paragraph{Tracking, item 4.}
+On three draws the lemniscate error exceeds 0.5~m (INDI against PID: 0.418 and 0.768~m, 0.834 and 0.862~m, 0.553 and 0.917~m).
+The owner ruled that a row on which PID also fails the same item on the same draw and seed is a test defect, provided INDI is not worse.
+These rows are reported and not counted against INDI.
+Each has one flight per stack, so there is no spread estimate.
+
+\paragraph{Repair candidates.}
+All were rate-loop changes that were not adopted.
+The first lowered the blend time constant between measured and modelled torque to 0.10~s: it fails items 1 and 2 on the saturation draw and item 2 on a second draw.
+The second added a per-motor correction with a time constant of 0.2~s: it loses control on a joint draw and on the saturation draw.
+The third added a bounded rate integrator: it loses control on the saturation draw and fails item 2 on the second draw.
+Only 25 flights of the second attempt and 3 of the last were flown, so no firmware after the final configuration has a 300-flight result.
+
+\paragraph{Recovery after events (item 5).}
+The owner fixed item 5 to require two conditions: recovery within 5~s without a new excursion larger than 0.3~m, and, from 5 to 10~s after the event, position error at most 0.3~m and tilt error at most 3~deg.
+A re-score of four pre-test runs reproduced the owner's expected outcome in all cases (six of six events).
+
+\paragraph{Gain range as drawn.}
+The recorded draws of the first campaign show controller gain factors between 0.62 and 1.69 times, wider than the amended box of \cref{tab:val_g3_factors}.
+This was not resolved.
+A narrower box would not change a verdict that rests on item 1 and item 2.
+
+\indifigure{g3_campaign}{Robustness campaign: 300 simulated flights with randomly drawn plant and disturbance factors. 218 runs pass, 79 fail at least one item and 2 end in loss of control (one further run was not scored). Failures are more frequent with slow motors and large added delay. The campaign is not passed.}{fig:val_g3}
+
+\begin{keyresult}[G3 verdict: \notpassed, final]
+The owner closed the gate as not passed and stopped further attempts.
+Two failures are INDI-specific: a 2~Hz pitch oscillation on slow motors, and loss of control with saturation plus a weak motor.
+A cause was not found; \cref{sec:lim_g3} gives the one hypothesis and its status.
+\end{keyresult}
+
+\section{G4: noise and effort}\label{sec:val_g4}
+
+G4 checks that sensor noise does not drive the motors too hard.
+Three noise profiles (quiet, typical, harsh) were flown in hover and in cruise, three seeds each: 18 INDI flights.
+Four metrics are measured on the motors.
+R20 is the rotor-speed ripple RMS above 20~Hz, R4 the ripple RMS around 4~Hz, C20 the command RMS above 20~Hz, and the clip fraction is the share of samples at command 0 or 1.
+\Cref{tab:val_g4_lim} gives the hover limits.
+In cruise, R20 and C20 are allowed 1.5 times the hover limit.
+Two further rows hold on the harsh profile in hover: G3 items 1 to 3, and no sustained 20 to 100~Hz chatter on the command.
+
+\begin{table}[tbp]
+\caption{G4 hover limits.}\label{tab:val_g4_lim}
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}l l l l@{}}
+\toprule
+Metric & Quiet & Typical & Harsh \\
+\midrule
+R20 & 1~\% & 1.5~\% & 3~\% \\
+C20 & 0.004 & 0.006 & 0.012 \\
+R4 & 3~\% & 4~\% & 6~\% \\
+Clip fraction & 0 & 0 & 0.1~\% \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\Cref{tab:val_g4} gives the harsh-profile results, which are the worst case.
+
+\begin{table}[tbp]
+\caption{G4 results on the harsh profile.}\label{tab:val_g4}
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}L{4.6cm} L{3.6cm} Y@{}}
+\toprule
+Quantity & Result & Limit \\
+\midrule
+Hover R20 / C20 / R4 / clip & 0.016~\% / 0.00025 / 0.041~\% / 0 & 3~\% / 0.012 / 6~\% / 0.1~\% \\
+Cruise R20 / C20 / R4 & 0.023 to 0.024~\% / 0.00065 to 0.00067 / 0.271 to 0.295~\% & 4.5~\% / 0.018 / 6~\% \\
+Command chatter, nearest to the flag & $4.12\times 10^{-4}$ & flag at $5\times 10^{-4}$ \\
+Hover horizontal RMS / mean height error & 0.027 to 0.047~m / $-0.029$ to $+0.013$~m & 0.15~m / 0.1~m \\
+PID guard at mode transitions & 54 transitions per key, none checked, none failed; largest INDI narrow-band RMS $3.46\times 10^{-4}$ & flag $5\times 10^{-4}$, failure above $1\times 10^{-3}$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+All 18 flights pass on both keys, with no key disagreement.
+The guard compares INDI with PID at mode transitions where INDI shows a narrow line.
+At the final configuration no transition reached the flag level, so none was compared.
+The PID comparison exists only from an earlier firmware, where INDI and PID narrow-band values at the same transitions lay within a ratio of 0.78 to 1.14.
+
+\indifigure{g4_noise_effort}{Rotor-speed ripple and motor-command RMS of the INDI controller for the quiet, typical and harsh noise profiles, in hover and cruise (three seeds each). Every run is far below its limit.}{fig:val_g4}
+
+\begin{keyresult}[G4 verdict: \passed]
+All 18 flights pass on both keys.
+Evidence limits: harsh-cruise rate flags are informational; the PID comparison exists only for four harsh flights and comes from an earlier firmware; a 20~Hz take-off transient exists in both stacks at 0.05~\% of full command.
+Item 3 (steady state) on cruise flights is not part of the G4 verdict: the scorer reports a miss on 9 of 9 cruise rows, in both stacks, because its window falls after the automatic landing starts.
+\end{keyresult}
+
+\section{G5: modes and transitions}\label{sec:val_g5}
+
+G5 flies the INDI stack through all flight modes and transitions, three seeds per row, with a second key where a second script exists.
+\Cref{tab:val_g5} gives the rows.
+A row result is the worst of the three seeds.
+
+\begin{table}[tbp]
+\caption{G5 rows, limits and worst-case results.}\label{tab:val_g5}
+\centering
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}L{3.1cm} L{5.6cm} Y@{}}
+\toprule
+Row & Limit & Result \\
+\midrule
+Acro steps & RMS rate error at most 10~deg/s on 100~deg/s steps, no loss of control & 3 of 3, worst 1.94 \\
+Stabilised release & tilt at most 3~deg, yaw rate at most 10~deg/s & 3 of 3, worst tilt 0.12 \\
+Altitude, position steps & height overshoot at most 0.3~m; horizontal overshoot at most 0.5~m; settling at most 4~s & 3 of 3 each \\
+Position hold in 5~m/s wind & 3-D RMS at most 0.3~m & 3 of 3, worst 0.062~m \\
+Mission, 4 waypoints & within 1.0~m & 3 of 3, worst 0.970~m \\
+Take-off, land & overshoot at most 0.5~m, edge step at most 10~\%, touchdown speed at most 0.8~m/s, tilt at most 10~deg & 6 of 6 \\
+Return to launch & height error at most 1~m & 3 of 3, 0.045 to 0.062~m \\
+Offboard trajectories o1 to o7 & horizontal RMS within $H_\mathrm{lim}$, vertical RMS at most 0.3~m & 21 of 21 under the amended limit (20 of 21 as first written) \\
+Offboard velocity step & vx RMS at most 0.2, end vx at most 0.1, height at most 0.3~m & 3 of 3 \\
+Mode switches & thrust step at most 20~\%, attitude jump at most 5~deg & 3 of 3, worst 3.98~deg \\
+Failsafes in hover (RC, link, offboard loss) & hold entered within 1~s, excursion at most 1~m & 9 of 9, entry within 0.51~s, excursion 0.121~m \\
+Failsafes at 3~m/s & same, excursion from the commanded setpoint & 9 of 9, excursion 0.16 to 0.25~m \\
+Kill and re-arm & motors off within 1.25~ms of the kill; all INDI states zero; command change in the first second at most 5~\%; take-off step at most 10~\% & Met: 0.00 to 1.25~ms; zero; at most 0.01~\%; 4.0 to 4.7~\% \\
+Stabilised full scale & no loss of control, tilt at most the mode limit plus 5~deg, attitude error at most 5~deg one second after the sticks centre & 3 of 3 \\
+Estimator yaw reset & excess at most 1~deg over the no-event level, excursion at most 0.5~m & 3 of 3 \\
+Estimator horizontal reset & true excursion at most 0.5~m, no oscillation & 3 of 3, 0.234 to 0.248~m \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The offboard trajectory limit is $H_\mathrm{lim}=\max(0.5\,\mathrm{m},\ \tau_\mathrm{att} v_\mathrm{rms})$.
+Here $\tau_\mathrm{att}=1/\param{MC_ROLL_P}=0.125$~s and $v_\mathrm{rms}$ is the RMS of the reference horizontal speed.
+For trajectory o2 the limit is 0.5685~m and INDI reaches 0.5027~m.
+Against a flat 0.5~m this one value would fail by 0.0027~m.
+The margins to $H_\mathrm{lim}$ of the other trajectories range from 0.043 to 0.456~m.
+On the failsafe test at 3~m/s, the PID reference has an excursion of 0.46 to 0.51~m on seed~1, against 0.16 to 0.25~m for INDI.
+
+\indifigure{g5_modes}{Worst transient of each mode and transition test, as a percentage of its acceptance limit (INDI, three seeds). All rows are within their limits; the mission waypoint error (0.97~m of 1.0~m) and offboard trajectory o2 (0.5027~m of 0.5685~m) are the thinnest.}{fig:val_g5}
+
+\begin{keyresult}[G5 verdict: \passed]
+All rows that were tested pass.
+Evidence limits:
+\begin{itemize}
+  \item Mission and return have one scoring script only; the mission margin to its limit is 0.03~m.
+  \item Not tested, by owner decision: a false maybe-landed flag, a vertical estimator reset, acceleration-only offboard setpoints, and take-off on an offboard setpoint alone.
+  \item The saturation part of the stabilised full-scale test was dropped, because no stack drives four motors above 0.99 for 1~s in this test (INDI reaches 0.869). Saturation under the position loop is covered by G3 corner C3, which INDI fails.
+  \item Some second-key scripts print a different verdict on kill, re-arm and estimator-reset rows because they use older reference definitions. Read against the gate definitions, all values are within limits.
+\end{itemize}
+\end{keyresult}
+
+\section{G6: defaults and identification}\label{sec:val_g6}
+
+G6 asks whether the identification chain that ships with the controller can start from wrong physical parameters and still produce a controller that passes G2, G3 and G5.
+The wrong starts are twice and half the true mass, inertia, motor time constant and thrust constant, one at a time (8 starts) plus the all-high and all-low corners.
+The chain runs once, the identified values are loaded, and nothing else is edited.
+G6 therefore requires G3.
+
+One further test is flown alone: item 7.
+It flies the 60 corner cases of G3 un-identified, with the identification flag off, controller gains halved and the actuator time constant at 0.05~s.
+The pass rule is no loss of control in any valid run.
+The owner reduced this test from about 100 Latin-hypercube runs plus corners to the 60 corners.
+
+\begin{table}[tbp]
+\caption{G6 results.}\label{tab:val_g6}
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}L{4.8cm} Y@{}}
+\toprule
+Test & Result \\
+\midrule
+Requires G3 & G3 is final NOT PASSED, so G6 cannot pass \\
+Item 7, no loss of control & Fails: 6 losses of control in 58 runs. Two runs lost control; four more were stopped by the flight watchdog (height loss, or tilt above 60~deg) and count as losses \\
+Invalid runs (harness) & 2, not flown again because they cannot change the verdict \\
+Reported only (key 1 / key 2 fail counts, 54 scored runs) & Oscillation over the whole run: 21 / 22. Steady state: 2 / 2. Tracking: 18 / 18. Recovery: 30 / 30. Rate mode: 0 / 0. Overall pass: 12 of 54 on both keys \\
+Time-constant identification & 0 of 30 cells failed in a simulation grid; time constants within 3.7~\%, delay offset about $+1.75$~ms. One airframe, mostly one seed \\
+Wrong-start identification (10 starts) & Not flown \\
+Other airframes (about 1~kg, above 5~kg) & Not flown \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The oscillation count covers the whole run.
+Item 7 asks for it only inside the identification manoeuvre, and that window score was not made.
+One run was scored before the owner changed the recovery rule.
+The failures cannot be split by corner, because the run list does not record which corner each run flew.
+
+\begin{keyresult}[G6 verdict: \notpassed]
+G3 is not passed, and the un-identified start loses control in 6 of 58 runs.
+The identification procedure and its defaults stay in the report as the method; \cref{sec:lim_g6} lists what was not covered.
+\end{keyresult}
+
+\section{G7: code}\label{sec:val_g7}
+
+G7 tests the firmware as code.
+\Cref{tab:val_g7} gives each check and its result at the final head of the firmware-only branch.
+
+\begin{table}[tbp]
+\caption{G7 checks.}\label{tab:val_g7}
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}l L{4.2cm} Y@{}}
+\toprule
+Check & Test & Result \\
+\midrule
+(a) & Stock flight-control modules are unchanged (zero diff against the main line) & Pass: 0 lines over the six stock paths, over 75 files \\
+(b) & Unit tests pass, and each behaviour test fails when the behaviour is broken & Pass: 12 of 12 test programs, 239 tests (244 after the arming check was added). A mutation audit of 66 deliberate code breaks killed all 9 survivors. Seven weak or missing test rows were closed by new tests \\
+(c) & Firmware default parameters equal the validated parameter files & Met: 0 mismatches in gains. Physical values (maximum rotor speed, actuator time constant) are per airframe \\
+(d) & Code format check is clean & Pass: 53 files clean \\
+(e) & Flash and RAM measured on one NuttX board from the build & Pass on the v5x board with both modules: $+64\,792$~B flash at first (8\,964~B left), $+66.1$~kB after the arming check (7.7~kB left). The v6x board overflows by 23.5~kB \\
+(f) & Instruction files and naming rules followed; whole-branch review & Pass: delta review with 0 blockers and 0 major findings; 92 review items closed, justified or superseded \\
+(g) & Firmware-only branch from the main line builds and has no project-only path & Pass: simulation target builds, zero project identifiers \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Some code is justified rather than unit-tested.
+The wiring of some parameters into the library is covered by the simulation rows of G2 and G5.
+A permanently saturated motor with frozen telemetry is not detected, by design, and a test pins that behaviour.
+Part of the position module (a position-and-velocity gain cascade) is not reachable, because the module always runs acceleration-only; it is listed as an open item.
+
+\begin{keyresult}[G7 verdict: \passed, with justified limits]
+Every check passes.
+The firmware does not fit the v6x board with both modules.
+Production boards do not build the modules; only the simulation target does.
+\Cref{sec:lim_impl} lists the open items.
+\end{keyresult}
+
+\section{G8: report}\label{sec:val_g8}
+
+G8 is this report: seven mechanical checks of its content pass, and the unverified claims it carries are marked in the text and counted.
+
+\section{Amendments to the tests after the first run}\label{sec:val_amendments}
+
+The owner amended these tests after their first run.
+Each amendment fixes a defect of the test.
+
+\begin{description}[leftmargin=1.4em,labelindent=0pt]
+  \item[G1.1] Logger completeness replaced the original gap rule, which simulator holes broke; the mode-change spread and latency limits were set to 10 and 20~ms.
+  \item[G1.5, G5 events] A discrete message event (stream stop, kill, estimator reset) is timed from the firmware's own applied flag, so that the measured delay does not include the message transport.
+  \item[G5.6, G5.11] The false maybe-landed test and the vertical estimator reset are not tested, because the simulation cannot inject them: the landing detector needs ground contact, and the estimator accepts only a horizontal external reset.
+  \item[G5.8] Failsafe tests at 3~m/s measure the excursion from the setpoint the failsafe commands, and the link-loss timeout is timed from the firmware's own flag.
+  \item[G5.9] ``Motors off within one command period'' is timed from the kill flag, not from the commander request.
+  \item[G5.2] The height settling band is the larger of 2~\% and 0.10~m, because the estimator height error is that large.
+  \item[G5.10] The full-scale test is flown in stabilised mode with the tilt limit of that mode plus 5~deg, and the saturation part is dropped unless four motors exceed 0.99 for one second in both stacks (they do not).
+  \item[G5.11] The horizontal reset is judged on the true excursion of at most 0.5~m and the tilt jump is only reported.
+  \item[G5.5] The horizontal limit for moving trajectories is $\max(0.5\,\mathrm{m},\ \tau_\mathrm{att}v_\mathrm{rms})$, because the flat 0.5~m limit is a steady hover limit and does not fit a moving trajectory.
+  \item[G2] Where $|L|>1$ within 10~deg of $-180^\circ$, the gain margin is the gain reduction $20\log_{10}|L|$, which must be at least 6~dB, because the plateau reading misses such crossings.
+  \item[G4 chatter] A 20 to 100~Hz line counts as chatter only when it is 20 times above the median and as large as one command step ($5\times 10^{-4}$).
+  \item[G4 and G3 windows] Detector windows that overlap the 3~s after a mode change, or the landing, are skipped, because mode transitions are judged by G5.
+  \item[G4 guard] Skipped windows are checked against PID: the row fails if INDI shows a line that PID does not, or an INDI line above $10^{-3}$.
+  \item[G3 factors] The controller-versus-plant gain error was narrowed from 0.5 to 2 times to 0.8 to 1.2 times, because the identification step is expected to be within 10~\%; the motor up and down time constants both lie in 0.5 to 3 times nominal; the estimator GNSS delay mismatch was reduced from $\pm 100$~ms to $\pm 50$~ms, because a correct bring-up leaves less.
+  \item[G3 controller time constant] The controller's actuator time constant is drawn like an identification error around the plant value, instead of being fixed.
+  \item[G3 items 3 to 6] There is no pass quota for them: every miss in a valid run is a failure.
+  \item[G3 harness aborts] A harness abort is an invalid run, flown again, and never a pass.
+  \item[G3 steady state, events] The steady-state window is the last 10~s of a hold of at least 20~s, and faults and gusts happen in a separate event hover before the main segment, so that the recovery and steady-state windows do not overlap.
+  \item[G3 oscillation windows] Item 2 skips every 4~s window that contains a fault or gust start.
+  \item[G3 item 5] Recovery is judged against a static reference, and, after the owner's reading, requires both a recovery within 5~s and a clean 5 to 10~s afterwards.
+  \item[G3 item 4] A row where PID also fails the same draw is a test defect and is not counted, if INDI is not worse.
+  \item[G6 item 7] It was added after the first robustness run, flown with the identification flag off, and reduced to the 60 corners.
+\end{description}
+
+Most amendments fix timing, windows or references.
+Two change a limit or a range: the G5.5 limit now grows with trajectory speed, and the G3 gain-error box was narrowed.
+Both are written above with their reason.
