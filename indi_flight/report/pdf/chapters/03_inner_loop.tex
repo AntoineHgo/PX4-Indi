@@ -86,7 +86,7 @@ Define
 \end{equation}
 where $\tau_a$ is the actuator time constant (\param{MC_INDI_ACT_TC}) and $\ell$ is the lead scale (\param{MC_INDI_LEAD}).
 The weight $(1+c)$ on the measured acceleration below, and the extra term $c\,\dot\omega_{\mathrm{ref},f}$, come from the lag.
-The torque $u_f$ trails the command by about $\tau_a$, so these terms add the lag that is expected.
+The torque $u_f$ trails the command by about $\tau_a$, so these terms compensate for this known lag.
 Let $\dot\omega_{\mathrm{ref},f}$ be the derivative of the rate setpoint, low-pass filtered with a time constant of 0.03~s and bounded to 1000~rad/s$^2$.
 With the lead, the effective desired acceleration is $K(1+\tau_a s)(\omega_{\mathrm{ref}}-\omega)$, for $\ell=1$ and $c<2$.
 Setting $\ell=0$ turns both lead terms off.
@@ -336,7 +336,7 @@ The column \emph{Default} gives the firmware default.
 The reference airframe values of $G_1$ and $G_2$ come from airframe data and are not identified in flight.
 The firmware defaults for $G_1$ and $G_2$ equal them.
 This is on purpose: a value of $G_1$ above the true one lowers the loop gain, so it is the safe side for a larger airframe.
-The earlier generic values of 320 and 210~rad/s$^2$ for roll and pitch would raise the loop gain by a factor of 5 to 8 on this airframe.
+A lower default, for example 320 and 210~rad/s$^2$ for roll and pitch, would raise the loop gain on this airframe by a factor of 5 to 8.
 
 \begin{table}[tbp]
 \caption{Parameters of the rate module. $\Omax$ and the $G$ values of the reference airframe are derived from airframe data.}\label{tab:inner_params}
