@@ -27,8 +27,8 @@ Unverified (stock PX4 knowledge, not read in this task):
 Caption: Rate-loop INDI law for one axis. The rate error gives a desired angular acceleration $\boldsymbol\nu$; the
 measured, filtered angular acceleration $\dot{\boldsymbol\omega}_f$ is subtracted, the remainder is inverted through
 $G_1$ to an increment $\Delta u$ and added to the filtered actuator state $u_f$. The actuator state blends the measured
-rotor speed (high frequencies) with a modelled first-order actuator (low frequencies), and all three paths share the same
-delay and filter $H$.
+rotor speed (high frequencies) with a modelled first-order actuator (low frequencies), and all three paths pass through the same
+filter chain $H$. The delays are set so that they match.
 Symbols: $\boldsymbol\omega$, $\boldsymbol\omega_{\mathrm{ref}}$, $\dot{\boldsymbol\omega}_f$,
 $\dot{\boldsymbol\omega}_{\mathrm{ref},f}$, $\boldsymbol\nu$, $K$, $c=K\tau_a$, $\tau_a$, $G_1$, $G_2$, $T_s$, $\Delta u$,
 $\Delta u_{\mathrm{prev}}$, $u_f$, $u_c$, $u_{\mathrm{meas}}$, $u_{\mathrm{mod}}$, $b$, $u_i=(\Omega_i/\Omega_{\max})^2$,

@@ -34,7 +34,8 @@ It runs on every sample of the angular-velocity topic, so at the rate of the gyr
 The simulation tests used 800, 400 and 266.7~Hz.
 
 \Cref{tab:inner_io} lists the signals.
-All quantities are per axis, in normalised torque space.
+All quantities are per axis and scalar, in normalised torque space.
+Here $u$ is the normalised torque of one axis, and $G_1$ is the diagonal entry of the effectiveness matrix for that axis.
 Torque lies in $[-1,\,1]$, and $G_1$ is in rad/s$^2$ per unit of normalised torque.
 
 \begin{table}[tbp]
@@ -60,7 +61,7 @@ Signal (uORB topic) & Use \\
 \Cref{fig:inner_loop} shows the loop for one axis.
 The next sections follow it from left to right.
 
-\indidiagram{inner_loop}{Rate-loop INDI law for one axis. The rate error gives a desired angular acceleration $\vect\nu$. The measured, filtered angular acceleration $\dot{\vect\omega}_f$ is subtracted. The remainder is inverted through $G_1$ to an increment $\Delta u$ and added to the filtered actuator state $u_f$. The actuator state blends the measured rotor speed (high frequencies) with a modelled first-order actuator (low frequencies). All three paths share the same delay and filter $H$.}{fig:inner_loop}
+\indidiagram{inner_loop}{Rate-loop INDI law for one axis. The rate error gives a desired angular acceleration $\vect\nu$. The measured, filtered angular acceleration $\dot{\vect\omega}_f$ is subtracted. The remainder is inverted through $G_1$ to an increment $\Delta u$ and added to the filtered actuator state $u_f$. The actuator state blends the measured rotor speed (high frequencies) with a modelled first-order actuator (low frequencies). All three paths pass through the same filter chain $H$. The delays are set so that they match.}{fig:inner_loop}
 
 \section{The rate law}\label{sec:inner_law}
 
@@ -71,9 +72,10 @@ The desired angular acceleration is proportional to the rate error:
   \nu = K\,(\omega_{\mathrm{ref}} - \omega) .
 \end{equation}
 For roll and pitch, $\omega_{\mathrm{ref}}$ includes the feed-forward from the outer loop.
-The gain $K$ is the set bandwidth in 1/s.
+The gain $K$ is the rate bandwidth, in rad/s per rad/s, that is in 1/s.
 Until the physical parameters are marked as identified (\param{MC_INDI_ID_OK}), the loop uses half of the set value.
 This halves the bandwidth of an unidentified airframe.
+In this chapter $K$ means the effective gain, so it is already halved while \param{MC_INDI_ID_OK} is 0.
 
 The torque $u_f$ in the feedback pair carries the actuator lag.
 A moving setpoint would therefore be followed late.
@@ -83,8 +85,10 @@ Define
   c = \min\!\bigl(\ell\,K\,\tau_a,\; 2\bigr) ,
 \end{equation}
 where $\tau_a$ is the actuator time constant (\param{MC_INDI_ACT_TC}) and $\ell$ is the lead scale (\param{MC_INDI_LEAD}).
+The weight $(1+c)$ on the measured acceleration below, and the extra term $c\,\dot\omega_{\mathrm{ref},f}$, come from the lag.
+The torque $u_f$ trails the command by about $\tau_a$, so these terms add the lag that is expected.
 Let $\dot\omega_{\mathrm{ref},f}$ be the derivative of the rate setpoint, low-pass filtered with a time constant of 0.03~s and bounded to 1000~rad/s$^2$.
-With the lead, the effective desired acceleration is $K(1+\tau_a s)(\omega_{\mathrm{ref}}-\omega)$.
+With the lead, the effective desired acceleration is $K(1+\tau_a s)(\omega_{\mathrm{ref}}-\omega)$, for $\ell=1$ and $c<2$.
 Setting $\ell=0$ turns both lead terms off.
 The setpoint derivative is zero in the first cycle, after a reset, after a change of the setpoint source, and on the ground.
 So no derivative impulse enters the law.
@@ -99,9 +103,10 @@ and the torque command is
 \begin{equation}\label{eq:inner_cmd}
   u_c = \operatorname{clip}\bigl(u_f + \operatorname{clip}(\Delta u,\,\pm\Delta_{\max}),\; -1,\; 1\bigr) .
 \end{equation}
+Here $u_f$ is the feedback torque after the ground handling of \cref{sec:inner_ground}.
 The bound $\Delta_{\max}$ is \param{MC_INDI_INC_MAX}.
 Its default of 1 is the full range, so the bound is inactive.
-Both $\dot\omega_f$ and $u_f$ pass through the same filter chain.
+Both $\dot\omega_f$ and $u_f$ pass through the same filter chain $H$ (\cref{sec:inner_filters}).
 If the plant follows $\dot\omega = G_1 u$, the two cancel.
 Then $u_c$ is the previous torque plus the increment that produces $\nu$.
 
@@ -173,7 +178,8 @@ An invalid rotor geometry also gives no measured torque.
 \paragraph{Switching.}
 The measurement replaces the model only after 20 consecutive valid cycles.
 Any invalid cycle drops the law back to the model at once.
-The two sources are not mixed per axis, because they differ in lag and in units.
+The switch is made for all axes together, because the model and the measurement differ in lag.
+The blend below then corrects the slow difference between them.
 While the measurement is invalid, its path is fed the modelled torque.
 So the switch back is without a step.
 
@@ -206,7 +212,7 @@ The result is a steady gap between the command and the output.
 
 With the measured torque alone, the gap is invisible as an error that persists.
 The law sees what the motor really does, and treats it as the new normal.
-In a closed-loop test, one motor at 0.8 then held a 10.4~deg standing attitude error.
+In a simulated closed-loop test, one motor that delivered 80~\% of its command then held a 10.4~deg standing attitude error.
 
 The model does see the gap, because it follows the command through the allocator.
 The library therefore blends the two sources.
@@ -232,9 +238,10 @@ At high frequency, $b$ moves slowly, so $u_f\approx u_{\mathrm{meas},f}$.
   \item With $t_b\le 0$ the blend is off and the measured torque is used alone.
 \end{itemize}
 
-The default $t_b=1.0$~s lies below the rate crossover, which is about 4~Hz.
+The default $t_b=1.0$~s gives a blend corner of $1/(2\pi t_b)=0.16$~Hz.
+This lies far below the rate crossover, which is 1.7~Hz in the measured loop of \cref{sec:inner_margins}.
 So it does not move the margins.
-In the same closed-loop test with one weak motor, $t_b=0$ left a standing rate error of 0.25~rad/s.
+In a simulated closed-loop unit test with one weak motor, $t_b=0$ left a standing rate error of 0.25~rad/s.
 With $t_b=1$ it was $1.6\times10^{-5}$~rad/s.
 
 \section{Saturation}\label{sec:inner_sat}
@@ -265,7 +272,7 @@ The law therefore treats the ground as follows.
     The blend state follows the gap.
     The actuator model and both filter chains keep running, so the pair is in step at take-off.
   \item \emph{Edges of landed.}
-    On both edges, the feedback torque is ramped with the slew \param{MC_INDI_LND_SLEW} (5 per second, so the full range takes 0.2~s).
+    On both edges, the feedback torque is ramped with the slew \param{MC_INDI_LND_SLEW} (5 per second, so a change of 1 takes 0.2~s).
     It is not stepped.
   \item \emph{Maybe landed.}
     The law runs in full.
@@ -301,7 +308,7 @@ The masks of valid and stuck motors are published in \topic{actuator_torque_meas
 The rate module registers an external arming check with the commander.
 Arming is refused in two cases.
 \begin{itemize}
-  \item The rotor-speed telemetry of any motor is missing or stale (sample age above 20~ms).
+  \item Any rotor has no fresh, plausible and non-stuck sample, or the oldest sample is older than \param{MC_INDI_ERPM_TO}.
   \item The measured path is not configured: \param{MC_INDI_W_MAX} is 0, or the \param{CA_*} rotor geometry is missing.
 \end{itemize}
 Once armed, the check always allows.
@@ -310,9 +317,10 @@ Telemetry lost in flight is handled by the modelled path, without the blend.
 This fallback is not validated for the whole flight envelope (\cref{ch:limits}).
 
 \paragraph{Rejected cycles.}
-An input that is not finite, a sample period outside $[0.000125,\,0.02]$~s, an effectiveness below 0.001, or a non-finite increment makes the update fail.
+An input that is not finite, a sample period outside $[0.000125,\,0.02]$~s, an effectiveness below 0.001, a parameter that is not finite or out of range, or a non-finite increment makes the update fail.
 The last valid torque is held for 3 cycles.
 Then the states are reset and the torque is zero.
+A non-finite increment resets the states at once, and then the last torque is held.
 
 \paragraph{Setpoint timeout.}
 When armed in a mode that uses the rate setpoint, a setpoint older than \param{MC_INDI_SP_TO} (0.5~s) is stale.
@@ -328,7 +336,7 @@ The column \emph{Default} gives the firmware default.
 The reference airframe values of $G_1$ and $G_2$ come from airframe data and are not identified in flight.
 The firmware defaults for $G_1$ and $G_2$ equal them.
 This is on purpose: a value of $G_1$ above the true one lowers the loop gain, so it is the safe side for a larger airframe.
-Generic values far below it would raise the loop gain by a factor of 5 to 8 on this airframe.
+The earlier generic values of 320 and 210~rad/s$^2$ for roll and pitch would raise the loop gain by a factor of 5 to 8 on this airframe.
 
 \begin{table}[tbp]
 \caption{Parameters of the rate module. $\Omax$ and the $G$ values of the reference airframe are derived from airframe data.}\label{tab:inner_params}
@@ -345,9 +353,9 @@ Parameter & Reference & Default & Unit & Meaning \\
 \param{MC_INDI_G1_Y} & 205 & 205 & rad/s$^2$ & Yaw control effectiveness $G_1$. \\
 \param{MC_INDI_G2_Y} & 27 & 27 & rad/s & Yaw rotor spin-up term $G_2$. \\
 \param{MC_INDI_ID_OK} & 0 & 0 & -- & 1 if the physical parameters are identified. At 0 the gains $K$ are halved. \\
-\param{MC_INDI_K_R} & 20 & 20 & rad/s & Roll rate bandwidth $K$. \\
-\param{MC_INDI_K_P} & 20 & 20 & rad/s & Pitch rate bandwidth $K$. \\
-\param{MC_INDI_K_Y} & 20 & 20 & rad/s & Yaw rate bandwidth $K$. \\
+\param{MC_INDI_K_R} & 20 & 20 & 1/s & Roll rate bandwidth $K$. \\
+\param{MC_INDI_K_P} & 20 & 20 & 1/s & Pitch rate bandwidth $K$. \\
+\param{MC_INDI_K_Y} & 20 & 20 & 1/s & Yaw rate bandwidth $K$. \\
 \param{MC_INDI_ACT_TC} & 0.033 & 0.05 & s & Actuator model and lead time constant $\tau_a$. \\
 \param{MC_INDI_LEAD} & 1 & 1 & -- & Lead scale $\ell$. 0 turns the lead off. \\
 \param{MC_INDI_DELAY} & 0 & 0 & cycles & Delay of the modelled torque. \\
@@ -364,13 +372,13 @@ Parameter & Reference & Default & Unit & Meaning \\
 \end{table}
 
 The table lists 21 parameters: 20 for tuning and one enable switch.
-Eight more parameters (\param{MC_INDI_INJ_*}) drive a bench excitation for loop-break measurements.
+Nine more parameters (\param{MC_INDI_INJ_*}) drive a bench excitation for loop-break measurements.
 They are off by default and are not part of the flight design.
 The loop also reads \param{IMU_GYRO_CUTOFF}, \param{IMU_DGYRO_CUTOFF} and the \param{CA_*} rotor geometry.
 These belong to other modules.
 
 \paragraph{Effective bandwidth.}
-With \param{MC_INDI_ID_OK} at 0, which is the default, the loop runs at $K=10$~rad/s, half of the set 20~rad/s.
+With \param{MC_INDI_ID_OK} at 0, which is the default, the loop runs at $K=10$~1/s, half of the set 20~1/s.
 Set it to 1 to use the full gains.
 
 \paragraph{Actuator time constant.}
