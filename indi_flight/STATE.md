@@ -48,8 +48,10 @@ Route check: RC256 current (S257 supervisor request answered by RC256, one sessi
 ## Tasks in flight
 S260: A skeleton DONE, committed 1258f61ac1 (23 pages, `report/pdf/build.sh [--no-figs]`; chapters 03-09, A, B
 stubs; NOTES_A.md lists unverified airframe-table units). Still running at S260 end (if cut, check files, finish or
-relaunch): B figures (bench/report_figs/, report/pdf/figures/, FIGURES.md, maybe results/report_traces/), C diagrams
-(report/pdf/diagrams/, CAPTIONS.md). Next: chapters 03-05 agent (inner, outer, analysis) from report/*.md, using
+relaunch): C diagrams (report/pdf/diagrams/, CAPTIONS.md). B figures DONE b8f50cae60 (7 figs, 12 tests; FIGURES.md
+lists not-possible figs). B flagged source discrepancies to settle before the chapters copy them: ch02 z outer cells
+"4 of 8" no -180 crossing vs 7/8 in scores; ch03 "item 2 fails 79 of 297" vs 79 failing runs, item 2 on 73; figure
+font DejaVu (Libertinus OTF is in texmf, point matplotlib at it); PID step trace from older indi_vs_pid flights. Next: chapters 03-05 agent (inner, outer, analysis) from report/*.md, using
 CAPTIONS.md/FIGURES.md. Cost: S260 three sonnet-high agents ~ $1+ each: run at most 2 per session. Firmware after FREEZE-10: e6af4b6b0d, ac744d360e (R1 arming check, owner-lifted freeze, no gate row
 invalidated). Commit trailer: AGENTS.md wins: `Assisted-by:` only.
 
