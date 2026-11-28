@@ -33,7 +33,6 @@ Later sections cover the flight modes, the ground and take-off ramp, the estimat
 \paragraph{Placement.}
 The outer-loop module runs instead of the stock position controller when \param{MC_INDI_POS_EN} is 1 (reboot required).
 Only one of the two runs.
-There is no fallback to the stock thrust path.
 The stock position controller still runs inside the module, but only to produce the acceleration reference $\aref$.
 Its thrust output is never published.
 The module reuses the stock setpoint handling, limits, take-off ramp and goto logic.
@@ -55,7 +54,7 @@ Signal (uORB topic) & Use \\
 \topic{trajectory_setpoint}, \topic{goto_setpoint}, \topic{vehicle_constraints} & Input: position, velocity, acceleration and yaw references. \\
 \topic{vehicle_local_position}, \topic{hover_thrust_estimate} & Input: position and velocity from the estimator, and the thrust model scale. \\
 \topic{vehicle_attitude} & Input: rotation $R$ and yaw. \\
-\topic{vehicle_acceleration} & Input: measured specific force, handled on every sample (about 267~Hz). \\
+\topic{vehicle_acceleration} & Input: measured specific force, handled on every sample (for example about 267~Hz in the reference simulation). \\
 \topic{esc_status} & Input: rotor speed, for the measured thrust. \\
 \topic{vehicle_thrust_setpoint} & Input: collective used to restart the state. \\
 \topic{control_allocator_status} & Input: saturation flag. \\
@@ -85,8 +84,8 @@ The measured acceleration is therefore $\vect a_f = R\,\vect f_{b,f} + \vect g$,
 
 The control variable is the specific thrust vector $\vect T$, in m/s$^2$.
 It is the thrust per unit of mass.
-A multicopter pushes along $-\vect z_b$, so $\vect T = -c\,\vect z_b$ with the collective $c = \lVert\vect T\rVert > 0$.
-At hover, $c = g$.
+A multicopter pushes along $-\vect z_b$, so $\vect T = -\tau\,\vect z_b$ with the thrust magnitude $\tau = \lVert\vect T\rVert > 0$.
+At hover, $\tau = g$.
 
 \indidiagram{outer_loop}{Acceleration-loop INDI of the position controller. The stock position/velocity cascade (integrator off) gives a reference acceleration $\aref$. The measured specific force gives $\vect a_f$, and the error is added to the filtered thrust vector $\vect T_f$ to form $\vect T_c$. After saturation the thrust vector sets the attitude setpoint and the collective thrust. A jerk feed-forward drives the rate loop directly. On the ground, in the take-off ramp and with stale data the force source switches to a modelled force.}{fig:outer_loop}
 
@@ -96,13 +95,15 @@ The position and velocity cascade closes the outer loop around it.
 
 \subsection{Reference acceleration}\label{sec:outer_cascade}
 
-The reference comes from the stock cascade, with its integrator off:
+The reference comes from the stock cascade, with its integrator off.
+$K_p$ and $K_v$ are diagonal gain matrices.
+The equations show the horizontal entries; the vertical entries are the stock gains.
 \begin{align}
   \vect v_{\mathrm{sp}} &= K_p\,(\vect p_{\mathrm{ref}} - \vect p) + \vect v_{\mathrm{ref}} , \label{eq:outer_vsp}\\
   \aref &= K_v\,(\vect v_{\mathrm{sp}} - \vect v) + \vect a_{\mathrm{ff}} . \label{eq:outer_aref}
 \end{align}
 The velocity setpoint is limited by the stock velocity limits.
-The stock derivative term and filters stay in place.
+The stock filters stay in place.
 The integrator is set to zero in every cycle.
 The INDI increment of \cref{eq:outer_inc} supplies the integral action.
 
@@ -110,9 +111,9 @@ The horizontal gains $K_p$ and $K_v$ are \param{MC_INDI_XY_P} and \param{MC_INDI
 They replace the stock horizontal gains, so the user can tune them for the INDI loop.
 The vertical gains stay stock.
 The feed-forward acceleration $\vect a_{\mathrm{ff}}$ comes from the setpoint after the take-off and failsafe edits.
-A setpoint that arrives at a lower rate than the controller is held and extrapolated:
-the velocity grows by $\vect a\,\dd t$ and the position by $\vect v\,\dd t + \tfrac12 \vect a\,\dd t^2$.
-The extrapolated time is capped at 0.5~s.
+A setpoint that arrives at a lower rate than the controller is held and extrapolated.
+With $\delta$ the age of the setpoint, the velocity grows by $\vect a\,\delta$ and the position by $\vect v\,\delta + \tfrac12 \vect a\,\delta^2$.
+$\delta$ is capped at 0.5~s.
 
 \subsection{Increment and thrust inversion}\label{sec:outer_inc}
 
@@ -134,13 +135,15 @@ It is
 \end{equation}
 where $u_f$ is the filtered mean actuator state of all rotors.
 $h_t$ is the hover thrust.
-It is the hover-thrust estimate while that estimate is valid, and else \param{MPC_THR_HOVER}.
+In flight, while the hover-thrust estimate is valid, $h_t$ is that estimate.
+Otherwise it is \param{MPC_THR_HOVER}.
+It is never below 0.05.
 An error of $g_t$ changes the loop gain.
 It does not leave an offset (\cref{sec:outer_gap}).
 
-The collective that goes to the attitude setpoint is
+The normalised collective $T_{\mathrm{col}}$ that goes to the attitude setpoint is
 \begin{equation}\label{eq:outer_cmd}
-  T_c = \frac{c}{g_t}, \qquad c = \lVert\vect T_c\rVert ,
+  T_{\mathrm{col}} = \frac{\tau}{g_t}, \qquad \tau = \lVert\vect T_c\rVert ,
 \end{equation}
 limited to the range from \param{MPC_THR_MIN} to \param{MPC_THR_MAX}.
 Until the take-off state is flight, the lower limit is zero.
@@ -158,8 +161,9 @@ Its cut-off is \param{MC_INDI_POS_LPF}.
 The filter on the force runs at the accelerometer sample rate.
 The module is scheduled on the acceleration topic and handles every sample.
 This is on purpose.
-Filtering after a decimation to the lower stage rate would fold a vibration line at 95.7~Hz down to 6.8~Hz in $\vect a_f$.
-The filter on the thrust runs at the stage rate with the same cut-off, so both paths have the same magnitude and phase.
+Filtering after a decimation to the lower stage rate would fold a vibration line into the signal band.
+The stage runs at about 89~Hz in the reference simulation, so a simulated vibration line at 95.7~Hz would appear at 6.8~Hz in $\vect a_f$.
+The filter on the thrust runs at the stage rate (about 89~Hz in the reference simulation) with the same cut-off, so both paths have the same magnitude and phase.
 
 The ESC-based thrust arrives later than the accelerometer.
 A pure delay of \param{MC_INDI_POS_DLY} controller cycles (0 to 4) matches it to the force path.
@@ -173,8 +177,8 @@ The thrust vector $\vect T_c$ is limited in this order.
     If the vertical part is not clearly upward, it is set to a small upward value.
   \item The tilt is limited to \param{MPC_TILTMAX_AIR} in flight and to \param{MPC_TILTMAX_LND} before flight, with a slew between the two.
     The horizontal part is scaled down to fit.
-  \item If $c$ is above its maximum, the horizontal part is shrunk first and the vertical part is kept.
-    If $c$ is below its minimum, the whole vector is scaled.
+  \item If $\tau$ is above its maximum, the horizontal part is shrunk first and the vertical part is kept.
+    If $\tau$ is below its minimum, the whole vector is scaled.
     In both cases the blend of \cref{sec:outer_gap} is held in the next cycle.
 \end{enumerate}
 The desired body axis is $\vect z_{b,d} = -\vect T_c/\lVert\vect T_c\rVert$.
@@ -189,10 +193,10 @@ The attitude loop follows $\vect q_d$ with a lag.
 A change of the acceleration setpoint would reach the rate loop late.
 The module therefore sends a body-rate feed-forward
 \begin{equation}\label{eq:outer_ff}
-  \vect\omega_{\mathrm{ff}} = \frac{1}{c}\,\bigl(\vect j\cdot\vect y_b,\; -\vect j\cdot\vect x_b,\; 0\bigr) ,
+  \vect\omega_{\mathrm{ff}} = \frac{1}{\tau}\,\bigl(\vect j\cdot\vect y_b,\; -\vect j\cdot\vect x_b,\; 0\bigr) ,
 \end{equation}
 where $\vect j$ is the jerk and $\vect x_b$, $\vect y_b$ are the desired body axes.
-It is limited to 3~rad/s per axis.
+It is limited to 3~rad/s per axis, and it is zero when $\tau$ is below 1~m/s$^2$.
 The rate loop adds it to its setpoint (\cref{ch:inner_loop}).
 
 The jerk is the difference of the setpoint acceleration $\vect a_{\mathrm{ff}}$ over time.
@@ -220,7 +224,7 @@ Mode & Condition & Law input \\
 Bypass & INDI not requested: disarmed, or no position, velocity or climb-rate mode. & The stage does not run. Its state follows the commanded collective. \\
 Hold & Requested, but the attitude is stale, $\aref$ is not finite, the cycle interval is above 0.2~s, or the stage rejected its input. & The last INDI attitude and thrust are held. \\
 Modelled force & Requested, acceleration data stale, or ground and take-off ramp. & Modelled specific force. \\
-Measured & All data fresh, in flight, no ground contact. & Measured specific force and measured rotor speed. \\
+Measured & Attitude and acceleration fresh, in flight, no ground contact. & Measured specific force and measured rotor speed. \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -228,7 +232,9 @@ Measured & All data fresh, in flight, no ground contact. & Measured specific for
 \paragraph{Measured thrust.}
 The mean actuator state is $u = \frac14\sum_i (\Omega_i/\Omega_{\max})^2$ over the four rotors.
 $\Omega_i$ comes from the ESC rotor-speed telemetry, and $\Omega_{\max}$ is \param{MC_INDI_W_MAX}.
-If a motor is offline, or \param{MC_INDI_W_MAX} is zero, the value is invalid.
+\param{MC_INDI_W_MAX} must be set: with its default of 0 the INDI stack refuses to arm.
+The mean is for four rotors (a quadrotor).
+If a motor goes offline in flight, or the ESC data is stale, the value is invalid.
 The law then uses the commanded collective instead.
 
 \paragraph{Modelled force.}
@@ -239,14 +245,20 @@ The stage then acts as a feed-forward from acceleration to thrust.
 This is the safe source on the ground, where the accelerometer also holds the ground reaction.
 
 \paragraph{Freshness.}
-Attitude, acceleration and thrust data must be younger than 20~ms, ESC data younger than 100~ms and allocator status younger than 200~ms.
-After a loss, the measured path returns only after 20~ms of continuously fresh acceleration.
+Each signal has an age limit, and a stale signal acts in its own way.
+\begin{itemize}
+  \item Attitude or acceleration older than 20~ms changes the mode (\cref{tab:outer_stage}).
+  \item ESC data older than 100~ms makes only the measured thrust invalid. The law then runs on the modelled thrust and the blend is frozen. The force still comes from the accelerometer.
+  \item Allocator status older than 200~ms is ignored.
+  \item The age of the commanded collective only decides which value restarts the stage.
+\end{itemize}
+After an acceleration loss, the measured path returns only after 20~ms of continuously fresh acceleration.
 
 \paragraph{Continuity at switches.}
 While the telemetry is invalid, the measured thrust path is fed the modelled value minus the blend, so the thrust stays continuous.
 When the force becomes valid again, its filter restarts from the force used in the last cycle.
 It then converges at the filter bandwidth.
-The delay line and the blend restart from the commanded collective at every reset of the stage.
+A reset of the stage re-seeds the delay line and the thrust filter from the measured rotor state when it is valid, and else from the commanded collective minus the blend.
 
 \section{Removing a steady thrust gap}\label{sec:outer_gap}
 
@@ -255,18 +267,22 @@ The outer loop has no integrator, so a standing acceleration error would remain.
 The module restores integral action with a complementary blend of measured and modelled collective.
 It adds a slow correction $b$ to the measured actuator state:
 \begin{equation}\label{eq:outer_blend}
-  b \leftarrow b + \frac{\dd t}{t_b + \dd t}\,\bigl(u_{\mathrm{mod},f} - u_{\mathrm{meas},f} - b\bigr),
+  b \leftarrow b + \frac{\ts}{t_b + \ts}\,\bigl(u_{\mathrm{mod},f} - u_{\mathrm{meas},f} - b\bigr),
   \qquad u_f = u_{\mathrm{meas},f} + b .
 \end{equation}
-Here $u_{\mathrm{mod},f}$ is the filtered commanded collective, which the thrust model predicts.
+Here $\ts$ is the stage period and $u_{\mathrm{meas},f}$ is the filtered mean of the four rotor states (a scalar, unlike the torque vector of \cref{ch:inner_loop}).
+$u_{\mathrm{mod},f}$ is the filtered commanded collective, which the thrust model predicts.
 The blend is bounded to $\lvert b\rvert \le 0.5$.
 The time constant is $t_b = $ \param{MC_INDI_POS_TB}.
 
 At high frequency the measured rotor speed dominates $u_f$.
 The loop reacts to fast thrust changes without the model.
 At low frequency $u_f$ equals the model.
-A thrust gap then appears as a rotor-speed deficit that the blend absorbs.
+With a thrust gap, the measured rotor state is only a fraction $\rho$ of the commanded state.
+Without the blend, the loop of \cref{eq:outer_inc} would settle at $\vect a_f = \aref - (1-\rho)\,\vect T_c$.
+The blend brings $u_f$ back to the model at low frequency and removes this error.
 The result is an integral action with the time constant $t_b$.
+A wrong scale $g_t$ is different: it changes only the loop gain, so it leaves no offset.
 The bound of 0.5 is large enough to absorb the thrust drop that follows a sudden loss of hover thrust.
 
 The blend is frozen in these cases:
@@ -278,6 +294,7 @@ The blend is frozen in these cases:
   \item the allocator reports saturation.
 \end{itemize}
 A reset of the stage keeps the blend, because it is a property of the airframe and battery.
+Only arming and disarming clear it.
 
 \begin{keyresult}[Integral action without an integrator state in the cascade]
 The cascade has no integrator.
@@ -318,7 +335,7 @@ The INDI stage does not know the mode.
 \section{Ground, take-off and landing}\label{sec:outer_ground}
 
 One law runs from arming to disarming.
-There is no stock thrust path and no hand-over of the hover thrust.
+The stock thrust is never published.
 The stage is requested when the vehicle is armed and a position, velocity or climb-rate mode is active.
 \Cref{fig:outer_ground} shows the states.
 
@@ -327,26 +344,26 @@ The stage is requested when the vehicle is armed and a position, velocity or cli
 \paragraph{On the ground.}
 The accelerometer holds the ground reaction, so the measured force would be wrong.
 The stage uses the modelled force.
-The module replaces the setpoint by an empty one with a large downward acceleration of 100~m/s$^2$.
+The module replaces the setpoint by an empty one with a large downward acceleration of 100~m/s$^2$, also in flight while ground contact is reported.
 This drives the thrust to the minimum.
 The tilt limit is \param{MPC_TILTMAX_LND}, and the horizontal acceleration is decoupled.
 
 \paragraph{Take-off ramp.}
 The stock ramp (\param{MPC_TKO_RAMP_T}, \param{MPC_TKO_SPEED}) shapes the vertical speed.
 The collective rises from zero through the model inversion.
-The feed-forward acceleration is cleared during the ramp.
+The vertical feed-forward acceleration is cleared during the ramp when a vertical velocity setpoint is given.
 On the ground and in the ramp these parts are frozen: the blend, the rate feed-forward and the stock integrator.
 
 \paragraph{Edge to flight.}
 At the end of the ramp the force source switches from modelled to measured.
 The step of the thrust at this edge is the error of the thrust model, a few percent of the hover thrust.
-It was at most 10~\% of the hover thrust on every measured take-off.
+On the measured take-offs it was 4 to 5~\% of the hover thrust, always below a limit of 10~\%.
 
 \paragraph{Landing.}
 The stock land task and \param{MPC_LAND_SPEED} shape the setpoint.
 At touch-down the landed flags switch the stage to the modelled force and hold the blend.
 The ground reaction then cannot wind anything up.
-During the descent the vertical measurement uses the altitude derivative, weighted by the ratio of the vertical speed setpoint to \param{MPC_LAND_SPEED}.
+While descending or climbing at a commanded vertical speed without altitude control, the vertical measurement uses the altitude derivative, weighted by the ratio of the vertical speed setpoint to \param{MPC_LAND_SPEED}.
 
 \paragraph{Arm and disarm.}
 Both edges restart the stage state: blend, held setpoint, stale latch and jerk differencing.
@@ -358,9 +375,10 @@ When the estimator resets its position, velocity or heading, the stock logic cor
 The module clears only the jerk history.
 It keeps the measured force, the mean actuator state, the delay lines and the previous thrust.
 These signals do not depend on the world frame.
-Re-seeding them from a single raw sample caused a tilt spike of 1.9~deg at a yaw reset.
+A single raw accelerometer sample carries vibration of about 0.25~m/s$^2$, against 0.04~m/s$^2$ after the filter.
+Re-seeding from it would step the acceleration estimate and tilt the thrust command (about 2~deg in simulation).
 A full reset of the stage happens only at entry to position control, at the return from hold and when the stage restarts.
-It keeps the blend.
+It keeps the blend and re-seeds the thrust path as described in \cref{sec:outer_state}.
 
 \paragraph{Failure signals.}
 If the setpoint is stale or the cascade fails, the module first tries a fallback within 200~ms of the last valid setpoint.
@@ -379,13 +397,13 @@ They never lead to the stock thrust.
 
 The module has these protections.
 \begin{itemize}
-  \item Stage hold. Stale or invalid inputs freeze the last attitude and thrust. The stage interval must lie between 2~ms and 0.2~s.
+  \item Stage hold. Stale or invalid inputs freeze the last attitude and thrust. A stage interval above 0.2~s holds the stage; shorter intervals are clamped to 2~ms.
   \item Saturation order. Altitude has priority over the horizontal path (\cref{sec:outer_sat}).
   \item Blend freeze. The blend is frozen on clamps, allocator saturation, telemetry loss, high rotor speed and on the ground (\cref{sec:outer_gap}).
   \item Blend bound. $\lvert b\rvert \le 0.5$.
   \item Rate feed-forward limits. 3~rad/s per axis, jerk 50~m/s$^3$.
   \item Measured-path recovery. 20~ms of fresh acceleration.
-  \item Missing rotor speed. If \param{MC_INDI_W_MAX} is zero or a motor is offline, the stage runs on the modelled collective.
+  \item Missing rotor speed. If a motor goes offline or the ESC data is stale, the stage runs on the modelled collective.
 \end{itemize}
 
 \section{Parameters}\label{sec:outer_params}
@@ -408,7 +426,7 @@ Parameter & Reference & Default & Unit & Meaning \\
 \param{MC_INDI_POS_TB} & 0.3 & 0.3 & s & Blend time constant $t_b$. 0 turns the blend off. \\
 \param{MC_INDI_XY_P} & 1.2 & 1.2 & 1/s & Horizontal position gain $K_p$, instead of \param{MPC_XY_P}. \\
 \param{MC_INDI_XY_VP} & 2.4 & 2.4 & 1/s & Horizontal velocity gain $K_v$, instead of \param{MPC_XY_VEL_P_ACC}. \\
-\param{MC_INDI_W_MAX} & 2700 & 0 & rad/s & Rotor speed at full thrust $\Omax$ (shared with the rate module). 0 turns the measured path off. \\
+\param{MC_INDI_W_MAX} & 2700 & 0 & rad/s & Rotor speed at full thrust $\Omax$ (shared with the rate module). Must be set; the default 0 blocks arming. \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -422,7 +440,7 @@ The stock defaults of the tilt limits are 45 and 12~deg.
 The ramp defaults are 3.0~s and 1.5~m/s.
 
 \paragraph{Library constants.}
-Some values are fixed in the firmware: a blend bound of 0.5, a rotor-speed limit of 0.98 for the blend, a jerk limit of 50~m/s$^3$, a rate feed-forward limit of 3~rad/s, a jerk hold of 0.1~s, at most 4 delay samples, and a minimum upward thrust of 0.1~m/s$^2$.
+Some values are fixed in the firmware: a blend bound of 0.5, a rotor-speed limit of 0.98 for the blend, a jerk limit of 50~m/s$^3$, a rate feed-forward limit of 3~rad/s, a jerk hold of 0.1~s, at most 4 delay samples, and a minimum upward thrust of 0.1~m/s$^2$, and no rate feed-forward below a thrust of 1~m/s$^2$.
 
 \section{Outer-loop margins}\label{sec:outer_margins}
 

@@ -33,6 +33,8 @@ Gate binary = 903eae63 (D-BINARY-GZFIX): do NOT rebuild build/px4_sitl_default f
 Route check: RC262 current (design/route_check_262.md). Cut acted on: writers batched 04 (done) +05, then 06+07,
 then 08+09+A+B; section and chapter review merged in one agent for 08, 09, A, B; one build/render per batch.
 Rejected: merging the fresh-eyes reader with the whole-PDF technical reviewer (directive 7c names two reviewers).
+S263: supervisor route-check request (GATE_STATUS unchanged 3 sessions) answered by RC262 (one session old): the
+file cannot change under the presentation-only directive (G8 stays PASSED, verdicts frozen); no new check bought.
 
 ## Notes
 - G5 trap: key2 rows script writes results/g5_events_s145/key2_rows.md (fixed path): `git checkout` it after use.
@@ -65,6 +67,8 @@ values found. Next: (1) ch04 fixes (sonnet-medium) + re-review; (2) ch05 write+r
 of ch01/02 + R8; (4) ch06+07, then 08+09+A+B. Costs seen S262: write ~$0.35, review $0.3-0.6, fix ~$0.25 (sonnet-medium).
 Owner also asked 7b chapter reviews once each chapter is complete (03 is complete now). Firmware after FREEZE-10: e6af4b6b0d, ac744d360e (R1 arming check, owner-lifted freeze, no gate row
 invalidated). Commit trailer: AGENTS.md wins: `Assisted-by:` only.
+S263 in flight (G8 PDF): ch04 fixes -> reviews/ch04_fixes.md; ch05 write -> chapters/05_analysis.tex + NOTES_F.md;
+ch01/02 7a review (+R8) -> reviews/ch01_02_section_review.md. Agents build into /tmp/indi_pdf_*, not build/.
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit

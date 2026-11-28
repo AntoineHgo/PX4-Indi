@@ -8,7 +8,7 @@
   \node[block, minimum width=2.6cm, minimum height=1.3cm] (sat) at (8.3,0)
      {Saturation\\[-1pt]\scriptsize vertical priority,\\[-2pt]\scriptsize tilt limit};
   \node[block, minimum width=3.0cm, minimum height=1.3cm] (split) at (11.9,0)
-     {Thrust vector to\\attitude and thrust\\[-1pt]\scriptsize $\mathbf{q}_d$,\; $T_c=\lVert\mathbf{T}_c\rVert/g_t$};
+     {Thrust vector to\\attitude and thrust\\[-1pt]\scriptsize $\mathbf{q}_d$,\; $T_{\mathrm{col}}=\lVert\mathbf{T}_c\rVert/g_t$};
 
   \draw[signal] (-0.9,0.5) -- node[lab, above, pos=0.15] {$\mathbf{a}_{\mathrm{ff}}$} ($(casc.west)+(0,0.5)$);
   \draw[signal] (-0.9,0)   -- node[lab, above, pos=0.15] {$\mathbf{v}_{\mathrm{ref}}$} (casc.west);
@@ -33,7 +33,7 @@
   % ---------- inner loop plant (y = -2.8) ----------
   \node[plant, minimum width=2.4cm, minimum height=1.3cm] (plant) at (11.9,-2.8)
      {Attitude loop,\\rate loop,\\airframe};
-  \draw[signal] (split.south -| plant.north) -- node[lab, right, pos=0.5] {$\mathbf{q}_d$, $T_c$} (plant.north);
+  \draw[signal] (split.south -| plant.north) -- node[lab, right, pos=0.5] {$\mathbf{q}_d$, $T_{\mathrm{col}}$} (plant.north);
 
   % ---------- measured specific force path ----------
   \node[switch, minimum width=1.6cm, minimum height=1.1cm] (sw) at (5.8,-2.8) {Force\\source};
@@ -48,9 +48,9 @@
   \node[measblock, minimum width=3.0cm] (um) at (9.6,-5.0)
      {Measured thrust\\[-1pt]\scriptsize mean $u_i=(\Omega_i/\Omega_{\max})^2$};
   \node[modblock, minimum width=2.5cm] (uo) at (12.9,-5.0)
-     {Modelled thrust\\[-1pt]\scriptsize from $T_c$};
+     {Modelled thrust\\[-1pt]\scriptsize from $T_{\mathrm{col}}$};
   \draw[measured] (10.9,-3.45) -- node[lab, right, text=indiorange, pos=0.5] {$\Omega_i$} (10.9,-4.52);
-  \draw[signal] (13.2,-0.65) -- node[lab, right, pos=0.5] {$T_c$} (13.2,-4.52);
+  \draw[signal] (13.2,-0.65) -- node[lab, right, pos=0.5] {$T_{\mathrm{col}}$} (13.2,-4.52);
   \node[badge] at (um.north west) {H};
   \node[badge] at (uo.north west) {H};
   \node[block, minimum width=5.8cm] (bl) at (6.4,-7.2)
