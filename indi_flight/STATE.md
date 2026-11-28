@@ -67,8 +67,14 @@ values found. Next: (1) ch04 fixes (sonnet-medium) + re-review; (2) ch05 write+r
 of ch01/02 + R8; (4) ch06+07, then 08+09+A+B. Costs seen S262: write ~$0.35, review $0.3-0.6, fix ~$0.25 (sonnet-medium).
 Owner also asked 7b chapter reviews once each chapter is complete (03 is complete now). Firmware after FREEZE-10: e6af4b6b0d, ac744d360e (R1 arming check, owner-lifted freeze, no gate row
 invalidated). Commit trailer: AGENTS.md wins: `Assisted-by:` only.
-S263 in flight (G8 PDF): ch04 fixes -> reviews/ch04_fixes.md; ch05 write -> chapters/05_analysis.tex + NOTES_F.md;
-ch01/02 7a review (+R8) -> reviews/ch01_02_section_review.md. Agents build into /tmp/indi_pdf_*, not build/.
+S263 done (G8 PDF): ch04 fixed + re-reviewed (ch04_rereview.md: 15/17 closed, C1-C8 chapter review), ch05 written,
+reviewed (8 MAJOR) and fixed (ch05_fixes.md, 21/21), ch01/02 reviewed (6 MAJOR, ch01_02_section_review.md) and fixed
+with ch04 C1-C8, R5, R8 (ch01_02_fixes.md). Next: (1) one re-review agent for ch01/02 + ch05 fixes (+7b chapter
+review of 01, 02, 05; 03 7b too); (2) FIGURES.md g2_margins caption 250 -> 267 Hz; (2b) ch01_02_fixes.md
+follow-ups: ch05 notation (ubar, plain nu/omega/u per axis), W_MAX 0 blocks arming, 4-5 % edge step = re-arm
+take-off; main.tex abstract ("no vehicle-specific assumption", "measured in flight") and uncited px4guide; ch02
+airframe table ~6 pt overfull; ch06 must list owner test amendments; (3) ch06+07 write, then
+08+09+A+B. Agents build into /tmp/indi_pdf_*, never build/ (parallel builds clash).
 
 ## Open problems
 - Deferred to stage 7 (RC98): MINORs frozen-b on saturated motor, lagging mean_u at reset, lower mean_u limit
